@@ -69,8 +69,11 @@ test('photo and copy finalize through one receipt-backed operation and preserve 
   assert.match(page,/nestly\.v104\.promotion-create/);
   assert.match(page,/nestly\.v104\.promotion-finalize/);
   assert.match(page,/rpcWithReceiptReplay/);
-  assert.match(page,/Confirming an interrupted draft save/);
-  assert.match(page,/Confirming an interrupted save/);
+  /* V373: opening a promotion with an unconfirmed receipt no longer says "Confirming an
+     interrupted save…" and then confirms it — that render-time auto-send was the P0 loop. It now
+     states what happened and waits for the owner to press. */
+  assert.match(page,/A previous save was interrupted and has not been confirmed\. Your edits are safe/);
+  assert.match(page,/promotionResumeFinalizeV373/);
   assert.match(page,/NestlyMediaSyncV95\.removeOrQueue/);
   assert.match(page,/\$\{businessId\}\/offer\/\$\{crypto\.randomUUID\(\)\}\.\$\{extension\}/);
   /* V280 retarget: the 10 MB ceiling is unchanged, but the literal comparison moved into

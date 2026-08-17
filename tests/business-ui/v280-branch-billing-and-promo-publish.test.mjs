@@ -111,7 +111,12 @@ test('who collects the base plan is recorded when it is decided, not guessed lat
 
 test('the busy state is released on every failure path, including an unexpected throw', () => {
   // the handler body is wrapped; nothing can leave Publish disabled with no error
-  assert.match(app, /const save=async\(publish,options=\{\}\)=>\{\s*\n\s*try\{return await runSave\(publish,options\)\}/);
+  /* V373 put the single-flight guard and the trigger-disable ahead of the try, so the two are no
+     longer adjacent. The property this test holds — the busy state is released on EVERY exit — is
+     now guaranteed harder than before, by a finally rather than by the catch alone. */
+  assert.match(app, /const save=async\(publish,options=\{\}\)=>\{[\s\S]{0,320}?try\{return await runSave\(publish,options\)\}/);
+  assert.match(app, /finally\{[\s\S]{0,400}?promotionSaveInFlightV373=false;/,
+    'the in-flight flag and the controls must be released however the save ended');
   assert.match(app, /catch\(error\)\{[\s\S]{0,400}?\.forEach\(button=>\{button\.disabled=false\}\)/);
   assert.match(app, /This did not finish: \$\{ownerErrorText\(error\)\} Nothing was lost — press again\./);
   // every storage call is bounded, because storage-js rethrows anything that is not a StorageError

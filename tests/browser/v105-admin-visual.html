@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="997ee16abf2694e94e04ece123675f4d8285286cd8ee475745c27eaa2ba6c7a1">
+<meta name="v105-production-component-sha256" content="932425a75f3b4bf61b4664bd8ac09a3434d4bdfbdaac65fe86b69f0425e467e7">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -166,7 +166,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-soft-head b{display:block;font-size:15px}.v150-soft-head p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
 .v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
-.v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.v150-segment button[aria-pressed="true"],.v150-segment button[aria-selected="true"]{background:var(--ink);color:#fff}
+/* V375: the appointment detail modal's two outcomes as one tab strip over one panel area. */
+.appointment-outcome-tabs-v375{margin-top:14px;flex-wrap:wrap}
 /* V368: the Customer settings tab strip is built from links (each tab is a real hash a reader can
    bookmark or open in a new tab), so the segment's own button styling is extended to <a>. */
 .v150-segment a{min-height:44px;display:inline-flex;align-items:center;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px;text-decoration:none}
@@ -188,6 +190,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
 }
+/* V372: the container itself must stop being a ROW. V369 made this list "vertical, one benefit
+   per line" by styling the rows — but the banner inherits .permission-banner{display:flex}, whose
+   default direction is row with no wrap, so every benefit stayed a flex item on one line and ran
+   off the right of the screen (owner screenshot, Record sale, Diamond benefits). Styling the
+   children could never fix that; the parent's own axis had to change. */
+.till-tier-benefits-v369{flex-direction:column;align-items:stretch;flex-wrap:wrap}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369{display:flex;gap:10px;align-items:center;
   justify-content:space-between;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span{display:flex;flex-direction:column;min-width:0;flex:1}
@@ -341,6 +349,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
 .dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:100px;font-size:13px;min-height:34px}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
+/* V375: the whole chip is the tap target now that it opens the appointment. */
+.dashboard-schedule-chip-link-v375{display:flex;align-items:baseline;gap:7px;color:inherit;text-decoration:none}
+.dashboard-schedule-chip-link-v375>b{color:var(--coral);font-variant-numeric:tabular-nums}
+.dashboard-schedule-chip:has(.dashboard-schedule-chip-link-v375){padding:0}
+.dashboard-schedule-chip-link-v375{padding:7px 12px}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
 /* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
@@ -1126,6 +1139,53 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-sale-package-options{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8;padding:0 12px}
 .till-sale-package-options>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:750}
 .till-sale-package-options[open]{padding-bottom:12px}
+/* ===== V373 — one Record sale flow (owner: "too crowded and no tabs to consolidate it") =====
+   Phone first: the customer is one line, the things a counter taps are a two-column grid of
+   big targets, and the cart never leaves the screen. Everything else is in a bottom sheet. */
+.till-flow-v373{padding-bottom:0}
+.till-head-v373{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.till-head-id-v373{min-width:0}
+.till-head-name-v373{display:block;font-size:1.15rem;font-weight:750;letter-spacing:-.03em;overflow-wrap:anywhere}
+.till-head-standing-v373{font-weight:700;color:var(--coral)}
+.till-who-v373{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.till-who-v373>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted)}
+.till-quick-head-v373{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.till-quick-grid-v373{grid-template-columns:repeat(2,minmax(0,1fr))}
+.till-cart-catalog .choice-button.till-add-tile-v373{border-style:dashed;background:#FBFAF8;color:var(--coral);flex-direction:row;align-items:center;gap:10px}
+.till-cart-catalog .choice-button.till-add-tile-v373 b{color:var(--ink)}
+.till-rewards-v373{margin-top:16px}
+.till-stage-tabs-v374{margin:14px 0 4px;max-width:100%}
+.till-stage-tabs-v374 button{gap:6px}
+.till-stage-tab-count-v374{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;
+  border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.v150-segment.till-stage-tabs-v374 button[aria-pressed="true"] .till-stage-tab-count-v374{background:#fff;color:var(--ink)}
+.till-stage-panel-v374{min-height:120px}
+.till-benefit-auto-v373>span>.muted{color:var(--green)}
+/* The cart the owner asked never to have to scroll for. It reports only figures the price check
+   returned — the item count is the one number this bar works out for itself. */
+.till-sticky-cart-v373{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:16px -22px 0;padding:12px 22px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:saturate(180%) blur(12px)}
+.till-sticky-figures-v373{flex:1 1 130px;min-width:0;display:flex;flex-direction:column;gap:1px;font-variant-numeric:tabular-nums}
+.till-sticky-figures-v373>b{font-size:1.02rem;letter-spacing:-.02em}
+.till-sticky-cart-v373>.btn{flex:0 0 auto;min-height:50px;padding:12px 22px;font-size:15.5px}
+.till-review-head-v373{display:block;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:1.05rem;font-weight:750;letter-spacing:-.02em}
+.till-add-sheet-v373 .modal-card{width:min(620px,100%);max-height:88dvh;overflow:auto}
+.till-sheet-tabs-v373{margin:14px 0 12px;max-width:100%}
+.till-sheet-panel-v373{min-height:120px}
+@media(max-width:600px){
+  .till-flow-v373{padding-left:16px;padding-right:16px}
+  /* On a phone the name, the +/- pair, the amount and the remove button cannot share one row
+     without squeezing the name into a column three words wide. The name takes the row. */
+  .till-flow-v373 .till-cart-line{flex-wrap:wrap}
+  .till-flow-v373 .till-cart-line .till-cart-line-label{flex:1 1 100%}
+  .till-flow-v373 .till-cart-line .till-cart-line-amount{flex:1 1 auto;text-align:left}
+  .till-sticky-cart-v373{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .till-cart-catalog .choice-button{min-height:76px}
+  .till-add-sheet-v373{align-items:flex-end;padding:0}
+  .till-add-sheet-v373 .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+}
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -1726,6 +1786,10 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
+/* V375: the one-off amount field, on the first Record sale screen. */
+.till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}
+/* V375: what a sale awarded, stated on the row it was awarded by. */
+.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 /* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
@@ -3584,7 +3648,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 997ee16abf26</span>
+<span class="v105-provenance">v105 production-component harness · 932425a75f3b</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3709,7 +3773,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'997ee16abf2694e94e04ece123675f4d8285286cd8ee475745c27eaa2ba6c7a1',
+  sourceHash:'932425a75f3b4bf61b4664bd8ac09a3434d4bdfbdaac65fe86b69f0425e467e7',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

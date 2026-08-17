@@ -223,12 +223,12 @@ inverted so the removal itself is now guarded.
 The recent rewards wave changed production source without recapturing the fixtures that pin it, so
 these were regenerated from current source. New `production-source-sha256` pins:
 
-- `tests/browser/reward-overview-owner-visual.html` → `35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d`
-- `tests/browser/v129-trial-test-visual.html` → `2c7714a1ab5b36a641ca9a83560c2fd61f058ed31ee1c78e30af5ee46056ee28`
-- `tests/browser/v130-self-serve-visual.html` → `9fd13670b7336ebce2aa03584fd46df791b0343c8129e28f0a9eabda4db9fc2b`
-- `tests/browser/v131-store-visual.html` → `5b87e3e790918d19a07dd08965668ca9cf6a75babb48bd42d3a35609d0a9f8e8`
-- `tests/browser/v141-dashboard-visual.html` → `28281e7493c97163228214276bafc599c46992a3fc715ceffe76fdf202a7e414`
-- `tests/browser/v145-launch-freeze-visual.html` → `dde81a48afffff79b36ee7c565807ce5fc3897350a84c822ea8670fa37a3f996`
+- `tests/browser/reward-overview-owner-visual.html` → `9b32f7e9c1dfdbed53ad5735e60278366ae69be04cc88fd2eb93dd94aebf44c3`
+- `tests/browser/v129-trial-test-visual.html` → `21fabfec39f27d2fc8c21b7967dbe1ababf0726e80e82e07873ee570ed796fe0`
+- `tests/browser/v130-self-serve-visual.html` → `817134c82c85476f274ea80a1fea6d4498058bbe4a15007ac3b4ed54a5fe37e1`
+- `tests/browser/v131-store-visual.html` → `67b4f13384f8367f962188f3cd21b6d0ae62b98ab69f99d42e2f1c42cc802a1c`
+- `tests/browser/v141-dashboard-visual.html` → `5a63c1ff37c4bab27ff4f33d5cd1504fac016db5a86cf80906febde8b7bf0202`
+- `tests/browser/v145-launch-freeze-visual.html` → `bb9946d3da81e75e240cd0bd711d403f5dfe27020c99ab31f889b577ef326b80`
 
 The v141/v145 generators sliced production source at the marker
 `async function visibleBranchesForCurrentUser()`; v370 gave that function a `{refresh}` option and

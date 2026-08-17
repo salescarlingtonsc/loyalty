@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="9b32f7e9c1dfdbed53ad5735e60278366ae69be04cc88fd2eb93dd94aebf44c3"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -160,7 +160,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-soft-head b{display:block;font-size:15px}.v150-soft-head p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
 .v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
-.v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.v150-segment button[aria-pressed="true"],.v150-segment button[aria-selected="true"]{background:var(--ink);color:#fff}
+/* V375: the appointment detail modal's two outcomes as one tab strip over one panel area. */
+.appointment-outcome-tabs-v375{margin-top:14px;flex-wrap:wrap}
 /* V368: the Customer settings tab strip is built from links (each tab is a real hash a reader can
    bookmark or open in a new tab), so the segment's own button styling is extended to <a>. */
 .v150-segment a{min-height:44px;display:inline-flex;align-items:center;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px;text-decoration:none}
@@ -182,6 +184,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
 }
+/* V372: the container itself must stop being a ROW. V369 made this list "vertical, one benefit
+   per line" by styling the rows — but the banner inherits .permission-banner{display:flex}, whose
+   default direction is row with no wrap, so every benefit stayed a flex item on one line and ran
+   off the right of the screen (owner screenshot, Record sale, Diamond benefits). Styling the
+   children could never fix that; the parent's own axis had to change. */
+.till-tier-benefits-v369{flex-direction:column;align-items:stretch;flex-wrap:wrap}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369{display:flex;gap:10px;align-items:center;
   justify-content:space-between;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span{display:flex;flex-direction:column;min-width:0;flex:1}
@@ -335,6 +343,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
 .dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:100px;font-size:13px;min-height:34px}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
+/* V375: the whole chip is the tap target now that it opens the appointment. */
+.dashboard-schedule-chip-link-v375{display:flex;align-items:baseline;gap:7px;color:inherit;text-decoration:none}
+.dashboard-schedule-chip-link-v375>b{color:var(--coral);font-variant-numeric:tabular-nums}
+.dashboard-schedule-chip:has(.dashboard-schedule-chip-link-v375){padding:0}
+.dashboard-schedule-chip-link-v375{padding:7px 12px}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
 /* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
@@ -1120,6 +1133,53 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-sale-package-options{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8;padding:0 12px}
 .till-sale-package-options>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:750}
 .till-sale-package-options[open]{padding-bottom:12px}
+/* ===== V373 — one Record sale flow (owner: "too crowded and no tabs to consolidate it") =====
+   Phone first: the customer is one line, the things a counter taps are a two-column grid of
+   big targets, and the cart never leaves the screen. Everything else is in a bottom sheet. */
+.till-flow-v373{padding-bottom:0}
+.till-head-v373{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.till-head-id-v373{min-width:0}
+.till-head-name-v373{display:block;font-size:1.15rem;font-weight:750;letter-spacing:-.03em;overflow-wrap:anywhere}
+.till-head-standing-v373{font-weight:700;color:var(--coral)}
+.till-who-v373{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.till-who-v373>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted)}
+.till-quick-head-v373{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.till-quick-grid-v373{grid-template-columns:repeat(2,minmax(0,1fr))}
+.till-cart-catalog .choice-button.till-add-tile-v373{border-style:dashed;background:#FBFAF8;color:var(--coral);flex-direction:row;align-items:center;gap:10px}
+.till-cart-catalog .choice-button.till-add-tile-v373 b{color:var(--ink)}
+.till-rewards-v373{margin-top:16px}
+.till-stage-tabs-v374{margin:14px 0 4px;max-width:100%}
+.till-stage-tabs-v374 button{gap:6px}
+.till-stage-tab-count-v374{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;
+  border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.v150-segment.till-stage-tabs-v374 button[aria-pressed="true"] .till-stage-tab-count-v374{background:#fff;color:var(--ink)}
+.till-stage-panel-v374{min-height:120px}
+.till-benefit-auto-v373>span>.muted{color:var(--green)}
+/* The cart the owner asked never to have to scroll for. It reports only figures the price check
+   returned — the item count is the one number this bar works out for itself. */
+.till-sticky-cart-v373{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:16px -22px 0;padding:12px 22px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:saturate(180%) blur(12px)}
+.till-sticky-figures-v373{flex:1 1 130px;min-width:0;display:flex;flex-direction:column;gap:1px;font-variant-numeric:tabular-nums}
+.till-sticky-figures-v373>b{font-size:1.02rem;letter-spacing:-.02em}
+.till-sticky-cart-v373>.btn{flex:0 0 auto;min-height:50px;padding:12px 22px;font-size:15.5px}
+.till-review-head-v373{display:block;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:1.05rem;font-weight:750;letter-spacing:-.02em}
+.till-add-sheet-v373 .modal-card{width:min(620px,100%);max-height:88dvh;overflow:auto}
+.till-sheet-tabs-v373{margin:14px 0 12px;max-width:100%}
+.till-sheet-panel-v373{min-height:120px}
+@media(max-width:600px){
+  .till-flow-v373{padding-left:16px;padding-right:16px}
+  /* On a phone the name, the +/- pair, the amount and the remove button cannot share one row
+     without squeezing the name into a column three words wide. The name takes the row. */
+  .till-flow-v373 .till-cart-line{flex-wrap:wrap}
+  .till-flow-v373 .till-cart-line .till-cart-line-label{flex:1 1 100%}
+  .till-flow-v373 .till-cart-line .till-cart-line-amount{flex:1 1 auto;text-align:left}
+  .till-sticky-cart-v373{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .till-cart-catalog .choice-button{min-height:76px}
+  .till-add-sheet-v373{align-items:flex-end;padding:0}
+  .till-add-sheet-v373 .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+}
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -1720,6 +1780,10 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
+/* V375: the one-off amount field, on the first Record sale screen. */
+.till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}
+/* V375: what a sale awarded, stated on the row it was awarded by. */
+.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 /* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
@@ -2769,7 +2833,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 9b32f7e9c1dfdbed53ad5735e60278366ae69be04cc88fd2eb93dd94aebf44c3</p><main id="main"></main></div>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -2814,6 +2878,9 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
    Gift cards. V295 removed it from the loyalty editor; the owner's ruling covers these headers too,
    now that the rail carries Programmes' own children and Gift cards sits under Serve & sell. The
    destination is one rail click away, so the capability did not leave with the button. */
+/* V375: the customer portal link is built in one place now that two pages show it (Bookings
+   keeps the Copy button, Appointments carries the card — owner, photo 5). */
+function portalUrlV375(slug){return publicAppUrl(`b/${encodeURIComponent(slug||'')}`)}
     function loyaltyAuthorityActionV140({canManage=false,draftVersionId=null}={}){
   if(!canManage)return '<span class="pill off">Read only</span>';
   if(draftVersionId)return '<span class="pill new">Editable draft</span>';
@@ -3053,7 +3120,7 @@ function pruneRewardSiblingsV139(root){
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
         <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div></div>`).join('')}</div>
-      <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option><option value="credit">Add store credit</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
+      <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
     </div>`:''}`;
 
   /* V291 (audit A2 #13). On the published view a rule could only be READ: Edit and Pause were
@@ -3708,7 +3775,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   };
 }
     function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null,programmes=null}={}){
-  const model=loyalty?.loyalty_model||loyaltyModel||'points';
+  const model=normaliseLoyaltyModelV375(loyalty?.loyalty_model||loyaltyModel)||'points';
   const unit=model==='stamps'?'stamps':'points';
   /* V314 (W6 increment 1): the owner's Live/paused pill asks the SPINE. loyalty_programs.active
      stopped being the switch at v314 — it is the published setting, and the engine reads
@@ -3737,7 +3804,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     .map((reward,index)=>{
       const startsAt=reward.claim_available_from?Date.parse(reward.claim_available_from):null;
       const endsAt=reward.claim_available_until?Date.parse(reward.claim_available_until):null;
-      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused':model==='classic'?'not_current_model'
+      /* V375: the 'not_current_model' branch went with the classic model. It hid every real
+         milestone from a classic tenant, which is the business-side half of the same defect
+         nestly_v375 fixed in the database reader. */
+      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused'
         :Number.isFinite(startsAt)&&startsAt>asOfMs?'not_started'
         :Number.isFinite(endsAt)&&endsAt<=asOfMs?'ended':'available';
       return {
@@ -3755,12 +3825,9 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       name:reward.customer_name||reward.name||'Reward',threshold:Math.max(0,Number(reward.cost_points||0)),unit,
       estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),active:false
     }));
-  const redeemPoints=Math.max(0,Number(loyalty?.redeem_points||0));
-  const rewardCreditCents=Math.max(0,Number(loyalty?.reward_credit_cents||0));
-  const classicReward=model==='classic'&&redeemPoints>0&&rewardCreditCents>0?{
-    id:`classic:${loyalty?.id||'programme'}`,name:'Points System',threshold:redeemPoints,unit:'points',
-    value:`SGD ${(rewardCreditCents/100).toFixed(2)} store credit`,availableToCustomers:programmeActive
-  }:null;
+  /* V375: this synthesized a reward card reading "Points System — SGD x store credit" out of the
+     programme's own redeem_points/reward_credit_cents pair. It was the last place in the browser
+     that invented a reward rather than reading the owner's catalogue. */
   const birthdayReward=!birthday?null:{
     id:birthday.id||birthday.program_id||'birthday',
     active:birthday.active!==false,
@@ -3770,7 +3837,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       ?`${Number(birthday.discount_percent||0)}% off`
       :birthday.manual_item||'Configured birthday benefit'
   };
-  return {model,unit,earning,milestones,archivedRewards,classicReward,birthday:birthdayReward};
+  return {model,unit,earning,milestones,archivedRewards,birthday:birthdayReward};
 }
     function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
@@ -3812,7 +3879,6 @@ async function openWelcomeOfferEditorV215(current,onSaved){
     {label:'Name',read:reward=>String(reward.customer_name||reward.name||'Reward').trim(),show:value=>value},
     {label:'Cost',read:reward=>Math.max(0,num(reward.cost_points)||0),show:value=>`${value} ${unit}`},
     {label:'Offered',read:reward=>reward.active!==false,show:value=>value?'Yes':'No'},
-    {label:'Store credit',read:reward=>Math.max(0,num(reward.credit_cents)||0),show:value=>value>0?money(value):'None'},
     {label:'Expires after',read:reward=>num(reward.entitlement_expiry_days),show:value=>value==null?'No expiry':`${value} day${value===1?'':'s'}`},
     {label:'Uses per customer',read:reward=>num(reward.usage_limit),show:value=>value==null?'Unlimited':String(value)},
     {label:'Who can redeem',read:reward=>{
@@ -4186,7 +4252,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      no draft yet. Reading the draft first is what makes a resumed setup show what was already
      saved rather than the numbers customers still see. */
   const base=draftProgram||live||null;
-  const baseModel=String(base?.loyalty_model||'');
+  const baseModel=normaliseLoyaltyModelV375(base?.loyalty_model);
   /* "Fresh" = nothing has ever reached a customer. It decides exactly three things: which model
      a points choice writes, whether the cost-per-point default is written, and whether at least
      one reward is required before the owner can leave step 3. */
@@ -4360,8 +4426,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     earn:Number(base?.earn_points_per_dollar)>0?Number(base.earn_points_per_dollar):1,
     stampSpend:Number(base?.stamp_per_cents)>0?Number(base.stamp_per_cents)/100:5,
     stampTarget:Number(base?.stamp_target)>0?Math.round(Number(base.stamp_target)):8,
-    classicRedeem:Number(base?.redeem_points)>0?Math.round(Number(base.redeem_points)):800,
-    classicCredit:Number(base?.reward_credit_cents)>0?Number(base.reward_credit_cents)/100:20,
     /* W6 increment 2 (OWNER AMENDMENT 2026-08-14: "every expiry knob survives per-programme —
        points expiry in all its modes (e.g. yearly via expiry_days=365, inactivity)"). Points
        expiry had no wizard screen at all before this wave: programRowV305 carried whatever was
@@ -4579,11 +4643,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const earnLine=()=>familyW6I2()==='stamps'
     ?`${currency} ${Number(state.stampSpend||0).toFixed(2)} spent → 1 stamp`
     :`${currency} 1 spent → ${unitWord(state.earn,'points')}`;
-  const rewardLine=()=>state.model==='classic'
-    ?`${unitWord(state.classicRedeem,'points')} → ${currency} ${Number(state.classicCredit||0).toFixed(2)} credit`
-    /* V304: the summary names what customers can actually claim, so a reward removed on the step
-       above drops out of it here rather than being restated on the Go-live step. */
-    :activeRewardsV304().length
+  /* V375: the classic branch is gone with the model itself (owner: "i don't want credit
+     feature") — a summary line promising an amount of store credit is the one thing this step
+     must never print now that no such reward can exist.
+     V304: the summary names what customers can actually claim, so a reward removed on the step
+     above drops out of it here rather than being restated on the Go-live step. */
+  const rewardLine=()=>activeRewardsV304().length
       ?activeRewardsV304().map(reward=>`${reward.name} — ${unitWord(reward.points,rewardUnit())}`).join(' · ')
       :'No reward yet';
   function exampleText(){
@@ -5276,9 +5341,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* A firm already on fixed redemption has no reward catalogue to fill in — its one reward IS
        the pair — and app.redeem_points_v40_internal refuses catalogue claims on that model, so
        showing a catalogue here would offer rewards its own engine would never honour. */
-    if(state.model==='classic')return `<p class="grow-setup-lead-v301">What do points buy?</p>
-      <p class="grow-setup-sentence-v301"><input id="growSetupClassicPointsV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.classicRedeem))}" aria-label="Points needed"> points → ${esc(currency)} <input id="growSetupClassicCreditV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.classicCredit||0).toFixed(2))}" aria-label="Credit given"> credit</p>
-      <p class="muted small" style="margin-top:10px">Customers spend that many points and get store credit back.</p>`;
     const stampsHead=familyW6I2()==='stamps'
       ?`<p class="grow-setup-sentence-v301">Collect <input id="growSetupStampTargetV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.stampTarget))}" aria-label="Stamps needed for a reward"> stamps → reward</p>`
       :'';
@@ -5589,11 +5651,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       return;
     }
     if(kind!=='reward'&&kind!=='stampGift')return;
-    if(kind==='reward'&&state.model==='classic'){
-      state.classicRedeem=parseInt($('growSetupClassicPointsV301')?.value||'',10)||state.classicRedeem;
-      state.classicCredit=parseFloat($('growSetupClassicCreditV301')?.value||'')||state.classicCredit;
-      return;
-    }
     /* V322 (R5): stamp_target is no longer typed on this screen — it is DERIVED from the last
        milestone, at save time, so the card's length can never disagree with its own last prize. */
     const name=String($('growSetupRewardNameV301')?.value||'').trim();
@@ -6111,8 +6168,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        stamps spine row after v314, requires stamp_per_cents to be there. */
     if(state.switches.stamps===true)row.stamp_per_cents=Math.round(state.stampSpend*100);
     if(model!=='stamps')row.earn_points_per_dollar=state.earn;
-    if(model==='classic'){row.redeem_points=state.classicRedeem;row.reward_credit_cents=Math.round(state.classicCredit*100)}
-    else if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
+    /* V375: the fixed-redeem pair is no longer typed by anyone; every model writes the derived
+       cost-per-point default below. */
+    if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
     /* V306: through tierBasisToDbV306 — state.tierBasis is the radio's spelling, and the DB CHECK
        accepts only visits|spend|points_earned, so the untranslated 'points' failed the save. */
     if(model==='points_tiers'&&state.tierBasis)row.tier_basis=tierBasisToDbV306(state.tierBasis);
@@ -6254,15 +6312,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       goto(state.step+1);
     });
     if(kind==='reward'||kind==='stampGift')return withBusy(async()=>{
-      if(kind==='reward'&&state.model==='classic'){
-        if(!(state.classicRedeem>0)||!(state.classicCredit>0)){
-          state.error='Enter how many points a customer spends, and what credit they get.';return render();
-        }
-        const result=await saveDraft({redeem_points:state.classicRedeem,reward_credit_cents:Math.round(state.classicCredit*100)});
-        if(!isCurrent())return;
-        if(!result.ok)return failStep(result.error,'Nothing was saved.');
-        return goto(state.step+1);
-      }
       const form=state.form;
       const hasForm=Boolean(form&&form.name.trim().length>=2);
       /* V304: only rewards a customer can actually claim count. Removing them all and pressing
@@ -6490,7 +6539,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      never-configured 'redeem' firm forever. The legacy column stays as the fallback for a
      session whose spine read failed, where a stale answer still beats an invented one. */
   const pointsModeV229=programmePointsModeV314()||S.biz.points_mode||null;
-  const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  const rewardCount=rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
      paused programme makes eight rows say "Programme paused" while none of them says how to fix
@@ -6831,7 +6880,14 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      "no tiles, no drilled topic" branch, which answers TRUE for every key — the Limited Offer
      page would have rendered every category on the module. V326: 'points' joins for the same
      reason — its own page, not a topic drill. */
-  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers'].includes(programmeView);
+  /* V375 (owner, photo 9: the whole Point system / Tiered membership / Promotions stack struck
+     through at the bottom of the BRING-BACK page — "this module is for bring-back rewards, do not
+     add other rewards inside, we already have a separate module to manage that, now it creates
+     duplicate"). 'bringback' was missing from this list, so growCategoryViewV271 stayed true on
+     its page; with no drilled topic and no tiles, topicOnV229 fell through to its "answer TRUE for
+     every key" branch and rendered every other programme category below the bring-back module —
+     the same trap V319 fixed for Limited Offer and V326 for the points page, one page later. */
+  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -7083,8 +7139,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      collapsed Reward history under the grid. Their Edit contract is unchanged, so a retired
      reward can still be opened and un-archived from history. */
   const rewardCardsV250=[
-    ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
-      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused with programme',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
     ...rewardJourney.milestones.filter(milestone=>milestone.availability!=='ended').map(milestone=>{
       const [status,tone]=rewardCardStatusV250(milestone);
       return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id,
@@ -7147,6 +7201,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :esc(String(Number(value)));
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
     ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
+  const GROW_PROGRAMME_PARENT_NAMES_V375=Object.freeze({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'});
+  const growRewardParentNameV375=reward=>{
+    const rows=programmeSpineRowsV314();
+    const kind=reward?.programme_id&&rows
+      ?rows.find(row=>String(row?.id)===String(reward.programme_id))?.kind:null;
+    return GROW_PROGRAMME_PARENT_NAMES_V375[kind]||null;
+  };
   const growProgrammeEntriesV271=(()=>{
     const entries=[];
     const milestoneById=new Map();
@@ -7162,7 +7223,13 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         :milestone?.availability==='ended'?'ended'
         :milestone?.availability==='not_started'?'scheduled'
         :milestone?.availableToCustomers?'live':'paused';
+      /* V375 (owner, photo 12: "please specify if some is under Point System" braced across the
+         retired gifts). A gift carries programme_id, so the parent is READ off the spine rather
+         than inferred from whichever model happens to be live today — a stamp-card gift retired
+         last year still says Stamp card after the firm switched to points. A gift with no
+         programme link says nothing rather than guessing. */
       entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
+        parent:growRewardParentNameV375(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
         customers:growRewardUsageV271.get(String(reward.id))??null,
         detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
@@ -7266,9 +7333,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const growOverviewNameColumnV324=(rows,label)=>[label,row=>{
     const at=rows.indexOf(row);
     const parentAbove=at>0&&rows.slice(0,at).some(entry=>!growOverviewChildRowV324(entry));
+    const parentNote=row.parent?`<span class="muted small grow-overview-parent-v375">Under ${esc(row.parent)}</span>`:'';
     return growOverviewChildRowV324(row)&&parentAbove
-      ?`<span class="grow-overview-child-v324"><b data-merchant-content>${esc(row.name)}</b></span>`
-      :`<b data-merchant-content>${esc(row.name)}</b>`;
+      ?`<span class="grow-overview-child-v324"><b data-merchant-content>${esc(row.name)}</b>${parentNote}</span>`
+      :`<b data-merchant-content>${esc(row.name)}</b>${parentNote}`;
   }];
   const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
@@ -7316,8 +7384,26 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      its end date has one, a row retired by hand does not — without a column that repeated in
      words what the dates already said. Type goes for the same reason it went on Overview, and the
      child indent replaces it here too. */
-  const growHistoryRewardRowsV324=growHistoryRowsV271.filter(entry=>!growLimitedOfferEntryV319(entry));
-  const growHistoryOfferRowsV324=growHistoryRowsV271.filter(growLimitedOfferEntryV319);
+  /* V375: a row is in the window when the period it ran overlaps it — a programme that started
+     before the From date but ended inside it is exactly what "what ended in this period" means.
+     A row with no dates at all is never hidden: the filter must not silently swallow a programme
+     whose dates were simply never tracked. */
+  const growHistoryInWindowV375=row=>{
+    const from=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
+    const to=growHistoryToV375?Date.parse(`${growHistoryToV375}T23:59:59+08:00`):null;
+    if(!Number.isFinite(from)&&!Number.isFinite(to))return true;
+    const started=Date.parse(row?.started||''),ended=Date.parse(row?.ended||'');
+    if(!Number.isFinite(started)&&!Number.isFinite(ended))return true;
+    const rowFrom=Number.isFinite(started)?started:ended;
+    const rowTo=Number.isFinite(ended)?ended:started;
+    if(Number.isFinite(from)&&rowTo<from)return false;
+    if(Number.isFinite(to)&&rowFrom>to)return false;
+    return true;
+  };
+  const growHistoryFilteredRowsV375=growHistoryRowsV271.filter(growHistoryInWindowV375);
+  const growHistoryHiddenCountV375=growHistoryRowsV271.length-growHistoryFilteredRowsV375.length;
+  const growHistoryRewardRowsV324=growHistoryFilteredRowsV375.filter(entry=>!growLimitedOfferEntryV319(entry));
+  const growHistoryOfferRowsV324=growHistoryFilteredRowsV375.filter(growLimitedOfferEntryV319);
   const growHistoryRewardsTableV324=growTableV271({label:'Reward programmes that have ended',rows:growHistoryRewardRowsV324,
     empty:'<b>No reward programme has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
     columns:[growOverviewNameColumnV324(growHistoryRewardRowsV324,'Programme'),
@@ -7328,7 +7414,49 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
       ['Ran from',row=>growDateCellV271(row.started)],
       ['Ran until',row=>growDateCellV271(row.ended)]]});
-  const growHistoryTableV271=growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false});
+  /* V375 (owner, photo 6: a large ring under the Overview tables — "put analytic here → show how
+     many inactive customer come back within specific stipulated time (can filter) → how many
+     customers used reward programmes in each different category. in short, i want see if these
+     programmes help to bring my customer back").
+     Two answers, both from readers that already exist and are already gated:
+       - the come-back question is renderComebackCardV300, which carries the 30/60/90 filter the
+         owner asked for. V358 removed its host from the TILES view; this is the Overview, which
+         is where the owner has now drawn it. Nothing about the card or its RPCs changes.
+       - the per-category question is business_programme_usage_v271, already read above for the
+         "Customers used" column. The rows are grouped by the category each programme belongs to
+         rather than counted again, so this block and the table beside it can never disagree.
+     Honesty rule kept from V271: a category whose usage the server did not answer says "Not
+     tracked". It never shows a zero it did not measure. */
+  const growAnalyticsRowsV375=(()=>{
+    const buckets=new Map();
+    growProgrammeEntriesV271.forEach(entry=>{
+      const category=entry.parent||entry.type||'Programme';
+      const current=buckets.get(category)||{category,customers:null,programmes:0};
+      current.programmes+=1;
+      if(entry.customers!=null)current.customers=(current.customers||0)+Number(entry.customers||0);
+      buckets.set(category,current);
+    });
+    return [...buckets.values()].sort((a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
+      ||String(a.category).localeCompare(String(b.category)));
+  })();
+  const growAnalyticsCardV375=`<section class="card" style="margin-top:16px" aria-labelledby="growAnalyticsHeadV375">
+    <h2 id="growAnalyticsHeadV375">Are the programmes bringing customers back?</h2>
+    <p class="muted small" style="margin-top:4px">Observed visits and redemptions only. These figures describe what happened; they do not claim a programme caused it.</p>
+    <div id="comebackHost" style="margin-top:14px"></div>
+    <div style="margin-top:16px"><b class="small">Customers who used each programme</b>
+      ${growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
+        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
+      </tbody></table></div>`
+      :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
+    </div>
+  </section>`;
+  const growHistoryFilterBarV375=`<div class="card v150-filterbar" style="margin-bottom:16px" data-grow-history-filter-v375>
+    <div><label for="growHistoryFromV375">From</label><input type="date" id="growHistoryFromV375" value="${esc(growHistoryFromV375)}"></div>
+    <div><label for="growHistoryToV375">To</label><input type="date" id="growHistoryToV375" value="${esc(growHistoryToV375)}"></div>
+    <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growHistoryApplyV375">Apply</button><button type="button" class="btn ghost sm" id="growHistoryClearV375">Clear</button></div>
+    ${growHistoryHiddenCountV375>0?`<p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growHistoryHiddenCountV375} ${growHistoryHiddenCountV375===1?'programme is':'programmes are'} outside this date range. Clear the filter to see everything.</p>`:''}
+  </div>`;
+  const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false})}`;
   /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3 ==========================
      The dedicated #/grow/points page: Published | History (no Draft — every change here is
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
@@ -7367,7 +7495,20 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :growPointsRawRewardsV326.filter(reward=>reward?.programme_id==null||reward.programme_id===growPointsSpineIdV326);
   const growPointsPublishedV326=growPointsScopedRewardsV326.filter(reward=>reward?.active!==false)
     .sort((a,b)=>Number(a.sort||0)-Number(b.sort||0)||Number(a.cost_points||0)-Number(b.cost_points||0));
+  /* V375 (owner, photo 7: "put warning here" with "history only saved here for 60 days" written
+     across the gift history). Asked what period suited an audit trail, the owner chose five
+     years — the Singapore statutory record-keeping period — and chose to keep everything. So this
+     is a DISPLAY window, not a retention rule: nothing is deleted, the rows are all still in the
+     database, and the notice below says exactly that rather than promising a deletion the app
+     does not perform. */
+  const GROW_HISTORY_WINDOW_YEARS_V375=5;
+  const growHistoryCutoffV375=(()=>{const d=new Date();d.setFullYear(d.getFullYear()-GROW_HISTORY_WINDOW_YEARS_V375);return d})();
+  const growWithinHistoryWindowV375=row=>{
+    const added=new Date(row?.created_at||'');
+    return !Number.isFinite(added.getTime())||added>=growHistoryCutoffV375;
+  };
   const growPointsHistoryV326=growPointsScopedRewardsV326.filter(reward=>reward?.active===false)
+    .filter(growWithinHistoryWindowV375)
     .sort((a,b)=>Number(b.sort||0)-Number(a.sort||0));
   const growPointsOnV326=programmeSpineOnV314(growPointsSpineKindV326)===true;
   const growPointsLosingV326=growPointsOnV326?[]:programmeExclusionsV322(growPointsSpineKindV326).filter(other=>programmeSpineOnV314(other)===true);
@@ -7512,7 +7653,8 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         ${growPointsEditingV326?'':growPointsAddFormV326}
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
-      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`:''}
+      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`
+        :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">Showing gifts retired in the last ${GROW_HISTORY_WINDOW_YEARS_V375} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.</p></div>`}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
         ${growPointsManageTabV326==='published'
           ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one below.</li>')
@@ -8019,6 +8161,22 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      that silently switched a paused programme on would be the defect R6 exists to prevent. */
   const growReferralRewardV364=Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0));
   const growReferralMinCentsV364=Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0));
+  /* V375 (owner, photo 10: "once set, can put referral info here" circled in the empty space
+     under the Referrals row). Once the programme is configured, its settings are STATED there
+     rather than only being visible after pressing Edit — the same two numbers the editor writes,
+     read from the same snapshot row, so the summary cannot drift from the form. Hidden while the
+     editor is open, so the page never shows the value twice in two shapes. */
+  const growReferralSummaryV375=!(referralConfigured&&!growReferralEditOpenV364)?''
+    :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
+      <b>Referral settings</b>
+      <dl class="appointment-detail-list" style="margin-top:8px">
+        <div><dt>Reward for the referrer</dt><dd>${Number(snapshot.referral?.reward_points)>0?esc(growPointsWordV322(snapshot.referral.reward_points)):'Not set yet'}</dd></div>
+        <div><dt>Friend must spend at least</dt><dd>${Number(snapshot.referral?.min_spend_cents)>0?esc(money(Number(snapshot.referral.min_spend_cents))):'No minimum'}</dd></div>
+        <div><dt>Paid</dt><dd>After the friend's first qualifying visit — never at sign-up</dd></div>
+        <div><dt>Limit</dt><dd>One reward per referred customer, ever</dd></div>
+      </dl>
+      <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
+    </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
     :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
       <b>Referral settings</b>
@@ -8158,7 +8316,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         :CUI.emptyState({iconName:'loyalty',title:canRewards?'Owner access only':'Loyalty is not included',
           body:canRewards?'Setting up the rewards programme is an owner job. You can review what is running from the Programmes list.':'This workspace does not include the loyalty module, so there is no rewards programme to set up.',
           actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})):''}
-      ${programmeView==='overview'?growOverviewTableV271:''}
+      ${programmeView==='overview'?`${growOverviewTableV271}${growAnalyticsCardV375}`:''}
       ${programmeView==='history'?growHistoryTableV271:''}
       ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
       ${programmeView==='bringback'?growBbPageV361:''}
@@ -8209,7 +8367,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
-        ${growReferralSettingsPanelV364}
+        ${growReferralSummaryV375}${growReferralSettingsPanelV364}
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
@@ -8897,6 +9055,20 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     growTileFilterStateV357=next;
     growRerenderV322({quiet:true});
   });
+  /* V375: the History date window. Apply/Clear write the module-scoped state and re-render
+     through the same quiet path every other grow filter uses. */
+  const growHistoryApplyV375=$('growHistoryApplyV375');
+  if(growHistoryApplyV375)growHistoryApplyV375.onclick=()=>{
+    growHistoryFromV375=$('growHistoryFromV375')?.value||'';
+    growHistoryToV375=$('growHistoryToV375')?.value||'';
+    if(growHistoryFromV375&&growHistoryToV375&&growHistoryFromV375>growHistoryToV375)
+      return toast('The From date must come before the To date.');
+    growRerenderV322({quiet:true});
+  };
+  const growHistoryClearV375=$('growHistoryClearV375');
+  if(growHistoryClearV375)growHistoryClearV375.onclick=()=>{
+    growHistoryFromV375='';growHistoryToV375='';growRerenderV322({quiet:true});
+  };
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
   /* ============ V326 — POINTS SYSTEM / STAMP CARD PAGE WIRING ===============================
@@ -9647,7 +9819,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'35bdda118c6252392c36e585db97c071c88c05e1b9de51a17187431f7272117d',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'9b32f7e9c1dfdbed53ad5735e60278366ae69be04cc88fd2eb93dd94aebf44c3',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,

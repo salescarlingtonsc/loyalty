@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="dde81a48afffff79b36ee7c565807ce5fc3897350a84c822ea8670fa37a3f996"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="bb9946d3da81e75e240cd0bd711d403f5dfe27020c99ab31f889b577ef326b80"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -160,7 +160,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .v150-soft-head b{display:block;font-size:15px}.v150-soft-head p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .v150-segment{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow)}
 .v150-segment button{min-height:44px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px}
-.v150-segment button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.v150-segment button[aria-pressed="true"],.v150-segment button[aria-selected="true"]{background:var(--ink);color:#fff}
+/* V375: the appointment detail modal's two outcomes as one tab strip over one panel area. */
+.appointment-outcome-tabs-v375{margin-top:14px;flex-wrap:wrap}
 /* V368: the Customer settings tab strip is built from links (each tab is a real hash a reader can
    bookmark or open in a new tab), so the segment's own button styling is extended to <a>. */
 .v150-segment a{min-height:44px;display:inline-flex;align-items:center;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px;text-decoration:none}
@@ -182,6 +184,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
 }
+/* V372: the container itself must stop being a ROW. V369 made this list "vertical, one benefit
+   per line" by styling the rows — but the banner inherits .permission-banner{display:flex}, whose
+   default direction is row with no wrap, so every benefit stayed a flex item on one line and ran
+   off the right of the screen (owner screenshot, Record sale, Diamond benefits). Styling the
+   children could never fix that; the parent's own axis had to change. */
+.till-tier-benefits-v369{flex-direction:column;align-items:stretch;flex-wrap:wrap}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369{display:flex;gap:10px;align-items:center;
   justify-content:space-between;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span{display:flex;flex-direction:column;min-width:0;flex:1}
@@ -335,6 +343,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-schedule-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
 .dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:100px;font-size:13px;min-height:34px}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
+/* V375: the whole chip is the tap target now that it opens the appointment. */
+.dashboard-schedule-chip-link-v375{display:flex;align-items:baseline;gap:7px;color:inherit;text-decoration:none}
+.dashboard-schedule-chip-link-v375>b{color:var(--coral);font-variant-numeric:tabular-nums}
+.dashboard-schedule-chip:has(.dashboard-schedule-chip-link-v375){padding:0}
+.dashboard-schedule-chip-link-v375{padding:7px 12px}
 .dashboard-schedule-chip.more a{color:var(--coral);font-weight:700;display:inline-flex;align-items:center;min-height:34px}
 .dashboard-schedule-copy{display:flex;gap:12px;align-items:flex-start}.dashboard-schedule-copy>.cui-icon{color:var(--coral);margin-top:2px}.dashboard-schedule-copy h2{font-size:1.05rem}.dashboard-schedule-copy p:not(.eyebrow){margin-top:3px;color:var(--muted)}
 /* V252: the removed subtitle promoted the eyebrow to the card heading, and the new day tabs
@@ -1120,6 +1133,53 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-sale-package-options{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8;padding:0 12px}
 .till-sale-package-options>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:750}
 .till-sale-package-options[open]{padding-bottom:12px}
+/* ===== V373 — one Record sale flow (owner: "too crowded and no tabs to consolidate it") =====
+   Phone first: the customer is one line, the things a counter taps are a two-column grid of
+   big targets, and the cart never leaves the screen. Everything else is in a bottom sheet. */
+.till-flow-v373{padding-bottom:0}
+.till-head-v373{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.till-head-id-v373{min-width:0}
+.till-head-name-v373{display:block;font-size:1.15rem;font-weight:750;letter-spacing:-.03em;overflow-wrap:anywhere}
+.till-head-standing-v373{font-weight:700;color:var(--coral)}
+.till-who-v373{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.till-who-v373>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted)}
+.till-quick-head-v373{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.till-quick-grid-v373{grid-template-columns:repeat(2,minmax(0,1fr))}
+.till-cart-catalog .choice-button.till-add-tile-v373{border-style:dashed;background:#FBFAF8;color:var(--coral);flex-direction:row;align-items:center;gap:10px}
+.till-cart-catalog .choice-button.till-add-tile-v373 b{color:var(--ink)}
+.till-rewards-v373{margin-top:16px}
+.till-stage-tabs-v374{margin:14px 0 4px;max-width:100%}
+.till-stage-tabs-v374 button{gap:6px}
+.till-stage-tab-count-v374{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;
+  border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.v150-segment.till-stage-tabs-v374 button[aria-pressed="true"] .till-stage-tab-count-v374{background:#fff;color:var(--ink)}
+.till-stage-panel-v374{min-height:120px}
+.till-benefit-auto-v373>span>.muted{color:var(--green)}
+/* The cart the owner asked never to have to scroll for. It reports only figures the price check
+   returned — the item count is the one number this bar works out for itself. */
+.till-sticky-cart-v373{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:16px -22px 0;padding:12px 22px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:saturate(180%) blur(12px)}
+.till-sticky-figures-v373{flex:1 1 130px;min-width:0;display:flex;flex-direction:column;gap:1px;font-variant-numeric:tabular-nums}
+.till-sticky-figures-v373>b{font-size:1.02rem;letter-spacing:-.02em}
+.till-sticky-cart-v373>.btn{flex:0 0 auto;min-height:50px;padding:12px 22px;font-size:15.5px}
+.till-review-head-v373{display:block;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:1.05rem;font-weight:750;letter-spacing:-.02em}
+.till-add-sheet-v373 .modal-card{width:min(620px,100%);max-height:88dvh;overflow:auto}
+.till-sheet-tabs-v373{margin:14px 0 12px;max-width:100%}
+.till-sheet-panel-v373{min-height:120px}
+@media(max-width:600px){
+  .till-flow-v373{padding-left:16px;padding-right:16px}
+  /* On a phone the name, the +/- pair, the amount and the remove button cannot share one row
+     without squeezing the name into a column three words wide. The name takes the row. */
+  .till-flow-v373 .till-cart-line{flex-wrap:wrap}
+  .till-flow-v373 .till-cart-line .till-cart-line-label{flex:1 1 100%}
+  .till-flow-v373 .till-cart-line .till-cart-line-amount{flex:1 1 auto;text-align:left}
+  .till-sticky-cart-v373{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .till-cart-catalog .choice-button{min-height:76px}
+  .till-add-sheet-v373{align-items:flex-end;padding:0}
+  .till-add-sheet-v373 .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+}
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -1720,6 +1780,10 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
+/* V375: the one-off amount field, on the first Record sale screen. */
+.till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}
+/* V375: what a sale awarded, stated on the row it was awarded by. */
+.c360-act-earned-v375{display:inline-block;padding:2px 9px;border-radius:999px;background:#EAF6EE;color:#1F6F43;font-weight:700;font-size:12px}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
 /* V267: sortable DATE / AMOUNT / STAFF headers, and the reversal reference that replaced the
@@ -2770,7 +2834,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · dde81a48afffff79b36ee7c565807ce5fc3897350a84c822ea8670fa37a3f996</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · bb9946d3da81e75e240cd0bd711d403f5dfe27020c99ab31f889b577ef326b80</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3942,6 +4006,23 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const redemptionWorkflow=Object.fromEntries((reversalData?.redemptions||[]).map(x=>[x.id,x]));
   const saleById=Object.fromEntries((allSl||[]).map(sale=>[sale.id,sale]));
+  /* V375 (owner, photo 2). Read under points_ledger's existing `points_select` policy
+     (app.has_perm(business_id,'view_sales')) and only when this role can already see loyalty, so
+     no new privilege is taken. Rebuilt on every load — never merged into a previous customer's
+     map — and left EMPTY if the read fails, which shows no earning rather than a wrong one. */
+  activityEarnedBySaleV375=new Map();
+  activityEarnUnitV375=String(loyaltyProjection?.program?.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
+  if(canReadLoyalty){
+    const earnLedgerV375=await fetchAllRowsResult(()=>sb.from('points_ledger')
+      .select('sale_id,points',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('client_id',id).eq('entry_type','earn')
+      .not('sale_id','is',null).order('id'));
+    if(!isClientDetailCurrent())return;
+    if(!earnLedgerV375.error)(earnLedgerV375.data||[]).forEach(row=>{
+      const key=String(row.sale_id);
+      activityEarnedBySaleV375.set(key,(Number(activityEarnedBySaleV375.get(key))||0)+(Number(row.points)||0));
+    });
+  }
   const reversalByOriginal=Object.fromEntries((allSl||[])
     .filter(sale=>sale.reversal_of)
     .sort((a,b)=>(a.occurred_at||'').localeCompare(b.occurred_at||'')||String(a.id).localeCompare(String(b.id)))
@@ -4893,6 +4974,15 @@ function bindActivityRowControlsV267(redraw){
    wording all survive as muted notes inside the ITEM cell, and the per-row Reverse button keeps
    its data-reverse-kind/data-reverse-id hooks so bindReversalButtons still works unchanged.
    The wrap scrolls horizontally on a narrow phone rather than breaking the page. */
+/* V375 (owner, photo 2: "can show how much points / stamp card earned" ringed beside the
+   Activity history rows). The earn rows are read from public.points_ledger — the ledger IS the
+   record of what a sale awarded, so nothing is recomputed from the sale amount and a business
+   that changed its earn rate last week does not have last month's visits restated. Module-scoped
+   because renderHistPage is a top-level function the customer page calls twice (first paint and
+   "show more"); it is rebuilt on every customer load, so one customer's earnings can never
+   appear under another's. */
+let activityEarnedBySaleV375=new Map();
+let activityEarnUnitV375='points';
 function renderHistPage(history,n){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
@@ -4941,10 +5031,18 @@ function renderHistPage(history,n){
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
       const amount=Number(activityAmountCentsV267(h)||0);
+      /* V375: what this sale actually awarded, straight off the ledger. A sale that earned
+         nothing — a membership, a gift card, a reversal — simply says nothing, rather than
+         printing a zero that would read as a mistake. */
+      const earnedV375=Number(activityEarnedBySaleV375.get(String(h.id)))||0;
+      const earnedUnitV375=earnedV375===1?activityEarnUnitV375.replace(/s$/,''):activityEarnUnitV375;
+      const earnedNoteV375=earnedV375>0
+        ?`<span class="c360-act-earned-v375">+${esc(String(earnedV375))} ${esc(earnedUnitV375)} earned</span>`:'';
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
         type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
         notes:[relation,
+          earnedNoteV375,
           h.note?esc(h.note):'',
           h.is_package_session?'Package session · reversal restores one session with no payment refund':'',
           h.reversal_sale_id?`Net ${money(Number(h.net_amount_cents||0))}`:'',
@@ -6122,7 +6220,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'dde81a48afffff79b36ee7c565807ce5fc3897350a84c822ea8670fa37a3f996',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'bb9946d3da81e75e240cd0bd711d403f5dfe27020c99ab31f889b577ef326b80',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

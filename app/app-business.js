@@ -11434,7 +11434,8 @@ async function promotionsPage(selectedPromotionId=null){
       <p class="muted small" id="promotionImageStatus" role="status" style="margin-top:7px">${initial.imageUrl?(initial.active&&initial.imageCustomerVisible?'Current photo is published. Choose another only to replace it.':'Draft photo saved. It is not shown in your customer programme until you publish.'):'Choose the customer-facing photo now. A saved draft is not shown in your customer programme until you publish.'}</p>
       <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}
         <button type="button" class="btn" id="promotionPublish" ${!canPublishThis?'disabled':''}>${initial.active?'Update published offer':'Publish offer'}</button>
-        ${initial.active?'<button type="button" class="btn ghost" id="promotionUnpublish">Unpublish</button>':''}</div>
+        ${initial.active?'<button type="button" class="btn ghost" id="promotionUnpublish">Unpublish</button>':''}
+        <button type="button" class="btn ghost" id="promotionResumeFinalizeV373" hidden>Confirm interrupted save</button></div>
       <p class="muted small" id="promotionSaveStatus" role="status" aria-live="polite" style="margin-top:9px">${initial.active?(promotionLifecycleV186(initial).live?'Published and visible to customers now.':promotionLifecycleV186(initial).state==='scheduled'?`Published, but customers cannot see it yet — it starts ${esc(promotionDateTextV104(initial.starts_at))}.`:'Published, but the end date has passed — customers no longer see it.'):'Drafts are never shown to customers.'}</p>
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
@@ -11711,7 +11712,22 @@ async function promotionsPage(selectedPromotionId=null){
       reason:'v104 promotion photo after definitive finalization failure'
     }),PROMOTION_STORAGE_TIMEOUT_MS_V280,'Photo cleanup did not finish in time.');
   };
+  /* V373 (P0): a hard ceiling on how many times ONE receipt may be sent, counted on the receipt
+     itself so it survives the reload that session storage is there to survive. The V280 rule that a
+     version conflict is retryable stays — but "retryable" now means a bounded number of tries, not
+     an unbounded one. Past the ceiling the receipt is released and the owner is told once. */
+  const PROMOTION_FINALIZE_MAX_SENDS_V373=3;
   const runPendingFinalize=async pending=>{
+    const sends=Number(pending?.sendsV373||0)+1;
+    if(sends>PROMOTION_FINALIZE_MAX_SENDS_V373){
+      await cleanFailedUpload(pending);
+      pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+      return {data:null,error:{message:
+        'This save was attempted several times and did not complete. Your edits are still here — reopen the promotion and publish again.',
+        code:'promotion_finalize_attempts_exhausted_v373'}};
+    }
+    pending.sendsV373=sends;
+    if(pendingFinalize===pending)writeSessionValue(pendingStorageKey,pending);
     const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
     if(!result.error){
       await clearFinalizedObjects(result.data,pending);
@@ -11914,7 +11930,18 @@ async function promotionsPage(selectedPromotionId=null){
      disables the buttons before its first await; anything that throws after that point used to
      leave Publish disabled and "Publishing…" on screen with no error, for as long as the owner
      was willing to wait. */
+  /* V373 (P0): one finalize at a time, per editor. Every entry point — the two buttons, the
+     unpublish control and the interrupted-save resume — funnels through save(), so a single flag
+     here is enough to make a duplicate in-flight finalize impossible. Without it, a second press
+     (or a second trigger) opened a second transaction against the same receipt. */
+  let promotionSaveInFlightV373=false;
+  const promotionSaveButtonsV373=()=>
+    [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish'),
+     field('promotionResumeFinalizeV373')].filter(Boolean);
   const save=async(publish,options={})=>{
+    if(promotionSaveInFlightV373)return;
+    promotionSaveInFlightV373=true;
+    promotionSaveButtonsV373().forEach(button=>{button.disabled=true});
     try{return await runSave(publish,options)}
     catch(error){
       if(!isPromotionCurrent())return;
@@ -11928,6 +11955,16 @@ async function promotionsPage(selectedPromotionId=null){
         imageStatus.textContent='The photo did not finish. Your draft is safe; choose it again and retry.';
       }
       return fail(error);
+    }
+    finally{
+      /* The trigger stays disabled until the request settles, then always comes back — an error
+         that left the controls disabled locked the owner out of their own editor (V186). */
+      promotionSaveInFlightV373=false;
+      if(isPromotionCurrent()){
+        promotionSaveButtonsV373().forEach(button=>{
+          if(button.id!=='promotionResumeFinalizeV373')button.disabled=false;
+        });
+      }
     }
   };
   if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
@@ -11952,8 +11989,20 @@ async function promotionsPage(selectedPromotionId=null){
       toast('Promotion draft confirmed');promotionsPage(workingPromotionId);
     },0);
   }else if(pendingFinalize?.promotionId===workingPromotionId){
-    field('promotionSaveStatus').textContent='Confirming an interrupted save…';
-    setTimeout(()=>{if(isPromotionCurrent())save(Boolean(pendingFinalize?.publish))},0);
+    /* V373 (P0): this used to fire the save itself, from RENDER, on a zero-delay timer with no
+       attempt cap and no user interaction. Every re-entry to this page re-armed it, so a receipt
+       the server keeps refusing became an unbounded BEGIN → set_config → finalize → ABORT loop —
+       measured in production at ~1,200 aborted transactions/sec, and 854 million cumulative
+       rollbacks tracking the authenticated set_config count almost 1:1.
+       The resume is now something the owner chooses. It is announced once, and nothing is sent
+       until they press. A save that cannot succeed therefore stops at one message. */
+    field('promotionSaveStatus').textContent=
+      'A previous save was interrupted and has not been confirmed. Your edits are safe — press Confirm to finish it.';
+    const resumeButton=field('promotionResumeFinalizeV373');
+    if(resumeButton){
+      resumeButton.hidden=false;
+      resumeButton.onclick=()=>{resumeButton.hidden=true;save(Boolean(pendingFinalize?.publish))};
+    }
   }
   routeDispose=()=>{if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl)};
 }
