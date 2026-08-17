@@ -2172,6 +2172,83 @@ function openStampsExclusivityPopupV363(losingNames,onProceed,openingName='the S
      "No, go back" keeps unwinding, because there the entry genuinely is ours to remove. */
   $('stampsExclusivityYesV363').onclick=()=>{close({handOffHistory:true});if(typeof onProceed==='function')onProceed();};
 }
+function openStampSwitchConversionPopupV384(){
+  return new Promise(resolve=>{
+    if($('stampSwitchConversionPopupV384'))return resolve({cancelled:true});
+    const defaultRate=100;
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="stampSwitchConversionPopupV384" role="dialog" aria-modal="true" aria-labelledby="stampSwitchConversionTitleV384" tabindex="-1"><div class="modal-card" style="max-width:500px">
+      <h2 id="stampSwitchConversionTitleV384">Switch customers to Stamp card?</h2>
+      <p class="muted" style="margin-top:8px">The Stamp card is a separate live programme. Customers will see stamps only; points and tier membership will switch off.</p>
+      <p class="muted small" style="margin-top:8px">Existing points stay saved. Convert them only if you want the old point balance to become stamps on this card.</p>
+      <label class="field" style="margin-top:14px"><span>Conversion suggestion</span>
+        <div class="row" style="gap:8px;align-items:center"><input id="stampSwitchRateV384" inputmode="numeric" type="number" min="1" step="1" value="${defaultRate}" style="max-width:130px"><span class="muted small">points = 1 stamp</span></div>
+      </label>
+      <p class="muted small" id="stampSwitchPreviewV384" role="status" aria-live="polite" style="min-height:20px;margin-top:8px">Checking existing points...</p>
+      <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="stampSwitchConvertV384" type="button">Convert and switch</button>
+        <button class="btn ghost" id="stampSwitchFreshV384" type="button">Start fresh</button>
+        <button class="btn ghost" id="stampSwitchCancelV384" type="button">Cancel</button>
+      </div>
+    </div></div>`);
+    const modal=$('stampSwitchConversionPopupV384');
+    const rateInput=$('stampSwitchRateV384');
+    const preview=$('stampSwitchPreviewV384');
+    let deactivate=null,closed=false,previewTimer=null;
+    const rate=()=>Math.max(1,Math.round(Number(rateInput?.value)||defaultRate));
+    const close=value=>{
+      if(closed)return;closed=true;
+      if(previewTimer)clearTimeout(previewTimer);
+      if(deactivate)deactivate({restoreFocus:false});else modal.remove();
+      resolve(value);
+    };
+    const updatePreview=async()=>{
+      if(!modal.isConnected)return;
+      preview.textContent='Checking existing points...';
+      try{
+        const {data,error}=await sb.rpc('business_preview_stamp_conversion_v384',{
+          p_business:S.biz.id,p_points_per_stamp:rate()
+        });
+        if(!modal.isConnected)return;
+        if(error)throw error;
+        const stamps=Math.max(0,Number(data?.stamps_to_issue)||0);
+        const customers=Math.max(0,Number(data?.customers)||0);
+        const points=Math.max(0,Number(data?.points_convertible)||0);
+        const leftover=Math.max(0,Number(data?.leftover_points)||0);
+        preview.textContent=stamps>0
+          ?`${points.toLocaleString('en-SG')} points can become ${stamps.toLocaleString('en-SG')} stamps for ${customers} customer${customers===1?'':'s'}. ${leftover.toLocaleString('en-SG')} points stay saved.`
+          :'No existing points are ready to convert at this rate.';
+      }catch(error){
+        if(modal.isConnected)preview.textContent='Preview unavailable. You can still start fresh, or try a different rate.';
+      }
+    };
+    rateInput.oninput=()=>{
+      if(previewTimer)clearTimeout(previewTimer);
+      previewTimer=setTimeout(updatePreview,280);
+    };
+    $('stampSwitchCancelV384').onclick=()=>close({cancelled:true});
+    $('stampSwitchFreshV384').onclick=()=>close({convert:false,rate:rate()});
+    $('stampSwitchConvertV384').onclick=()=>close({convert:true,rate:rate()});
+    deactivate=CUI.activateDialog(modal,{onClose:()=>close({cancelled:true}),initialFocus:'#stampSwitchConvertV384'});
+    updatePreview();
+  });
+}
+async function writeProgrammeSwitchesWithStampConversionV384(set,{paused=false,key=null}={}){
+  if(set?.stamps===true&&paused!==true){
+    const decision=await openStampSwitchConversionPopupV384();
+    if(decision?.cancelled)return {ok:false,cancelled:true,skipped:true,error:null};
+    const switchKey=key||crypto.randomUUID();
+    const {data,error}=await sb.rpc('business_switch_to_stamps_v384',{
+      p_business:S.biz.id,
+      p_convert_existing_points:decision.convert===true,
+      p_points_per_stamp:decision.convert===true?decision.rate:null,
+      p_idempotency_key:switchKey
+    });
+    if(error)return {ok:false,skipped:false,error};
+    rememberProgrammeSpineV314(data?.programmes);
+    return {ok:true,skipped:false,error:null,data};
+  }
+  return writeProgrammeSwitchesV314(S.biz.id,set,{paused,key});
+}
 function openBookingRequestPopupV329(row){
   if($('bookingRequestPopupV329'))return;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingRequestPopupV329" role="dialog" aria-modal="true" aria-labelledby="bookingRequestPopupTitleV329" tabindex="-1"><div class="modal-card" style="max-width:480px">
@@ -14641,8 +14718,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        points pot — V314 residual §7.1 — and it also passes briefly through the shape the server
        now refuses, so it would fail on the first half. */
     if(want)programmeExclusionsV322(kind).forEach(other=>{set[other]=false});
-    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
+    const {ok,error,cancelled}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
     if(!isGrowCurrent())return;
+    if(cancelled){button.disabled=false;return;}
     if(!ok){
       growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
       growSwitchPendingV322='';return growRerenderV322({quiet:true});
@@ -14873,9 +14951,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
-    const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
+    const {ok,error,cancelled}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
+    if(cancelled)return growRerenderV322({quiet:true});
     if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
     /* The server just moved loyalty_model with the spine (V354), so the cached copy this page's
        own "configured" check reads is stale by exactly one field. Mirror it rather than refetch

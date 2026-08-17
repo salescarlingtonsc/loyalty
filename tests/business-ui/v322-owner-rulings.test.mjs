@@ -381,7 +381,7 @@ test('V335 confirming the switch still writes and still repaints, quietly', () =
      swaps in fresh state, just without wiping the page first. */
   const confirmHandler = closure("outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')",
     '/* V229: tiles drill in');
-  assert.match(confirmHandler, /writeProgrammeSwitchesV314\(/);
+  assert.match(confirmHandler, /writeProgrammeSwitchesWithStampConversionV384\(/);
   assert.match(confirmHandler, /growRerenderV322\(\{quiet:true\}\)/, 'a real write still repaints from the server reply');
 });
 
@@ -391,8 +391,10 @@ test('V322 R6 the panel switches in ONE call and keeps referral_programs in step
   assert.match(handler, /const want=programmeSpineOnV314\(kind\)!==true/);
   assert.match(handler, /if\(want\)programmeExclusionsV322\(kind\)\.forEach\(other=>\{set\[other\]=false\}\)/,
     'the exclusion travels in the same payload, so the firm is never in a refused shape');
-  assert.equal((handler.match(/writeProgrammeSwitchesV314\(/g) || []).length, 1,
+  assert.equal((handler.match(/writeProgrammeSwitchesWithStampConversionV384\(/g) || []).length, 1,
     'a two-step switch is what strands a pot');
+  assert.match(app, /function writeProgrammeSwitchesWithStampConversionV384[\s\S]*business_switch_to_stamps_v384[\s\S]*writeProgrammeSwitchesV314/,
+    'the wrapper adds the stamp conversion confirmation without creating a second ordinary switch write');
   assert.match(handler, /if\(kind==='referral'\)\{[\s\S]{0,400}save_referral_program_v322/,
     'the spine and the column the engine actually reads must move together');
 });

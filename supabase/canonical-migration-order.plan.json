@@ -2122,6 +2122,12 @@
       "version": "20260817000015",
       "name": "nestly_v383_off_days_block_bookings",
       "sourcePath": "db/migrations/20260817_nestly_v383_off_days_block_bookings.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817162432",
+      "name": "nestly_v384_stamp_conversion_switch",
+      "sourcePath": "db/migrations/20260818_nestly_v384_stamp_conversion_switch.sql"
     }
   ]
 }

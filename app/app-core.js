@@ -4108,8 +4108,8 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const unit=String(loyalty.unit||presentation.unit||'points').toLowerCase();
   const rewardReady=reward?.available_now===true;
   const remaining=Math.max(0,Number(reward?.remaining_units||0));
-  const primary=unit==='stamps'&&reward
-    ?`${customerPointTotalV103(balance)} / ${customerPointTotalV103(Math.max(balance,Number(reward.cost_units||0)))} stamps`
+  const primary=unit==='stamps'
+    ?`${customerPointTotalV103(balance)} stamps`
     :`${customerPointTotalV103(balance)} ${unitLabel}`;
   const subline=rewardReady?'1 reward ready'
     :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
