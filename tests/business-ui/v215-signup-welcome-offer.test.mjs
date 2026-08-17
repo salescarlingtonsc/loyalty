@@ -64,7 +64,11 @@ test('V215 till surfaces the offer and follows the server contract for minimum s
 
   // A minimum-spend offer gets NO redeem button in the picker: the server proves the spend
   // against a real recorded sale, which does not exist yet at that point.
-  const picker = app.slice(app.indexOf('const welcomeOffer=(!walkin'), app.indexOf('picker=`${welcomeBanner}'));
+  /* V373 moved the till's banners out of one long picker template into tillRewardsBlockV373,
+     which renders only what can be given on THIS sale. The contract this test protects is
+     unchanged, so it follows the code rather than the old marker. */
+  const picker = app.slice(app.indexOf('const welcomeOffer=catalog.customerWelcomeOffer||null;'),
+    app.indexOf('const bringbackOffer=catalog.customerBringbackOffer||null;'));
   assert.match(picker, /Ring the sale up first — the free item is offered on the receipt/);
   assert.match(picker, /welcomeMin\s*\?/);
   const zeroBranch = picker.slice(picker.indexOf('No minimum spend. Nothing is charged.'));

@@ -19,9 +19,12 @@ try{
     await page.getByRole('button',{name:'Next'}).click();
     await page.getByRole('button',{name:/Harbour Lunch Set/}).waitFor();
     await page.getByRole('button',{name:/Harbour Lunch Set/}).click();
+    /* V373: the tender and the confirm button live on the review stage now — one tap after the
+       item, exactly as a cashier reaches them. */
+    await page.getByRole('button',{name:/Review sale/}).click();
     await page.getByRole('button',{name:'PayNow QR'}).click();
-    await page.getByRole('button',{name:/Take payment · SGD 10\.00/}).waitFor();
-    await page.getByRole('button',{name:/Take payment · SGD 10\.00/}).click();
+    await page.getByRole('button',{name:/Record sale · SGD 10\.00/}).waitFor();
+    await page.getByRole('button',{name:/Record sale · SGD 10\.00/}).click();
     await page.getByRole('heading',{name:'PayNow · SGD 10.00'}).waitFor();
     const before=await page.evaluate(()=>window.v142Metrics());
     await page.locator('#posReceiptV142').waitFor({timeout:6000});

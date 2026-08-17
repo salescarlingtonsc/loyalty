@@ -45,6 +45,11 @@ function declarationsIn(source) {
     /\b(?:function|class)\s+([A-Za-z_$][\w$]*)/g,
     /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)/g,
     /\b(?:const|let|var)\s*\{([^}]*)\}/g,
+    /* V373: array destructuring was the one binding form this guard could not see. Object
+       destructuring was already handled, so `const {a,b}=…` counted as a declaration while
+       `const [a,b]=…` did not — a false positive that only stayed quiet while some other line
+       happened to declare the same name. Adding declarations can never turn a passing file red. */
+    /\b(?:const|let|var)\s*\[([^\]]*)\]/g,
     /\b([A-Za-z_$][\w$]*)\s*(?::|=[^=])/g,
   ];
   for (const pattern of patterns) {

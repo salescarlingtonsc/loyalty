@@ -1157,6 +1157,47 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-sale-package-options{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#FBFAF8;padding:0 12px}
 .till-sale-package-options>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:750}
 .till-sale-package-options[open]{padding-bottom:12px}
+/* ===== V373 — one Record sale flow (owner: "too crowded and no tabs to consolidate it") =====
+   Phone first: the customer is one line, the things a counter taps are a two-column grid of
+   big targets, and the cart never leaves the screen. Everything else is in a bottom sheet. */
+.till-flow-v373{padding-bottom:0}
+.till-head-v373{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.till-head-id-v373{min-width:0}
+.till-head-name-v373{display:block;font-size:1.15rem;font-weight:750;letter-spacing:-.03em;overflow-wrap:anywhere}
+.till-head-standing-v373{font-weight:700;color:var(--coral)}
+.till-who-v373{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.till-who-v373>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted)}
+.till-quick-head-v373{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.till-quick-grid-v373{grid-template-columns:repeat(2,minmax(0,1fr))}
+.till-cart-catalog .choice-button.till-add-tile-v373{border-style:dashed;background:#FBFAF8;color:var(--coral);flex-direction:row;align-items:center;gap:10px}
+.till-cart-catalog .choice-button.till-add-tile-v373 b{color:var(--ink)}
+.till-rewards-v373{margin-top:16px}
+.till-benefit-auto-v373>span>.muted{color:var(--green)}
+/* The cart the owner asked never to have to scroll for. It reports only figures the price check
+   returned — the item count is the one number this bar works out for itself. */
+.till-sticky-cart-v373{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:16px -22px 0;padding:12px 22px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:saturate(180%) blur(12px)}
+.till-sticky-figures-v373{flex:1 1 130px;min-width:0;display:flex;flex-direction:column;gap:1px;font-variant-numeric:tabular-nums}
+.till-sticky-figures-v373>b{font-size:1.02rem;letter-spacing:-.02em}
+.till-sticky-cart-v373>.btn{flex:0 0 auto;min-height:50px;padding:12px 22px;font-size:15.5px}
+.till-review-head-v373{display:block;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:1.05rem;font-weight:750;letter-spacing:-.02em}
+.till-add-sheet-v373 .modal-card{width:min(620px,100%);max-height:88dvh;overflow:auto}
+.till-sheet-tabs-v373{margin:14px 0 12px;max-width:100%}
+.till-sheet-panel-v373{min-height:120px}
+@media(max-width:600px){
+  .till-flow-v373{padding-left:16px;padding-right:16px}
+  /* On a phone the name, the +/- pair, the amount and the remove button cannot share one row
+     without squeezing the name into a column three words wide. The name takes the row. */
+  .till-flow-v373 .till-cart-line{flex-wrap:wrap}
+  .till-flow-v373 .till-cart-line .till-cart-line-label{flex:1 1 100%}
+  .till-flow-v373 .till-cart-line .till-cart-line-amount{flex:1 1 auto;text-align:left}
+  .till-sticky-cart-v373{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .till-cart-catalog .choice-button{min-height:76px}
+  .till-add-sheet-v373{align-items:flex-end;padding:0}
+  .till-add-sheet-v373 .modal-card{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+}
 .service-media-cell{display:flex;align-items:center;gap:10px;min-width:0}
 .service-photo-uploader-v158{position:relative;overflow:hidden}
 .service-photo-uploader-v158 input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -2851,7 +2892,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=2254a4b6d35e","business":"/app-business.js?b=4939d5cad33c","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=2254a4b6d35e","business":"/app-business.js?b=b2b2d5b8675c","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

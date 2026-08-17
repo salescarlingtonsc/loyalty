@@ -5413,7 +5413,18 @@ async function tillPage(){
                            // custom carries a mandatory staff `reason`; giftcard/package/membership = each its own server-idempotent RPC per line.
   let catalog=null;       // catalogue + customer package/voucher entitlements, loaded together
   let catalogLoading=false, catalogError=null;
-  let tillSellPackageOpenV257=false; // V257: the "Sell package" drawer survives a panel redraw
+  /* V373: Record sale is ONE flow with two stages — 'items' (who this is, what they had, what
+     they can be given now) and 'review' (the server-priced bill, how they paid, one confirm).
+     A cart in recovery is always on 'review'; see drawCartComposer. */
+  let tillStageV373='items';
+  /* V373 retires V257's "Sell package" <details> drawer. That drawer existed to keep package
+     SALES off the main screen, and it had to remember its own open state because adding a line
+     redrew the panel underneath it and collapsed it. The Add item sheet keeps both promises
+     structurally: it is a dialog mounted on document.body, so the redraw that follows every add
+     cannot close it, and it remembers which tab is open. */
+  let tillAddSheetV373=null;     // null | {tab:'services'|'products'|'usepackage'|'sellpackage'|'membership'|'custom',query:string}
+  let tillWhoOpenV373=false;     // the branch/teammate disclosure survives a redraw for the same reason
+  const TILL_QUICK_ITEMS_V373=8; // tiles on the main screen; everything else is one tap away in the sheet
   const packageUseAttemptsV102=new Map(); // client-package + branch -> stable key until confirmed success
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
@@ -5482,7 +5493,7 @@ async function tillPage(){
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
     catalog=null;catalogError=null;
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
-    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;draw();
+    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';draw();
   }
   /* Leave the cart step and go back to the phone keypad. Same discard-the-cart behaviour the
      "Different number" button always had; it additionally clears the walk-in flag and, when the
@@ -5496,9 +5507,13 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
-    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];draw();
+    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';draw();
   }
   function draw(){
+    /* V373: the Add item sheet and the review stage belong to the cart step alone. Anything that
+       leaves that step (a new lookup, a completed sale, a reset) drops both, so a sheet can never
+       be left floating over the keypad or a receipt. */
+    if(step!==2){if(tillAddSheetV373)closeTillAddSheetV373();tillStageV373='items';}
     if(step===1) return drawStep1();
     if(step===2) return drawStep2();
     return drawStep3();
@@ -5514,7 +5529,7 @@ async function tillPage(){
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
     catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
-    walkin=true;step=2;
+    walkin=true;step=2;tillStageV373='items';
     CUI.announce('Walk-in sale started. No customer is linked.');
     draw();
   }
@@ -6103,7 +6118,7 @@ async function tillPage(){
   function checkoutActionHtml(){
     const hasSale=cartSaleLines().length>0, extras=extraLines();
     if(!hasSale)
-      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Charge · ${money(extrasTotalCents())}</button>`:'';
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale · ${money(extrasTotalCents())}</button>`:'';
     if(staleConfirm)
       return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
     if(payError&&payError.kind==='retry')
@@ -6121,27 +6136,72 @@ async function tillPage(){
          amount collected — not just the kernel total, which is what made the till look like it
          was asking for two payments. */
       const dueV257=(svTender?svTender.remaining_due_cents:evalResult.total_cents)+extrasTotalCents();
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Take payment · ${money(dueV257)}</button>`;
+      /* V373 (owner's confirm screen: "[Record sale · $21]"). The tender is chosen directly above
+         this button now, so the money has already been taken by the time a hand reaches it — the
+         button's job is to record what happened. The FIGURE is unchanged: still the whole amount
+         across both records, still the evaluation's. */
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale · ${money(dueV257)}</button>`;
     }
     return '';
   }
 
+  /* ==========================================================================================
+     V373 — ONE Record sale flow (owner: "simplify my record sale, make it easy to use and very
+     clear — current model too crowded and no tabs to consolidate it").
+
+     What was wrong was not any single control; it was that all of them were on screen at once.
+     Every service, every product, every bundle, a "Sell package" drawer, memberships, an
+     "Other item" button, the customer's own packages, every tier benefit of their rung, the
+     cart, the price panel, the tender buttons and the confirm button — one column, one scroll.
+     Worse, it read as three different jobs ("use a package", "record a sale", "sell a package"),
+     so a counter hand had to decide WHICH flow they were in before they could ring up a haircut.
+
+     The flow is now the one the owner described: customer -> what they had -> rewards -> confirm.
+       stage 'items'  — the customer in one line, the few things tapped most often, their own
+                        packages, and only the rewards that can be given on THIS sale
+       stage 'review' — the server-priced bill, how they paid, one confirm button
+     Everything else lives behind ONE "Add item" sheet with tabs: services, products, use a
+     package, sell a package, memberships, other item. Selling a package is a tab, not a journey.
+
+     NOTHING about the money moved. evaluate_checkout is still the only pricing authority and
+     every payable figure on both stages is copied from it verbatim; record_cart_sale still
+     finalises the cart under one stable idempotency key; packages and memberships are still
+     their own server-idempotent writes with their own keys; the lock and recovery states are
+     untouched — a locked cart simply forces the review stage, which is where its recovery panel
+     has always lived.
+     ========================================================================================== */
   function drawCartComposer(){
     if(catalog===null&&!catalogError)loadCatalog();
-    // Packages and memberships are sold TO a customer (sell_package_v102 / enroll_membership_v41 both
-    // take p_client) — structurally impossible for a walk-in, so the entries are hidden, not disabled.
-    const canPkg=branchCanWrite(tillBranchId,'packages')&&!walkin;
-    const canMem=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
-    // not an individually grantable permission — granting it means promoting the employee to
-    // manager, which also carries the broader finance/refund permissions. The server enforces this
-    // (custom_line_denied); the UI only shows the entry to owner/manager and labels it honestly.
-    const canCustomLine=S.myRole==='owner'||S.myRole==='manager';
-    const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
+    /* A cart in recovery — a failed finalise, a stale re-price, a live PayNow QR, unfinished
+       extras — has never been editable, and every one of those panels is part of the bill, so
+       'review' is the only stage such a cart can be on. */
+    if(cartLocked())tillStageV373='review';
+    if(tillStageV373==='review'&&!cart.length)tillStageV373='items';
+    if(tillStageV373!=='items')closeTillAddSheetV373();
+    const reviewing=tillStageV373==='review';
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',
+      subtitle:reviewing
+        ?'Check the bill, choose how the customer paid, then confirm.'
+        :'Choose products or services, review the checked total, then select how the customer paid.',
+      iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
+      <div class="card frontline-card till-cart-card till-found-card till-flow-v373">
+        ${tillCustomerHeadV373()}
+        ${reviewing?tillReviewStageHtmlV373():tillItemsStageHtmlV373()}
+      </div>`;
+    bindTillControlsV373();
+    if(tillAddSheetV373)paintTillAddSheetV373();
+  }
+
+  /* ---------------------------------------------------------------- the customer, in one line */
+  /* V373 compresses what used to be four rows before the first item — a name block, a
+     "member since / last visit" note, a branch <select> and a teammate <select> — into one
+     identity line plus a disclosure. Nothing was dropped: the pickers are the same controls,
+     with the same ids, the same candidate rules, the same defaults and the same handlers. */
+  function tillCustomerHeadV373(){
     const locked=cartLocked();
     const branchPicker=accessibleTillBranches.length>1
       ?`<label for="tBranch">Branch</label><select id="tBranch"${locked?' disabled':''}>${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
-      :`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`;
+      :'';
     /* V287. The catalogue composer is the DEFAULT checkout for every firm with catalogue
        selection on, and it carried no "Who made this sale?" control at all — while
        record_cart_sale still sends p_staff. Every commission on the default path was therefore
@@ -6154,180 +6214,286 @@ async function tillPage(){
         <select id="tillSaleStaff" style="margin-bottom:12px"${locked?' disabled':''}>${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
         <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`
       :'';
-    // catalog picker (hidden while a finalise recovery / extras partial-failure panel is up)
-    let picker='';
-    if(!locked){
-      if(catalogError){
-        picker=`<div class="err" role="alert">${esc(catalogError)}</div><button class="btn ghost sm" id="tCatRetry" style="margin-top:8px">${CUI.icon('retention',{size:16})} Try again</button>`;
-      }else if(!catalog){
-        picker=`<p class="muted small" role="status">Loading products and services for this branch…</p>`;
-      }else{
-        const noCheckoutItems=!catalog.services.length&&!(catalog.products&&catalog.products.length);
-	        const selectedCatalogQty=(type,id)=>saleLines.reduce((sum,line)=>sum+(line.type===type&&String(line.ref)===String(id)?Number(line.qty||0):0),0);
-	        const svcBtns=catalog.services.length
-	          ?`<div class="till-cart-catalog">${catalog.services.map(s=>{
-	            const qty=selectedCatalogQty('service',s.id);
-	            const image=catalogueImageUrlV158(s);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="service" data-id="${s.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(s.name)}</b><span class="till-cart-price">${money(s.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
-	          }).join('')}</div>`
-	          :'';
-	        const prodBtns=(catalog.products&&catalog.products.length)
-	          ?`<b class="small" style="display:block;margin-top:14px">Retail</b><div class="till-cart-catalog">${catalog.products.map(p=>{
-	            const qty=selectedCatalogQty('product',p.id);
-	            const image=catalogueImageUrlV158(p);
-	            return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="product" data-id="${p.id}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
-	          }).join('')}</div>`
-          :'';
-        /* V211 (owner: "i still dont see the package here in record sale - not able to use
-           sessions"). The customer's OWNED packages had no UI at all: catalog.customerPackages
-           was loaded and useCustomerPackage() was defined, but nothing ever called it, so a
-           customer with four paid-for sessions had no way to spend one. The v102 test had been
-           failing on exactly this copy and I had written it off as a stale assertion — it was
-           reporting a live regression.
-           This sits ABOVE "Sell package": at a counter the far commoner act is spending a session
-           the customer already bought, not selling them another one. */
-        const ownedPkgs=(catalog.customerPackages||[]).filter(item=>Number(item.remaining)>0);
-        const ownedPackages=ownedPkgs.length
-          ?`<b class="small" style="display:block;margin-top:14px">Use an existing customer package</b>
-            <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit. No points are earned — they were earned when the package was bought.</p>
-            <div class="till-cart-catalog">${ownedPkgs.map(item=>`<button type="button" class="choice-button" data-use-package="${esc(item.client_package_id)}">
-              <b>${esc(item.plan_name||'Package')}</b>
-              <span class="muted small">${esc(item.service_name||'Session')}${item.variant_label?' · '+esc(item.variant_label):''}</span>
-              <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
-          :'';
-        const pkgBtns=(canPkg&&catalog.packages&&catalog.packages.length)
-          ?`<details class="till-sale-package-options" id="tillSellPackageV257"${tillSellPackageOpenV257?' open':''}><summary>Sell package</summary><p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p><div class="till-cart-catalog">${catalog.packages.map(p=>{
-            /* V257 (owner: "sell package ... no order count, closes the tab and shows nothing").
-               Two defects, both here: a package line got no count, and adding one re-rendered the
-               whole panel, which collapsed this <details> and hid the only evidence that anything
-               had happened. The open state is now remembered across the redraw, and each plan
-               shows how many are on this bill. addPlanLine ALWAYS pushes a new line (each carries
-               its own idempotency key), so the count is a line count, not a qty. */
-            const qty=selectedPlanCountV257('package',p.id);
-            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-plan="package" data-id="${p.id}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
-          }).join('')}</div></details>`
-          :'';
-        /* v187: bundles sit right under the services they are made of — that is where a
-           counter hand looks for "the package deal" — and each says what is inside it. */
-        const bundleBtns=(catalog.bundles&&catalog.bundles.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${catalog.bundles.map(bundle=>{
-            /* V257 (owner: a service tile shows a red count when it is in the cart, the bundle
-               tile showed nothing while the cart line read "Rainbow special ×2"). A bundle IS a
-               cart sale line of its own type, so it counts its own lines — never the services it
-               expands into on the server — and reuses the service tile's badge, not a second one. */
-            const qty=selectedCatalogQty('bundle',bundle.id);
-            return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
-          }).join('')}</div>
-            <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`
-          :'';
-        const memBtns=(canMem&&catalog.memberships&&catalog.memberships.length)
-          ?`<b class="small" style="display:block;margin-top:14px">Memberships</b><div class="till-cart-catalog">${catalog.memberships.map(p=>`<button type="button" class="btn ghost" data-plan="membership" data-id="${p.id}">${esc(p.name)}<span class="till-cart-price">${money(p.unit_cents)}</span></button>`).join('')}</div>`
-          :'';
-        const pendingVouchers=(!walkin&&(catalog.customerVouchers||[]).length)
-          ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
-            ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
-            ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
-          :'';
-        /* v215 (owner: "i need to enable new sign ups redeemption ... minimum spend $5 (get
-           free xx product) ... or no minimum spend and free xx product"). The welcome offer sits
-           at the top of the picker because it is the first thing to settle at a counter.
-           Where the button lives follows the server contract, not convenience: a minimum spend is
-           proved against a REAL recorded sale, so that button appears on the receipt once the
-           sale exists. A zero-minimum offer needs no purchase, so it is given straight from here.
-           Nothing here decides eligibility — staff_redeem_welcome_offer_v215 re-checks all of it. */
-        const welcomeOffer=(!walkin&&catalog.customerWelcomeOffer)?catalog.customerWelcomeOffer:null;
-        const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
-        /* V362: bring-back voucher. Always redeemable on sight — unlike the welcome offer there is
-           no minimum-spend variant, because the campaign's condition (being away) was already met
-           before it was ever issued. staff_redeem_bringback_v361 re-checks expiry, ownership and
-           branch, so nothing here decides eligibility. */
-        const bringbackOffer=(!walkin&&catalog.customerBringbackOffer)?catalog.customerBringbackOffer:null;
-        const bringbackBanner=bringbackOffer
-          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Bring-back voucher</b>
-            <p class="small" style="margin:5px 0">${esc(bringbackOffer.reward_label||'Free item')} is free for this customer.</p>
-            <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
-            <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
-          :'';
-        /* V365 (owner, photo 4): the tier benefits this customer has earned, each stating its own
-           limit and what is left this period. Staff scan the customer's Peekaa QR (or look them
-           up) and press Give; staff_issue_tier_benefit_v365 re-checks the tier, the period count
-           and the branch, so nothing here decides eligibility — this list is a display of the
-           server's answer, and a benefit with nothing left is shown spent rather than hidden, so
-           staff can tell "already used this month" from "not a benefit of this tier". */
-        const tierBenefitsAllV365=(!walkin&&catalog.customerTierBenefits&&Array.isArray(catalog.customerTierBenefits.benefits))
-          ?catalog.customerTierBenefits.benefits:[];
-        /* V369 (owner: "this is affecting the ui ux and alignment issue. (only show available
-           rewards)"). The panel used to print EVERY benefit of the customer's tier as a wide row
-           of side-by-side blocks — with used-up and out-of-season ones among them — which
-           overflowed the cart column and pushed the packages list sideways. Two changes: only
-           what the customer can actually be given right now is listed (the server already answers
-           that in claimable_now), and the list is vertical, one benefit per line, inside the same
-           narrow column as every other till banner. */
-        const tierBenefitsV365=tierBenefitsAllV365.filter(benefit=>benefit.claimable_now!==false);
-        const tierBenefitsHiddenV369=tierBenefitsAllV365.length-tierBenefitsV365.length;
-        const tierBenefitBannerV365=tierBenefitsV365.length
-          ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${esc(catalog.customerTierBenefits?.tier?.label||'Tier')} benefits</b>
-            <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
-            ${tierBenefitsV365.map(benefit=>`<div class="till-tier-benefit-row-v369">
-                <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
-                ${benefit.limit_count==null?'<span class="muted small">No limit</span>'
-                  :`<span class="muted small">${Math.max(0,Number(benefit.remaining)||0)} left ${benefit.limit_period==='birthday_month'?'this birthday month':benefit.limit_period==='ever'?'in total':`this ${esc(benefit.limit_period||'month')}`}</span>`}</span>
-                <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
-              </div>`).join('')}
-            ${tierBenefitsHiddenV369?`<p class="muted small" style="margin:8px 0 0">${tierBenefitsHiddenV369} other tier benefit${tierBenefitsHiddenV369===1?' is':'s are'} not available right now (used up, or birthday month only).</p>`:''}</div>`
-          :'';
-        const welcomeBanner=welcomeOffer
-          ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
-            <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
-            ${welcomeMin
-              ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
-              :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
-                <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
-          :'';
-        /* V216 (owner: "i need a product modules - instead of just services (because products
-           have no minutes)"). The picker printed a hardcoded "Services" heading and gave the
-           products no heading at all. A cafe or chicken-rice shop with seven products and no
-           services therefore saw an empty "Services" label followed by unlabelled buttons —
-           the app insisting on a concept that business does not have. Each group now names
-           itself, and a group with nothing in it prints no heading. */
-        const svcHeadingV216=catalog.services.length?'<b class="small" style="display:block">Services</b>':'';
-        const prodHeadingV216=(catalog.products&&catalog.products.length)?'<b class="small" style="display:block;margin-top:14px">Products</b>':'';
-        picker=`${welcomeBanner}${bringbackBanner}${tierBenefitBannerV365}${ownedPackages}${pendingVouchers}${noCheckoutItems?CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'}):`${svcHeadingV216}${svcBtns}${bundleBtns}${prodHeadingV216}${prodBtns}`}${pkgBtns}${memBtns}
-          ${canCustomLine?`<div style="margin-top:14px"><button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
-            <p class="muted small" style="margin:6px 0 0;text-align:center">Custom prices — owner and manager only</p></div>`:''}
-          ${(pkgBtns||memBtns)?`<p class="muted small" style="margin-top:6px">${catalog.packageEarnsPoints===true
-            ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
-            :catalog.packageEarnsPoints===false
-              ?'Package purchases are not eligible for points for this business.'
-              :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`:''}`;
-      }
+    const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'';
+    const staffName=(tillAttributableStaff.find(person=>person.id===tillSaleStaffId)
+      ||tillRoster.find(person=>person.id===tillSaleStaffId))?.full_name||'';
+    const contextLine=[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
+    /* Only offered where there is a genuine choice to make. With one branch and one teammate the
+       line above already says which, and a disclosure hiding two read-only facts is furniture. */
+    const pickers=(accessibleTillBranches.length>1||tillAttributableStaff.length>1)
+      ?`<details class="till-who-v373" id="tillWhoV373"${tillWhoOpenV373?' open':''}><summary>Change branch or teammate</summary>
+        ${branchPicker}
+        ${staffPickerV287}</details>`
+      :'';
+    if(walkin){
+      return `<div class="till-head-v373">
+        <div class="till-head-id-v373"><b class="till-head-name-v373">Walk-in customer</b>
+          <p class="muted small" style="margin:2px 0 0">No points, rewards, packages or stored value.</p>
+          ${contextLine?`<p class="muted small" style="margin:2px 0 0" data-merchant-content>${contextLine}</p>`:''}</div>
+        <button type="button" class="btn ghost sm" id="tWalkinSwitch">${CUI.icon('customers',{size:16})} Customer</button>
+      </div>${pickers}`;
     }
-    // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
-    // figures live in the checkout panel below (evaluation-authoritative).
-    const saleLinesHtml=saleLines.length?`<ul class="till-cart-lines">${saleLines.map(l=>{
-      const badge=l.type==='custom'?`<span class="till-cart-line-sub">Other item${l.reason?` · ${esc(l.reason)}`:''}</span>`:'';
-      const qtyCtl=locked?'':`<div class="till-cart-qty">
-        <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
-        <output aria-label="Quantity">${l.qty}</output>
-        <button type="button" class="btn ghost" data-qty="1" data-line="${l.lineId}" aria-label="Increase quantity">+</button></div>`;
-      const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})}>${CUI.icon('close',{size:16})}</button>`;
-      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
-    }).join('')}</ul>`:'';
-    /* extras (package / membership) — charged as their OWN records, NOT part of the kernel total,
-       so the panel TOTAL keeps matching the evaluation exactly.
-       V257 (owner: "why is the session charged separately? cannot together?"). The split is
-       deliberate and stays: sell_package_v102 writes a sales row of kind='package' that carries
-       its own prepaid entitlement and is judged by that kind's own revenue/visit/points policy,
-       while the cart finalises as kind='quick_sale' with sale_items. Merging them would file a
-       prepaid package as today's takings. What was wrong was the WORDS: "charged separately"
-       reads as "ask the customer to pay twice". It is one payment, two receipts — and the panel
-       now says the single amount to collect. */
-    const extrasHtml=extras.length?`<div style="margin-top:14px"><b class="small">Also on this bill · kept as its own receipt</b>
-      <ul class="ck-extras">${extras.map(l=>{
-        const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
-        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
-        return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
-      }).join('')}</ul></div>`:'';
+    const tierLabel=catalog?.customerTierBenefits?.tier?.label||'';
+    const pointsValue=Number(cust?.points);
+    const standing=[tierLabel?esc(tierLabel):'',Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} pts`:'']
+      .filter(Boolean).join(' · ');
+    return `<div class="till-head-v373">
+      <div class="till-head-id-v373"><b class="till-head-name-v373" data-merchant-content>${esc(cust.full_name)}</b>
+        ${standing?`<p class="small till-head-standing-v373" data-merchant-content style="margin:2px 0 0">${standing}</p>`:''}
+        ${contextLine?`<p class="muted small" style="margin:2px 0 0" data-merchant-content>${contextLine}</p>`:''}
+        <p class="muted small" style="margin:2px 0 0">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
+      <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
+    </div>${pickers}`;
+  }
+
+  /* ------------------------------------------------------------------------- catalogue tiles */
+  /* One tile, used by BOTH the quick grid and the Add item sheet, so an item looks the same and
+     counts the same wherever it is tapped. */
+  function tillSelectedQtyV373(){
+    const saleLines=cartSaleLines();
+    const selectedCatalogQty=(type,id)=>saleLines.reduce((sum,line)=>sum+(line.type===type&&String(line.ref)===String(id)?Number(line.qty||0):0),0);
+    return selectedCatalogQty;
+  }
+  function tillCatalogueTilesV373(entries){
+    const selectedCatalogQty=tillSelectedQtyV373();
+    return entries.map(({type,item})=>{
+      const qty=selectedCatalogQty(type,item.id);
+      const image=catalogueImageUrlV158(item);
+      return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+    }).join('');
+  }
+  /* v187: a bundle is several services at one price. It keeps the service tile's badge — it is a
+     cart sale line of its own type, so it counts its own lines, never the services the server
+     expands it into. */
+  function tillBundleTilesV373(bundles){
+    const selectedCatalogQty=tillSelectedQtyV373();
+    return bundles.map(bundle=>{
+      const qty=selectedCatalogQty('bundle',bundle.id);
+      return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+    }).join('');
+  }
+  /* V216 (owner: "i need a product modules - instead of just services (because products have no
+     minutes)"). The picker used to print a hardcoded "Services" heading and give products none, so
+     a cafe with seven products and no services saw an empty "Services" label above unlabelled
+     buttons — the app insisting on a concept that business does not have. Each group names itself,
+     and a group with nothing in it prints no heading. V373 keeps the rule on the quick grid. */
+  function tillGroupHeadingV216(label,count){
+    return count?`<b class="small" style="display:block;margin-top:12px">${label}</b>`:'';
+  }
+  function tillQuickGroupsHtmlV373(shownServices,shownProducts){
+    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}`;
+  }
+  /* V211/V257: package plans on sale. Each is an EXTRA line with its own idempotency key, so the
+     badge counts lines, not quantity. */
+  function tillPackagePlanTilesV373(plans){
+    return plans.map(p=>{
+      const qty=selectedPlanCountV257('package',p.id);
+      return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-plan="package" data-id="${esc(p.id)}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+    }).join('');
+  }
+  /* V211 (owner: "i still dont see the package here in record sale - not able to use sessions").
+     Spending a session the customer already paid for is the commoner act at a counter than
+     selling them another package, so it stays on the main screen; the sheet carries the same
+     list for staff who went looking for it there. */
+  function tillOwnedPackagesBlockV373({inSheet=false}={}){
+    const ownedPkgs=(walkin?[]:(catalog?.customerPackages||[])).filter(item=>Number(item.remaining)>0);
+    const ownedPackages=ownedPkgs.length
+      ?`<b class="small" style="display:block;margin-top:14px">${inSheet?'Use an existing customer package':'Available packages'}</b>
+        <p class="muted small" style="margin:4px 0 8px">No payment is taken. One session is deducted and recorded as a visit. No points are earned — they were earned when the package was bought.</p>
+        <div class="till-cart-catalog">${ownedPkgs.map(item=>`<button type="button" class="choice-button" data-use-package="${esc(item.client_package_id)}">
+          <b>${esc(item.plan_name||'Package')}</b>
+          <span class="muted small">${esc(item.service_name||'Session')}${item.variant_label?' · '+esc(item.variant_label):''}</span>
+          <span class="pill ok">${Number(item.remaining)} left</span></button>`).join('')}</div>`
+      :'';
+    return ownedPackages;
+  }
+
+  /* ------------------------------------------------------------------------------- rewards */
+  /* V373 (owner: "Do NOT show the full list of tier benefits. Only show benefits that are
+     eligible for this transaction today. Auto-apply deterministic discounts. Only require staff
+     action for physical rewards").
+
+     A tier benefit that is a percentage and carries NO per-period limit is applied by
+     evaluate_checkout itself (V370) — the one place allowed to move money. Printing a Give
+     button beside it asked a cashier to hand over a discount the bill had already taken off,
+     and pressing it burned an issue record for a benefit with no limit to count it against. It
+     is now shown as what it is: automatic, with the server's own figure once the price check
+     comes back. Everything a human actually hands over — a free item, a custom perk, a limited
+     discount — keeps its Give button. The rest of the ladder moves behind "View all benefits",
+     so an unavailable perk is still explainable to a customer without crowding the sale. */
+  function tillAutoTierDiscountV373(benefits){
+    /* The engine's own rule, read the same way: the best UNLIMITED discount_pct the customer's
+       rung entitles them to. The payload is already ordered by threshold desc, so a stable sort
+       on the percentage reproduces evaluate_checkout's pick. */
+    return benefits.filter(benefit=>benefit.benefit_kind==='discount_pct'&&benefit.limit_count==null)
+      .sort((a,b)=>Number(b.discount_percent||0)-Number(a.discount_percent||0))[0]||null;
+  }
+  function tillBenefitLimitTextV373(benefit){
+    if(benefit.limit_count==null)return 'No limit';
+    const left=Math.max(0,Number(benefit.remaining)||0);
+    const period=benefit.limit_period==='birthday_month'?'this birthday month'
+      :benefit.limit_period==='ever'?'in total'
+      :`this ${esc(benefit.limit_period||'month')}`;
+    return `${left} left ${period}`;
+  }
+  function tillRewardsBlockV373(){
+    if(walkin||!catalog)return '';
+    /* v215: a welcome offer for a first-time sign-up. Where the button lives follows the server
+       contract, not convenience: a minimum spend is proved against a REAL recorded sale, so that
+       button appears on the receipt once the sale exists. A zero-minimum offer needs no purchase,
+       so it is given straight from here. Nothing here decides eligibility —
+       staff_redeem_welcome_offer_v215 re-checks all of it. */
+    const welcomeOffer=catalog.customerWelcomeOffer||null;
+    const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
+    const welcomeBanner=welcomeOffer
+      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
+        <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+        ${welcomeMin
+          ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+          :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
+            <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
+      :'';
+    /* V362: a bring-back voucher is always redeemable on sight — unlike the welcome offer there
+       is no minimum-spend variant, because its condition (being away) was met before it was
+       issued. staff_redeem_bringback_v361 re-checks expiry, ownership and branch. */
+    const bringbackOffer=catalog.customerBringbackOffer||null;
+    const bringbackBanner=bringbackOffer
+      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Bring-back voucher</b>
+        <p class="small" style="margin:5px 0">${esc(bringbackOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
+        <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
+      :'';
+    const pendingVouchers=(catalog.customerVouchers||[]).length
+      ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
+        ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
+        ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
+      :'';
+    const allBenefits=Array.isArray(catalog.customerTierBenefits?.benefits)?catalog.customerTierBenefits.benefits:[];
+    const autoBenefit=tillAutoTierDiscountV373(allBenefits);
+    const giveNow=allBenefits.filter(benefit=>benefit.claimable_now!==false&&benefit!==autoBenefit);
+    /* The applied figure is the SERVER's, never a percentage this screen worked out for itself. */
+    const appliedTierEffect=(evalResult?.applied_effects||[])
+      .find(effect=>effect&&effect.source==='tier_benefit'&&!effect.suppressed&&!effect.suppression_reason);
+    const tierName=esc(catalog.customerTierBenefits?.tier?.label||'Tier');
+    const autoRow=autoBenefit
+      ?`<div class="till-tier-benefit-row-v369 till-benefit-auto-v373">
+          <span><b class="small">${esc(autoBenefit.sentence||autoBenefit.label||'Discount')}</b>
+          <span class="muted small">Applied automatically at payment — no action needed</span></span>
+          <span class="pill ok">${appliedTierEffect
+            ?`Applied · −${money(appliedTierEffect.amount_cents!=null?appliedTierEffect.amount_cents:0)}`
+            :'Automatic'}</span>
+        </div>`
+      :'';
+    const giveRows=giveNow.map(benefit=>`<div class="till-tier-benefit-row-v369">
+        <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
+        <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>
+        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
+      </div>`).join('');
+    const tierBanner=(autoRow||giveRows)
+      ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
+        <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
+        ${autoRow}${giveRows}
+        ${allBenefits.length>((autoBenefit?1:0)+giveNow.length)
+          ?`<button type="button" class="btn ghost sm" id="tAllBenefitsV373" style="margin-top:10px">View all ${tierName} benefits (${allBenefits.length})</button>`
+          :''}</div>`
+      :'';
+    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${pendingVouchers}`;
+    return rewards?`<div class="till-rewards-v373">${rewards}</div>`:'';
+  }
+  /* The whole ladder, on demand: what is available now, and — in plain words — why the rest is
+     not. Staff get asked this at the counter; the answer belongs somewhere, just not in the way
+     of the sale. */
+  function openTillAllBenefitsV373(){
+    const payload=catalog?.customerTierBenefits;
+    const benefits=Array.isArray(payload?.benefits)?payload.benefits:[];
+    if(!benefits.length)return toast('This customer has no tier benefits yet.');
+    const autoBenefit=tillAutoTierDiscountV373(benefits);
+    const rows=benefits.map(benefit=>{
+      const status=benefit===autoBenefit?'<span class="pill ok">Automatic</span>'
+        :benefit.claimable_now!==false?'<span class="pill new">Available now</span>'
+        :benefit.blocked_reason==='not_birthday_month'?'<span class="pill off">Birthday month only</span>'
+        :benefit.blocked_reason==='used_up'?'<span class="pill off">Used up</span>'
+        :'<span class="pill off">Not available</span>';
+      return `<div class="till-tier-benefit-row-v369">
+        <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
+        <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>${status}</div>`;
+    }).join('');
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tillAllBenefitsModalV373" role="dialog" aria-modal="true" aria-labelledby="tillAllBenefitsTitleV373" tabindex="-1"><div class="modal-card" style="max-width:520px">
+      <div class="row"><div><h2 id="tillAllBenefitsTitleV373">${esc(payload?.tier?.label||'Tier')} benefits</h2><p class="muted small">Everything this customer's tier includes, and what can be given today.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tillAllBenefitsCloseV373">Close</button></div>
+      <div class="till-tier-benefits-v369" style="display:block;margin-top:6px">${rows}</div>
+    </div></div>`);
+    const node=$('tillAllBenefitsModalV373');
+    let deactivate;
+    const close=()=>{if(deactivate)deactivate();else node.remove()};
+    deactivate=CUI.activateDialog(node,{onClose:close,initialFocus:'#tillAllBenefitsCloseV373'});
+    $('tillAllBenefitsCloseV373').onclick=close;
+  }
+
+  /* ------------------------------------------------------------------------ stage 1: items */
+  function tillItemsStageHtmlV373(){
+    if(catalogError)
+      return `<div class="err" role="alert">${esc(catalogError)}</div><button class="btn ghost sm" id="tCatRetry" style="margin-top:8px">${CUI.icon('retention',{size:16})} Try again</button>${tillLeaveRowV373()}`;
+    if(!catalog)
+      return `<p class="muted small" role="status">Loading products and services for this branch…</p>${tillLeaveRowV373()}`;
+    const noCheckoutItems=!catalog.services.length&&!(catalog.products&&catalog.products.length);
+    /* Services lead because that is what most of these firms sell; a shop with only products —
+       a cafe, a chicken-rice stall — simply gets its products in the quick grid instead. */
+    const entries=[
+      ...catalog.services.map(item=>({type:'service',item})),
+      ...(catalog.products||[]).map(item=>({type:'product',item}))
+    ];
+    const shown=entries.slice(0,TILL_QUICK_ITEMS_V373);
+    const hiddenCount=entries.length-shown.length;
+    const shownServices=shown.filter(entry=>entry.type==='service');
+    const shownProducts=shown.filter(entry=>entry.type==='product');
+    /* The Add item tile is rendered even when this branch has no checkout catalogue at all: a
+       firm that only sells prepaid packages still has something to add, and hiding the only door
+       to the sheet would strand it. */
+    const addTile=`<button type="button" class="choice-button till-add-tile-v373" id="tAddItemV373">${CUI.icon('add',{size:20})}<span class="till-choice-text"><b>Add item</b><span class="muted small">Everything else</span></span></button>`;
+    const quick=noCheckoutItems
+      ?`${CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'})}
+        <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`
+      :`<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${hiddenCount>0?`<span class="muted small">${hiddenCount} more under Add item</span>`:''}</div>
+        ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
+        <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
+    return `${quick}
+      ${tillOwnedPackagesBlockV373()}
+      ${tillCartLinesHtmlV373()}
+      ${tillExtrasHtmlV373()}
+      ${tillRewardsBlockV373()}
+      <div id="tcErr"></div>
+      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
+      ${tillLeaveRowV373()}`;
+  }
+  /* The cart is always in view: the owner's rule is that staff must never scroll to find it.
+     Every figure in it is the evaluation's — this bar computes nothing but the item count. */
+  function tillStickyCartHtmlV373(){
+    const hasSale=cartSaleLines().length>0;
+    const count=cart.reduce((sum,line)=>sum+(isCartSaleLine(line)?Number(line.qty||1):1),0);
+    let amount='',saved='';
+    if(!hasSale){
+      amount=extraLines().length?money(extrasTotalCents()):'';
+    }else if(evalState==='evaluating'){
+      amount='Checking price…';
+    }else if(evalState==='ready'&&evalResult){
+      amount=money((svTender?svTender.remaining_due_cents:evalResult.total_cents)+extrasTotalCents());
+      if(Number(evalResult.discount_total_cents)>0)saved=`You save ${money(evalResult.discount_total_cents)}`;
+    }else if(evalState==='expired'){
+      amount='Price check expired';
+    }
+    return `<div class="till-sticky-cart-v373">
+      <div class="till-sticky-figures-v373"><b>${count} item${count===1?'':'s'}${amount?` · ${esc(amount)}`:''}</b>
+        ${saved?`<span class="ok small">${esc(saved)}</span>`:''}</div>
+      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:18})} Review sale</button>
+    </div>`;
+  }
+  function tillLeaveRowV373(){
+    return `<button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} ${walkin?'Switch to customer':'Different number'}</button>`;
+  }
+
+  /* ----------------------------------------------------------------------- stage 2: review */
+  function tillReviewStageHtmlV373(){
+    const hasSale=cartSaleLines().length>0, extras=extraLines(), locked=cartLocked();
     // V257: the one number the customer actually hands over, across both records.
     const collectBaseV257=(hasSale&&evalResult&&evalState!=='error')
       ?(svTender?svTender.remaining_due_cents:evalResult.total_cents):null;
@@ -6337,8 +6503,6 @@ async function tillPage(){
         <p class="muted small" style="margin:6px 0 0">Take this once. Today's items and the package are kept as two records so prepaid sessions never count as today's takings — the customer pays one amount.</p>
       </div>`
       :'';
-    const emptyHtml=cart.length?'':`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Cart is empty. Tap a service or add an item to begin.</p></div>`;
-    const panelHtml=checkoutPanelHtml();
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
     /* PayNow QR is customer-bound: the v142 edge command rejects the request unless client_id is a
        uuid (create_paynow -> invalid_request), so it is HIDDEN for a walk-in rather than offered and
@@ -6347,8 +6511,8 @@ async function tillPage(){
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
       <div class="frontline-tenders" id="tTenders">${tenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
-    // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
+    // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
       <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted
         ?saleResult?.duplicate
@@ -6360,38 +6524,195 @@ async function tillPage(){
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
+    /* Points are the server's answer, worked out when the sale is written (record_cart_sale
+       returns them and the receipt prints them). evaluate_checkout does not preview them, so
+       this screen says what will happen rather than inventing a number. */
+    const pointsNote=(!walkin&&hasSale)
+      ?`<p class="muted small" style="margin-top:8px">Points are worked out when the sale is recorded — the receipt shows exactly how many were earned.</p>`
+      :'';
+    return `<b class="small till-review-head-v373">Confirm sale</b>
+      ${tillCartLinesHtmlV373()}
+      ${checkoutPanelHtml()}
+      ${tillExtrasHtmlV373()}
+      ${combinedTotalV257}
+      ${pointsNote}
+      <div id="tcErr"></div>
+      ${tenderHtml}
+      ${paynowHtml}
+      ${partialHtml}
+      ${actionHtml}
+      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Add more items</button>`}
+      ${tillLeaveRowV373()}`;
+  }
+  // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
+  // figures live in the checkout panel (evaluation-authoritative).
+  function tillCartLinesHtmlV373(){
+    const saleLines=cartSaleLines();
+    const locked=cartLocked();
+    if(!saleLines.length)return '';
+    return `<ul class="till-cart-lines">${saleLines.map(l=>{
+      const badge=l.type==='custom'?`<span class="till-cart-line-sub">Other item${l.reason?` · ${esc(l.reason)}`:''}</span>`:'';
+      const qtyCtl=locked?'':`<div class="till-cart-qty">
+        <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
+        <output aria-label="Quantity">${l.qty}</output>
+        <button type="button" class="btn ghost" data-qty="1" data-line="${l.lineId}" aria-label="Increase quantity">+</button></div>`;
+      const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})}>${CUI.icon('close',{size:16})}</button>`;
+      return `<li class="till-cart-line"><span class="till-cart-line-label">${esc(l.label)}${l.qty>1?` ×${l.qty}`:''}${badge}</span>${qtyCtl}<span class="till-cart-line-amount">${money(l.unit_cents*l.qty)}</span>${rm}</li>`;
+    }).join('')}</ul>`;
+  }
+  /* extras (package / membership) — charged as their OWN records, NOT part of the kernel total,
+     so the panel TOTAL keeps matching the evaluation exactly.
+     V257 (owner: "why is the session charged separately? cannot together?"). The split is
+     deliberate and stays: sell_package_v102 writes a sales row of kind='package' that carries
+     its own prepaid entitlement and is judged by that kind's own revenue/visit/points policy,
+     while the cart finalises as kind='quick_sale' with sale_items. Merging them would file a
+     prepaid package as today's takings. What was wrong was the WORDS: "charged separately"
+     reads as "ask the customer to pay twice". It is one payment, two receipts. */
+  function tillExtrasHtmlV373(){
+    const extras=extraLines();
+    const locked=cartLocked();
+    if(!extras.length)return '';
+    return `<div style="margin-top:14px"><b class="small">Also on this bill · kept as its own receipt</b>
+      <ul class="ck-extras">${extras.map(l=>{
+        const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
+        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
+        return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
+      }).join('')}</ul></div>`;
+  }
 
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Choose products or services, review the checked total, then select how the customer paid.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
-      <div class="card frontline-card till-cart-card till-found-card">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
-          ${walkin
-            ?`<div><div style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">Walk-in customer</div><p class="muted small" style="margin:4px 0 0">No customer linked — this sale earns no points and cannot use rewards, packages or stored value.</p></div>
-          <button type="button" class="btn ghost sm" id="tWalkinSwitch">${CUI.icon('customers',{size:16})} Switch to customer</button>`
-            :`<div><div data-merchant-content style="font-size:1.3rem;font-weight:700;letter-spacing:-.03em">${esc(cust.full_name)}</div><p class="muted small" data-merchant-content style="margin:0">${esc(cust.phone||'')}</p><p class="muted small" style="margin-top:4px">Member since: ${esc(formatCustomerJoinedDateV141(cust.created_at))} · Last visit: ${cust.last_visit_at?esc(formatCustomerJoinedDateV141(cust.last_visit_at)):'Never visited'}</p></div>
-          <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>`}
-        </div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        ${branchPicker}
-        ${staffPickerV287}
-        ${picker}
-        ${saleLinesHtml}
-        ${panelHtml}
-        ${extrasHtml}
-        ${combinedTotalV257}
-        ${emptyHtml}
-        <div id="tcErr"></div>
-        ${tenderHtml}
-        ${paynowHtml}
-        ${partialHtml}
-        ${actionHtml}
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} ${walkin?'Switch to customer':'Different number'}</button>
-      </div>`;
-    $('tBack').onclick=backToPhoneStep;
+  /* -------------------------------------------------------------------- the Add item sheet */
+  /* Everything that is not tapped every few minutes lives here, one tap from the sale, grouped
+     by what it IS rather than by which workflow it used to belong to. Selling a package is a
+     tab; using one is a tab; neither is a separate journey any more. */
+  const TILL_SHEET_TABS_V373=[
+    {key:'services',label:'Services'},
+    {key:'products',label:'Products'},
+    {key:'usepackage',label:'Use package'},
+    {key:'sellpackage',label:'Sell package'},
+    {key:'membership',label:'Memberships'},
+    {key:'custom',label:'Other item'}
+  ];
+  function tillSheetTabsV373(){
+    if(!catalog)return [];
+    // Packages and memberships are sold TO a customer (sell_package_v102 / enroll_membership_v41 both
+    // take p_client) — structurally impossible for a walk-in, so the tabs are absent, not disabled.
+    const canPkg=branchCanWrite(tillBranchId,'packages')&&!walkin;
+    const canMem=branchCanWrite(tillBranchId,'memberships')&&!walkin;
+    // §6 custom-price ('Other item') entry is OWNER AND MANAGER ONLY (Option A). This is a role,
+    // not an individually grantable permission. The server enforces it (custom_line_denied).
+    const canCustomLine=S.myRole==='owner'||S.myRole==='manager';
+    const available={
+      services:catalog.services.length>0||(catalog.bundles||[]).length>0,
+      products:(catalog.products||[]).length>0,
+      usepackage:!walkin&&(catalog.customerPackages||[]).some(item=>Number(item.remaining)>0),
+      sellpackage:canPkg&&(catalog.packages||[]).length>0,
+      membership:canMem&&(catalog.memberships||[]).length>0,
+      custom:canCustomLine
+    };
+    return TILL_SHEET_TABS_V373.filter(tab=>available[tab.key]);
+  }
+  function openTillAddSheetV373(){
+    if(cartLocked())return;
+    const tabs=tillSheetTabsV373();
+    if(!tabs.length)return toast('There is nothing to add at this branch yet.');
+    tillAddSheetV373={tab:tabs[0].key,query:''};
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal till-add-sheet-v373" id="tillAddSheetV373" role="dialog" aria-modal="true" aria-labelledby="tillAddSheetTitleV373" tabindex="-1"><div class="modal-card">
+      <div class="row"><div><h2 id="tillAddSheetTitleV373">Add item</h2><p class="muted small">Tap to add. The sale stays open behind this.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tillAddSheetCloseV373">Done</button></div>
+      <div id="tillAddSheetBodyV373"></div>
+    </div></div>`);
+    const node=$('tillAddSheetV373');
+    let deactivate;
+    const close=()=>{tillAddSheetV373=null;if(deactivate)deactivate();else node.remove()};
+    deactivate=CUI.activateDialog(node,{onClose:close,initialFocus:'#tillAddSheetCloseV373'});
+    node._closeV373=close;
+    $('tillAddSheetCloseV373').onclick=close;
+    paintTillAddSheetV373();
+  }
+  function closeTillAddSheetV373(){
+    const node=$('tillAddSheetV373');
+    tillAddSheetV373=null;
+    if(!node)return;
+    if(typeof node._closeV373==='function')node._closeV373();else node.remove();
+  }
+  function paintTillAddSheetV373(){
+    const body=$('tillAddSheetBodyV373');
+    if(!body||!tillAddSheetV373)return;
+    const tabs=tillSheetTabsV373();
+    if(!tabs.length)return closeTillAddSheetV373();
+    if(!tabs.some(tab=>tab.key===tillAddSheetV373.tab))tillAddSheetV373.tab=tabs[0].key;
+    const active=tillAddSheetV373.tab;
+    const query=(tillAddSheetV373.query||'').trim().toLowerCase();
+    const match=item=>!query||String(item.name||'').toLowerCase().includes(query);
+    const searchable=active==='services'||active==='products';
+    let panel='';
+    if(active==='services'){
+      const services=catalog.services.filter(match);
+      const bundles=(catalog.bundles||[]).filter(match);
+      panel=`${services.length?`<div class="till-cart-catalog">${tillCatalogueTilesV373(services.map(item=>({type:'service',item})))}</div>`:'<p class="muted small">No services match.</p>'}
+        ${bundles.length?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${tillBundleTilesV373(bundles)}</div>
+          <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+    }else if(active==='products'){
+      const products=(catalog.products||[]).filter(match);
+      panel=products.length
+        ?`<div class="till-cart-catalog">${tillCatalogueTilesV373(products.map(item=>({type:'product',item})))}</div>`
+        :'<p class="muted small">No products match.</p>';
+    }else if(active==='usepackage'){
+      panel=tillOwnedPackagesBlockV373({inSheet:true});
+    }else if(active==='sellpackage'){
+      panel=`<p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p>
+        <div class="till-cart-catalog">${tillPackagePlanTilesV373(catalog.packages||[])}</div>
+        <p class="muted small" style="margin-top:8px">${catalog.packageEarnsPoints===true
+          ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
+          :catalog.packageEarnsPoints===false
+            ?'Package purchases are not eligible for points for this business.'
+            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`;
+    }else if(active==='membership'){
+      panel=`<div class="till-cart-catalog">${(catalog.memberships||[]).map(p=>`<button type="button" class="choice-button" data-plan="membership" data-id="${esc(p.id)}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span></button>`).join('')}</div>`;
+    }else{
+      panel=`<button type="button" class="btn ghost" id="tCustomOpen" style="width:100%">${CUI.icon('add',{size:16})} Add other item</button>
+        <p class="muted small" style="margin:8px 0 0">A one-off charge that isn't in your catalogue. Custom prices — owner and manager only.</p>`;
+    }
+    body.innerHTML=`<div class="v150-segment section-subtabs-v200 till-sheet-tabs-v373" role="group" aria-label="What to add">${tabs.map(tab=>`<button type="button" data-till-tab-v373="${tab.key}" aria-pressed="${tab.key===active}">${esc(tab.label)}</button>`).join('')}</div>
+      ${searchable?`<label class="sr-only" for="tillAddSearchV373">Search this list</label>
+        <input id="tillAddSearchV373" type="search" placeholder="Search" value="${esc(tillAddSheetV373.query||'')}">`:''}
+      <div class="till-sheet-panel-v373">${panel}</div>`;
+    body.querySelectorAll('[data-till-tab-v373]').forEach(button=>button.onclick=()=>{
+      tillAddSheetV373.tab=button.dataset.tillTabV373;tillAddSheetV373.query='';paintTillAddSheetV373();
+    });
+    const search=$('tillAddSearchV373');
+    if(search){
+      const hadFocus=document.activeElement===search;
+      search.oninput=()=>{
+        tillAddSheetV373.query=search.value;
+        paintTillAddSheetV373();
+        const next=$('tillAddSearchV373');
+        if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length)}
+      };
+      if(hadFocus)search.focus();
+    }
+    /* The tiles inside the sheet are the same tiles the page renders, so they are bound by the
+       same one binder — never a second copy of the handlers. */
+    bindTillControlsV373();
+  }
+
+  /* --------------------------------------------------------------------------- one binder */
+  /* Bound after every render of either stage AND after every repaint of the sheet, because the
+     sheet's tiles live on document.body rather than inside the route. Handlers are assigned
+     (not added), so re-binding the same node is a no-op rather than a duplicate listener. */
+  function bindTillControlsV373(){
+    if($('tBack'))$('tBack').onclick=backToPhoneStep;
     if($('tWalkinSwitch'))$('tWalkinSwitch').onclick=backToPhoneStep;
+    if($('tGoReviewV373'))$('tGoReviewV373').onclick=()=>{closeTillAddSheetV373();tillStageV373='review';draw()};
+    if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';draw()};
+    if($('tAddItemV373'))$('tAddItemV373').onclick=openTillAddSheetV373;
+    if($('tAllBenefitsV373'))$('tAllBenefitsV373').onclick=openTillAllBenefitsV373;
+    const whoV373=$('tillWhoV373');
+    if(whoV373)whoV373.ontoggle=()=>{tillWhoOpenV373=whoV373.open};
     if($('tBranch'))$('tBranch').onchange=async()=>{
       tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;
       /* A branch change invalidates every item and evaluation. Clear the cart, then ask the
          server for this branch's effective catalogue before another selection is possible. */
+      closeTillAddSheetV373();
       cart=[];catalog=null;catalogError=null;clearCheckoutState({abandon:true});
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
@@ -6409,8 +6730,7 @@ async function tillPage(){
     /* V211: spend a session the customer already paid for. useCustomerPackage confirms, calls
        use_package_session_v102 with a stable idempotency key, and is reversible afterwards —
        reversing that session's sale restores it (reverse_sale -> v40_base -> v34_base writes
-       package_session_reversals). This handler is what was missing: the function existed and
-       nothing called it. */
+       package_session_reversals). */
     document.querySelectorAll('[data-use-package]').forEach(b=>b.onclick=()=>
       useCustomerPackage(b.dataset.usePackage));
     /* v215 */
@@ -6469,20 +6789,17 @@ async function tillPage(){
       const bundle=(catalog.bundles||[]).find(x=>x.id===b.dataset.addBundle);
       if(bundle)addBundleLines(bundle);
     });
-    const sellPackageDrawerV257=$('tillSellPackageV257');
-    if(sellPackageDrawerV257)sellPackageDrawerV257.ontoggle=()=>{tillSellPackageOpenV257=sellPackageDrawerV257.open};
     document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
-    /* V287: a second, byte-identical [data-use-package] binding used to sit here. It overwrote
-       the V211 binding above with the same handler, so it changed nothing and only invited the
-       reader to look for a difference that does not exist. */
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
-    if($('tCustomOpen'))$('tCustomOpen').onclick=openCustomModal;
+    /* The custom-price dialog replaces the sheet rather than stacking on it: two focus traps on
+       screen at once is how a keyboard user gets stuck. */
+    if($('tCustomOpen'))$('tCustomOpen').onclick=()=>{closeTillAddSheetV373();openCustomModal()};
     document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>changeQty(b.dataset.line,parseInt(b.dataset.qty,10)));
     document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeLine(b.dataset.remove));
     document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{

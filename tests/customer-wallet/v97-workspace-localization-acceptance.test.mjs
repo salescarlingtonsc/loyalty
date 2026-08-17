@@ -580,7 +580,9 @@ test('v97 Quick Earn collision markers preserve customer, phone and single-branc
   assert.match(till,/<div data-merchant-content style="font-size:1\.9rem[^>]*>\$\{esc\(cust\.full_name\)\}<\/div>/);
   assert.match(till,/<p class="muted small" data-merchant-content>\$\{esc\(cust\.phone\|\|''\)\}<\/p>/);
   assert.match(till,/<span data-merchant-content>\$\{esc\(accessibleTillBranches\[0\]\.name\)\}<\/span>/);
-  assert.match(till,/<div data-merchant-content style="font-size:1\.3rem[^>]*>\$\{esc\(cust\.full_name\)\}<\/div>/);
+  /* V373 compressed the composer's customer block into one line; the marker that keeps a
+     customer's own name out of the translation pass moved with it. */
+  assert.match(till,/<b class="till-head-name-v373" data-merchant-content>\$\{esc\(cust\.full_name\)\}<\/b>/);
   assert.match(till,/<span data-merchant-content>\$\{esc\(notFoundPhone\|\|phone\)\}<\/span>/);
 });
 

@@ -50,8 +50,11 @@ test('V158 exposes staff management from branch settings without duplicating the
 test('V158 keeps next-phase and inventory controls hidden while sale selection remains compact', () => {
   assert.match(services, /const showServiceProductDeductionV157=false/);
   assert.match(services, /if\(showServiceProductDeductionV157\)\{/);
-  /* V257: the drawer now remembers whether it is open across a redraw (adding a package used to collapse it), so the pin allows the id + open attribute. */
-  assert.match(recordSale, /<details class="till-sale-package-options" id="tillSellPackageV257"\$\{tillSellPackageOpenV257\?' open':''\}><summary>Sell package<\/summary>/);
+  /* V257 kept package SALES collapsed behind a <details> drawer. V373 moves them into the Add
+     item sheet's "Sell package" tab, which protects the same thing more strongly: they are not
+     on the main screen at all, and the sheet cannot be collapsed by a redraw. */
+  assert.match(recordSale, /\{key:'sellpackage',label:'Sell package'\}/);
+  assert.match(recordSale, /sellpackage:canPkg&&\(catalog\.packages\|\|\[\]\)\.length>0/);
   assert.match(recordSale, /String\(line\.ref\)===String\(id\)/);
   assert.doesNotMatch(recordSale, /line\.ref_id/);
   assert.match(recordSale, /class="till-choice-qty"/);
@@ -83,8 +86,11 @@ test('V158 product and service photos flow from owner upload to record sale and 
   assert.match(mediaHelpers, /data-catalogue-photo-kind-v158/);
   assert.match(services, /cataloguePhotoInputHtmlV158\(\{assetKind:'service'/);
   assert.match(checkoutCatalogue, /cataloguePhotoInputHtmlV158\(\{assetKind:item\.item_type/);
-  assert.match(recordSale, /catalogueImageUrlV158\(s\)/);
-  assert.match(recordSale, /catalogueImageUrlV158\(p\)/);
+  /* V373: services and products are drawn by ONE tile builder, so the photo lookup is one call
+     for both kinds rather than two copies that could drift apart. */
+  assert.match(recordSale, /catalogueImageUrlV158\(item\)/);
+  assert.match(recordSale, /\.\.\.catalog\.services\.map\(item=>\(\{type:'service',item\}\)\)/);
+  assert.match(recordSale, /\.\.\.\(catalog\.products\|\|\[\]\)\.map\(item=>\(\{type:'product',item\}\)\)/);
   assert.match(recordSale, /class="till-choice-image"/);
   assert.match(customerPortal, /customerMediaUrlV95\(item\?\.image_url\)/);
   assert.match(customerPortal, /class="customer-feature-image"/);

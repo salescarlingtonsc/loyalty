@@ -38,16 +38,19 @@ test('V157 keeps Record sale focused by collapsing package sales and showing ite
   assert.match(recordSale, /class="till-choice-image"/);
   assert.match(recordSale, /class="till-choice-qty"/);
   assert.match(recordSale, /aria-label="\$\{qty\} selected"/);
-  /* V257: the drawer now remembers whether it is open across a redraw (adding a package used to collapse it), so the pin allows the id + open attribute. */
-  assert.match(recordSale, /<details class="till-sale-package-options" id="tillSellPackageV257"\$\{tillSellPackageOpenV257\?' open':''\}><summary>Sell package<\/summary>/);
+  /* V257 kept package SALES collapsed behind a <details> drawer. V373 moves them into the Add
+     item sheet's "Sell package" tab, which protects the same thing more strongly: they are not
+     on the main screen at all, and the sheet cannot be collapsed by a redraw. */
+  assert.match(recordSale, /\{key:'sellpackage',label:'Sell package'\}/);
+  assert.match(recordSale, /sellpackage:canPkg&&\(catalog\.packages\|\|\[\]\)\.length>0/);
   /* V211: this used to assert `const ownedPackages=''` — it pinned the STUB that emptied the
      owned-package list. That stub is why an owner could not spend a session a customer had
      already paid for, and it stood in direct contradiction to the v102 test, which requires the
      till to show owned packages and consume sessions. The owner reported the symptom directly:
      "i still dont see the package here in record sale - not able to use sessions".
      The compactness this test protects is real and is still asserted above: package SALES stay
-     collapsed behind the <details> summary. Spending an existing session is the common act at a
-     counter and is not hidden. */
+     off the main screen (V373: inside the Add item sheet's own tab). Spending an existing session
+     is the common act at a counter and is not hidden. */
   assert.match(recordSale, /const ownedPackages=ownedPkgs\.length/);
   assert.match(recordSale, /Use an existing customer package/);
 });

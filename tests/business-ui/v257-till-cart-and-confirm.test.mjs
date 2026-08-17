@@ -32,17 +32,24 @@ test('BUG 1 — a bundle tile carries the same quantity badge a service tile doe
   assert.match(till, /cart\.push\(\{lineId:crypto\.randomUUID\(\),type:'bundle',ref:bundle\.id,/);
 });
 
-test('BUG 2 — selling a package shows a count, keeps its drawer open, and says so out loud', () => {
+test('BUG 2 — selling a package shows a count, survives the redraw, and says so out loud', () => {
   // (a) a countable indicator. Package lines are EXTRA lines, one line per sale (each carries its
   //     own idempotency key), so the count is a line count and must not read line.qty.
   assert.match(till, /function selectedPlanCountV257\(type,id\)\{/);
   assert.match(till, /return extraLines\(\)\.reduce\(\(sum,line\)=>sum\+\(\(line\.type===type&&String\(line\.ref\)===String\(id\)\)\?1:0\),0\);/);
   assert.match(composer, /const qty=selectedPlanCountV257\('package',p\.id\);/);
   assert.match(composer, /data-plan="package"[\s\S]{0,320}?class="till-choice-qty" data-workspace-i18n aria-label="\$\{qty\} selected"/);
-  // (b) the drawer no longer collapses on the redraw that adding a line triggers.
-  assert.match(till, /let tillSellPackageOpenV257=false;/);
-  assert.match(composer, /<details class="till-sale-package-options" id="tillSellPackageV257"\$\{tillSellPackageOpenV257\?' open':''\}>/);
-  assert.match(composer, /sellPackageDrawerV257\.ontoggle=\(\)=>\{tillSellPackageOpenV257=sellPackageDrawerV257\.open\}/);
+  /* (b) the list of plans no longer collapses on the redraw that adding a line triggers.
+     V373 replaced the <details> drawer with the Add item sheet, which keeps the same guarantee
+     structurally rather than by remembering a flag: the sheet is a dialog mounted on
+     document.body, so the redraw that follows every add cannot close it, and the tab it is on
+     is state that survives the repaint. */
+  assert.match(till, /let tillAddSheetV373=null;/);
+  assert.match(composer, /document\.body\.insertAdjacentHTML\('beforeend',`<div class="modal till-add-sheet-v373" id="tillAddSheetV373"/);
+  assert.match(composer, /\{key:'sellpackage',label:'Sell package'\}/);
+  // Adding a line redraws the route only; the sheet is repainted in place, never re-opened.
+  assert.match(composer, /if\(tillAddSheetV373\)paintTillAddSheetV373\(\);/);
+  assert.match(composer, /tillAddSheetV373\.tab=button\.dataset\.tillTabV373;/);
   // (c) visible confirmation, not only a screen-reader announcement.
   // Reuses the reviewed v97 named template rather than an interpolated literal, which the
   // workspace-localization acceptance suite forbids for runtime copy.
@@ -65,7 +72,8 @@ test('BUG 3 — the split stays (two sale kinds), the confirm screen states ONE 
   assert.doesNotMatch(composer, /Also processing \(charged separately\)/);
   // The single primary button names the whole amount it will collect, not just the kernel total.
   assert.match(till, /const dueV257=\(svTender\?svTender\.remaining_due_cents:evalResult\.total_cents\)\+extrasTotalCents\(\);/);
-  assert.match(till, / Take payment · \$\{money\(dueV257\)\}/);
+  // V373 renamed the button to the owner's own words; the FIGURE it names is unchanged.
+  assert.match(till, / Record sale · \$\{money\(dueV257\)\}/);
   // The receipt totals both records afterwards, excluding anything that failed.
   assert.match(receipt, /d\.extras\.filter\(x=>x\.status!=='failed'\)\.reduce/);
   assert.match(receipt, /<span>Total collected<\/span>/);
