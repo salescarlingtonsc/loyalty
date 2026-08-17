@@ -2067,6 +2067,12 @@
       "path": "db/migrations/20260817_nestly_v371_programme_off_reaches_customer.sql",
       "semanticVersion": "v371",
       "proposedDeployVersion": "20260817000004"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v372_gift_follows_its_programme.sql",
+      "semanticVersion": "v372",
+      "proposedDeployVersion": "20260817000005"
     }
   ]
 }

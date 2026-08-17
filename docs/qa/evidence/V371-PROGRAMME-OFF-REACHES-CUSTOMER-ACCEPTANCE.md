@@ -109,16 +109,61 @@ in every state.
 | step | business view | customer view |
 | --- | --- | --- |
 | all on | points=true tiers=true | enabled=true · tier=ZZ Bronze · gift offered |
-| points off | points=false | **enabled=false** · tier=ZZ Bronze · gift offered |
+| points off | points=false | **enabled=false** · tier=ZZ Bronze · **gift hidden** (v372) |
 | tiers off | tiers=false | enabled=true · **tier=(none)** · gift offered |
 | gift paused | — | enabled=true · tier=ZZ Bronze · **gift not offered** |
 | gift live again | — | enabled=true · tier=ZZ Bronze · gift offered |
+
+The "gift hidden" cell in the points-off row is v372's doing, and its absence is what v372 fixed —
+see below. As first reported this row read "gift offered", which was correct as an observation and
+wrong as an outcome: the gift belonged to the Points programme.
 
 `supabase_migrations.schema_migrations` records v371 at `20260817000004`. The 15 migrations from
 v343 to v370 remain absent from that ledger: they were applied by direct SQL, and the backfill is
 refused by the Claude Code auto-mode classifier (both as a batch and one row at a time). The repo
 plans and manifests are the accurate record. v340 is correctly absent — it is written for rehearsal
 and is not applied, which was confirmed by probing for the object it would create.
+
+## V372 — a gift is only offered while its own programme is running
+
+Found by the owner reading the table above: with Points off, the customer view still said "gift
+offered", and that gift was a Points programme reward. It was. v371 gated the wallet's `enabled`
+flag and the `paused` check but not the reward's own programme, so a live, unpaused gift belonging
+to a switched-off programme stayed in the catalogue.
+
+The damaging shape is not the one that was spotted, but the one next to it, and **Cubbly was in it**:
+
+| | |
+| --- | --- |
+| business | stamps **off**, points **on** |
+| gift | "Free Massage Oil", priced **2 stamps**, on the stamps programme |
+| customer wallet | unit `points`, balance `50` |
+| customer was told | `{"name":"Free Massage Oil","cost_units":2,"available_now":true}` |
+
+A reward priced in stamps, reported ready to claim, judged against a points balance, for a
+programme the owner had switched off — and `redeem_reward_core` would refuse the claim. Two units
+conflated into one number.
+
+Both readers now drop a reward whose own programme is switched off, extending the same live-row
+lookup that already carries the pause check so there is one condition per reader rather than two
+that can drift. A reward with no `programme_id` is deliberately left alone — failing open never
+hides a real gift because a link is missing (all 20 production rewards do have one).
+
+`db/tests/v372_gift_follows_its_programme.sql` reproduces Cubbly's shape exactly, pricing the
+running programme's gift out of reach so the switched-off programme's cheap gift is the one the
+wallet would otherwise pick. Five of its seven checks fail on the pre-v372 functions; all seven pass
+after, and v371's seventeen still pass unchanged.
+
+Live effect, the whole of it:
+
+| business | reward | programme | now |
+| --- | --- | --- | --- |
+| Cubbly | Free Massage Oil (2) | stamps, **off** | **hidden** |
+| Cubbly | Free Mini Burger (10) | points, on | offered |
+| Cubbly | moisturizer (10) | points, on | offered |
+
+Hougang ABC's two stamps rewards are unaffected because its `loyalty_programs.active` is false, so
+the catalogue refuses for that tenant before reaching any reward.
 
 ## Defects found while making the suite green
 
@@ -192,7 +237,18 @@ break it the same way.
 
 ## Migration ledger
 
-`supabase_migrations.schema_migrations` still ends at `nestly_v332`. Everything from v343 onward —
-the whole 2026-08-16/17 rewards wave, now including v371 — has been applied by direct SQL without a
-ledger row, because writes to that table are refused by the Claude Code auto-mode classifier. The
-repo plans and manifests are the accurate record; the database ledger is not.
+This paragraph originally read "still ends at `nestly_v332`", written before v371 was applied. It
+was left standing when the applied section was added above, so the document contradicted itself.
+Queried directly against production, the truth is:
+
+```
+20260815070236  nestly_v332_retention_program_lifecycle
+20260817000004  nestly_v371_programme_off_reaches_customer
+20260817000005  nestly_v372_gift_follows_its_programme     <- head
+```
+
+367 rows. v371 and v372 are both recorded. **v343 through v370 are absent** — zero rows in that
+range: they were applied by direct SQL, and the backfill is refused by the Claude Code auto-mode
+classifier, as a batch and one row at a time. v340 is correctly absent because it is not applied.
+So the ledger is accurate about what it contains and incomplete about the 2026-08-16 wave; the repo
+plans and manifests remain the complete record.
