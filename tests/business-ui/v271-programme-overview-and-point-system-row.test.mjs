@@ -151,9 +151,9 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
 test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {
   /* V301: the setup wizard replaces the category list for the same reason Overview and History
      do — showing both would put the same programme on the page twice, under two shapes. */
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback'\]\.includes\(programmeView\);/);
   assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
-  assert.match(grow, /\$\{programmeView==='overview'\?growOverviewTableV271:''\}/);
+  assert.match(grow, /\$\{programmeView==='overview'\?`\$\{growOverviewTableV271\}\$\{growAnalyticsCardV375\}`:''\}/);
   assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);
 });
 

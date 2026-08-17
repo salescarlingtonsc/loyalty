@@ -2073,6 +2073,18 @@
       "path": "db/migrations/20260817_nestly_v372_gift_follows_its_programme.sql",
       "semanticVersion": "v372",
       "proposedDeployVersion": "20260817000005"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v374_birthday_gift_saves.sql",
+      "semanticVersion": "v374",
+      "proposedDeployVersion": "20260817000007"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v375_points_are_not_credit.sql",
+      "semanticVersion": "v375",
+      "proposedDeployVersion": "20260817000008"
     }
   ]
 }

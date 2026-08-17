@@ -128,7 +128,7 @@ test('merchant insights sits outside the Performance section', () => {
 test('today schedule glance shows real bookings and is fixed to today', () => {
   const i = app.indexOf('async function loadDashboardScheduleGlanceV180');
   assert.ok(i > 0, 'no schedule glance loader');
-  const src = app.slice(i, i + 3600);
+  const src = app.slice(i, i + 4600);
   // V252: the glance is no longer pinned to today — the owner added Today/Tomorrow tabs and a
   // date picker. What must still hold is that the day is a SINGAPORE calendar date (defaulting
   // to today) and that it is never widened by the Performance date range above it.

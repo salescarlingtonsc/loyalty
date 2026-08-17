@@ -173,7 +173,11 @@ test('V291 blocked time is visible in the List view and the mobile week agenda',
   assert.match(code,/const blockedFromV291=\$\('appointmentListFrom'\)\?\.value\|\|todaySg;/);
   assert.match(code,/const blockedToV291=\$\('appointmentListTo'\)\?\.value\|\|addDays\(blockedFromV291,90\);/);
   assert.match(code,/blockedResultV291\.error\s*\n?\s*\?`<section class="card"[\s\S]{0,160}Blocked time could not be read/);
-  assert.match(code,/\$\('alist'\)\.insertAdjacentHTML\('beforeend',blockedListHtmlV291\);/);
+  /* V375 (owner, photo 13: "move there inside"): blocked time is its own Block tab now rather
+     than a section appended under the appointment list, so the guarantee is that the tab renders
+     it and wires its controls — the same markup, one tab across. */
+  assert.match(code,/if\(view==='block'\)\{\s*\n?\s*\$\('alist'\)\.innerHTML=blockedListHtmlV291;/);
+  assert.match(code,/id="appointmentBlockSeg"/);
   // Week agenda (the 390px week view) carries the rows plus their controls.
   assert.match(code,/const blockedAgendaV291=canWrite\?calendarBlocks\.map\(block=>\{/);
   assert.match(code,/<div class="calendar-agenda">\$\{agenda\|\|\(blockedAgendaV291\?''/);
@@ -200,14 +204,18 @@ test('V291 a waiting walk-in can be corrected without losing their place in the 
   assert.match(code,/return seat\+edit\+book\+called\+remove;/);
 });
 
-test('V291 a custom customer field can be renamed but never re-typed',()=>{
-  const rename=section("document.querySelectorAll('.cfRenameV291')",".cfRetire')");
-  assert.match(rename,/sb\.from\('client_field_definitions'\)\.update\(\{label\}\)/);
-  assert.match(rename,/Field renamed; existing answers are unchanged/);
-  // The three things that would rewrite the meaning of stored answers are not editable.
-  for(const forbidden of [/update\(\{[^}]*value_type/,/update\(\{[^}]*classification/,/update\(\{[^}]*field_key/]){
-    assert.doesNotMatch(rename,forbidden,'renaming must never change what an answer means');
-  }
+test('V375 the custom customer-field editor is gone, and no stored answer was touched',()=>{
+  /* V375 (owner, photo 16: the Customer fields card struck through, "delete these wordings").
+     The editor and all three of its handlers left with the card. What V291 protected — that a
+     stored answer can never be re-typed or re-classified — is now guaranteed by there being no
+     writer at all: nothing in the browser bundle updates client_field_definitions. */
+  assert.doesNotMatch(code,/cfRenameV291/);
+  assert.doesNotMatch(code,/\$\('cfAdd'\)/);
+  assert.doesNotMatch(code,/create_client_field_definition/);
+  assert.doesNotMatch(code,/client_field_definitions'\)\.update\(/);
+  /* The customer profile still READS the definitions a business already has, so existing fields
+     and every answer recorded against them keep appearing where they always did. */
+  assert.match(code,/sb\.from\('client_field_definitions'\)\.select\(/);
 });
 
 test('V291 a module the sector does not run cannot be granted to a teammate',()=>{
@@ -228,7 +236,9 @@ test('V291 a module the sector does not run cannot be granted to a teammate',()=
 
 test('V291 the reward comparison covers every field a draft can change',()=>{
   const fields=section('function growRewardDiffFieldsV291(','function growRewardDiffOptionsFromSnapshotV291(');
-  for(const label of ['Name','Cost','Offered','Store credit','Expires after','Uses per customer',
+  /* V375: 'Store credit' left the comparison with the column it compared — a reward can no
+     longer pay out credit at all (owner, photo 3). */
+  for(const label of ['Name','Cost','Offered','Expires after','Uses per customer',
     'Who can redeem','Branches','Services']){
     assert.match(fields,new RegExp(`label:'${label}'`),`${label} must be compared`);
   }

@@ -144,7 +144,8 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
   // every field the single UPDATE writes is still in the one panel
   /* V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief): 'bbio'
      joined this same interleaved form and the same single UPDATE — still one form, one save. */
-  for (const id of ['bn', 'bi', 'bc', 'bp', 'bbio', 'blegal', 'buen', 'bru']) {
+  /* V375 (owner, photo 17): 'bc', the brand colour picker, was removed from the form. */
+  for (const id of ['bn', 'bi', 'bp', 'bbio', 'blegal', 'buen', 'bru']) {
     assert.match(brandPanel, new RegExp(`id="${id}"`), `${id} must not be split out of the form`);
   }
   assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name:\$\('bn'\)\.value\.trim\(\),/);

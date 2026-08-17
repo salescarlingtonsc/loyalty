@@ -80,9 +80,11 @@ test('the day view still wires its appointment buttons inside the captured route
   // investigation does not have to re-derive it
   const renderDay = calendar.slice(calendar.indexOf('function renderDay(day)'),
     calendar.indexOf('function renderWeek('));
-  // V329: a pending-requests banner is now prepended ahead of the timeline intro — still the
-  // same #alist root, just with an extra fragment glued on the front of the same template.
-  assert.match(renderDay, /\$\('alist'\)\.innerHTML=`\$\{pendingRequestsBannerHtml\(\)\}<div class="day-timeline-intro"/);
+  // V375: the pending-requests banner V329 prepended here has moved to the Appointment List tab
+  // (owner, photo 19), so the day view writes the timeline straight into the same #alist root.
+  assert.match(renderDay, /\$\('alist'\)\.innerHTML=`<div class="day-timeline-intro"/);
+  assert.doesNotMatch(renderDay, /pendingRequestsBannerHtml\(\)/,
+    'the awaiting-confirmation banner belongs to the list tab now, not the day timeline');
   assert.match(renderDay, /class="day-timeline-event\$\{inactiveV288\?' appointment-inactive-v288':''\}" data-appointment="\$\{item\.id\}"/);
   assert.match(renderDay, /wireBlockedTimeActions\(\);\s*wireAppointmentActions\(\);\s*wirePendingRequestActionsV329\(\);/);
   assert.match(calendar, /<div id="alist"/, 'the day host must be part of the route root markup');

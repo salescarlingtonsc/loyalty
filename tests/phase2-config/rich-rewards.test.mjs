@@ -46,21 +46,17 @@ test('reward editor exposes simple customer-facing fields and progressive disclo
 
 test('fulfilment choices are controlled and preserve the existing credit contract', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(app, /value="manual_item"[^>]*>Manual item or benefit/i);
-  assert.match(app, /value="credit"[^>]*>Store credit/i);
+  /* V375 (owner, photo 3: "i don't want credit feature"). The Fulfilment chooser is gone; every
+     reward is a manual item, pinned as a hidden field so the save path is unchanged. */
+  assert.match(app, /<input type="hidden" id="rwKind" value="manual_item">/i);
   assert.match(app, /fulfillment_kind:kind/i);
   assert.match(app, /credit_cents:kind==='credit'?/i);
-  /* The contract is that FULFILMENT has exactly two kinds — a manual item, or store credit.
-     Anything else (a discount, a cash payout) would put a second writer on the credit ledger.
-     The assertion used to scan the whole application source for `<option value="custom">` and
-     friends, so it broke the moment an unrelated dropdown used one of those words: v215's welcome
-     -offer item picker and v369's tier-benefit kind both legitimately offer "custom". Scope it to
-     the fulfilment select itself, which is what the contract is actually about. */
-  const fulfilmentSelect = app.match(/<select id="rwKind">[\s\S]*?<\/select>/i)?.[0];
-  assert.ok(fulfilmentSelect, 'the fulfilment select must be findable to be checked');
-  assert.doesNotMatch(fulfilmentSelect, /<option value="(?:discount|percentage|custom|cash)"/i);
-  assert.equal((fulfilmentSelect.match(/<option /g) || []).length, 2,
-    'fulfilment must offer exactly the two allowlisted kinds');
+  /* The contract WAS that fulfilment has exactly two kinds — a manual item, or store credit —
+     because anything else would put a second writer on the credit ledger. V375 tightens it to
+     ONE: the owner removed store credit from the product, so a reward can only ever be an item
+     the counter hands over. The save path still sends fulfillment_kind and credit_cents, now
+     invariably 'manual_item' and 0, and no chooser exists to send anything else. */
+  assert.doesNotMatch(app, /<select id="rwKind">/i);
 });
 
 test('saving a reward uses the allowlisted version workflow and never deletes reward history', async () => {

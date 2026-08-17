@@ -3251,6 +3251,11 @@ function walletDate(value,withTime=false){
   return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
 }
 
+/* V375 (owner, photo 17: Brand colour struck through, "remove"). Every customer surface paints
+   Peekaa's own accent now. This is the single definition the three former brand_color readers
+   share, so a business can no longer ship a colour of its own — and no longer ship an unreadable
+   one either, which is what contrastSafeBrandColor existed to catch. */
+const CUSTOMER_SURFACE_ACCENT_V375='#c73b2f';
 function customerProgrammeLogoV95(presentation,businessName){
   return presentation.logoUrl
     ?`<img src="${esc(presentation.logoUrl)}" alt="${esc(businessName||presentation.name)} logo" loading="eager">`

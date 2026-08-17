@@ -143,7 +143,10 @@ test('v29 includes a rollback-only behavioral suite', async () => {
 
 test('owner UI creates fields atomically and edits typed customer values', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(app, /sb\.rpc\('create_client_field_definition'/i);
+  /* V375 (owner, photo 16: the Customer fields card struck through). The RPC and its grants are
+     untouched server-side — asserted above — but the browser no longer calls it, so the owner
+     cannot add a new field from the workspace. Existing fields and answers are unaffected. */
+  assert.doesNotMatch(app, /sb\.rpc\('create_client_field_definition'/i);
   assert.doesNotMatch(app, /from\('client_field_definitions'\)\.insert/i);
   assert.doesNotMatch(app, /from\('client_field_options'\)\.insert/i);
   assert.match(app, /from\('client_field_values'\)\.upsert\(payload/i);

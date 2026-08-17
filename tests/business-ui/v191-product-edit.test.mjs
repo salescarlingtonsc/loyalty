@@ -49,15 +49,14 @@ test('a brand colour that cannot be used says so instead of silently changing', 
   // colour"): the fixed universal fallback is gone — the colour is now darkened toward the
   // owner's own choice instead of replaced, so the message says "darken", not "pick a darker
   // shade" (there is no longer a rejected colour to steer the owner away from).
-  assert.match(app, /id="programmeColourWarning"/);
-  assert.match(app, /const paintProgrammeColourWarning=/);
-  const i = app.indexOf('const paintProgrammeColourWarning=');
-  const src = app.slice(i, i + 900);
-  assert.match(src, /contrastSafeBrandColor\(chosen\)/);
-  assert.match(src, /too light for the white title text/);
-  assert.match(src, /Peekaa will darken it slightly/);
-  // it must warn while choosing, not only after saving
-  assert.match(app, /\$\('programmeHeroColor'\)\.oninput=paintProgrammeColourWarning/);
+  /* V375 (owner, photo 17: "remove"): both colour pickers are gone, so there is no under-contrast
+     pick left to warn about — contrastSafeBrandColor now only guards Peekaa's own accent. */
+  assert.doesNotMatch(app, /id="programmeColourWarning"/);
+  assert.match(app, /const CUSTOMER_SURFACE_ACCENT_V375='#c73b2f';/);
+  assert.doesNotMatch(app, /const paintProgrammeColourWarning=/);
+  assert.doesNotMatch(app, /programmeHeroColor/);
+  // The legibility guard itself survives — it is what keeps the shared accent readable.
+  assert.match(app, /function contrastSafeBrandColor\(/);
 });
 
 test('a paused programme explains the consequence and the fix, once', () => {

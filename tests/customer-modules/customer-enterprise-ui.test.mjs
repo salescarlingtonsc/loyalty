@@ -221,11 +221,12 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
   assert.match(settings,/<div class="settings-page">/);
   assert.match(customerInterface,/<div class="customer-interface-sections-v243">/);
   for(const [source,id,label] of [
-    [brand,'bn','Name'],[brand,'bi','Industry'],[brand,'bc','Brand colour (used on your portal)'],
+    /* V375 (owner, photo 17: "remove") — the brand colour picker is gone from the form. */
+    [brand,'bn','Name'],[brand,'bi','Industry'],
     [brand,'bp','Booking policy (shown on your portal)'],[settings,'ir','Invite role'],
     [settings,'ie','Invite email (optional)'],[customerInterface,'csvf','Customer CSV file'],
-    [customerInterface,'cfLabel','Field name'],[customerInterface,'cfType','Answer type'],
-    [customerInterface,'cfClass','Data classification'],[customerInterface,'cfOptions','Choices (list type only)'],
+    /* V375 (owner, photo 16): the custom customer-field editor and its four labelled inputs
+       were deleted with the card that held them. */
   ])assert.match(source,new RegExp(`<label[^>]*for="${id}"[^>]*>${label.replace(/[()]/g,'\\$&')}<\\/label>`));
   assert.match(customerInterface,/id="csvf"[^>]*aria-describedby="csvHelp"/);
   assert.match(app,/\.settings-page,\.settings-page \.split,\.settings-page \.card\{[^}]*min-width:0[^}]*max-width:100%/s);

@@ -50,15 +50,18 @@ test('V245 the available view still filters to the non-running rows', () => {
   assert.match(app, /const show=programmeView==='ongoing'\?isOngoing:!isOngoing;/);
 });
 
-test('V245 opening a booked appointment shows the amend fields immediately', () => {
+test('V375 the amend form is minimised until a tab is pressed, and Amend still opens it', () => {
   const render = app.slice(app.indexOf('function renderAppointmentDetails('), app.indexOf('editForm.onsubmit='));
-  // Expanded on open, with the toggle telling assistive tech the truth.
-  assert.match(render, /editForm\.hidden=false;toggle\.setAttribute\('aria-expanded','true'\);/);
-  // Focus is only stolen when the caller explicitly asked to edit.
+  /* V375 (owner, photo 14: "minimise this" across the amend form) OVERRULES V245's forced-open
+     default. The guarantee is now the pair: nothing is open on a plain view, and the Amend entry
+     point — the one that passes startEditing — still lands straight in the form with focus. */
+  assert.match(render, /showOutcomePanelV375\(startEditing\?'amend':null\);/);
   assert.match(render, /if\(startEditing\)requestAnimationFrame\(\(\)=>\$\('appointmentEditDate'\)\?\.focus\(\)\);/);
-  assert.doesNotMatch(render, /if\(startEditing\)\{editForm\.hidden=false;/);
-  // The toggle still collapses it — this adds a default, it does not remove the control.
-  assert.match(render, /toggle\.onclick=\(\)=>\{const open=editForm\.hidden;editForm\.hidden=!open;/);
+  assert.doesNotMatch(render, /editForm\.hidden=false;toggle\.setAttribute\('aria-expanded','true'\);/);
+  // The two outcomes are tabs over one panel area, and only one can be open.
+  assert.match(render, /id="appointmentEditToggle" role="tab"/);
+  assert.match(render, /id="appointmentCompleteTabV375" role="tab"/);
+  assert.match(render, /const amendOpen=which==='amend',completeOpen=which==='complete';/);
 });
 
 test('V245 the popup can change staff, time and details, and is gated on write access', () => {

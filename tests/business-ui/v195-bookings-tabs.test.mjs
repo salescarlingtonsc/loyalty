@@ -34,7 +34,10 @@ test('the portal link stays visible in both tabs', () => {
      closest('.card,section') returned NULL and the portal card was never actually recognised —
      this assertion passed while the behaviour it names was broken. The nodes that stay above
      the tabs are marked with data-bookings-shell now, so the check is on the real mechanism. */
-  assert.match(app, /data-bookings-shell="portal"/);
+  /* V375: the portal card moved to Appointments (owner, photo 5), so the shell marker that
+     stays above the tabs here is the head — the mechanism this test names is unchanged. */
+  assert.match(app, /data-appointments-shell="portal"/);
+  assert.match(app, /data-bookings-shell="head"/);
   assert.match(src, /if\(child\.hasAttribute\('data-bookings-shell'\)\|\|child\.contains\(tabs\)\)return/);
 });
 

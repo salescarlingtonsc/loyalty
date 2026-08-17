@@ -74,9 +74,10 @@ test('merchant-authoring guidance never reaches a customer reward card',()=>{
 test('a wallet card shows prepaid sessions and store credit beside the points',()=>{
   const holdings=section(app,'function customerProgrammeHoldingsMarkupV183','function customerProgrammeTileMarkupV96');
   assert.match(holdings,/card\?\.packages\?\.sessions_remaining/);
-  assert.match(holdings,/card\?\.credit\?\.balance_cents/);
+  /* V375 (owner, photo 3: "i don't want credit feature"): the credit chip left this row with
+     the feature. Prepaid sessions — the other holding it states — are unchanged. */
+  assert.doesNotMatch(holdings,/card\?\.credit\?\.balance_cents/);
   assert.match(holdings,/sessions>0/,'a zero session balance must not render an empty row');
-  assert.match(holdings,/creditCents>0/);
   assert.match(holdings,/return chips\.length\?/);
   assert.match(app,/\$\{holdings\?`<div style="grid-column:1\/-1">\$\{holdings\}<\/div>`:''\}/);
 });

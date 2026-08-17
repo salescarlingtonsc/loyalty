@@ -90,17 +90,15 @@ test('V243 the module hosts the customer programme editor through the same v95 l
   assert.equal((app.match(/async function loadCustomerProgrammePresentationEditorV95\(\)/g) || []).length, 1);
 });
 
-test('V243 the customer fields and CSV import moved with their panel, once', () => {
-  assert.match(sections, /<b>Customer fields<\/b>/);
-  /* V368 (owner ruling: move, don't delete): the importer moved on again, to Customers, where
-     bringing in a customer list belongs. Still exactly one copy of its markup and its wiring. */
+test('V375 the CSV import still lives on Customers, once; the fields editor is gone', () => {
+  /* V368 (owner ruling: move, don't delete): the importer moved to Customers, where bringing in
+     a customer list belongs. Still exactly one copy of its markup and its wiring.
+     V375 (owner, photo 16): the Customer fields card beside it was struck through and deleted,
+     so this test no longer expects it anywhere. */
   assert.match(app, /function customerCsvImportCardHtmlV368\(\)/);
   assert.match(app, /function wireCustomerCsvImportV368\(\)/);
   assert.match(app, /staff_create_client/);
-  assert.match(wiring, /create_client_field_definition/);
-  // add/retire re-render the page they now live on, not Settings.
-  assert.match(wiring, /toast\('Customer field added'\);rerender\(\);/);
-  assert.equal((app.match(/<b>Customer fields<\/b>/g) || []).length, 1, 'one copy of the form');
+  assert.equal((app.match(/<b>Customer fields<\/b>/g) || []).length, 0, 'the fields editor is deleted');
   assert.equal((app.match(/<b>Import customers \(CSV\)<\/b>/g) || []).length, 1);
   assert.equal((app.match(/function wireCustomerCsvImportV368\(\)/g) || []).length, 1);
 });
@@ -115,7 +113,11 @@ test('V259 Workspace & brand moved to Customer Interface as ONE form with ONE sa
   assert.doesNotMatch(settings, /id="bsave"/, 'Settings must not carry a second copy of the form');
   assert.doesNotMatch(settings, /<label for="bc">Brand colour/);
   assert.match(page, /\$\{workspaceBrandPanelHtmlV259\(\)\}/);
-  assert.match(app, /<label for="bc">Brand colour \(used on your portal\)<\/label>/);
+  /* V375 (owner, photo 17: "remove"): the brand colour picker is gone from the form. The form is
+     still ONE form with ONE save, which is what this test guards; the booking policy field is the
+     marker that it travelled whole. */
+  assert.match(app, /<label for="bp">Booking policy \(shown on your portal\)<\/label>/);
+  assert.doesNotMatch(app, /<label for="bc">Brand colour/);
   assert.equal((app.match(/id="bsave"/g) || []).length, 1, 'exactly one Workspace & brand form');
   assert.equal((app.match(/\$\('bsave'\)\.onclick=/g) || []).length, 1, 'exactly one save handler');
 });
@@ -165,7 +167,8 @@ test('V326 the live preview reflects the CURRENT form values, not last-saved sta
   const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function refreshCustomerInterfaceLivePreviewV326(');
   // Reads the live input value, falling back to saved state only when the field isn't on screen.
   assert.match(markup, /\$\('bn'\)\?\.value\|\|S\.biz\.name/);
-  assert.match(markup, /\$\('bc'\)\?\.value\|\|S\.biz\.brand_color/);
+  /* V375: there is no colour to read any more — every customer surface uses Peekaa's accent. */
+  assert.match(markup, /CUSTOMER_SURFACE_ACCENT_V375/);
 });
 
 /* V327 (owner, screenshot of the real wallet — tier, points, rewards, bottom nav — "must tally

@@ -33,7 +33,9 @@ test('appointments open in a simple day-by-team view with advanced controls seco
   assert.match(appointments, /id="vDay"[^>]*>Day</);
   assert.match(appointments, /id="vWeek"[^>]*>Week</);
   // The day/week/list buttons became a segmented control; List lives on appointmentListSeg.
-  assert.match(appointments, /id="appointmentListSeg"[^>]*>List</);
+  /* V375 (owner, photo 13): the tab reads "Appointment List" and a third "Block" tab joins it. */
+  assert.match(appointments, /id="appointmentListSeg"[^>]*>Appointment List</);
+  assert.match(appointments, /id="appointmentBlockSeg"[^>]*>Block</);
   assert.match(appointments, /<details class="appointment-more"/);
   assert.match(appointments, /id="appointmentFormCard"[^>]*hidden/);
   assert.match(appointments, /openNewAppointmentForm\(\{date='',staffId='',time='',serviceId=''\}=\{\}\)/);

@@ -85,13 +85,17 @@ test('V269 each moved panel is defined exactly once in the bundle', () => {
   for (const [what, marker] of [
     ['Workspace & brand markup', /function workspaceBrandPanelHtmlV259\(\)\{/g],
     ['Workspace & brand form', /id="bsave"/g],
-    ['brand colour field', /<label for="bc">Brand colour/g],
+    /* V375: the brand colour picker was removed on the owner's instruction (photo 17), so the
+       booking policy field is the marker for the same one-copy-of-the-moved-form guarantee. */
+    ['booking policy field', /<label for="bp">Booking policy/g],
     ['customer programme editor host', /id="customerProgrammeEditorV95"/g],
     ['Interface markup', /function customerInterfaceSectionsHtmlV243\(/g],
     /* V368: the sign-up QR card now renders into the profile menu's dialog host instead of a
        page card. Still exactly one host, and still one loader writing into it. */
     ['sign-up card host', /id="businessQrHostV368"/g],
-    ['customer fields list', /id="cfList"/g],
+    /* V375: the custom customer-fields card was deleted on the owner's instruction (photo 16);
+       the capabilities status line is the marker for the section that remains. */
+    ['customer capabilities status', /id="customerCapabilitiesStatus"/g],
     ['customer app actions', /id="businessCustomerCapabilities"/g],
   ]) assert.equal((app.match(marker) || []).length, 1, `${what} must exist exactly once`);
 });
@@ -100,7 +104,9 @@ test('V269 each moved save handler is defined exactly once in the bundle', () =>
   for (const [what, marker] of [
     ['workspace save', /\$\('bsave'\)\.onclick=/g],
     ['workspace save wiring', /function wireWorkspaceBrandV259\(\)\{/g],
-    ['customer field add', /\$\('cfAdd'\)\.onclick=/g],
+    /* V375: the custom-field editor was deleted (owner, photo 16). The capabilities loader is
+       the one remaining moved save path, and it must still be defined exactly once. */
+    ['customer capabilities loader', /async function loadCustomerCapabilitiesV223\(\)\{/g],
     ['customer capabilities save', /function wireCustomerInterfaceV243\(/g],
     ['programme presentation editor', /async function loadCustomerProgrammePresentationEditorV95\(\)\{/g],
   ]) assert.equal((app.match(marker) || []).length, 1, `${what} must exist exactly once`);
@@ -172,9 +178,11 @@ test('V269 the owner-only gate is exactly what it was, on both routes', () => {
   assert.match(app, /if\(pageKey==='settings'&&S\.myRole!=='owner'\)\{/);
   assert.match(app, /if\(pageKey==='customer-interface'&&S\.myRole!=='owner'\)\{/);
   assert.match(customerInterface, /const canEditCustomerInterface=S\.myRole==='owner';/);
-  // the in-page check still guards every editable panel, and only the owner reads field defs
+  // the in-page check still guards every editable panel
   assert.match(customerInterface, /\$\{canEditCustomerInterface\?`/);
-  assert.match(customerInterface, /const \{data:fieldDefs,error:fieldDefsError\}=canEditCustomerInterface/);
+  /* V375: the custom-field editor was deleted (owner, photo 16), so the page no longer reads
+     client_field_definitions at all — a stronger guarantee than reading it owner-only. */
+  assert.doesNotMatch(customerInterface, /client_field_definitions/);
   assert.match(customerInterface, /if\(!canEditCustomerInterface\)return;/);
   assert.match(app, /if\(S\.myRole==='owner'\)loadWorkspaceLogoEditorV96\(\);/);
 });

@@ -46,7 +46,8 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
     ['interface', 'Customer Sign-up', '#/customer-interface/interface'],
     /* V368: 'actions' (Customer Action) joins the list — the rail's second child, holding the
        app-action switches and customer fields that outlived the retired sign-up page. */
-    ['actions', 'Customer Action', '#/customer-interface/actions'],
+    /* V375 (owner, photo 16): relabelled "Customer Permissions". The hash is untouched. */
+    ['actions', 'Customer Permissions', '#/customer-interface/actions'],
   ];
   const viewsSource = section(app, 'const CUSTOMER_INTERFACE_VIEWS_V296=[', '];');
   /* V368 no longer asserts ORDER across the whole list — 'actions' is declared beside the

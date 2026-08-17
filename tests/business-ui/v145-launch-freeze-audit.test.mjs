@@ -383,7 +383,9 @@ test('customer directory and CSV reuse one bounded actionable balance projection
   assert.match(customers,/const allCustomerDirectoryRows=async/);
   assert.match(customers,/while\(total===null\|\|offset<total\)/);
   assert.match(customers,/loyalty_available===true/);
-  assert.match(customers,/Points and spendable credit are unavailable because complete Loyalty access could not be confirmed/);
+  /* V375 (owner, photo 1: "delete credit here"): the Credit column is gone from the directory,
+     so the unavailable notice names only what the table still shows. */
+  assert.match(customers,/Points are unavailable because complete Loyalty access could not be confirmed/);
   assert.match(customers,/No zero is inferred/);
   assert.doesNotMatch(customers,/from\('client_points_balance'\)|from\('client_credit_balance'\)/,
     'directory and CSV must not diverge from the V145 server projection');

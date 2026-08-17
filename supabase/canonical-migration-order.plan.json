@@ -2068,6 +2068,18 @@
       "version": "20260817000005",
       "name": "nestly_v372_gift_follows_its_programme",
       "sourcePath": "db/migrations/20260817_nestly_v372_gift_follows_its_programme.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000007",
+      "name": "nestly_v374_birthday_gift_saves",
+      "sourcePath": "db/migrations/20260817_nestly_v374_birthday_gift_saves.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000008",
+      "name": "nestly_v375_points_are_not_credit",
+      "sourcePath": "db/migrations/20260817_nestly_v375_points_are_not_credit.sql"
     }
   ]
 }

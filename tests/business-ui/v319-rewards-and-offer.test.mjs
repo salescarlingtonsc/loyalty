@@ -161,7 +161,7 @@ const growHarness=()=>new Function('esc','assertOk',`
   return (rewardRows,offerRows)=>{
     const growOverviewRowsV271=[...rewardRows,...offerRows];
     ${statement('const growLimitedOfferEntryV319=','growOverviewRowsV271.filter(growLimitedOfferEntryV319);')}
-    ${statement('const growOverviewChildRowV324=',':\`<b data-merchant-content>\${esc(row.name)}</b>\`;\n  }];')}
+    ${statement('const growOverviewChildRowV324=',':\`<b data-merchant-content>\${esc(row.name)}</b>\${parentNote}\`;\n  }];')}
     ${statement('const growOverviewRewardsTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
     ${statement('const growOverviewOffersTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
     ${statement('const growOverviewFrameV324=','</div>\`;')}
@@ -308,7 +308,8 @@ test('V319 #/grow/offers resolves as a view, lights one rail row, and renders on
   assert.match(appJs,/const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
   assert.match(appJs,/const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/,
     'without this the hash is handed to the deep editor instead of the view');
-  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers'\]/,
+  /* V375 added 'bringback' to the same list, for the same reason — see photo 9. */
+  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback'\]/,
     'without this the offers view falls through to "render every category"');
   /* Rail active-state: 'offers' belongs to its own child, not to the Rewards Programme list. */
   const navActive=section('const navViewActiveV296=','const childRowsV294=');

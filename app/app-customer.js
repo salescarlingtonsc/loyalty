@@ -2481,13 +2481,12 @@ function customerProgrammePresentationV95(payload={},fallback={}){
   /* v177: the hero paints this colour behind white text, so a merchant who picks a pale brand
      colour would otherwise ship unreadable copy. contrastSafeBrandColor keeps the merchant's own
      colour whenever it clears 4.5:1 against white and substitutes the brand fallback when it does not. */
-  const heroColor=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(brand.hero_color||''))?brand.hero_color
-    :/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#28212f');
+  const heroColor=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   const unit=String(programme.unit||loyalty.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
   return {
     locale:normalizeCustomerLocale(payload?.locale||customerLocale),
     logoUrl:customerMediaUrlV95(brand.logo_url),
-    heroImageUrl:customerMediaUrlV95(brand.hero_image_url),
+    heroImageUrl:'',
     heroColor,
     name:programme.name||business.name||ct('programmes'),
     tagline:programme.tagline||programme.description||business.industry||ct('localBusiness'),
@@ -2625,7 +2624,7 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
      stacked kicker read as filler above the real title. One icon-led title line instead. */
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers <span aria-hidden="true">🎁</span></span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -3427,7 +3426,6 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
     <div class="row"><div><h2>${esc(business.name||'Business')} rewards</h2><p class="muted small" style="margin-top:4px">${esc(business.industry||'Local business')}</p></div><span class="spacer"></span>${detail?'':`<span class="pill">${esc(actionableWalletActionText(card))}</span>`}</div>
     <div class="wallet-metrics">
       <div class="wallet-metric"><span class="muted small">${unit} balance</span><b>${esc(customerPointTotalV103(loyalty.balance||0))}</b></div>
-      <div class="wallet-metric"><span class="muted small">Credit balance</span><b>${currency} ${(Number(credit.balance_cents||0)/100).toFixed(2)}</b></div>
       <div class="wallet-metric"><span class="muted small">Package session balance</span><b>${Number(packages.sessions_remaining||0)}</b></div>
       <div class="wallet-metric"><span class="muted small">${unit} expiry</span><b style="font-size:14px;line-height:1.35">${esc(actionableWalletExpiryText(card?.expiry,loyalty.unit||'points'))}</b></div>
     </div>
@@ -3509,11 +3507,9 @@ function mergeCustomerProgrammeSelectorMediaV96(cards=[],payload=null){
 function customerProgrammeHoldingsMarkupV183(card){
   const loyalty=card?.loyalty||{},business=card?.business||{},
     sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0),
-    creditCents=Math.max(0,Number(card?.credit?.balance_cents)||0),
     currency=String(business.currency||'SGD');
   const chips=[];
   if(sessions>0)chips.push(`<span class="customer-programme-holding"><b>${sessions}</b> ${esc(sessions===1?'session left':'sessions left')}</span>`);
-  if(creditCents>0)chips.push(`<span class="customer-programme-holding"><b>${esc(currency)} ${(creditCents/100).toFixed(2)}</b> credit</span>`);
   return chips.length?`<div class="customer-programme-holdings">${chips.join('')}</div>`:'';
 }
 function customerProgrammeDirectoryTypeV346(business={}){
@@ -3575,7 +3571,7 @@ function customerProgrammeDirectoryStatusV346(card){
 }
 function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
-  const accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
+  const accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   const holdings=customerProgrammeHoldingsMarkupV183(card);
   const tier=String(loyalty.tier_name||'').trim(),
     metric=customerProgrammeDirectoryMetricV346(card),
@@ -3655,7 +3651,7 @@ function customerHomeBusinessBalanceV345(card){
 function customerHomeBusinessCardV345(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),
     status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier_name||'').trim(),
-    accent=contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(String(business.brand_color||''))?business.brand_color:'#c73b2f');
+    accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   return `<a class="customer-home-business-card-v345" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
     <span class="customer-home-business-logo-v345">${customerProgrammeTileLogoV96(business)}</span>
     <span class="customer-home-business-copy-v345"><b>${esc(name)}</b>${tier?`<em>${esc(tier)}</em>`:''}<strong>${esc(customerHomeBusinessBalanceV345(card))}</strong>${status?`<small>${esc(status)}</small>`:''}</span>
@@ -3665,7 +3661,7 @@ function customerHomeBusinessCardV345(card){
 function customerHomeBusinessRailV343(cards=[]){
   const rows=(Array.isArray(cards)?cards:[]).slice(0,8);
   if(!rows.length)return '';
-  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your businesses</h2><a href="#/customer/programmes">See all</a></div>
+  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa <span aria-hidden="true">👀</span></h2><a href="#/customer/programmes">See all</a></div>
     <div class="customer-home-business-track-v343">${rows.map(customerHomeBusinessCardV345).join('')}</div></section>`;
 }
 function customerHomeBookingTimeV345(value){
@@ -5495,7 +5491,7 @@ async function renderPortal(slug){
   }finally{clearTimeout(portalLoadTimer)}
   if(!isPortalCurrent())return;
 
-  const bc=contrastSafeBrandColor(biz.brand_color);
+  const bc=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   const currency=biz.currency||'SGD';
   const services=(biz.services&&biz.services.length)?biz.services:[];
   const hasServices=services.length>0;

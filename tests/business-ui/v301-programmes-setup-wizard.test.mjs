@@ -73,7 +73,7 @@ test('V301 (a) "setup" resolves as a Programmes view, and is not mistaken for a 
   // The three V271/V294 rail children keep resolving exactly as before.
   assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
   // The view replaces the category list rather than stacking on it.
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback'\]\.includes\(programmeView\);/);
   assert.match(grow, /programmeView==='setup'\?'Set up rewards'/);
 });
 
@@ -524,8 +524,10 @@ test('V304 Remove writes active:false through the same writers, with Undo and no
   assert.match(wizard, /\.filter\(reward=>reward\.active!==false\),/);
   assert.match(wizard, /const activeRewardsV304=\(\)=>state\.rewards\.filter\(reward=>reward\.active!==false\);/);
   assert.match(wizard, /const activeTiersV304=\(\)=>state\.tiers\.filter\(tier=>tier\.active!==false\);/);
-  // The Go-live summary names only what a customer can still claim.
-  assert.match(wizard, /:activeRewardsV304\(\)\.length/);
+  /* The Go-live summary names only what a customer can still claim. V375 removed the classic
+     store-credit branch that used to sit in front of this expression (owner, photo 3), so the
+     reward line now opens with the very same test. */
+  assert.match(wizard, /const rewardLine=\(\)=>activeRewardsV304\(\)\.length/);
 });
 
 test('V304 the copy matches the button, and no step still says "press Next to add"', () => {

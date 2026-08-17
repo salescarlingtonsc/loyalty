@@ -117,7 +117,8 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
      the customer app-action switches and the customer fields that used to sit at the bottom of
      the retired Customer Sign-up page. It is the rail's second child; Appointment Setting stays
      as a TAB beside it on the same page, which is how the owner drew it. */
-  ['actions','Customer Action','#/customer-interface/actions','customers',2],
+  /* V375 (owner, photo 16: "Customer Action" struck through, "Customer Permissions" written). */
+  ['actions','Customer Permissions','#/customer-interface/actions','customers',2],
   ['preview','Preview','#/customer-interface','customers',3],
   ['done','Done','#/customer-interface/done','check',4],
   ['programme','Customer programme','#/customer-interface/programme','loyalty',5],
@@ -253,6 +254,10 @@ let pendingProgrammeSuggestV172=null;
    once, on the first render that can use them, so a later plain visit to the wizard is unaffected. */
 let pendingGrowSetupModelV303=null;
 let pendingGrowSetupRewardV303=null;
+/* V375 (owner, photo 12: "can filter date range to see" over the History page). Module-scoped so
+   the window survives growPage's re-render, exactly like growPointsViewKindV350 above. */
+let growHistoryFromV375='';
+let growHistoryToV375='';
 /* V349: lazily-created/revoked preview blob URL for a newly-picked (not-yet-uploaded) gift photo
    — reused across rerenders as long as the File reference is unchanged, so choosing a photo
    doesn't leak a fresh object URL on every keystroke-triggered rerender. */
@@ -1415,6 +1420,9 @@ function activeGroupKey(pageKey){
    Gift cards. V295 removed it from the loyalty editor; the owner's ruling covers these headers too,
    now that the rail carries Programmes' own children and Gift cards sits under Serve & sell. The
    destination is one rail click away, so the capability did not leave with the button. */
+/* V375: the customer portal link is built in one place now that two pages show it (Bookings
+   keeps the Copy button, Appointments carries the card — owner, photo 5). */
+function portalUrlV375(slug){return publicAppUrl(`b/${encodeURIComponent(slug||'')}`)}
 function waitlistBadgeHtml(){
   const count=Number(waitlistActiveCount)||0;
   return count>0?`<span class="nav-badge" data-waitlist-badge>${count}</span>`:'';
@@ -1506,7 +1514,7 @@ function navHtml(page,idPrefix='nav'){
     const childRowsV294=(g.views||[]).length
       ?g.views.map(([label,href,iconName])=>{const on=navViewActiveV296(href);
         return `<a href="${href}" class="${on?'act':''}"${on?' aria-current="page"':''}><span class="ic">${CUI.icon(iconName||g.icon,{size:18})}</span><span class="nav-label">${label}</span></a>`}).join('')
-      :g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}</a>`).join('');
+      :g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:18})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}${m==='appointments'?`<span data-appointments-badge-slot>${appointmentsNavBadgeHtml()}</span>`:''}</a>`).join('');
     return `<div class="navgroup">
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="${idPrefix}-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:18})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
       <div class="navbody" id="${idPrefix}-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
@@ -2023,6 +2031,13 @@ function ensureRealtimeChannel(){
    already used — this never becomes a second RPC, only a second place to reach it from, so
    confirm/decline logic cannot drift between the two surfaces. */
 let pendingBookingRequestCountV329=0;
+/* V375 (owner, photo 19: the "1" circled with an arrow to the Appointments rail item, "show
+   here"). The rail row carries the SAME pendingBookingRequestCountV329 the topbar button reads,
+   so the two can never disagree, and it follows the waitlist badge's slot pattern exactly. */
+function appointmentsNavBadgeHtml(){
+  const n=Number(pendingBookingRequestCountV329)||0;
+  return n>0?`<span class="nav-badge" data-appointments-badge>${n}</span>`:'';
+}
 function bookingRequestsBadgeWrapHtml(){
   const n=pendingBookingRequestCountV329;
   /* No separate aria-label: the visible text ("N awaiting confirmation") already is the
@@ -2053,6 +2068,9 @@ async function refreshPendingBookingRequestCountNowV370(){
   pendingBookingRequestCountV329=count||0;
   const wrap=$('bookingRequestsBadgeWrapV329');
   if(wrap){wrap.outerHTML=bookingRequestsBadgeWrapHtml();wireBookingRequestsBadgeV329();}
+  document.querySelectorAll('[data-appointments-badge-slot]').forEach(slot=>{
+    slot.innerHTML=appointmentsNavBadgeHtml();
+  });
 }
 /* The single decision path, callable from any page — the popup can fire while the owner is on
    Dashboard, Customers, anywhere. window.decideBookingRequestV73 (bookingsPage) is bound to
@@ -2098,10 +2116,17 @@ function openStampsExclusivityPopupV363(losingNames,onProceed){
     </div>
   </div></div>`);
   let deactivate;
-  const close=()=>{if(deactivate)deactivate();else $('stampsExclusivityPopupV363')?.remove();};
+  const close=options=>{if(deactivate)deactivate(options);else $('stampsExclusivityPopupV363')?.remove();};
   deactivate=CUI.activateDialog($('stampsExclusivityPopupV363'),{onClose:close,initialFocus:'#stampsExclusivityNoV363'});
-  $('stampsExclusivityNoV363').onclick=close;
-  $('stampsExclusivityYesV363').onclick=()=>{close();if(typeof onProceed==='function')onProceed();};
+  $('stampsExclusivityNoV363').onclick=()=>close();
+  /* V375 (owner, photo 8: "when i press this, page did not proceed to stamp card"). CUI's dialog
+     teardown unwinds the history entry it pushed by calling history.back(), which is ASYNCHRONOUS.
+     The plain close() therefore queued a pop, openStampsV363 then set the hash synchronously, and
+     the queued pop landed afterwards and took the owner straight back to the programmes list —
+     the navigation happened and was immediately undone. Proceeding hands the entry over instead
+     (handOffHistory), so nothing pops and Back still returns here from the stamp card page.
+     "No, go back" keeps unwinding, because there the entry genuinely is ours to remove. */
+  $('stampsExclusivityYesV363').onclick=()=>{close({handOffHistory:true});if(typeof onProceed==='function')onProceed();};
 }
 function openBookingRequestPopupV329(row){
   if($('bookingRequestPopupV329'))return;
@@ -3049,7 +3074,12 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
     const time=sgt(row.starts_at).slice(11,16);
     const who=row.clients?.full_name||'Walk-in';
     const what=row.services?.name||'';
-    return `<li class="dashboard-schedule-chip"><b>${esc(time)}</b><span data-merchant-content>${esc(who)}</span>${what?`<span class="muted small" data-merchant-content>${esc(what)}</span>`:''}</li>`;
+    /* V375 (owner, photo 15: the 11:30 row ringed — "clickable to pop-up see details & to
+       complete & checkout"). The chip links to the Appointments page carrying this appointment's
+       id, which that page opens in its existing detail dialog. Deliberately a link to the one
+       surface that owns the dialog rather than a second copy of it here: the dialog's complete,
+       amend and cancel paths all live inside appointmentsPage's closure. */
+    return `<li class="dashboard-schedule-chip"><a class="dashboard-schedule-chip-link-v375" href="#/appointments?appointment=${encodeURIComponent(row.id)}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:who})}><b>${esc(time)}</b><span data-merchant-content>${esc(who)}</span>${what?`<span class="muted small" data-merchant-content>${esc(what)}</span>`:''}</a></li>`;
   }).join('')}${overflow>0?`<li class="dashboard-schedule-chip more"><a href="#/appointments?view=list&preset=today">+${overflow} more</a></li>`:''}</ol>`;
 }
 /* V182: the benefits SMEs actually offer, in customer-facing words. */
@@ -3681,7 +3711,7 @@ async function clientsPage(){
          only the first was ever read by getElementById, so the second was dead UI. One bar now
          renders, carrying the union of both bars' inactivity buckets (incl. all_inactive, which
          the dashboard drill targets). -->
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="credit_desc">Credit high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">Points high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -3751,7 +3781,6 @@ async function clientsPage(){
     if(sortKey==='last_visit_desc')list.sort((a,b)=>ts(b.last_visit_at)-ts(a.last_visit_at));
     else if(sortKey==='joined_desc')list.sort((a,b)=>ts(b.created_at)-ts(a.created_at));
     else if(sortKey==='points_desc')list.sort((a,b)=>num(b.points)-num(a.points));
-    else if(sortKey==='credit_desc')list.sort((a,b)=>num(b.balance_cents)-num(a.balance_cents));
     else if(sortKey==='consent_desc')list.sort((a,b)=>Number(!!b.marketing_consent)-Number(!!a.marketing_consent));
     else list.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||'')));
     return list;
@@ -3843,11 +3872,10 @@ async function clientsPage(){
       directory=await allCustomerDirectoryRows();
     }catch(error){if(isCustomersCurrent()){exportButton.disabled=false;fail(error)}return}
     if(!isCustomersCurrent())return;
-    const rows=[['name','phone','email','birth_date','date_joined','consent','points','credit'],
+    const rows=[['name','phone','email','birth_date','date_joined','consent','points'],
       ...directory.customers.map(c=>[c.full_name,c.phone||'',c.email||'',c.birth_date||'',
         c.created_at||'',c.marketing_consent?'yes':'no',
-        directory.loyaltyAvailable?Number(c.points||0):'unavailable',
-        directory.loyaltyAvailable?(Number(c.balance_cents||0)/100).toFixed(2):'unavailable'])];
+        directory.loyaltyAvailable?Number(c.points||0):'unavailable'])];
     const blob=new Blob([rows.map(r=>r.map(v=>String(v).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-customers.csv`;a.click();
     exportButton.disabled=false;
@@ -3906,10 +3934,10 @@ async function clientsPage(){
     const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points and spendable credit are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">Points ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="credit_desc">Credit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">Points ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
-        <td>${loyaltyAvailable?`${Number(c.points)||0} pts`:'Unavailable'}</td><td>${loyaltyAvailable?money(Number(c.balance_cents)||0):'Unavailable'}</td>
+        <td>${loyaltyAvailable?`${Number(c.points)||0} pts`:'Unavailable'}</td>
         <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
@@ -4120,6 +4148,23 @@ async function clientDetail(id){
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const redemptionWorkflow=Object.fromEntries((reversalData?.redemptions||[]).map(x=>[x.id,x]));
   const saleById=Object.fromEntries((allSl||[]).map(sale=>[sale.id,sale]));
+  /* V375 (owner, photo 2). Read under points_ledger's existing `points_select` policy
+     (app.has_perm(business_id,'view_sales')) and only when this role can already see loyalty, so
+     no new privilege is taken. Rebuilt on every load — never merged into a previous customer's
+     map — and left EMPTY if the read fails, which shows no earning rather than a wrong one. */
+  activityEarnedBySaleV375=new Map();
+  activityEarnUnitV375=String(loyaltyProjection?.program?.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
+  if(canReadLoyalty){
+    const earnLedgerV375=await fetchAllRowsResult(()=>sb.from('points_ledger')
+      .select('sale_id,points',{count:'exact'})
+      .eq('business_id',S.biz.id).eq('client_id',id).eq('entry_type','earn')
+      .not('sale_id','is',null).order('id'));
+    if(!isClientDetailCurrent())return;
+    if(!earnLedgerV375.error)(earnLedgerV375.data||[]).forEach(row=>{
+      const key=String(row.sale_id);
+      activityEarnedBySaleV375.set(key,(Number(activityEarnedBySaleV375.get(key))||0)+(Number(row.points)||0));
+    });
+  }
   const reversalByOriginal=Object.fromEntries((allSl||[])
     .filter(sale=>sale.reversal_of)
     .sort((a,b)=>(a.occurred_at||'').localeCompare(b.occurred_at||'')||String(a.id).localeCompare(String(b.id)))
@@ -5071,6 +5116,15 @@ function bindActivityRowControlsV267(redraw){
    wording all survive as muted notes inside the ITEM cell, and the per-row Reverse button keeps
    its data-reverse-kind/data-reverse-id hooks so bindReversalButtons still works unchanged.
    The wrap scrolls horizontally on a narrow phone rather than breaking the page. */
+/* V375 (owner, photo 2: "can show how much points / stamp card earned" ringed beside the
+   Activity history rows). The earn rows are read from public.points_ledger — the ledger IS the
+   record of what a sale awarded, so nothing is recomputed from the sale amount and a business
+   that changed its earn rate last week does not have last month's visits restated. Module-scoped
+   because renderHistPage is a top-level function the customer page calls twice (first paint and
+   "show more"); it is rebuilt on every customer load, so one customer's earnings can never
+   appear under another's. */
+let activityEarnedBySaleV375=new Map();
+let activityEarnUnitV375='points';
 function renderHistPage(history,n){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
@@ -5119,10 +5173,18 @@ function renderHistPage(history,n){
       const action=h.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${h.id}">Reverse</button>`
         :h.refusal_reason?`<span class="muted small">${esc(h.refusal_reason)}</span>`:'';
       const amount=Number(activityAmountCentsV267(h)||0);
+      /* V375: what this sale actually awarded, straight off the ledger. A sale that earned
+         nothing — a membership, a gift card, a reversal — simply says nothing, rather than
+         printing a zero that would read as a mistake. */
+      const earnedV375=Number(activityEarnedBySaleV375.get(String(h.id)))||0;
+      const earnedUnitV375=earnedV375===1?activityEarnUnitV375.replace(/s$/,''):activityEarnUnitV375;
+      const earnedNoteV375=earnedV375>0
+        ?`<span class="c360-act-earned-v375">+${esc(String(earnedV375))} ${esc(earnedUnitV375)} earned</span>`:'';
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
         type:activityTypeOfV267(h),
         item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
         notes:[relation,
+          earnedNoteV375,
           h.note?esc(h.note):'',
           h.is_package_session?'Package session · reversal restores one session with no payment refund':'',
           h.reversal_sale_id?`Net ${money(Number(h.net_amount_cents||0))}`:'',
@@ -6487,7 +6549,45 @@ async function tillPage(){
         <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
     return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
       ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
-      <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
+      <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>
+      ${tillManualAmountRowHtmlV375()}`;
+  }
+  /* V375 (owner, photo 4: "put a manually add amount field", arrow into the space under the
+     item grid). The amount the customer paid is often the ONLY thing the counter knows — a
+     one-off job, a price agreed on the spot — and typing it was two taps deep, inside More items
+     → Other item. It is now on the first screen, and it is the SAME addCustomLine the sheet's tab
+     calls: one custom-line path, one server validation (custom_line_denied / custom_line_limit /
+     custom_line_invalid), so nothing about who may type a price or what the server accepts is
+     changed by moving the field. Owner and manager only, for exactly that reason. */
+  function tillManualCanTypeAmountV375(){return S.myRole==='owner'||S.myRole==='manager'}
+  function tillManualAmountRowHtmlV375(){
+    if(!tillManualCanTypeAmountV375())return '';
+    return `<div class="till-manual-amount-v375" data-till-manual-amount-v375>
+      <label for="tillManualAmountV375"><b class="small">Or type an amount</b></label>
+      <div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px">
+        <div><span class="muted small">${esc(S.biz?.currency||'SGD')}</span>
+          <input id="tillManualAmountV375" type="number" inputmode="decimal" step="0.01" placeholder="0.00" style="max-width:140px" ${cartLocked()?'disabled':''}></div>
+        <div style="flex:1;min-width:min(100%,200px)"><label class="muted small" for="tillManualReasonV375">What was it? (optional)</label>
+          <input id="tillManualReasonV375" type="text" maxlength="120" placeholder="e.g. touch-up" ${cartLocked()?'disabled':''}></div>
+        <button type="button" class="btn sm" id="tillManualAddV375" ${cartLocked()?'disabled':''}>Add</button>
+      </div>
+      <p class="muted small" style="margin-top:6px">Adds a one-off line to this sale. It earns whatever your programmes award, the same as any other item.</p>
+    </div>`;
+  }
+  function wireTillManualAmountV375(root){
+    const button=root?.querySelector?.('#tillManualAddV375');
+    if(!button)return;
+    const amountField=root.querySelector('#tillManualAmountV375');
+    const reasonField=root.querySelector('#tillManualReasonV375');
+    const submit=()=>{
+      const cents=Math.round(Number(amountField?.value||'')*100);
+      if(!Number.isFinite(cents)||cents===0)return toast('Type an amount first.');
+      addCustomLine(cents,String(reasonField?.value||'').trim());
+      if(amountField)amountField.value='';
+      if(reasonField)reasonField.value='';
+    };
+    button.onclick=submit;
+    if(amountField)amountField.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();submit()}};
   }
   /* Tab 2 — this customer's prepaid sessions, and the one action that sells another. Selling is
      an action rather than a second grid: at a counter, spending a session the customer already
@@ -6752,6 +6852,7 @@ async function tillPage(){
     if($('tGoReviewV373'))$('tGoReviewV373').onclick=()=>{closeTillAddSheetV373();tillStageV373='review';draw()};
     if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';tillItemsTabV374='items';draw()};
     if($('tAddItemV373'))$('tAddItemV373').onclick=()=>openTillAddSheetV373();
+    wireTillManualAmountV375(document);
     if($('tSellPackageV374'))$('tSellPackageV374').onclick=()=>openTillAddSheetV373('sellpackage');
     document.querySelectorAll('[data-till-stage-tab-v374]').forEach(button=>button.onclick=()=>{
       tillItemsTabV374=button.dataset.tillStageTabV374;draw();
@@ -8066,7 +8167,7 @@ const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-ho
 
 async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const portal=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
+  const portal=portalUrlV375(S.biz.slug);
   const isOwner=S.myRole==='owner';
   /* V288 (audit A2 HIGH 1, beachhead blocker). Confirming a booking request was gated on
      APPOINTMENTS write, but the F&B and bar sectors are not entitled to the appointments module
@@ -8092,9 +8193,6 @@ async function bookingsPage(){
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
   routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
-    <div class="card" data-bookings-shell="portal" style="margin-bottom:16px"><b>Your customer portal</b>
-      <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
-      <p class="small portal-link-row"><a class="portal-link" href="${portal}" target="_blank" rel="noopener noreferrer">${portal}</a></p></div>
     <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
       <!-- V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
@@ -9622,8 +9720,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
           <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
-          <div><label>Fulfilment</label><select id="rwKind"><option value="manual_item" ${rewardKind(r)==='manual_item'?'selected':''}>Manual item or benefit</option><option value="credit" ${rewardKind(r)==='credit'?'selected':''}>Store credit</option></select></div>
-          <div id="rwCreditWrap"><label>Store credit value (${S.biz.currency||'SGD'})</label><input id="rwCredit" type="number" min="0" step="0.01" value="${((r.credit_cents||0)/100).toFixed(2)}" placeholder="e.g. 3.00"></div>
+          ${/* V375 (owner, photo 3: "i don't want credit feature"). The Fulfilment chooser and its
+                store-credit amount are gone — every reward is an item or a benefit the counter
+                hands over. Both ids are kept as hidden inputs so the save path below, the archive
+                branch and the audit column reader all keep reading the same fields; production
+                holds 20 rewards and every one of them is already manual_item, so nothing is
+                being rewritten here. */''}
+          <input type="hidden" id="rwKind" value="manual_item">
+          <input type="hidden" id="rwCredit" value="0">
           <div class="full" style="margin-top:6px"><b>Limits and timing</b></div>
           <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
           <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
@@ -9660,8 +9764,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        original behaviour of leaving the editor. openRewardDialogV238 rebinds it after this
        render so the opener also regains focus. */
     $('rwClose').onclick=()=>document.getElementById('rewardDialogV238')?closeRewardDialogV238(true):finishGrowEditorV139();
-    const kind=$('rwKind'),creditWrap=$('rwCreditWrap');
-    const syncKind=()=>{creditWrap.style.display=kind.value==='credit'?'block':'none';if(kind.value!=='credit')$('rwCredit').value='0'};
+    const kind=$('rwKind');
+    const syncKind=()=>{};
     kind.onchange=syncKind;syncKind();
     /* V293 (owner report 2026-08-12: "isn't it auto populated since i know what points needed
        for redemptions"): the budget→points sync silently overwrote a Points cost the owner had
@@ -12339,7 +12443,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      "no tiles, no drilled topic" branch, which answers TRUE for every key — the Limited Offer
      page would have rendered every category on the module. V326: 'points' joins for the same
      reason — its own page, not a topic drill. */
-  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers'].includes(programmeView);
+  /* V375 (owner, photo 9: the whole Point system / Tiered membership / Promotions stack struck
+     through at the bottom of the BRING-BACK page — "this module is for bring-back rewards, do not
+     add other rewards inside, we already have a separate module to manage that, now it creates
+     duplicate"). 'bringback' was missing from this list, so growCategoryViewV271 stayed true on
+     its page; with no drilled topic and no tiles, topicOnV229 fell through to its "answer TRUE for
+     every key" branch and rendered every other programme category below the bring-back module —
+     the same trap V319 fixed for Limited Offer and V326 for the points page, one page later. */
+  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -12655,6 +12766,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :esc(String(Number(value)));
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
     ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
+  const GROW_PROGRAMME_PARENT_NAMES_V375=Object.freeze({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'});
+  const growRewardParentNameV375=reward=>{
+    const rows=programmeSpineRowsV314();
+    const kind=reward?.programme_id&&rows
+      ?rows.find(row=>String(row?.id)===String(reward.programme_id))?.kind:null;
+    return GROW_PROGRAMME_PARENT_NAMES_V375[kind]||null;
+  };
   const growProgrammeEntriesV271=(()=>{
     const entries=[];
     const milestoneById=new Map();
@@ -12670,7 +12788,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         :milestone?.availability==='ended'?'ended'
         :milestone?.availability==='not_started'?'scheduled'
         :milestone?.availableToCustomers?'live':'paused';
+      /* V375 (owner, photo 12: "please specify if some is under Point System" braced across the
+         retired gifts). A gift carries programme_id, so the parent is READ off the spine rather
+         than inferred from whichever model happens to be live today — a stamp-card gift retired
+         last year still says Stamp card after the firm switched to points. A gift with no
+         programme link says nothing rather than guessing. */
       entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
+        parent:growRewardParentNameV375(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
         customers:growRewardUsageV271.get(String(reward.id))??null,
         detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
@@ -12774,9 +12898,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growOverviewNameColumnV324=(rows,label)=>[label,row=>{
     const at=rows.indexOf(row);
     const parentAbove=at>0&&rows.slice(0,at).some(entry=>!growOverviewChildRowV324(entry));
+    const parentNote=row.parent?`<span class="muted small grow-overview-parent-v375">Under ${esc(row.parent)}</span>`:'';
     return growOverviewChildRowV324(row)&&parentAbove
-      ?`<span class="grow-overview-child-v324"><b data-merchant-content>${esc(row.name)}</b></span>`
-      :`<b data-merchant-content>${esc(row.name)}</b>`;
+      ?`<span class="grow-overview-child-v324"><b data-merchant-content>${esc(row.name)}</b>${parentNote}</span>`
+      :`<b data-merchant-content>${esc(row.name)}</b>${parentNote}`;
   }];
   const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
@@ -12824,8 +12949,26 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      its end date has one, a row retired by hand does not — without a column that repeated in
      words what the dates already said. Type goes for the same reason it went on Overview, and the
      child indent replaces it here too. */
-  const growHistoryRewardRowsV324=growHistoryRowsV271.filter(entry=>!growLimitedOfferEntryV319(entry));
-  const growHistoryOfferRowsV324=growHistoryRowsV271.filter(growLimitedOfferEntryV319);
+  /* V375: a row is in the window when the period it ran overlaps it — a programme that started
+     before the From date but ended inside it is exactly what "what ended in this period" means.
+     A row with no dates at all is never hidden: the filter must not silently swallow a programme
+     whose dates were simply never tracked. */
+  const growHistoryInWindowV375=row=>{
+    const from=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
+    const to=growHistoryToV375?Date.parse(`${growHistoryToV375}T23:59:59+08:00`):null;
+    if(!Number.isFinite(from)&&!Number.isFinite(to))return true;
+    const started=Date.parse(row?.started||''),ended=Date.parse(row?.ended||'');
+    if(!Number.isFinite(started)&&!Number.isFinite(ended))return true;
+    const rowFrom=Number.isFinite(started)?started:ended;
+    const rowTo=Number.isFinite(ended)?ended:started;
+    if(Number.isFinite(from)&&rowTo<from)return false;
+    if(Number.isFinite(to)&&rowFrom>to)return false;
+    return true;
+  };
+  const growHistoryFilteredRowsV375=growHistoryRowsV271.filter(growHistoryInWindowV375);
+  const growHistoryHiddenCountV375=growHistoryRowsV271.length-growHistoryFilteredRowsV375.length;
+  const growHistoryRewardRowsV324=growHistoryFilteredRowsV375.filter(entry=>!growLimitedOfferEntryV319(entry));
+  const growHistoryOfferRowsV324=growHistoryFilteredRowsV375.filter(growLimitedOfferEntryV319);
   const growHistoryRewardsTableV324=growTableV271({label:'Reward programmes that have ended',rows:growHistoryRewardRowsV324,
     empty:'<b>No reward programme has ended yet.</b><p class="muted small" style="margin-top:6px">Programmes appear here once they pass their end date or you retire them.</p>',
     columns:[growOverviewNameColumnV324(growHistoryRewardRowsV324,'Programme'),
@@ -12836,7 +12979,49 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
       ['Ran from',row=>growDateCellV271(row.started)],
       ['Ran until',row=>growDateCellV271(row.ended)]]});
-  const growHistoryTableV271=growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false});
+  /* V375 (owner, photo 6: a large ring under the Overview tables — "put analytic here → show how
+     many inactive customer come back within specific stipulated time (can filter) → how many
+     customers used reward programmes in each different category. in short, i want see if these
+     programmes help to bring my customer back").
+     Two answers, both from readers that already exist and are already gated:
+       - the come-back question is renderComebackCardV300, which carries the 30/60/90 filter the
+         owner asked for. V358 removed its host from the TILES view; this is the Overview, which
+         is where the owner has now drawn it. Nothing about the card or its RPCs changes.
+       - the per-category question is business_programme_usage_v271, already read above for the
+         "Customers used" column. The rows are grouped by the category each programme belongs to
+         rather than counted again, so this block and the table beside it can never disagree.
+     Honesty rule kept from V271: a category whose usage the server did not answer says "Not
+     tracked". It never shows a zero it did not measure. */
+  const growAnalyticsRowsV375=(()=>{
+    const buckets=new Map();
+    growProgrammeEntriesV271.forEach(entry=>{
+      const category=entry.parent||entry.type||'Programme';
+      const current=buckets.get(category)||{category,customers:null,programmes:0};
+      current.programmes+=1;
+      if(entry.customers!=null)current.customers=(current.customers||0)+Number(entry.customers||0);
+      buckets.set(category,current);
+    });
+    return [...buckets.values()].sort((a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
+      ||String(a.category).localeCompare(String(b.category)));
+  })();
+  const growAnalyticsCardV375=`<section class="card" style="margin-top:16px" aria-labelledby="growAnalyticsHeadV375">
+    <h2 id="growAnalyticsHeadV375">Are the programmes bringing customers back?</h2>
+    <p class="muted small" style="margin-top:4px">Observed visits and redemptions only. These figures describe what happened; they do not claim a programme caused it.</p>
+    <div id="comebackHost" style="margin-top:14px"></div>
+    <div style="margin-top:16px"><b class="small">Customers who used each programme</b>
+      ${growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
+        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
+      </tbody></table></div>`
+      :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
+    </div>
+  </section>`;
+  const growHistoryFilterBarV375=`<div class="card v150-filterbar" style="margin-bottom:16px" data-grow-history-filter-v375>
+    <div><label for="growHistoryFromV375">From</label><input type="date" id="growHistoryFromV375" value="${esc(growHistoryFromV375)}"></div>
+    <div><label for="growHistoryToV375">To</label><input type="date" id="growHistoryToV375" value="${esc(growHistoryToV375)}"></div>
+    <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growHistoryApplyV375">Apply</button><button type="button" class="btn ghost sm" id="growHistoryClearV375">Clear</button></div>
+    ${growHistoryHiddenCountV375>0?`<p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growHistoryHiddenCountV375} ${growHistoryHiddenCountV375===1?'programme is':'programmes are'} outside this date range. Clear the filter to see everything.</p>`:''}
+  </div>`;
+  const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false})}`;
   /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3 ==========================
      The dedicated #/grow/points page: Published | History (no Draft — every change here is
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
@@ -12875,7 +13060,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :growPointsRawRewardsV326.filter(reward=>reward?.programme_id==null||reward.programme_id===growPointsSpineIdV326);
   const growPointsPublishedV326=growPointsScopedRewardsV326.filter(reward=>reward?.active!==false)
     .sort((a,b)=>Number(a.sort||0)-Number(b.sort||0)||Number(a.cost_points||0)-Number(b.cost_points||0));
+  /* V375 (owner, photo 7: "put warning here" with "history only saved here for 60 days" written
+     across the gift history). Asked what period suited an audit trail, the owner chose five
+     years — the Singapore statutory record-keeping period — and chose to keep everything. So this
+     is a DISPLAY window, not a retention rule: nothing is deleted, the rows are all still in the
+     database, and the notice below says exactly that rather than promising a deletion the app
+     does not perform. */
+  const GROW_HISTORY_WINDOW_YEARS_V375=5;
+  const growHistoryCutoffV375=(()=>{const d=new Date();d.setFullYear(d.getFullYear()-GROW_HISTORY_WINDOW_YEARS_V375);return d})();
+  const growWithinHistoryWindowV375=row=>{
+    const added=new Date(row?.created_at||'');
+    return !Number.isFinite(added.getTime())||added>=growHistoryCutoffV375;
+  };
   const growPointsHistoryV326=growPointsScopedRewardsV326.filter(reward=>reward?.active===false)
+    .filter(growWithinHistoryWindowV375)
     .sort((a,b)=>Number(b.sort||0)-Number(a.sort||0));
   const growPointsOnV326=programmeSpineOnV314(growPointsSpineKindV326)===true;
   const growPointsLosingV326=growPointsOnV326?[]:programmeExclusionsV322(growPointsSpineKindV326).filter(other=>programmeSpineOnV314(other)===true);
@@ -13020,7 +13218,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growPointsEditingV326?'':growPointsAddFormV326}
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
-      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`:''}
+      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`
+        :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">Showing gifts retired in the last ${GROW_HISTORY_WINDOW_YEARS_V375} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.</p></div>`}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
         ${growPointsManageTabV326==='published'
           ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one below.</li>')
@@ -13527,6 +13726,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      that silently switched a paused programme on would be the defect R6 exists to prevent. */
   const growReferralRewardV364=Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0));
   const growReferralMinCentsV364=Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0));
+  /* V375 (owner, photo 10: "once set, can put referral info here" circled in the empty space
+     under the Referrals row). Once the programme is configured, its settings are STATED there
+     rather than only being visible after pressing Edit — the same two numbers the editor writes,
+     read from the same snapshot row, so the summary cannot drift from the form. Hidden while the
+     editor is open, so the page never shows the value twice in two shapes. */
+  const growReferralSummaryV375=!(referralConfigured&&!growReferralEditOpenV364)?''
+    :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
+      <b>Referral settings</b>
+      <dl class="appointment-detail-list" style="margin-top:8px">
+        <div><dt>Reward for the referrer</dt><dd>${Number(snapshot.referral?.reward_points)>0?esc(growPointsWordV322(snapshot.referral.reward_points)):'Not set yet'}</dd></div>
+        <div><dt>Friend must spend at least</dt><dd>${Number(snapshot.referral?.min_spend_cents)>0?esc(money(Number(snapshot.referral.min_spend_cents))):'No minimum'}</dd></div>
+        <div><dt>Paid</dt><dd>After the friend's first qualifying visit — never at sign-up</dd></div>
+        <div><dt>Limit</dt><dd>One reward per referred customer, ever</dd></div>
+      </dl>
+      <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
+    </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
     :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
       <b>Referral settings</b>
@@ -13666,7 +13881,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         :CUI.emptyState({iconName:'loyalty',title:canRewards?'Owner access only':'Loyalty is not included',
           body:canRewards?'Setting up the rewards programme is an owner job. You can review what is running from the Programmes list.':'This workspace does not include the loyalty module, so there is no rewards programme to set up.',
           actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})):''}
-      ${programmeView==='overview'?growOverviewTableV271:''}
+      ${programmeView==='overview'?`${growOverviewTableV271}${growAnalyticsCardV375}`:''}
       ${programmeView==='history'?growHistoryTableV271:''}
       ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
       ${programmeView==='bringback'?growBbPageV361:''}
@@ -13717,7 +13932,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
         ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
-        ${growReferralSettingsPanelV364}
+        ${growReferralSummaryV375}${growReferralSettingsPanelV364}
       </div></div>
       `:''}
       ${topicOnV229('recurring')?`
@@ -14405,6 +14620,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTileFilterStateV357=next;
     growRerenderV322({quiet:true});
   });
+  /* V375: the History date window. Apply/Clear write the module-scoped state and re-render
+     through the same quiet path every other grow filter uses. */
+  const growHistoryApplyV375=$('growHistoryApplyV375');
+  if(growHistoryApplyV375)growHistoryApplyV375.onclick=()=>{
+    growHistoryFromV375=$('growHistoryFromV375')?.value||'';
+    growHistoryToV375=$('growHistoryToV375')?.value||'';
+    if(growHistoryFromV375&&growHistoryToV375&&growHistoryFromV375>growHistoryToV375)
+      return toast('The From date must come before the To date.');
+    growRerenderV322({quiet:true});
+  };
+  const growHistoryClearV375=$('growHistoryClearV375');
+  if(growHistoryClearV375)growHistoryClearV375.onclick=()=>{
+    growHistoryFromV375='';growHistoryToV375='';growRerenderV322({quiet:true});
+  };
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
   /* ============ V326 — POINTS SYSTEM / STAMP CARD PAGE WIRING ===============================
@@ -16161,7 +16390,6 @@ function growRewardDiffFieldsV291({unit='points',tierName=()=>null,branchName=nu
     {label:'Name',read:reward=>String(reward.customer_name||reward.name||'Reward').trim(),show:value=>value},
     {label:'Cost',read:reward=>Math.max(0,num(reward.cost_points)||0),show:value=>`${value} ${unit}`},
     {label:'Offered',read:reward=>reward.active!==false,show:value=>value?'Yes':'No'},
-    {label:'Store credit',read:reward=>Math.max(0,num(reward.credit_cents)||0),show:value=>value>0?money(value):'None'},
     {label:'Expires after',read:reward=>num(reward.entitlement_expiry_days),show:value=>value==null?'No expiry':`${value} day${value===1?'':'s'}`},
     {label:'Uses per customer',read:reward=>num(reward.usage_limit),show:value=>value==null?'Unlimited':String(value)},
     {label:'Who can redeem',read:reward=>{
@@ -16928,11 +17156,12 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const earnLine=()=>familyW6I2()==='stamps'
     ?`${currency} ${Number(state.stampSpend||0).toFixed(2)} spent → 1 stamp`
     :`${currency} 1 spent → ${unitWord(state.earn,'points')}`;
-  const rewardLine=()=>state.model==='classic'
-    ?`${unitWord(state.classicRedeem,'points')} → ${currency} ${Number(state.classicCredit||0).toFixed(2)} credit`
-    /* V304: the summary names what customers can actually claim, so a reward removed on the step
-       above drops out of it here rather than being restated on the Go-live step. */
-    :activeRewardsV304().length
+  /* V375: the classic branch is gone with the model itself (owner: "i don't want credit
+     feature") — a summary line promising an amount of store credit is the one thing this step
+     must never print now that no such reward can exist.
+     V304: the summary names what customers can actually claim, so a reward removed on the step
+     above drops out of it here rather than being restated on the Go-live step. */
+  const rewardLine=()=>activeRewardsV304().length
       ?activeRewardsV304().map(reward=>`${reward.name} — ${unitWord(reward.points,rewardUnit())}`).join(' · ')
       :'No reward yet';
   function exampleText(){
@@ -20638,8 +20867,15 @@ async function appointmentsPage(){
   const bookingRequestsActionV269=canSeeBookingRequestsV269
     ?`<button class="btn ghost" type="button" id="apptBookingRequestsV269" aria-label="Booking requests">${CUI.icon('bookings',{size:18})} Booking requests<span class="pill new" id="apptBookingRequestsCountV269" hidden></span></button>`
     :'';
+  const appointmentsPortalLinkV375=esc(portalUrlV375(S.biz.slug));
   const apptHeaderActions=`${bookingRequestsActionV269}${canWrite?`<button class="btn ghost" id="openBlockTime">${CUI.icon('staff',{size:18})} Block time</button><button class="btn" id="openAppointmentForm">${CUI.icon('appointments',{size:18})} New appointment</button>`:''}`;
   routeMain.innerHTML=`<div data-workspace-i18n>${CUI.pageHeader({title:'Appointments',subtitle:'',iconName:'appointments',actions:apptHeaderActions,canWrite,moduleLabel:'Appointment scheduling'})}</div>
+    ${/* V375 (owner, photo 5: the portal card ringed on Bookings with an arrow to Appointments,
+          "put here"). It moved WHOLE — this is the only copy, and the Bookings page keeps the
+          Copy portal link button that shares the same `portal` value. */''}
+    <div class="card" data-appointments-shell="portal" style="margin-bottom:16px"><b>Your customer portal</b>
+      <p class="muted small" style="margin-top:6px">Customers book or reserve here — share it, QR it, put it in your bio:</p>
+      <p class="small portal-link-row"><a class="portal-link" href="${appointmentsPortalLinkV375}" target="_blank" rel="noopener noreferrer">${appointmentsPortalLinkV375}</a></p></div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
       ${canWrite?`<section class="card appointment-form-card" id="appointmentFormCard" aria-labelledby="newAppointmentTitle" hidden><div class="row"><h2 id="newAppointmentTitle" style="font-size:17px">New appointment</h2><span class="spacer"></span><button class="btn ghost sm" type="button" id="closeAppointmentForm">Close</button></div>
@@ -20658,7 +20894,7 @@ async function appointmentsPage(){
         <div class="row" style="margin-top:16px;flex-wrap:wrap"><button class="btn ghost" id="checkAvailability">${CUI.icon('staff',{size:18})} Check staff</button>
           <button class="btn" id="ago">${CUI.icon('check',{size:18})} Book appointment</button></div>
       </section>`:''}
-      <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">List</button></div><span class="spacer"></span>
+      <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">Appointment List</button>${canWrite?'<button type="button" id="appointmentBlockSeg" aria-pressed="false">Block</button>':''}</div><span class="spacer"></span>
         
         
         <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:17,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
@@ -21054,16 +21290,25 @@ async function appointmentsPage(){
     if(next==='list'&&view!=='list')listPage=0;
     view=next;
     ['Day','Week'].forEach(name=>$(`v${name}`)?.classList.toggle('act',next===name.toLowerCase()));
-    $('appointmentCalendarSeg')?.setAttribute('aria-pressed',String(next!=='list'));
+    /* V375 (owner, photo 13): three tabs now — Calendar, Appointment List and Block. Block reuses
+       the list's own From/To window, because "which time is blocked" is the same question over the
+       same dates the list is already filtered to; only the Appointment status filter is hidden,
+       since a blocked slot has no appointment status. */
+    const listLikeV375=next==='list'||next==='block';
+    $('appointmentCalendarSeg')?.setAttribute('aria-pressed',String(!listLikeV375));
     $('appointmentListSeg')?.setAttribute('aria-pressed',String(next==='list'));
-    if($('calendarOnlyControls'))$('calendarOnlyControls').hidden=next==='list';
-    if($('appointmentListFilters'))$('appointmentListFilters').hidden=next!=='list';
+    $('appointmentBlockSeg')?.setAttribute('aria-pressed',String(next==='block'));
+    if($('calendarOnlyControls'))$('calendarOnlyControls').hidden=listLikeV375;
+    if($('appointmentListFilters'))$('appointmentListFilters').hidden=!listLikeV375;
+    const statusFilterField=$('appointmentListStatus')?.closest('div');
+    if(statusFilterField)statusFilterField.hidden=next==='block';
     loadAppointmentsGuardedV288();
   }
   $('vDay').onclick=()=>setCalendarView('day');
   $('vWeek').onclick=()=>setCalendarView('week');
   $('appointmentCalendarSeg').onclick=()=>setCalendarView(view==='week'?'week':'day');
   $('appointmentListSeg').onclick=()=>setCalendarView('list');
+  if($('appointmentBlockSeg'))$('appointmentBlockSeg').onclick=()=>setCalendarView('block');
   
   $('wkPrev').onclick=()=>{dayAutoScrolled=false;if(view==='week')wkOff--;else{dayOffset--;if(view==='list')view='day'}setCalendarView(view)};
   $('wkNext').onclick=()=>{dayAutoScrolled=false;if(view==='week')wkOff++;else{dayOffset++;if(view==='list')view='day'}setCalendarView(view)};
@@ -21188,6 +21433,8 @@ async function appointmentsPage(){
     closeAppointmentDetails();statusGate.invalidate();
     const outcomeIsDue=appointmentOutcomeIsDue(item),duration=appointmentDuration(item),callNumber=safeCallNumber(item);
     const amendableBooked=item.status==='booked'&&canWrite;
+    const completeTabAvailableV375=item.status==='booked'&&canWrite&&outcomeIsDue&&canComplete;
+    const amendTabsAvailableV375=amendableBooked||completeTabAvailableV375;
     const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
     const itemBranch=visibleBranches.find(branch=>branch.id===item.branch_id);
     const branchName=itemBranch?.name||'Branch';
@@ -21208,7 +21455,21 @@ async function appointmentsPage(){
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:15})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${amendableBooked?'<button type="button" class="btn" id="appointmentEditToggle" aria-expanded="false" aria-controls="appointmentRescheduleForm">Change appointment</button>':''}${item.status==='booked'&&canWrite?`${outcomeIsDue&&canComplete?'<button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>':''}${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:15})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:15})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:15})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${item.status==='booked'&&canWrite?`${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:15})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:15})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      ${/* V375 (owner, photo 14: "Change Appointment" and "Complete & Checkout" ringed with arrows
+           down onto a tab strip, and "minimise this" written across the amend form). The two
+           outcomes of an open booking are now tabs over one panel area, so only one is on screen
+           at a time and the modal opens showing neither — V245's forced-open amend form is what
+           the owner struck through. Complete & checkout keeps the SAME .statusAction element it
+           always used, so there is still exactly one completion path. */''}
+      ${amendTabsAvailableV375?`<div class="v150-segment appointment-outcome-tabs-v375" role="tablist" aria-label="Appointment outcome">
+        ${amendableBooked?'<button type="button" id="appointmentEditToggle" role="tab" aria-selected="false" aria-expanded="false" aria-controls="appointmentRescheduleForm">Change appointment</button>':''}
+        ${completeTabAvailableV375?'<button type="button" id="appointmentCompleteTabV375" role="tab" aria-selected="false" aria-expanded="false" aria-controls="appointmentCompletePanelV375">Complete &amp; checkout</button>':''}
+      </div>
+      ${completeTabAvailableV375?`<div id="appointmentCompletePanelV375" class="appointment-reschedule-form" hidden>
+        <p class="muted small" style="margin-bottom:10px">Closing this appointment records the visit, so it earns whatever your programmes award.</p>
+        <button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>
+      </div>`:''}`:''}
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
@@ -21222,16 +21483,31 @@ async function appointmentsPage(){
       editForm.setAttribute('aria-busy',String(pending));
       [...editForm.elements].forEach(control=>{control.disabled=pending});
     };
-    toggle.onclick=()=>{const open=editForm.hidden;editForm.hidden=!open;toggle.setAttribute('aria-expanded',String(open));if(open)$('appointmentEditDate').focus()};
+    /* V375: one panel at a time, and neither open until the owner picks a tab. */
+    const completeTabV375=$('appointmentCompleteTabV375'),completePanelV375=$('appointmentCompletePanelV375');
+    const showOutcomePanelV375=which=>{
+      const amendOpen=which==='amend',completeOpen=which==='complete';
+      editForm.hidden=!amendOpen;
+      toggle?.setAttribute('aria-expanded',String(amendOpen));
+      toggle?.setAttribute('aria-selected',String(amendOpen));
+      if(completePanelV375)completePanelV375.hidden=!completeOpen;
+      completeTabV375?.setAttribute('aria-expanded',String(completeOpen));
+      completeTabV375?.setAttribute('aria-selected',String(completeOpen));
+    };
+    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)$('appointmentEditDate').focus()};
+    if(completeTabV375)completeTabV375.onclick=()=>showOutcomePanelV375(completePanelV375?.hidden?'complete':null);
     /* V245 (owner: "when i click in jeffrey tan meng lee - i need to have pop up to amend and
        change details. or change staff if needed to"). The amend form — date, time, duration,
        assigned staff and note — was already here, but folded behind a second click, so opening
        an appointment read as view-only. A booked appointment now opens with it expanded; the
        toggle stays for collapsing it. Focus is only forced when the caller asked to edit, so
        merely opening a card does not yank the screen to a date field. */
-    editForm.hidden=false;toggle.setAttribute('aria-expanded','true');
+    /* V375 (owner, photo 14: "minimise this" across the amend form). V245 forced it open on every
+       card, which is what the owner struck through; it now opens only when the caller explicitly
+       asked to edit — the Amend button in the list — or when its own tab is pressed. */
+    showOutcomePanelV375(startEditing?'amend':null);
     if(startEditing)requestAnimationFrame(()=>$('appointmentEditDate')?.focus());
-    $('appointmentRescheduleCancel').onclick=()=>{editForm.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus()};
+    $('appointmentRescheduleCancel').onclick=()=>{showOutcomePanelV375(null);toggle?.focus()};
     const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
     ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{
       $(id).addEventListener('input',invalidateRescheduleEdit);$(id).addEventListener('change',invalidateRescheduleEdit);
@@ -21337,7 +21613,7 @@ async function appointmentsPage(){
   const loadAppointmentsGuardedV288=()=>loadCalendar().catch(error=>
     renderAppointmentLoadErrorV288(error,loadAppointmentsGuardedV288));
   async function loadCalendar(){
-    if(view==='list')return loadList();
+    if(view==='list'||view==='block')return loadList();
     const stillCurrent=calendarGate.begin();
     const start=view==='day'?addDays(todaySg,dayOffset):weekStart(wkOff);
     const end=view==='day'?addDays(start,1):addDays(start,7);
@@ -21352,12 +21628,11 @@ async function appointmentsPage(){
         .eq('business_id',S.biz.id).eq('branch_id',branchId).gte('starts_at',sgDateBoundary(start)).lt('starts_at',sgDateBoundary(end)).order('starts_at').order('id'))),
       fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
         p_from:sgDateBoundary(start),p_to:sgDateBoundary(end)}).order('starts_at').order('staff_id')),
-      view==='day'&&canReadModule('bookings')
-        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min)',{count:'exact'})
-            .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
-            .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
-            .gte('preferred_at',sgDateBoundary(start)).lt('preferred_at',sgDateBoundary(end)).order('preferred_at'))
-        :Promise.resolve({data:[],error:null})
+      /* V375 (owner, photo 19: the awaiting-confirmation card ringed, "move it into List"). The
+         requests are read by loadList now, over the list's own From/To window rather than the one
+         day the timeline is showing — so a request for next Tuesday is answerable without first
+         finding next Tuesday on the calendar. */
+      Promise.resolve({data:[],error:null})
     ]);
     if(!stillCurrent())return;
     const error=appointmentResult.error||blockResult.error;
@@ -21392,12 +21667,23 @@ async function appointmentsPage(){
       query.range(listPage*APPOINTMENT_LIST_PAGE_SIZE,(listPage+1)*APPOINTMENT_LIST_PAGE_SIZE-1),
       sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
         p_from:sgDateBoundary(blockedFromV291),p_to:sgDateBoundary(blockedToV291,1)})
-        .order('starts_at').order('staff_id')
+        .order('starts_at').order('staff_id'),
+      /* V375: the awaiting-confirmation cards live in this tab now (owner, photo 19). A single-
+         branch business always has branch_id=null on its requests, so the filter stays "this
+         branch OR none on file", exactly as the day view's read did. */
+      view==='list'&&canReadModule('bookings')
+        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min)',{count:'exact'})
+            .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
+            .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
+            .gte('preferred_at',sgDateBoundary(blockedFromV291)).lt('preferred_at',sgDateBoundary(blockedToV291,1)).order('preferred_at'))
+        :Promise.resolve({data:[],error:null})
     ]);
     const {data,error,count}=listAndBlocksV291[0];
     const blockedResultV291=listAndBlocksV291[1];
+    const pendingResultV375=listAndBlocksV291[2];
     if(!stillCurrent())return;
     if(error){renderAppointmentLoadErrorV288(error,loadAppointmentsGuardedV288);return}
+    pendingRequests=pendingResultV375.error?[]:(pendingResultV375.data||[]);
     calendarItems=data||[];
     calendarBlocks=blockedResultV291.error?[]:(blockedResultV291.data||[])
       .filter(block=>staffFilter==='all'||block.staff_id===staffFilter);
@@ -21409,14 +21695,20 @@ async function appointmentsPage(){
             return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
           }).join('')}</tbody></table></div>`
           :'<p class="muted small" style="margin-top:10px">No blocked time in this window.</p>'}</section>`;
+    /* V375 (owner, photo 13: "move there inside" from the Blocked time panel to a new Block tab).
+       The panel is no longer appended under the appointment list — each tab shows one thing. */
+    if(view==='block'){
+      $('alist').innerHTML=blockedListHtmlV291;
+      wireBlockedTimeActions();
+      return;
+    }
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadAppointmentsGuardedV288();return}
-    $('alist').innerHTML=calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+    $('alist').innerHTML=pendingRequestsBannerHtml()+(calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
       ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}"><span data-workspace-i18n>${esc(statusLabelV288(a.status))}</span></span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
-      :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`;
-    $('alist').insertAdjacentHTML('beforeend',blockedListHtmlV291);
+      :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`);
     wireAppointmentActions();
-    wireBlockedTimeActions();
+    wirePendingRequestActionsV329();
     if($('appointmentPrev'))$('appointmentPrev').onclick=()=>{if(listPage>0){listPage--;loadAppointmentsGuardedV288()}};
     if($('appointmentNext'))$('appointmentNext').onclick=()=>{if(listPage+1<pages){listPage++;loadAppointmentsGuardedV288()}};
   }
@@ -21751,7 +22043,7 @@ async function appointmentsPage(){
     const dayAgendaV291=dayAgendaRowsV291.length
       ?dayAgendaRowsV291.map(row=>row.html).join('')
       :`<div class="cui-empty">${CUI.icon('appointments',{size:38})}<h2>Nothing scheduled</h2><p>No appointments or blocked time on this day.</p></div>`;
-    $('alist').innerHTML=`${pendingRequestsBannerHtml()}<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
+    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
       ?`Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.`
       :day<todaySg
         ?'This day has already passed — appointments can only be booked for a time still to come.'
@@ -21878,6 +22170,12 @@ async function appointmentsPage(){
     if(routeParamV288('view')==='list')setCalendarView('list');
     else loadAppointmentsGuardedV288();
   }else loadAppointmentsGuardedV288();
+  /* V375 (owner, photo 15): '#/appointments?appointment=<id>' opens that appointment's detail
+     dialog straight away — the door the Dashboard's schedule chips now publish. The branch is
+     left null so openAppointmentDetails resolves it from the row itself; an id that is not this
+     tenant's simply reports that it could not be opened, exactly as a stale calendar tap does. */
+  const routedAppointmentV375=routeParamV288('appointment');
+  if(routedAppointmentV375)openAppointmentDetails({id:routedAppointmentV375,branch_id:branchId});
 }
 
 /* ---------- waitlist (conversion queue) ----------
@@ -26080,8 +26378,6 @@ async function loadWorkspaceLogoEditorV96(){
      of the UI, but app.business_publish_media_asset_v95 still requires a non-empty p_alt_en
      (1-240 chars) server-side — dropping it from the payload would 22023 every upload. So the
      value is generated the same way the removed input used to default to, just never shown. */
-  const heroExisting=brand.hero_asset||null;
-  const heroCurrentUrl=customerMediaUrlV95(heroExisting?.url||'');
   host.innerHTML=`<div class="workspace-logo-editor">
     <div class="workspace-logo-preview" id="workspaceLogoPreviewV96" aria-label="Business logo preview">
       ${currentUrl?`<img src="${esc(currentUrl)}" alt="${esc(existing?.alt_en||`${S.biz.name} logo`)}" width="184" height="184">`:esc(initial)}
@@ -26097,21 +26393,7 @@ async function loadWorkspaceLogoEditorV96(){
       </div>
     </div>
   </div>
-  <div class="workspace-logo-editor" style="margin-top:16px">
-    <div class="workspace-logo-preview" id="workspaceHeroPreviewV334" aria-label="Cover photo preview">
-      ${heroCurrentUrl?`<img src="${esc(heroCurrentUrl)}" alt="${esc(heroExisting?.alt_en||`${S.biz.name} cover photo`)}" width="184" height="184">`:CUI.icon('business',{size:28})}
-    </div>
-    <div class="workspace-logo-fields">
-      <b>Cover photo</b>
-      <p class="muted small" style="margin:5px 0 10px">Shown behind your business name on your customer programme. A wide PNG, JPG, WebP or GIF works best.</p>
-      <label for="workspaceHeroFileV334">${heroExisting?'Choose a replacement':'Choose a cover photo'}</label>
-      <input id="workspaceHeroFileV334" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-describedby="workspaceHeroHelpV334">
-      <div class="settings-save-row">
-        <button type="button" class="btn sm" id="workspaceHeroPublishV334" disabled>${heroExisting?'Replace cover photo':'Upload cover photo'}</button>
-        <span class="settings-scope" id="workspaceHeroHelpV334" role="status">Maximum 10 MB. Nothing changes until you publish.</span>
-      </div>
-    </div>
-  </div>`;
+`;
   refreshCustomerInterfaceLivePreviewV326();
   const fileInput=$('workspaceLogoFileV96'),preview=$('workspaceLogoPreviewV96');
   const publish=$('workspaceLogoPublishV96'),status=$('workspaceLogoHelpV96');
@@ -26177,68 +26459,10 @@ async function loadWorkspaceLogoEditorV96(){
     toast(existing?'Business logo replaced':'Business logo published');
     loadWorkspaceLogoEditorV96();
   };
-  /* V334: cover photo, same upload/publish mechanics as the logo above, asset_kind='hero' —
-     already a fully supported kind in business_publish_media_asset_v95 (see hero_asset_id on
-     business_presentation_brand_v95), just never had a UI writer before. */
-  const heroFileInput=$('workspaceHeroFileV334'),heroPreview=$('workspaceHeroPreviewV334');
-  const heroPublish=$('workspaceHeroPublishV334'),heroStatus=$('workspaceHeroHelpV334');
-  let heroPreviewUrl='';
-  if(heroFileInput)heroFileInput.onchange=()=>{
-    if(heroPreviewUrl)URL.revokeObjectURL(heroPreviewUrl);
-    const file=heroFileInput.files?.[0];
-    heroPublish.disabled=!file;
-    if(!file){
-      heroPreview.innerHTML=heroCurrentUrl
-        ?`<img src="${esc(heroCurrentUrl)}" alt="${esc(heroExisting?.alt_en||`${S.biz.name} cover photo`)}" width="184" height="184">`
-        :CUI.icon('business',{size:28});
-      heroStatus.textContent='Maximum 10 MB. Nothing changes until you publish.';
-      /* V336 (owner markup, photo 3: "cover photo added > will replace portion A") — the live
-         preview reads this same <img>, matching the logo control above. */
-      refreshCustomerInterfaceLivePreviewV326();
-      return;
-    }
-    heroPreviewUrl=URL.createObjectURL(file);
-    heroPreview.innerHTML=`<img src="${esc(heroPreviewUrl)}" alt="New cover photo preview" width="184" height="184">`;
-    heroStatus.textContent='Preview only — publish when this looks right.';
-    refreshCustomerInterfaceLivePreviewV326();
-  };
-  if(heroPublish)heroPublish.onclick=async()=>{
-    const file=heroFileInput.files?.[0];
-    const altEn=(heroExisting?.alt_en||`${S.biz.name} cover photo`).trim().slice(0,240)||'Business cover photo';
-    if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760){
-      return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
-    }
-    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
-    const objectPath=`${S.biz.id}/hero/${crypto.randomUUID()}.${extension}`;
-    heroPublish.disabled=true;heroStatus.textContent='Uploading and publishing cover photo…';
-    let dimensions;
-    try{dimensions=await imageDimensionsV95(file)}
-    catch(dimensionError){
-      heroPublish.disabled=false;heroStatus.textContent='Cover photo dimensions could not be read.';
-      return fail(dimensionError);
-    }
-    const result=await NestlyMediaSyncV95.publish({
-      storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file,
-      publishArgs:workspaceLogoPublishArgsV96({
-        businessId:S.biz.id,objectPath,fileType:file.type,
-        width:dimensions.width,height:dimensions.height,altEn,
-        brand,existing:heroExisting,assetKind:'hero'
-      })
-    });
-    if(!host.isConnected)return;
-    if(!result.ok){
-      heroPublish.disabled=false;
-      heroStatus.textContent=result.cleanup.status==='pending_cleanup'
-        ?'Cover photo was not published. Uploaded file cleanup is pending and will retry.'
-        :result.cleanup.status==='cleanup_untracked'
-          ?'Cover photo was not published, and file cleanup needs support.'
-          :'Cover photo was not published.';
-      return fail(result.error);
-    }
-    if(heroPreviewUrl){URL.revokeObjectURL(heroPreviewUrl);heroPreviewUrl=''}
-    toast(heroExisting?'Cover photo replaced':'Cover photo published');
-    loadWorkspaceLogoEditorV96();
-  };
+  /* V375 (owner, photo 17: the whole Cover photo control struck through, "remove"). The upload
+     and publish wiring goes with the markup — asset_kind='hero' is still a supported kind in
+     business_publish_media_asset_v95 and any hero already published stays in the table, it simply
+     has no writer and no reader any more. */
 }
 function openCustomerProgrammePreviewV148({brand={},programme={},copy={},entities=[],assets=[]}={}){
   const overlay=document.createElement('div');
@@ -26316,9 +26540,9 @@ async function loadCustomerProgrammePresentationEditorV95(){
     <button class="btn" id="programmeCopySave" style="margin-top:14px">Save overview</button>
     <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
     <div class="split"><div><h3>Brand &amp; images</h3>
-      <label for="programmeHeroColor">Programme colour</label><input id="programmeHeroColor" type="color" value="${esc(brand.hero_color||'#C43D32')}" style="height:44px;padding:4px">
-      <p class="muted small" id="programmeColourWarning" role="status" aria-live="polite" style="margin-top:6px"></p>
-      <button class="btn ghost sm" id="programmeColourSave" style="margin-top:8px">Save programme colour</button>
+      ${/* V375: the second colour picker goes with the first (owner, photo 17). Leaving it would
+            have been worse than removing it — the customer surfaces stopped reading hero_color in
+            this same change, so it would have been a control that saved a value nobody sees. */''}
       <label for="programmeImageEntity">Image for</label><select id="programmeImageEntity" data-merchant-content>${entityOptions.map(item=>`<option value="${esc(item.kind+'|'+item.id)}">${esc(item.name)}</option>`).join('')}</select>
       <label for="programmeImageFile">Image file</label><input id="programmeImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
       <label for="programmeImageAlt">Image description</label><input id="programmeImageAlt" maxlength="240">
@@ -26353,42 +26577,6 @@ async function loadCustomerProgrammePresentationEditorV95(){
     if(copyError){$('programmeCopySave').disabled=false;return fail(copyError)}
     toast('Customer programme overview updated');loadCustomerProgrammePresentationEditorV95();
   };
-  /* V191 (owner: "changed colour but nothing shows"). The colour DOES save — Hougang ABC stored
-     #F5EC00 — but the customer hero paints white text on it, so contrastSafeBrandColor silently
-     substituted a fixed fallback for anything under 4.5:1. The owner picked yellow, saw it
-     accepted, and their customers kept seeing coral with no explanation anywhere.
-     V336 (owner: "some colours are not being recognised — every company have their unique
-     colour"): the fixed fallback is gone — contrastSafeBrandColor now darkens the OWNER'S OWN
-     colour until it is legible, so every under-contrast pick still reads as that company's own
-     hue rather than collapsing onto the same shared coral. This message still says so, before and
-     after saving, because the shown value is not byte-identical to what was picked. */
-  const paintProgrammeColourWarning=()=>{
-    const warning=$('programmeColourWarning'),picker=$('programmeHeroColor');
-    if(!warning||!picker)return;
-    const chosen=String(picker.value||'').toUpperCase();
-    const effective=contrastSafeBrandColor(chosen);
-    if(effective===chosen){
-      warning.textContent='Customers will see this colour behind the programme title.';
-      warning.style.color='';
-    }else{
-      warning.innerHTML=`This colour is too light for the white title text on it, so customers would not be able to read the words. Peekaa will darken it slightly to <b>${esc(effective)}</b> so it stays legible.`;
-      warning.style.color='var(--amber)';
-    }
-  };
-  if($('programmeHeroColor')){
-    $('programmeHeroColor').oninput=paintProgrammeColourWarning;
-    paintProgrammeColourWarning();
-  }
-  $('programmeColourSave').onclick=async()=>{
-    $('programmeColourSave').disabled=true;
-    const {error:colourError}=await sb.rpc('business_set_brand_presentation_v95',{
-      p_business:S.biz.id,p_logo_asset:brand.logo_asset?.id||null,
-      p_hero_asset:brand.hero_asset?.id||null,p_hero_color:$('programmeHeroColor').value,
-      p_expected_version:Number(brand.version||1)
-    });
-    if(colourError){$('programmeColourSave').disabled=false;return fail(colourError)}
-    toast('Programme colour updated');loadCustomerProgrammePresentationEditorV95();
-  };
   $('programmeImageUpload').onclick=async()=>{
     const file=$('programmeImageFile').files?.[0],altEn=$('programmeImageAlt').value.trim();
     if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760)return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
@@ -26405,7 +26593,7 @@ async function loadCustomerProgrammePresentationEditorV95(){
         p_business:S.biz.id,p_asset_kind:kind,p_entity_id:entityId||null,p_branch:null,
         p_object_path:objectPath,p_mime_type:file.type,p_width_px:dimensions.width,p_height_px:dimensions.height,
         p_alt_en:altEn,p_alt_zh_cn:null,
-        p_hero_color:kind==='logo'||kind==='hero'?$('programmeHeroColor').value:null,
+        p_hero_color:kind==='logo'||kind==='hero'?(brand.hero_color||CUSTOMER_SURFACE_ACCENT_V375):null,
         p_expected_asset_version:Number(existing?.version||0),
         p_expected_brand_version:kind==='logo'||kind==='hero'?Number(brand.version||1):null
       }
@@ -27312,7 +27500,14 @@ async function loadCustomerCapabilitiesV223(){
   if(!$('businessCustomerCapabilities'))return;
 
     const controls=['customerBookingEnabled','customerRedemptionEnabled','customerAppointmentChangesEnabled'];
-    const status=$('customerCapabilitiesStatus'),save=$('saveCustomerCapabilities');
+    const status=$('customerCapabilitiesStatus');
+    /* V375: the three switches are split across two tabs now (owner, photo 16), so "save" is
+       every Save button on the page — one handler, one RPC, all three values. */
+    const saveButtons=[...document.querySelectorAll('.capabilities-save-v375')];
+    const save={
+      set disabled(value){saveButtons.forEach(button=>{button.disabled=value})},
+      set onclick(handler){saveButtons.forEach(button=>{button.onclick=handler})}
+    };
     const capabilityResult=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
     if(!$('businessCustomerCapabilities')?.isConnected)return;
     $('businessCustomerCapabilities').setAttribute('aria-busy','false');
@@ -27549,7 +27744,9 @@ function workspaceBrandPanelHtmlV259(){
       <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
       <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
       <p class="muted small" id="biSectorHint" style="margin-top:4px">Set by Peekaa for your sector.</p>
-      <label for="bc">Brand colour (used on your portal)</label><input id="bc" type="color" value="${esc(S.biz.brand_color||'#FF6B5E')}" style="height:44px;padding:4px">
+      ${/* V375 (owner, photo 17: the swatch struck through, "remove"). Every business's customer
+            surface now uses Peekaa's own accent, so there is no colour to pick and none to save.
+            businesses.brand_color is left in place and simply stops being read. */''}
       <label for="bp">Booking policy (shown on your portal)</label><textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
       <!-- V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief):
            businesses.bio, nullable, shown to customers on the public booking portal alongside
@@ -27587,10 +27784,10 @@ function wireWorkspaceBrandV259(){
     const bio=($('bbio')?.value||'').trim()||null;
     invalidateBusinessRecordCacheV370(); // V370: the cached firm row is now stale
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
-      brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,
+      booking_policy:$('bp').value||null,review_url:reviewUrl,
       legal_name:legalName,registration_number:registrationNumber,bio}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),brand_color:$('bc').value,booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber,bio});
+    Object.assign(S.biz,{name:$('bn').value.trim(),booking_policy:$('bp').value||null,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber,bio});
     toast('Saved');route();
   };
 }
@@ -27906,16 +28103,12 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
 function customerInterfaceLivePreviewMarkupV326(){
   const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
   const logoUrl=logoImg?.getAttribute('src')||'';
-  /* V336 (owner markup, photo 3: "cover photo added > will replace portion A"). Read the same
-     <img> the cover-photo control itself just updated, exactly like logoUrl above — this is the
-     first time this preview reflects a chosen cover photo at all. */
-  const heroImg=document.querySelector('#workspaceHeroPreviewV334 img');
-  const heroImageUrl=heroImg?.getAttribute('src')||'';
+  /* V375: the cover photo and the brand colour are both gone (owner, photo 17), so the preview
+     shows what a customer will actually see — the logo, the name, and Peekaa's own accent. */
   const name=($('bn')?.value||S.biz.name||'').trim()||'Your business';
-  const brandColor=$('bc')?.value||S.biz.brand_color||'#FF6B5E';
   const presentation={
-    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl,
-    heroColor:contrastSafeBrandColor(/^#[0-9a-f]{6}$/i.test(brandColor)?brandColor:'#28212f'),
+    locale:normalizeCustomerLocale(customerLocale),logoUrl,heroImageUrl:'',
+    heroColor:contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375),
     name,tagline:'',description:'',balance:77877,unit:'points',
     tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
     benefits:[],offers:[],rewards:[],products:[],services:[],capabilities:{}
@@ -27996,48 +28189,34 @@ function wireCustomerInterfacePreviewV243(){
 function customerInterfaceSectionHeadingV269(id,label,hint){
   return `<h2 class="customer-interface-section-v269" id="${esc(id)}" style="margin:26px 0 0;font-size:1.05rem">${esc(label)}<span class="muted small" style="display:block;font-weight:400;margin-top:4px">${esc(hint)}</span></h2>`;
 }
-function customerInterfaceSectionsHtmlV243(fieldDefs){
+/* V375 (owner, photo 16). Three marks on one screen:
+     - "Customer Action" -> "Customer Permissions" (the tab and the page title above);
+     - "move inside" on Customer booking and Customer appointment changes, with arrows onto the
+       Appointment Setting tab — both are about appointments, so they now live beside the booking
+       rules and only the redemption QR stays here;
+     - the Customer fields and Tenant isolation cards struck through, "delete these wordings".
+   Splitting the switches does NOT split the write: there is still one
+   business_set_customer_capabilities_v89 call reading all three checkboxes by id, and both Save
+   buttons run it, so the two panes can never save contradictory halves. */
+function customerCapabilitiesAppointmentCardHtmlV375(){
+  return `<section class="card" id="businessCustomerCapabilitiesAppointmentV375" style="margin-top:16px"><div class="row"><div><b>What customers may do with appointments</b><p class="muted small" style="margin-top:5px">Turning one off keeps existing bookings and history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilitiesAppointmentV375" type="button" disabled>Save</button></div>
+    <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+    <!-- v294 (owner: "Why only one company showed when i already enable qrcode?" — the ticked
+         box was real but INERT: booking is only offered to customers when at least one active
+         service is shown on the booking page, and this screen never said so. The dependency is
+         now stated the moment it bites, with the exact next step.) -->
+    <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
+    <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label></section>`;
+}
+function customerInterfaceSectionsHtmlV243(){
   return `<div class="customer-interface-sections-v243">
-    ${/* V368 (owner markup 2026-08-17, photo 5: "remove this" across Import customers, and the
-         whole Customer Sign-up page struck out). The importer is not deleted — the owner chose to
-         MOVE it to Customers, where bringing in a customer list belongs — and the sign-up QR card
-         moved into the profile menu as "My Business QR". Both are the same markup and the same
-         wiring, called from their new homes (customerCsvImportCardHtmlV368 / loadSignupConfig with
-         a host). This section keeps only what still lives here. */''}
     <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
-         operation set up"). These switches govern what a customer may do in their own app —
-         booking, redemption QR, appointment changes. Only one of the three is about bookings,
-         so living on the Bookings page made the other two unfindable and made Bookings a
-         settings screen. This tab is where the rest of the customer-facing configuration
-         already lives (sign-up QR, customer fields, import). -->
-    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
-      <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-      <!-- v294 (owner: "Why only one company showed when i already enable qrcode?" — the ticked
-           box was real but INERT: booking is only offered to customers when at least one active
-           service is shown on the booking page, and this screen never said so. The dependency is
-           now stated the moment it bites, with the exact next step.) -->
-      <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
+         operation set up"). These switches govern what a customer may do in their own app.
+         V375 moved the two appointment ones to Appointment Setting; the redemption QR is not
+         about appointments, so it stays here with the section's status line. -->
+    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
       <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
-    <div class="card" style="margin-top:16px"><b>Customer fields</b>
-      <p class="muted small" style="margin:6px 0 12px">Add only information your business genuinely needs. Sensitive fields stay owner-only and never appear in the customer wallet.</p>
-      <!-- V291 (audit A2 leftover): a custom field could be added and retired but never renamed,
-           so a typo in a question every customer profile asks was permanent — retiring and
-           re-adding orphans every answer already recorded. Only the LABEL is editable: the field
-           key, its answer type and its data classification are what the stored answers mean, and
-           changing those under existing values would rewrite history. -->
-      <div id="cfList">${(fieldDefs||[]).length?(fieldDefs||[]).map(f=>`<div class="row" data-merchant-content style="padding:7px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px"><span><b>${esc(f.label)}</b><span class="muted small"> · ${esc(f.value_type)} · ${esc(f.classification)}</span></span><span class="spacer"></span><span class="pill ${f.active?'on':'off'}">${f.active?'active':'retired'}</span>${f.active?`<button class="cfRenameV291 btn ghost sm" data-id="${f.id}" data-label="${esc(f.label)}">Rename</button><button class="btn ghost sm cfRetire" data-id="${f.id}">Retire</button>`:''}</div>`).join(''):'<p class="muted small">No custom customer fields yet.</p>'}</div>
-      <details><summary>Add a customer field</summary>
-        <div class="field-grid"><div><label for="cfLabel">Field name</label><input id="cfLabel" placeholder="e.g. Preferred therapist"></div>
-        <div><label for="cfType">Answer type</label><select id="cfType"><option value="text">Short text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / no</option><option value="select">Choose from a list</option></select></div>
-        <div><label for="cfClass">Data classification</label><select id="cfClass"><option value="operational">Operational</option><option value="personal">Personal</option><option value="sensitive">Sensitive — owner only</option></select></div>
-        <div><label for="cfOptions">Choices (list type only)</label><input id="cfOptions" placeholder="e.g. Alice, Ben, No preference"></div></div>
-        <button class="btn sm" id="cfAdd" style="margin-top:12px">Add field</button>
-      </details></div>
-    <div class="card" style="margin-top:16px"><b>Tenant isolation</b>
-      <p class="muted small" style="margin-top:6px;line-height:1.7">Every business on ${esc(BRAND.productName)} has its own isolated data space. Row-level security is enforced by the database on every table — your customers, sales, and programs are invisible to every other business, and theirs to you. Your team only ever sees this workspace.</p></div>
-
     </div>`;
 }
 /* Every handler the moved markup needs, in one place, so the page that renders it is also the page
@@ -28095,42 +28274,10 @@ function wireCustomerCsvImportV368(){
   };
 }
 /* V243's own wiring resumes here, minus the importer that moved to Customers with V368. */
-function wireCustomerInterfaceV243(rerender){
-  $('cfAdd').onclick=async()=>{
-    const label=$('cfLabel').value.trim(),valueType=$('cfType').value;
-    if(label.length<2)return toast('Give the field a clear name');
-    const fieldKey=label.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,64);
-    if(fieldKey.length<2)return toast('Use a field name with at least two letters');
-    let options=[];
-    if(valueType==='select'){
-      options=$('cfOptions').value.split(',').map(x=>x.trim()).filter(Boolean);
-      if(options.length<2){
-        return toast('List fields need at least two choices');
-      }
-    }
-    const {error}=await sb.rpc('create_client_field_definition',{p_business:S.biz.id,
-      p_field_key:fieldKey,p_label:label,p_value_type:valueType,p_classification:$('cfClass').value,
-      p_options:options.map((optionLabel,i)=>({option_key:`option_${i+1}`,option_label:optionLabel}))});
-    if(error)return fail(error);
-    toast('Customer field added');rerender();
-  };
-  /* V291: rename only. Answers already recorded keep their value and their meaning; the
-     question is simply asked in better words. */
-  document.querySelectorAll('.cfRenameV291').forEach(b=>b.onclick=async()=>{
-    const label=prompt('New field name',b.dataset.label)?.trim();
-    if(!label||label===b.dataset.label)return;
-    if(label.length<2)return toast('Give the field a clear name');
-    const {error}=await sb.from('client_field_definitions').update({label})
-      .eq('id',b.dataset.id).eq('business_id',S.biz.id);
-    if(error)return fail(error);
-    toast('Field renamed; existing answers are unchanged');rerender();
-  });
-  document.querySelectorAll('.cfRetire').forEach(b=>b.onclick=async()=>{
-    const {error}=await sb.from('client_field_definitions').update({active:false}).eq('id',b.dataset.id).eq('business_id',S.biz.id);
-    if(error)return fail(error);toast('Field retired; existing answers remain in history');rerender();
-  });
-  /* V368: the sign-up QR is no longer part of this page — it is the profile menu's dialog. Only
-     the capabilities card, which moved here with the fields, still loads. */
+function wireCustomerInterfaceV243(){
+  /* V375: the custom-field add/rename/retire handlers went with the card the owner deleted
+     (photo 16). client_field_definitions and every answer already recorded are untouched —
+     only the editor is gone — so the capabilities card is all this page still wires. */
   loadCustomerCapabilitiesV223();
 }
 async function customerInterfacePageV243(hashParam){
@@ -28155,10 +28302,9 @@ async function customerInterfacePageV243(hashParam){
   const customerInterfaceHostV288=M();
   if(customerInterfaceHostV288)customerInterfaceHostV288.innerHTML=CUI.loadingState({
     title:'Customer Interface',iconName:'customers',body:'Loading what your customers see\u2026'});
-  const {data:fieldDefs,error:fieldDefsError}=canEditCustomerInterface
-    ?await sb.from('client_field_definitions').select('*').eq('business_id',S.biz.id).order('created_at')
-    :{data:[],error:null};
-  if(fieldDefsError) return fail(fieldDefsError);
+  /* V375: the custom-field editor was deleted on the owner's mark (photo 16), so this page no
+     longer reads the custom field definitions — one fewer query on every Customer Interface
+     load. The table and every answer already recorded are untouched. */
   /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"). The V296 Gift cards
      sub-tab and its business_get_checkout_preferences_v102 read are gone with it — one fewer RPC
      per Customer Interface load. The RPCs themselves (business_get_checkout_preferences_v102 /
@@ -28186,7 +28332,7 @@ async function customerInterfacePageV243(hashParam){
      X" statement is struck out, and the Publish button becomes a Save that sits at the FOOT of
      the page (see ciSaveBarV368 below). */
   const ciOnActionPageV368=CUSTOMER_INTERFACE_TABS_V368.includes(customerInterfaceViewV296);
-  const ciPageTitleV368=ciOnActionPageV368?'Customer Action':(ciActiveLabelV296||'Customer Interface');
+  const ciPageTitleV368=ciOnActionPageV368?'Customer Permissions':(ciActiveLabelV296||'Customer Interface');
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>${esc(ciPageTitleV368)}</h1></div></div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
@@ -28198,6 +28344,7 @@ async function customerInterfacePageV243(hashParam){
          it does not illustrate. */''}
     ${ciSectionV296('appointment',`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
     ${bookingRulesCardHtmlV325()}
+    ${customerCapabilitiesAppointmentCardHtmlV375()}
     ${serviceBufferPointerCardHtmlV325()}`)}
     ${ciSectionV296('preview',customerInterfacePreviewCardHtmlV243())}
     ${ciSectionV296('done',customerInterfaceDoneCardHtmlV325())}
@@ -28205,7 +28352,7 @@ async function customerInterfacePageV243(hashParam){
     <div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>`)}
     ${/* V368: the two cards that outlived the retired Customer Sign-up page. Both are about what
          a customer may do and what they are asked for, which is exactly this page's question. */''}
-    ${ciSectionV296('actions',customerInterfaceSectionsHtmlV243(fieldDefs))}
+    ${ciSectionV296('actions',customerInterfaceSectionsHtmlV243())}
     ${/* V368: '#/customer-interface/interface' still resolves — old links and history entries must
          not 404 — but its content now lives on Customer Action, so the hash lands there rather
          than rendering a second copy of the same ids. */''}`

@@ -55,7 +55,8 @@ test('V268 (a) only a reward whose draft genuinely differs is marked', () => {
   assert.match(diff, /if\(changes\.length\)changed\.set\(id,changes\);/);
   /* V291 additions: the fields that used to publish silently. */
   const fields = section('function growRewardDiffFieldsV291(', 'function growRewardDiffOptionsFromSnapshotV291(');
-  for (const label of ['Name', 'Cost', 'Offered', 'Store credit', 'Expires after',
+  /* V375: 'Store credit' left the comparison with the fulfilment that produced it. */
+  for (const label of ['Name', 'Cost', 'Offered', 'Expires after',
     'Uses per customer', 'Who can redeem', 'Branches', 'Services']) {
     assert.match(fields, new RegExp(`label:'${label}'`), `${label} must be compared`);
   }

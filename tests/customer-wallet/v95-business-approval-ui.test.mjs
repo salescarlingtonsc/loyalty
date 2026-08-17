@@ -63,10 +63,13 @@ test('owner programme editor publishes canonical copy and allowlisted media thro
   assert.match(app,/business_upsert_localized_copy_v95/);
   assert.doesNotMatch(app,/business_upsert_media_asset_v95/);
   assert.match(mediaSync,/business_publish_media_replacement_v95/);
-  assert.match(app,/business_set_brand_presentation_v95/);
+  /* V375 (owner, photo 17): the programme colour picker was the only caller of
+     business_set_brand_presentation_v95 and went with the colour itself. Media publishing —
+     which is what this test is about — still runs through its own guarded contract below. */
+  assert.doesNotMatch(app,/business_set_brand_presentation_v95/);
   assert.match(app,/NestlyMediaSyncV95\.publish/);
   assert.match(app,/file\.size>10485760/);
-  assert.match(app,/id="programmeColourSave"/);
+  assert.doesNotMatch(app,/id="programmeColourSave"/);
   assert.match(mediaSync,/business_queue_media_cleanup_v95/);
   assert.match(mediaSync,/business_mark_media_cleanup_result_v95/);
   assert.match(mediaSync,/business_list_media_cleanup_queue_v95/);

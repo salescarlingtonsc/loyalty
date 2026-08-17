@@ -78,7 +78,8 @@ test('HIGH 1 — the rollback suite proves the confirm end to end for a bar tena
 
 test('HIGH 2 — the Bookings shell is marked, never inferred from #cp\'s ancestors', () => {
   assert.match(bookingsPage, /data-bookings-shell="head"/);
-  assert.match(bookingsPage, /data-bookings-shell="portal"/);
+  /* V375: the portal card lives on Appointments now (owner, photo 5); head and changes are
+     still the marked shell nodes the tab enhancer skips. */
   assert.match(bookingsPage, /data-bookings-shell="changes"/);
   const enhance = between('function enhanceBookingsTabsV195(root){', 'const V183_DAYS=');
   assert.match(enhance, /child\.hasAttribute\('data-bookings-shell'\)/);
@@ -240,7 +241,10 @@ test('MEDIUM 15 — the catalogue row and the shelf list can be corrected', () =
 test('MEDIUM 18 — Customer Interface paints a loading state before it reads', () => {
   const page = between('async function customerInterfacePageV243(hashParam){', 'phone country-code picker');
   assert.match(page, /customerInterfaceHostV288[\s\S]*?CUI\.loadingState\(\{/);
-  assert.equal(page.indexOf('CUI.loadingState({') < page.indexOf('client_field_definitions'), true);
+  /* V375: the client_field_definitions read left with the editor (owner, photo 16). The
+     guarantee is unchanged — the loading state is painted before the page renders anything —
+     so it is now measured against the render itself. */
+  assert.equal(page.indexOf('CUI.loadingState({') < page.indexOf('M().innerHTML='), true);
 });
 
 test('MEDIUM 19 — a Bookings load failure is recoverable in place, not an eternal spinner', () => {

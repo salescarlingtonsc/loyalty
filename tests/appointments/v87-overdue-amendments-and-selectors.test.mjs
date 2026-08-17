@@ -42,11 +42,10 @@ test('booked appointments expose direct, prefilled amendments including overdue 
   assert.match(calendar,/openFromButton\(button,button\.dataset\.appointmentAmend,\{startEditing:true\}\)/);
   assert.match(calendar,/return openAppointmentDetails\(item,\{startEditing\}\)/,
     'the found path must still open the real dialog in editing mode');
-  /* V245 (owner: "i need to have pop up to amend and change details. or change staff"). The
-     amend form is now expanded for EVERY booked appointment, not only when Amend was the entry
-     point — so this asserts the stronger guarantee: opening one is always editable, and the
-     startEditing path additionally moves focus into the form. */
-  assert.match(calendar,/editForm\.hidden=false;toggle\.setAttribute\('aria-expanded','true'\);/);
+  /* V375 (owner, photo 14: "minimise this") replaces V245's always-expanded default with tabs.
+     What this test cares about is unchanged and still asserted: the Amend entry point opens the
+     form and moves focus into it. */
+  assert.match(calendar,/showOutcomePanelV375\(startEditing\?'amend':null\);/);
   assert.match(calendar,/if\(startEditing\)requestAnimationFrame\(\(\)=>\$\('appointmentEditDate'\)\?\.focus\(\)\);/);
   assert.match(calendar,/This booked appointment is overdue\. You can move it to a future slot/);
   assert.match(calendar,/The new start must be in the future/);
