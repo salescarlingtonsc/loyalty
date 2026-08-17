@@ -6274,9 +6274,15 @@ async function renderCustomerMessages(){
   }
   /* V289: the inbox has no tab of its own — it is opened from the header bell — so it must offer
      a way back to Home. Without backTo the shell drew no back button at all. */
-  renderCustomerShell({active:'messages',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1><p class="muted">Customer-safe updates grouped by your separate business programmes.</p></div></header>
+  renderCustomerShell({active:'messages',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1></div></header>
     <section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerMessagesNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:6px">Get these updates on your lock screen too. Which ones you receive is set in <a href="#/customer/communications">Communications</a>.</p></div><button class="btn ghost sm" id="customerPushMessagesControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}`});
+    ${/* v386 (owner photo 8): the page subtitle, the "<brand> inbox" heading and its second copy
+         of the same sentence were three explanations stacked over one list. The list says what it
+         is. Device notifications keeps its section and its id — the v296 wiring below binds
+         #customerPushMessagesControl by id, and the push-permission tests read it — but it now
+         renders inside the settings panel the gear opens, with the reminder preferences, which is
+         where the owner drew both of them. */''}
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerMessagesNotifications" hidden><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:6px">Get these updates on your lock screen too. Which ones you receive is set in <a href="#/customer/communications">Communications</a>.</p></div><button class="btn ghost sm" id="customerPushMessagesControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}`});
   focusCustomerRoute();
   /* v296 (owner drew it onto this page): the switch that governs whether these updates also
      reach the lock screen now sits with the inbox it governs, not behind an avatar menu. */
@@ -7206,7 +7212,7 @@ function wireCustomerSheetNavV183(overlay,deactivate){
   });
 }
 function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
-  const name=String(business?.name||'').trim()||'Your business',slug=encodeURIComponent(business?.slug||''),
+  const name=String(business?.name||'').trim()||'Your business',
     industry=String(business?.industry||'').trim();
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-business-detail-modal';overlay.setAttribute('role','dialog');
@@ -7215,10 +7221,14 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
     <div class="row"><p class="customer-quest-kicker">Company details</p><span class="spacer"></span><button class="btn ghost sm" id="customerBusinessDetailClose" type="button" aria-label="Close company details">${CUI.icon('close',{size:18})}</button></div>
     <div class="customer-business-detail-head">${customerCompanyIdentityMarkupV178(business)}<div><h2 id="customerBusinessDetailTitle">${esc(name)}</h2>${industry?`<p class="muted small" style="margin-top:2px">${esc(industry)}</p>`:''}</div></div>
     <div class="customer-offer-detail-meta" data-business-contact><p class="muted small">Loading contact details…</p></div>
-    <h3 class="customer-business-detail-subhead">Current offers</h3>
-    <div data-business-offers><p class="muted small">Loading offers…</p></div>
-    <div class="row" style="margin-top:16px"><a class="btn" href="#/wallet/${slug}" data-business-detail-nav>${esc(ct('openProgramme',{business:name}))}</a></div>
+    <div data-business-branches-v386></div>
   </section>`;
+  /* v386 (owner photo 2, both struck through). The offers list repeated the same promotions the
+     programme page behind this modal already shows in its own Limited offers rail, and
+     "Open <business> rewards" navigated to that page — which is the page the customer was
+     standing on when they tapped the name to open this. The modal is now what its heading says:
+     company details. Dropping that list also drops the second promotions round trip that fired
+     every time the name was tapped. */
   document.body.appendChild(overlay);
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'#customerBusinessDetailClose',inheritHistoryId});
   overlay.querySelector('#customerBusinessDetailClose').onclick=()=>deactivate({restoreFocus:true});
@@ -7226,7 +7236,6 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
   const host=selector=>overlay.isConnected?overlay.querySelector(selector):null;
   if(!business?.id){
     const contact=host('[data-business-contact]');if(contact)contact.innerHTML='<p class="muted small">Contact details unavailable.</p>';
-    const offers=host('[data-business-offers]');if(offers)offers.innerHTML='<p class="muted small">Current offers are unavailable.</p>';
     return;
   }
   Promise.resolve(customerRpc('customer_get_offer_business_contact_v173',{p_business:business.id}))
@@ -7234,37 +7243,40 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
       const contact=host('[data-business-contact]');if(!contact)return;
       if(error){contact.innerHTML='<p class="muted small">Contact details unavailable.</p>';return}
       const branch=data?.branch||{};
-      const lines=[
-        branch.address?`<p class="muted small">${CUI.icon('bookings',{size:14})} ${esc(branch.address)}</p>`:'',
-        branch.phone?`<p class="muted small"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:'',
-        branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
-      ].filter(Boolean).join('');
-      contact.innerHTML=lines||'<p class="muted small">Contact details unavailable.</p>';
+      contact.innerHTML=customerBranchContactLinesV386(branch)||'<p class="muted small">Contact details unavailable.</p>';
+      /* v386 (owner photo 2: "put other branches here too"). branches[0] is the same default
+         branch already printed above, so only the rest are listed — repeating it would read as
+         the business having the same outlet twice. An older bundle, or a business with one
+         outlet, gets no list and no empty heading. */
+      const branchesHost=host('[data-business-branches-v386]');
+      const others=(Array.isArray(data?.branches)?data.branches:[]).slice(1)
+        .filter(row=>String(row?.address||row?.phone||row?.name||'').trim());
+      if(branchesHost&&others.length)branchesHost.innerHTML=`
+        <h3 class="customer-business-detail-subhead">${esc(others.length===1?'Other branch':'Other branches')}</h3>
+        ${others.map(row=>`<div class="customer-offer-detail-meta customer-business-branch-v386">
+          ${String(row?.name||'').trim()?`<p class="customer-business-branch-name-v386"><b>${esc(String(row.name).trim())}</b></p>`:''}
+          ${customerBranchContactLinesV386(row)}
+        </div>`).join('')}`;
     }).catch(()=>{
       const contact=host('[data-business-contact]');
       if(contact)contact.innerHTML='<p class="muted small">Contact details unavailable.</p>';
     });
-  Promise.resolve(customerRpc('customer_get_promotions_v155',{p_business:business.id,p_branch:null,p_locale:merchantCopyLocale()}))
-    .then(({data,error})=>{
-      const offersHost=host('[data-business-offers]');if(!offersHost)return;
-      if(error){offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';return}
-      const items=(Array.isArray(data?.items)?data.items:Array.isArray(data)?data:[]).filter(Boolean);
-      if(!items.length){offersHost.innerHTML='<p class="muted small">No current offers from this business.</p>';return}
-      offersHost.innerHTML=`<div class="customer-business-offer-list">${items.map((offer,index)=>{
-        const validity=customerPromotionValidityV104(offer);
-        return `<button class="customer-business-offer" type="button" data-business-offer="${index}"><span class="customer-business-offer-copy"><b>${esc(offer?.name||'Offer')}</b>${validity?`<span class="muted small">${esc(validity)}</span>`:''}</span><span class="spacer"></span><span class="customer-company-row-chevron" aria-hidden="true">›</span></button>`;
-      }).join('')}</div>`;
-      offersHost.querySelectorAll('[data-business-offer]').forEach(button=>button.onclick=()=>{
-        const offer=items[Number(button.dataset.businessOffer)];
-        if(!offer)return;
-        const handOff=CUI.currentDialogHistoryId?.()||0;
-        deactivate({restoreFocus:false,handOffHistory:handOff>0});
-        showCustomerOfferDetailV173({...offer,business:{...business,...(offer.business||{})}},{inheritHistoryId:handOff});
-      });
-    }).catch(()=>{
-      const offersHost=host('[data-business-offers]');
-      if(offersHost)offersHost.innerHTML='<p class="muted small">Current offers couldn’t load.</p>';
-    });
+}
+/* v386 (owner photo 2: a phone glyph drawn beside the bare number). The address already carried
+   an icon; the phone and email lines were unlabelled strings, so a number sat under an address
+   with nothing saying it was callable. One shape for all three, reused by the default branch and
+   by every branch listed under it. */
+function customerBranchContactLinesV386(branch={}){
+  const phone=String(branch?.phone||'').trim();
+  /* The address glyph moves from 'bookings' (a calendar) to 'branch' (a building) — the same
+     glyph the profile header already uses for its Address segment. There is no envelope in the
+     customer icon set and CUI.icon falls back to the INFO glyph for an unknown name, so the
+     email line is left unprefixed rather than labelled with a wrong picture. */
+  return [
+    branch?.address?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('branch',{size:14})} <span>${esc(branch.address)}</span></p>`:'',
+    phone?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('phone',{size:14})} <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
+    branch?.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
+  ].filter(Boolean).join('');
 }
 /* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
    for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
@@ -7880,29 +7892,6 @@ function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready'
     ${status==='error'?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>':''}
   </section>`;
 }
-/* v339/v362: the honest "earn more" list. There is no admin-configurable per-action earn table in
-   this product, so this section prints only what a real field can back. Referral now lives behind
-   the Refer a friend shortcut instead of inside Points & gifts. The visit row carries NO "+N pts":
-   the customer surface is never told this firm's
-   earn_points_per_dollar (customer_get_wallet returns enabled/model/unit/balance and nothing
-   else), so a number here would be invented. It is therefore phrased without one, and it renders
-   only where spendable points are actually running — the same customerPointsHeroVisibleV337 check
-   the hero uses. There is no review mechanism anywhere in this codebase, so there is no review row.
-   No "See all" link either: no route lists earn actions, and a link to a page that does not exist
-   is worse than no link. */
-function customerEarnMorePointsMarkupV339({loyalty={},presentation={},programmeCapabilities={}}={}){
-  if(!customerPointsHeroVisibleV337({loyalty,programmeCapabilities}))return '';
-  const unitLabel=ct(presentation.unit);
-  return `<section class="card customer-earn-more-v339" id="customerEarnMoreV339" aria-labelledby="customerEarnMoreTitleV339">
-    <div class="customer-earn-more-head-v339"><h2 id="customerEarnMoreTitleV339">Earn more ${esc(unitLabel)}</h2></div>
-    <ul class="customer-earn-more-list-v339">
-      <li class="customer-earn-more-row-v339">
-        <span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('bookings',{size:18})}</span>
-        <span class="customer-earn-more-copy-v339"><b>Visit and spend here</b><span class="muted small">Every qualifying purchase adds ${esc(unitLabel)} to your balance.</span></span>
-      </li>
-    </ul>
-  </section>`;
-}
 /* V174 customer tier card. One compact card, CHAGEE-style: where I am, how close the next
    tier is (exact remaining in the business's own basis — visits, spend or points), what the
    next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
@@ -8040,7 +8029,12 @@ function customerTierLadderMarkupV186(tier={}){
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
-  return `<details class="customer-tier-ladder">
+  /* v386 (owner photo 6: "don't minimise"). The ladder shipped closed, so the one thing the
+     Tier benefits screen exists to answer — what the next rung unlocks — was behind a tap the
+     owner did not expect to have to make. It stays a <details> (the summary is still the
+     labelled control, and a customer who wants the screen shorter can still collapse it), but
+     it now opens with the page. */
+  return `<details class="customer-tier-ladder" open>
     <summary><span>All tiers and what they unlock</span><span class="muted small">${rungs.length} tiers</span></summary>
     <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
       const isCurrent=rung.current===true;
@@ -8097,7 +8091,7 @@ function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}=
 /* v310 (W4b): `progressMarkupV310` lets the stack supply the same meter with its sentence routed
    through ct(). Omitted — which is every v194 fallback caller — the panel builds the V167 English
    line exactly as it has since v167. Nothing else about this panel changes. */
-function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null,hideSummaryV338=false}){
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null,hideSummaryV338=false,expiry=null}){
   const unitLabel=ct(presentation.unit);
   /* V289 (audit A3, G4). Both wallet readers return loyalty.enabled=false with EVERY number
      zeroed when the firm has the module off or its programme inactive — the server cannot
@@ -8119,8 +8113,26 @@ function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=nul
      business where the hero doesn't render (paused programme, tiers-only) is untouched, because
      the caller only sets this flag when the hero itself is visible. */
   return `${hideSummaryV338?'':`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
-    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}`}
+    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
+    ${customerPointsExpiryLineV386({expiry,loyalty,presentation})}`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
+}
+/* v386 (owner photo 10: "show how many points i accumulated and when will expire"). The wallet
+   card already carries the answer — app.c45/v44 return expiry.expiring_units and
+   expiry.next_expiry_at — but the customer surface only ever printed it on the HOME rail as a
+   count of businesses "expiring soon", never on the programme that owns the points.
+   Two deliberate limits, both from the server's own shape: next_expiry_at is set ONLY when the
+   batch expires inside 30 days, and it is null whenever the firm's expiry_mode is 'none'. So a
+   business that never expires points, or whose next expiry is further out than the server will
+   say, prints NOTHING here rather than a guessed date. */
+function customerPointsExpiryLineV386({expiry=null,loyalty={},presentation={}}={}){
+  const units=Math.max(0,Number(expiry?.expiring_units)||0),at=String(expiry?.next_expiry_at||'').trim();
+  if(!units||!at)return '';
+  const unitLabel=ct(presentation.unit||loyalty.unit||'points');
+  const soon=Math.max(0,Number(expiry?.expiring_7_units)||0)>0;
+  return `<p class="muted small customer-points-expiry-v386"${soon?' data-points-expiry-soon-v386="true"':''} style="margin-top:6px">
+    ${CUI.icon('appointments',{size:14})} <span>${esc(customerPointTotalV103(units))} ${esc(unitLabel)} expire on <time datetime="${esc(at)}">${esc(walletDate(at))}</time></span>
+  </p>`;
 }
 /* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
    what it counts toward rather than as something to spend. */
@@ -8404,12 +8416,12 @@ function customerStampQuestBodyV323(quest){
 }
 /* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
-function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false}){
+function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false,expiry=null}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
     <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
-      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,
+      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,expiry,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
   </section>`;
 }
@@ -8502,7 +8514,7 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false,expiry=null}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
@@ -8515,12 +8527,22 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
      alone drops out entirely while its own programme is paused, rather than keeping its card
      with a "Programme paused" message. Stamps/points/referral paused behaviour is untouched —
      only Tier was annotated. */
-  const tierPausedV326=entries.tiers?.active===false;
+  /* v386 (owner photos 5 + 10, "when paused, dont show in customer interface", drawn over the
+     paused STAMP card on both the Tier benefits and the Points & gifts screens): the v326 rule
+     was right but was scoped to one card because only Tier had been annotated. It is now the
+     rule for every accruing card — a programme this business is not running does not get a card
+     announcing that it is not running. What the customer already earned is untouched; it is
+     still on the server and the card returns the moment the programme does.
+     The paused MARKUP stays reachable (customerProgrammePausedMarkupV310 still serves the v194
+     tab fallback and the points panel's own enabled===false branch), so nothing about how a
+     pause is worded changes — only whether this stack paints a card for it. */
+  const cardPausedV386=kind=>entries[kind]?.active===false;
+  const tierPausedV326=cardPausedV386('tiers');
   const cards=[
     /* v333: the paint order IS PROGRAMME_STACK_ORDER_V310 — tier first. The gifts host below is
        unaffected: it is decided by which accruing card is present, never by which is on top. */
     show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
-    show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
+    show.stamps&&!cardPausedV386('stamps')?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
     /* v338 (owner: v337's red hero + reward banner duplicated this same points balance and
        "ready to claim" fact a second time on the same screen). The card stays — it is still the
        mount point for the rewards list (rewardsHost/#walletRewards) — but its own balance/
@@ -8528,7 +8550,12 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        balance for THIS business. suppressPointsCardV337 is computed by the caller with the exact
        same visibility check the hero uses (customerPointsHeroVisibleV337), so a stamps-only or
        tiers-only business, where the hero renders nothing, keeps this card exactly as before. */
-    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost,hideSummaryV338:suppressPointsCardV337}):'',
+    show.points&&!cardPausedV386('points')?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost,hideSummaryV338:suppressPointsCardV337,expiry}):'',
+    /* The rewards list mounts on whichever accruing card is present. When v386 drops BOTH of
+       them as paused, the list would lose its mount point and the gifts the customer already
+       holds would vanish with the card — so the bare host is emitted on its own. */
+    rewardsHost&&!(show.stamps&&!cardPausedV386('stamps'))&&!(show.points&&!cardPausedV386('points'))
+      ?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -8634,7 +8661,39 @@ function customerClaimableRewardBannerMarkupV337({reward=null}={}){
     <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
   </section>`;
 }
-function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={}}={}){
+/* v386 (owner photo 7). "this card available when point system + tier [on] … if tier on only
+   [meter] … if point system off and stamp card on, this change to stamp card … this reward card
+   is interchangeable depends on what business choose."
+
+   The hero printed one shape for every firm: a big number labelled with the unit. On a stamps
+   firm that read "6 stamps" where the customer expected to SEE six stamps, and on a tiers-only
+   firm — which has no spendable balance at all — it read "0 points", which is not merely bare
+   but wrong. The card now takes its shape from the same programme spine the module tiles read
+   (programmeStackV310 → active, customer-visible entries), so it is interchangeable in exactly
+   the sense the owner means: the business's own choice of programme decides it.
+
+   Both new shapes reuse rendering this file already owns — customerProgrammeStampRingsV310 for
+   the rings and .customer-reward-progress for the meter — so no new CSS rule is introduced.
+   That is deliberate: seven browser fixtures inline this stylesheet under captured Chrome
+   measurements pinned to a source hash (see customerStampQuestRingsV323's note), and a new rule
+   would force a recapture for a cosmetic change. */
+function customerBusinessHeroModeV386(capabilities={},loyalty={}){
+  const stack=programmeStackV310(capabilities);
+  if(!stack){
+    /* No spine (older payload): fall back to the unit the wallet itself reports, which is what
+       this card keyed off before v386. */
+    return String(loyalty.unit||'').toLowerCase()==='stamps'?'stamps':'points';
+  }
+  const live=kind=>{
+    const entry=programmeStackEntryV310(stack,kind);
+    return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+  };
+  if(live('points'))return 'points';
+  if(live('stamps'))return 'stamps';
+  if(live('tiers'))return 'tiers';
+  return 'points';
+}
+function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={}}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
@@ -8664,14 +8723,41 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const bookAction=bookingEnabled&&business?.slug
     ?`<a class="customer-business-book-inline-v349" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`
     :'';
-  return `<section class="card customer-business-summary-v346" aria-label="Membership summary">
+  const modeV386=customerBusinessHeroModeV386(programmeCapabilities,loyalty);
+  /* STAMPS: the rings ARE the figure. Target comes from the reward's own cost_units through the
+     same helper the stamps card uses, so the two can never disagree about how long the card is;
+     when the server gives no reward (nothing to aim at yet) there is no length to draw and the
+     plain count stands in, exactly as customerProgrammeStampsCardV310 does. */
+  const stampTargetV386=modeV386==='stamps'?customerStampTargetV310(reward):0;
+  const stampRingsV386=stampTargetV386?customerProgrammeStampRingsV310(balance,stampTargetV386):'';
+  /* TIERS-ONLY: no spendable balance exists, so the hero states the standing and the distance to
+     the next rung. tier.progress_percent is the server's own figure — the same one
+     customerTierPanelMarkupV194 renders — never a percentage derived here. */
+  const tierNextV386=tier?.next||null;
+  const tierProgressV386=Math.max(0,Math.min(100,Number(tier?.progress_percent||0)));
+  const tierRemainingV386=tierNextV386
+    ?Math.max(0,Number(tierNextV386.threshold||0)-Number(tier?.metric||0)):0;
+  const figureV386=modeV386==='stamps'&&stampRingsV386
+    ?`<div class="customer-business-stamp-figure-v386">${stampRingsV386}</div>
+      <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
+    :modeV386==='tiers'
+      ?`<b class="customer-business-balance-v347 customer-business-balance-tier-v386">${esc(tierLabel||heroLabel)}</b>
+        <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tierProgressV386}" aria-label="${esc(tierLabel?`${tierLabel} progress`:'Tier progress')}" style="--reward-progress:${tierProgressV386}%"><span></span></div>
+        <p class="customer-business-summary-line-v362">${tierNextV386
+          ?`${esc(customerTierDistanceCountV310(tierRemainingV386,String(tier?.basis||'visits')))} ${esc(customerTierUnitWordV310(String(tier?.basis||'visits')))} to ${esc(tierNextV386.label||'next tier')}`
+          :'You are at the top tier'}</p>`
+      :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>`;
+  /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
+     running, so they are suppressed rather than printed against a tier meter. */
+  const showRewardLinesV386=modeV386!=='tiers'||rewardReady;
+  return `<section class="card customer-business-summary-v346" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
     <div class="customer-business-summary-top-v347">
       <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(heroLabel)}</span></span>
       <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(subline)}</span></span>
     </div>
-    <b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>
-    <p class="customer-business-summary-line-v362">${esc(claimLine)}</p>
-    ${progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+    ${figureV386}
+    ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+    ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
     ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
       ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
       ${bookAction}
@@ -8740,6 +8826,7 @@ function wireCustomerBusinessShortcutsV347(root=document){
   const selectors={
     points:'#customerBusinessRewardsDetailV347',
     rewards:'#customerBusinessRewardsDetailV347',
+    /* Same node as points — v386 filters which cards inside it are shown per action. */
     tiers:'#customerBusinessRewardsDetailV347',
     packages:'#customerBusinessPackagesDetailV347',
     membership:'#walletMemberships,#customerBusinessPackagesDetailV347',
@@ -8779,7 +8866,35 @@ function openCustomerBusinessShortcutPageV348({action='',title='Details',target=
   target.parentNode?.insertBefore(placeholder,target);
   content.replaceChildren(target);
   if(heading)heading.textContent=title;
+  /* v386 (owner photos 5 + 10). "Tier benefits" and "Points & gifts" are two tiles that opened
+     ONE section, so both screens painted the whole programme stack and the owner saw the tier
+     ladder inside Points & gifts ("dont show 'Tier' in 'Points & gift'") and the stamp card
+     inside Tier benefits ("dont show this in Tier"). The stack is still rendered once — two
+     copies would give the rewards list two mount points with one id — and the cards that do not
+     belong to the tile the customer actually tapped are hidden for as long as this page is open,
+     then restored on close. Hiding rather than detaching keeps loadRewards/loadTier writing into
+     live nodes, so a section that arrives while the page is open still lands. */
+  const hiddenByShortcutV386=[];
+  const keepForActionV386={tiers:['tiers'],points:['stamps','points'],rewards:['stamps','points']}[action];
+  if(keepForActionV386){
+    target.querySelectorAll('[data-programme-card]').forEach(card=>{
+      if(keepForActionV386.includes(String(card.dataset.programmeCard||'')))return;
+      if(card.hidden)return;
+      card.hidden=true;
+      hiddenByShortcutV386.push(card);
+    });
+    /* The explainer and the section's own "Rewards / ready rewards, catalogue" head are points
+       guidance, so they follow the points half rather than standing alone over a tier ladder —
+       the page already carries "Tier benefits" as its title. */
+    if(action==='tiers')target.querySelectorAll('[data-points-explainer],.customer-business-group-head-v346').forEach(node=>{
+      if(node.hidden)return;
+      node.hidden=true;
+      hiddenByShortcutV386.push(node);
+    });
+  }
   page._customerBusinessShortcutRestoreV348=()=>{
+    hiddenByShortcutV386.forEach(node=>{node.hidden=false});
+    hiddenByShortcutV386.length=0;
     if(placeholder.parentNode)placeholder.parentNode.insertBefore(target,placeholder);
     placeholder.remove();
   };
@@ -8884,16 +8999,26 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
       </div>
     </header>
-    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business})}
+    ${/* v386 (owner photo 9): the header chip truncated the address to "313 Orcha…", which the
+         owner struck out and redrew as a pin and the full address on its own line under the name.
+         The chip stays as the tap target for the details sheet; this line is the address itself,
+         filled by the same contact read that fills the chip and hidden until it arrives. */''}
+    <p class="customer-business-address-line-v386" data-company-address-line-v386 hidden></p>
+    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities})}
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
-        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
+        /* v386 (owner photo 10: "show how many points i accumulated and when will expire").
+           v338 suppressed this card's own balance because the red hero above it already said the
+           same number — true on the main profile, but v347/v348 moved this card into the Points &
+           gifts sub-page, which HIDES that hero. The one place the balance was printed was
+           therefore invisible on the one screen named after it. The suppression is lifted for
+           this layout only; the pre-v347 path below still passes the hero-derived flag. */
+        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard?.expiry||null})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
-      ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
       ${customerPointsExplainerMarkupV167(business)}
     </section>
   </div>`;
@@ -8922,7 +9047,6 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${/* v339/v362: the older non-collapsed preview path still renders the referral slot near this
           tail. The collapsed customer app renders its referral slot in customerBusinessReferralDetailV362
           so Points & gifts remains only points, rewards and earn guidance. */''}
-    ${collapsedHeaderV339?customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities}):''}
     ${collapsedHeaderV339||!programmeStackV310(programmeCapabilities)?'<div id="walletReferralSlot" hidden></div>':''}
     ${customerPointsExplainerMarkupV167(business)}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
@@ -9201,12 +9325,16 @@ function customerRewardReadyCountV343(cards=[]){
 }
 function customerHomeSummaryV343(cards=[]){
   const rewardCount=customerRewardReadyCountV343(cards);
-  const businessCount=(Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
   const expiringCount=customerExpiringRowsV286(cards).length;
   const rewardWord=rewardCount===1?'reward':'rewards';
-  return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} ${esc(rewardWord)} ready across ${esc(businessCount)} businesses">
+  /* v386 (owner photo 1, "across 0 businesses" struck out). The line counted the businesses that
+     have a reward ready — the SAME filter as rewardCount above it, so it could only ever restate
+     the number already printed one line up ("0 rewards ready / across 0 businesses"), and it read
+     as a second, contradictory-looking figure. The count of businesses is not a fact this card
+     needs: "Your Peekaa" directly below lists them by name. */
+  return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} ${esc(rewardWord)} ready">
     <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:42})}</span>
-    <span class="customer-home-ready-copy-v343"><b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b><small>across ${esc(customerPointTotalV103(businessCount))} ${businessCount===1?'business':'businesses'}</small>${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
+    <span class="customer-home-ready-copy-v343"><b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b>${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
@@ -9931,6 +10059,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
             :`<button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:18})}${compactHeaderContactV366?'':`<span>Call</span>`}</button>`
         }`;
         contactHostV326.querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=openSheet);
+        const addressLineV386=$('walletBody').querySelector('[data-company-address-line-v386]');
+        if(addressLineV386&&branch.address){
+          addressLineV386.innerHTML=`${CUI.icon('branch',{size:15})}<span>${esc(String(branch.address))}</span>`;
+          addressLineV386.hidden=false;
+        }
       }).catch(()=>{});
   }
   /* v337: "Claim reward ›" on the reward-ready banner does not invent a new claim path — it
@@ -9938,8 +10071,24 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      matching reward's own "Show QR at counter" button (wired in loadRewards) does the redeem. */
   const claimBannerCtaV337=$('walletBody').querySelector('[data-claim-reward-scroll-v337]');
   if(claimBannerCtaV337)claimBannerCtaV337.onclick=()=>{
-    const rewardsHostEl=$('walletRewards');
-    (rewardsHostEl||claimBannerCtaV337).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+    /* v386 (owner photo 3: "why i click nothing happened"). v337 scrolled to #walletRewards, but
+       v347/v348 moved the rewards list INTO the Points & gifts shortcut page, which is hidden
+       until its tile is opened. scrollIntoView on a hidden element scrolls nowhere, so the button
+       was inert for every customer on the collapsed profile. It now opens the same shortcut page
+       the tile opens — reusing that one code path rather than inventing a second claim route —
+       and scrolls to the rewards list inside it once it is on screen. The pre-v347 layout, where
+       the list is already in the page, keeps the plain scroll. */
+    const rewardsTile=document.querySelector('[data-business-shortcut-v347="points"],[data-business-shortcut-v347="rewards"]');
+    const scrollToRewards=()=>{
+      const rewardsHostEl=$('walletRewards');
+      (rewardsHostEl||claimBannerCtaV337).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+    };
+    if(rewardsTile&&$('customerBusinessShortcutPageV348')?.hidden!==false){
+      rewardsTile.click();
+      requestAnimationFrame(()=>requestAnimationFrame(scrollToRewards));
+      return;
+    }
+    scrollToRewards();
   };
   /* v327 (owner: "clicked tier > auto scroll to tier below"): the header's tier badge jumps to
      the Tier card. Covers both the v310 stack (its own [data-programme-card="tiers"] section)
@@ -10009,6 +10158,31 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         entry_point:'customer_wallet',surface_version:'v255'}
     });
     showCustomerOfferDetailV173({...offer,business:{...b,id:businessId||b.id,slug:businessSlug}});
+  });
+  /* v386 (owner photo 9: "why cannot click to see details", drawn across the offer card). The
+     detail sheet was reachable only through a [data-promotion-details] button, and that button
+     exists only when the business's configured CTA is 'programme'. A business that chose "Book
+     now" — the annotated one — got a card with Book and Share and no way into the offer at all.
+     The card body now opens the same sheet the button opens, going through that button when it
+     is present so there is exactly one code path and one analytics event. Clicks that land on a
+     control the card already owns (Book, Share, Terms, Show at counter) are left alone. */
+  document.querySelectorAll('.customer-promotion-card[data-promotion-id]').forEach(card=>{
+    if(card.dataset.promotionOpenWiredV386==='yes')return;
+    card.dataset.promotionOpenWiredV386='yes';
+    card.classList.add('customer-promotion-card-openable-v386');
+    card.addEventListener('click',event=>{
+      if(event.target.closest('a,button,summary,input,select,textarea,label'))return;
+      const detailsButton=card.querySelector('[data-promotion-details]');
+      if(detailsButton)return detailsButton.click();
+      const offerId=String(card.dataset.promotionId||'');
+      const offer=(Array.isArray(presentation.offers)?presentation.offers:[]).find(item=>String(item?.id||'')===offerId);
+      if(!offer)return openCustomerPromotionDetailsV104(card);
+      typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.promotion_opened',customerWalletBusinessIdV256,{
+        context:{promotion_id:offerId,surface_key:'promotion_detail',
+          entry_point:'customer_wallet',surface_version:'v255'}
+      });
+      showCustomerOfferDetailV173({...offer,business:{...b,id:businessId||b.id,slug:businessSlug}});
+    });
   });
   /* v265: Share reads the offer back out of the list the page already rendered, so the sheet can
      never describe a different promotion from the card that was tapped. */
@@ -10673,24 +10847,72 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     const status=[
       items.some(item=>item?.state==='source_unavailable')?'Some programme updates are temporarily unavailable and cannot be opened.':''
     ].filter(Boolean).join(' ');
-    let priorBusinessSlug='';
+    /* v386 (owner photo 8: "i want this ↓ [avatar] Cubbly xxx … 27 Aug 2026", drawn over the
+       expanded card and its three buttons, marked "too confusing"). One message is now ONE ROW:
+       who it is from, what it says, and when it stops mattering. The row itself is the "Open
+       programme" button that used to sit under the text — same handler, same data-inbox-open
+       contract, so opening still marks read and still refuses a resolved or unavailable source.
+       Dismiss stays as a single quiet control on the row; "Mark unread" is dropped, because a
+       row the customer just opened is the one thing they cannot have wanted to re-flag, and it
+       was the third of three competing buttons.
+       The per-business <h3> group heading goes too: every row now names its own business, so a
+       heading over a single row was repeating the row. */
     const renderedItems=items.map(item=>{
       const state=String(item?.state||'read'),isResolved=state==='resolved',isUnavailable=state==='source_unavailable',business=item?.business||null;
       const routeSlug=global?business?.slug:businessSlug;
-      const deadline=item?.deadline_at?`<p class="muted small" style="margin-top:4px">Relevant until ${esc(walletDate(item.deadline_at))}.</p>`:'';
-      const businessHeading=global&&business?.slug!==priorBusinessSlug?`<h3 class="customer-inbox-group">${esc(business?.name||'Business programme')}</h3>`:'';
-      if(global&&business?.slug)priorBusinessSlug=business.slug;
+      const name=String(business?.name||'').trim()||(global?'Business programme':'This business');
+      const when=item?.deadline_at||item?.created_at||'';
+      const openable=item?.action_available===true&&!isResolved&&item?.route_key==='wallet_business'&&!!routeSlug;
+      const monogram=(name[0]||'B').toUpperCase();
+      const line=String(item?.title||'Inbox update').trim();
+      const detail=String(item?.body||'').trim();
+      /* Screen-reader only, so the full wording costs no space and stays the honest one. */
       const stateCopy=isResolved?'Resolved history':isUnavailable?'Programme temporarily unavailable':state==='unread'?'Unread':'Read';
-      const openAction=item?.action_available===true&&!isResolved&&item?.route_key==='wallet_business'&&routeSlug?`<button type="button" class="btn ghost sm" data-inbox-open="${esc(item.event_id)}" data-route-key="wallet_business">Open programme</button>`:'';
-      const markAction=!isResolved?`<button type="button" class="btn ghost sm" data-inbox-state="${esc(item.event_id)}" data-state="${state==='unread'?'read':'unread'}">Mark ${state==='unread'?'read':'unread'}</button><button type="button" class="btn ghost sm" data-inbox-state="${esc(item.event_id)}" data-state="dismiss">Dismiss</button>`:'';
-      return `${businessHeading}<article class="customer-inbox-item ${esc(state)}"><div class="row"><div><b>${esc(item?.title||'Inbox update')}</b><p class="muted small" style="margin-top:3px">${esc(item?.body||'')}</p>${deadline}</div><span class="spacer"></span><span class="pill">${esc(stateCopy)}</span></div><div class="customer-inbox-actions">${openAction}${markAction}</div></article>`;
+      return `<article class="customer-inbox-item customer-inbox-row-v386 ${esc(state)}">
+        <${openable?'button':'div'} class="customer-inbox-row-main-v386"${openable?` type="button" data-inbox-open="${esc(item.event_id)}" data-route-key="wallet_business"`:''}>
+          <span class="customer-inbox-avatar-v386" aria-hidden="true">${esc(monogram)}</span>
+          <span class="customer-inbox-row-copy-v386">
+            <span class="customer-inbox-row-top-v386"><b>${esc(name)}</b>${when?`<time class="customer-inbox-row-when-v386" datetime="${esc(when)}">${esc(walletDate(when))}</time>`:''}</span>
+            <span class="customer-inbox-row-line-v386">${esc(line)}</span>
+            ${detail&&detail!==line?`<span class="customer-inbox-row-detail-v386 muted small">${esc(detail)}</span>`:''}
+          </span>
+          ${state==='unread'?'<span class="customer-inbox-row-dot-v386" aria-hidden="true"></span>':''}
+          <span class="sr-only">${esc(stateCopy)}</span>
+        </${openable?'button':'div'}>
+        ${isResolved?'':`<button type="button" class="customer-inbox-row-dismiss-v386" data-inbox-state="${esc(item.event_id)}" data-state="dismiss" aria-label="Dismiss ${esc(line)}">${CUI.icon('close',{size:16})}</button>`}
+      </article>`;
     }).join('');
     host.setAttribute('aria-busy','false');
-    host.innerHTML=`<div class="wallet-section-head"><div><h2>${global?`${esc(BRAND.customerLabel)} inbox`:'Inbox'}</h2><p class="muted small">${global?'Updates grouped by your separate business programmes.':'Customer-safe updates from this business.'}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button><button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button></div>
+    /* The gear holds everything that is a SETTING rather than a message: the All/Unread filter,
+       the per-business reminder preferences, and (on the Messages page) the device-notification
+       switch, which is moved in below. Collapsed by default — photo 8 shows a list, not a
+       control panel. */
+    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="false" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:18})}</button></div>
+      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" hidden>
+        <div class="customer-inbox-filter-row-v386" role="group" aria-label="Show">
+          <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
+          <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
+        </div>
+        <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
+        <div id="customerInboxDeviceSlotV386"></div>
+      </div>
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
-      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
-      <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>`;
+      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
+    const settingsPanelV386=host.querySelector('#customerInboxSettingsV386'),settingsToggleV386=host.querySelector('#customerInboxSettingsToggleV386');
+    if(settingsToggleV386&&settingsPanelV386)settingsToggleV386.onclick=()=>{
+      const open=settingsPanelV386.hidden;
+      settingsPanelV386.hidden=!open;
+      settingsToggleV386.setAttribute('aria-expanded',String(open));
+    };
+    /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
+       push wiring that ran once at page render still owns the button it bound. */
+    const deviceSectionV386=$('customerMessagesNotifications'),deviceSlotV386=host.querySelector('#customerInboxDeviceSlotV386');
+    if(deviceSectionV386&&deviceSlotV386&&!deviceSlotV386.contains(deviceSectionV386)){
+      deviceSectionV386.hidden=false;
+      deviceSectionV386.style.marginTop='18px';
+      deviceSlotV386.appendChild(deviceSectionV386);
+    }
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
     });

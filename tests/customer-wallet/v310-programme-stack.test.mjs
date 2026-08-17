@@ -165,30 +165,38 @@ test('a programme the firm never ran renders nothing at all',()=>{
 
 /* --------------------------------------------------------- 4 · a paused programme keeps its card */
 
-test('a paused programme keeps its card, says so, and never blanks the others',()=>{
+/* v386 (owner photos 5 + 10: "when paused, dont show in customer interface", drawn over the
+   paused Stamp card on two different screens). This REPLACES the v310 rule that a paused
+   programme keeps a card saying it is paused, and generalises v326's Tier-only exception to
+   every card. The paused SENTENCE is untouched and still ships — customerProgrammePausedMarkupV310
+   serves the v194 tab fallback and the points panel's own enabled===false branch, both still
+   covered below — this is only about whether the stack paints a card for a programme the
+   business is not running. */
+test('a paused programme drops its card entirely and never blanks the others',()=>{
   const html=render(spine({points:paused('2026-07-01T00:00:00Z'),tiers:running(),stamps:running()}));
-  assert.deepEqual(cardOrder(html),['tiers','stamps','points'],
-    'pausing points removes neither the stamps card nor the tier card');
-  const points=card('points',html);
-  assert.match(points,/Programme paused/);
-  assert.match(points,/Anything you already earned is kept/);
-  assert.match(points,/1 Jul 2026/,'the card says since when, from the server’s own breadcrumb');
-  assert.doesNotMatch(points,/customer-programme-balance/,
-    'a paused programme discloses no balance — the server zeroes it, and a bare 0 is a lie');
+  assert.deepEqual(cardOrder(html),['tiers','stamps'],
+    'the paused points card is gone; pausing points removes neither the stamps card nor the tier card');
+  assert.doesNotMatch(html,/data-programme-card="points"/,'no card for a programme that is not running');
+  assert.doesNotMatch(html,/Programme paused/,'and so no paused sentence in the stack');
   assert.match(card('tiers',html),/Explorer/,'the tier card is untouched by the points pause');
 });
 
-/* v326 (owner: "if programme is paused/not live, remove from customer app" — annotated on the
-   Tier card specifically): unlike every other card in the stack, a paused TIER card no longer
-   renders at all, rather than showing "Programme paused". This is the one deliberate exception
-   to rule 4 above; stamps/points/referral paused behaviour is untouched. */
-test('each card reads its OWN active flag, not a single programme-wide one — Tier is the paused exception',()=>{
+test('each card reads its OWN active flag, not a single programme-wide one',()=>{
   const tierPaused=render(spine({points:running(),tiers:paused()}));
   assert.deepEqual(cardOrder(tierPaused),['points'],
     'a paused Tier programme drops its card entirely; points is running, so its own card is the only one left');
   assert.match(tierPaused,/customer-programme-balance/,'points is running, so its figure stands');
   assert.doesNotMatch(tierPaused,/data-programme-card="tiers"/,'no tier card at all while its programme is paused');
   assert.doesNotMatch(tierPaused,/Explorer/,'a paused tier programme does not show a rung it is not awarding');
+});
+
+/* The gifts list mounts on an accruing card. When v386 drops both of them as paused, the bare
+   host must still ship or the customer loses gifts they already hold along with the card. */
+test('v386 the rewards host survives a stack whose accruing programmes are all paused',()=>{
+  const html=render(spine({points:paused(),tiers:running()}));
+  assert.doesNotMatch(html,/data-programme-card="points"/);
+  assert.equal((html.match(/id="walletRewards"/g)||[]).length,1,
+    'exactly one mount point, even with no card to hang it on');
 });
 
 /* -------------------------------------------------------------------- 5 · exactly one hero */
@@ -305,7 +313,10 @@ test('the stamps card never says "Reward points"',()=>{
   const html=render(spine({stamps:running(),points:paused()}),
     {loyalty:{enabled:true,balance:8,unit:'stamps'},presentation:{unit:'stamps',balance:8},
       reward:{name:'Free pastry',cost_units:10,remaining_units:2,available_now:false}});
-  const stamps=section('data-programme-card="stamps"','data-programme-card="points"',html);
+  /* v386: the paused points card no longer renders, so the stamps card runs to the end of the
+     stack rather than up to a points marker. */
+  assert.doesNotMatch(html,/data-programme-card="points"/);
+  const stamps=html.slice(html.indexOf('data-programme-card="stamps"'));
   assert.doesNotMatch(stamps,/Reward points/);
   assert.match(stamps,/Stamp card/);
 });
@@ -313,7 +324,7 @@ test('the stamps card never says "Reward points"',()=>{
 test('the gifts host lands on the accruing card, never on both',()=>{
   const stampsFirm=render(spine({stamps:running(),points:paused()}));
   assert.equal((stampsFirm.match(/id="walletRewards"/g)||[]).length,1);
-  const stamps=section('data-programme-card="stamps"','data-programme-card="points"',stampsFirm);
+  const stamps=stampsFirm.slice(stampsFirm.indexOf('data-programme-card="stamps"'));
   assert.match(stamps,/id="walletRewards"/,'at a stamps firm the gifts sheet hangs off the stamps card');
   const pointsFirm=render(spine({points:running(),tiers:running()}));
   assert.equal((pointsFirm.match(/id="walletRewards"/g)||[]).length,1);

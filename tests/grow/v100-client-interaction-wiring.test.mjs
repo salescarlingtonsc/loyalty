@@ -72,7 +72,11 @@ test('v100 interaction contexts remain short allowlisted dimensions with no cust
   // customer.promotion_opened event from the new handler — a call site, not a new event name.
   // V300 adds customer.referral_shared (channel + surface_version only — the same fixed-handful
   // channel dimension the V264 share uses; no code, no identity, no free text).
-  assert.equal(calls.length,19);
+  // v386 (owner photo 9, "why cannot click to see details") makes the offer CARD open the detail
+  // sheet, for the businesses whose configured CTA is "Book now" and therefore render no "View
+  // details" button at all. Like V286 before it, this is a new CALL SITE re-emitting the SAME
+  // customer.promotion_opened event with the same four dimensions — not a new event or dimension.
+  assert.equal(calls.length,20);
   for(const [,context] of calls){
     // V256: query_shape is deliberately allowed and deliberately NOT the typed text — the
     // shape helper is asserted separately in tests/business-ui/v255-interaction-batching.

@@ -153,10 +153,14 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   const merchant=app.slice(app.indexOf('function customerMerchantExperienceMarkupV95'),app.indexOf('/* W4c lives HERE',app.indexOf('function customerMerchantExperienceMarkupV95')));
   const collapsed=merchant.slice(merchant.indexOf('if(collapsedHeaderV339)return'),merchant.indexOf('return `${customerProgrammeSwitcherMarkup',merchant.indexOf('if(collapsedHeaderV339)return')));
   assert.doesNotMatch(collapsed,/customer-business-book-v346/);
-  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business\}\)/);
+  /* v386 (owner photo 7): the hero takes programmeCapabilities so its shape can follow the
+     business's own choice of programme — number, stamp rings, or tier meter. */
+  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities\}\)/);
   assert.match(collapsed,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'\}\)/);
   assert.match(collapsed,/customerBusinessReferralDetailMarkupV362\(\)/);
-  assert.doesNotMatch(collapsed,/customerEarnMorePointsMarkupV339\(\{loyalty,presentation,programmeCapabilities\}\)\}\n\s+\$\{customerReferralSlotMarkupV360\(\)\}/);
+  /* v386 (owner photo 4, the whole card struck through): "Earn more points → Visit and spend
+     here" is removed outright, function and both call sites. */
+  assert.doesNotMatch(app,/customerEarnMorePointsMarkupV339/);
   assert.match(app,/function customerBusinessReferralDetailMarkupV362/);
   assert.doesNotMatch(app,/id="customerEarnMoreReferralV339"/);
   assert.match(app,/class="customer-business-book-inline-v349"/);

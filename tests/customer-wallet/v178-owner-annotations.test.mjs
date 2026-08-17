@@ -134,13 +134,18 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.match(sheet,/Contact details unavailable\./);
   assert.match(sheet,/href="tel:/);
   assert.match(sheet,/href="mailto:/);
-  assert.match(sheet,/customerRpc\('customer_get_promotions_v155',\{p_business:business\.id,p_branch:null,p_locale:merchantCopyLocale\(\)\}\)/);
-  assert.match(sheet,/Loading offers…/);
-  assert.match(sheet,/No current offers from this business\./);
-  assert.match(sheet,/Current offers couldn’t load\./);
-  assert.match(sheet,/showCustomerOfferDetailV173\(\{\.\.\.offer,business:\{\.\.\.business,\.\.\.\(offer\.business\|\|\{\}\)\}\},\{inheritHistoryId:handOff\}\)/);
-  assert.match(sheet,/ct\('openProgramme',\{business:name\}\)/);
-  assert.match(sheet,/href="#\/wallet\/\$\{slug\}" data-business-detail-nav/);
+  /* v386 (owner photo 2, both scribbled out): the sheet no longer lists "Current offers" — the
+     programme page behind it already shows them — and no longer carries an "Open <business>
+     rewards" button that navigated to the page the customer was already on. It gained the phone
+     glyph beside the number, and every other branch under the default one. */
+  assert.doesNotMatch(sheet,/customer_get_promotions_v155/,'no second offers read from the company sheet');
+  assert.doesNotMatch(sheet,/Current offers/);
+  assert.doesNotMatch(sheet,/ct\('openProgramme',\{business:name\}\)/);
+  assert.doesNotMatch(sheet,/data-business-detail-nav/);
+  assert.match(sheet,/customerBranchContactLinesV386\(branch\)/);
+  assert.match(sheet,/data-business-branches-v386/);
+  assert.match(app,/function customerBranchContactLinesV386[\s\S]{0,900}CUI\.icon\('phone',\{size:14\}\)/,
+    'the phone number carries a phone glyph, which is what the owner drew');
   assert.match(app,/function customerCompanyIdentityMarkupV178[\s\S]{0,400}customerMediaUrlV95\(business\?\.logo_url\)/);
   assert.match(app,/\.customer-business-detail-modal \.modal-card\{width:min\(480px/);
 });

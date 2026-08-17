@@ -3464,29 +3464,6 @@ function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready'
     ${status==='error'?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>':''}
   </section>`;
 }
-/* v339/v362: the honest "earn more" list. There is no admin-configurable per-action earn table in
-   this product, so this section prints only what a real field can back. Referral now lives behind
-   the Refer a friend shortcut instead of inside Points & gifts. The visit row carries NO "+N pts":
-   the customer surface is never told this firm's
-   earn_points_per_dollar (customer_get_wallet returns enabled/model/unit/balance and nothing
-   else), so a number here would be invented. It is therefore phrased without one, and it renders
-   only where spendable points are actually running — the same customerPointsHeroVisibleV337 check
-   the hero uses. There is no review mechanism anywhere in this codebase, so there is no review row.
-   No "See all" link either: no route lists earn actions, and a link to a page that does not exist
-   is worse than no link. */
-function customerEarnMorePointsMarkupV339({loyalty={},presentation={},programmeCapabilities={}}={}){
-  if(!customerPointsHeroVisibleV337({loyalty,programmeCapabilities}))return '';
-  const unitLabel=ct(presentation.unit);
-  return `<section class="card customer-earn-more-v339" id="customerEarnMoreV339" aria-labelledby="customerEarnMoreTitleV339">
-    <div class="customer-earn-more-head-v339"><h2 id="customerEarnMoreTitleV339">Earn more ${esc(unitLabel)}</h2></div>
-    <ul class="customer-earn-more-list-v339">
-      <li class="customer-earn-more-row-v339">
-        <span class="customer-earn-more-icon-v339" aria-hidden="true">${CUI.icon('bookings',{size:18})}</span>
-        <span class="customer-earn-more-copy-v339"><b>Visit and spend here</b><span class="muted small">Every qualifying purchase adds ${esc(unitLabel)} to your balance.</span></span>
-      </li>
-    </ul>
-  </section>`;
-}
 /* V174 customer tier card. One compact card, CHAGEE-style: where I am, how close the next
    tier is (exact remaining in the business's own basis — visits, spend or points), what the
    next tier unlocks (two-item teaser), then my current benefits. Renders nothing when the
@@ -3624,7 +3601,12 @@ function customerTierLadderMarkupV186(tier={}){
   const basis=String(tier.basis||'visits');
   const metric=Number(tier.metric||0);
   const requirement=threshold=>customerTierRequirementTextV189(threshold,basis);
-  return `<details class="customer-tier-ladder">
+  /* v386 (owner photo 6: "don't minimise"). The ladder shipped closed, so the one thing the
+     Tier benefits screen exists to answer — what the next rung unlocks — was behind a tap the
+     owner did not expect to have to make. It stays a <details> (the summary is still the
+     labelled control, and a customer who wants the screen shorter can still collapse it), but
+     it now opens with the page. */
+  return `<details class="customer-tier-ladder" open>
     <summary><span>All tiers and what they unlock</span><span class="muted small">${rungs.length} tiers</span></summary>
     <ol class="customer-tier-rungs" aria-label="Every tier and what it unlocks">${rungs.map(rung=>{
       const isCurrent=rung.current===true;
@@ -3681,7 +3663,7 @@ function customerProgrammeModeV230({points_mode=null,tiers=false,rewards=false}=
 /* v310 (W4b): `progressMarkupV310` lets the stack supply the same meter with its sentence routed
    through ct(). Omitted — which is every v194 fallback caller — the panel builds the V167 English
    line exactly as it has since v167. Nothing else about this panel changes. */
-function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null,hideSummaryV338=false}){
+function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=null,rewardsHost=false,progressMarkupV310=null,hideSummaryV338=false,expiry=null}){
   const unitLabel=ct(presentation.unit);
   /* V289 (audit A3, G4). Both wallet readers return loyalty.enabled=false with EVERY number
      zeroed when the firm has the module off or its programme inactive — the server cannot
@@ -3703,8 +3685,26 @@ function customerProgrammePointsPanelV230({loyalty={},presentation={},reward=nul
      business where the hero doesn't render (paused programme, tiers-only) is untouched, because
      the caller only sets this flag when the hero itself is visible. */
   return `${hideSummaryV338?'':`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)}</span></p>
-    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}`}
+    ${progress||`<p class="muted small" style="margin-top:6px">Rewards from this business appear below as you earn.</p>`}
+    ${customerPointsExpiryLineV386({expiry,loyalty,presentation})}`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}`;
+}
+/* v386 (owner photo 10: "show how many points i accumulated and when will expire"). The wallet
+   card already carries the answer — app.c45/v44 return expiry.expiring_units and
+   expiry.next_expiry_at — but the customer surface only ever printed it on the HOME rail as a
+   count of businesses "expiring soon", never on the programme that owns the points.
+   Two deliberate limits, both from the server's own shape: next_expiry_at is set ONLY when the
+   batch expires inside 30 days, and it is null whenever the firm's expiry_mode is 'none'. So a
+   business that never expires points, or whose next expiry is further out than the server will
+   say, prints NOTHING here rather than a guessed date. */
+function customerPointsExpiryLineV386({expiry=null,loyalty={},presentation={}}={}){
+  const units=Math.max(0,Number(expiry?.expiring_units)||0),at=String(expiry?.next_expiry_at||'').trim();
+  if(!units||!at)return '';
+  const unitLabel=ct(presentation.unit||loyalty.unit||'points');
+  const soon=Math.max(0,Number(expiry?.expiring_7_units)||0)>0;
+  return `<p class="muted small customer-points-expiry-v386"${soon?' data-points-expiry-soon-v386="true"':''} style="margin-top:6px">
+    ${CUI.icon('appointments',{size:14})} <span>${esc(customerPointTotalV103(units))} ${esc(unitLabel)} expire on <time datetime="${esc(at)}">${esc(walletDate(at))}</time></span>
+  </p>`;
 }
 /* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
    what it counts toward rather than as something to spend. */
@@ -3871,12 +3871,12 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
 }
 /* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
-function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false}){
+function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false,expiry=null}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
     <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
-      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,
+      :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,expiry,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
   </section>`;
 }
@@ -3969,7 +3969,7 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false,expiry=null}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
@@ -3982,12 +3982,22 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
      alone drops out entirely while its own programme is paused, rather than keeping its card
      with a "Programme paused" message. Stamps/points/referral paused behaviour is untouched —
      only Tier was annotated. */
-  const tierPausedV326=entries.tiers?.active===false;
+  /* v386 (owner photos 5 + 10, "when paused, dont show in customer interface", drawn over the
+     paused STAMP card on both the Tier benefits and the Points & gifts screens): the v326 rule
+     was right but was scoped to one card because only Tier had been annotated. It is now the
+     rule for every accruing card — a programme this business is not running does not get a card
+     announcing that it is not running. What the customer already earned is untouched; it is
+     still on the server and the card returns the moment the programme does.
+     The paused MARKUP stays reachable (customerProgrammePausedMarkupV310 still serves the v194
+     tab fallback and the points panel's own enabled===false branch), so nothing about how a
+     pause is worded changes — only whether this stack paints a card for it. */
+  const cardPausedV386=kind=>entries[kind]?.active===false;
+  const tierPausedV326=cardPausedV386('tiers');
   const cards=[
     /* v333: the paint order IS PROGRAMME_STACK_ORDER_V310 — tier first. The gifts host below is
        unaffected: it is decided by which accruing card is present, never by which is on top. */
     show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
-    show.stamps?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
+    show.stamps&&!cardPausedV386('stamps')?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
     /* v338 (owner: v337's red hero + reward banner duplicated this same points balance and
        "ready to claim" fact a second time on the same screen). The card stays — it is still the
        mount point for the rewards list (rewardsHost/#walletRewards) — but its own balance/
@@ -3995,7 +4005,12 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
        balance for THIS business. suppressPointsCardV337 is computed by the caller with the exact
        same visibility check the hero uses (customerPointsHeroVisibleV337), so a stamps-only or
        tiers-only business, where the hero renders nothing, keeps this card exactly as before. */
-    show.points?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost,hideSummaryV338:suppressPointsCardV337}):'',
+    show.points&&!cardPausedV386('points')?customerProgrammePointsCardV310({loyalty,presentation,reward,entry:entries.points,rewardsHost:rewardsHost&&!stampsHost,hideSummaryV338:suppressPointsCardV337,expiry}):'',
+    /* The rewards list mounts on whichever accruing card is present. When v386 drops BOTH of
+       them as paused, the list would lose its mount point and the gifts the customer already
+       holds would vanish with the card — so the bare host is emitted on its own. */
+    rewardsHost&&!(show.stamps&&!cardPausedV386('stamps'))&&!(show.points&&!cardPausedV386('points'))
+      ?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':'',
     /* 4 · REFERRAL. The slot only, and unconditionally — exactly as the fallback path emits it.
        customerReferralCardMarkupV300 replaces it, and ONLY on a server {enabled:true}; any other
        answer removes it. That rule is unchanged, and deliberately NOT duplicated into the spine:
@@ -4101,7 +4116,39 @@ function customerClaimableRewardBannerMarkupV337({reward=null}={}){
     <button type="button" class="btn sm customer-claimable-banner-cta-v337" data-claim-reward-scroll-v337>Claim reward ›</button>
   </section>`;
 }
-function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={}}={}){
+/* v386 (owner photo 7). "this card available when point system + tier [on] … if tier on only
+   [meter] … if point system off and stamp card on, this change to stamp card … this reward card
+   is interchangeable depends on what business choose."
+
+   The hero printed one shape for every firm: a big number labelled with the unit. On a stamps
+   firm that read "6 stamps" where the customer expected to SEE six stamps, and on a tiers-only
+   firm — which has no spendable balance at all — it read "0 points", which is not merely bare
+   but wrong. The card now takes its shape from the same programme spine the module tiles read
+   (programmeStackV310 → active, customer-visible entries), so it is interchangeable in exactly
+   the sense the owner means: the business's own choice of programme decides it.
+
+   Both new shapes reuse rendering this file already owns — customerProgrammeStampRingsV310 for
+   the rings and .customer-reward-progress for the meter — so no new CSS rule is introduced.
+   That is deliberate: seven browser fixtures inline this stylesheet under captured Chrome
+   measurements pinned to a source hash (see customerStampQuestRingsV323's note), and a new rule
+   would force a recapture for a cosmetic change. */
+function customerBusinessHeroModeV386(capabilities={},loyalty={}){
+  const stack=programmeStackV310(capabilities);
+  if(!stack){
+    /* No spine (older payload): fall back to the unit the wallet itself reports, which is what
+       this card keyed off before v386. */
+    return String(loyalty.unit||'').toLowerCase()==='stamps'?'stamps':'points';
+  }
+  const live=kind=>{
+    const entry=programmeStackEntryV310(stack,kind);
+    return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+  };
+  if(live('points'))return 'points';
+  if(live('stamps'))return 'stamps';
+  if(live('tiers'))return 'tiers';
+  return 'points';
+}
+function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={}}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
   const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
@@ -4131,14 +4178,41 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const bookAction=bookingEnabled&&business?.slug
     ?`<a class="customer-business-book-inline-v349" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:16})}<span>${esc(ct('bookNow'))}</span></a>`
     :'';
-  return `<section class="card customer-business-summary-v346" aria-label="Membership summary">
+  const modeV386=customerBusinessHeroModeV386(programmeCapabilities,loyalty);
+  /* STAMPS: the rings ARE the figure. Target comes from the reward's own cost_units through the
+     same helper the stamps card uses, so the two can never disagree about how long the card is;
+     when the server gives no reward (nothing to aim at yet) there is no length to draw and the
+     plain count stands in, exactly as customerProgrammeStampsCardV310 does. */
+  const stampTargetV386=modeV386==='stamps'?customerStampTargetV310(reward):0;
+  const stampRingsV386=stampTargetV386?customerProgrammeStampRingsV310(balance,stampTargetV386):'';
+  /* TIERS-ONLY: no spendable balance exists, so the hero states the standing and the distance to
+     the next rung. tier.progress_percent is the server's own figure — the same one
+     customerTierPanelMarkupV194 renders — never a percentage derived here. */
+  const tierNextV386=tier?.next||null;
+  const tierProgressV386=Math.max(0,Math.min(100,Number(tier?.progress_percent||0)));
+  const tierRemainingV386=tierNextV386
+    ?Math.max(0,Number(tierNextV386.threshold||0)-Number(tier?.metric||0)):0;
+  const figureV386=modeV386==='stamps'&&stampRingsV386
+    ?`<div class="customer-business-stamp-figure-v386">${stampRingsV386}</div>
+      <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
+    :modeV386==='tiers'
+      ?`<b class="customer-business-balance-v347 customer-business-balance-tier-v386">${esc(tierLabel||heroLabel)}</b>
+        <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tierProgressV386}" aria-label="${esc(tierLabel?`${tierLabel} progress`:'Tier progress')}" style="--reward-progress:${tierProgressV386}%"><span></span></div>
+        <p class="customer-business-summary-line-v362">${tierNextV386
+          ?`${esc(customerTierDistanceCountV310(tierRemainingV386,String(tier?.basis||'visits')))} ${esc(customerTierUnitWordV310(String(tier?.basis||'visits')))} to ${esc(tierNextV386.label||'next tier')}`
+          :'You are at the top tier'}</p>`
+      :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>`;
+  /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
+     running, so they are suppressed rather than printed against a tier meter. */
+  const showRewardLinesV386=modeV386!=='tiers'||rewardReady;
+  return `<section class="card customer-business-summary-v346" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
     <div class="customer-business-summary-top-v347">
       <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(heroLabel)}</span></span>
       <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(subline)}</span></span>
     </div>
-    <b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>
-    <p class="customer-business-summary-line-v362">${esc(claimLine)}</p>
-    ${progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+    ${figureV386}
+    ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+    ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
     ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
       ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
       ${bookAction}
@@ -4258,16 +4332,26 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
       </div>
     </header>
-    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business})}
+    ${/* v386 (owner photo 9): the header chip truncated the address to "313 Orcha…", which the
+         owner struck out and redrew as a pin and the full address on its own line under the name.
+         The chip stays as the tap target for the details sheet; this line is the address itself,
+         filled by the same contact read that fills the chip and hidden until it arrives. */''}
+    <p class="customer-business-address-line-v386" data-company-address-line-v386 hidden></p>
+    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities})}
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
-        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:true,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true})
+        /* v386 (owner photo 10: "show how many points i accumulated and when will expire").
+           v338 suppressed this card's own balance because the red hero above it already said the
+           same number — true on the main profile, but v347/v348 moved this card into the Points &
+           gifts sub-page, which HIDES that hero. The one place the balance was printed was
+           therefore invisible on the one screen named after it. The suppression is lifted for
+           this layout only; the pre-v347 path below still passes the hero-derived flag. */
+        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard?.expiry||null})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
-      ${customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities})}
       ${customerPointsExplainerMarkupV167(business)}
     </section>
   </div>`;
@@ -4296,7 +4380,6 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${/* v339/v362: the older non-collapsed preview path still renders the referral slot near this
           tail. The collapsed customer app renders its referral slot in customerBusinessReferralDetailV362
           so Points & gifts remains only points, rewards and earn guidance. */''}
-    ${collapsedHeaderV339?customerEarnMorePointsMarkupV339({loyalty,presentation,programmeCapabilities}):''}
     ${collapsedHeaderV339||!programmeStackV310(programmeCapabilities)?'<div id="walletReferralSlot" hidden></div>':''}
     ${customerPointsExplainerMarkupV167(business)}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}

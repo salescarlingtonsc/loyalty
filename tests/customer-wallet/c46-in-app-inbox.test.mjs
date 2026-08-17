@@ -247,7 +247,13 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and lau
   assert.doesNotMatch(inbox, /scrollIntoView|aria-controls="customerInAppInbox"/i);
   assert.match(inbox, /aria-live="polite"/i);
   assert.match(inbox, /data-route-key="wallet_business"/i);
-  assert.match(inbox, /\$\{esc\(BRAND\.customerLabel\)\} inbox/i);
+  /* v386 (owner photo 8): the "<brand> inbox" heading and its subtitle are gone — the Messages
+     page title already names the screen, and the list names each business. What replaced them is
+     a settings control holding the filter, the reminder preferences and the device switch. */
+  assert.doesNotMatch(inbox, /\$\{esc\(BRAND\.customerLabel\)\} inbox/i);
+  assert.match(inbox, /customerInboxSettingsToggleV386/);
+  assert.match(inbox, /aria-controls="customerInboxSettingsV386"/);
+  assert.match(inbox, /data-inbox-filter="unread"/);
   assert.match(inbox, /customerInboxSyncRetry/i);
   assert.match(inbox, /A list is never loaded after a failed C46 sync/i);
   assert.match(inbox, /globalThis\.navigator\?\.onLine===false/i);

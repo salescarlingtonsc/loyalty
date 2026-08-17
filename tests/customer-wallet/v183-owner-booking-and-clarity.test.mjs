@@ -128,7 +128,9 @@ test('the offer sheet opens the company sheet and keeps only the booking action'
   assert.match(company,/industry\?`<p class="muted small" style="margin-top:2px">\$\{esc\(industry\)\}<\/p>`/,
     'the company sheet names the business type');
   assert.match(company,/href="tel:/);
-  assert.match(company,/ct\('openProgramme',\{business:name\}\)/,'the company sheet keeps its own rewards CTA');
+  /* v386 (owner photo 2): the sheet's own "Open <business> rewards" button is struck out too —
+     it navigated to the programme page the customer had to be standing on to open this sheet. */
+  assert.doesNotMatch(company,/ct\('openProgramme',\{business:name\}\)/);
 });
 
 /* ---------------------------------------------------------------------- portal */

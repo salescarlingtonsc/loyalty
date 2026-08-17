@@ -1,0 +1,137 @@
+/* v386 — the ten annotated customer screens (owner, 2026-08-17).
+ *
+ * Each assertion fails against the pre-v386 source:
+ *  1. (photo 3) "Claim reward" scrolled to #walletRewards, which v347/v348 moved into a hidden
+ *     shortcut page — scrollIntoView on a hidden element does nothing, so the button was inert.
+ *  2. (photos 5+10) A paused programme kept a card announcing it was paused.
+ *  3. (photos 5+10) "Tier benefits" and "Points & gifts" opened ONE section, so each showed the
+ *     other's cards.
+ *  4. (photo 6) The tier ladder shipped collapsed.
+ *  5. (photo 10) The Points & gifts balance was suppressed on the one screen named after it, and
+ *     the expiry the server already returns was never shown there.
+ *  6. (photo 4) "Earn more points → Visit and spend here" told the customer nothing.
+ *  7. (photo 1) The offer card's business name was hidden by a .muted catch-all, and the ready
+ *     card restated its own reward count as a business count.
+ *  8. (photo 2) The company sheet listed offers already on the page behind it and offered to
+ *     open the page the customer was standing on; the phone number had no glyph; other branches
+ *     were unreachable.
+ *  9. (photo 7) The hero printed one shape for every firm — "0 points" at a tiers-only business.
+ * 10. (photo 8) One message was a card with three buttons under two stacked explanations.
+ * 11. (photo 9) An offer whose CTA is "Book now" had no way into its details at all.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+
+const app=await readFile(new URL('../../app/app.js',import.meta.url),'utf8');
+const indexHtml=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
+
+test('photo 3: Claim reward opens the rewards shortcut page instead of scrolling to a hidden node',()=>{
+  const handler=app.slice(app.indexOf('const claimBannerCtaV337='),app.indexOf('const tierJumpV327='));
+  assert.match(handler,/data-business-shortcut-v347="points"\],\[data-business-shortcut-v347="rewards"/,
+    'it reuses the tile the customer could have tapped, not a second claim path');
+  assert.match(handler,/rewardsTile\.click\(\)/);
+  assert.match(handler,/customerBusinessShortcutPageV348'\)\?\.hidden!==false/,
+    'only when the shortcut page is not already open');
+  assert.match(handler,/requestAnimationFrame\(\(\)=>requestAnimationFrame\(scrollToRewards\)\)/,
+    'the scroll waits for the page it just opened to be laid out');
+});
+
+test('photos 5+10: a paused programme paints no card at all',()=>{
+  const stack=app.slice(app.indexOf('function customerProgrammeStackV310'),app.indexOf('function customerPointsHeroVisibleV337'));
+  assert.match(stack,/const cardPausedV386=kind=>entries\[kind\]\?\.active===false/);
+  assert.match(stack,/show\.stamps&&!cardPausedV386\('stamps'\)/);
+  assert.match(stack,/show\.points&&!cardPausedV386\('points'\)/);
+  assert.match(stack,/rewardsHost&&!\(show\.stamps&&!cardPausedV386\('stamps'\)\)&&!\(show\.points&&!cardPausedV386\('points'\)\)/,
+    'the gifts host survives a stack whose accruing cards are all paused');
+});
+
+test('photos 5+10: each shortcut shows only the cards that belong to it',()=>{
+  const open=app.slice(app.indexOf('function openCustomerBusinessShortcutPageV348'),app.indexOf('function closeCustomerBusinessShortcutPageV348'));
+  assert.match(open,/keepForActionV386=\{tiers:\['tiers'\],points:\['stamps','points'\],rewards:\['stamps','points'\]\}\[action\]/);
+  assert.match(open,/hiddenByShortcutV386\.push\(card\)/);
+  assert.match(open,/hiddenByShortcutV386\.forEach\(node=>\{node\.hidden=false\}\)/,
+    'and restores them on close, so the main page is unchanged');
+  assert.match(open,/action==='tiers'\)target\.querySelectorAll\('\[data-points-explainer\],\.customer-business-group-head-v346'\)/);
+});
+
+test('photo 6: the tier ladder ships open',()=>{
+  assert.match(app,/<details class="customer-tier-ladder" open>/);
+});
+
+test('photo 10: Points & gifts shows the balance it is named after, and when it expires',()=>{
+  assert.match(app,/function customerPointsExpiryLineV386/);
+  /* The helper is declared between the points panel and the tier panel deliberately: the v289 G4
+     harness evals exactly that span to exercise customerProgrammePointsPanelV230 in isolation,
+     and a helper outside it would be an undefined reference there. */
+  const line=app.slice(app.indexOf('function customerPointsExpiryLineV386'),app.indexOf('function customerProgrammeTierPanelV230'));
+  assert.match(line,/expiry\?\.expiring_units/);
+  assert.match(line,/expiry\?\.next_expiry_at/);
+  assert.match(line,/if\(!units\|\|!at\)return ''/,'no invented date when the server gives none');
+  assert.match(app,/customerPointsExpiryLineV386\(\{expiry,loyalty,presentation\}\)/);
+  assert.match(app,/suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard\?\.expiry\|\|null/,
+    'the collapsed profile stops suppressing the balance, because its hero is hidden behind the sub-page');
+});
+
+test('photo 4: the "Earn more points" card is gone, function and call sites',()=>{
+  assert.doesNotMatch(app,/customerEarnMorePointsMarkupV339/);
+  assert.doesNotMatch(app,/Visit and spend here/);
+});
+
+test('photo 1: the offer card names its business, and the ready card drops the business count',()=>{
+  assert.match(indexHtml,/\.customer-home-offer-copy>\.muted\{display:none\}/,
+    'direct children only — the nested business-name span must survive');
+  assert.doesNotMatch(indexHtml,/\.customer-home-offer-copy \.muted:not\(\.customer-home-offer-business\)\{display:none\}/);
+  const summary=app.slice(app.indexOf('function customerHomeSummaryV343'),app.indexOf('function customerHomeBusinessStatusV345'));
+  assert.doesNotMatch(summary,/across \$\{esc\(customerPointTotalV103\(businessCount\)\)\}/);
+  assert.doesNotMatch(summary,/const businessCount=/,'the count is not computed either');
+});
+
+test('photo 2: the company sheet is company details, with a phone glyph and every branch',()=>{
+  const sheet=app.slice(app.indexOf('function showCustomerBusinessDetailV178'),app.indexOf('function customerBranchContactLinesV386'));
+  assert.doesNotMatch(sheet,/customer_get_promotions_v155/);
+  assert.doesNotMatch(sheet,/data-business-detail-nav/);
+  assert.match(sheet,/data-business-branches-v386/);
+  assert.match(sheet,/\.slice\(1\)/,'branches\[0\] is the default branch already printed above');
+  const lines=app.slice(app.indexOf('function customerBranchContactLinesV386'));
+  assert.match(lines.slice(0,900),/CUI\.icon\('phone',\{size:14\}\)/);
+  assert.doesNotMatch(lines.slice(0,900),/CUI\.icon\('mail'/,'there is no envelope glyph; an unknown name falls back to INFO');
+});
+
+test('photo 7: the hero takes its shape from the business’s own programme spine',()=>{
+  const mode=app.slice(app.indexOf('function customerBusinessHeroModeV386'),app.indexOf('function customerBusinessRelationshipSummaryV346'));
+  assert.match(mode,/if\(live\('points'\)\)return 'points'/);
+  assert.match(mode,/if\(live\('stamps'\)\)return 'stamps'/);
+  assert.match(mode,/if\(live\('tiers'\)\)return 'tiers'/);
+  const hero=app.slice(app.indexOf('function customerBusinessRelationshipSummaryV346'),app.indexOf('function customerBusinessSecondaryMarkupV346'));
+  assert.match(hero,/customerProgrammeStampRingsV310\(balance,stampTargetV386\)/,'the rings are the existing renderer, not a new one');
+  assert.match(hero,/customer-business-tier-meter-v386/);
+  assert.match(hero,/const showRewardLinesV386=modeV386!=='tiers'\|\|rewardReady/,
+    'a tiers-only firm gets no sentences about a reward ladder it does not run');
+  assert.match(hero,/data-hero-mode-v386="\$\{esc\(modeV386\)\}"/);
+  assert.match(indexHtml,/\.customer-business-stamp-figure-v386 \.customer-programme-stamp-rings\{display:grid/);
+});
+
+test('photo 8: one message is one row, and the settings live behind the gear',()=>{
+  const inbox=app.slice(app.indexOf('async function renderCustomerInAppInbox'),app.indexOf('function renderWorkspaceAccessUnavailable'));
+  assert.match(inbox,/customer-inbox-row-v386/);
+  assert.match(inbox,/customer-inbox-avatar-v386/);
+  assert.match(inbox,/customer-inbox-row-when-v386/);
+  assert.doesNotMatch(inbox,/Mark \$\{state==='unread'\?'read':'unread'\}/,'the third competing button is gone');
+  assert.doesNotMatch(inbox,/customer-inbox-group/,'every row names its own business, so the group heading repeats it');
+  assert.match(inbox,/customerInboxSettingsToggleV386/);
+  assert.match(inbox,/customerInboxDeviceSlotV386/);
+  assert.match(inbox,/deviceSlotV386\.appendChild\(deviceSectionV386\)/,
+    'the device switch is MOVED, keeping the id its already-bound control was wired by');
+  assert.doesNotMatch(app,/<h1>Messages<\/h1><p class="muted">Customer-safe updates grouped by your separate business programmes\./);
+  assert.match(indexHtml,/\.customer-inbox-row-main-v386\{/);
+});
+
+test('photo 9: the offer card itself opens the detail sheet, and the address gets its own line',()=>{
+  assert.match(app,/document\.querySelectorAll\('\.customer-promotion-card\[data-promotion-id\]'\)/);
+  assert.match(app,/if\(event\.target\.closest\('a,button,summary,input,select,textarea,label'\)\)return/,
+    'the card’s own controls keep their behaviour');
+  assert.match(app,/if\(detailsButton\)return detailsButton\.click\(\)/,'one code path, one analytics event');
+  assert.match(app,/data-company-address-line-v386/);
+  assert.match(indexHtml,/\.customer-business-address-line-v386\{/);
+});

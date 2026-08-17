@@ -84,7 +84,10 @@ test('the ladder hangs off the tier panel', () => {
   // v194: the panel is the Tier tab of the programme card, and the ladder folds behind a
   // disclosure — "too many wordings, make it clickable".
   assert.match(app, /\$\{customerTierLadderMarkupV186\(tier\)\}`;/);
-  assert.match(app, /<details class="customer-tier-ladder">/);
+  /* v386 (owner photo 6: "don't minimise"): still a <details>, so the summary remains the
+     labelled control and the customer can still collapse it — but it ships OPEN, because what
+     the next rung unlocks is the question this screen exists to answer. */
+  assert.match(app, /<details class="customer-tier-ladder" open>/);
   assert.match(app, /<summary><span>All tiers and what they unlock<\/span>/);
 });
 
