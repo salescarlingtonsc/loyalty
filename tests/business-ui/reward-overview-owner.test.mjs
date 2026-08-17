@@ -13,6 +13,16 @@ function section(start,end){
   return app.slice(from,to);
 }
 
+/* V375: ownerRewardJourneyV122 now reads the stored loyalty model through this one-line helper,
+   so the sandbox is given it out of the SAME source rather than a hand-written stand-in. */
+function declaredConst(name){
+  const start=app.indexOf(`const ${name}=`);
+  assert.ok(start>=0,`missing const ${name}`);
+  const end=app.indexOf('\n',start);
+  return app.slice(start,end);
+}
+const NORMALISER_V375=declaredConst('normaliseLoyaltyModelV375');
+
 function declaredFunction(name){
   const start=app.indexOf(`function ${name}(`);
   assert.ok(start>=0,`missing function ${name}`);
@@ -25,9 +35,9 @@ function declaredFunction(name){
   throw new Error(`unterminated function ${name}`);
 }
 
-test('one pure owner overview includes points earning, classic redemption, catalogue rewards and birthday',()=>{
+test('V375 a firm stored as classic gets the reward catalogue, and no store-credit reward',()=>{
   const source=declaredFunction('ownerRewardJourneyV122');
-  const build=vm.runInNewContext(`(()=>{${source};return ownerRewardJourneyV122})()`);
+  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`);
   const overview=JSON.parse(JSON.stringify(build({
     loyalty:{id:'programme-1',active:true,loyalty_model:'classic',earn_points_per_dollar:10,
       redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
@@ -40,21 +50,26 @@ test('one pure owner overview includes points earning, classic redemption, catal
       customer_description:'Available during the birthday month.'}
   })));
 
-  assert.deepEqual(overview.earning,{model:'classic',unit:'points',rate:10,availableToCustomers:true,label:'Earn 10 points per SGD 1 spent'});
-  assert.equal(overview.classicReward.id,'classic:programme-1');
-  assert.equal(overview.classicReward.threshold,1000);
-  assert.equal(overview.classicReward.value,'SGD 10.00 store credit');
+  /* V375 (owner, photo 3). The stored value is still 'classic' — ten production programmes read
+     that and the check constraint still permits it — but every reader normalises it to the
+     catalogue model, so this firm is described as what it now actually is. */
+  assert.deepEqual(overview.earning,{model:'points_tiers',unit:'points',rate:10,availableToCustomers:true,label:'Earn 10 points per SGD 1 spent'});
+  assert.equal(overview.classicReward,undefined,
+    'no reward is synthesized out of redeem_points/reward_credit_cents any more');
+  assert.doesNotMatch(JSON.stringify(overview),/store credit/i);
   assert.deepEqual(overview.milestones.map(item=>item.id),['reward-a','reward-b'],
     'duplicate names retain stable reward identities and sort by threshold');
-  assert.ok(overview.milestones.every(item=>item.availableToCustomers===false),
-    'catalogue rows are visible for editing but cannot be presented as current classic rewards');
+  /* The half of the defect that mattered most: these rows used to be forced to false purely
+     because the model read 'classic', so the firm's own published gifts were shown to nobody. */
+  assert.ok(overview.milestones.every(item=>item.availableToCustomers===true),
+    'a published gift is offered whatever the stored model says');
   assert.equal(overview.birthday.id,'birthday-1');
   assert.equal(overview.birthday.value,'20% off');
 });
 
 test('stamp overview explains the earn rate and incremental milestones without inventing birthday',()=>{
   const source=declaredFunction('ownerRewardJourneyV122');
-  const build=vm.runInNewContext(`(()=>{${source};return ownerRewardJourneyV122})()`);
+  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`);
   const overview=JSON.parse(JSON.stringify(build({
     loyalty:{id:'programme-2',active:true,loyalty_model:'stamps',stamp_per_cents:500},
     rewards:[
@@ -69,7 +84,7 @@ test('stamp overview explains the earn rate and incremental milestones without i
 
 test('paused programmes and scheduled or ended rewards are never described as customer-available',()=>{
   const source=declaredFunction('ownerRewardJourneyV122');
-  const build=vm.runInNewContext(`(()=>{${source};return ownerRewardJourneyV122})()`);
+  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`);
   const paused=JSON.parse(JSON.stringify(build({
     asOf:'2026-08-01T00:00:00.000Z',
     loyalty:{id:'paused',active:false,loyalty_model:'points_tiers',earn_points_per_dollar:5},
@@ -132,7 +147,8 @@ test('owner cards route by stable ID to the exact reward and birthday editors',(
   assert.doesNotMatch(grow,/data-rewards-overview-edit="birthday"/);
   assert.match(grow,/if\(tile\.dataset\.growTopicV229==='birthday'\)\{/);
   assert.match(grow,/openBirthdayBenefitEditorV364\(/);
-  assert.match(grow,/editKind:'classic'/);  // V250: emitted through the same card attribute
+  /* V375 (owner, photo 3): the classic points-for-store-credit model is retired. */
+  assert.doesNotMatch(grow,/editKind:'classic'/);
   assert.match(grow,/pendingGuideAction=action/,
     'clicking from a published overview must prepare a protected draft before editing');
   assert.match(grow,/\.rwEdit\[data-reward-id=/,

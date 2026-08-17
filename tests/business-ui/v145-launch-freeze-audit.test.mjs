@@ -500,12 +500,14 @@ test('loyalty automation copy is conditional on eligible sales and effective pub
   const loyalty=section('async function loyaltyPage(', '/* ---------- referrals ---------- */');
   assert.match(sales,/applies points only when an active published loyalty programme makes it eligible/);
   assert.match(customers,/Record an eligible first purchase; points are earned only when an active published loyalty programme applies/);
-  assert.match(loyalty,/workspaceTemplateHtmlV97\('classicEligibleEarning'/);
+  /* V375 (owner, photo 3): the classic points-for-store-credit model is retired, and the
+     "how fixed redeem works" panel went with it. */
+  assert.doesNotMatch(loyalty,/workspaceTemplateHtmlV97\('classicEligibleEarning'/);
   assert.match(loyalty,/workspaceTemplateHtmlV97\('stampsEligibleEarning'/);
   assert.doesNotMatch(sales,/loyalty points and retention rewards fire automatically/);
   assert.doesNotMatch(customers,/start earning points and unlock loyalty automatically/);
   assert.doesNotMatch(loyalty,/Every sale earns points automatically|Customers collect stamps automatically as they spend/);
-  for(const key of ['classicEligibleEarning','stampsEligibleEarning']){
+  for(const key of ['stampsEligibleEarning']){
     assert.match(app,new RegExp(`${key}:Object\\.freeze\\(\\{en:`));
   }
   assert.match(app, /'Record a sale — eligible customer-linked sales apply active published loyalty and retention rules':'记录销售 — 合资格且关联顾客的销售会应用生效且已发布的忠诚与回流规则'/);

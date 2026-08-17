@@ -17,10 +17,13 @@ const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readF
 const start = app.indexOf('function growPublishFieldRowsV170');
 assert.ok(start > 0);
 const src = app.slice(start, app.indexOf('/* ============================ Program Studio page', start));
+/* V375: growPublishFieldRowsV170 reads the stored model through normaliseLoyaltyModelV375, so the
+   sandbox is handed that one line out of the SAME source rather than a hand-written stand-in. */
+const normaliserV375 = app.slice(app.indexOf('const normaliseLoyaltyModelV375='), app.indexOf('\n', app.indexOf('const normaliseLoyaltyModelV375=')));
 const rows = new Function(
   'GROW_PUBLISH_MODEL_LABEL_V170', 'GROW_PUBLISH_EXPIRY_LABEL_V170',
   'GROW_PUBLISH_TIER_BASIS_LABEL_V175', 'studioMoney',
-  `${src}; return growPublishFieldRowsV170;`
+  `${normaliserV375}; ${src}; return growPublishFieldRowsV170;`
 )({classic:'Classic',points_tiers:'Points with milestones',stamps:'Stamp card'},
   {none:'Never expire',inactivity:'Expire after inactivity',fixed:'Fixed shelf life from earn'},
   {visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points earned'},
@@ -36,12 +39,16 @@ test('points_tiers hides inert classic redemption fields (the real 2026-08-06 ca
   assert.ok(labels.includes('Tier level is earned by'), 'tier basis is a real customer-facing change');
 });
 
-test('classic still shows redemption fields — they are load-bearing there', () => {
+test('V375 a stored classic programme is diffed as the catalogue model it now is', () => {
+  /* V375 (owner, photo 3). Those two rows described the retired fixed-redeem pair and are gone
+     with it. The pair is still STORED — it carries the cost per point now — so the guarantee this
+     test makes is that a change to it is still reported, under the label that is now true. */
   const live  = {active:true, loyalty_model:'classic', redeem_points:1500, reward_credit_cents:1500};
   const draft = {active:true, loyalty_model:'classic', redeem_points:800,  reward_credit_cents:2000};
   const labels = rows(live, draft).map(r => r.label);
-  assert.ok(labels.includes('Points needed to redeem'));
-  assert.ok(labels.includes('Credit minted on redemption'));
+  assert.ok(!labels.includes('Points needed to redeem'));
+  assert.ok(!labels.includes('Credit minted on redemption'));
+  assert.ok(labels.includes('Cost per point'), 'the same two columns are the cost per point now');
 });
 
 test('stamps shows stamp fields and hides points-per-dollar', () => {

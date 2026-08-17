@@ -30,7 +30,10 @@ test('V230 one three-way model select, in the owner\'s words', () => {
   assert.doesNotMatch(app, /Simple points — fixed redeem into credit/);
   assert.doesNotMatch(app, /Points \+ reward catalog \+ tiers/);
   /* V235 tied every editor label to its control with for=/id=. */
-  assert.match(app, /loyaltySelectionV230==='redeem'\?`<label for="lmStyle">Redemption style<\/label>/);
+  /* V375 (owner, photo 3): "Redemption style" offered exactly two options and one of them was
+     store credit. With that model retired there is no style left to choose, so the control was
+     removed rather than reduced to a one-option select. */
+  assert.doesNotMatch(app, /lmStyle/);
   // Selection previews on change; Save is the decision point, and it writes BOTH stores.
   assert.match(app, /Loyalty model preview updated — Save to apply\./);
   /* V240: the target gains 'both' — points redemption and tiers may now run together. */

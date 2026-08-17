@@ -5462,7 +5462,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   publishDraftVersion:Object.freeze({en:'Exactly what happens when you publish draft v{version}.','zh-CN':'发布草稿 v{version} 时将发生的确切变化。',ms:'Perkara tepat yang berlaku apabila anda menerbitkan draf v{version}.'}),
   publishConfirmationSensitive:Object.freeze({en:'This turns on a live rule that affects money or customers. Type PUBLISH below to confirm you reviewed the impact.','zh-CN':'这将启用影响金额或顾客的实时规则。请在下方输入 PUBLISH，确认您已审核影响。',ms:'Ini menghidupkan peraturan langsung yang mempengaruhi wang atau pelanggan. Taip PUBLISH di bawah untuk mengesahkan anda telah menyemak kesannya.'}),
   publishConfirmationStandard:Object.freeze({en:'Review complete. Type PUBLISH below to confirm this exact draft.','zh-CN':'审核完成。请在下方输入 PUBLISH，以确认这份确切草稿。',ms:'Semakan selesai. Taip PUBLISH di bawah untuk mengesahkan draf tepat ini.'}),
-  classicEligibleEarning:Object.freeze({en:'Eligible customer-linked sales earn points when this programme is active, published, and available at the selected branch. At {points} points, one tap converts them into {credit} of real in-store credit. Switch models above any time — balances carry over.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售可赚取积分。达到 {points} 积分后，只需轻点一下即可转换为 {credit} 的实际店内余额。您可随时切换上方模式，余额会保留。',ms:'Jualan layak yang dipautkan kepada pelanggan memperoleh mata apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Pada {points} mata, satu ketikan menukarkannya kepada kredit dalam kedai sebenar sebanyak {credit}. Tukar model di atas pada bila-bila masa — baki kekal.'}),
   stampsEligibleEarning:Object.freeze({en:'Eligible customer-linked sales add stamps when this programme is active, published, and available at the selected branch. Define what each milestone is worth — a free item to hand over, or store credit.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售会增加印花。请定义每个里程碑的价值，例如可交付的免费商品或店内余额。',ms:'Jualan layak yang dipautkan kepada pelanggan menambah cop apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Tetapkan nilai setiap pencapaian — item percuma untuk diserahkan atau kredit kedai.'}),
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
@@ -5507,7 +5506,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'publishImpactActions','publishMoneyLive','publishMoneyNone',
   'publishCustomersLive','publishCustomersNone','publishDraftVersion',
   'publishConfirmationSensitive','publishConfirmationStandard',
-  'classicEligibleEarning','stampsEligibleEarning','referralEnabledOutcome'
+  /* V375: classicEligibleEarning retired with the fixed-redeem panel that was its only
+     render path (owner, photo 3) — the same rule V364 applied to the growPublished* keys. */
+  'stampsEligibleEarning','referralEnabledOutcome'
 ]);
 const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',

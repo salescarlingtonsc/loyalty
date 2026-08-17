@@ -370,7 +370,10 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     assert.match(loyaltyPage, new RegExp(`canManageLoyalty\\?[\\s\\S]*?${control}`, 'i'),
       `${control} must be visible only to an owner with loyalty:rw`);
   }
-  for (const control of ['la', 'lm', 'le', 'lsp', 'lr', 'lc', 'lx', 'ltb']) {
+  /* V375 (owner, photo 3): 'lr' (points needed to redeem) and 'lc' (credit minted on redemption)
+     were the fixed-redeem pair and were removed with that model. Every control that remains is
+     still asserted to carry the same read-only gate. */
+  for (const control of ['la', 'lm', 'le', 'lsp', 'lx', 'ltb']) {
     assert.match(loyaltyPage, new RegExp(`id="${control}"[^>]*\\$\\{loyaltyControlDisabled\\}`, 'i'),
       `${control} must be disabled outside owner loyalty:rw`);
   }

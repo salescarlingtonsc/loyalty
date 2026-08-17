@@ -48,7 +48,9 @@ test('V227 everything earned and spent in points is in one group', () => {
     assert.ok(points.includes(part), `Point system group is missing ${part}`);
   }
   const grid = app.slice(app.indexOf('const rewardCardsV250=['), app.indexOf('const rewardCardGridV250='));
-  for (const part of ['rewardJourney.classicReward', 'rewardJourney.milestones', 'archivedRewards']) {
+  /* V375 (owner, photo 3): the synthesized store-credit card is gone; the grid is the owner's
+     own catalogue and its history, which is all it ever should have been. */
+  for (const part of ['rewardJourney.milestones', 'archivedRewards']) {
     assert.ok(grid.includes(part), `the points reward grid is missing ${part}`);
   }
   assert.ok(app.slice(app.indexOf('const rewardCardGridV250='), pointsStart).includes('growTemplatesOpen'),

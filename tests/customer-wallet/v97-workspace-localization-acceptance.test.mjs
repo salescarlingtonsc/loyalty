@@ -312,7 +312,10 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      133 -> 135: V367 adds tierBenefitBirthdayOnly and tierBenefitBirthdayUnknown — the two
      refusals a birthday-month benefit can produce at the counter, each naming the benefit, with
      all three locales and one {item} placeholder. */
-  assert.equal(keys.length,135,'mixed-interface interpolation inventory changed without review');
+  /* 135 -> 134: V375 retires classicEligibleEarning with the fixed-redeem panel that was its only
+     render path (owner, photo 3: "i don't want credit feature") — the same rule V364 applied to
+     the growPublished* keys when their block was removed. */
+  assert.equal(keys.length,134,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

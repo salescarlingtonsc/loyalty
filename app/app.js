@@ -1015,6 +1015,14 @@ function programmeSwitchSetV314(selection,{paused=false}={}){
   Object.keys(base).forEach(kind=>{set[kind]=paused?false:base[kind]===true});
   return set;
 }
+/* V375 (owner, photo 3: "i don't want credit feature") — the SECOND half of retiring the classic
+   model. nestly_v375 stopped the database offering points-as-store-credit; this stops the browser
+   doing the same thing in three more places: the "Redemption style" chooser that let an owner pick
+   it, the synthesized "Points System — SGD x store credit" reward card built here rather than read
+   from the catalogue, and the setup wizard's classic step. The stored value is NOT rewritten —
+   ten production programmes still read 'classic' and the check constraint still permits it — so
+   every read normalises it to the catalogue model instead, which is what those firms now get. */
+const normaliseLoyaltyModelV375=value=>String(value||'')==='classic'?'points_tiers':String(value||'');
 function programmeSpineRowsV314(){
   return Array.isArray(S.programmes)&&S.programmesBusinessId&&S.biz&&S.programmesBusinessId===S.biz.id
     ?S.programmes:null;
@@ -13702,7 +13710,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   publishDraftVersion:Object.freeze({en:'Exactly what happens when you publish draft v{version}.','zh-CN':'发布草稿 v{version} 时将发生的确切变化。',ms:'Perkara tepat yang berlaku apabila anda menerbitkan draf v{version}.'}),
   publishConfirmationSensitive:Object.freeze({en:'This turns on a live rule that affects money or customers. Type PUBLISH below to confirm you reviewed the impact.','zh-CN':'这将启用影响金额或顾客的实时规则。请在下方输入 PUBLISH，确认您已审核影响。',ms:'Ini menghidupkan peraturan langsung yang mempengaruhi wang atau pelanggan. Taip PUBLISH di bawah untuk mengesahkan anda telah menyemak kesannya.'}),
   publishConfirmationStandard:Object.freeze({en:'Review complete. Type PUBLISH below to confirm this exact draft.','zh-CN':'审核完成。请在下方输入 PUBLISH，以确认这份确切草稿。',ms:'Semakan selesai. Taip PUBLISH di bawah untuk mengesahkan draf tepat ini.'}),
-  classicEligibleEarning:Object.freeze({en:'Eligible customer-linked sales earn points when this programme is active, published, and available at the selected branch. At {points} points, one tap converts them into {credit} of real in-store credit. Switch models above any time — balances carry over.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售可赚取积分。达到 {points} 积分后，只需轻点一下即可转换为 {credit} 的实际店内余额。您可随时切换上方模式，余额会保留。',ms:'Jualan layak yang dipautkan kepada pelanggan memperoleh mata apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Pada {points} mata, satu ketikan menukarkannya kepada kredit dalam kedai sebenar sebanyak {credit}. Tukar model di atas pada bila-bila masa — baki kekal.'}),
   stampsEligibleEarning:Object.freeze({en:'Eligible customer-linked sales add stamps when this programme is active, published, and available at the selected branch. Define what each milestone is worth — a free item to hand over, or store credit.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售会增加印花。请定义每个里程碑的价值，例如可交付的免费商品或店内余额。',ms:'Jualan layak yang dipautkan kepada pelanggan menambah cop apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Tetapkan nilai setiap pencapaian — item percuma untuk diserahkan atau kredit kedai.'}),
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
@@ -13747,7 +13754,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'publishImpactActions','publishMoneyLive','publishMoneyNone',
   'publishCustomersLive','publishCustomersNone','publishDraftVersion',
   'publishConfirmationSensitive','publishConfirmationStandard',
-  'classicEligibleEarning','stampsEligibleEarning','referralEnabledOutcome'
+  /* V375: classicEligibleEarning retired with the fixed-redeem panel that was its only
+     render path (owner, photo 3) — the same rule V364 applied to the growPublished* keys. */
+  'stampsEligibleEarning','referralEnabledOutcome'
 ]);
 const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
@@ -20369,7 +20378,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const birthdayProgram=birthdayPrograms[0]||null;
   const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
   const rewards=rw||[],tiers=tr||[];
-  const model=modelOverride||p?.loyalty_model||'classic';
+  const model=normaliseLoyaltyModelV375(modelOverride||p?.loyalty_model)||'points_tiers';
   /* V230 (owner: "can just change to Points Redemption / Tiered Membership / stamp card (only 1
      can be live at any go)"). One three-way choice. Underneath, 'redeem' and 'tiers' share the
      points engine (loyalty_model classic/points_tiers) and differ by businesses.points_mode —
@@ -20739,22 +20748,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <option value="tiers" ${loyaltySelectionV230==='tiers'?'selected':''}>Tiered membership — points build a tier and its benefits</option>
         <option value="stamps" ${loyaltySelectionV230==='stamps'?'selected':''}>Stamp card — collect stamps, milestone rewards</option></select>
       <label for="la">Status</label><select id="la"${loyaltyControlDisabled}><option value="true" ${loyaltyActiveV235?'selected':''}>Active</option><option value="false" ${!loyaltyActiveV235?'selected':''}>Paused</option></select>
-      ${loyaltySelectionV230==='redeem'?`<label for="lmStyle">Redemption style</label><select id="lmStyle"${loyaltyControlDisabled}>
-        <option value="points_tiers" ${model!=='classic'?'selected':''}>Reward catalogue — customers pick from rewards you define</option>
-        <option value="classic" ${model==='classic'?'selected':''}>Fixed redeem — points become store credit automatically</option></select>`:''}
+      ${/* V375: "Redemption style" offered exactly two options and one of them was store credit.
+             With that retired there is no style left to choose — points buy the rewards the owner
+             defines, always — so the control goes rather than becoming a one-option select. */''}
       ${model==='stamps'
         ?`<label for="lsp">Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
           <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
         :`<label for="le">Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">How fast customers earn. This is generosity, not a cost — the cost comes from what rewards you give.</p>`}
-      ${model==='stamps'||model==='classic'?'':`<label for="lpc">Cost per point (${S.biz.currency||'SGD'})</label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
+      ${model==='stamps'?'':`<label for="lpc">Cost per point (${S.biz.currency||'SGD'})</label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
         <p class="muted small" style="margin-top:4px">What one point is worth when redeemed. Used to price every reward.</p>`}
-      ${model==='classic'
-        ?`<label for="lr">Points needed to redeem</label><input id="lr" type="number" min="1" value="${p?.redeem_points??800}"${loyaltyControlDisabled}>
-          <label for="lc">Credit minted on redemption (${S.biz.currency||'SGD'})</label><input id="lc" type="number" min="0" step="0.01" value="${((p?.reward_credit_cents??2000)/100).toFixed(2)}"${loyaltyControlDisabled}>
-          <p class="muted small" id="lpcDerivedV262" data-point-cost-cents="${programmePointCostCentsV262}" style="margin-top:4px">Cost per point: ${esc(pointCostLabelV262(programmePointCostCentsV262))}. Every reward uses this to work out its point price.</p>
-          <div class="gb-meter is-blank" id="gbMeter"></div>`:''}
       <details class="loyalty-advanced-v235" id="loyaltyAdvancedV235" style="margin-top:18px"><summary>Advanced settings</summary>
       <label for="lx">${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
         <option value="none" ${firmExpiryMode==='none'?'selected':''}>Never expire</option>
@@ -20764,13 +20768,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       ${branchOverrideRows()}
       </details></div>
     <div class="card" id="loyaltyRewardEditor">
-      ${model==='classic'
-        ?`<b>How it works</b><p class="muted" style="margin-top:8px;line-height:1.7">${workspaceTemplateHtmlV97('classicEligibleEarning',{points:p?.redeem_points??800,credit:money(p?.reward_credit_cents??2000)})}</p>
-          ${canManageLoyalty?`<div class="rec-panel"><b>Not sure what numbers to use?</b>
-            <p class="muted small" style="margin-top:6px">${esc(BRAND.productName)} can suggest a starting point from your own service and product prices. Nothing is saved until you say so.</p>
-            <div style="margin-top:12px">${CUI.action({id:'growRecOpen',label:'Recommend my numbers',iconName:'info',variant:'secondary'})}</div>
-            <div id="growRecBody"></div></div>`:''}`
-        :model==='stamps'
+      ${/* V375: the fixed-redeem arm is gone, and with it the give-back meter and the "recommend my
+            numbers" panel — both existed only to price points against an amount of store credit. */''}
+      ${model==='stamps'
         ?`<b>Milestones</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('stampsEligibleEarning')}</p>${rewardRows('Your milestones')}`
         :loyaltySelectionV230==='tiers'
         ?`<b>Tiers — your loyalty model</b><p class="muted small" style="margin-top:6px">Customers climb these tiers, and each tier carries its own benefits. Points build the tier — they are not redeemed.</p>
@@ -21090,8 +21090,6 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     select.value=button.dataset.loyaltyModelV235;
     select.dispatchEvent(new Event('change'));
   });
-  const loyaltyStyleInput=$('lmStyle');
-  if(loyaltyStyleInput)loyaltyStyleInput.onchange=()=>refreshLoyaltyPanel(loyaltyStyleInput.value,draftVersionId,recommendation,'Redemption style preview updated — Save to apply.',false,editorIntent);
   /* V262: in the fixed-redeem model the two numbers above ARE the cost per point, so it is
      shown derived instead of typed — a third editable field could only contradict them. */
   const pointCostDerivedV262=$('lpcDerivedV262');
@@ -21182,13 +21180,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(expiryDays!==undefined)row.expiry_days=expiryDays;
     if(model==='stamps') row.stamp_per_cents=Math.round(parseFloat($('lsp').value||'5')*100);
     else row.earn_points_per_dollar=parseFloat($('le').value||'1');
-    if(model==='classic'){row.redeem_points=parseInt($('lr').value||'800');
-      row.reward_credit_cents=Math.round(parseFloat($('lc').value||'20')*100)}
     /* V262: outside fixed redeem the owner types the cost per point directly, and it is stored
        as the SAME redeem_points ÷ reward_credit_cents ratio the fixed-redeem model edits by
        hand. One stored quantity, so the Point system and every reward always agree, and no new
        column (and no unapplied migration) stands between the owner and their own number. */
-    if(model!=='classic'&&$('lpc')){
+    if($('lpc')){
       const pointCostV262=parseFloat($('lpc').value);
       if(!(pointCostV262>0)){toast('Enter a cost per point greater than zero');$('lpc').focus();return}
       row.redeem_points=pointCostBasisPointsV262;
@@ -22697,7 +22693,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   };
 }
 function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null,programmes=null}={}){
-  const model=loyalty?.loyalty_model||loyaltyModel||'points';
+  const model=normaliseLoyaltyModelV375(loyalty?.loyalty_model||loyaltyModel)||'points';
   const unit=model==='stamps'?'stamps':'points';
   /* V314 (W6 increment 1): the owner's Live/paused pill asks the SPINE. loyalty_programs.active
      stopped being the switch at v314 — it is the published setting, and the engine reads
@@ -22726,7 +22722,10 @@ function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyMo
     .map((reward,index)=>{
       const startsAt=reward.claim_available_from?Date.parse(reward.claim_available_from):null;
       const endsAt=reward.claim_available_until?Date.parse(reward.claim_available_until):null;
-      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused':model==='classic'?'not_current_model'
+      /* V375: the 'not_current_model' branch went with the classic model. It hid every real
+         milestone from a classic tenant, which is the business-side half of the same defect
+         nestly_v375 fixed in the database reader. */
+      const availability=!loyalty?'programme_unconfigured':!programmeActive?'programme_paused'
         :Number.isFinite(startsAt)&&startsAt>asOfMs?'not_started'
         :Number.isFinite(endsAt)&&endsAt<=asOfMs?'ended':'available';
       return {
@@ -22744,12 +22743,9 @@ function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyMo
       name:reward.customer_name||reward.name||'Reward',threshold:Math.max(0,Number(reward.cost_points||0)),unit,
       estimatedCostCents:Math.max(0,Number(reward.estimated_cost_cents||0)),active:false
     }));
-  const redeemPoints=Math.max(0,Number(loyalty?.redeem_points||0));
-  const rewardCreditCents=Math.max(0,Number(loyalty?.reward_credit_cents||0));
-  const classicReward=model==='classic'&&redeemPoints>0&&rewardCreditCents>0?{
-    id:`classic:${loyalty?.id||'programme'}`,name:'Points System',threshold:redeemPoints,unit:'points',
-    value:`SGD ${(rewardCreditCents/100).toFixed(2)} store credit`,availableToCustomers:programmeActive
-  }:null;
+  /* V375: this synthesized a reward card reading "Points System — SGD x store credit" out of the
+     programme's own redeem_points/reward_credit_cents pair. It was the last place in the browser
+     that invented a reward rather than reading the owner's catalogue. */
   const birthdayReward=!birthday?null:{
     id:birthday.id||birthday.program_id||'birthday',
     active:birthday.active!==false,
@@ -22759,7 +22755,7 @@ function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyMo
       ?`${Number(birthday.discount_percent||0)}% off`
       :birthday.manual_item||'Configured birthday benefit'
   };
-  return {model,unit,earning,milestones,archivedRewards,classicReward,birthday:birthdayReward};
+  return {model,unit,earning,milestones,archivedRewards,birthday:birthdayReward};
 }
 function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
@@ -23774,7 +23770,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      never-configured 'redeem' firm forever. The legacy column stays as the fallback for a
      session whose spine read failed, where a stale answer still beats an invented one. */
   const pointsModeV229=programmePointsModeV314()||S.biz.points_mode||null;
-  const rewardCount=rewardJourney.classicReward?.availableToCustomers?1:rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
+  const rewardCount=rewardJourney.milestones.filter(item=>item.availableToCustomers).length;
   /* V191 (owner: "why already active already - but still show inactive?"). One master switch,
      loyalty_programs.active, drives availability for the earning rule AND every reward, so a
      paused programme makes eight rows say "Programme paused" while none of them says how to fix
@@ -24374,8 +24370,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      collapsed Reward history under the grid. Their Edit contract is unchanged, so a retired
      reward can still be opened and un-archived from history. */
   const rewardCardsV250=[
-    ...(rewardJourney.classicReward?[{name:rewardJourney.classicReward.name,cost:rewardJourney.classicReward.threshold,unit:rewardJourney.classicReward.unit,
-      status:rewardJourney.classicReward.availableToCustomers?'Live':'Paused with programme',tone:rewardJourney.classicReward.availableToCustomers?'on':'off',editKind:'classic',rewardId:null}]:[]),
     ...rewardJourney.milestones.filter(milestone=>milestone.availability!=='ended').map(milestone=>{
       const [status,tone]=rewardCardStatusV250(milestone);
       return {name:milestone.name,cost:milestone.threshold,unit:milestone.unit,status,tone,editKind:'catalogue',rewardId:milestone.id,
@@ -28471,7 +28465,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      no draft yet. Reading the draft first is what makes a resumed setup show what was already
      saved rather than the numbers customers still see. */
   const base=draftProgram||live||null;
-  const baseModel=String(base?.loyalty_model||'');
+  const baseModel=normaliseLoyaltyModelV375(base?.loyalty_model);
   /* "Fresh" = nothing has ever reached a customer. It decides exactly three things: which model
      a points choice writes, whether the cost-per-point default is written, and whether at least
      one reward is required before the owner can leave step 3. */
@@ -28645,8 +28639,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     earn:Number(base?.earn_points_per_dollar)>0?Number(base.earn_points_per_dollar):1,
     stampSpend:Number(base?.stamp_per_cents)>0?Number(base.stamp_per_cents)/100:5,
     stampTarget:Number(base?.stamp_target)>0?Math.round(Number(base.stamp_target)):8,
-    classicRedeem:Number(base?.redeem_points)>0?Math.round(Number(base.redeem_points)):800,
-    classicCredit:Number(base?.reward_credit_cents)>0?Number(base.reward_credit_cents)/100:20,
     /* W6 increment 2 (OWNER AMENDMENT 2026-08-14: "every expiry knob survives per-programme —
        points expiry in all its modes (e.g. yearly via expiry_days=365, inactivity)"). Points
        expiry had no wizard screen at all before this wave: programRowV305 carried whatever was
@@ -29562,9 +29554,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* A firm already on fixed redemption has no reward catalogue to fill in — its one reward IS
        the pair — and app.redeem_points_v40_internal refuses catalogue claims on that model, so
        showing a catalogue here would offer rewards its own engine would never honour. */
-    if(state.model==='classic')return `<p class="grow-setup-lead-v301">What do points buy?</p>
-      <p class="grow-setup-sentence-v301"><input id="growSetupClassicPointsV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.classicRedeem))}" aria-label="Points needed"> points → ${esc(currency)} <input id="growSetupClassicCreditV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.classicCredit||0).toFixed(2))}" aria-label="Credit given"> credit</p>
-      <p class="muted small" style="margin-top:10px">Customers spend that many points and get store credit back.</p>`;
     const stampsHead=familyW6I2()==='stamps'
       ?`<p class="grow-setup-sentence-v301">Collect <input id="growSetupStampTargetV301" class="grow-setup-input-v301" inputmode="numeric" value="${esc(String(state.stampTarget))}" aria-label="Stamps needed for a reward"> stamps → reward</p>`
       :'';
@@ -29875,11 +29864,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       return;
     }
     if(kind!=='reward'&&kind!=='stampGift')return;
-    if(kind==='reward'&&state.model==='classic'){
-      state.classicRedeem=parseInt($('growSetupClassicPointsV301')?.value||'',10)||state.classicRedeem;
-      state.classicCredit=parseFloat($('growSetupClassicCreditV301')?.value||'')||state.classicCredit;
-      return;
-    }
     /* V322 (R5): stamp_target is no longer typed on this screen — it is DERIVED from the last
        milestone, at save time, so the card's length can never disagree with its own last prize. */
     const name=String($('growSetupRewardNameV301')?.value||'').trim();
@@ -30397,8 +30381,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        stamps spine row after v314, requires stamp_per_cents to be there. */
     if(state.switches.stamps===true)row.stamp_per_cents=Math.round(state.stampSpend*100);
     if(model!=='stamps')row.earn_points_per_dollar=state.earn;
-    if(model==='classic'){row.redeem_points=state.classicRedeem;row.reward_credit_cents=Math.round(state.classicCredit*100)}
-    else if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
+    /* V375: the fixed-redeem pair is no longer typed by anyone; every model writes the derived
+       cost-per-point default below. */
+    if(writesCostDefault()){row.redeem_points=costBasis;row.reward_credit_cents=Math.round(0.01*100*costBasis)}
     /* V306: through tierBasisToDbV306 — state.tierBasis is the radio's spelling, and the DB CHECK
        accepts only visits|spend|points_earned, so the untranslated 'points' failed the save. */
     if(model==='points_tiers'&&state.tierBasis)row.tier_basis=tierBasisToDbV306(state.tierBasis);
@@ -30540,15 +30525,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       goto(state.step+1);
     });
     if(kind==='reward'||kind==='stampGift')return withBusy(async()=>{
-      if(kind==='reward'&&state.model==='classic'){
-        if(!(state.classicRedeem>0)||!(state.classicCredit>0)){
-          state.error='Enter how many points a customer spends, and what credit they get.';return render();
-        }
-        const result=await saveDraft({redeem_points:state.classicRedeem,reward_credit_cents:Math.round(state.classicCredit*100)});
-        if(!isCurrent())return;
-        if(!result.ok)return failStep(result.error,'Nothing was saved.');
-        return goto(state.step+1);
-      }
       const form=state.form;
       const hasForm=Boolean(form&&form.name.trim().length>=2);
       /* V304: only rewards a customer can actually claim count. Removing them all and pressing
@@ -30658,15 +30634,15 @@ function growPublishFieldRowsV170(live,draft){
      stops an owner from publishing a correct draft. Stamp fields are likewise classic/stamps-
      irrelevant outside the stamps model. V262 narrows that ruling: the PAIR stays hidden, but
      the ratio it now also carries (cost per point) is listed on its own row below. */
-  const model=String(draft?.loyalty_model||live?.loyalty_model||'');
-  const usesClassicRedemption=model==='classic';
+  const model=normaliseLoyaltyModelV375(draft?.loyalty_model||live?.loyalty_model);
   const usesStamps=model==='stamps';
   const fields=[
     {label:'Programme status',read:p=>p?.active==null?null:(p.active===true?'Active':'Paused'),show:plain},
     {label:'Loyalty model',read:p=>text(p?.loyalty_model),show:v=>v==null?'not set':(GROW_PUBLISH_MODEL_LABEL_V170[v]||v)},
     {label:'Points earned per $1 spent',read:p=>num(p?.earn_points_per_dollar),show:plain,when:!usesStamps},
-    {label:'Points needed to redeem',read:p=>num(p?.redeem_points),show:plain,when:usesClassicRedemption},
-    {label:'Credit minted on redemption',read:p=>num(p?.reward_credit_cents),show:v=>v==null?'not set':studioMoney(v),when:usesClassicRedemption},
+    /* V375: "Points needed to redeem" and "Credit minted on redemption" described the retired
+         fixed-redeem pair. The same two columns still carry the cost per point, which is the row
+         below and the one that is now true for every model. */
     /* V262: outside fixed redeem the same pair is no longer inert — it now carries the one
        programme-wide cost per point that prices every reward, so publishing it is a real
        change for the business and has to be shown as the quantity the owner actually typed. */
@@ -30675,7 +30651,7 @@ function growPublishFieldRowsV170(live,draft){
       return points>0&&cents>0?Math.round((cents/points)*1000)/1000:null;
       /* Three decimals, not studioMoney: a point costs a fraction of a cent and rounding it to
          two would print two different costs as the same number on a publish gate. */
-    },show:v=>v==null?'not set':(v/100).toFixed(3),when:!usesClassicRedemption&&!usesStamps},
+    },show:v=>v==null?'not set':(v/100).toFixed(3),when:!usesStamps},
     {label:'Stamps needed for a reward',read:p=>num(p?.stamp_target),show:plain,when:usesStamps},
     {label:'Spend per stamp',read:p=>num(p?.stamp_per_cents),show:v=>v==null?'not set':studioMoney(v),when:usesStamps},
     {label:'Tier level is earned by',read:p=>text(p?.tier_basis),show:v=>v==null?'not set':(GROW_PUBLISH_TIER_BASIS_LABEL_V175[v]||v),when:model==='points_tiers'},

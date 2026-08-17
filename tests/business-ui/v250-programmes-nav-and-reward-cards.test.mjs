@@ -108,7 +108,8 @@ test('V250 (e) rewards render as cards with a name, a point cost and their own s
   assert.match(cards, /<span class="reward-card-cost-v250" data-merchant-content>\$\{esc\(`\$\{cost\} \$\{unit\}`\)\}<\/span>/);
   // The SAME edit contract the rows carried — one edit path, reached from the card.
   assert.match(cards, /data-rewards-overview-edit="\$\{esc\(editKind\)\}"\$\{rewardId\?` data-reward-id="\$\{esc\(rewardId\)\}"`:''\}/);
-  assert.match(cards, /editKind:'classic'/);
+  /* V375 (owner, photo 3): the classic points-for-store-credit model is retired. */
+  assert.doesNotMatch(cards, /editKind:'classic'/);
   assert.match(cards, /editKind:'catalogue'/);
   assert.match(app, /document\.querySelectorAll\('\[data-rewards-overview-edit\]'\)\.forEach/);
   // A staff member without setup rights gets a card that is not a button.

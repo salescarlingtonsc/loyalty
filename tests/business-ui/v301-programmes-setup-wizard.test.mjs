@@ -343,7 +343,9 @@ test('V301 (b) step 2 mirrors the #lsave field set, minus what belongs to publis
   assert.match(wizard, /if\(state\.switches\.stamps===true\)row\.stamp_per_cents=Math\.round\(state\.stampSpend\*100\);/);
   assert.match(wizard, /if\(model!=='stamps'\)row\.earn_points_per_dollar=state\.earn;/);
   // V262's stored cost-per-point pair, written for a fresh programme exactly as #lsave would.
-  assert.match(wizard, /else if\(writesCostDefault\(\)\)\{row\.redeem_points=costBasis;row\.reward_credit_cents=Math\.round\(0\.01\*100\*costBasis\)\}/);
+  /* V375: the fixed-redeem branch that used to sit in front of this is gone, so the cost-per-point
+     default is now the only writer of the pair — for every model. */
+  assert.match(wizard, /if\(writesCostDefault\(\)\)\{row\.redeem_points=costBasis;row\.reward_credit_cents=Math\.round\(0\.01\*100\*costBasis\)\}/);
   assert.match(wizard, /const costBasis=Number\(base\?\.redeem_points\)>0\?Math\.round\(Number\(base\.redeem_points\)\):800;/);
   /* V305: tier_basis is read from STATE now, not straight off the stored row — the Climbing step
      and the Points + tiers basis control are how the owner sets it, and state carries the stored
@@ -376,8 +378,9 @@ test('V301 (b) step 3 writes the reward through the saveReward envelope', () => 
   // V293's budget → points derivation, with the same manual-override rule.
   assert.match(wizard, /pointsInput\.value=String\(Math\.max\(1,Math\.ceil\(\(budget\*100\)\/Math\.max\(1,costPerPointCents\(\)\)\)\)\)/);
   assert.match(wizard, /pointsInput\.addEventListener\('input',\(\)=>\{manualV301=true\}\);/);
-  // The classic pair keeps its own sentence rather than a catalogue its engine ignores.
-  assert.match(wizard, /await saveDraft\(\{redeem_points:state\.classicRedeem,reward_credit_cents:Math\.round\(state\.classicCredit\*100\)\}\)/);
+  /* V375 (owner, photo 3): the classic pair had its own "what do points buy" sentence and its own
+     save. Both are gone with the model — every firm now reaches the reward catalogue step. */
+  assert.doesNotMatch(wizard, /classicRedeem|classicCredit/);
   /* Stamps save their target with the programme fields — through the same saveDraft envelope, on
      the same Next, which is the fact this line has always protected.
      V322 (OWNER RULING R5 — "stamps is like a quest … 3 stamp = xx rewards, 5 stamp = xx rewards,

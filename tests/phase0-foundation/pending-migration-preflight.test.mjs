@@ -357,7 +357,8 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v371_programme_off_reaches_customer', 'db/tests/v371_programme_off_reaches_customer.sql'],
   ['nestly_v372_gift_follows_its_programme', 'db/tests/v372_gift_follows_its_programme.sql'],
   ['nestly_v374_birthday_gift_saves', 'db/tests/v374_birthday_gift_saves.sql'],
-  ['nestly_v375_points_are_not_credit', 'db/tests/v375_points_are_not_credit.sql']
+  ['nestly_v375_points_are_not_credit', 'db/tests/v375_points_are_not_credit.sql'],
+  ['nestly_v376_no_classic_redemption_offer', 'db/tests/v376_no_classic_redemption_offer.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -861,7 +862,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 301); // + v371 programme-off reaches the customer + v365 tier benefit limits & merchant issuance (applied to prod 2026-08-17) // + the 2026-08-16 rewards wave (v343/v345/v347/v348/v350/v353/v354/v355/v359/v361/v362), all applied to prod and sharing one acceptance suite // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
+  assert.equal(pending.length, 302); // + v371 programme-off reaches the customer + v365 tier benefit limits & merchant issuance (applied to prod 2026-08-17) // + the 2026-08-16 rewards wave (v343/v345/v347/v348/v350/v353/v354/v355/v359/v361/v362), all applied to prod and sharing one acceptance suite // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

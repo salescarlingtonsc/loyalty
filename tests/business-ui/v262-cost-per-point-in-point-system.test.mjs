@@ -37,13 +37,18 @@ test('the Point system editor carries the cost-per-point control', () => {
   assert.match(editor, /What one point is worth when redeemed\. Used to price every reward\./);
   // Stamps have no points, and fixed redeem derives the value from the two numbers it already
   // asks for — a third editable field there could only contradict them.
-  assert.match(editor, /\$\{model==='stamps'\|\|model==='classic'\?'':`<label for="lpc">/);
-  assert.match(editor, /<p class="muted small" id="lpcDerivedV262" data-point-cost-cents="\$\{programmePointCostCentsV262\}"/);
+  /* V375 (owner, photo 3): with fixed redeem retired, cost per point is shown for EVERY points
+     model rather than for all-but-classic. */
+  assert.match(editor, /\$\{model==='stamps'\?'':`<label for="lpc">/);
+  /* V375: the DERIVED readout belonged to fixed redeem, where the two credit numbers implied the
+     cost. With that model gone the owner types the cost directly and there is nothing to derive. */
+  assert.doesNotMatch(editor, /lpcDerivedV262/);
 });
 
 test('the control is wired to the Point system save path, with no new column', () => {
   const save = section("const loyaltySave=$('lsave')", "if(draftVersionId){\n      toast('Grow draft saved");
-  assert.match(save, /if\(model!=='classic'&&\$\('lpc'\)\)\{/);
+  /* V375: no model is excluded any more — every points programme stores its cost per point. */
+  assert.match(save, /if\(\$\('lpc'\)\)\{/);
   assert.match(save, /const pointCostV262=parseFloat\(\$\('lpc'\)\.value\);/);
   assert.match(save, /row\.redeem_points=pointCostBasisPointsV262;/);
   assert.match(save, /row\.reward_credit_cents=Math\.round\(pointCostV262\*100\*pointCostBasisPointsV262\);/);
@@ -114,7 +119,7 @@ test('publishing shows the cost per point outside fixed redeem', () => {
   const rows = section('function growPublishFieldRowsV170(live,draft){', '/* ============================ Program Studio page');
   assert.match(rows, /\{label:'Cost per point',read:p=>\{/);
   assert.match(rows, /return points>0&&cents>0\?Math\.round\(\(cents\/points\)\*1000\)\/1000:null;/);
-  assert.match(rows, /when:!usesClassicRedemption&&!usesStamps\}/);
+  assert.match(rows, /when:!usesStamps\}/);
   // The row must stay evaluable on its own — the V175 test evals this function in isolation.
   assert.doesNotMatch(rows, /S\.biz/);
 });

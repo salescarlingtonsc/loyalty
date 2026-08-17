@@ -596,6 +596,8 @@ const wizardFactory = new Function('S', 'sb', 'esc', 'CUI', '$', 'toast', 'owner
 
 /* The go-live change list's own row builder, evaluated with the real label tables. */
 const publishRows = new Function('studioMoney', `
+  ${/* V375: the row builder reads the stored model through this one line. */''}
+  ${section('const normaliseLoyaltyModelV375=', '\nfunction programmeSpineRowsV314(')}
   ${section('const GROW_PUBLISH_MODEL_LABEL_V170=', 'const GROW_PUBLISH_TIER_BASIS_LABEL_V175=')}
   ${section('const GROW_PUBLISH_TIER_BASIS_LABEL_V175=', '\n/*')}
   ${section('function growPublishFieldRowsV170(', '/* ============================ Program Studio page')}
