@@ -2116,6 +2116,12 @@
       "version": "20260817000014",
       "name": "nestly_v381_balance_follows_live_programme",
       "sourcePath": "db/migrations/20260817_nestly_v381_balance_follows_live_programme.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000015",
+      "name": "nestly_v383_off_days_block_bookings",
+      "sourcePath": "db/migrations/20260817_nestly_v383_off_days_block_bookings.sql"
     }
   ]
 }

@@ -2121,6 +2121,12 @@
       "path": "db/migrations/20260817_nestly_v381_balance_follows_live_programme.sql",
       "semanticVersion": "v381",
       "proposedDeployVersion": "20260817000014"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v383_off_days_block_bookings.sql",
+      "semanticVersion": "v383",
+      "proposedDeployVersion": "20260817000015"
     }
   ]
 }
