@@ -213,6 +213,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
 }
+/* V372: the container itself must stop being a ROW. V369 made this list "vertical, one benefit
+   per line" by styling the rows — but the banner inherits .permission-banner{display:flex}, whose
+   default direction is row with no wrap, so every benefit stayed a flex item on one line and ran
+   off the right of the screen (owner screenshot, Record sale, Diamond benefits). Styling the
+   children could never fix that; the parent's own axis had to change. */
+.till-tier-benefits-v369{flex-direction:column;align-items:stretch;flex-wrap:wrap}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369{display:flex;gap:10px;align-items:center;
   justify-content:space-between;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span{display:flex;flex-direction:column;min-width:0;flex:1}
