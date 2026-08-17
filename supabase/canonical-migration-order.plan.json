@@ -2092,6 +2092,24 @@
       "version": "20260817000010",
       "name": "nestly_v377_no_credit_reward_types",
       "sourcePath": "db/migrations/20260817_nestly_v377_no_credit_reward_types.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000011",
+      "name": "nestly_v378_promotion_finalize_breaker",
+      "sourcePath": "db/migrations/20260817_nestly_v378_promotion_finalize_breaker.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000012",
+      "name": "nestly_v379_promotion_finalize_breaker_v154",
+      "sourcePath": "db/migrations/20260817_nestly_v379_promotion_finalize_breaker_v154.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260817000013",
+      "name": "nestly_v380_promotion_breaker_bigint_overloads",
+      "sourcePath": "db/migrations/20260817_nestly_v380_promotion_breaker_bigint_overloads.sql"
     }
   ]
 }

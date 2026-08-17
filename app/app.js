@@ -23401,7 +23401,16 @@ async function promotionsPage(selectedPromotionId=null){
     }
     pending.sendsV373=sends;
     if(pendingFinalize===pending)writeSessionValue(pendingStorageKey,pending);
-    const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
+    let result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
+    /* V378: a definitive refusal now comes back as a structured 200 rather than an error, so the
+       server can COUNT it (an aborted transaction erased the evidence) and so a stale client stops
+       replaying instead of aborting forever. A 200 with no error would otherwise read here as a
+       successful publish, so it is converted to the definitive failure it is — which takes the
+       existing path: release the receipt and its orphaned photo, say so once, stop. */
+    if(!result.error&&result.data?.blocked===true&&result.data?.code==='promotion_finalize_rejected'){
+      result={data:null,error:{code:'promotion_finalize_rejected',
+        message:`This promotion was not saved (${result.data.reason||'refused'}). Reopen it to see the latest version, then publish again.`}};
+    }
     if(!result.error){
       await clearFinalizedObjects(result.data,pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);

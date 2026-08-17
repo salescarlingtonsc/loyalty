@@ -2097,6 +2097,24 @@
       "path": "db/migrations/20260817_nestly_v377_no_credit_reward_types.sql",
       "semanticVersion": "v377",
       "proposedDeployVersion": "20260817000010"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v378_promotion_finalize_breaker.sql",
+      "semanticVersion": "v378",
+      "proposedDeployVersion": "20260817000011"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v379_promotion_finalize_breaker_v154.sql",
+      "semanticVersion": "v379",
+      "proposedDeployVersion": "20260817000012"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v380_promotion_breaker_bigint_overloads.sql",
+      "semanticVersion": "v380",
+      "proposedDeployVersion": "20260817000013"
     }
   ]
 }

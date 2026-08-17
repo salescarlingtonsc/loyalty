@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 347,
-  "executableCount": 333,
+  "itemCount": 350,
+  "executableCount": 336,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -508,7 +508,7 @@
     },
     {
       "sourceDeployVersion": "20260817",
-      "count": 9,
+      "count": 12,
       "paths": [
         "db/migrations/20260817_nestly_v367_birthday_month_benefit_period.sql",
         "db/migrations/20260817_nestly_v369_structured_tier_benefits.sql",
@@ -518,7 +518,10 @@
         "db/migrations/20260817_nestly_v374_birthday_gift_saves.sql",
         "db/migrations/20260817_nestly_v375_points_are_not_credit.sql",
         "db/migrations/20260817_nestly_v376_no_classic_redemption_offer.sql",
-        "db/migrations/20260817_nestly_v377_no_credit_reward_types.sql"
+        "db/migrations/20260817_nestly_v377_no_credit_reward_types.sql",
+        "db/migrations/20260817_nestly_v378_promotion_finalize_breaker.sql",
+        "db/migrations/20260817_nestly_v379_promotion_finalize_breaker_v154.sql",
+        "db/migrations/20260817_nestly_v380_promotion_breaker_bigint_overloads.sql"
       ]
     }
   ],
@@ -3298,6 +3301,30 @@
       "semanticVersion": "v377",
       "proposedDeployVersion": "20260817000010",
       "sha256": "87a0161d06dc135f1b0a71c3b20dbe3f24290a709226c23f08f2b611fa30582a"
+    },
+    {
+      "order": 348,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v378_promotion_finalize_breaker.sql",
+      "semanticVersion": "v378",
+      "proposedDeployVersion": "20260817000011",
+      "sha256": "d264b1af48cf7f8915dba939e272506b1ffc70ff983d78707e05cce8d9a3b83a"
+    },
+    {
+      "order": 349,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v379_promotion_finalize_breaker_v154.sql",
+      "semanticVersion": "v379",
+      "proposedDeployVersion": "20260817000012",
+      "sha256": "70a9cb7a90eda3fe9bbfda3d77c080ad08e0f42bf33a2271f321152ea15b4349"
+    },
+    {
+      "order": 350,
+      "kind": "executable",
+      "path": "db/migrations/20260817_nestly_v380_promotion_breaker_bigint_overloads.sql",
+      "semanticVersion": "v380",
+      "proposedDeployVersion": "20260817000013",
+      "sha256": "31eed55e2ba1d3a3037d1e470b99470861e3f1716f39af7fe96dc9888f9e7201"
     }
   ]
 }

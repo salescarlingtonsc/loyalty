@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="21fabfec39f27d2fc8c21b7967dbe1ababf0726e80e82e07873ee570ed796fe0"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="a6a9ae76f3bd53daec8af2e85ace485d67b9421b66f3da58013bd81a15108c91"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2834,7 +2834,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 21fabfec39f27d2fc8c21b7967dbe1ababf0726e80e82e07873ee570ed796fe0</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · a6a9ae76f3bd53daec8af2e85ace485d67b9421b66f3da58013bd81a15108c91</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -11587,7 +11587,16 @@ async function promotionsPage(selectedPromotionId=null){
     }
     pending.sendsV373=sends;
     if(pendingFinalize===pending)writeSessionValue(pendingStorageKey,pending);
-    const result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
+    let result=await rpcWithReceiptReplay('business_finalize_promotion_v155',pending.args);
+    /* V378: a definitive refusal now comes back as a structured 200 rather than an error, so the
+       server can COUNT it (an aborted transaction erased the evidence) and so a stale client stops
+       replaying instead of aborting forever. A 200 with no error would otherwise read here as a
+       successful publish, so it is converted to the definitive failure it is — which takes the
+       existing path: release the receipt and its orphaned photo, say so once, stop. */
+    if(!result.error&&result.data?.blocked===true&&result.data?.code==='promotion_finalize_rejected'){
+      result={data:null,error:{code:'promotion_finalize_rejected',
+        message:`This promotion was not saved (${result.data.reason||'refused'}). Reopen it to see the latest version, then publish again.`}};
+    }
     if(!result.error){
       await clearFinalizedObjects(result.data,pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
@@ -22806,6 +22815,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'21fabfec39f27d2fc8c21b7967dbe1ababf0726e80e82e07873ee570ed796fe0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'a6a9ae76f3bd53daec8af2e85ace485d67b9421b66f3da58013bd81a15108c91',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
