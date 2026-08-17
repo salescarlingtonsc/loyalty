@@ -32,7 +32,7 @@ function render(services, products) {
 
 /* The empty-catalogue case is decided by the caller, not by the group builder: with nothing to
    sell the stage renders the empty state instead of any grid. */
-const stage = app.slice(app.indexOf('function tillItemsStageHtmlV373(){'), app.indexOf('function tillStickyCartHtmlV373(){'));
+const stage = app.slice(app.indexOf('function tillItemsPanelHtmlV374(){'), app.indexOf('function tillPackagesPanelHtmlV374(){'));
 
 test('V216 a products-only business gets a Products heading and no empty Services heading', () => {
   const cafe = render([], [{ id: 'p1' }, { id: 'p2' }]);
@@ -58,6 +58,6 @@ test('V216 a business selling both labels both, and an empty branch shows the em
   // A branch with nothing to sell is told so — and still gets the door to the Add item sheet,
   // because a firm selling only prepaid packages has something to add.
   assert.match(stage, /const noCheckoutItems=!catalog\.services\.length&&!\(catalog\.products&&catalog\.products\.length\);/);
-  assert.match(stage, /noCheckoutItems\s*\n?\s*\?`\$\{CUI\.emptyState\(\{iconName:'till',title:'No checkout items at this branch'/);
+  assert.match(stage, /if\(noCheckoutItems\)\s*\n\s*return `\$\{CUI\.emptyState\(\{iconName:'till',title:'No checkout items at this branch'/);
   assert.match(stage, /\$\{addTile\}<\/div>`/);
 });

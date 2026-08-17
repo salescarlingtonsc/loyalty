@@ -33,11 +33,11 @@ test('V373 the sale has two stages, and a cart in recovery can only be on the re
   assert.match(composer, /if\(tillStageV373==='review'&&!cart\.length\)tillStageV373='items';/);
   // Leaving the cart step drops the stage AND the sheet, so neither can float over the keypad
   // or a receipt.
-  assert.match(till, /if\(step!==2\)\{if\(tillAddSheetV373\)closeTillAddSheetV373\(\);tillStageV373='items';\}/);
+  assert.match(till, /if\(step!==2\)\{if\(tillAddSheetV373\)closeTillAddSheetV373\(\);tillStageV373='items';tillItemsTabV374='items';\}/);
   for (const marker of [
-    /step=1;phone='';cust=null;walkin=false;[\s\S]{0,240}?tillStageV373='items';draw\(\);/,
-    /step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=\[\];tillStageV373='items';draw\(\);/,
-    /walkin=true;step=2;tillStageV373='items';/,
+    /step=1;phone='';cust=null;walkin=false;[\s\S]{0,240}?tillStageV373='items';tillItemsTabV374='items';draw\(\);/,
+    /step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=\[\];tillStageV373='items';tillItemsTabV374='items';draw\(\);/,
+    /walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';/,
   ]) assert.match(till, marker);
 });
 
@@ -57,7 +57,7 @@ test('V373 everything that is not tapped often is behind ONE tabbed sheet', () =
   // The main screen keeps a bounded number of tiles plus one door to everything else.
   assert.match(till, /const TILL_QUICK_ITEMS_V373=8;/);
   assert.match(composer, /id="tAddItemV373"/);
-  assert.match(composer, /if\(\$\('tAddItemV373'\)\)\$\('tAddItemV373'\)\.onclick=openTillAddSheetV373;/);
+  assert.match(composer, /if\(\$\('tAddItemV373'\)\)\$\('tAddItemV373'\)\.onclick=\(\)=>openTillAddSheetV373\(\);/);
 });
 
 test('V373 the sheet and the page share ONE binder, so a tile behaves the same wherever it is', () => {
@@ -128,4 +128,48 @@ test('V373 changed the screen, not the money: every write path and guard is inta
   // Points are the server's answer at finalise time; this screen must not preview a number
   // evaluate_checkout does not return.
   assert.match(composer, /Points are worked out when the sale is recorded/);
+});
+
+test('V374 the three sections are three tabs, and only the selected one renders', () => {
+  /* Owner: "The latest version removed the transaction choices but now renders Services,
+     Products, Packages and all Diamond benefits vertically on one page, causing endless
+     scrolling." The sections are the same sections; what changed is that exactly one of them
+     is on screen at a time. */
+  assert.match(till, /let tillItemsTabV374='items';/);
+  assert.match(composer, /\{key:'items',label:'Items',count:0\}/);
+  assert.match(composer, /\{key:'packages',label:'Packages',count:packagesReady\}/);
+  assert.match(composer, /\{key:'benefits',label:'Benefits',count:rewards\.count\}/);
+  // ONE panel is chosen — the other two are never concatenated underneath it.
+  assert.match(composer, /const panel=active==='packages'\?tillPackagesPanelHtmlV374\(\)\s*\n\s*:active==='benefits'\?tillBenefitsPanelHtmlV374\(rewards\)\s*\n\s*:tillItemsPanelHtmlV374\(\);/);
+  assert.match(composer, /<div class="till-stage-panel-v374">\$\{panel\}<\/div>/);
+  // The cart bar is outside the panel, so it survives every tab.
+  assert.match(composer, /\$\{cart\.length\?tillStickyCartHtmlV373\(\)/);
+  assert.ok(composer.indexOf('till-stage-panel-v374') < composer.indexOf('cart.length?tillStickyCartHtmlV373()'),
+    'the sticky cart must sit outside and after the tab panel');
+  // Default is Items, and every fresh sale returns to it.
+  assert.match(till, /let tillItemsTabV374='items';/);
+  assert.match(composer, /if\(!tabs\.some\(tab=>tab\.key===tillItemsTabV374\)\)tillItemsTabV374='items';/);
+  // A walk-in has neither packages nor rewards, so it gets no tabs at all rather than two dead ones.
+  assert.match(composer, /\.filter\(tab=>!\(walkin&&tab\.key!=='items'\)\)/);
+});
+
+test('V374 each tab carries only its own contents, and the counts come from the same rules', () => {
+  const items = section('function tillItemsPanelHtmlV374(){', 'function tillPackagesPanelHtmlV374(){');
+  const packages = section('function tillPackagesPanelHtmlV374(){', 'function tillBenefitsPanelHtmlV374(rewards){');
+  const benefits = section('function tillBenefitsPanelHtmlV374(rewards){', 'function tillStickyCartHtmlV373(){');
+  // Items: services, products, and the door to the rest. No packages, no benefits.
+  assert.match(items, /tillQuickGroupsHtmlV373\(shownServices,shownProducts\)/);
+  assert.doesNotMatch(items, /tillOwnedPackagesBlockV373\(|tillRewardsBlockV373\(/);
+  // Packages: the customer's own sessions plus ONE action that sells another, which opens the
+  // sheet already on its tab rather than making the cashier find it.
+  assert.match(packages, /const owned=tillOwnedPackagesBlockV373\(\);/);
+  assert.match(packages, /id="tSellPackageV374"/);
+  assert.match(composer, /\$\('tSellPackageV374'\)\.onclick=\(\)=>openTillAddSheetV373\('sellpackage'\)/);
+  assert.doesNotMatch(packages, /tillQuickGroupsHtmlV373\(|tillRewardsBlockV373\(/);
+  // Benefits: the rewards block's own answer, nothing else.
+  assert.doesNotMatch(benefits, /tillQuickGroupsHtmlV373\(|tillOwnedPackagesBlockV373\(/);
+  // The badge counts things that need a HAND. An automatic discount needs none, so it is excluded
+  // — and the count is derived where eligibility is decided, never by a second copy of the rules.
+  assert.match(composer, /const count=giveNow\.length\+\(welcomeOffer\?1:0\)\+\(bringbackOffer\?1:0\)\+\(catalog\.customerVouchers\|\|\[\]\)\.length;/);
+  assert.match(composer, /return \{html:rewards\?`<div class="till-rewards-v373">\$\{rewards\}<\/div>`:'',count\};/);
 });

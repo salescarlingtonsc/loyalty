@@ -5417,6 +5417,10 @@ async function tillPage(){
      they can be given now) and 'review' (the server-priced bill, how they paid, one confirm).
      A cart in recovery is always on 'review'; see drawCartComposer. */
   let tillStageV373='items';
+  /* V374 (owner: "now renders Services, Products, Packages and all Diamond benefits vertically
+     on one page, causing endless scrolling"). V373 removed the three transaction MODES but left
+     their three sections stacked. They are now three tabs, and only the selected one renders. */
+  let tillItemsTabV374='items';   // 'items' | 'packages' | 'benefits'
   /* V373 retires V257's "Sell package" <details> drawer. That drawer existed to keep package
      SALES off the main screen, and it had to remember its own open state because adding a line
      redrew the panel underneath it and collapsed it. The Add item sheet keeps both promises
@@ -5493,7 +5497,7 @@ async function tillPage(){
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
     catalog=null;catalogError=null;
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
-    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';draw();
+    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';draw();
   }
   /* Leave the cart step and go back to the phone keypad. Same discard-the-cart behaviour the
      "Different number" button always had; it additionally clears the walk-in flag and, when the
@@ -5507,13 +5511,13 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
-    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';draw();
+    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';draw();
   }
   function draw(){
     /* V373: the Add item sheet and the review stage belong to the cart step alone. Anything that
        leaves that step (a new lookup, a completed sale, a reset) drops both, so a sheet can never
        be left floating over the keypad or a receipt. */
-    if(step!==2){if(tillAddSheetV373)closeTillAddSheetV373();tillStageV373='items';}
+    if(step!==2){if(tillAddSheetV373)closeTillAddSheetV373();tillStageV373='items';tillItemsTabV374='items';}
     if(step===1) return drawStep1();
     if(step===2) return drawStep2();
     return drawStep3();
@@ -5529,7 +5533,7 @@ async function tillPage(){
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
     catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
-    walkin=true;step=2;tillStageV373='items';
+    walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';
     CUI.announce('Walk-in sale started. No customer is linked.');
     draw();
   }
@@ -6337,7 +6341,7 @@ async function tillPage(){
     return `${left} left ${period}`;
   }
   function tillRewardsBlockV373(){
-    if(walkin||!catalog)return '';
+    if(walkin||!catalog)return {html:'',count:0};
     /* v215: a welcome offer for a first-time sign-up. Where the button lives follows the server
        contract, not convenience: a minimum spend is proved against a REAL recorded sale, so that
        button appears on the receipt once the sale exists. A zero-minimum offer needs no purchase,
@@ -6392,13 +6396,14 @@ async function tillPage(){
     const tierBanner=(autoRow||giveRows)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
         <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
-        ${autoRow}${giveRows}
-        ${allBenefits.length>((autoBenefit?1:0)+giveNow.length)
-          ?`<button type="button" class="btn ghost sm" id="tAllBenefitsV373" style="margin-top:10px">View all ${tierName} benefits (${allBenefits.length})</button>`
-          :''}</div>`
+        ${autoRow}${giveRows}</div>`
       :'';
     const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${pendingVouchers}`;
-    return rewards?`<div class="till-rewards-v373">${rewards}</div>`:'';
+    /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
+       do anything about it — so the badge means "this many things need a hand", which is the
+       only reading that would make a cashier open the tab. */
+    const count=giveNow.length+(welcomeOffer?1:0)+(bringbackOffer?1:0)+(catalog.customerVouchers||[]).length;
+    return {html:rewards?`<div class="till-rewards-v373">${rewards}</div>`:'',count};
   }
   /* The whole ladder, on demand: what is available now, and — in plain words — why the rest is
      not. Staff get asked this at the counter; the answer belongs somewhere, just not in the way
@@ -6435,6 +6440,33 @@ async function tillPage(){
       return `<div class="err" role="alert">${esc(catalogError)}</div><button class="btn ghost sm" id="tCatRetry" style="margin-top:8px">${CUI.icon('retention',{size:16})} Try again</button>${tillLeaveRowV373()}`;
     if(!catalog)
       return `<p class="muted small" role="status">Loading products and services for this branch…</p>${tillLeaveRowV373()}`;
+    /* V374: the three sections became three tabs. Each tab reports how much is waiting in it, so
+       a ready reward or an unused package is visible WITHOUT opening the tab — otherwise moving
+       them off the page would hide the very things a counter must not miss. */
+    const packagesReady=(walkin?[]:(catalog.customerPackages||[])).filter(item=>Number(item.remaining)>0).length;
+    const rewards=tillRewardsBlockV373();
+    const tabs=[
+      {key:'items',label:'Items',count:0},
+      {key:'packages',label:'Packages',count:packagesReady},
+      {key:'benefits',label:'Benefits',count:rewards.count}
+    ].filter(tab=>!(walkin&&tab.key!=='items'));
+    if(!tabs.some(tab=>tab.key===tillItemsTabV374))tillItemsTabV374='items';
+    const active=tillItemsTabV374;
+    const strip=tabs.length>1
+      ?`<div class="v150-segment section-subtabs-v200 till-stage-tabs-v374" role="group" aria-label="What to work on">${tabs.map(tab=>`<button type="button" data-till-stage-tab-v374="${tab.key}" aria-pressed="${tab.key===active}">${tab.label}${tab.count?`<span class="till-stage-tab-count-v374">${tab.count}</span>`:''}</button>`).join('')}</div>`
+      :'';
+    const panel=active==='packages'?tillPackagesPanelHtmlV374()
+      :active==='benefits'?tillBenefitsPanelHtmlV374(rewards)
+      :tillItemsPanelHtmlV374();
+    return `${strip}
+      <div class="till-stage-panel-v374">${panel}</div>
+      <div id="tcErr"></div>
+      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
+      ${tillLeaveRowV373()}`;
+  }
+  /* Tab 1 — what they had today: the services and products tapped most often, and one door to
+     the rest of the catalogue. */
+  function tillItemsPanelHtmlV374(){
     const noCheckoutItems=!catalog.services.length&&!(catalog.products&&catalog.products.length);
     /* Services lead because that is what most of these firms sell; a shop with only products —
        a cafe, a chicken-rice stall — simply gets its products in the quick grid instead. */
@@ -6446,24 +6478,39 @@ async function tillPage(){
     const hiddenCount=entries.length-shown.length;
     const shownServices=shown.filter(entry=>entry.type==='service');
     const shownProducts=shown.filter(entry=>entry.type==='product');
-    /* The Add item tile is rendered even when this branch has no checkout catalogue at all: a
+    /* The More items tile is rendered even when this branch has no checkout catalogue at all: a
        firm that only sells prepaid packages still has something to add, and hiding the only door
        to the sheet would strand it. */
-    const addTile=`<button type="button" class="choice-button till-add-tile-v373" id="tAddItemV373">${CUI.icon('add',{size:20})}<span class="till-choice-text"><b>Add item</b><span class="muted small">Everything else</span></span></button>`;
-    const quick=noCheckoutItems
-      ?`${CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'})}
-        <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`
-      :`<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${hiddenCount>0?`<span class="muted small">${hiddenCount} more under Add item</span>`:''}</div>
-        ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
+    const addTile=`<button type="button" class="choice-button till-add-tile-v373" id="tAddItemV373">${CUI.icon('add',{size:20})}<span class="till-choice-text"><b>More items</b><span class="muted small">Everything else</span></span></button>`;
+    if(noCheckoutItems)
+      return `${CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'})}
         <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
-    return `${quick}
-      ${tillOwnedPackagesBlockV373()}
-      ${tillCartLinesHtmlV373()}
-      ${tillExtrasHtmlV373()}
-      ${tillRewardsBlockV373()}
-      <div id="tcErr"></div>
-      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
-      ${tillLeaveRowV373()}`;
+    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+      ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
+      <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
+  }
+  /* Tab 2 — this customer's prepaid sessions, and the one action that sells another. Selling is
+     an action rather than a second grid: at a counter, spending a session the customer already
+     paid for is far commoner than selling them a new package. */
+  function tillPackagesPanelHtmlV374(){
+    const owned=tillOwnedPackagesBlockV373();
+    const canPkg=branchCanWrite(tillBranchId,'packages')&&!walkin;
+    const sellAction=(canPkg&&(catalog.packages||[]).length)
+      ?`<button type="button" class="btn ghost" id="tSellPackageV374" style="width:100%;margin-top:14px">${CUI.icon('add',{size:16})} Sell new package</button>`
+      :'';
+    if(!owned)
+      return `${CUI.emptyState({iconName:'packages',title:'No packages yet',body:'This customer has no prepaid sessions left to use.'})}${sellAction}`;
+    return `${owned}${sellAction}`;
+  }
+  /* Tab 3 — only what this sale can actually give. tillRewardsBlockV373 already answers that;
+     this tab is where its answer lives instead of trailing the items. */
+  function tillBenefitsPanelHtmlV374(rewards){
+    const ladder=(!walkin&&Array.isArray(catalog.customerTierBenefits?.benefits)&&catalog.customerTierBenefits.benefits.length)
+      ?`<button type="button" class="btn ghost sm" id="tAllBenefitsV373" style="width:100%;margin-top:12px">View all ${esc(catalog.customerTierBenefits?.tier?.label||'tier')} benefits</button>`
+      :'';
+    if(!rewards.html)
+      return `${CUI.emptyState({iconName:'loyalty',title:'Nothing to give on this sale',body:'This customer has no reward, voucher or tier benefit that can be given right now.'})}${ladder}`;
+    return `${rewards.html}${ladder}`;
   }
   /* The cart is always in view: the owner's rule is that staff must never scroll to find it.
      Every figure in it is the evaluation's — this bar computes nothing but the item count. */
@@ -6611,11 +6658,11 @@ async function tillPage(){
     };
     return TILL_SHEET_TABS_V373.filter(tab=>available[tab.key]);
   }
-  function openTillAddSheetV373(){
+  function openTillAddSheetV373(preferredTab){
     if(cartLocked())return;
     const tabs=tillSheetTabsV373();
     if(!tabs.length)return toast('There is nothing to add at this branch yet.');
-    tillAddSheetV373={tab:tabs[0].key,query:''};
+    tillAddSheetV373={tab:tabs.some(tab=>tab.key===preferredTab)?preferredTab:tabs[0].key,query:''};
     document.body.insertAdjacentHTML('beforeend',`<div class="modal till-add-sheet-v373" id="tillAddSheetV373" role="dialog" aria-modal="true" aria-labelledby="tillAddSheetTitleV373" tabindex="-1"><div class="modal-card">
       <div class="row"><div><h2 id="tillAddSheetTitleV373">Add item</h2><p class="muted small">Tap to add. The sale stays open behind this.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tillAddSheetCloseV373">Done</button></div>
       <div id="tillAddSheetBodyV373"></div>
@@ -6703,8 +6750,12 @@ async function tillPage(){
     if($('tBack'))$('tBack').onclick=backToPhoneStep;
     if($('tWalkinSwitch'))$('tWalkinSwitch').onclick=backToPhoneStep;
     if($('tGoReviewV373'))$('tGoReviewV373').onclick=()=>{closeTillAddSheetV373();tillStageV373='review';draw()};
-    if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';draw()};
-    if($('tAddItemV373'))$('tAddItemV373').onclick=openTillAddSheetV373;
+    if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';tillItemsTabV374='items';draw()};
+    if($('tAddItemV373'))$('tAddItemV373').onclick=()=>openTillAddSheetV373();
+    if($('tSellPackageV374'))$('tSellPackageV374').onclick=()=>openTillAddSheetV373('sellpackage');
+    document.querySelectorAll('[data-till-stage-tab-v374]').forEach(button=>button.onclick=()=>{
+      tillItemsTabV374=button.dataset.tillStageTabV374;draw();
+    });
     if($('tAllBenefitsV373'))$('tAllBenefitsV373').onclick=openTillAllBenefitsV373;
     const whoV373=$('tillWhoV373');
     if(whoV373)whoV373.ontoggle=()=>{tillWhoOpenV373=whoV373.open};
