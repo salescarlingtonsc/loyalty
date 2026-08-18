@@ -161,7 +161,7 @@ const growHarness=()=>new Function('esc','assertOk',`
   return (rewardRows,offerRows)=>{
     const growOverviewRowsV271=[...rewardRows,...offerRows];
     ${statement('const growLimitedOfferEntryV319=','growOverviewRowsV271.filter(growLimitedOfferEntryV319);')}
-    ${statement('const growOverviewChildRowV324=',':\`<b data-merchant-content>\${esc(row.name)}</b>\${parentNote}\`;\n  }];')}
+    ${statement('const growOverviewChildRowV324=','\`\${nameV388}\${parentNote}\`;\n  }];')}
     ${statement('const growOverviewRewardsTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
     ${statement('const growOverviewOffersTableV319=','esc(row.detail)}</span>\`:\'<span class="muted">—</span>\']]});')}
     ${statement('const growOverviewFrameV324=','</div>\`;')}
@@ -233,8 +233,10 @@ test('V319 each category empties independently, and points at its own door', () 
    the struck Type column, the ringed reward row ("those reward is under point system"), the
    ringed "+" beside each heading, and the arrow onto the date column. */
 
+/* V388: a row carries the editor it opens (openV388), set where the row was built. */
 const CHILD_REWARD_ROW={name:'Free Facial cream',type:'Reward',started:'2026-08-06T00:00:00+08:00',
-  ended:null,endsAt:null,state:'live',customers:0,detail:'1000 points'};
+  ended:null,endsAt:null,state:'live',customers:0,detail:'1000 points',
+  openV388:{topic:'gift',id:'reward-1',kind:'points'}};
 
 test('V324 a reward reads as belonging to the programme above it, not as its sibling', () => {
   const {html}=growHarness()([REWARD_ROW,CHILD_REWARD_ROW],[]);
@@ -253,7 +255,17 @@ test('V324 a reward reads as belonging to the programme above it, not as its sib
   assert.doesNotMatch(cells[0],/grow-overview-child-v324/,'the Point system row is a parent and takes no indent');
   /* V385: the indent is a real \u21b3 glyph in the markup now, not a CSS ::before elbow that a
      narrow-screen media query deleted — on a tablet the gifts were not indented at all. */
-  assert.match(cells[1],/<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3<\/span><b data-merchant-content>Free Facial cream<\/b><\/span>/);
+  /* V388 (owner, photo 4): the name is the control that opens this reward's own editor, so it is
+     a button rather than a <b>. The indent and the arrow are unchanged. */
+  assert.match(cells[1],/<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3<\/span><button type="button" class="grow-overview-open-v388"[^>]*>Free Facial cream<\/button><\/span>/);
+  /* The button carries WHICH editor and WHICH row, so the handler never infers either from the
+     label — a firm that renames a gift still opens that gift. */
+  assert.match(cells[1],/data-grow-open-v388="gift"/);
+  assert.match(cells[1],/data-grow-open-id-v388="reward-1"/);
+  assert.match(cells[1],/data-grow-open-kind-v388="points"/,'a stamp-card gift must not open the points template');
+  /* And a row with no editor stays plain text rather than becoming a button that goes nowhere. */
+  const plain=growHarness()([{...CHILD_REWARD_ROW,openV388:undefined}],[]);
+  assert.doesNotMatch(plain.html,/grow-overview-open-v388/);
 });
 
 test('V324 with no programme above it, a lone reward is not indented under nothing', () => {

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="c4d35c7c045a477b95c15576b59d74c0d99817f75670a4d5f9d3fd6208a279f3"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="86f67224fafcd6fba80d4bb92310597f94787d15dee381f11cd7e39d9e0cec9a"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1831,8 +1831,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .module-perm-select-v382[data-perm-state-v382="off"]{border-color:#9B3B2B;color:#9B3B2B;font-weight:700;background:#FBEAE7}
 .module-perm-select-v382:disabled{opacity:.55}
 /* V385: the "?" help affordance next to a panel heading. */
-.help-dot-v385{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;padding:0;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:pointer;vertical-align:middle}
+.help-dot-v385{position:relative;display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:help;vertical-align:middle}
 .help-dot-v385:hover,.help-dot-v385:focus-visible{border-color:var(--coral);color:var(--coral)}
+/* V388: the enlarged rewards code, and the quick date ranges on the usage filter. */
+.wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
+.wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
+.grow-usage-quick-v388{margin-top:8px}
+.grow-overview-open-v388{padding:0;border:0;background:none;font:inherit;font-weight:750;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.grow-overview-open-v388:hover{color:var(--coral);text-decoration:underline}
+.grow-overview-open-v388:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:4px}
+/* V388: the hint is a bubble on hover/focus, not a dialog (owner, photo 3). */
+.help-dot-bubble-v385{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:30;
+  width:max-content;max-width:min(260px,70vw);padding:8px 10px;border-radius:10px;
+  background:var(--ink);color:#fff;font-size:12px;font-weight:500;line-height:1.4;text-align:left;
+  letter-spacing:0;box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transition:opacity .12s var(--ease)}
+.help-dot-bubble-v385::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--ink)}
+.help-dot-v385:hover .help-dot-bubble-v385,.help-dot-v385:focus-visible .help-dot-bubble-v385{opacity:1;visibility:visible}
+/* On touch there is no hover and no native title to fall back on, so the tap that focuses the
+   control is what reveals it — which is why the rule above matches :focus-visible as well. */
 .appt-portal-qr-v378{margin-top:12px}
 .appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
 .booking-row-openable-v378{cursor:pointer}
@@ -3933,15 +3950,20 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        superseded. Every one of the four metric definitions carries a route, and the tiles are
        built from those same four keys, so the branch could never be taken and the modal it
        opened could never be seen. Both are gone. */
+    /* V388 (owner, photo 1: "when clicked into the boxes ... it should show the pop up of the
+       details shown, like who are the 5 customers (date of joined). because it wrote 'see new
+       customers' — it should really allow see new customers pop up").
+       V225 made each tile a direct link to its report, which answered "where do I go" rather
+       than "who are these five". The tile now opens the rows behind the figure, and the report
+       it used to jump to is one press away at the foot of the dialog — nothing was taken away. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      const route=dashboardMetricDefinitionsV141[key]?.route;
-      /* V288: the pending drill now carries the BUCKET KEY the destination understands, not a
-         day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
-         asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
-      if(key==='inactive')pendingCustomerInactivity='30_59';
+      /* V287/V290, unchanged: the report this dialog can hand off to must land on the SAME group
+         the tile counted. The bucket is set here, where the tile is, so the dialog's footer link
+         and the old direct route can never drill into a different set of people. */
       if(key==='inactive')pendingCustomerInactivity='all_inactive';
-      if(route)nav(route);
+      openDashboardMetricRowsV388({key,from,to,scopePayload,
+        value:(metrics.find(metric=>metric.key===key)||{}).value||''});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -4026,6 +4048,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'c4d35c7c045a477b95c15576b59d74c0d99817f75670a4d5f9d3fd6208a279f3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'86f67224fafcd6fba80d4bb92310597f94787d15dee381f11cd7e39d9e0cec9a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

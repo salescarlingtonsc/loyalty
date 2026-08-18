@@ -3091,32 +3091,19 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
    the SAME previous period, so repeating it four times would be four readings of one fact. It
    is printed only when at least one tile actually has a comparison to make — a first-ever
    period has no previous equivalent, and percentageChangeV153 returns null for all of them. */
-/* V385: the house "?" affordance. A sentence an owner needs once — what a thing IS — should
-   not occupy the panel for every later visit, which is what the owner drew on the Blocked time
-   card. The button carries its own copy in data attributes and one delegated handler opens it,
-   so a second caller anywhere is one markup call and no new wiring. */
+/* V385: the house "?" affordance, reworked at V388.
+   V385 opened a dialog. The owner (photo 3): "don't need to pop up, usually for such ? or hint
+   will just be a text when hover mouse over." So the copy rides the control itself — a CSS
+   bubble on hover, the same bubble on keyboard focus so it is not mouse-only, and `title` as the
+   native fallback for touch and for anything that reads attributes. No dialog, nothing to
+   dismiss, and no wiring at all: the markup IS the behaviour, so a second caller anywhere is one
+   markup call. */
 function helpDotMarkupV385(title,body){
-  return ` <button type="button" class="help-dot-v385" data-help-dot-v385="${esc(String(body||''))}" data-help-dot-title-v385="${esc(String(title||'What this is'))}" ${workspaceTemplateAttributeV97('aria-label','explainHelpDotV385',{topic:String(title||'this')})}>?</button>`;
-}
-function openHelpDotV385(title,body){
-  document.getElementById('helpDotModalV385')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="helpDotModalV385" role="dialog" aria-modal="true" aria-labelledby="helpDotTitleV385" tabindex="-1"><div class="modal-card" style="max-width:420px">
-    <div class="row"><h2 id="helpDotTitleV385" style="font-size:1.05rem">${esc(title)}</h2><span class="spacer"></span><button class="btn ghost sm" id="helpDotCloseV385" type="button">Close</button></div>
-    <p class="muted small" style="margin-top:10px">${esc(body)}</p>
-  </div></div>`);
-  const modal=document.getElementById('helpDotModalV385');
-  let deactivate;
-  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
-  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#helpDotCloseV385'});
-  document.getElementById('helpDotCloseV385').onclick=close;
-}
-function wireHelpDotsV385(root){
-  (root||document).querySelectorAll?.('[data-help-dot-v385]').forEach(button=>{
-    button.onclick=event=>{
-      event.preventDefault();event.stopPropagation();
-      openHelpDotV385(button.dataset.helpDotTitleV385||'What this is',button.dataset.helpDotV385||'');
-    };
-  });
+  const text=String(body||'');
+  /* No `title` attribute: it would duplicate the bubble, and an interpolated one is a dynamic
+     accessibility attribute the v97 audit rightly refuses outside the named-template mechanism.
+     The bubble is the visible copy and the aria-label is the spoken one, both from here. */
+  return ` <span class="help-dot-v385" tabindex="0" role="note" ${workspaceTemplateAttributeV97('aria-label','explainHelpDotV385',{topic:String(title||'this')})}><span aria-hidden="true">?</span><span class="help-dot-bubble-v385" data-merchant-content>${esc(text)}</span></span>`;
 }
 /* V387 (owner, second pass on photo 1: the ▲400% chip ringed again — "the 400% still unknown").
    The V385 legend answered "which period", which is not the question. The question a percentage
@@ -3126,6 +3113,76 @@ function wireHelpDotsV385(root){
    Drawn only when there IS a comparison: a tile with no delta has no previous figure worth
    stating, and a first-ever period would otherwise print "was 0" and invite the reading that
    the business went from nothing to something when nobody was measured at all. */
+/* V388: the rows behind a KPI tile.
+   The hard rule here is the one V287 was written for — the number on the tile and the list it
+   opens must be the same set of people, or the owner is reading two different truths. So each
+   reader below reproduces the SERVER's definition rather than inventing a near-enough one:
+
+     new       get_dashboard_summary_v155 counts clients.created_at inside the Singapore day
+               window, business-wide, with no other predicate. This is that query, exactly.
+     inactive  the tile already drills through staff_list_customers_v155's all_inactive bucket
+               (V290); the dialog asks the same RPC for the rows instead of the count.
+     visits    the server's valid_visits CTE is counts_as_visit, not a reversal, and not itself
+               reversed — which is precisely validVisitSales(), the helper this codebase already
+               shares between Customer 360 and bring-back audiences for that reason.
+     revenue   the same scoped rows, kept where counts_as_revenue, summed.
+
+   A read that fails says so. It never falls back to a shorter list, because a shorter list under
+   a bigger number is worse than an error. */
+async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
+  const def=dashboardMetricDefinitionsV141[key]||{};
+  document.getElementById('metricRowsModalV388')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="metricRowsModalV388" role="dialog" aria-modal="true" aria-labelledby="metricRowsTitleV388" tabindex="-1"><div class="modal-card" style="max-width:640px">
+    <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:1.05rem">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${key==='inactive'?'':` · ${esc(promotionDateShortV324(from))} – ${esc(promotionDateShortV324(to))}`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
+    <div id="metricRowsBodyV388" style="margin-top:14px" aria-live="polite">${CUI.loadingState({title:'Loading',iconName:'reports'})}</div>
+    ${def.route?`<div class="row" style="margin-top:14px"><a class="btn ghost sm" href="${esc(def.route)}" id="metricRowsGoV388">${esc(def.buttonLabel||'View details')}</a></div>`:''}
+  </div></div>`);
+  const modal=document.getElementById('metricRowsModalV388');
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#metricRowsCloseV388'});
+  document.getElementById('metricRowsCloseV388').onclick=close;
+  /* The report link is the destination the tile used to jump to; closing first stops the dialog
+     outliving the page it was opened from. */
+  const go=document.getElementById('metricRowsGoV388');
+  if(go)go.onclick=event=>{event.preventDefault();close();nav(def.route)};
+  const body=document.getElementById('metricRowsBodyV388');
+  const stillOpen=()=>body.isConnected;
+  const table=(head,rows)=>rows.length
+    ?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`
+    :`<p class="muted small">Nothing in this period.</p>`;
+  const failed=message=>{if(stillOpen())body.innerHTML=`<div class="err" role="alert">${esc(message)}</div>`};
+  try{
+    if(key==='new'){
+      const {data,error}=await sb.from('clients').select('id,full_name,phone,created_at')
+        .eq('business_id',S.biz.id)
+        .gte('created_at',sgDateBoundary(from)).lt('created_at',sgDateBoundary(to,1))
+        .order('created_at',{ascending:false}).limit(500);
+      if(!stillOpen())return;
+      if(error)return failed(ownerErrorText(error));
+      body.innerHTML=table(['Customer','Joined'],(data||[]).map(row=>`<tr><td data-label="Customer"><b>${esc(row.full_name||'—')}</b>${row.phone?`<br><span class="muted small">${esc(row.phone)}</span>`:''}</td><td data-label="Joined">${esc(sgLedgerDateV154(row.created_at).date)}</td></tr>`));
+      return;
+    }
+    if(key==='inactive'){
+      const {data,error}=await sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,
+        p_inactive_bucket:'all_inactive',p_limit:200,p_offset:0,...scopePayload});
+      if(!stillOpen())return;
+      if(error)return failed(ownerErrorText(error));
+      const rows=Array.isArray(data?.rows)?data.rows:(Array.isArray(data)?data:[]);
+      body.innerHTML=table(['Customer','Last visit'],rows.map(row=>`<tr><td data-label="Customer"><b>${esc(row.full_name||'—')}</b>${row.phone?`<br><span class="muted small">${esc(row.phone)}</span>`:''}</td><td data-label="Last visit">${row.last_visit_at?esc(sgLedgerDateV154(row.last_visit_at).date):'<span class="muted">Never</span>'}</td></tr>`));
+      return;
+    }
+    const {data,error}=await fetchAllRowsResult(()=>sb.from('sales')
+      .select('id,client_id,amount_cents,occurred_at,kind,counts_as_visit,counts_as_revenue,reversal_of,clients(full_name)')
+      .eq('business_id',S.biz.id)
+      .gte('occurred_at',sgDateBoundary(from)).lt('occurred_at',sgDateBoundary(to,1))
+      .order('occurred_at',{ascending:false}));
+    if(!stillOpen())return;
+    if(error)return failed(ownerErrorText(error));
+    const scoped=key==='visits'?validVisitSales(data||[]):(data||[]).filter(row=>row?.counts_as_revenue);
+    body.innerHTML=table(['When','Customer',key==='visits'?'Kind':'Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${esc(row.clients?.full_name||'Walk-in')}</td><td data-label="${key==='visits'?'Kind':'Amount'}">${key==='visits'?esc(String(row.kind||'')):esc(money(row.amount_cents||0))}</td></tr>`));
+  }catch(error){failed(ownerErrorText(error))}
+}
 function dashboardMetricWasLineV387(metric,previousRange){
   if(metric?.was==null||metric?.delta==null||!Number.isFinite(Number(metric.delta)))return '';
   /* Only the NUMBER here. The period is stated once in the legend under the row — every tile is
@@ -3613,15 +3670,20 @@ async function dashboard(){
        superseded. Every one of the four metric definitions carries a route, and the tiles are
        built from those same four keys, so the branch could never be taken and the modal it
        opened could never be seen. Both are gone. */
+    /* V388 (owner, photo 1: "when clicked into the boxes ... it should show the pop up of the
+       details shown, like who are the 5 customers (date of joined). because it wrote 'see new
+       customers' — it should really allow see new customers pop up").
+       V225 made each tile a direct link to its report, which answered "where do I go" rather
+       than "who are these five". The tile now opens the rows behind the figure, and the report
+       it used to jump to is one press away at the foot of the dialog — nothing was taken away. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      const route=dashboardMetricDefinitionsV141[key]?.route;
-      /* V288: the pending drill now carries the BUCKET KEY the destination understands, not a
-         day number the Customers page had to re-guess. The tile counts 30–59 (V287), so it
-         asks for 30–59; Merchant insights counts 60+, so it asks for 60+. */
-      if(key==='inactive')pendingCustomerInactivity='30_59';
+      /* V287/V290, unchanged: the report this dialog can hand off to must land on the SAME group
+         the tile counted. The bucket is set here, where the tile is, so the dialog's footer link
+         and the old direct route can never drill into a different set of people. */
       if(key==='inactive')pendingCustomerInactivity='all_inactive';
-      if(route)nav(route);
+      openDashboardMetricRowsV388({key,from,to,scopePayload,
+        value:(metrics.find(metric=>metric.key===key)||{}).value||''});
     });
     if(loyalty){
       if(!loyaltyVisibleV170)loyalty.innerHTML='';
@@ -5568,6 +5630,49 @@ function serviceDisplayName(service={}){
    is kept for every browser where it already worked, now inside a try/catch with a cleanup
    timer — an exception used to leave the page stuck in its print-only stylesheet. And when
    neither route is available the owner is TOLD, rather than shown a button that does nothing. */
+/* V388: the receipt code, big enough to scan off a screen, with the PNG offered. Drawn fresh at
+   320px rather than scaling the 132px receipt bitmap, because an upscaled QR loses the crispness
+   a scanner needs. The download is built from the canvas the library produces — no network, no
+   second encoder — and when the CDN never arrived the url is still shown as text, which is the
+   thing that actually matters. */
+function openWalletQrDialogV388(url,businessName){
+  document.getElementById('walletQrModalV388')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="walletQrModalV388" role="dialog" aria-modal="true" aria-labelledby="walletQrTitleV388" tabindex="-1"><div class="modal-card" style="max-width:420px">
+    <div class="row"><div><h2 id="walletQrTitleV388" style="font-size:1.05rem">Customer rewards code</h2><p class="muted small" style="margin-top:4px">Scan to open rewards, points and past visits at <span data-merchant-content>${esc(businessName)}</span>.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletQrCloseV388" type="button">Close</button></div>
+    <div id="walletQrHostV388" class="wallet-qr-host-v388" role="status">Drawing the code…</div>
+    <p class="small" style="word-break:break-all;margin-top:10px"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a></p>
+    <div class="row" style="margin-top:14px;gap:8px"><button class="btn sm" id="walletQrSaveV388" type="button" disabled>Save image</button></div>
+  </div></div>`);
+  const modal=document.getElementById('walletQrModalV388');
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#walletQrCloseV388'});
+  document.getElementById('walletQrCloseV388').onclick=close;
+  const host=document.getElementById('walletQrHostV388'),save=document.getElementById('walletQrSaveV388');
+  void loadQrLibrary().then(()=>{
+    if(!host.isConnected)return;
+    host.innerHTML='';
+    new QRCode(host,{text:url,width:320,height:320,correctLevel:QRCode.CorrectLevel.M});
+    /* qrcodejs paints a canvas and an <img> of it; either can produce the PNG, and which one is
+       present depends on the browser. */
+    const png=()=>{
+      const canvas=host.querySelector('canvas');
+      if(canvas)return canvas.toDataURL('image/png');
+      return host.querySelector('img')?.src||'';
+    };
+    save.disabled=false;
+    save.onclick=()=>{
+      const data=png();
+      if(!data)return toast('The image could not be saved. Screenshot the code instead.');
+      const link=document.createElement('a');
+      link.href=data;link.download=`${BRAND.downloadPrefix}-rewards-qr.png`;
+      document.body.appendChild(link);link.click();link.remove();
+    };
+  }).catch(()=>{
+    if(!host.isConnected)return;
+    host.innerHTML='<p class="muted small">The code could not be drawn. Share the link below instead.</p>';
+  });
+}
 const posReceiptStandaloneV385=()=>globalThis.navigator?.standalone===true
   ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
 function printPosReceiptV385(){
@@ -7649,7 +7754,25 @@ async function tillPage(){
        Walk-in sales get no QR: there is no customer to show anything to. */
     const receiptQrHost=$('receiptWalletQr');
     if(receiptQrHost&&S.biz.slug){
-      const walletUrl=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
+      /* V388 (owner, photo 2: "this qrcode brings me to a booking page for cubbly instead of
+         revealing the qrcode"). It encoded the PUBLIC BOOKING PORTAL while the caption under it
+         promised "your rewards, points and past visits" — so a customer who scanned their own
+         receipt landed on a form to book another appointment. `wallet/<slug>` is the route that
+         actually shows them what the caption says. */
+      const walletUrl=publicAppUrl(`wallet/${encodeURIComponent(S.biz.slug)}`);
+      /* And the second half of the same mark: "it should popup the qrcode for user to screenshot
+         or download". The receipt code is 132px so the printed slip stays tidy; that is too small
+         to photograph off a screen, so tapping it opens the same code big enough to scan and
+         offers the PNG. */
+      receiptQrHost.style.cursor='zoom-in';
+      receiptQrHost.setAttribute('role','button');
+      receiptQrHost.setAttribute('tabindex','0');
+      receiptQrHost.setAttribute('title','Show this code larger');
+      const openLargeV388=()=>openWalletQrDialogV388(walletUrl,S.biz.name||'this business');
+      receiptQrHost.onclick=openLargeV388;
+      receiptQrHost.onkeydown=event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();openLargeV388()}
+      };
       void loadQrLibrary()
         .then(()=>{
           if(!receiptQrHost.isConnected)return;
@@ -13151,9 +13274,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const entries=[];
     const milestoneById=new Map();
     rewardJourney.milestones.forEach(item=>milestoneById.set(String(item.id),item));
+    /* V388 (owner, photo 4: "when my points is off it should not be shown in overview — overview
+       only shows live rewards only"). rewardJourney.earning.availableToCustomers is
+       spineAccruingV314, which is true when points OR stamps is on — it answers "is this firm
+       accruing anything", the right question for the customer surface and the wrong one for a
+       row that names ONE programme. A firm running stamps with points switched off had its
+       Point system row still reading Live.
+       Only an explicit false pauses it: a null means the spine has not been read yet, and a
+       programme must not vanish because a fetch has not landed. */
+    const growEarningSpineKindV388=rewardJourney.earning?.model==='stamps'?'stamps':'points';
+    const growEarningLiveV388=programmeSpineOnV314(growEarningSpineKindV388)===false
+      ?false:rewardJourney.earning?.availableToCustomers;
     if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',usageScopeV386:'point_system',
+      spineKindV388:growEarningSpineKindV388,openV388:{topic:growEarningSpineKindV388},
       started:growFirstPublishedV271,ended:null,
-      state:rewardJourney.earning.availableToCustomers?'live':'paused',
+      state:growEarningLiveV388?'live':'paused',
       customers:growUsageV271?(growUsageV271.point_system?.customers??null):null,
       detail:growEarnRateTextV271(rewardJourney.earning)});
     (snapshot.rewards||[]).forEach(reward=>{
@@ -13169,6 +13304,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          programme link says nothing rather than guessing. */
       entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
         usageScopeV386:'reward',usageIdV386:reward.id,
+        openV388:{topic:'gift',id:reward.id,kind:growRewardParentKindV385(reward)},
         parent:growRewardParentNameV375(reward),parentKind:growRewardParentKindV385(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
         customers:growRewardUsageV271.get(String(reward.id))??null,
@@ -13177,18 +13313,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     (snapshot.retention||[]).forEach(program=>{
       const overview=retentionOverviewState(program);
       entries.push({name:program.name||'Bring-back reward',type:'Bring-back',
-        usageScopeV386:'retention',usageIdV386:program.id,
+        usageScopeV386:'retention',usageIdV386:program.id,openV388:{topic:'bringback'},
         started:program.starts_on||program.created_at||null,ended:null,
         state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
         customers:growRetentionUsageV271.get(String(program.id))??null,
         detail:`${Math.max(0,Number(program.goal_visits)||0)} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days)||0)} days`});
     });
-    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',usageScopeV386:'birthday',
+    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',usageScopeV386:'birthday',openV388:{topic:'birthday'},
       started:growUsageV271?.birthday?.started_at||null,ended:null,
       state:rewardJourney.birthday.active?'live':'paused',
       customers:growUsageV271?(growUsageV271.birthday?.customers??null):null,
       detail:rewardJourney.birthday.value});
-    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',usageScopeV386:'welcome',
+    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',usageScopeV386:'welcome',openV388:{topic:'welcome'},
       started:null,ended:null,
       state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
       customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
@@ -13206,18 +13342,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          needs the opposite — when a RUNNING offer stops — so `endsAt` carries it rather than
          loosening the field History depends on. `customers:null` is untouched: nothing records a
          customer using a promotion, and this row must keep admitting that. */
-      entries.push({name:promotion?.name||'Promotion',type:'Promotion',
+      entries.push({name:promotion?.name||'Promotion',type:'Promotion',openV388:{topic:'promotion',id:promotion?.id},
         started:promotion?.starts_at||null,ended:lifecycle.state==='ended'?(promotion?.ends_at||null):null,
         endsAt:promotion?.ends_at||null,state:lifecycle.state,
         customers:null,detail:promotion?.tagline||''});
     });
-    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',usageScopeV386:'referrals',
+    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',usageScopeV386:'referrals',openV388:{topic:'referrals'},
       started:snapshot.referral.created_at||null,ended:null,
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
       detail:snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:''});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
-      usageScopeV386:'membership',usageIdV386:plan?.id,
+      usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
       customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
@@ -13303,9 +13439,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const parentAbove=Boolean(above);
     const parentNote=row.parent&&String(above?.name||'')!==String(row.parent)
       ?`<span class="muted small grow-overview-parent-v375">Under ${esc(row.parent)}</span>`:'';
+    /* V388 (owner, photo 4: "all these modules and submodules in overview should be clickable and
+       immediately go into the edit of such activities. example click 'free lotion' will pop up
+       edit page for this particular activity"). The name is the control; every row already knows
+       which editor it belongs to (openV388, set where the row was built), so nothing is inferred
+       from the label. A row with no editor stays plain text rather than becoming a button that
+       goes nowhere. */
+    const nameV388=row.openV388
+      ?`<button type="button" class="grow-overview-open-v388" data-grow-open-v388="${esc(row.openV388.topic)}" data-grow-open-id-v388="${esc(row.openV388.id||'')}" data-grow-open-kind-v388="${esc(row.openV388.kind||'')}" data-merchant-content>${esc(row.name)}</button>`
+      :`<b data-merchant-content>${esc(row.name)}</b>`;
     return growOverviewChildRowV324(row)&&parentAbove
-      ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span><b data-merchant-content>${esc(row.name)}</b>${parentNote}</span>`
-      :`<b data-merchant-content>${esc(row.name)}</b>${parentNote}`;
+      ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span>${nameV388}${parentNote}</span>`
+      :`${nameV388}${parentNote}`;
   }];
   const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
@@ -13321,7 +13466,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      so rather than borrowing "Not tracked" from a count. */
   const growOverviewOffersTableV319=growTableV271({label:'Limited offers running now',rows:growOverviewOfferRowsV319,
     empty:'<b>No offer is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/offers">Limited Offer</a> to create one customers can see.</p>',
-    columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+    columns:[['Offer',row=>row.openV388
+        ?`<button type="button" class="grow-overview-open-v388" data-grow-open-v388="${esc(row.openV388.topic)}" data-grow-open-id-v388="${esc(row.openV388.id||'')}" data-merchant-content>${esc(row.name)}</button>`
+        :`<b data-merchant-content>${esc(row.name)}</b>`],
       ['Started',row=>growDateCellV271(row.started)],
       ['Ends',row=>Number.isFinite(Date.parse(row.endsAt||''))?esc(promotionDateShortV324(row.endsAt)):'<span class="muted">No end date</span>'],
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
@@ -13463,6 +13610,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div><label for="growUsageFromV386">From</label><input type="date" id="growUsageFromV386" value="${esc(growUsageFromV386)}"></div>
     <div><label for="growUsageToV386">To</label><input type="date" id="growUsageToV386" value="${esc(growUsageToV386)}"></div>
     <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growUsageApplyV386">Apply</button><button type="button" class="btn ghost sm" id="growUsageClearV386" ${growUsageWindowedV386?'':'disabled'}>Clear</button></div>
+    ${/* V388 (owner, photo 6: "i need to have a smart button to press last month / this week /
+         this month (shortcut button instead of manual)"). Each one resolves to a real pair of
+         Singapore calendar dates and then takes the SAME path Apply takes, so there is one
+         window state and a shortcut can never disagree with what the inputs show. The pressed
+         state is derived by comparing the shortcut's own dates with the applied window, so it
+         lights up when the owner types those dates by hand too. */''}
+    <div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Quick date ranges" style="flex-basis:100%">
+      ${growUsageQuickRangesV388().map(range=>`<button type="button" data-grow-usage-quick-v388="${esc(range.key)}" aria-pressed="${growUsageFromV386===range.from&&growUsageToV386===range.to?'true':'false'}">${esc(range.label)}</button>`).join('')}
+    </div>
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
       ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
@@ -15038,6 +15194,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTopicV229=tile.dataset.growTopicV229;
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
+  /* V388: one door per Overview row. Every destination here is a door that ALREADY existed —
+     the same page or editor the tile map above opens — so a row cannot reach somewhere the rest
+     of the module cannot. A gift additionally pre-opens its own edit form by setting the very
+     state variable the page's own Edit button sets, which is why clicking "Free Lotion" lands on
+     the form in the owner's photo 5 rather than on a list they then have to search. */
+  outerMain.querySelectorAll('[data-grow-open-v388]').forEach(button=>{
+    button.onclick=event=>{
+      event.preventDefault();event.stopPropagation();
+      const topic=button.dataset.growOpenV388,id=button.dataset.growOpenIdV388||'';
+      if(topic==='points'||topic==='stamps'){
+        growPointsViewKindV350=topic;return nav('#/grow/points');
+      }
+      if(topic==='gift'){
+        if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
+        /* The kind decides WHICH page the gift lives on; a stamp-card gift must not open the
+           points template. It is read off the spine at build time, never guessed from the label. */
+        growPointsViewKindV350=button.dataset.growOpenKindV388||growPointsViewKindV350||'points';
+        growPointsEditingV326=id;growPointsAddOpenV326='';growPointsErrorV326='';
+        growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
+        return nav('#/grow/points');
+      }
+      if(topic==='bringback')return nav('#/grow/bringback');
+      if(topic==='birthday')return nav('#/grow/birthday');
+      if(topic==='referrals')return nav('#/referrals');
+      if(topic==='membership')return nav('#/memberships');
+      if(topic==='promotion'){growOffersTabV324='published';return nav('#/grow/offers')}
+      if(topic==='welcome'){
+        if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
+        return openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+          ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+      }
+    };
+  });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
@@ -15168,6 +15357,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growUsageClearV386)growUsageClearV386.onclick=()=>{
     growUsageFromV386='';growUsageToV386='';growRerenderV322({quiet:true});
   };
+  /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
+     same way — it is Apply with the typing done for you, not a second window state. */
+  document.querySelectorAll('[data-grow-usage-quick-v388]').forEach(button=>{
+    button.onclick=()=>{
+      const range=growUsageQuickRangesV388().find(item=>item.key===button.dataset.growUsageQuickV388);
+      if(!range)return;
+      growUsageFromV386=range.from;growUsageToV386=range.to;growRerenderV322({quiet:true});
+    };
+  });
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
   /* ============ V326 — POINTS SYSTEM / STAMP CARD PAGE WIRING ===============================
@@ -22251,7 +22449,6 @@ async function appointmentsPage(){
     if(view==='block'){
       $('alist').innerHTML=blockedListHtmlV291;
       wireBlockedTimeActions();
-      wireHelpDotsV385($('alist'));
       return;
     }
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
@@ -25315,6 +25512,25 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
    one axis and a shorter bar always means a smaller number. A category the schema cannot measure
    is left out entirely rather than drawn as a zero-length bar, which would read as "measured,
    and nobody used it" — the same rule the table's "Not tracked" cell keeps. */
+/* V388: the four windows an owner actually asks for, in Singapore calendar terms. Built from
+   today's SGT date with the existing shiftSgDateInput helper rather than the browser's clock, so
+   a device west of Singapore does not offer yesterday's "this week". Weeks run Monday-Sunday. */
+function growUsageQuickRangesV388(today=sgDateInputValue()){
+  const monthStart=date=>`${date.slice(0,7)}-01`;
+  const [year,month]=today.split('-').map(Number);
+  const lastMonthStart=month===1?`${year-1}-12-01`:`${year}-${String(month-1).padStart(2,'0')}-01`;
+  /* The day before this month began IS the last day of last month, whatever its length. */
+  const lastMonthEnd=shiftSgDateInput(monthStart(today),-1);
+  /* getUTCDay on a date-only string is safe: shiftSgDateInput builds it from UTC parts. */
+  const weekday=new Date(`${today}T00:00:00Z`).getUTCDay();
+  const mondayOffset=weekday===0?-6:1-weekday;
+  return [
+    {key:'this_week',label:'This week',from:shiftSgDateInput(today,mondayOffset),to:today},
+    {key:'last_week',label:'Last week',from:shiftSgDateInput(today,mondayOffset-7),to:shiftSgDateInput(today,mondayOffset-1)},
+    {key:'this_month',label:'This month',from:monthStart(today),to:today},
+    {key:'last_month',label:'Last month',from:lastMonthStart,to:lastMonthEnd}
+  ];
+}
 function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
   const measured=(rows||[]).filter(row=>row.customers!=null);
   if(measured.length<1)return '';

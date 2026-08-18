@@ -1861,8 +1861,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .module-perm-select-v382[data-perm-state-v382="off"]{border-color:#9B3B2B;color:#9B3B2B;font-weight:700;background:#FBEAE7}
 .module-perm-select-v382:disabled{opacity:.55}
 /* V385: the "?" help affordance next to a panel heading. */
-.help-dot-v385{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;padding:0;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:pointer;vertical-align:middle}
+.help-dot-v385{position:relative;display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:help;vertical-align:middle}
 .help-dot-v385:hover,.help-dot-v385:focus-visible{border-color:var(--coral);color:var(--coral)}
+/* V388: the enlarged rewards code, and the quick date ranges on the usage filter. */
+.wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
+.wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
+.grow-usage-quick-v388{margin-top:8px}
+.grow-overview-open-v388{padding:0;border:0;background:none;font:inherit;font-weight:750;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.grow-overview-open-v388:hover{color:var(--coral);text-decoration:underline}
+.grow-overview-open-v388:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:4px}
+/* V388: the hint is a bubble on hover/focus, not a dialog (owner, photo 3). */
+.help-dot-bubble-v385{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:30;
+  width:max-content;max-width:min(260px,70vw);padding:8px 10px;border-radius:10px;
+  background:var(--ink);color:#fff;font-size:12px;font-weight:500;line-height:1.4;text-align:left;
+  letter-spacing:0;box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transition:opacity .12s var(--ease)}
+.help-dot-bubble-v385::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--ink)}
+.help-dot-v385:hover .help-dot-bubble-v385,.help-dot-v385:focus-visible .help-dot-bubble-v385{opacity:1;visibility:visible}
+/* On touch there is no hover and no native title to fall back on, so the tap that focuses the
+   control is what reveals it — which is why the rule above matches :focus-visible as well. */
 .appt-portal-qr-v378{margin-top:12px}
 .appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
 .booking-row-openable-v378{cursor:pointer}
@@ -3005,7 +3022,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=8cf21f09f159","business":"/app-business.js?b=2aa5fe35333e","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=8cf21f09f159","business":"/app-business.js?b=628f165153ed","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

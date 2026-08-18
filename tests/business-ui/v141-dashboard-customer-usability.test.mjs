@@ -56,8 +56,14 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
      direct link (all four definitions carry a route, so the `else` could never run). The
      drilldown contract this test guards is now the navigation itself. */
   assert.doesNotMatch(dashboard,/function openDashboardMetricDetailV141\(/);
-  assert.match(dashboard,/const route=dashboardMetricDefinitionsV141\[key\]\?\.route;/);
-  assert.match(dashboard,/if\(route\)nav\(route\);/);
+  /* V388 (owner, photo 1: "it should really allow see new customers pop up"). The tile opens the
+     ROWS behind the figure now instead of jumping straight to a report. Every definition still
+     carries its route — the dialog hands off to it at the foot — so the drilldown contract this
+     test guards is intact; only what the first press does changed. */
+  assert.match(dashboard,/openDashboardMetricRowsV388\(\{key,from,to,scopePayload,/);
+  assert.match(app,/const go=document\.getElementById\('metricRowsGoV388'\);/);
+  /* V388: the hand-off to the report moved into the dialog's own footer control. */
+  assert.match(app,/if\(go\)go\.onclick=event=>\{event\.preventDefault\(\);close\(\);nav\(def\.route\)\};/);
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
   assert.match(dashboard,/business-current/);

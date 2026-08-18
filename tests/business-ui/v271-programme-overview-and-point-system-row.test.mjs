@@ -193,7 +193,7 @@ test('V271 (b) an unsourceable cell says so — it is never a zero', () => {
     /const growDateCellV271=value=>Number\.isFinite\(Date\.parse\(value\|\|''\)\)\s*\r?\n?\s*\?esc\(promotionDateShortV324\(value\)\):'<span class="muted">Not tracked<\/span>';/);
   // Promotions are a programme with no usage record at all.
   const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
-  assert.match(entries, /type:'Promotion',[\s\S]{0,220}?customers:null/);
+  assert.match(entries, /type:'Promotion',[\s\S]{0,340}?customers:null/);
   /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards used to be
      the other such row. V294 moved gift-card management to Serve & sell and V296 moved its
      switch to Customer Interface, but neither touched businesses.gift_card_sales_enabled — the

@@ -133,8 +133,14 @@ test('V287 MAJOR: the Inactive customers tile counts the same group it drills th
      so the tile counts ALL inactive again and drills to exactly that set — the original
      goal V287 could not reach without a migration. */
   assert.match(app, /all_inactive/);
-  /* V288: the drill carries the bucket key itself rather than a day number. */
-  assert.match(dashboard, /if\(key==='inactive'\)pendingCustomerInactivity='30_59';/);
+  /* V288: the drill carries the bucket key itself rather than a day number.
+     V388: the vestigial `='30_59'` assignment that sat immediately above the all_inactive one —
+     dead since V290, because the next statement overwrote it before anything read it — went with
+     the tile's rewrite. What this test is really guarding is the rule, and the rule is that the
+     drill asks for the bucket the tile counted. */
+  assert.match(dashboard, /if\(key==='inactive'\)pendingCustomerInactivity='all_inactive';/);
+  assert.doesNotMatch(dashboard, /pendingCustomerInactivity='30_59'/,
+    'a bucket that is assigned and then immediately overwritten is not a drill target');
   // ...and it says so, both on the tile and in its definition.
     // V290: the 30–59 hint went with the narrowing it explained.
     // V290: the tile's definition now describes the all-inactive union instead of the 30–59 window.

@@ -58,14 +58,22 @@ test('the receipt QR opens the customer wallet, never a public receipt URL', () 
   assert.match(app, /id="receiptWalletQr"/);
   const i = app.indexOf("const receiptQrHost=");
   const src = app.slice(i, i + 900);
-  assert.match(src, /publicAppUrl\(`b\/\$\{encodeURIComponent\(S\.biz\.slug\)\}`\)/);
+  /* V388 (owner, photo 2): it encoded `b/<slug>` — the PUBLIC BOOKING PORTAL — while the caption
+     printed under it promised "your rewards, points and past visits", so a customer scanning
+     their own receipt landed on a form to book another appointment. `wallet/<slug>` is the route
+     that shows what the caption says. The PDPA rule this test exists for is untouched and still
+     asserted below: no per-receipt public URL is minted, and the wallet shows the signed-in
+     customer their OWN history rather than this receipt's contents. */
+  assert.match(src, /publicAppUrl\(`wallet\/\$\{encodeURIComponent\(S\.biz\.slug\)\}`\)/);
+  assert.doesNotMatch(src, /publicAppUrl\(`b\//, 'the booking portal is not the customer wallet');
   assert.ok(!/receipt\/\$\{.*saleId/.test(src), 'must not mint a per-receipt public URL');
 });
 
 test('a walk-in gets no QR, and a CDN failure still leaves a usable receipt', () => {
   assert.match(app, /\$\{d\.walkin\?''\:`<div class="receipt-qr-block"/);
   const i = app.indexOf("const receiptQrHost=");
-  const src = app.slice(i, i + 900);
+  /* V388 widened this block (the code is tappable now), so the slice widened with it. */
+  const src = app.slice(i, i + 2600);
   assert.match(src, /\.catch\(\(\)=>\{/);
   assert.match(src, /word-break:break-all/, 'the link must be printable as text when the QR library fails');
 });

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="cd95d8890e77f94ea470b80669dd7a4e997671b6452e2ce896ad53a304ecf780"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c60488967a5ae06fc850816ab89b2ad7f03bb79e27a8b6184c0f6139b4ac5386"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1830,8 +1830,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .module-perm-select-v382[data-perm-state-v382="off"]{border-color:#9B3B2B;color:#9B3B2B;font-weight:700;background:#FBEAE7}
 .module-perm-select-v382:disabled{opacity:.55}
 /* V385: the "?" help affordance next to a panel heading. */
-.help-dot-v385{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;padding:0;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:pointer;vertical-align:middle}
+.help-dot-v385{position:relative;display:inline-grid;place-items:center;width:20px;height:20px;margin-left:6px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:12px;font-weight:800;line-height:1;cursor:help;vertical-align:middle}
 .help-dot-v385:hover,.help-dot-v385:focus-visible{border-color:var(--coral);color:var(--coral)}
+/* V388: the enlarged rewards code, and the quick date ranges on the usage filter. */
+.wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
+.wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
+.grow-usage-quick-v388{margin-top:8px}
+.grow-overview-open-v388{padding:0;border:0;background:none;font:inherit;font-weight:750;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.grow-overview-open-v388:hover{color:var(--coral);text-decoration:underline}
+.grow-overview-open-v388:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:4px}
+/* V388: the hint is a bubble on hover/focus, not a dialog (owner, photo 3). */
+.help-dot-bubble-v385{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:30;
+  width:max-content;max-width:min(260px,70vw);padding:8px 10px;border-radius:10px;
+  background:var(--ink);color:#fff;font-size:12px;font-weight:500;line-height:1.4;text-align:left;
+  letter-spacing:0;box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transition:opacity .12s var(--ease)}
+.help-dot-bubble-v385::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--ink)}
+.help-dot-v385:hover .help-dot-bubble-v385,.help-dot-v385:focus-visible .help-dot-bubble-v385{opacity:1;visibility:visible}
+/* On touch there is no hover and no native title to fall back on, so the tap that focuses the
+   control is what reveals it — which is why the rule above matches :focus-visible as well. */
 .appt-portal-qr-v378{margin-top:12px}
 .appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
 .booking-row-openable-v378{cursor:pointer}
@@ -2930,7 +2947,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · cd95d8890e77f94ea470b80669dd7a4e997671b6452e2ce896ad53a304ecf780</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c60488967a5ae06fc850816ab89b2ad7f03bb79e27a8b6184c0f6139b4ac5386</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -5262,6 +5279,49 @@ function serviceDisplayName(service={}){
    is kept for every browser where it already worked, now inside a try/catch with a cleanup
    timer — an exception used to leave the page stuck in its print-only stylesheet. And when
    neither route is available the owner is TOLD, rather than shown a button that does nothing. */
+/* V388: the receipt code, big enough to scan off a screen, with the PNG offered. Drawn fresh at
+   320px rather than scaling the 132px receipt bitmap, because an upscaled QR loses the crispness
+   a scanner needs. The download is built from the canvas the library produces — no network, no
+   second encoder — and when the CDN never arrived the url is still shown as text, which is the
+   thing that actually matters. */
+function openWalletQrDialogV388(url,businessName){
+  document.getElementById('walletQrModalV388')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="walletQrModalV388" role="dialog" aria-modal="true" aria-labelledby="walletQrTitleV388" tabindex="-1"><div class="modal-card" style="max-width:420px">
+    <div class="row"><div><h2 id="walletQrTitleV388" style="font-size:1.05rem">Customer rewards code</h2><p class="muted small" style="margin-top:4px">Scan to open rewards, points and past visits at <span data-merchant-content>${esc(businessName)}</span>.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletQrCloseV388" type="button">Close</button></div>
+    <div id="walletQrHostV388" class="wallet-qr-host-v388" role="status">Drawing the code…</div>
+    <p class="small" style="word-break:break-all;margin-top:10px"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a></p>
+    <div class="row" style="margin-top:14px;gap:8px"><button class="btn sm" id="walletQrSaveV388" type="button" disabled>Save image</button></div>
+  </div></div>`);
+  const modal=document.getElementById('walletQrModalV388');
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#walletQrCloseV388'});
+  document.getElementById('walletQrCloseV388').onclick=close;
+  const host=document.getElementById('walletQrHostV388'),save=document.getElementById('walletQrSaveV388');
+  void loadQrLibrary().then(()=>{
+    if(!host.isConnected)return;
+    host.innerHTML='';
+    new QRCode(host,{text:url,width:320,height:320,correctLevel:QRCode.CorrectLevel.M});
+    /* qrcodejs paints a canvas and an <img> of it; either can produce the PNG, and which one is
+       present depends on the browser. */
+    const png=()=>{
+      const canvas=host.querySelector('canvas');
+      if(canvas)return canvas.toDataURL('image/png');
+      return host.querySelector('img')?.src||'';
+    };
+    save.disabled=false;
+    save.onclick=()=>{
+      const data=png();
+      if(!data)return toast('The image could not be saved. Screenshot the code instead.');
+      const link=document.createElement('a');
+      link.href=data;link.download=`${BRAND.downloadPrefix}-rewards-qr.png`;
+      document.body.appendChild(link);link.click();link.remove();
+    };
+  }).catch(()=>{
+    if(!host.isConnected)return;
+    host.innerHTML='<p class="muted small">The code could not be drawn. Share the link below instead.</p>';
+  });
+}
 const posReceiptStandaloneV385=()=>globalThis.navigator?.standalone===true
   ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
 function printPosReceiptV385(){
@@ -7343,7 +7403,25 @@ async function tillPage(){
        Walk-in sales get no QR: there is no customer to show anything to. */
     const receiptQrHost=$('receiptWalletQr');
     if(receiptQrHost&&S.biz.slug){
-      const walletUrl=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
+      /* V388 (owner, photo 2: "this qrcode brings me to a booking page for cubbly instead of
+         revealing the qrcode"). It encoded the PUBLIC BOOKING PORTAL while the caption under it
+         promised "your rewards, points and past visits" — so a customer who scanned their own
+         receipt landed on a form to book another appointment. `wallet/<slug>` is the route that
+         actually shows them what the caption says. */
+      const walletUrl=publicAppUrl(`wallet/${encodeURIComponent(S.biz.slug)}`);
+      /* And the second half of the same mark: "it should popup the qrcode for user to screenshot
+         or download". The receipt code is 132px so the printed slip stays tidy; that is too small
+         to photograph off a screen, so tapping it opens the same code big enough to scan and
+         offers the PNG. */
+      receiptQrHost.style.cursor='zoom-in';
+      receiptQrHost.setAttribute('role','button');
+      receiptQrHost.setAttribute('tabindex','0');
+      receiptQrHost.setAttribute('title','Show this code larger');
+      const openLargeV388=()=>openWalletQrDialogV388(walletUrl,S.biz.name||'this business');
+      receiptQrHost.onclick=openLargeV388;
+      receiptQrHost.onkeydown=event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();openLargeV388()}
+      };
       void loadQrLibrary()
         .then(()=>{
           if(!receiptQrHost.isConnected)return;
@@ -12916,9 +12994,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const entries=[];
     const milestoneById=new Map();
     rewardJourney.milestones.forEach(item=>milestoneById.set(String(item.id),item));
+    /* V388 (owner, photo 4: "when my points is off it should not be shown in overview — overview
+       only shows live rewards only"). rewardJourney.earning.availableToCustomers is
+       spineAccruingV314, which is true when points OR stamps is on — it answers "is this firm
+       accruing anything", the right question for the customer surface and the wrong one for a
+       row that names ONE programme. A firm running stamps with points switched off had its
+       Point system row still reading Live.
+       Only an explicit false pauses it: a null means the spine has not been read yet, and a
+       programme must not vanish because a fetch has not landed. */
+    const growEarningSpineKindV388=rewardJourney.earning?.model==='stamps'?'stamps':'points';
+    const growEarningLiveV388=programmeSpineOnV314(growEarningSpineKindV388)===false
+      ?false:rewardJourney.earning?.availableToCustomers;
     if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',usageScopeV386:'point_system',
+      spineKindV388:growEarningSpineKindV388,openV388:{topic:growEarningSpineKindV388},
       started:growFirstPublishedV271,ended:null,
-      state:rewardJourney.earning.availableToCustomers?'live':'paused',
+      state:growEarningLiveV388?'live':'paused',
       customers:growUsageV271?(growUsageV271.point_system?.customers??null):null,
       detail:growEarnRateTextV271(rewardJourney.earning)});
     (snapshot.rewards||[]).forEach(reward=>{
@@ -12934,6 +13024,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          programme link says nothing rather than guessing. */
       entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
         usageScopeV386:'reward',usageIdV386:reward.id,
+        openV388:{topic:'gift',id:reward.id,kind:growRewardParentKindV385(reward)},
         parent:growRewardParentNameV375(reward),parentKind:growRewardParentKindV385(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
         customers:growRewardUsageV271.get(String(reward.id))??null,
@@ -12942,18 +13033,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     (snapshot.retention||[]).forEach(program=>{
       const overview=retentionOverviewState(program);
       entries.push({name:program.name||'Bring-back reward',type:'Bring-back',
-        usageScopeV386:'retention',usageIdV386:program.id,
+        usageScopeV386:'retention',usageIdV386:program.id,openV388:{topic:'bringback'},
         started:program.starts_on||program.created_at||null,ended:null,
         state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
         customers:growRetentionUsageV271.get(String(program.id))??null,
         detail:`${Math.max(0,Number(program.goal_visits)||0)} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days)||0)} days`});
     });
-    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',usageScopeV386:'birthday',
+    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',usageScopeV386:'birthday',openV388:{topic:'birthday'},
       started:growUsageV271?.birthday?.started_at||null,ended:null,
       state:rewardJourney.birthday.active?'live':'paused',
       customers:growUsageV271?(growUsageV271.birthday?.customers??null):null,
       detail:rewardJourney.birthday.value});
-    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',usageScopeV386:'welcome',
+    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',usageScopeV386:'welcome',openV388:{topic:'welcome'},
       started:null,ended:null,
       state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
       customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
@@ -12971,18 +13062,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          needs the opposite — when a RUNNING offer stops — so `endsAt` carries it rather than
          loosening the field History depends on. `customers:null` is untouched: nothing records a
          customer using a promotion, and this row must keep admitting that. */
-      entries.push({name:promotion?.name||'Promotion',type:'Promotion',
+      entries.push({name:promotion?.name||'Promotion',type:'Promotion',openV388:{topic:'promotion',id:promotion?.id},
         started:promotion?.starts_at||null,ended:lifecycle.state==='ended'?(promotion?.ends_at||null):null,
         endsAt:promotion?.ends_at||null,state:lifecycle.state,
         customers:null,detail:promotion?.tagline||''});
     });
-    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',usageScopeV386:'referrals',
+    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',usageScopeV386:'referrals',openV388:{topic:'referrals'},
       started:snapshot.referral.created_at||null,ended:null,
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
       detail:snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:''});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
-      usageScopeV386:'membership',usageIdV386:plan?.id,
+      usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
       customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
@@ -13068,9 +13159,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const parentAbove=Boolean(above);
     const parentNote=row.parent&&String(above?.name||'')!==String(row.parent)
       ?`<span class="muted small grow-overview-parent-v375">Under ${esc(row.parent)}</span>`:'';
+    /* V388 (owner, photo 4: "all these modules and submodules in overview should be clickable and
+       immediately go into the edit of such activities. example click 'free lotion' will pop up
+       edit page for this particular activity"). The name is the control; every row already knows
+       which editor it belongs to (openV388, set where the row was built), so nothing is inferred
+       from the label. A row with no editor stays plain text rather than becoming a button that
+       goes nowhere. */
+    const nameV388=row.openV388
+      ?`<button type="button" class="grow-overview-open-v388" data-grow-open-v388="${esc(row.openV388.topic)}" data-grow-open-id-v388="${esc(row.openV388.id||'')}" data-grow-open-kind-v388="${esc(row.openV388.kind||'')}" data-merchant-content>${esc(row.name)}</button>`
+      :`<b data-merchant-content>${esc(row.name)}</b>`;
     return growOverviewChildRowV324(row)&&parentAbove
-      ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span><b data-merchant-content>${esc(row.name)}</b>${parentNote}</span>`
-      :`<b data-merchant-content>${esc(row.name)}</b>${parentNote}`;
+      ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span>${nameV388}${parentNote}</span>`
+      :`${nameV388}${parentNote}`;
   }];
   const growOverviewRewardsTableV319=growTableV271({label:'Rewards and loyalty programmes running now',rows:growOverviewRewardRowsV319,
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
@@ -13086,7 +13186,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      so rather than borrowing "Not tracked" from a count. */
   const growOverviewOffersTableV319=growTableV271({label:'Limited offers running now',rows:growOverviewOfferRowsV319,
     empty:'<b>No offer is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/offers">Limited Offer</a> to create one customers can see.</p>',
-    columns:[['Offer',row=>`<b data-merchant-content>${esc(row.name)}</b>`],
+    columns:[['Offer',row=>row.openV388
+        ?`<button type="button" class="grow-overview-open-v388" data-grow-open-v388="${esc(row.openV388.topic)}" data-grow-open-id-v388="${esc(row.openV388.id||'')}" data-merchant-content>${esc(row.name)}</button>`
+        :`<b data-merchant-content>${esc(row.name)}</b>`],
       ['Started',row=>growDateCellV271(row.started)],
       ['Ends',row=>Number.isFinite(Date.parse(row.endsAt||''))?esc(promotionDateShortV324(row.endsAt)):'<span class="muted">No end date</span>'],
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
@@ -13228,6 +13330,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div><label for="growUsageFromV386">From</label><input type="date" id="growUsageFromV386" value="${esc(growUsageFromV386)}"></div>
     <div><label for="growUsageToV386">To</label><input type="date" id="growUsageToV386" value="${esc(growUsageToV386)}"></div>
     <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growUsageApplyV386">Apply</button><button type="button" class="btn ghost sm" id="growUsageClearV386" ${growUsageWindowedV386?'':'disabled'}>Clear</button></div>
+    ${/* V388 (owner, photo 6: "i need to have a smart button to press last month / this week /
+         this month (shortcut button instead of manual)"). Each one resolves to a real pair of
+         Singapore calendar dates and then takes the SAME path Apply takes, so there is one
+         window state and a shortcut can never disagree with what the inputs show. The pressed
+         state is derived by comparing the shortcut's own dates with the applied window, so it
+         lights up when the owner types those dates by hand too. */''}
+    <div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Quick date ranges" style="flex-basis:100%">
+      ${growUsageQuickRangesV388().map(range=>`<button type="button" data-grow-usage-quick-v388="${esc(range.key)}" aria-pressed="${growUsageFromV386===range.from&&growUsageToV386===range.to?'true':'false'}">${esc(range.label)}</button>`).join('')}
+    </div>
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
       ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
@@ -14803,6 +14914,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTopicV229=tile.dataset.growTopicV229;
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
   });
+  /* V388: one door per Overview row. Every destination here is a door that ALREADY existed —
+     the same page or editor the tile map above opens — so a row cannot reach somewhere the rest
+     of the module cannot. A gift additionally pre-opens its own edit form by setting the very
+     state variable the page's own Edit button sets, which is why clicking "Free Lotion" lands on
+     the form in the owner's photo 5 rather than on a list they then have to search. */
+  outerMain.querySelectorAll('[data-grow-open-v388]').forEach(button=>{
+    button.onclick=event=>{
+      event.preventDefault();event.stopPropagation();
+      const topic=button.dataset.growOpenV388,id=button.dataset.growOpenIdV388||'';
+      if(topic==='points'||topic==='stamps'){
+        growPointsViewKindV350=topic;return nav('#/grow/points');
+      }
+      if(topic==='gift'){
+        if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
+        /* The kind decides WHICH page the gift lives on; a stamp-card gift must not open the
+           points template. It is read off the spine at build time, never guessed from the label. */
+        growPointsViewKindV350=button.dataset.growOpenKindV388||growPointsViewKindV350||'points';
+        growPointsEditingV326=id;growPointsAddOpenV326='';growPointsErrorV326='';
+        growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
+        return nav('#/grow/points');
+      }
+      if(topic==='bringback')return nav('#/grow/bringback');
+      if(topic==='birthday')return nav('#/grow/birthday');
+      if(topic==='referrals')return nav('#/referrals');
+      if(topic==='membership')return nav('#/memberships');
+      if(topic==='promotion'){growOffersTabV324='published';return nav('#/grow/offers')}
+      if(topic==='welcome'){
+        if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
+        return openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+          ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+      }
+    };
+  });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
@@ -14933,6 +15077,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growUsageClearV386)growUsageClearV386.onclick=()=>{
     growUsageFromV386='';growUsageToV386='';growRerenderV322({quiet:true});
   };
+  /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
+     same way — it is Apply with the typing done for you, not a second window state. */
+  document.querySelectorAll('[data-grow-usage-quick-v388]').forEach(button=>{
+    button.onclick=()=>{
+      const range=growUsageQuickRangesV388().find(item=>item.key===button.dataset.growUsageQuickV388);
+      if(!range)return;
+      growUsageFromV386=range.from;growUsageToV386=range.to;growRerenderV322({quiet:true});
+    };
+  });
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
   /* ============ V326 — POINTS SYSTEM / STAMP CARD PAGE WIRING ===============================
@@ -22959,7 +23112,25 @@ async function svRunTopupFlow({branches,state,testOnly}){
        Walk-in sales get no QR: there is no customer to show anything to. */
     const receiptQrHost=$('receiptWalletQr');
     if(receiptQrHost&&S.biz.slug){
-      const walletUrl=publicAppUrl(`b/${encodeURIComponent(S.biz.slug)}`);
+      /* V388 (owner, photo 2: "this qrcode brings me to a booking page for cubbly instead of
+         revealing the qrcode"). It encoded the PUBLIC BOOKING PORTAL while the caption under it
+         promised "your rewards, points and past visits" — so a customer who scanned their own
+         receipt landed on a form to book another appointment. `wallet/<slug>` is the route that
+         actually shows them what the caption says. */
+      const walletUrl=publicAppUrl(`wallet/${encodeURIComponent(S.biz.slug)}`);
+      /* And the second half of the same mark: "it should popup the qrcode for user to screenshot
+         or download". The receipt code is 132px so the printed slip stays tidy; that is too small
+         to photograph off a screen, so tapping it opens the same code big enough to scan and
+         offers the PNG. */
+      receiptQrHost.style.cursor='zoom-in';
+      receiptQrHost.setAttribute('role','button');
+      receiptQrHost.setAttribute('tabindex','0');
+      receiptQrHost.setAttribute('title','Show this code larger');
+      const openLargeV388=()=>openWalletQrDialogV388(walletUrl,S.biz.name||'this business');
+      receiptQrHost.onclick=openLargeV388;
+      receiptQrHost.onkeydown=event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();openLargeV388()}
+      };
       void loadQrLibrary()
         .then(()=>{
           if(!receiptQrHost.isConnected)return;
@@ -23205,6 +23376,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'cd95d8890e77f94ea470b80669dd7a4e997671b6452e2ce896ad53a304ecf780',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'c60488967a5ae06fc850816ab89b2ad7f03bb79e27a8b6184c0f6139b4ac5386',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -53,7 +53,9 @@ test('V288 MAJOR: the 60+ insight links to the 60+ audience it counted, not to 6
   assert.doesNotMatch(app, /data-insight-inactive="60_89"/);
   assert.match(app, /data-insight-inactive="60_plus"/);
   // The drill carries a bucket key, not a day number the destination had to re-guess.
-  assert.match(dashboard, /if\(key==='inactive'\)pendingCustomerInactivity='30_59';/);
+  /* V388: the dead `='30_59'` assignment — overwritten by the very next statement since V290 —
+     went with the tile's rewrite. The rule is that the drill asks for the bucket the tile counted. */
+  assert.match(dashboard,/if\(key==='inactive'\)pendingCustomerInactivity='all_inactive';/);
   assert.match(dashboard, /pendingCustomerInactivity=link\.dataset\.insightInactive\|\|'60_plus'/);
 });
 
