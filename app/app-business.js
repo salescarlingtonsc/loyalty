@@ -3516,7 +3516,7 @@ async function dashboard(){
     killCharts();
     status.innerHTML='';
     if(loyalty)loyalty.innerHTML='';
-    if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
+    if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'kpi-skel-metric'})).join('');
     if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
     if(charts)charts.innerHTML=['Busiest days','Revenue over time','Age groups','Recorded gender'].map(title=>CUI.chartSkeleton({title})).join('');
     kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');insights?.setAttribute('aria-busy','true');loyalty?.setAttribute('aria-busy','true');
@@ -24042,7 +24042,7 @@ async function waitlistPage(){
 
   routeMain.innerHTML=
     CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
-    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'v150-kpi'})).join('')}</div>`
+    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'kpi-skel-plain'})).join('')}</div>`
     +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
         <div class="wl-add-grid">
           <div class="wl-fld" style="flex:1 1 180px"><label for="wn">Name</label><input id="wn" autocomplete="off"></div>

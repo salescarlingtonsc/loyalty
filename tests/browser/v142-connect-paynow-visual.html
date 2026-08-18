@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="6071ff853be636a5fb62711d3f614df5a9b6008301c712460c09646b444a8c07"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="f5a39b28591ebd707912f1a75234eb7f49079ce10ec84a9eec5b77e000a1d8a1"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -540,7 +540,14 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @keyframes cui-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cui-skeleton-line{display:block;width:var(--skel-w,100%);height:12px;border-radius:999px;background:linear-gradient(90deg,#EEE9E2,#FFFDFC,#EEE9E2);background-size:220% 100%;animation:cui-skeleton 1.15s linear infinite}
 .cui-skeleton-line.short{height:10px}.cui-skeleton-line.label{height:10px;margin-bottom:8px}.cui-skeleton-line.control{height:44px;border-radius:var(--r-sm)}.cui-skeleton-line.button{height:44px;border-radius:999px;margin-top:4px}
-.cui-skeleton-card{display:grid;gap:12px;min-height:132px}.cui-skeleton-card .cui-skeleton-line:first-child{height:16px}.cui-skeleton-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+/* A skeleton exists to hold the exact space its real tile will take. The flat 132px below
+   fitted none of the three KPI tiles: Dashboard's .dashboard-metric.kpi renders 149px and
+   Waitlist's plain .card.kpi renders 95px, so the page jumped 17px one way and 37px the
+   other as data arrived. These three variants are the measured heights of those tiles. */
+.cui-skeleton-card{display:grid;gap:12px;min-height:132px}
+.cui-skeleton-card.kpi-skel-metric{min-height:149px}   /* Dashboard .dashboard-metric.kpi */
+.cui-skeleton-card.kpi-skel-plain{min-height:95px}     /* Waitlist / Daily report .card.kpi */
+.cui-skeleton-card.v150-kpi{min-height:138px}          /* P&L .card.kpi.v150-kpi */.cui-skeleton-card .cui-skeleton-line:first-child{height:16px}.cui-skeleton-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .cui-table-skeleton td{padding:14px 12px}.cui-chart-skeleton{min-height:260px;display:grid;grid-template-rows:auto 1fr;gap:14px}.cui-chart-skeleton-head{display:grid;gap:9px}.cui-chart-placeholder{height:170px;border-radius:14px;background:linear-gradient(180deg,#FBFAF8,#fff);border:1px solid var(--hair);display:flex;align-items:end;gap:8px;padding:18px}
 .cui-chart-placeholder span{flex:1;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#F7C7BE,#F7E6DF);animation:cui-skeleton 1.15s linear infinite}.cui-chart-placeholder span:nth-child(1){height:35%}.cui-chart-placeholder span:nth-child(2){height:68%}.cui-chart-placeholder span:nth-child(3){height:48%}.cui-chart-placeholder span:nth-child(4){height:82%}.cui-chart-placeholder span:nth-child(5){height:55%}
 .cui-form-skeleton{display:grid;gap:16px}.cui-form-skeleton-field{display:grid;gap:8px}
@@ -2914,7 +2921,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 6071ff853be636a5fb62711d3f614df5a9b6008301c712460c09646b444a8c07</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f5a39b28591ebd707912f1a75234eb7f49079ce10ec84a9eec5b77e000a1d8a1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5605,7 +5612,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'6071ff853be636a5fb62711d3f614df5a9b6008301c712460c09646b444a8c07',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'f5a39b28591ebd707912f1a75234eb7f49079ce10ec84a9eec5b77e000a1d8a1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

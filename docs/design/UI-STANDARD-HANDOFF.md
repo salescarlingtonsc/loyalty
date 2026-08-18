@@ -136,9 +136,12 @@ the report that no decision was taken on.
 1. ~~**Money column alignment.**~~ **DONE** — `a3acb9a`. Every money cell and its
    header now uses the shared `.num` helper; `th.num` was added to the rule and
    the plain responsive table's stacked label pinned left.
-2. **KPI tiles.** Three implementations — `.card.kpi`, `.card.kpi.v150-kpi`,
-   `.dashboard-metric.kpi` — and a loading skeleton that doesn't match the tile
-   replacing it, so Dashboard and Waitlist visibly jump on load.
+2. **KPI tiles — HALF DONE.** The load jump is fixed: each skeleton is now sized
+   to the tile that replaces it (Dashboard was +17px, Waitlist −37px, P&L +6px;
+   all three now 0). **Still open:** the three implementations themselves —
+   `.card.kpi`, `.card.kpi.v150-kpi`, `.dashboard-metric.kpi`. Collapsing them to
+   one needs an owner decision on which tile wins, because Dashboard's is a
+   clickable button with an arrow and action label while the others are static.
 3. **`CUI.status` / `CUI.field`.** Still zero uses against 177 hand-written
    pills and ~58 hand-written forms. Ruling 4 fixed the *words*; the *component*
    consolidation is open, and it is the root cause of the pill drift.

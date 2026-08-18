@@ -574,7 +574,14 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @keyframes cui-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cui-skeleton-line{display:block;width:var(--skel-w,100%);height:12px;border-radius:999px;background:linear-gradient(90deg,#EEE9E2,#FFFDFC,#EEE9E2);background-size:220% 100%;animation:cui-skeleton 1.15s linear infinite}
 .cui-skeleton-line.short{height:10px}.cui-skeleton-line.label{height:10px;margin-bottom:8px}.cui-skeleton-line.control{height:44px;border-radius:var(--r-sm)}.cui-skeleton-line.button{height:44px;border-radius:999px;margin-top:4px}
-.cui-skeleton-card{display:grid;gap:12px;min-height:132px}.cui-skeleton-card .cui-skeleton-line:first-child{height:16px}.cui-skeleton-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+/* A skeleton exists to hold the exact space its real tile will take. The flat 132px below
+   fitted none of the three KPI tiles: Dashboard's .dashboard-metric.kpi renders 149px and
+   Waitlist's plain .card.kpi renders 95px, so the page jumped 17px one way and 37px the
+   other as data arrived. These three variants are the measured heights of those tiles. */
+.cui-skeleton-card{display:grid;gap:12px;min-height:132px}
+.cui-skeleton-card.kpi-skel-metric{min-height:149px}   /* Dashboard .dashboard-metric.kpi */
+.cui-skeleton-card.kpi-skel-plain{min-height:95px}     /* Waitlist / Daily report .card.kpi */
+.cui-skeleton-card.v150-kpi{min-height:138px}          /* P&L .card.kpi.v150-kpi */.cui-skeleton-card .cui-skeleton-line:first-child{height:16px}.cui-skeleton-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .cui-table-skeleton td{padding:14px 12px}.cui-chart-skeleton{min-height:260px;display:grid;grid-template-rows:auto 1fr;gap:14px}.cui-chart-skeleton-head{display:grid;gap:9px}.cui-chart-placeholder{height:170px;border-radius:14px;background:linear-gradient(180deg,#FBFAF8,#fff);border:1px solid var(--hair);display:flex;align-items:end;gap:8px;padding:18px}
 .cui-chart-placeholder span{flex:1;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#F7C7BE,#F7E6DF);animation:cui-skeleton 1.15s linear infinite}.cui-chart-placeholder span:nth-child(1){height:35%}.cui-chart-placeholder span:nth-child(2){height:68%}.cui-chart-placeholder span:nth-child(3){height:48%}.cui-chart-placeholder span:nth-child(4){height:82%}.cui-chart-placeholder span:nth-child(5){height:55%}
 .cui-form-skeleton{display:grid;gap:16px}.cui-form-skeleton-field{display:grid;gap:8px}
@@ -2992,7 +2999,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=37a14ffa411d","business":"/app-business.js?b=cce5892f9fc6","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=37a14ffa411d","business":"/app-business.js?b=56c10c825e1b","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
