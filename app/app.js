@@ -7500,14 +7500,21 @@ function customerPromotionCtaV104(item,business,bookingEnabled){
     requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
     kind=requestedKind==='book'&&!bookingEnabled?'programme':requestedKind;
   const configured=String(cta.label||metadata.cta_label||'').trim();
-  if(kind==='book'&&bookingEnabled){
-    return `<a class="btn sm" href="#/b/${encodeURIComponent(business.slug||'')}">${esc(configured||'Book now')}</a>`;
-  }
+  /* v392: the book branch no longer short-circuits into the booking flow from the card. */
   if(kind==='counter'){
     return `<button class="btn sm" type="button" data-promotion-counter>${esc(configured||'Show at counter')}</button>`;
   }
-  const label=requestedKind==='book'&&!bookingEnabled?'View details':configured||'View details';
-  return `<button class="btn sm" type="button" data-promotion-details>${esc(label)}</button>`;
+  /* v392 (owner: "before book now, should be view more then book now after reading. because
+     need to understand what is it first"). The card's button used to BOOK — for a business whose
+     configured CTA kind is 'book' it was a direct link into the booking flow, so the offer's own
+     terms, dates and description were skipped entirely unless the customer thought to tap the
+     card itself. The card now always opens the offer, and the label says so.
+     A configured cta_label is deliberately NOT used here any more: it was authored to name a
+     booking action ("Book now", "Reserve"), and printing it on a button that opens a description
+     would be a lie. It still appears where it is true — showCustomerOfferDetailV173 renders
+     `ctaLabel||'Book now'` on the sheet's own action, which is the button that actually books.
+     'counter' keeps its own button: showing a QR at the till is not reading. */
+  return `<button class="btn sm" type="button" data-promotion-details>View more</button>`;
 }
 function customerPromotionValidityV104(item={}){
   const starts=promotionDateTextV104(item.starts_at),ends=promotionDateTextV104(item.ends_at);

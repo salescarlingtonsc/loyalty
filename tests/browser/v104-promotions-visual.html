@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="f28b3c8e1dd20a65a5aa783a3009525fcf17c1af08d98c4c24250e3406adb677">
+<meta name="v104-production-source-sha256" content="65d5ce0e0dde7927592eee6cad6e1ee092fa39697ea92431db13e727fa976932">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -2538,10 +2538,19 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    space under the short reward banner, since a flex row's height always matches its tallest
    child regardless of align-items. This override only applies inside the swipe carousel; the
    full-size card (all-offers grid, admin preview) is untouched. */
-.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:row;align-items:stretch;border-radius:14px}
-.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 84px;width:84px;display:flex;align-items:center}
-.customer-reward-offer-page-v339 .customer-promotion-card-media img{height:auto;max-height:84px}
-.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:auto;height:100%}
+/* v392 (owner: "for the photo i need it to be fitting to the screen as much as possible").
+   The swipe card was a row with an 84px thumbnail — on offers whose artwork IS the offer (the
+   National Day posters carry their own wording), that thumbnail was too small to read, so the
+   picture did no work. The card is a column again with the artwork on top at the largest size
+   that fits.
+   It is still never cropped (V173/V371, reaffirmed by the owner 2026-08-19 when asked directly):
+   the image keeps its own proportions and is centred, so a tall poster is bounded by the height
+   cap and a wide one by the card width. The space either side of a portrait poster is the card's
+   own dark background, which reads as a frame rather than as letterbox bars. */
+.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:column;border-radius:14px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 auto;width:100%;display:flex;align-items:center;justify-content:center}
+.customer-reward-offer-page-v339 .customer-promotion-card-media img{width:auto;max-width:100%;height:auto;max-height:46vh;object-fit:contain;margin:0 auto}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:16/9;height:auto}
 .customer-reward-offer-page-v339 .customer-promotion-card-media--fallback span{width:38px;height:38px;font-size:15px;border-radius:11px}
 .customer-reward-offer-page-v339 .customer-promotion-card-copy{padding:9px 11px;justify-content:center;gap:0}
 .customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-quest-kicker{font-size:.62rem}
@@ -2588,8 +2597,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-points-explainer-chevron-v339{flex:0 0 auto;color:var(--muted)}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
-.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
-.customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
+/* v392: the sheet's poster is the thing the customer opened the sheet to read, so it takes as
+   much of the screen as it can. The frame is TRANSPARENT and the picture is centred inside it,
+   rather than the picture sitting on a tinted panel — that is what removes the bars, without
+   cropping a single pixel. (A width:fit-content frame was tried first and collapsed: the image's
+   max-width:100% and the frame's fit-content width resolve against each other.) Capped at 72vh so the title, validity and Book now stay reachable
+   by scrolling rather than being pushed off a phone screen. */
+.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;text-align:center;background:transparent}
+.customer-offer-detail-media img{display:inline-block;width:auto;max-width:100%;height:auto;max-height:72vh;object-fit:contain;border-radius:14px}
 .customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
 .customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
 .customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
@@ -2980,7 +2995,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source f28b3c8e1dd20a65a5aa783a3009525fcf17c1af08d98c4c24250e3406adb677</p>
+  <p class="v104-provenance">Local production-render harness · source 65d5ce0e0dde7927592eee6cad6e1ee092fa39697ea92431db13e727fa976932</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2992,7 +3007,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="f28b3c8e1dd20a65a5aa783a3009525fcf17c1af08d98c4c24250e3406adb677";
+const PRODUCTION_SOURCE_SHA256="65d5ce0e0dde7927592eee6cad6e1ee092fa39697ea92431db13e727fa976932";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -3060,14 +3075,21 @@ function customerPromotionCtaV104(item,business,bookingEnabled){
     requestedKind=String(cta.kind||metadata.cta_kind||'programme'),
     kind=requestedKind==='book'&&!bookingEnabled?'programme':requestedKind;
   const configured=String(cta.label||metadata.cta_label||'').trim();
-  if(kind==='book'&&bookingEnabled){
-    return `<a class="btn sm" href="#/b/${encodeURIComponent(business.slug||'')}">${esc(configured||'Book now')}</a>`;
-  }
+  /* v392: the book branch no longer short-circuits into the booking flow from the card. */
   if(kind==='counter'){
     return `<button class="btn sm" type="button" data-promotion-counter>${esc(configured||'Show at counter')}</button>`;
   }
-  const label=requestedKind==='book'&&!bookingEnabled?'View details':configured||'View details';
-  return `<button class="btn sm" type="button" data-promotion-details>${esc(label)}</button>`;
+  /* v392 (owner: "before book now, should be view more then book now after reading. because
+     need to understand what is it first"). The card's button used to BOOK — for a business whose
+     configured CTA kind is 'book' it was a direct link into the booking flow, so the offer's own
+     terms, dates and description were skipped entirely unless the customer thought to tap the
+     card itself. The card now always opens the offer, and the label says so.
+     A configured cta_label is deliberately NOT used here any more: it was authored to name a
+     booking action ("Book now", "Reserve"), and printing it on a button that opens a description
+     would be a lie. It still appears where it is true — showCustomerOfferDetailV173 renders
+     `ctaLabel||'Book now'` on the sheet's own action, which is the button that actually books.
+     'counter' keeps its own button: showing a QR at the till is not reading. */
+  return `<button class="btn sm" type="button" data-promotion-details>View more</button>`;
 }
 function customerPromotionValidityV104(item={}){
   const starts=promotionDateTextV104(item.starts_at),ends=promotionDateTextV104(item.ends_at);

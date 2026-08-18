@@ -1,6 +1,6 @@
 {
   "desktop1440": {
-    "sourceHash": "f28b3c8e1dd20a65a5aa783a3009525fcf17c1af08d98c4c24250e3406adb677",
+    "sourceHash": "65d5ce0e0dde7927592eee6cad6e1ee092fa39697ea92431db13e727fa976932",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -174,39 +174,32 @@
       "activeElement": "customerPromotionDetailsClose",
       "textOverflow": [
         {
-          "text": "Weekday facial upgrade",
-          "clientWidth": 306,
-          "scrollWidth": 306,
+          "text": "National Day: 30% off Spa Ritual 60",
+          "clientWidth": 362,
+          "scrollWidth": 362,
           "clientHeight": 26,
           "scrollHeight": 26
         },
         {
-          "text": "Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
+          "text": "Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier.",
           "clientWidth": 468,
           "scrollWidth": 468,
-          "clientHeight": 85,
-          "scrollHeight": 85
+          "clientHeight": 17,
+          "scrollHeight": 17
         },
         {
-          "text": "Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
-          "clientWidth": 366,
-          "scrollWidth": 366,
-          "clientHeight": 102,
-          "scrollHeight": 102
-        },
-        {
-          "text": "Valid 15 August 2026 – 15 September 2026",
+          "text": "Valid 1 August 2026 – 30 August 2026",
           "clientWidth": 366,
           "scrollWidth": 366,
           "clientHeight": 17,
           "scrollHeight": 17
         },
         {
-          "text": "Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60",
+          "text": "One redemption per customer. Advance booking required.",
           "clientWidth": 366,
           "scrollWidth": 366,
-          "clientHeight": 119,
-          "scrollHeight": 119
+          "clientHeight": 34,
+          "scrollHeight": 34
         },
         {
           "text": "Show these details to the team when you visit.",
@@ -219,7 +212,7 @@
     }
   },
   "mobile390": {
-    "sourceHash": "f28b3c8e1dd20a65a5aa783a3009525fcf17c1af08d98c4c24250e3406adb677",
+    "sourceHash": "65d5ce0e0dde7927592eee6cad6e1ee092fa39697ea92431db13e727fa976932",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -389,7 +382,7 @@
     "modal": null
   },
   "mobile412": {
-    "sourceHash": "f28b3c8e1dd20a65a5aa783a3009525fcf17c1af08d98c4c24250e3406adb677",
+    "sourceHash": "65d5ce0e0dde7927592eee6cad6e1ee092fa39697ea92431db13e727fa976932",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412

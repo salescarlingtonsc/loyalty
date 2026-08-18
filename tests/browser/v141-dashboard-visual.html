@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e44391f65df206c191546aced0ccb1a66d870335985e072cb780b85033dc05cb"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="d209648107a49aefbce63b33ae4076eeaecb3fd2704dfdc6545a24831eafde65"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2532,10 +2532,19 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    space under the short reward banner, since a flex row's height always matches its tallest
    child regardless of align-items. This override only applies inside the swipe carousel; the
    full-size card (all-offers grid, admin preview) is untouched. */
-.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:row;align-items:stretch;border-radius:14px}
-.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 84px;width:84px;display:flex;align-items:center}
-.customer-reward-offer-page-v339 .customer-promotion-card-media img{height:auto;max-height:84px}
-.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:auto;height:100%}
+/* v392 (owner: "for the photo i need it to be fitting to the screen as much as possible").
+   The swipe card was a row with an 84px thumbnail — on offers whose artwork IS the offer (the
+   National Day posters carry their own wording), that thumbnail was too small to read, so the
+   picture did no work. The card is a column again with the artwork on top at the largest size
+   that fits.
+   It is still never cropped (V173/V371, reaffirmed by the owner 2026-08-19 when asked directly):
+   the image keeps its own proportions and is centred, so a tall poster is bounded by the height
+   cap and a wide one by the card width. The space either side of a portrait poster is the card's
+   own dark background, which reads as a frame rather than as letterbox bars. */
+.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:column;border-radius:14px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 auto;width:100%;display:flex;align-items:center;justify-content:center}
+.customer-reward-offer-page-v339 .customer-promotion-card-media img{width:auto;max-width:100%;height:auto;max-height:46vh;object-fit:contain;margin:0 auto}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:16/9;height:auto}
 .customer-reward-offer-page-v339 .customer-promotion-card-media--fallback span{width:38px;height:38px;font-size:15px;border-radius:11px}
 .customer-reward-offer-page-v339 .customer-promotion-card-copy{padding:9px 11px;justify-content:center;gap:0}
 .customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-quest-kicker{font-size:.62rem}
@@ -2582,8 +2591,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-points-explainer-chevron-v339{flex:0 0 auto;color:var(--muted)}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
-.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
-.customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
+/* v392: the sheet's poster is the thing the customer opened the sheet to read, so it takes as
+   much of the screen as it can. The frame is TRANSPARENT and the picture is centred inside it,
+   rather than the picture sitting on a tinted panel — that is what removes the bars, without
+   cropping a single pixel. (A width:fit-content frame was tried first and collapsed: the image's
+   max-width:100% and the frame's fit-content width resolve against each other.) Capped at 72vh so the title, validity and Book now stay reachable
+   by scrolling rather than being pushed off a phone screen. */
+.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;text-align:center;background:transparent}
+.customer-offer-detail-media img{display:inline-block;width:auto;max-width:100%;height:auto;max-height:72vh;object-fit:contain;border-radius:14px}
 .customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
 .customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
 .customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
@@ -4070,6 +4085,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'e44391f65df206c191546aced0ccb1a66d870335985e072cb780b85033dc05cb',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'d209648107a49aefbce63b33ae4076eeaecb3fd2704dfdc6545a24831eafde65',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

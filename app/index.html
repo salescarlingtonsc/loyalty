@@ -2562,10 +2562,19 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    space under the short reward banner, since a flex row's height always matches its tallest
    child regardless of align-items. This override only applies inside the swipe carousel; the
    full-size card (all-offers grid, admin preview) is untouched. */
-.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:row;align-items:stretch;border-radius:14px}
-.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 84px;width:84px;display:flex;align-items:center}
-.customer-reward-offer-page-v339 .customer-promotion-card-media img{height:auto;max-height:84px}
-.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:auto;height:100%}
+/* v392 (owner: "for the photo i need it to be fitting to the screen as much as possible").
+   The swipe card was a row with an 84px thumbnail — on offers whose artwork IS the offer (the
+   National Day posters carry their own wording), that thumbnail was too small to read, so the
+   picture did no work. The card is a column again with the artwork on top at the largest size
+   that fits.
+   It is still never cropped (V173/V371, reaffirmed by the owner 2026-08-19 when asked directly):
+   the image keeps its own proportions and is centred, so a tall poster is bounded by the height
+   cap and a wide one by the card width. The space either side of a portrait poster is the card's
+   own dark background, which reads as a frame rather than as letterbox bars. */
+.customer-reward-offer-page-v339 .customer-promotion-card{flex-direction:column;border-radius:14px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{flex:0 0 auto;width:100%;display:flex;align-items:center;justify-content:center}
+.customer-reward-offer-page-v339 .customer-promotion-card-media img{width:auto;max-width:100%;height:auto;max-height:46vh;object-fit:contain;margin:0 auto}
+.customer-reward-offer-page-v339 .customer-promotion-card-media--fallback{aspect-ratio:16/9;height:auto}
 .customer-reward-offer-page-v339 .customer-promotion-card-media--fallback span{width:38px;height:38px;font-size:15px;border-radius:11px}
 .customer-reward-offer-page-v339 .customer-promotion-card-copy{padding:9px 11px;justify-content:center;gap:0}
 .customer-reward-offer-page-v339 .customer-promotion-card-copy .customer-quest-kicker{font-size:.62rem}
@@ -2612,8 +2621,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-points-explainer-chevron-v339{flex:0 0 auto;color:var(--muted)}
 .customer-offer-detail{min-width:0;text-align:left}
 .customer-offer-detail-modal .modal-card{width:min(480px,calc(100vw - 24px));background:var(--card);color:var(--ink)}
-.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;overflow:hidden;border-radius:14px;background:var(--bg)}
-.customer-offer-detail-media img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;margin:0 auto}
+/* v392: the sheet's poster is the thing the customer opened the sheet to read, so it takes as
+   much of the screen as it can. The frame is TRANSPARENT and the picture is centred inside it,
+   rather than the picture sitting on a tinted panel — that is what removes the bars, without
+   cropping a single pixel. (A width:fit-content frame was tried first and collapsed: the image's
+   max-width:100% and the frame's fit-content width resolve against each other.) Capped at 72vh so the title, validity and Book now stay reachable
+   by scrolling rather than being pushed off a phone screen. */
+.customer-offer-detail-media{position:relative;width:100%;margin:12px 0;text-align:center;background:transparent}
+.customer-offer-detail-media img{display:inline-block;width:auto;max-width:100%;height:auto;max-height:72vh;object-fit:contain;border-radius:14px}
 .customer-offer-detail-media--fallback{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:linear-gradient(135deg,var(--tint),var(--card,#fff))}
 .customer-offer-detail-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}
 .customer-offer-detail-media--fallback span{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:20px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}
@@ -3068,6 +3083,6 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=2a344db195a7" defer></script>
+<script src="/app-core.js?b=af77125e2e00" defer></script>
 </body>
 </html>

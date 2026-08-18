@@ -53,9 +53,19 @@ test('each promotion CTA has one clear, working outcome',()=>{
   assert.match(merchant,/cta=metadata\.cta\|\|\{\}/);
   assert.match(merchant,/requestedKind=String\(cta\.kind\|\|metadata\.cta_kind\|\|'programme'\)/);
   assert.match(merchant,/configured=String\(cta\.label\|\|metadata\.cta_label\|\|''\)/);
-  assert.match(merchant,/kind==='book'&&bookingEnabled[\s\S]*href="#\/b\//);
+  /* v392 (owner: "before book now, should be view more then book now after reading. because
+     need to understand what is it first"). The CARD no longer books: for every kind except
+     'counter' its button opens the offer, so the terms, dates and description cannot be skipped.
+     The booking link still exists — in showCustomerOfferDetailV173, after the reading. */
+  assert.doesNotMatch(merchant,/kind==='book'&&bookingEnabled[\s\S]{0,120}href="#\/b\//,
+    'the card must not link straight into the booking flow');
   assert.match(merchant,/requestedKind==='book'&&!bookingEnabled\?'programme':requestedKind/);
-  assert.match(merchant,/requestedKind==='book'&&!bookingEnabled\?'View details'/);
+  assert.match(merchant,/<button class="btn sm" type="button" data-promotion-details>View more<\/button>/);
+  const sheet=section('function showCustomerOfferDetailV173','function wireCustomerHomeOffersV167');
+  assert.match(sheet,/cta\.kind==='book'\?`<a class="btn" href="#\/b\/\$\{slug\}"/,
+    'the sheet is where Book now lives now');
+  assert.match(sheet,/ctaLabel\|\|'Book now'/,
+    'and the business\u2019s own configured CTA wording lands on the button that actually books');
   assert.match(merchant,/data-promotion-counter/);
   assert.match(merchant,/data-promotion-details/);
   assert.match(wallet,/Show this offer to the team at the counter/);

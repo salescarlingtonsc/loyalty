@@ -172,3 +172,22 @@ test('v390: a dead connection says so, and does not blame the business',()=>{
   assert.match(retry,/const offline=!expired&&customerWalletOfflineV390\(error\)/,
     'expiry still wins — it has its own Sign in action');
 });
+
+/* v392 (owner, 2026-08-19): "for the photo i need it to be fitting to the screen as much as
+   possible" and "before book now, should be view more then book now after reading". Asked
+   directly whether cropping could win, the owner reaffirmed the V173/V371 no-crop rule. */
+test('v392: the offer artwork is shown large and whole, never cropped',()=>{
+  const rail=indexHtml.slice(indexHtml.indexOf('.customer-reward-offer-page-v339 .customer-promotion-card{'));
+  assert.match(rail.slice(0,700),/flex-direction:column/,
+    'the swipe card is photo-led again, not an 84px thumbnail row');
+  assert.doesNotMatch(rail.slice(0,700),/flex:0 0 84px/);
+  assert.match(rail.slice(0,700),/max-height:46vh;object-fit:contain/,
+    'bounded so the card stays about half a screen, and contained so nothing is cut off');
+  assert.doesNotMatch(indexHtml,/\.customer-promotion-card-media img\{[^}]*object-fit:cover/,
+    'cover would crop the poster, which the owner ruled out');
+  const detail=indexHtml.match(/\.customer-offer-detail-media\{[^}]*\}/)[0];
+  assert.match(detail,/background:transparent/,
+    'a transparent frame is what removes the bars — a fit-content frame collapses against the image');
+  assert.match(indexHtml,/\.customer-offer-detail-media img\{[^}]*max-height:72vh/);
+  assert.doesNotMatch(indexHtml,/\.customer-offer-detail-media img\{[^}]*max-height:420px/);
+});
