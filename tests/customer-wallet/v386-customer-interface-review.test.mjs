@@ -81,6 +81,14 @@ test('photo 4: the "Earn more points" card is gone, function and call sites',()=
 test('photo 1: the offer card names its business, and the ready card drops the business count',()=>{
   assert.match(indexHtml,/\.customer-home-offer-copy>\.muted\{display:none\}/,
     'direct children only — the nested business-name span must survive');
+  /* Un-hiding it was not enough: in flow it landed under the absolutely-positioned
+     "Ends in N days" pill, which painted straight over it. It is hoisted to the first line of
+     the copy block — where the owner drew it, beside the avatar — and the title keeps an
+     explicit flex basis or its 2-line clamp collapses to one clipped line. */
+  assert.match(indexHtml,/\.customer-home-offer-business\{order:-2/);
+  assert.match(indexHtml,/\.customer-home-offer-copy h3\{order:0;flex:0 0 auto\}/);
+  assert.match(indexHtml,/\.customer-home-offer-copy\{min-height:auto;height:132px/,
+    'and the card gained the room for name + two title lines above the pill strip');
   assert.doesNotMatch(indexHtml,/\.customer-home-offer-copy \.muted:not\(\.customer-home-offer-business\)\{display:none\}/);
   const summary=app.slice(app.indexOf('function customerHomeSummaryV343'),app.indexOf('function customerHomeBusinessStatusV345'));
   assert.doesNotMatch(summary,/across \$\{esc\(customerPointTotalV103\(businessCount\)\)\}/);
