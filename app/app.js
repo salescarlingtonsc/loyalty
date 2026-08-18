@@ -14893,7 +14893,7 @@ async function dashboard(){
   const greeting=firstName?`Hello, ${firstName}`:'Hello';
   M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
     <header class="v150-titlebar">
-      <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('home',{size:24})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <!-- V319 (owner markup 2026-08-14: the whole period strip circled here, with an arrow drawn
            down to the Performance card — "filter time move here"). Sitting beside the page title
            and above the schedule glance, it read as a filter over the WHOLE page, while what it
@@ -15476,7 +15476,7 @@ async function clientsPage(){
     (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
-      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customers</h1></div></div>
       <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
@@ -19297,7 +19297,7 @@ async function salesPage(){
   /* V291: Export CSV is only offered on the render that has a ledger behind it. The loading,
      denied and load-error headers reuse the same markup WITHOUT it, so the page never paints a
      download button that has nothing to download and no handler bound to it. */
-  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:24})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
   const salesHead=salesHeadHtmlV291(false);
   routeMain.innerHTML=`${salesHead}
     <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
@@ -19484,7 +19484,7 @@ async function servicesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
-  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:25})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
     <div class="v150-title-actions">${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
@@ -20033,7 +20033,7 @@ async function bookingsPage(){
      the when-you-are-full rule and auto-confirm. A bar has tables. */
   const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
-  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
+  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div class="cui-page-title">${CUI.icon('bookings',{size:24})}<div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
@@ -20573,7 +20573,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:draft,error:draftError}=await loyaltyDraftRequestV379;
     if(!isLoyaltyCurrent())return;
     if(draftError){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('loyalty',{size:24})}<div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(draftError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -20588,7 +20588,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:branchOverrides,error:boError}=await branchOverridesRequest;
     if(!isLoyaltyCurrent())return;
     if(boError){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('loyalty',{size:24})}<div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(boError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -22176,7 +22176,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     const {data:draft,error}=await sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId});
     if(!isRetentionCurrent())return;
     if(error){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('retention',{size:24})}<div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(humanErrorV295(error,'This section could not be loaded.'))}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
@@ -36245,7 +36245,7 @@ async function inventoryPage(){
      column is left untouched, so no figure already entered is destroyed, and cost is still
      collected in Programmes -> More reward settings, where it has an actual purpose: deciding
      what a reward can safely cost. It is never asked for twice. */
-  M().innerHTML=`<div class="topbar"><div><h1>Products</h1><p class="muted small">What you sell and what you charge for it. Stock keeping is optional.</p></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('inventory',{size:24})}<div><h1>Products</h1><p class="muted small">What you sell and what you charge for it. Stock keeping is optional.</p></div></div>
     <div class="row">${canWrite?importBtn('inventory'):''}</div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
     <div class="split">
@@ -36349,7 +36349,7 @@ async function inventoryPage(){
 async function packagesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('packages');
-  routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
   const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,duration_min,price_cents,active',{count:'exact'}).eq('business_id',S.biz.id).order('name').order('id')),
@@ -36360,7 +36360,7 @@ async function packagesPage(){
     fetchAllRowsResult(()=>sb.from('client_packages').select('plan_id',{count:'exact'}).eq('business_id',S.biz.id))]);
   if(!isCurrent())return;
   if(plansResult.error||servicesResult.error||branchesResult.error){
-    routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
+    routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1></div></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
     $('packagesRetry').onclick=packagesPage;return;
   }
   const plans=plansResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
@@ -36382,7 +36382,7 @@ async function packagesPage(){
       ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
       :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
   };
-  M().innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Manage prepaid sessions. Sell packages from Record sale.</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Manage prepaid sessions. Sell packages from Record sale.</p></div></div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only packages access</b><p class="muted small" style="margin-top:5px">You can review package plans and customer balances. Ask for Packages edit access to create or use sessions.</p></div>`}
     <div class="settings-tabs package-tabs-v157" role="tablist" aria-label="Package sections">
       <button type="button" class="settings-tab" id="pkgTabPlans" role="tab" aria-selected="true" aria-controls="pkgPanelPlans" data-package-tab="plans">My packages</button>
@@ -36623,7 +36623,7 @@ async function saveBranchFieldsV325(branchId,fields){
 async function branchesPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('branch',{size:24})}<div><h1>Branches</h1></div></div>
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
@@ -36798,7 +36798,7 @@ async function customerIntelligencePage(){
      itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
      because it is an accurate description of what the page produces. The per-page branch picker is
      gone for the V260/V272 reason — the top bar owns branch scope. */
-  routeMain.innerHTML=`<div class="topbar"><div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div>
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div></div>
     <div class="range"><label class="sr-only" for="cif">Customer intelligence start date</label><input type="date" id="cif" value="${from}">
       <span class="muted" aria-hidden="true">→</span><label class="sr-only" for="cit">Customer intelligence end date</label><input type="date" id="cit" value="${today}">
       <button class="btn sm" id="ciRun">Run</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
@@ -37239,7 +37239,7 @@ async function reportsPage(){
   /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
      here" — the period and the Run report button decide what every card below shows, so they
      are read first. The markup moved; the ids, handlers and the report bodies did not. */
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('reports',{size:24})}<div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div></div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
@@ -37730,13 +37730,13 @@ const setSetupFlag=(key,on)=>{try{if(on)localStorage.setItem(key,'1');else local
 async function setupPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(setupFlagOn(SETUP_GUIDE_HIDDEN_V170)){
-    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden on this device.</p></div></div>
+    M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('setup',{size:24})}<div><h1>Get started</h1><p class="muted small">Setup guide hidden on this device.</p></div></div></div>
       <div class="card"><div class="row"><span class="muted small">Setup guide hidden on this device. Show it again whenever you want.</span><span class="spacer"></span>
         <button class="btn sm" id="sp_show">Show guide</button></div></div>`;
     $('sp_show').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,false);setupPage()};
     return;
   }
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('setup',{size:24})}<div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div></div>
     <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     <div id="sp_steps" class="grid"></div>`;
   const bid=S.biz.id;
@@ -37825,7 +37825,7 @@ async function staffPerfPage(drillId){
   const requestGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   let staffPerfSearch='',staffPerfSort='revenue',staffPerfDir='desc';
-  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div></div>
     <div class="range">
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" value="${today}">
@@ -38289,7 +38289,7 @@ async function staffMembersPage(){
   }
   const topbar=M().querySelector('.topbar');
   if(topbar){
-    topbar.innerHTML=`<div><h1>Staff Members</h1></div>`;
+    topbar.innerHTML=`<div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff Members</h1></div></div>`;
   }
   const teamTab=$('settab-team');
   if(teamTab)teamTab.textContent='Staff Members';
@@ -38305,7 +38305,7 @@ async function dailyReportPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
-  M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
     <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
@@ -38439,7 +38439,7 @@ async function dailyReportPage(){
 async function expensesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('expenses');
-  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('expenses',{size:24})}<div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div></div>
     <div class="card" id="expGate">${CUI.formSkeleton({fields:3})}</div>`;
   const todayIso=sgDateInputValue();
   let scopeResult;
@@ -38457,7 +38457,7 @@ async function expensesPage(){
     $('expensesGateRetry').onclick=expensesPage;return;
   }
   const expenseBranches=branchResult.data||[];
-  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('expenses',{size:24})}<div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
@@ -38590,7 +38590,7 @@ async function pnlPage(){
      is offer a second answer to the same question. The stray closing tag after the range row went
      with it: it closed the topbar a second time, so every element after it sat one level shallower
      than the markup claims. */
-  M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('pnl',{size:24})}<div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div></div>
     <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
       <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
@@ -39089,7 +39089,7 @@ async function settingsPage(){
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
-  M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
+  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
@@ -40919,7 +40919,7 @@ async function customerInterfacePageV243(hashParam){
      the page (see ciSaveBarV368 below). */
   const ciOnActionPageV368=CUSTOMER_INTERFACE_TABS_V368.includes(customerInterfaceViewV296);
   const ciPageTitleV368=ciOnActionPageV368?'Customer Permissions':(ciActiveLabelV296||'Customer Interface');
-  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>${esc(ciPageTitleV368)}</h1></div></div>
+  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>${esc(ciPageTitleV368)}</h1></div></div></div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
     ${workspaceBrandPanelHtmlV259()}
@@ -41015,7 +41015,7 @@ function buildPhone(ccId,phoneId){
    is no separate flag here that could drift out of sync with the database. Read-only: no
    write path to another tenant exists in this page, and the DB enforces that regardless. */
 async function platformPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Platform</h1><p class="muted small">Every company on ${esc(BRAND.productName)} — read-only, super-admin view.</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('platform',{size:24})}<div><h1>Platform</h1><p class="muted small">Every company on ${esc(BRAND.productName)} — read-only, super-admin view.</p></div></div></div>
     <div class="card" id="platBody"><div class="empty">Loading…</div></div>`;
   const {data,error}=await sb.rpc('super_admin_list_businesses');
   if(error){

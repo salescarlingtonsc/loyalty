@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="72296430f417f0b4700e39aa281a8068e0b391030b3fcda94540ef2df5d69a34"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="88a51a92a1035529f13b00570094ebac32abe8faccae07df558906a33bab8890"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2914,7 +2914,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 72296430f417f0b4700e39aa281a8068e0b391030b3fcda94540ef2df5d69a34</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 88a51a92a1035529f13b00570094ebac32abe8faccae07df558906a33bab8890</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3583,7 +3583,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const greeting=firstName?`Hello, ${firstName}`:'Hello';
   M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
     <header class="v150-titlebar">
-      <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('home',{size:24})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <!-- V319 (owner markup 2026-08-14: the whole period strip circled here, with an arrow drawn
            down to the Performance card — "filter time move here"). Sitting beside the page title
            and above the schedule glance, it read as a filter over the WHOLE page, while what it
@@ -5212,7 +5212,7 @@ function renderHistPage(history,n){
   /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
      here" — the period and the Run report button decide what every card below shows, so they
      are read first. The markup moved; the ids, handlers and the report bodies did not. */
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('reports',{size:24})}<div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div></div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
@@ -5693,7 +5693,7 @@ function renderHistPage(history,n){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
-  M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
     <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
@@ -5825,7 +5825,7 @@ function renderHistPage(history,n){
   async function expensesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('expenses');
-  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('expenses',{size:24})}<div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div></div>
     <div class="card" id="expGate">${CUI.formSkeleton({fields:3})}</div>`;
   const todayIso=sgDateInputValue();
   let scopeResult;
@@ -5843,7 +5843,7 @@ function renderHistPage(history,n){
     $('expensesGateRetry').onclick=expensesPage;return;
   }
   const expenseBranches=branchResult.data||[];
-  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('expenses',{size:24})}<div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
@@ -5974,7 +5974,7 @@ function renderHistPage(history,n){
      is offer a second answer to the same question. The stray closing tag after the range row went
      with it: it closed the topbar a second time, so every element after it sat one level shallower
      than the markup claims. */
-  M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('pnl',{size:24})}<div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div></div>
     <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
       <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
@@ -6298,7 +6298,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'72296430f417f0b4700e39aa281a8068e0b391030b3fcda94540ef2df5d69a34',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'88a51a92a1035529f13b00570094ebac32abe8faccae07df558906a33bab8890',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

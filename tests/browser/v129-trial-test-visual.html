@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1c33b119006d6ebd42184ab5c0367377f3b0bc2bdfeb0767f1d3f5bbf921090e"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="8cbf683f8efd0ce6b991cd5233d7377579ce0cebc1cc51f4c75018d8c52af74a"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2914,7 +2914,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1c33b119006d6ebd42184ab5c0367377f3b0bc2bdfeb0767f1d3f5bbf921090e</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 8cbf683f8efd0ce6b991cd5233d7377579ce0cebc1cc51f4c75018d8c52af74a</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -3575,7 +3575,7 @@ async function clientsPage(){
     (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
-      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customers</h1></div></div>
       <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
@@ -7395,7 +7395,7 @@ async function salesPage(){
   /* V291: Export CSV is only offered on the render that has a ledger behind it. The loading,
      denied and load-error headers reuse the same markup WITHOUT it, so the page never paints a
      download button that has nothing to download and no handler bound to it. */
-  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:24})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
   const salesHead=salesHeadHtmlV291(false);
   routeMain.innerHTML=`${salesHead}
     <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
@@ -7582,7 +7582,7 @@ async function servicesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
-  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:25})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
     <div class="v150-title-actions">${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
@@ -8131,7 +8131,7 @@ async function bookingsPage(){
      the when-you-are-full rule and auto-confirm. A bar has tables. */
   const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
-  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
+  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div class="cui-page-title">${CUI.icon('bookings',{size:24})}<div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
@@ -8671,7 +8671,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:draft,error:draftError}=await loyaltyDraftRequestV379;
     if(!isLoyaltyCurrent())return;
     if(draftError){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('loyalty',{size:24})}<div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(draftError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -8686,7 +8686,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:branchOverrides,error:boError}=await branchOverridesRequest;
     if(!isLoyaltyCurrent())return;
     if(boError){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('loyalty',{size:24})}<div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(boError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -10274,7 +10274,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     const {data:draft,error}=await sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId});
     if(!isRetentionCurrent())return;
     if(error){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('retention',{size:24})}<div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(humanErrorV295(error,'This section could not be loaded.'))}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
@@ -23101,6 +23101,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'1c33b119006d6ebd42184ab5c0367377f3b0bc2bdfeb0767f1d3f5bbf921090e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'8cbf683f8efd0ce6b991cd5233d7377579ce0cebc1cc51f4c75018d8c52af74a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
