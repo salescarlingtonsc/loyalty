@@ -28,7 +28,10 @@ test('customer dark tokens preserve readable controls and a fixed light QR surfa
   assert.match(app,/color-scheme:dark/);
   assert.match(app,/html\[data-customer-theme="dark"\]\[data-customer-surface="true"\] body\{background:#0F1115\}/);
   assert.match(app,/--bg:#0F1115;--card:#191C22;--ink:#F7F4EF/);
-  assert.match(app,/html\[data-customer-theme="dark"\] \.customer-surface\.portal\{--coral:#FF8A7E!important;--grad:[^}]+!important\}/);
+  /* The dark-surface accent is now a documented step off --brand-red rather than a loose hex,
+     so it moves with the brand instead of drifting from it. */
+  assert.match(app,/--brand-red-on-dark:#E4776B;/);
+  assert.match(app,/html\[data-customer-theme="dark"\] \.customer-surface\.portal\{--coral:var\(--brand-red-on-dark\)!important;--grad:[^}]+!important\}/);
   assert.match(app,/html\[data-customer-theme="dark"\] \.customer-surface\.customer-surface :is\(input,select,textarea/);
   assert.match(app,/html\[data-customer-theme="dark"\] \.customer-surface \.btn\.ghost,\s*\n?html\[data-customer-theme="dark"\] \.customer-surface \.svc\{background:var\(--card\)/);
   assert.match(app,/html\[data-customer-theme="dark"\] \.customer-surface \.svc\.sel\{background:var\(--tint\)/);

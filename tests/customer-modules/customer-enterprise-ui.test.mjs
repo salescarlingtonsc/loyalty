@@ -35,8 +35,15 @@ function contrast(a,b){
   const [light,dark]=[luminance(a),luminance(b)].sort((x,y)=>y-x);
   return (light+.05)/(dark+.05);
 }
-function token(name){
-  return app.match(new RegExp(`--${name}:(#[0-9A-Fa-f]{6})`))?.[1];
+/* Tokens may now be declared as an alias of another token (--coral:var(--brand-red)) since the
+   brand red was consolidated to one source. Resolve one chain of aliases so every contrast gate
+   below keeps measuring the colour that actually renders. */
+function token(name,depth=0){
+  const raw=app.match(new RegExp(`--${name}:\\s*(#[0-9A-Fa-f]{6}|var\\(--[A-Za-z0-9-]+\\))`))?.[1];
+  if(!raw)return undefined;
+  const alias=raw.match(/^var\(--([A-Za-z0-9-]+)\)$/);
+  if(alias)return depth<4?token(alias[1],depth+1):undefined;
+  return raw;
 }
 
 test('warm-coral text and component boundary tokens meet WCAG contrast targets',()=>{

@@ -94,14 +94,18 @@ test('home and rewards cards keep points/stamps labels honest and compact',()=>{
 });
 
 test('customer surface uses the warm premium accent palette without changing the app background',()=>{
-  assert.match(indexHtml,/--peekaa-red:#F06A4F;--peekaa-red-dark:#D94A38;--peekaa-red-soft:#FFE1D7;--peekaa-red-faint:#FFF0EA;/);
+  /* Owner ruling 2026-08-18: Peekaa has ONE brand red, #C24135. The customer app previously ran
+     on #F06A4F while the business app ran on #C24135. The --peekaa-* names survive as aliases so
+     no rule needed rewriting; this now locks the single source and the aliasing that feeds it. */
+  assert.match(indexHtml,/--brand-red:#C24135;/);
+  assert.match(indexHtml,/--peekaa-red:var\(--brand-red\);--peekaa-red-dark:var\(--brand-red-dark\);--peekaa-red-soft:var\(--brand-red-soft\);--peekaa-red-faint:var\(--brand-red-faint\);/);
   assert.match(indexHtml,/--peekaa-bg:#F8F4F1;/,
     'the existing customer app background must stay exactly unchanged');
   assert.match(indexHtml,/--peekaa-text:#251F1B;--peekaa-text-secondary:#7C746E;/);
   assert.match(indexHtml,/--peekaa-success:#4F8A72;--peekaa-success-bg:#E7F3ED;/);
   assert.match(indexHtml,/--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;/);
   assert.match(indexHtml,/\/\* V361: warm premium customer accents\. The page background stays on --peekaa-bg exactly as-is\. \*\//);
-  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(240,106,79,\.28\)!important\}/);
+  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(194,65,53,\.28\)!important\}/);
   assert.match(indexHtml,/\.customer-primary-nav a\[aria-current="page"\],[^{]+\.is-active\{background:var\(--peekaa-red-soft\)!important;border-color:var\(--peekaa-red\)!important;color:var\(--peekaa-red\)!important\}/);
   assert.match(indexHtml,/\.customer-claimable-banner-v337,\.customer-claimable-strip\{border-color:var\(--peekaa-gold\)!important;background:var\(--peekaa-gold-bg\)!important/);
   assert.match(indexHtml,/\.customer-surface \.pill\.ok\{background:var\(--peekaa-success-bg\)!important;color:var\(--peekaa-success\)!important\}/);
@@ -172,7 +176,7 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(indexHtml,/\.customer-business-detail-store-v348\[hidden\]\{display:none!important\}/);
   assert.doesNotMatch(indexHtml,/\.customer-business-profile-v346 \.customer-reward-offer-swipe-v339\{display:none!important\}/);
   assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:Georgia/);
-  assert.match(indexHtml,/\.customer-shell \.card\.customer-business-summary-v346\{[^}]*linear-gradient\(145deg,#F06A4F 0%,#D94A38 100%\)/);
+  assert.match(indexHtml,/\.customer-shell \.card\.customer-business-summary-v346\{[^}]*linear-gradient\(145deg,var\(--brand-red\) 0%,var\(--brand-red-dark\) 100%\)/);
   assert.match(indexHtml,/\.customer-business-balance-v347\{[^}]*font-size:56px!important/);
   assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*grid-template-columns:1fr 1fr!important/);
   assert.match(indexHtml,/\.customer-referral-code-row\{[^}]*grid-template-columns:1fr 1fr!important/);
