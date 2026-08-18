@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="42da6fd33ce7863237f722ca27f38b30453db17efa208f447f0e75c04ad5c4a3"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="d539e4b23996826a862d90a311b8b61068288e45761a73bbde1a22314c23ff45"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -28,6 +28,18 @@
      second brand. Change these two together with --brand-red above. */
   --brand-red-on-dark:#E4776B;   /* accent text/icons on a dark ground */
   --brand-red-on-dark-2:#F0A199; /* hover step on a dark ground */
+  /* ===== LAYOUT BREAKPOINTS (owner ruling 2026-08-18) ==================================
+     The workspace shell is governed by TWO thresholds, and only these two:
+       <= 768px   compact layout — mobile page padding, stacked page headers, responsive
+                  tables, single-column dashboard. iPad portrait (768) sits INSIDE this.
+       <= 960px   no room for a persistent sidebar — rail hidden, mobile dock shown.
+                  iPad portrait and 11in Pro portrait (834) get the dock; iPad landscape
+                  (1024) keeps the rail.
+     Before this, four thresholds (760 / 767 / 768 / 960) governed the same decision, which
+     left 761-767px and exactly 768px in hybrid states nobody designed: mobile padding with
+     a desktop-centred header. Component-local breakpoints (small-phone tweaks, short
+     viewports, individual carousels) are deliberately left alone — they are per-component
+     decisions, not shell layout. Do not introduce a third shell threshold. */
   --coral:var(--brand-red); --coral-hover:var(--brand-red-dark); --amber:#A75514; --green:#1F6B48; --red:var(--brand-red-dark);
   --grad:linear-gradient(135deg,var(--brand-red),var(--brand-red-dark));
   --peekaa-red:var(--brand-red);--peekaa-red-dark:var(--brand-red-dark);--peekaa-red-soft:var(--brand-red-soft);--peekaa-red-faint:var(--brand-red-faint);
@@ -274,7 +286,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* v330: a generic speech bubble tinted WhatsApp's brand green stands in for a "WhatsApp" action
    without reproducing WhatsApp's own trademarked logo glyph. */
 .icon-whatsapp-v330{color:#25D366}
-@media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
+@media(max-width:768px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
 /* KPI tiles: `.kpi` and `.v150-kpi` are the same tile built twice and specified different label
@@ -462,7 +474,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .settings-tabs{display:none}
 .staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
 .staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
-@media(min-width:761px) and (max-width:1180px){
+@media(min-width:769px) and (max-width:1180px){
   .appbar{gap:8px;padding:10px 14px;overflow:visible}
   .global-actions{gap:6px;min-width:0}
   .global-search{flex:0 0 48px;width:48px;min-width:48px;padding-left:0;justify-content:center}
@@ -479,11 +491,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 }
 @media(max-width:900px){.dashboard-schedule-top{align-items:flex-start;flex-direction:column}.dashboard-schedule-actions{width:100%}.dashboard-schedule-actions .btn{flex:1}}
 @media(max-width:700px){.staff-members-toolbar{align-items:stretch}.staff-members-tabs{width:100%;justify-content:space-between}.staff-members-tab{flex:1}.staff-members-add-top{width:100%;margin-left:0}}
-@media(min-width:761px) and (max-width:940px){
+@media(min-width:769px) and (max-width:940px){
   .global-act#globalNewAppt span:not(.ic){display:none}
   .business-workspace-switch .who{max-width:112px}
 }
-@media(max-width:760px){
+@media(max-width:768px){
   .dashboard-date-pair{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
   .dashboard-date-pair input[type="date"]{width:100%;flex:auto}
   .appointment-list-filters,.sales-filter-row,.sales-filter-row.secondary,.staff-performance-filterbar,.staff-rank-summary{grid-template-columns:1fr}
@@ -510,7 +522,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .current-time-line{position:absolute;left:0;right:0;height:2px;background:var(--coral);z-index:3;pointer-events:none}
 .current-time-line span{position:absolute;left:6px;top:-12px;background:var(--coral);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:2px 6px}
 @media(max-width:1100px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-charts.v150-understand{grid-template-columns:1fr}.v150-title-actions{justify-content:flex-start}.cui-skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
+@media(max-width:768px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}.cui-fade-in{animation:none}}
 .permission-banner{display:flex;gap:11px;align-items:flex-start;background:#FFF6E8;color:#65400C;border:1px solid #E7C994;border-radius:var(--r-sm);padding:13px 15px;margin:-7px 0 18px}
 .permission-banner p{font-size:12.5px;line-height:1.5;margin-top:2px}.permission-banner svg{margin-top:1px}
@@ -1427,7 +1439,7 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-row-v343{border-radius:0!important;box-shadow:none!important;border-color:var(--line)!important;border-top:0!important}
 .grow-tier-name-cell-v343{display:flex;align-items:center;gap:14px;min-width:0}.grow-tier-name-cell-v343 b{font-size:1rem}.grow-tier-name-cell-v343 small{display:block}
 .grow-tier-row-icon-v343{width:40px;height:40px;border-radius:999px;background:#FFF0ED;color:var(--coral);display:grid;place-items:center;flex-shrink:0}
-@media(max-width:760px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}.grow-tier-ladder-line-v343{min-width:620px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
+@media(max-width:768px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}.grow-tier-ladder-line-v343{min-width:620px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
 @media(max-width:860px){.grow-tier-table-head-v343{display:none}.grow-tier-table-row-v343{grid-template-columns:1fr}.grow-tier-table-row-v343>.row{justify-content:flex-start!important}}
 /* V351 (owner UX pass, 2026-08-16): the 4-column "Tier name / Required points / Status / Actions"
    table read like a database admin screen — replaced with a plain card row, same information,
@@ -1585,7 +1597,7 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .dashboard-loyalty-card .v{display:block;margin-top:5px;font-size:1.3rem;font-weight:750}
 .dashboard-loyalty-card .metric-hint{display:block;margin-top:6px;color:var(--muted);font-size:11.5px;line-height:1.35}
 .dashboard-loyalty-card .btn{margin-top:9px}
-@media(max-width:760px){.dashboard-loyalty-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.dashboard-loyalty-grid{grid-template-columns:1fr}}
 .dashboard-charts{grid-template-columns:repeat(2,minmax(0,1fr))}
 .dashboard-chart-card{padding:0;overflow:hidden;min-width:0}
 /* V171: margin:0 is load-bearing — an older v141 rule still sets margin:-22px on this class
@@ -1906,7 +1918,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   .staff-mobile-action{min-height:56px;font-size:11px}
 }
 @media(max-width:560px){.dashboard-appbar-branch{order:2;flex:1 1 100%}.report-decision-grid{grid-template-columns:1fr}.appointment-primary-action .btn{width:100%}.performance-body{padding:16px}.dashboard-intro{padding:16px}.dashboard-chart-link{padding-inline:0}}
-@media(max-width:767px){
+/* === COMPACT LAYOUT SHELL (<=768px) — the workspace shell block. Anchor comment: tests slice
+   on it, and it marks where the compact page-head / topbar / table rules live. === */
+@media(max-width:768px){
   .cui-page-head,.topbar{align-items:flex-start}.cui-page-actions,.topbar>.row{width:100%}.cui-page-actions>.btn,.topbar>.row>.btn{flex:1 1 auto}
   .topbar>.row{min-width:0;max-width:100%;flex-wrap:wrap}
   .topbar>.row>input,.topbar>.row>select,.topbar>.row>span{min-width:0;max-width:100%}
@@ -2414,7 +2428,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .promotion-studio-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none;padding:10px;border-radius:17px;background:var(--card);border:1px solid var(--hair)}
 @media(max-width:720px){.promotion-studio-progress{grid-template-columns:minmax(0,1fr)}}
 .promotion-studio-progress li{padding:11px;border-radius:13px;background:var(--bg);border:1px solid var(--hair);font-size:.84rem;font-weight:750}.promotion-studio-progress li strong{display:block;color:var(--coral);margin-bottom:3px}.promotion-editor-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px}.promotion-preview{position:sticky;top:92px;align-self:start}.promotion-preview .customer-promotion-card{min-height:410px}.promotion-item-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}.promotion-item-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg)}.promotion-item-row:last-child{border-bottom:0}.promotion-quota{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.promotion-quota-meter{height:8px;flex:1 1 180px;overflow:hidden;border-radius:999px;background:var(--hair)}.promotion-quota-meter span{display:block;height:100%;width:var(--quota-progress,0%);background:var(--coral)}
-@media(max-width:760px){
+@media(max-width:768px){
   .promotion-editor-grid{grid-template-columns:1fr}
   /* v326 (owner: "in phone view, please put side by side to swipe, don't arrange above &
      bottom"): the customer's own Latest offers row used to collapse to one stacked column on
@@ -2481,7 +2495,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-rewards-carousel-head-v337 h2{font-size:1.1rem;margin:0}
 .wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
 .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex:0 0 78%;max-width:280px;scroll-snap-align:start}
-@media(min-width:640px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
+@media(min-width:641px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
 /* v339 (owner mockup "photo 1") — collapsed profile header, the reward/offers swipe region, the
    restyled tier card and reward cards, the earn-more list, and the compact rewards explainer. */
 .wallet-head-compact-v339{gap:8px;min-height:44px}
@@ -2499,7 +2513,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 .customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
 .customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0;align-self:flex-start}
-@media(min-width:640px){.customer-reward-offer-page-v339{flex-basis:360px}}
+@media(min-width:641px){.customer-reward-offer-page-v339{flex-basis:360px}}
 /* v342 (owner: "the promotions are elongated - shrink to horizontal like Grab/Fave"): the
    promo pages after the reward-ready page reused customerPromotionCardV104's full vertical
    layout (up to 220px of artwork + copy) unchanged, which also forced the whole swipe TRACK's
@@ -3987,6 +4001,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'42da6fd33ce7863237f722ca27f38b30453db17efa208f447f0e75c04ad5c4a3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'d539e4b23996826a862d90a311b8b61068288e45761a73bbde1a22314c23ff45',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

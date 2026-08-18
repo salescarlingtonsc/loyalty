@@ -51,7 +51,7 @@ body{min-height:100dvh}
 .pwa-action:focus-visible,.pwa-dismiss:focus-visible,.pwa-status button:focus-visible{
   outline:3px solid #C24135;outline-offset:3px
 }
-@media(max-width:760px){
+@media(max-width:768px){
   input,select,textarea{font-size:16px!important}
   .pwa-prompt{bottom:calc(88px + var(--pwa-safe-bottom));align-items:flex-start}
   .pwa-prompt-actions{align-self:center}

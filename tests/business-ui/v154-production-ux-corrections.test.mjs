@@ -155,7 +155,7 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
 });
 
 test('V154 tablet header uses responsive priority instead of clipping controls', () => {
-  assert.match(app, /@media\(min-width:761px\) and \(max-width:1180px\)/);
+  assert.match(app, /@media\(min-width:769px\) and \(max-width:1180px\)/);
   assert.match(app, /\.global-search input\{display:none\}/);
   assert.match(app, /\.workspace-language-picker\{display:none\}/);
   assert.match(app, /text-overflow:ellipsis/);

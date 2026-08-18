@@ -46,7 +46,7 @@ test('actual-render fixture keeps identity compact, wraps long tokens, and expos
      while the business-side promotion editor grid keeps its original single-column stack. */
   assert.match(
     fixture,
-    /@media\(max-width:760px\)\{[\s\S]*\.promotion-editor-grid\{grid-template-columns:1fr\}/
+    /@media\(max-width:768px\)\{[\s\S]*\.promotion-editor-grid\{grid-template-columns:1fr\}/
   );
   assert.match(
     fixture,

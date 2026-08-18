@@ -111,7 +111,7 @@ test('inactive staff stop before page data calls with a reactivation and sign-ou
 });
 
 test('inactive-access legal links are semantic WCAG targets on desktop and 390px',()=>{
-  const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
+  const mobile=section('/* === COMPACT LAYOUT SHELL (<=768px)','@media(max-width:375px){');
 
   assert.match(app,/const legalLinks=\(locale='en'\)=>\{/);
   assert.match(app,/return `<nav class="legal-links" aria-label="\$\{esc\(copy\.label\)\}">/);
@@ -160,7 +160,7 @@ test('targets, mobile layouts, reflowing tables, and reduced motion are explicit
   assert.match(app,/--control-h:\s*44px/);
   assert.match(app,/@media\(max-width:375px\)/);
   assert.match(app,/@media\(min-width:376px\) and \(max-width:768px\)/);
-  assert.match(app,/@media\(max-width:767px\)[\s\S]*content:attr\(data-label\)/);
+  assert.match(app,/@media\(max-width:768px\)[\s\S]*content:attr\(data-label\)/);
   assert.match(app,/@media\(prefers-reduced-motion:reduce\)/);
   assert.match(ui,/const isComplex=!!table\.querySelector\('\[colspan\],\[rowspan\]'\)/);
   assert.match(ui,/looseRows\.forEach\(row=>body\.append\(row\)\)/);
@@ -204,7 +204,7 @@ test('mobile Retention actions wrap and role-aware workspace navigation stays th
   assert.match(app,/\.retention-taxonomy-row\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
   assert.match(app,/\.retention-taxonomy-copy\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
   assert.match(app,/\.retention-taxonomy-actions\{[^}]*flex-wrap:wrap[^}]*min-width:0/s);
-  const mobileShell=section('@media(max-width:960px){','@media(max-width:767px){');
+  const mobileShell=section('@media(max-width:960px){','/* === COMPACT LAYOUT SHELL (<=768px)');
   assert.match(mobileShell,/\.shell\{[^}]*grid-template-columns:minmax\(0,1fr\)[^}]*max-width:100vw[^}]*min-width:0/s);
   assert.match(mobileShell,/\.side\{display:none\}/);
   assert.match(mobileShell,/\.staff-mobile-dock\{[^}]*position:fixed[^}]*bottom:0[^}]*display:grid/s);
@@ -224,7 +224,7 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
      labelling contract simply moved with it. */
   const brand=section('function workspaceBrandPanelHtmlV259(){','function wireWorkspaceBrandV259(){');
   const bookingRules=section('function bookingRulesCardHtmlV325(){','function wireBookingRulesV325(');
-  const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
+  const mobile=section('/* === COMPACT LAYOUT SHELL (<=768px)','@media(max-width:375px){');
 
   assert.match(settings,/<div class="settings-page">/);
   assert.match(customerInterface,/<div class="customer-interface-sections-v243">/);
@@ -259,7 +259,7 @@ test('customer sign-up join URL is a safe 44px target without 390px overflow',()
   /* V368: the QR card renders into a host it is handed (the profile menu's dialog) rather than a
      fixed page card, so the function takes one argument now. Same body, same RPCs. */
   const signup=section('async function loadSignupConfig(host)','async function loadCommissionConfig()');
-  const mobile=section('@media(max-width:767px){','@media(max-width:375px){');
+  const mobile=section('/* === COMPACT LAYOUT SHELL (<=768px)','@media(max-width:375px){');
 
   assert.match(signup,/<p class="small portal-link-row" id="joinQrLink"[^>]*><\/p>/);
   assert.match(signup,/\$\('joinQrLink'\)\.innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="\$\{esc\(url\)\}">\$\{esc\(url\)\}<\/a>`/);

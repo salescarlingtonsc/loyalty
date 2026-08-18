@@ -123,7 +123,7 @@ test('the install prompt remembers a dismissal and lifts above the mobile nav',a
   assert.match(pwa,/const PWA_PROMPT_DISMISS_MS=30\*24\*60\*60\*1000/);
   assert.match(pwa,/setItem\(PWA_PROMPT_DISMISSED_KEY,String\(Date\.now\(\)\)\)/);
   assert.match(pwa,/function offerInstall\(\)\{[\s\S]{0,200}if\(promptDismissedRecently\(\)\)return;/);
-  assert.match(pwaCss,/@media\(max-width:760px\)\{/);
+  assert.match(pwaCss,/@media\(max-width:768px\)\{/);
   assert.doesNotMatch(pwaCss,/@media\(max-width:720px\)\{/);
   assert.match(push,/Notifications aren’t available yet\./);
 });
