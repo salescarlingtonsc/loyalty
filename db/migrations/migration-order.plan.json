@@ -2151,6 +2151,12 @@
       "path": "db/migrations/20260818_nestly_v386_dated_programme_usage.sql",
       "semanticVersion": "v386",
       "proposedDeployVersion": "20260818000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260818_nestly_v391_capabilities_undefined_column.sql",
+      "semanticVersion": "v391",
+      "proposedDeployVersion": "20260818000004"
     }
   ]
 }

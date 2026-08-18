@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="25ddc222077eb4236e98fdb103c8e2b5980a1c8229a837fbf2ed7414afa71dfb">
+<meta name="v105-production-component-sha256" content="55707d497a847a2a568ec5452176a5705d6c8c00f49d1bc0757574286ec5fc2a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1842,11 +1842,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
 .wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
 .grow-usage-quick-v388{margin-top:8px}
+.grow-usage-compare-label-v392{align-self:center;padding:0 8px 0 4px}
 /* V389: the enabled-module list on Settings. It wore .chip inside .platform-module-list; .chip is
    styled here but sets no display, and the flex container that blockified it lives only in
    platform-console.css, which this page never loads — so every chip stayed inline and its padded
    background broke across lines. These cells are laid out here, and they are small on purpose:
    the list is reference, not a control. */
+/* V392: the redeem block, indented under the accruing programme row it belongs to. */
+.c360-rewards-under-v392{padding:2px 0 12px 14px;margin:-4px 0 6px;border-left:2px solid var(--hair)}
+.c360-rewards-under-v392>:first-child{margin-top:6px!important}
+.till-item-search-v392{margin:8px 0 10px}
+.till-item-search-v392 input{min-height:44px}
 .settings-module-grid-v389{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:7px;margin-top:10px}
 .settings-module-v389{display:flex;flex-direction:column;gap:1px;min-width:0;padding:7px 9px;
   border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--bg)}
@@ -3773,7 +3779,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 25ddc222077e</span>
+<span class="v105-provenance">v105 production-component harness · 55707d497a84</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3898,7 +3904,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'25ddc222077eb4236e98fdb103c8e2b5980a1c8229a837fbf2ed7414afa71dfb',
+  sourceHash:'55707d497a847a2a568ec5452176a5705d6c8c00f49d1bc0757574286ec5fc2a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -64,7 +64,7 @@ test('Quick Earn sends the selected accessible till branch to the current scanne
   );
   assert.equal(
     (till.match(/openMerchantRedemptionScanner\(\{\s*businessId:S\.biz\.id,branchId:tillBranchId,/g)||[]).length,
-    4,
+    5,
     'the header, selected-customer, standard receipt, and cart receipt scanners must use the active accessible branch',
   );
 });

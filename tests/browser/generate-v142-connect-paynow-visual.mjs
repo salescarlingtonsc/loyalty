@@ -74,10 +74,17 @@ export async function buildV142Visual(){
     /* v187 made sale attribution real: tillPage resolves the acting staff by user_id and
        gates the whole till on it, so the stub row must carry the signed-in user's id and the
        full_name the roster orders by. */
-    return {staff:[{id:STAFF_ID,full_name:'Aisyah',user_id:USER_ID}],branches:[{id:BRANCH_ID,name:'Tanjong Pagar',is_default:true}],staff_branches:[{staff_id:STAFF_ID,branch_id:BRANCH_ID}],services:[{id:SERVICE_ID,name:'Harbour Lunch Set',variant_label:'',duration_min:30}],package_plans:[],membership_plans:[]}[table]||[];
+    return {staff:[{id:STAFF_ID,full_name:'Aisyah',user_id:USER_ID}],branches:[{id:BRANCH_ID,name:'Tanjong Pagar',is_default:true}],staff_branches:[{staff_id:STAFF_ID,branch_id:BRANCH_ID}],services:[{id:SERVICE_ID,name:'Harbour Lunch Set',variant_label:'',duration_min:30}],package_plans:[],membership_plans:[],
+      /* V392: this customer has no prior items, so the quick grid falls back to catalogue order —
+         the same path a first-time customer takes. */
+      sale_items:[]}[table]||[];
   }
   function fixtureQuery(table){
-    const query={select(){return query},eq(){return query},order(){return query},limit(){return query},single(){return query},maybeSingle(){return query},then(resolve,reject){return Promise.resolve({data:queryRows(table),error:null}).then(resolve,reject)}};
+    /* V392: in() and not() joined the chain when the till started reading this customer's own
+       recent sale_items. A stub missing a builder method does not fail loudly — the call throws
+       inside the catalogue Promise.all and the panel simply never leaves "Loading products and
+       services for this branch", which is a slow way to discover stub drift. */
+    const query={select(){return query},eq(){return query},order(){return query},limit(){return query},in(){return query},not(){return query},single(){return query},maybeSingle(){return query},then(resolve,reject){return Promise.resolve({data:queryRows(table),error:null}).then(resolve,reject)}};
     return query;
   }
   function paymentStatus(){

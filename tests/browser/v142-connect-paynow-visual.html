@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="a44e8dbeee4009672b4849a4e7c540b049e31830dda0e58f87927ecd2e3513f1"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="935e1289e8c2cd4b6e65140430a108778972dfcba466b4d907ad06528006b711"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1836,11 +1836,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
 .wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
 .grow-usage-quick-v388{margin-top:8px}
+.grow-usage-compare-label-v392{align-self:center;padding:0 8px 0 4px}
 /* V389: the enabled-module list on Settings. It wore .chip inside .platform-module-list; .chip is
    styled here but sets no display, and the flex container that blockified it lives only in
    platform-console.css, which this page never loads — so every chip stayed inline and its padded
    background broke across lines. These cells are laid out here, and they are small on purpose:
    the list is reference, not a control. */
+/* V392: the redeem block, indented under the accruing programme row it belongs to. */
+.c360-rewards-under-v392{padding:2px 0 12px 14px;margin:-4px 0 6px;border-left:2px solid var(--hair)}
+.c360-rewards-under-v392>:first-child{margin-top:6px!important}
+.till-item-search-v392{margin:8px 0 10px}
+.till-item-search-v392 input{min-height:44px}
 .settings-module-grid-v389{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:7px;margin-top:10px}
 .settings-module-v389{display:flex;flex-direction:column;gap:1px;min-width:0;padding:7px 9px;
   border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--bg)}
@@ -2959,7 +2965,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a44e8dbeee4009672b4849a4e7c540b049e31830dda0e58f87927ecd2e3513f1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 935e1289e8c2cd4b6e65140430a108778972dfcba466b4d907ad06528006b711</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3392,10 +3398,17 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
     /* v187 made sale attribution real: tillPage resolves the acting staff by user_id and
        gates the whole till on it, so the stub row must carry the signed-in user's id and the
        full_name the roster orders by. */
-    return {staff:[{id:STAFF_ID,full_name:'Aisyah',user_id:USER_ID}],branches:[{id:BRANCH_ID,name:'Tanjong Pagar',is_default:true}],staff_branches:[{staff_id:STAFF_ID,branch_id:BRANCH_ID}],services:[{id:SERVICE_ID,name:'Harbour Lunch Set',variant_label:'',duration_min:30}],package_plans:[],membership_plans:[]}[table]||[];
+    return {staff:[{id:STAFF_ID,full_name:'Aisyah',user_id:USER_ID}],branches:[{id:BRANCH_ID,name:'Tanjong Pagar',is_default:true}],staff_branches:[{staff_id:STAFF_ID,branch_id:BRANCH_ID}],services:[{id:SERVICE_ID,name:'Harbour Lunch Set',variant_label:'',duration_min:30}],package_plans:[],membership_plans:[],
+      /* V392: this customer has no prior items, so the quick grid falls back to catalogue order —
+         the same path a first-time customer takes. */
+      sale_items:[]}[table]||[];
   }
   function fixtureQuery(table){
-    const query={select(){return query},eq(){return query},order(){return query},limit(){return query},single(){return query},maybeSingle(){return query},then(resolve,reject){return Promise.resolve({data:queryRows(table),error:null}).then(resolve,reject)}};
+    /* V392: in() and not() joined the chain when the till started reading this customer's own
+       recent sale_items. A stub missing a builder method does not fail loudly — the call throws
+       inside the catalogue Promise.all and the panel simply never leaves "Loading products and
+       services for this branch", which is a slow way to discover stub drift. */
+    const query={select(){return query},eq(){return query},order(){return query},limit(){return query},in(){return query},not(){return query},single(){return query},maybeSingle(){return query},then(resolve,reject){return Promise.resolve({data:queryRows(table),error:null}).then(resolve,reject)}};
     return query;
   }
   function paymentStatus(){
@@ -3741,6 +3754,11 @@ async function tillPage(){
   let tillAddSheetV373=null;     // null | {tab:'services'|'products'|'usepackage'|'sellpackage'|'membership'|'custom',query:string}
   let tillWhoOpenV373=false;     // the branch/teammate disclosure survives a redraw for the same reason
   const TILL_QUICK_ITEMS_V373=8; // tiles on the main screen; everything else is one tap away in the sheet
+  /* V392: how many of the customer's most recent items lead the grid, per kind (owner: "latest 2
+     services & products"). Everything else stays one tap away in More items, or one type away in
+     the search field beside it. */
+  const TILL_RECENT_PER_KIND_V392=2;
+  let tillItemSearchV392='';
   const packageUseAttemptsV102=new Map(); // client-package + branch -> stable key until confirmed success
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
@@ -3807,7 +3825,7 @@ async function tillPage(){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;
+    catalog=null;catalogError=null;tillItemSearchV392='';
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';draw();
   }
@@ -3822,7 +3840,7 @@ async function tillPage(){
        is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
-    catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
+    catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';draw();
   }
   function draw(){
@@ -3844,7 +3862,7 @@ async function tillPage(){
     clearCheckoutState({abandon:true}); // V286: switching to a walk-in abandons any stored PayNow request
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
-    catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
+    catalog=null;catalogError=null;tillItemSearchV392=''; // V392: a leftover query would hide the next customer's items
     walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';
     CUI.announce('Walk-in sale started. No customer is linked.');
     draw();
@@ -4059,7 +4077,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365,giftCatalogueV392,recentItemsV392]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -4090,7 +4108,33 @@ async function tillPage(){
          Fail-soft: a database without the v365 migration simply yields no panel. */
       walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_tier_benefits_for_client_v365',{
         p_business:S.biz.id,p_client:cust.client_id
-      })
+      }),
+      /* V392 (owner, photo 1: "only show latest 2 services & products for specified customer").
+         What THIS customer had last is a far better guess than the top of the catalogue, and the
+         counter is usually repeating a regular's usual. Rides this same load — one round trip per
+         looked-up customer, exactly as the entitlements and tier benefits above do.
+         An inner join on sales is what scopes these lines to this customer; RLS still decides
+         which sales are visible at all. Fail-soft: no history simply means no preference, and the
+         grid falls back to the catalogue order it has always used. */
+      /* V392 (owner, photo 2: "need to show available rewards" ringed over "Nothing to give on
+         this sale" — for a customer holding 75,907 points). The Benefits tab listed vouchers
+         already ISSUED, tier benefits and the two one-off offers, but never the point-funded
+         gifts this customer could claim right now, so a counter had no way to see that the
+         person in front of them could take something home.
+         This is the SAME projection Customer 360 uses, deliberately: readiness is resolved
+         server-side against the active config version, the redemption capability and the real
+         balance. Reading loyalty_rewards and comparing cost to points in the browser would be
+         the exact thing v145 forbids — and it would be wrong, because a gift can be live in the
+         catalogue and still not claimable. */
+      walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_get_customer_actionable_loyalty_v145',{
+        p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId
+      }),
+      walkin?Promise.resolve({data:null,error:null}):sb.from('sale_items')
+        .select('item_type,ref_id,created_at,sales!inner(client_id,business_id)')
+        .eq('business_id',S.biz.id).eq('sales.client_id',cust.client_id)
+        .in('item_type',['service','product'])
+        .not('ref_id','is',null)
+        .order('created_at',{ascending:false}).limit(60)
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
@@ -4113,7 +4157,21 @@ async function tillPage(){
     const activeItems=(Array.isArray(checkout.data.items)?checkout.data.items:[])
       .filter(item=>item?.checkout_active===true&&item?.branch_available!==false);
     const serviceById=Object.fromEntries((serviceMeta.data||[]).map(service=>[service.id,service]));
+    /* V392: the customer's own recent item ids, newest first, de-duplicated. Ids only — the name
+       and price still come from the checkout catalogue, so an item withdrawn from this branch
+       cannot reappear through history. */
+    const recentIdsV392=(kind=>{
+      const seen=[];
+      for(const row of (recentItemsV392?.data||[])){
+        if(row?.item_type!==kind||!row.ref_id)continue;
+        if(!seen.includes(row.ref_id))seen.push(row.ref_id);
+      }
+      return seen;
+    });
 	    catalog={
+	      customerGiftsV392:giftCatalogueV392?.error?null:(giftCatalogueV392?.data||null),
+	      recentServiceIdsV392:recentIdsV392('service'),
+	      recentProductIdsV392:recentIdsV392('product'),
 	      services:activeItems.filter(item=>item.item_type==='service')
 	        .map(item=>({id:item.item_id,
 	          name:serviceDisplayName(serviceById[item.item_id]||item),
@@ -4712,11 +4770,43 @@ async function tillPage(){
         <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
         ${autoRow}${giveRows}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${pendingVouchers}`;
+    /* V392: what this customer's points can actually take home today.
+       Affordable gifts lead; the next one up is shown too, with how many points are still needed,
+       because "you are 5 away" is the sentence that sells the next visit. Nothing here issues
+       anything: a point redemption is confirmed against the customer's own QR
+       (staff_scan_member_qr_v327 / the voucher scan below), and inventing a second, unscanned
+       give-path from the till would be a way to spend a customer's points without them present.
+       So this states what is available and hands over to the scan that already exists. */
+    const giftProjectionV392=catalog.customerGiftsV392||null;
+    const giftUnitV392=giftProjectionV392?.program?.unit==='stamps'?'stamps':'points';
+    const giftsV392=Array.isArray(giftProjectionV392?.rewards)?giftProjectionV392.rewards:[];
+    /* available_now and remaining_units are the SERVER's answers. Nothing here recomputes
+       readiness from a balance and a cost — see v145. */
+    const affordableV392=giftsV392.filter(gift=>gift.available_now===true);
+    const nextUpV392=giftsV392.filter(gift=>gift.available_now!==true)
+      .sort((a,b)=>(Number(a.remaining_units)||0)-(Number(b.remaining_units)||0))[0]||null;
+    const giftsBannerV392=(affordableV392.length||nextUpV392)
+      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Rewards this customer can claim</b>
+        <p class="muted small" style="margin:5px 0">Scan the customer's QR to confirm a redemption.</p>
+        ${affordableV392.map(gift=>`<div class="till-tier-benefit-row-v369">
+            <span><b class="small" data-merchant-content>${esc(gift.name||'Reward')}</b>
+            <span class="muted small">${Number.isFinite(Number(gift.cost_units))?`${esc(String(Number(gift.cost_units)))} ${esc(giftUnitV392)}`:''}</span></span>
+            <span class="pill ok">Ready</span>
+          </div>`).join('')}
+        ${nextUpV392?`<div class="till-tier-benefit-row-v369">
+            <span><b class="small" data-merchant-content>${esc(nextUpV392.name||'Reward')}</b>
+            <span class="muted small">${esc(String(Math.max(0,Number(nextUpV392.remaining_units)||0)))} more ${esc(giftUnitV392)}</span></span>
+            <span class="pill off">Not yet</span>
+          </div>`:''}
+        ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm" id="tGiftScanV392" style="margin-top:8px">${CUI.icon('scan',{size:16})} Scan customer QR</button>`:''}</div>`
+      :'';
+    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
-    const count=giveNow.length+(welcomeOffer?1:0)+(bringbackOffer?1:0)+(catalog.customerVouchers||[]).length;
+    /* V392: an affordable gift needs a hand (a scan), so it counts; the "not yet" row does not. */
+    const count=giveNow.length+(welcomeOffer?1:0)+(bringbackOffer?1:0)+(catalog.customerVouchers||[]).length
+      +affordableV392.length;
     return {html:rewards?`<div class="till-rewards-v373">${rewards}</div>`:'',count};
   }
   /* The whole ladder, on demand: what is available now, and — in plain words — why the rest is
@@ -4788,10 +4878,37 @@ async function tillPage(){
       ...catalog.services.map(item=>({type:'service',item})),
       ...(catalog.products||[]).map(item=>({type:'product',item}))
     ];
-    const shown=entries.slice(0,TILL_QUICK_ITEMS_V373);
+    /* V392 (owner, photo 1: "only show latest 2 services & products for specified customer", and
+       "put search field for services and product").
+       Two changes, one screen. The grid leads with what THIS customer last had — a counter is
+       usually repeating a regular's usual, and the top of the catalogue is a worse guess than
+       their own history. Ids come from their sale_items; the name and price still come from the
+       checkout catalogue, so an item withdrawn from this branch cannot reappear through history.
+       With no history (a first visit, a walk-in) it falls back to the catalogue order it always
+       used, because "latest" of nothing is not an empty grid.
+       The search reaches the WHOLE catalogue, not just what the grid is showing — otherwise it
+       would only ever find the four tiles already on screen. When a search is typed the "latest"
+       preference steps aside: the owner is looking for something specific. */
+    const queryV392=tillItemSearchV392.trim().toLowerCase();
+    const rankV392=(list,ids)=>{
+      const order=new Map((ids||[]).map((id,index)=>[String(id),index]));
+      return [...list].sort((a,b)=>{
+        const left=order.has(String(a.item.id))?order.get(String(a.item.id)):Number.MAX_SAFE_INTEGER;
+        const right=order.has(String(b.item.id))?order.get(String(b.item.id)):Number.MAX_SAFE_INTEGER;
+        return left-right;
+      });
+    };
+    const matchesV392=entry=>!queryV392||String(entry.item.name||'').toLowerCase().includes(queryV392);
+    const allServicesV392=entries.filter(entry=>entry.type==='service');
+    const allProductsV392=entries.filter(entry=>entry.type==='product');
+    const pickV392=(list,ids)=>queryV392
+      ?list.filter(matchesV392)
+      :rankV392(list,ids).slice(0,TILL_RECENT_PER_KIND_V392);
+    const shownServices=pickV392(allServicesV392,catalog.recentServiceIdsV392);
+    const shownProducts=pickV392(allProductsV392,catalog.recentProductIdsV392);
+    const shown=[...shownServices,...shownProducts];
     const hiddenCount=entries.length-shown.length;
-    const shownServices=shown.filter(entry=>entry.type==='service');
-    const shownProducts=shown.filter(entry=>entry.type==='product');
+    const usingHistoryV392=!queryV392&&((catalog.recentServiceIdsV392||[]).length>0||(catalog.recentProductIdsV392||[]).length>0);
     /* The More items tile is rendered even when this branch has no checkout catalogue at all: a
        firm that only sells prepaid packages still has something to add, and hiding the only door
        to the sheet would strand it. */
@@ -4799,7 +4916,12 @@ async function tillPage(){
     if(noCheckoutItems)
       return `${CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'})}
         <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
-    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${usingHistoryV392?'<span class="muted small">What they had last</span>':hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+      <div class="till-item-search-v392">
+        <label class="sr-only" for="tillItemSearchV392">Search services and products</label>
+        <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services and products" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
+      </div>
+      ${(queryV392&&!shown.length)?`<p class="muted small" style="margin:10px 0">Nothing in this branch's checkout catalogue matches “${esc(tillItemSearchV392)}”. Try More items, or type an amount below.</p>`:''}
       ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
       <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>
       ${tillManualAmountRowHtmlV375()}`;
@@ -5104,6 +5226,17 @@ async function tillPage(){
     if($('tGoReviewV373'))$('tGoReviewV373').onclick=()=>{closeTillAddSheetV373();tillStageV373='review';draw()};
     if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';tillItemsTabV374='items';draw()};
     if($('tAddItemV373'))$('tAddItemV373').onclick=()=>openTillAddSheetV373();
+    /* V392: the search redraws the grid as it is typed. The caret is put back where it was —
+       draw() replaces the panel, so without this the field would lose focus on every keystroke
+       and the counter could type exactly one letter at a time. */
+    const tillItemSearchInputV392=$('tillItemSearchV392');
+    if(tillItemSearchInputV392)tillItemSearchInputV392.oninput=event=>{
+      tillItemSearchV392=event.target.value;
+      const at=event.target.selectionStart;
+      draw();
+      const again=$('tillItemSearchV392');
+      if(again){again.focus();try{again.setSelectionRange(at,at)}catch(error){}}
+    };
     wireTillManualAmountV375(document);
     if($('tSellPackageV374'))$('tSellPackageV374').onclick=()=>openTillAddSheetV373('sellpackage');
     document.querySelectorAll('[data-till-stage-tab-v374]').forEach(button=>button.onclick=()=>{
@@ -5198,6 +5331,12 @@ async function tillPage(){
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
+      businessId:S.biz.id,branchId:tillBranchId,
+      isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
+    });
+    /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
+       server confirmation, and the customer is present for it. */
+    if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
@@ -5711,7 +5850,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'a44e8dbeee4009672b4849a4e7c540b049e31830dda0e58f87927ecd2e3513f1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'935e1289e8c2cd4b6e65140430a108778972dfcba466b4d907ad06528006b711',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

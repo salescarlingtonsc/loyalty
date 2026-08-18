@@ -47,7 +47,10 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
     /* V368: 'actions' (Customer Action) joins the list — the rail's second child, holding the
        app-action switches and customer fields that outlived the retired sign-up page. */
     /* V375 (owner, photo 16): relabelled "Customer Permissions". The hash is untouched. */
-    ['actions', 'Customer Permissions', '#/customer-interface/actions'],
+    /* V392 (owner, photo 3): "Permissions" struck through and "Action" written, and the arrow
+       onto the Appointment Setting pill — "when click this is the default page". The row's own
+       hash moved to that tab; both hashes still resolve, which is what the loop below checks. */
+    ['actions', 'Customer Action', '#/customer-interface/appointment'],
   ];
   const viewsSource = section(app, 'const CUSTOMER_INTERFACE_VIEWS_V296=[', '];');
   /* V368 no longer asserts ORDER across the whole list — 'actions' is declared beside the

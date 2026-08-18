@@ -24,16 +24,22 @@ const section=(start,end,source=appJs)=>{
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const promotionDateShortV324=value=>value?String(value).split('-').reverse().join('/'):'';
 
-/* The three shipped helpers, evaluated exactly as they ship. `growProgrammeEntriesV271` and
-   `growAnalyticsCategoryV385` are injected because they are built from a live snapshot; what is
-   under test is how a usage payload is READ, not how the entries were assembled. */
-const usageHarness=entries=>new Function('esc','entries','growAnalyticsCategoryV385',`
+/* The shipped helpers, evaluated exactly as they ship. Only `growProgrammeEntriesV271` is
+   injected — it is built from a live snapshot. The CATEGORISER is taken from source rather than
+   restated here: V392 changed how gifts are grouped and this suite sailed straight through it,
+   green, because it was running its own copy of the rule instead of the product's. A stub of the
+   function under test is not a test of it. */
+const usageHarness=entries=>new Function('esc','entries',`
   const growProgrammeEntriesV271=entries;
-  ${section('const growUsageForEntryV386=','  const growAnalyticsRowsV375=')}
-  return {rowsFrom:growAnalyticsRowsFromUsageV386};
-`)(esc,entries,entry=>entry.type==='Reward'?(entry.parent?`${entry.parent} gifts`:'Gifts'):(entry.type||'Programme'));
+  const growOverviewChildRowV324=row=>row.type==='Reward';
+  ${section('  const growAnalyticsCategoryV385=','  const growAnalyticsRowsV375=')}
+  return {rowsFrom:growAnalyticsRowsFromUsageV386,categoryOf:growAnalyticsCategoryV385};
+`)(esc,entries);
 
+/* V392: the label helper travels with the chart, from source — the legend names whichever basis
+   the owner picked (period before / last month / last year). */
 const chart=new Function('esc','promotionDateShortV324',`
+  ${section('const GROW_USAGE_COMPARE_OPTIONS_V392=','function growUsageComparisonRangeV392(')}
   ${section('function growUsageComparisonChartV386(','const REPORT_SHARE_COLOURS_V297=')}
   return growUsageComparisonChartV386;
 `)(esc,promotionDateShortV324);
@@ -57,10 +63,14 @@ test('V386 a windowed payload is read through each entry\'s own scope, not its l
   const by=Object.fromEntries(rows.map(row=>[row.category,row]));
   assert.equal(by['Point system'].customers,5);
   assert.equal(by['Point system'].programmes,1);
-  /* V385's rule survives the window: the gifts are their own row and are not folded into the
-     engine they hang off. Their counts come from the payload's per-reward list. */
-  assert.equal(by['Point system gifts'].customers,4);
-  assert.equal(by['Point system gifts'].programmes,2);
+  /* V385 took the gifts out of the engine's own count; V392 takes each gift out separately
+     (owner, photo 6: "take out each gift out"), because "Point system gifts · 11" still could not
+     say WHICH gift a customer took. One row per gift, named, counted from the per-reward list. */
+  assert.equal(by['Free Lotion'].customers,3);
+  assert.equal(by['Free Lotion'].programmes,1);
+  assert.equal(by['moisturizer'].customers,1);
+  assert.equal(by['moisturizer'].programmes,1);
+  assert.ok(!by['Point system gifts'],'gifts are no longer lumped into one row');
   /* V271's honesty rule survives it too — a promotion is unmeasurable, never a zero. */
   assert.equal(by['Promotion'].customers,null);
   assert.equal(by['Referrals'].customers,2);
@@ -82,10 +92,13 @@ test('V386 the chart compares this period with the previous one when a window is
   const {rowsFrom}=usageHarness(ENTRIES);
   const rows=rowsFrom(USAGE_NOW);
   const previous=new Map(rowsFrom(USAGE_BEFORE).map(row=>[row.category,row.customers]));
-  const html=chart(rows,previous,{previousFrom:'2026-06-19',previousTo:'2026-07-18',days:30});
+  const html=chart(rows,previous,{previousFrom:'2026-06-19',previousTo:'2026-07-18',days:30,basis:'previous'});
   assert.match(html,/is-was-v386/,'a windowed chart carries a second series');
   assert.match(html,/This period against the one before it/);
   assert.match(html,/19\/06\/2026 – 18\/07\/2026/,'the previous window is named, not implied');
+  /* V392 (owner, photo 6): the owner picks what to compare against — the period before, last
+     month or last year — so the legend names the basis rather than always saying "Previous". */
+  assert.match(html,/Period before · 19\/06\/2026/);
   /* Point system fell 9 -> 5. Both bars are scaled against the largest value across BOTH series,
      so a shorter bar always means a smaller number. */
   const widths=[...html.matchAll(/width:([\d.]+)%/g)].map(match=>Number(match[1]));

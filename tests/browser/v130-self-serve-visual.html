@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c63bd9c8887f4be789dae45030548a60daed0a0547b20389876980b1bcc9c9e1"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="cdbc023a83e294aa00e0d566120b51700506000fc9fa73ab1873934e04908190"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1835,11 +1835,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
 .wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
 .grow-usage-quick-v388{margin-top:8px}
+.grow-usage-compare-label-v392{align-self:center;padding:0 8px 0 4px}
 /* V389: the enabled-module list on Settings. It wore .chip inside .platform-module-list; .chip is
    styled here but sets no display, and the flex container that blockified it lives only in
    platform-console.css, which this page never loads — so every chip stayed inline and its padded
    background broke across lines. These cells are laid out here, and they are small on purpose:
    the list is reference, not a control. */
+/* V392: the redeem block, indented under the accruing programme row it belongs to. */
+.c360-rewards-under-v392{padding:2px 0 12px 14px;margin:-4px 0 6px;border-left:2px solid var(--hair)}
+.c360-rewards-under-v392>:first-child{margin-top:6px!important}
+.till-item-search-v392{margin:8px 0 10px}
+.till-item-search-v392 input{min-height:44px}
 .settings-module-grid-v389{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:7px;margin-top:10px}
 .settings-module-v389{display:flex;flex-direction:column;gap:1px;min-width:0;padding:7px 9px;
   border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--bg)}

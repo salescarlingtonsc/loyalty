@@ -575,8 +575,14 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
      the customer app-action switches and the customer fields that used to sit at the bottom of
      the retired Customer Sign-up page. It is the rail's second child; Appointment Setting stays
      as a TAB beside it on the same page, which is how the owner drew it. */
-  /* V375 (owner, photo 16: "Customer Action" struck through, "Customer Permissions" written). */
-  ['actions','Customer Permissions','#/customer-interface/actions','customers',2],
+  /* V375 (owner, photo 16: "Customer Action" struck through, "Customer Permissions" written).
+     V392 reverses that at the owner's request (photo 3: "Permissions" struck through, "Action"
+     written on both the rail row and the page title). The rail row also points at the
+     APPOINTMENT tab now — "when click this is the default page", drawn onto that pill — because
+     the two tabs on this page are Appointment Setting and Customer Permissions, and the booking
+     rules are the ones an owner opens it for. Both hashes still resolve exactly as before; only
+     which one the rail row carries has changed, so a bookmarked /actions is untouched. */
+  ['actions','Customer Action','#/customer-interface/appointment','customers',2],
   ['preview','Preview','#/customer-interface','customers',3],
   ['done','Done','#/customer-interface/done','check',4],
   ['programme','Customer programme','#/customer-interface/programme','loyalty',5],
@@ -774,6 +780,10 @@ let growHistoryToV375='';
    sharing one would move a table the owner did not touch. */
 let growUsageFromV386='';
 let growUsageToV386='';
+/* V392 (owner, photo 6, ringed on the PREVIOUS PERIOD column: "can filter compare last month /
+   last year"). Which window this one is measured against. 'previous' is the equal-length window
+   immediately before it — what V386 always used and still the default. */
+let growUsageCompareV392='previous';
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
@@ -12657,6 +12667,12 @@ function navHtml(page,idPrefix='nav'){
       /* V319: 'offers' joins the set of #/grow hashes that belong to a SIBLING child rather than
          to the Rewards Programme list, so opening it no longer lights two rail rows at once. */
       if(routeKey==='grow')return routeView?page[1]===routeView:!['overview','history','offers'].includes(String(page[1]||''));
+      /* V392: Customer Action is ONE rail row over a page with two tabs. Its row now carries the
+         Appointment Setting hash (owner, photo 3: "when click this is the default page"), so
+         without this the row would go dark the moment the owner switched to the Customer
+         Permissions tab beside it — one row, both of its own tabs. */
+      if(routeKey==='customer-interface'&&CUSTOMER_INTERFACE_TABS_V368.includes(routeView))
+        return CUSTOMER_INTERFACE_TABS_V368.includes(String(page[1]||''));
       return String(page[1]||'')===routeView;
     };
     const childRowsV294=(g.views||[]).length
@@ -16641,6 +16657,11 @@ async function clientDetail(id){
      in V259. Every other caller keeps passing `copy` and keeps being escaped. */
   const programmeRowHtmlV294=(name,copy,live,label=null,copyHtml=null,footHtml='')=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${copyHtml??esc(copy)}</p>${footHtml}</div><span class="pill ${live?'on':'off'}">${esc(label||(live?'Live':'Paused'))}</span></div>`;
   const programmeRowsV294=[];
+  /* V392 (owner, photo 5: the redeem block circled with "put under point system"). It sat at the
+     FOOT of the card, below every other programme, so "5 more points for Free Massage Oil" was
+     four rows away from the points balance it is about. It belongs to the accruing programme, so
+     it is inserted directly beneath that row — this records where. */
+  let accruingRowAtV392=-1;
   if(loyaltyFactsAvailable&&prog){
     /* V314 (W6 increment 1): the same two frozen reads the Grow pill carried. This row's
        Live/Paused pill is about whether THIS customer can earn and claim right now, which after
@@ -16667,9 +16688,11 @@ async function clientDetail(id){
     if((prog.unit==='stamps'?'stamps':'points')==='stamps'){
       programmeRowsV294.push(programmeRowHtmlV294('Stamp card','',loyaltyLiveV294,null,
         balanceLeadHtmlV319(`${pts===1?'stamp':'stamps'} collected`,nextRewardBitV296),pointsPausedNoteV259));
+      accruingRowAtV392=programmeRowsV294.length;
     }else{
-      if(pointsModeV294!=='tiers')programmeRowsV294.push(programmeRowHtmlV294('Points System','',loyaltyLiveV294,null,
+      if(pointsModeV294!=='tiers'){programmeRowsV294.push(programmeRowHtmlV294('Points System','',loyaltyLiveV294,null,
         balanceLeadHtmlV319(pointsUnit,nextRewardBitV296),pointsPausedNoteV259));
+        accruingRowAtV392=programmeRowsV294.length;}
       if(pointsModeV294==='tiers'||pointsModeV294==='both')programmeRowsV294.push(programmeRowHtmlV294('Tiered membership',
         !tierStandingV296.known?'Tier standing could not be loaded.'
         :`${tierStandingV296.current?`Currently ${tierStandingV296.current.name}`:'Not in a tier yet'}${tierStandingV296.next?` · next ${tierStandingV296.next.name} at ${Number(tierStandingV296.next.threshold)||0}`:''}`,
@@ -16695,6 +16718,13 @@ async function clientDetail(id){
   if(birthdayProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294(birthdayProgrammeV294.customer_label||'Birthday benefit',
     birthdayProgrammeV294.fulfillment_kind==='discount_pct'?`${birthdayProgrammeV294.discount_percent}% off during the birthday window.`:(birthdayProgrammeV294.manual_item||'A birthday treat during the window.'),
     birthdayProgrammeV294.active===true));
+  /* V392: the redeem block goes under the points/stamp row it describes. If there is no accruing
+     row at all — a firm running only referrals, say — it stays where it was, at the foot of the
+     card, rather than being dropped. */
+  const rewardsUnderAccruingV392=accruingRowAtV392>=0&&rewardsMarkup
+    ?`<div class="c360-rewards-under-v392">${rewardsMarkup}</div>`:'';
+  if(rewardsUnderAccruingV392)programmeRowsV294.splice(accruingRowAtV392,0,rewardsUnderAccruingV392);
+  const rewardsMarkupTrailingV392=rewardsUnderAccruingV392?'':rewardsMarkup;
   const programmesListV294=programmeRowsV294.length?`<div class="c360-programmes-v294">${programmeRowsV294.join('')}</div>`:'';
   /* V319: absent stays absent — a workspace running no offer gets no empty card, exactly as the
      programmes card renders nothing when it has no rows. */
@@ -16780,7 +16810,7 @@ async function clientDetail(id){
     <div class="split c360-content-split-v295" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
-        <div class="c360-rewards-body">${programmesListV294}${rewardsMarkup}</div>
+        <div class="c360-rewards-body">${programmesListV294}${rewardsMarkupTrailingV392}</div>
       </section>`:''}
       ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
            cell now instead of a flex sibling that dictated the height of an empty left column.
@@ -17646,6 +17676,11 @@ async function tillPage(){
   let tillAddSheetV373=null;     // null | {tab:'services'|'products'|'usepackage'|'sellpackage'|'membership'|'custom',query:string}
   let tillWhoOpenV373=false;     // the branch/teammate disclosure survives a redraw for the same reason
   const TILL_QUICK_ITEMS_V373=8; // tiles on the main screen; everything else is one tap away in the sheet
+  /* V392: how many of the customer's most recent items lead the grid, per kind (owner: "latest 2
+     services & products"). Everything else stays one tap away in More items, or one type away in
+     the search field beside it. */
+  const TILL_RECENT_PER_KIND_V392=2;
+  let tillItemSearchV392='';
   const packageUseAttemptsV102=new Map(); // client-package + branch -> stable key until confirmed success
   let saleCommitted=false, saleResult=null; // once the cart sale succeeds it is LOCKED; a retry never
                                              // re-runs it, only the failed gift/package/membership calls.
@@ -17712,7 +17747,7 @@ async function tillPage(){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;
+    catalog=null;catalogError=null;tillItemSearchV392='';
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';draw();
   }
@@ -17727,7 +17762,7 @@ async function tillPage(){
        is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
-    catalog=null;catalogError=null; // v281 audit: see resetToStart — the snapshot is per-customer
+    catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';draw();
   }
   function draw(){
@@ -17749,7 +17784,7 @@ async function tillPage(){
     clearCheckoutState({abandon:true}); // V286: switching to a walk-in abandons any stored PayNow request
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
-    catalog=null;catalogError=null; // never reuse a catalogue loaded with another customer's entitlements
+    catalog=null;catalogError=null;tillItemSearchV392=''; // V392: a leftover query would hide the next customer's items
     walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';
     CUI.announce('Walk-in sale started. No customer is linked.');
     draw();
@@ -17964,7 +17999,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365,giftCatalogueV392,recentItemsV392]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -17995,7 +18030,33 @@ async function tillPage(){
          Fail-soft: a database without the v365 migration simply yields no panel. */
       walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_tier_benefits_for_client_v365',{
         p_business:S.biz.id,p_client:cust.client_id
-      })
+      }),
+      /* V392 (owner, photo 1: "only show latest 2 services & products for specified customer").
+         What THIS customer had last is a far better guess than the top of the catalogue, and the
+         counter is usually repeating a regular's usual. Rides this same load — one round trip per
+         looked-up customer, exactly as the entitlements and tier benefits above do.
+         An inner join on sales is what scopes these lines to this customer; RLS still decides
+         which sales are visible at all. Fail-soft: no history simply means no preference, and the
+         grid falls back to the catalogue order it has always used. */
+      /* V392 (owner, photo 2: "need to show available rewards" ringed over "Nothing to give on
+         this sale" — for a customer holding 75,907 points). The Benefits tab listed vouchers
+         already ISSUED, tier benefits and the two one-off offers, but never the point-funded
+         gifts this customer could claim right now, so a counter had no way to see that the
+         person in front of them could take something home.
+         This is the SAME projection Customer 360 uses, deliberately: readiness is resolved
+         server-side against the active config version, the redemption capability and the real
+         balance. Reading loyalty_rewards and comparing cost to points in the browser would be
+         the exact thing v145 forbids — and it would be wrong, because a gift can be live in the
+         catalogue and still not claimable. */
+      walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_get_customer_actionable_loyalty_v145',{
+        p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId
+      }),
+      walkin?Promise.resolve({data:null,error:null}):sb.from('sale_items')
+        .select('item_type,ref_id,created_at,sales!inner(client_id,business_id)')
+        .eq('business_id',S.biz.id).eq('sales.client_id',cust.client_id)
+        .in('item_type',['service','product'])
+        .not('ref_id','is',null)
+        .order('created_at',{ascending:false}).limit(60)
     ]);
     if(!isTillCurrent())return;
     catalogLoading=false;
@@ -18018,7 +18079,21 @@ async function tillPage(){
     const activeItems=(Array.isArray(checkout.data.items)?checkout.data.items:[])
       .filter(item=>item?.checkout_active===true&&item?.branch_available!==false);
     const serviceById=Object.fromEntries((serviceMeta.data||[]).map(service=>[service.id,service]));
+    /* V392: the customer's own recent item ids, newest first, de-duplicated. Ids only — the name
+       and price still come from the checkout catalogue, so an item withdrawn from this branch
+       cannot reappear through history. */
+    const recentIdsV392=(kind=>{
+      const seen=[];
+      for(const row of (recentItemsV392?.data||[])){
+        if(row?.item_type!==kind||!row.ref_id)continue;
+        if(!seen.includes(row.ref_id))seen.push(row.ref_id);
+      }
+      return seen;
+    });
 	    catalog={
+	      customerGiftsV392:giftCatalogueV392?.error?null:(giftCatalogueV392?.data||null),
+	      recentServiceIdsV392:recentIdsV392('service'),
+	      recentProductIdsV392:recentIdsV392('product'),
 	      services:activeItems.filter(item=>item.item_type==='service')
 	        .map(item=>({id:item.item_id,
 	          name:serviceDisplayName(serviceById[item.item_id]||item),
@@ -18617,11 +18692,43 @@ async function tillPage(){
         <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
         ${autoRow}${giveRows}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${pendingVouchers}`;
+    /* V392: what this customer's points can actually take home today.
+       Affordable gifts lead; the next one up is shown too, with how many points are still needed,
+       because "you are 5 away" is the sentence that sells the next visit. Nothing here issues
+       anything: a point redemption is confirmed against the customer's own QR
+       (staff_scan_member_qr_v327 / the voucher scan below), and inventing a second, unscanned
+       give-path from the till would be a way to spend a customer's points without them present.
+       So this states what is available and hands over to the scan that already exists. */
+    const giftProjectionV392=catalog.customerGiftsV392||null;
+    const giftUnitV392=giftProjectionV392?.program?.unit==='stamps'?'stamps':'points';
+    const giftsV392=Array.isArray(giftProjectionV392?.rewards)?giftProjectionV392.rewards:[];
+    /* available_now and remaining_units are the SERVER's answers. Nothing here recomputes
+       readiness from a balance and a cost — see v145. */
+    const affordableV392=giftsV392.filter(gift=>gift.available_now===true);
+    const nextUpV392=giftsV392.filter(gift=>gift.available_now!==true)
+      .sort((a,b)=>(Number(a.remaining_units)||0)-(Number(b.remaining_units)||0))[0]||null;
+    const giftsBannerV392=(affordableV392.length||nextUpV392)
+      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Rewards this customer can claim</b>
+        <p class="muted small" style="margin:5px 0">Scan the customer's QR to confirm a redemption.</p>
+        ${affordableV392.map(gift=>`<div class="till-tier-benefit-row-v369">
+            <span><b class="small" data-merchant-content>${esc(gift.name||'Reward')}</b>
+            <span class="muted small">${Number.isFinite(Number(gift.cost_units))?`${esc(String(Number(gift.cost_units)))} ${esc(giftUnitV392)}`:''}</span></span>
+            <span class="pill ok">Ready</span>
+          </div>`).join('')}
+        ${nextUpV392?`<div class="till-tier-benefit-row-v369">
+            <span><b class="small" data-merchant-content>${esc(nextUpV392.name||'Reward')}</b>
+            <span class="muted small">${esc(String(Math.max(0,Number(nextUpV392.remaining_units)||0)))} more ${esc(giftUnitV392)}</span></span>
+            <span class="pill off">Not yet</span>
+          </div>`:''}
+        ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm" id="tGiftScanV392" style="margin-top:8px">${CUI.icon('scan',{size:16})} Scan customer QR</button>`:''}</div>`
+      :'';
+    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
-    const count=giveNow.length+(welcomeOffer?1:0)+(bringbackOffer?1:0)+(catalog.customerVouchers||[]).length;
+    /* V392: an affordable gift needs a hand (a scan), so it counts; the "not yet" row does not. */
+    const count=giveNow.length+(welcomeOffer?1:0)+(bringbackOffer?1:0)+(catalog.customerVouchers||[]).length
+      +affordableV392.length;
     return {html:rewards?`<div class="till-rewards-v373">${rewards}</div>`:'',count};
   }
   /* The whole ladder, on demand: what is available now, and — in plain words — why the rest is
@@ -18693,10 +18800,37 @@ async function tillPage(){
       ...catalog.services.map(item=>({type:'service',item})),
       ...(catalog.products||[]).map(item=>({type:'product',item}))
     ];
-    const shown=entries.slice(0,TILL_QUICK_ITEMS_V373);
+    /* V392 (owner, photo 1: "only show latest 2 services & products for specified customer", and
+       "put search field for services and product").
+       Two changes, one screen. The grid leads with what THIS customer last had — a counter is
+       usually repeating a regular's usual, and the top of the catalogue is a worse guess than
+       their own history. Ids come from their sale_items; the name and price still come from the
+       checkout catalogue, so an item withdrawn from this branch cannot reappear through history.
+       With no history (a first visit, a walk-in) it falls back to the catalogue order it always
+       used, because "latest" of nothing is not an empty grid.
+       The search reaches the WHOLE catalogue, not just what the grid is showing — otherwise it
+       would only ever find the four tiles already on screen. When a search is typed the "latest"
+       preference steps aside: the owner is looking for something specific. */
+    const queryV392=tillItemSearchV392.trim().toLowerCase();
+    const rankV392=(list,ids)=>{
+      const order=new Map((ids||[]).map((id,index)=>[String(id),index]));
+      return [...list].sort((a,b)=>{
+        const left=order.has(String(a.item.id))?order.get(String(a.item.id)):Number.MAX_SAFE_INTEGER;
+        const right=order.has(String(b.item.id))?order.get(String(b.item.id)):Number.MAX_SAFE_INTEGER;
+        return left-right;
+      });
+    };
+    const matchesV392=entry=>!queryV392||String(entry.item.name||'').toLowerCase().includes(queryV392);
+    const allServicesV392=entries.filter(entry=>entry.type==='service');
+    const allProductsV392=entries.filter(entry=>entry.type==='product');
+    const pickV392=(list,ids)=>queryV392
+      ?list.filter(matchesV392)
+      :rankV392(list,ids).slice(0,TILL_RECENT_PER_KIND_V392);
+    const shownServices=pickV392(allServicesV392,catalog.recentServiceIdsV392);
+    const shownProducts=pickV392(allProductsV392,catalog.recentProductIdsV392);
+    const shown=[...shownServices,...shownProducts];
     const hiddenCount=entries.length-shown.length;
-    const shownServices=shown.filter(entry=>entry.type==='service');
-    const shownProducts=shown.filter(entry=>entry.type==='product');
+    const usingHistoryV392=!queryV392&&((catalog.recentServiceIdsV392||[]).length>0||(catalog.recentProductIdsV392||[]).length>0);
     /* The More items tile is rendered even when this branch has no checkout catalogue at all: a
        firm that only sells prepaid packages still has something to add, and hiding the only door
        to the sheet would strand it. */
@@ -18704,7 +18838,12 @@ async function tillPage(){
     if(noCheckoutItems)
       return `${CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'})}
         <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
-    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${usingHistoryV392?'<span class="muted small">What they had last</span>':hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+      <div class="till-item-search-v392">
+        <label class="sr-only" for="tillItemSearchV392">Search services and products</label>
+        <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services and products" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
+      </div>
+      ${(queryV392&&!shown.length)?`<p class="muted small" style="margin:10px 0">Nothing in this branch's checkout catalogue matches “${esc(tillItemSearchV392)}”. Try More items, or type an amount below.</p>`:''}
       ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
       <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>
       ${tillManualAmountRowHtmlV375()}`;
@@ -19009,6 +19148,17 @@ async function tillPage(){
     if($('tGoReviewV373'))$('tGoReviewV373').onclick=()=>{closeTillAddSheetV373();tillStageV373='review';draw()};
     if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';tillItemsTabV374='items';draw()};
     if($('tAddItemV373'))$('tAddItemV373').onclick=()=>openTillAddSheetV373();
+    /* V392: the search redraws the grid as it is typed. The caret is put back where it was —
+       draw() replaces the panel, so without this the field would lose focus on every keystroke
+       and the counter could type exactly one letter at a time. */
+    const tillItemSearchInputV392=$('tillItemSearchV392');
+    if(tillItemSearchInputV392)tillItemSearchInputV392.oninput=event=>{
+      tillItemSearchV392=event.target.value;
+      const at=event.target.selectionStart;
+      draw();
+      const again=$('tillItemSearchV392');
+      if(again){again.focus();try{again.setSelectionRange(at,at)}catch(error){}}
+    };
     wireTillManualAmountV375(document);
     if($('tSellPackageV374'))$('tSellPackageV374').onclick=()=>openTillAddSheetV373('sellpackage');
     document.querySelectorAll('[data-till-stage-tab-v374]').forEach(button=>button.onclick=()=>{
@@ -19103,6 +19253,12 @@ async function tillPage(){
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
+      businessId:S.biz.id,branchId:tillBranchId,
+      isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
+    });
+    /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
+       server confirmation, and the customer is present for it. */
+    if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
@@ -24390,7 +24546,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      it uses previousEquivalentRangeV153, the same derivation the dashboard's delta chips use. */
   const growUsageWindowedV386=Boolean(growUsageFromV386&&growUsageToV386);
   const growUsagePreviousRangeV386=growUsageWindowedV386
-    ?previousEquivalentRangeV153(growUsageFromV386,growUsageToV386):null;
+    ?growUsageComparisonRangeV392(growUsageFromV386,growUsageToV386,growUsageCompareV392):null;
   const growUsageWindowRequestV386=(canRewards&&growUsageWindowedV386)
     ?Promise.all([
       sb.rpc('business_programme_usage_v386',{p_business:S.biz.id,p_from:growUsageFromV386,p_to:growUsageToV386})
@@ -25443,8 +25599,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      "Stamp card gifts" — and the parent row counts only itself.
      A gift with no programme link (nothing on the spine to hang it off) keeps its own generic
      row rather than being folded into a parent it was never proved to belong to. */
+  /* V385 gave the gifts their own row instead of folding eleven of them into "Point system: 12".
+     V392 finishes the thought (owner, photo 6: "take out each gift out", drawn on that row): one
+     row PER GIFT, named. "Point system gifts · 11 programmes · 1 customer" still could not answer
+     which gift the customer actually took, which is the only reason to read this table. The
+     grouping key is the gift's own name, so two gifts never merge and a renamed gift is simply a
+     renamed row. Non-gift programmes keep grouping by type exactly as before. */
   const growAnalyticsCategoryV385=entry=>growOverviewChildRowV324(entry)
-    ?(entry.parent?`${entry.parent} gifts`:'Gifts')
+    ?String(entry.name||'Gift')
     :(entry.type||'Programme');
   /* V386: one entry's count, read out of ANY usage payload — the all-time one or a windowed one.
      Each entry carries the scope it was built from (usageScopeV386) rather than the category
@@ -25504,6 +25666,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Quick date ranges" style="flex-basis:100%">
       ${growUsageQuickRangesV388().map(range=>`<button type="button" data-grow-usage-quick-v388="${esc(range.key)}" aria-pressed="${growUsageFromV386===range.from&&growUsageToV386===range.to?'true':'false'}">${esc(range.label)}</button>`).join('')}
     </div>
+    ${growUsageWindowedV386?`<div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Compare against" style="flex-basis:100%">
+      <span class="muted small grow-usage-compare-label-v392">Compare with</span>
+      ${GROW_USAGE_COMPARE_OPTIONS_V392.map(option=>`<button type="button" data-grow-usage-compare-v392="${esc(option.key)}" aria-pressed="${growUsageCompareV392===option.key?'true':'false'}">${esc(option.label)}</button>`).join('')}
+    </div>`:''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
       ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
@@ -25519,8 +25685,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growUsageFilterBarV386}
       ${growUsageWindowFailedV386
         ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
-        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th>${growUsageWindowedV386?'<th>Previous period</th>':''}</tr></thead><tbody>
-        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td>${growUsageWindowedV386?`<td data-label="Previous period">${growCountCellV271(growAnalyticsPreviousRowsV386?.get(row.category)??null)}</td>`:''}</tr>`).join('')}
+        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th>${growUsageWindowedV386?`<th>${esc(growUsageCompareLabelV392(growUsagePreviousRangeV386))}</th>`:''}</tr></thead><tbody>
+        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td>${growUsageWindowedV386?`<td data-label="${esc(growUsageCompareLabelV392(growUsagePreviousRangeV386))}">${growCountCellV271(growAnalyticsPreviousRowsV386?.get(row.category)??null)}</td>`:''}</tr>`).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,growAnalyticsPreviousRowsV386,growUsagePreviousRangeV386)}`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
@@ -27244,6 +27410,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   };
   /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
      same way — it is Apply with the typing done for you, not a second window state. */
+  document.querySelectorAll('[data-grow-usage-compare-v392]').forEach(button=>{
+    button.onclick=()=>{growUsageCompareV392=button.dataset.growUsageCompareV392||'previous';growRerenderV322({quiet:true})};
+  });
   document.querySelectorAll('[data-grow-usage-quick-v388]').forEach(button=>{
     button.onclick=()=>{
       const range=growUsageQuickRangesV388().find(item=>item.key===button.dataset.growUsageQuickV388);
@@ -37727,6 +37896,39 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
 /* V388: the four windows an owner actually asks for, in Singapore calendar terms. Built from
    today's SGT date with the existing shiftSgDateInput helper rather than the browser's clock, so
    a device west of Singapore does not offer yesterday's "this week". Weeks run Monday-Sunday. */
+/* V392: what "the period before" means, when the owner gets to choose.
+   'previous'   the equal-length window immediately before this one — V386's original, and still
+                the default, because it answers "is this fortnight better than the last one".
+   'last_month' / 'last_year'  the SAME calendar dates shifted back, which is the comparison a
+                seasonal business actually wants: this August against last August, not against
+                July. Shifting the dates rather than subtracting 30/365 days keeps the window
+                aligned to the calendar; a 31st that does not exist in the target month clamps to
+                that month's last day rather than rolling into the next one. */
+function growUsageShiftMonthsV392(date,months){
+  const [year,month,day]=String(date).split('-').map(Number);
+  const target=new Date(Date.UTC(year,month-1-months,1));
+  const lastDay=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate();
+  const safeDay=Math.min(day,lastDay);
+  return `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
+}
+const GROW_USAGE_COMPARE_OPTIONS_V392=Object.freeze([
+  {key:'previous',label:'Period before'},
+  {key:'last_month',label:'Last month'},
+  {key:'last_year',label:'Last year'}
+]);
+/* The column and the chart name the basis the owner picked, so a figure can never be read
+   against a period nobody chose. */
+function growUsageCompareLabelV392(range){
+  return (GROW_USAGE_COMPARE_OPTIONS_V392.find(option=>option.key===(range?.basis||'previous'))||{}).label||'Period before';
+}
+function growUsageComparisonRangeV392(from,to,basis){
+  if(basis==='last_month'||basis==='last_year'){
+    const months=basis==='last_year'?12:1;
+    return {previousFrom:growUsageShiftMonthsV392(from,months),previousTo:growUsageShiftMonthsV392(to,months),
+      days:Math.max(1,daysBetweenSgInputsV153(from,to)),basis};
+  }
+  return {...previousEquivalentRangeV153(from,to),basis:'previous'};
+}
 function growUsageQuickRangesV388(today=sgDateInputValue()){
   const monthStart=date=>`${date.slice(0,7)}-01`;
   const [year,month]=today.split('-').map(Number);
@@ -37753,7 +37955,7 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
     return `<p class="muted small" style="margin-top:12px">Nobody used a programme in this period, so there is nothing to chart yet.</p>`;
   const width=value=>`${Math.max(Number(value)>0?2:0,(Number(value)||0)/peak*100).toFixed(2)}%`;
   const legend=windowed
-    ? `<ul class="grow-usage-chart-legend-v386"><li><span class="grow-usage-chart-key-v386 is-now-v386" aria-hidden="true"></span>This period</li><li><span class="grow-usage-chart-key-v386 is-was-v386" aria-hidden="true"></span>Previous period · ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}</li></ul>`
+    ? `<ul class="grow-usage-chart-legend-v386"><li><span class="grow-usage-chart-key-v386 is-now-v386" aria-hidden="true"></span>This period</li><li><span class="grow-usage-chart-key-v386 is-was-v386" aria-hidden="true"></span>${esc(growUsageCompareLabelV392(previousRange))} · ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}</li></ul>`
     : '';
   /* The whole chart is one labelled image to a screen reader: the table above already states
      every figure a row by row reading would repeat. */
@@ -41517,7 +41719,7 @@ async function customerInterfacePageV243(hashParam){
      X" statement is struck out, and the Publish button becomes a Save that sits at the FOOT of
      the page (see ciSaveBarV368 below). */
   const ciOnActionPageV368=CUSTOMER_INTERFACE_TABS_V368.includes(customerInterfaceViewV296);
-  const ciPageTitleV368=ciOnActionPageV368?'Customer Permissions':(ciActiveLabelV296||'Customer Interface');
+  const ciPageTitleV368=ciOnActionPageV368?'Customer Action':(ciActiveLabelV296||'Customer Interface');
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>${esc(ciPageTitleV368)}</h1></div></div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}

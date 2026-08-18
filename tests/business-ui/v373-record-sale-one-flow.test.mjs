@@ -170,6 +170,6 @@ test('V374 each tab carries only its own contents, and the counts come from the 
   assert.doesNotMatch(benefits, /tillQuickGroupsHtmlV373\(|tillOwnedPackagesBlockV373\(/);
   // The badge counts things that need a HAND. An automatic discount needs none, so it is excluded
   // — and the count is derived where eligibility is decided, never by a second copy of the rules.
-  assert.match(composer, /const count=giveNow\.length\+\(welcomeOffer\?1:0\)\+\(bringbackOffer\?1:0\)\+\(catalog\.customerVouchers\|\|\[\]\)\.length;/);
+  assert.match(composer, /const count=giveNow\.length\+\(welcomeOffer\?1:0\)\+\(bringbackOffer\?1:0\)\+\(catalog\.customerVouchers\|\|\[\]\)\.length\s*\+affordableV392\.length;/);
   assert.match(composer, /return \{html:rewards\?`<div class="till-rewards-v373">\$\{rewards\}<\/div>`:'',count\};/);
 });

@@ -17,6 +17,11 @@ try{
     await page.waitForTimeout(500);
     for(const digit of '81863833')await page.locator(`[data-k="${digit}"]`).click();
     await page.getByRole('button',{name:'Next'}).click();
+    /* V392 (owner, photo 1): the quick grid leads with this customer's own last two services and
+       two products, so an item further down the catalogue is no longer a tile. It is reached the
+       way a cashier now reaches it — by typing in the search field beside the grid — which also
+       makes this capture real evidence that the search works against the whole catalogue. */
+    await page.locator('#tillItemSearchV392').fill('Harbour');
     await page.getByRole('button',{name:/Harbour Lunch Set/}).waitFor();
     await page.getByRole('button',{name:/Harbour Lunch Set/}).click();
     /* V373: the tender and the confirm button live on the review stage now — one tap after the

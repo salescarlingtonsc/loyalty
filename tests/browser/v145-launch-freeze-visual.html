@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="3be8ceb8476431f5483989cda6cea6dce51cab30ef201e9d730e014274cafade"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f63e481fbedaa0f665eca70487ccbc6bf367ba4f57bfd47c96c548cbd23783d3"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1836,11 +1836,17 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .wallet-qr-host-v388{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;margin-top:14px;padding:14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:#fff}
 .wallet-qr-host-v388 canvas,.wallet-qr-host-v388 img{display:block;max-width:100%;height:auto}
 .grow-usage-quick-v388{margin-top:8px}
+.grow-usage-compare-label-v392{align-self:center;padding:0 8px 0 4px}
 /* V389: the enabled-module list on Settings. It wore .chip inside .platform-module-list; .chip is
    styled here but sets no display, and the flex container that blockified it lives only in
    platform-console.css, which this page never loads — so every chip stayed inline and its padded
    background broke across lines. These cells are laid out here, and they are small on purpose:
    the list is reference, not a control. */
+/* V392: the redeem block, indented under the accruing programme row it belongs to. */
+.c360-rewards-under-v392{padding:2px 0 12px 14px;margin:-4px 0 6px;border-left:2px solid var(--hair)}
+.c360-rewards-under-v392>:first-child{margin-top:6px!important}
+.till-item-search-v392{margin:8px 0 10px}
+.till-item-search-v392 input{min-height:44px}
 .settings-module-grid-v389{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:7px;margin-top:10px}
 .settings-module-v389{display:flex;flex-direction:column;gap:1px;min-width:0;padding:7px 9px;
   border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--bg)}
@@ -2959,7 +2965,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3be8ceb8476431f5483989cda6cea6dce51cab30ef201e9d730e014274cafade</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f63e481fbedaa0f665eca70487ccbc6bf367ba4f57bfd47c96c548cbd23783d3</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -4564,6 +4570,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
      in V259. Every other caller keeps passing `copy` and keeps being escaped. */
   const programmeRowHtmlV294=(name,copy,live,label=null,copyHtml=null,footHtml='')=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${copyHtml??esc(copy)}</p>${footHtml}</div><span class="pill ${live?'on':'off'}">${esc(label||(live?'Live':'Paused'))}</span></div>`;
   const programmeRowsV294=[];
+  /* V392 (owner, photo 5: the redeem block circled with "put under point system"). It sat at the
+     FOOT of the card, below every other programme, so "5 more points for Free Massage Oil" was
+     four rows away from the points balance it is about. It belongs to the accruing programme, so
+     it is inserted directly beneath that row — this records where. */
+  let accruingRowAtV392=-1;
   if(loyaltyFactsAvailable&&prog){
     /* V314 (W6 increment 1): the same two frozen reads the Grow pill carried. This row's
        Live/Paused pill is about whether THIS customer can earn and claim right now, which after
@@ -4590,9 +4601,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     if((prog.unit==='stamps'?'stamps':'points')==='stamps'){
       programmeRowsV294.push(programmeRowHtmlV294('Stamp card','',loyaltyLiveV294,null,
         balanceLeadHtmlV319(`${pts===1?'stamp':'stamps'} collected`,nextRewardBitV296),pointsPausedNoteV259));
+      accruingRowAtV392=programmeRowsV294.length;
     }else{
-      if(pointsModeV294!=='tiers')programmeRowsV294.push(programmeRowHtmlV294('Points System','',loyaltyLiveV294,null,
+      if(pointsModeV294!=='tiers'){programmeRowsV294.push(programmeRowHtmlV294('Points System','',loyaltyLiveV294,null,
         balanceLeadHtmlV319(pointsUnit,nextRewardBitV296),pointsPausedNoteV259));
+        accruingRowAtV392=programmeRowsV294.length;}
       if(pointsModeV294==='tiers'||pointsModeV294==='both')programmeRowsV294.push(programmeRowHtmlV294('Tiered membership',
         !tierStandingV296.known?'Tier standing could not be loaded.'
         :`${tierStandingV296.current?`Currently ${tierStandingV296.current.name}`:'Not in a tier yet'}${tierStandingV296.next?` · next ${tierStandingV296.next.name} at ${Number(tierStandingV296.next.threshold)||0}`:''}`,
@@ -4618,6 +4631,13 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(birthdayProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294(birthdayProgrammeV294.customer_label||'Birthday benefit',
     birthdayProgrammeV294.fulfillment_kind==='discount_pct'?`${birthdayProgrammeV294.discount_percent}% off during the birthday window.`:(birthdayProgrammeV294.manual_item||'A birthday treat during the window.'),
     birthdayProgrammeV294.active===true));
+  /* V392: the redeem block goes under the points/stamp row it describes. If there is no accruing
+     row at all — a firm running only referrals, say — it stays where it was, at the foot of the
+     card, rather than being dropped. */
+  const rewardsUnderAccruingV392=accruingRowAtV392>=0&&rewardsMarkup
+    ?`<div class="c360-rewards-under-v392">${rewardsMarkup}</div>`:'';
+  if(rewardsUnderAccruingV392)programmeRowsV294.splice(accruingRowAtV392,0,rewardsUnderAccruingV392);
+  const rewardsMarkupTrailingV392=rewardsUnderAccruingV392?'':rewardsMarkup;
   const programmesListV294=programmeRowsV294.length?`<div class="c360-programmes-v294">${programmeRowsV294.join('')}</div>`:'';
   /* V319: absent stays absent — a workspace running no offer gets no empty card, exactly as the
      programmes card renders nothing when it has no rows. */
@@ -4703,7 +4723,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     <div class="split c360-content-split-v295" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
-        <div class="c360-rewards-body">${programmesListV294}${rewardsMarkup}</div>
+        <div class="c360-rewards-body">${programmesListV294}${rewardsMarkupTrailingV392}</div>
       </section>`:''}
       ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
            cell now instead of a flex sibling that dictated the height of an empty left column.
@@ -6405,7 +6425,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'3be8ceb8476431f5483989cda6cea6dce51cab30ef201e9d730e014274cafade',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'f63e481fbedaa0f665eca70487ccbc6bf367ba4f57bfd47c96c548cbd23783d3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
