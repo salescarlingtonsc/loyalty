@@ -7126,7 +7126,10 @@ function customerHomeOfferMarkupV167(item,seen){
     <p class="customer-home-offer-business">${logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
       :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}${category?` · ${esc(category)}`:''}</span></p>
-    ${countdown?`<p class="customer-home-offer-countdown">${esc(countdown)}</p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+    ${/* V392 (owner, photo 7: a clock drawn onto the "Ends in 13 days" pill). The countdown was
+         already red; the icon is what makes it read as a deadline at a glance rather than as one
+         more line of small text. */''}
+    ${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:14})}<span>${esc(countdown)}</span></p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
 /* v173: with many linked businesses each posting offers, a plain ends-soonest
@@ -9305,6 +9308,9 @@ function customerProgrammeDirectoryStatusV346(card){
   if(membership.active===true)return '1 active perk';
   return 'No reward yet';
 }
+/* V392: the one status worth shouting about. Read from the SAME server flag the status line
+   itself uses, so the emphasis can never disagree with the words. */
+function customerProgrammeRewardReadyV392(card){return card?.next_eligible_reward?.available_now===true}
 function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
@@ -9312,12 +9318,21 @@ function customerProgrammeTileMarkupV96(card){
   const tier=String(loyalty.tier_name||'').trim(),
     metric=customerProgrammeDirectoryMetricV346(card),
     status=customerProgrammeDirectoryStatusV346(card);
-  return `<a class="card customer-programme-card customer-programme-card-v95" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy"><p class="customer-quest-kicker">${esc(customerProgrammeDirectoryTypeV346(business))}</p><h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346">${esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+  return `<a class="card customer-programme-card customer-programme-card-v95" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${/* V392 (owner, photo 4): the FACIAL kicker is struck
+      through — every tile in this list already sits under a heading naming its category, so the
+      kicker repeated the row above it on every card. And "1 reward ready" is ringed with "make
+      this more prominent": it is the one line that tells the customer to walk in, and it was the
+      quietest thing on the card. It leads now, and only when something really is ready — the
+      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${CUI.icon('redeem',{size:15})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
+  /* V392 (owner, photo 4: "Personal care" struck through, "Beauty" written with an arrow to the
+     filter chip of that name). The chips above this list already said Beauty; the headings below
+     said Personal care for the same businesses, so the filter and the thing it filtered were
+     using two different words for one category. */
   if(/facial|spa|salon|beauty|hair|massage|personal care|aesthetic|wellness/.test(value))
-    return 'Personal care';
+    return 'Beauty';
   if(/cafe|café|coffee|restaurant|food|beverage|f&b|fnb|bakery|bar/.test(value))
     return 'Food & drink';
   if(/fitness|gym|yoga|pilates|sport/.test(value))return 'Fitness';
@@ -9325,7 +9340,7 @@ function customerBusinessCategoryV122(industry=''){
   return 'Other';
 }
 function customerProgrammeGridMarkupV96(cards=[]){
-  const order=['Personal care','Food & drink','Fitness','Shopping','Other'];
+  const order=['Beauty','Food & drink','Fitness','Shopping','Other'];
   const grouped=new Map(order.map(category=>[category,[]]));
   cards.forEach(card=>grouped.get(customerBusinessCategoryV122(card?.business?.industry)).push(card));
   return `<div class="customer-programme-list customer-programme-grid-v96">${order

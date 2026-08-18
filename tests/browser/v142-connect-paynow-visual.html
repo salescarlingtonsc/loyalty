@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="935e1289e8c2cd4b6e65140430a108778972dfcba466b4d907ad06528006b711"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="d0ecf6e9bb5e1ec671e32eac5d4ba919adab6f0238f9ff0923a439328858ff5a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2068,6 +2068,10 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-home-empty-action h2{font-size:clamp(1.3rem,4.5vw,1.7rem);overflow-wrap:anywhere}
 .customer-home-empty-action .customer-first-quest-icon{width:60px;height:60px;margin-bottom:14px;border-radius:20px}
 .customer-quest-kicker{color:var(--coral);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+/* V392 (owner, photo 4: "make this more prominent"): a reward the customer can claim today is
+   the reason to open the app, so that one status reads as a badge rather than a caption. */
+.customer-programme-card-status-v346.is-ready-v392{display:inline-flex;align-items:center;gap:5px;margin-top:4px;padding:3px 9px;border-radius:999px;background:var(--peekaa-red-soft,var(--tint));color:var(--peekaa-red,var(--coral));font-weight:800;font-size:12.5px}
+.customer-programme-card-status-v346.is-ready-v392 svg{flex:0 0 auto}
 .customer-scan-modal .modal-card{width:min(520px,calc(100vw - 24px))}
 .customer-programme-switcher{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
 .customer-programme-switcher a{flex:0 0 auto;min-height:44px;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-weight:700;scroll-snap-align:start}
@@ -2965,7 +2969,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 935e1289e8c2cd4b6e65140430a108778972dfcba466b4d907ad06528006b711</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · d0ecf6e9bb5e1ec671e32eac5d4ba919adab6f0238f9ff0923a439328858ff5a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5850,7 +5854,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'935e1289e8c2cd4b6e65140430a108778972dfcba466b4d907ad06528006b711',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'d0ecf6e9bb5e1ec671e32eac5d4ba919adab6f0238f9ff0923a439328858ff5a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

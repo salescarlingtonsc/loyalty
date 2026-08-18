@@ -104,7 +104,11 @@ test('product cost produces plain-language margin and safe reward budget guidanc
 test('customer programmes are grouped by stable business categories without self-linking',()=>{
   const source=declaredFunction('customerBusinessCategoryV122');
   const categorize=vm.runInNewContext(`(()=>{${source};return customerBusinessCategoryV122})()`);
-  assert.equal(categorize('Facial spa'),'Personal care');
+  /* V392 (owner, photo 4): "Personal care" struck through, "Beauty" written with an arrow to the
+     filter chip of that name. The chips above this list already said Beauty while the headings
+     below said Personal care for the same businesses — the filter and the thing it filtered were
+     using two different words for one category. */
+  assert.equal(categorize('Facial spa'),'Beauty');
   assert.equal(categorize('Cafe'),'Food & drink');
   assert.equal(categorize('Pilates studio'),'Fitness');
   assert.equal(categorize('Unmapped trade'),'Other');

@@ -4258,6 +4258,16 @@ function customerBusinessTaglineV385(business={}){
   if(!text)return '';
   return `<small>${esc(text)}</small>`;
 }
+function customerProgrammeDirectoryTypeV346(business={}){
+  const raw=String(business.industry||'').trim();
+  if(!raw)return 'Member';
+  if(/facial|spa|beauty|aesthetic/i.test(raw))return 'FACIAL';
+  if(/hair|salon/i.test(raw))return 'SALON';
+  if(/restaurant|food|f&b|fnb|cafe|café|coffee|bakery/i.test(raw))return 'FNB';
+  if(/bar|bottle|club/i.test(raw))return 'BAR';
+  if(/fitness|gym|yoga|pilates|sport/i.test(raw))return 'FITNESS';
+  return raw.toUpperCase().slice(0,18);
+}
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;
   const {data,error}=await sb.rpc('customer_get_notification_preferences',{p_business_slug:businessSlug});
