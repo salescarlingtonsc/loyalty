@@ -7923,7 +7923,7 @@ async function servicesPage(){
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
-      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
+      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="svcEditName">Name</label><input id="svcEditName" value="${esc(s.name||'')}"></div>
           <div><label for="svcEditVariant">Variation (optional)</label><input id="svcEditVariant" value="${esc(s.variant_label||'')}"></div>
@@ -8051,7 +8051,7 @@ async function servicesPage(){
       <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
-        <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Disable':'Enable'}</button>
+        <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
         <button class="btn ghost sm" type="button" data-bundle-delete="${b.id}">Delete</button>
       </div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
@@ -8600,8 +8600,8 @@ async function bookingsPage(){
         <td class="small" data-label="Live">${a?`${a.held} held · ${a.available} free`:'—'}</td>
         <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${statusOnOff(t.active)}</span></td>
         <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
-        <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Disable':'Enable'}</button>
-        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Remove</button></td></tr>${editingV291?`<tr><td colspan="6">
+        <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Turn off':'Turn on'}</button>
+        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
           <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
             <div style="flex:1 1 180px"><label for="tblEditNameV291">Name</label><input id="tblEditNameV291" value="${esc(t.name||'')}"></div>
             <div><label for="tblEditPaxV291">Pax</label><input id="tblEditPaxV291" type="number" min="1" style="max-width:90px" value="${t.pax??''}"></div>
@@ -10005,7 +10005,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         </div>
         <p class="muted small help">Choose specific items to restrict eligibility. Leaving a group empty means all of that resource type.</p>
       </details>
-      <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Archive</button>':''}</div>
+      <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Delete</button>':''}</div>
     </div>`;
     if(isExactRewardIntentV139)pruneRewardSiblingsV139(routeMain);
     /* V238: Done closes the dialog when the editor is inside one; outside a dialog it keeps its
@@ -10653,7 +10653,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'will be live':'paused'}</span>
         ${isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
+          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>`:''}</div>`).join('')
         :CUI.emptyState({iconName:'retention',title:'No retention programs',body:'There are no programs in this draft.'})):''}</div></div></div>
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
@@ -10739,7 +10739,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${statusOnOff(r.active)}</span>
         ${isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>
+          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>
           <button type="button" class="btn ghost sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-retention-deleteconfirm-v332="${esc(r.program_id||r.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
@@ -11749,7 +11749,7 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">${item.active?'Retire':'Delete'}</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -13568,7 +13568,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      own "Add gifts" button already does. */
   const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
     <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
-    <b>Add a new gift</b>
+    <b>Add reward</b>
     <span class="muted small">Create new gifts for your customers to redeem with ${growPointsUnitV326}s.</span>
   </li>`:'';
   /* V359 (owner: "adding or editing the fields will be auto publish (with a save button that
@@ -13621,7 +13621,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <li data-grow-points-header-v326><span><b>Earning rule</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
-            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add gift</button>
+            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add reward</button>
             <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
             :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
             <span class="spacer"></span>
@@ -20857,7 +20857,7 @@ async function membershipsPage(){
       const confirmOpen=plansDeletePendingV329===String(p.id);
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
         <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
-        ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button>
+        ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Turn off':'Turn on'}</button>
         <button type="button" class="btn ghost sm" data-plan-delete-v329="${esc(p.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-plan-deleteconfirm-v329="${esc(p.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
@@ -22182,7 +22182,7 @@ async function appointmentsPage(){
       :`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time${helpDotMarkupV385('Blocked time','Time your team is marked unavailable. Customers never see the reason.')}</b></div>
         ${calendarBlocks.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Blocked time"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Team member</th><th>Reason</th><th>Actions</th></tr></thead><tbody>
           ${calendarBlocks.map(block=>{const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
-            return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
+            return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
           }).join('')}</tbody></table></div>`
           :'<p class="muted small" style="margin-top:10px">No blocked time in this window.</p>'}</section>`;
     /* V375 (owner, photo 13: "move there inside" from the Blocked time panel to a new Block tab).
@@ -22528,7 +22528,7 @@ async function appointmentsPage(){
       ...column.blocks.map(block=>{
         const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
         const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-        return {sort:from.minutes,html:`<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</b></span><span><b>Blocked time</b><br><span class="muted small"><span data-merchant-content>${esc(column.label)}</span> · ${esc(reason)}</span></span></span>${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:''}</div>`};
+        return {sort:from.minutes,html:`<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</b></span><span><b>Blocked time</b><br><span class="muted small"><span data-merchant-content>${esc(column.label)}</span> · ${esc(reason)}</span></span></span>${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:''}</div>`};
       })
     ]).sort((a,b)=>a.sort-b.sort);
     const dayAgendaV291=dayAgendaRowsV291.length
@@ -22561,7 +22561,7 @@ async function appointmentsPage(){
           const blocks=column.blocks.map(block=>{
             const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;
             const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-            return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-edit-block="${block.id}">Edit</button><button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:reason})}>Remove</button>`:''}</div>`;
+            return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-edit-block="${block.id}">Edit</button><button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','deleteItem',{item:reason})}>Delete</button>`:''}</div>`;
           }).join('');
           const state=schedule.state!=='working'?`<div class="day-track-state"><b>${esc(schedule.label)}</b>${schedule.reason?`<span>${esc(schedule.reason)}</span>`:''}</div>`:'';
           const working=schedule.state==='working'?`<div class="day-schedule-window" style="top:${workingTop}px;height:${workingHeight}px" aria-hidden="true"></div>`:'';
@@ -22644,7 +22644,7 @@ async function appointmentsPage(){
     const blockedAgendaV291=canWrite?calendarBlocks.map(block=>{
       const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
       const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-      return `<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(block.starts_at))}</b><br><span>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></span><span><b>Blocked time</b><br><span class="muted small" data-merchant-content>${esc(staffName[block.staff_id]||'Team member')} · ${esc(reason)}</span></span></span>${block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:''}</div>`;
+      return `<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(block.starts_at))}</b><br><span>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></span><span><b>Blocked time</b><br><span class="muted small" data-merchant-content>${esc(staffName[block.staff_id]||'Team member')} · ${esc(reason)}</span></span></span>${block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:''}</div>`;
     }).join(''):'';
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
@@ -24359,7 +24359,7 @@ async function inventoryPage(){
     $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Sell for</th><th>Stock</th><th></th></tr></thead><tbody>
       ${pr.map(p=>{const s=SM[p.id]||0;return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
       <td data-label="Sell for">${money(p.retail_price_cents)}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
-      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
+      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
           <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>

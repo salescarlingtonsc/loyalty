@@ -5450,6 +5450,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   phoneKeyDigit:Object.freeze({en:'Digit {digit}','zh-CN':'数字 {digit}',ms:'Digit {digit}'}),
   openCustomer:Object.freeze({en:'Open customer {name}','zh-CN':'打开顾客 {name}',ms:'Buka pelanggan {name}'}),
   removeItem:Object.freeze({en:'Remove {item}','zh-CN':'移除 {item}',ms:'Alih keluar {item}'}),
+  deleteItem:Object.freeze({en:'Delete {item}','zh-CN':'删除 {item}',ms:'Padam {item}'}),
   adjustLoyalty:Object.freeze({en:'+/- {unit}','zh-CN':'增加／减少{unit}',ms:'Tambah/tolak {unit}'}),
   viewAppointmentDetails:Object.freeze({en:'View details for {customer}','zh-CN':'查看 {customer} 的预约详情',ms:'Lihat butiran janji temu untuk {customer}'}),
   amendAppointment:Object.freeze({en:'Amend appointment for {customer}','zh-CN':'修改 {customer} 的预约',ms:'Pinda janji temu untuk {customer}'}),
@@ -5507,7 +5508,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
-  'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
+  'removeItem','deleteItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails','explainHelpDotV385',
   /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
@@ -5522,7 +5523,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
 ]);
 const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
-  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
+  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem','deleteItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
   'explainHelpDotV385'
