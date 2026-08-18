@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="552cd89872fcb747f672bb67e766c15956892d1c51725d45cb3b22169438bb8d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3d92497bd1806cfdc9ddafe25f14d23d2266493c72dc613b8e2205e5428b3f84"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2914,7 +2914,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 552cd89872fcb747f672bb67e766c15956892d1c51725d45cb3b22169438bb8d</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 3d92497bd1806cfdc9ddafe25f14d23d2266493c72dc613b8e2205e5428b3f84</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7760,7 +7760,7 @@ async function servicesPage(){
     $('blist3').querySelectorAll('[data-bundle-delete]').forEach(button=>button.onclick=async()=>{
       const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleDelete);
       if(!bundle)return;
-      if(!confirm(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Disable instead — that keeps it here.`))return;
+      if(!await confirmActionV386(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Turn off instead — that keeps it here.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('delete_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id});
       if(!isCurrent())return;
@@ -8369,7 +8369,7 @@ async function bookingsPage(){
     toast('Updated');loadCapacity();
   };
   window.rmTable=async(id)=>{
-    if(!confirm('Remove this table type? Existing bookings against it are unaffected.')) return;
+    if(!await confirmActionV386('Remove this table type? Existing bookings against it are unaffected.')) return;
     const {error}=await sb.from('booking_tables').delete().eq('id',id);
     if(!isCurrent())return;
     if(error) return fail(error);
@@ -9513,7 +9513,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
       both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis you chose above.'};
     if(loyaltySelectionV230!=='stamps'&&liveModeForAskV314&&targetModeV230!==liveModeForAskV314
-       &&!confirm(modeSwitchAskV240[targetModeV230]))return;
+       &&!await confirmActionV386(modeSwitchAskV240[targetModeV230]))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -10109,8 +10109,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     dialog.querySelector('#tierDialogSlotV236').append(form);
     form.hidden=false;
     setTierDirtyStateV237(tierDirtyV237);
-    const close=()=>{
-      if(tierDirtyV237&&!confirm('Discard your unsaved changes to this tier?'))return;
+    const close=async()=>{
+      if(tierDirtyV237&&!await confirmActionV386('Discard your unsaved changes to this tier?'))return;
       closeTierDialogV236(true);opener?.focus?.()};
     dialog.querySelector('#tierDialogCloseV236').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
@@ -10523,7 +10523,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
-    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
+    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
   }
   /* Playbooks (v50 campaign/holdout/lift engine) live only in the published view — a campaign
      binds to a PUBLISHED retention version, so it has no meaning while editing a draft. The
@@ -11490,7 +11490,7 @@ async function promotionsPage(selectedPromotionId=null){
     const question=published
       ? `End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
-    if(!confirm(question))return;
+    if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
@@ -14580,7 +14580,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const question=published
       ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
-    if(!confirm(question))return;
+    if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:S.biz.id,p_promotion_id:id,p_expected_version:null});
@@ -15801,7 +15801,7 @@ async function pbRecordReturns(c,el,ctx){
 }
 const pbSealAttempts=new Map();
 async function pbSealMeasurement(c,el,ctx){
-  if(!confirm('Start the common measurement window now? Every treatment customer has a manual receipt attestation. This does not verify provider delivery or prove lift, and the measurement terms cannot be changed after sealing.'))return;
+  if(!await confirmActionV386('Start the common measurement window now? Every treatment customer has a manual receipt attestation. This does not verify provider delivery or prove lift, and the measurement terms cannot be changed after sealing.'))return;
   let attempt=pbSealAttempts.get(c.campaign_id);
   if(!attempt){attempt=crypto.randomUUID();pbSealAttempts.set(c.campaign_id,attempt)}
   const button=el.querySelector('[data-pb-seal]');
@@ -15822,14 +15822,14 @@ async function pbSealMeasurement(c,el,ctx){
   pbRenderResults(c,el,ctx);
 }
 async function pbComplete(c,ctx){
-  if(!confirm(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
+  if(!await confirmActionV386(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
   const {error}=await sb.rpc('complete_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id});
   if(error)return fail(error);
   toast('Playbook completed');
   if(ctx.isCurrent())renderPlaybooks(ctx);
 }
 async function pbCancel(c,ctx){
-  if(!confirm(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
+  if(!await confirmActionV386(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
   const {error}=await sb.rpc('cancel_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id,p_reason:null});
   if(error)return fail(error);
   toast('Playbook cancelled');
@@ -15845,7 +15845,7 @@ async function pbActivateDraft(c,ctx){
   const {candidates:cands,truncated}=await pbLoadCandidatesV244(crit.lapsed_days||45,crit.min_visits||3);
   if(truncated)return toast('Too many customers match this playbook to freeze safely — start a fresh one with a narrower rule');
   if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
-  if(!confirm(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
+  if(!await confirmActionV386(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
   const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
   if(error)return fail(error);
   toast('Playbook started');
@@ -15949,7 +15949,7 @@ function pbOpenIssueModal(c,targets,ctx){
       return toast(message);
     }
     const channel=retryChannel.channel;
-    if(!confirm(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
+    if(!await confirmActionV386(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
     const button=$('pbConfirmExposure'),status=$('pbExposureStatus');
     button.disabled=true;status.textContent='Recording manual receipt confirmations…';
     let confirmed=0;const failed=[];
@@ -16446,10 +16446,10 @@ function studioEmergencyPauseActorLabel(actor){
    version (set_studio_rule_active); emergency pause/lift writes an append-only pause row and stops
    NEW effects without deleting any historical fulfilment/discount/reservation. The chip that
    re-renders afterwards is the server's fresh state — no client guessing. */
-function studioSetRuleActive(item,active,onDone){
+async function studioSetRuleActive(item,active,onDone){
   if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
   const verb=active?'Resume':'Pause';
-  if(!confirm(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
+  if(!await confirmActionV386(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
   sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
     if(error){
       if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
@@ -20017,7 +20017,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   document.querySelectorAll('.studioEditRule').forEach(b=>b.onclick=()=>{
     const r=rules.find(x=>x.rule_id===b.dataset.id);if(r)openEditor(modelFromRule(r));});
   document.querySelectorAll('.studioDelRule').forEach(b=>b.onclick=async()=>{
-    if(!confirm(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
+    if(!await confirmActionV386(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
     b.disabled=true;
     const {error}=await sb.rpc('delete_program_rule_draft',{p_config_version:draftVersionId,p_rule_id:b.dataset.id,p_expected_snapshot_hash:snapshotHash});
     if(!isCurrent())return;
@@ -23101,6 +23101,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'552cd89872fcb747f672bb67e766c15956892d1c51725d45cb3b22169438bb8d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'3d92497bd1806cfdc9ddafe25f14d23d2266493c72dc613b8e2205e5428b3f84',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

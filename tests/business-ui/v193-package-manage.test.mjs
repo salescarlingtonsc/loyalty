@@ -24,7 +24,7 @@ test('writes go through the RPC, because package_plans is read-only to the brows
   assert.ok(!/from\('package_plans'\)\.(update|delete)\(/.test(app),
     'a direct write would silently affect zero rows under SELECT-only RLS');
   const i = app.indexOf('data-package-delete]');
-  assert.match(app.slice(i, i + 700), /confirm\(/, 'deletion must be confirmed');
+  assert.match(app.slice(i, i + 700), /confirmActionV386\(/, 'deletion must be confirmed');
 });
 
 test('the appointment list filters share one baseline', () => {

@@ -1076,6 +1076,58 @@ function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
    no future caller has to remember it. route() is safe to re-enter: it takes a fresh
    beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
 function nav(h){if(location.hash===h)route();else location.hash=h}
+/* ===== THE ONE DESTRUCTIVE CONFIRM (owner ruling 2026-08-18) ================================
+   Deleting something used to behave three different ways: 28 sites called the browser's native
+   window.confirm(), five modules expanded an inline .imp-note under the row, and nine used
+   confirmDeliberateV288's typed acknowledgement. The native dialog was the problem — it cannot
+   carry Peekaa's brand, it renders as "peekaa.asia says..." in Chrome, it reads as a browser
+   error inside the installed PWA, and (V291 already said this about four money dialogs) it
+   CANNOT BE TRANSLATED, so it spoke English to a workforce CLAUDE.md says may not read it.
+
+   This is its replacement and the default for every ordinary destructive action.
+   confirmDeliberateV288 stays for the irreversible money and tenant-data actions that deserve a
+   typed acknowledgement; the inline .imp-note expand stays as the pattern for list rows.
+
+   The message keeps the SAME single string the native call passed — the leading question becomes
+   the dialog title and the remainder becomes the explanation, so no copy had to be rewritten and
+   every sentence the owner wrote survives verbatim.
+   TO CHANGE THE CONFIRM PATTERN: change this one function. */
+function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',danger=true}={}){
+  const text=String(message||'').trim();
+  const cut=(()=>{
+    const q=text.indexOf('? ');
+    if(q>=0)return q+1;
+    const dot=text.indexOf('. ');
+    return dot>=0?dot+1:-1;
+  })();
+  const title=cut>0?text.slice(0,cut).trim():text;
+  const body=cut>0?text.slice(cut).trim():'';
+  return new Promise(resolve=>{
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','confirmActionTitleV386');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(460px,100%)">
+      <h2 id="confirmActionTitleV386" style="margin:0;font-size:17px">${esc(title||'Please confirm')}</h2>
+      ${body?`<p class="muted small" style="margin-top:10px">${esc(body)}</p>`:''}
+      <div class="row" style="margin-top:18px"><span class="spacer"></span>
+        <button type="button" class="btn ghost" id="confirmActionCancelV386">${esc(cancelLabel)}</button>
+        <button type="button" class="btn${danger?' danger':''}" id="confirmActionOkV386">${esc(confirmLabel)}</button></div>
+    </div>`;
+    document.body.append(dialog);
+    let settled=false,deactivate=null;
+    const finish=value=>{
+      if(settled)return;
+      settled=true;
+      const close=deactivate;deactivate=null;
+      if(close)close({restoreFocus:true});else dialog.remove();
+      resolve(value);
+    };
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#confirmActionCancelV386'});
+    dialog.onclick=event=>{if(event.target===dialog)finish(false)};
+    dialog.querySelector('#confirmActionOkV386').onclick=()=>finish(true);
+    dialog.querySelector('#confirmActionCancelV386').onclick=()=>finish(false);
+  });
+}
 window.addEventListener('hashchange',route);
 /* "/" or ⌘K / Ctrl+K focuses the global customer search from anywhere in the workspace. "/"
    is ignored while the user is typing in a field so it can't hijack normal input. The listener

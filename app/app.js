@@ -2706,6 +2706,58 @@ function confirmDeliberateV288({title,summaryHtml='',body='',acknowledgement='I 
     dialog.querySelector('#confirmDeliberateCloseV288').onclick=()=>finish(false);
   });
 }
+/* ===== THE ONE DESTRUCTIVE CONFIRM (owner ruling 2026-08-18) ================================
+   Deleting something used to behave three different ways: 28 sites called the browser's native
+   window.confirm(), five modules expanded an inline .imp-note under the row, and nine used
+   confirmDeliberateV288's typed acknowledgement. The native dialog was the problem — it cannot
+   carry Peekaa's brand, it renders as "peekaa.asia says..." in Chrome, it reads as a browser
+   error inside the installed PWA, and (V291 already said this about four money dialogs) it
+   CANNOT BE TRANSLATED, so it spoke English to a workforce CLAUDE.md says may not read it.
+
+   This is its replacement and the default for every ordinary destructive action.
+   confirmDeliberateV288 stays for the irreversible money and tenant-data actions that deserve a
+   typed acknowledgement; the inline .imp-note expand stays as the pattern for list rows.
+
+   The message keeps the SAME single string the native call passed — the leading question becomes
+   the dialog title and the remainder becomes the explanation, so no copy had to be rewritten and
+   every sentence the owner wrote survives verbatim.
+   TO CHANGE THE CONFIRM PATTERN: change this one function. */
+function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',danger=true}={}){
+  const text=String(message||'').trim();
+  const cut=(()=>{
+    const q=text.indexOf('? ');
+    if(q>=0)return q+1;
+    const dot=text.indexOf('. ');
+    return dot>=0?dot+1:-1;
+  })();
+  const title=cut>0?text.slice(0,cut).trim():text;
+  const body=cut>0?text.slice(cut).trim():'';
+  return new Promise(resolve=>{
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','confirmActionTitleV386');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(460px,100%)">
+      <h2 id="confirmActionTitleV386" style="margin:0;font-size:17px">${esc(title||'Please confirm')}</h2>
+      ${body?`<p class="muted small" style="margin-top:10px">${esc(body)}</p>`:''}
+      <div class="row" style="margin-top:18px"><span class="spacer"></span>
+        <button type="button" class="btn ghost" id="confirmActionCancelV386">${esc(cancelLabel)}</button>
+        <button type="button" class="btn${danger?' danger':''}" id="confirmActionOkV386">${esc(confirmLabel)}</button></div>
+    </div>`;
+    document.body.append(dialog);
+    let settled=false,deactivate=null;
+    const finish=value=>{
+      if(settled)return;
+      settled=true;
+      const close=deactivate;deactivate=null;
+      if(close)close({restoreFocus:true});else dialog.remove();
+      resolve(value);
+    };
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#confirmActionCancelV386'});
+    dialog.onclick=event=>{if(event.target===dialog)finish(false)};
+    dialog.querySelector('#confirmActionOkV386').onclick=()=>finish(true);
+    dialog.querySelector('#confirmActionCancelV386').onclick=()=>finish(false);
+  });
+}
 /* V288 (audit A2, LOW 23): raw database statuses reached the screen in several places —
    'no_show', 'at_table', 'waitlisted'. One table, so a status cannot read one way on the
    calendar and another in a list. Anything unknown degrades to the underscore-free string
@@ -6179,7 +6231,7 @@ async function renderCustomerBookings(){
     $('walletBody').querySelectorAll('[data-withdraw-request]').forEach(button=>{
       button.onclick=async()=>{
         if(button.disabled)return;
-        if(!confirm('Withdraw this booking request? The business will not see it any more.'))return;
+        if(!await confirmActionV386('Withdraw this booking request? The business will not see it any more.'))return;
         button.disabled=true;button.setAttribute('aria-busy','true');
         const result=await customerRpc('customer_withdraw_booking_request_v290',{p_request:button.dataset.withdrawRequest});
         if(result.error){
@@ -19685,7 +19737,7 @@ async function servicesPage(){
     $('blist3').querySelectorAll('[data-bundle-delete]').forEach(button=>button.onclick=async()=>{
       const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleDelete);
       if(!bundle)return;
-      if(!confirm(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Disable instead — that keeps it here.`))return;
+      if(!await confirmActionV386(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Turn off instead — that keeps it here.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('delete_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id});
       if(!isCurrent())return;
@@ -20294,7 +20346,7 @@ async function bookingsPage(){
     toast('Updated');loadCapacity();
   };
   window.rmTable=async(id)=>{
-    if(!confirm('Remove this table type? Existing bookings against it are unaffected.')) return;
+    if(!await confirmActionV386('Remove this table type? Existing bookings against it are unaffected.')) return;
     const {error}=await sb.from('booking_tables').delete().eq('id',id);
     if(!isCurrent())return;
     if(error) return fail(error);
@@ -21438,7 +21490,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
       both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis you chose above.'};
     if(loyaltySelectionV230!=='stamps'&&liveModeForAskV314&&targetModeV230!==liveModeForAskV314
-       &&!confirm(modeSwitchAskV240[targetModeV230]))return;
+       &&!await confirmActionV386(modeSwitchAskV240[targetModeV230]))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -22034,8 +22086,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     dialog.querySelector('#tierDialogSlotV236').append(form);
     form.hidden=false;
     setTierDirtyStateV237(tierDirtyV237);
-    const close=()=>{
-      if(tierDirtyV237&&!confirm('Discard your unsaved changes to this tier?'))return;
+    const close=async()=>{
+      if(tierDirtyV237&&!await confirmActionV386('Discard your unsaved changes to this tier?'))return;
       closeTierDialogV236(true);opener?.focus?.()};
     dialog.querySelector('#tierDialogCloseV236').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
@@ -22448,7 +22500,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
-    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
+    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
   }
   /* Playbooks (v50 campaign/holdout/lift engine) live only in the published view — a campaign
      binds to a PUBLISHED retention version, so it has no meaning while editing a draft. The
@@ -23415,7 +23467,7 @@ async function promotionsPage(selectedPromotionId=null){
     const question=published
       ? `End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
-    if(!confirm(question))return;
+    if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
@@ -26505,7 +26557,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const question=published
       ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
-    if(!confirm(question))return;
+    if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:S.biz.id,p_promotion_id:id,p_expected_version:null});
@@ -27726,7 +27778,7 @@ async function pbRecordReturns(c,el,ctx){
 }
 const pbSealAttempts=new Map();
 async function pbSealMeasurement(c,el,ctx){
-  if(!confirm('Start the common measurement window now? Every treatment customer has a manual receipt attestation. This does not verify provider delivery or prove lift, and the measurement terms cannot be changed after sealing.'))return;
+  if(!await confirmActionV386('Start the common measurement window now? Every treatment customer has a manual receipt attestation. This does not verify provider delivery or prove lift, and the measurement terms cannot be changed after sealing.'))return;
   let attempt=pbSealAttempts.get(c.campaign_id);
   if(!attempt){attempt=crypto.randomUUID();pbSealAttempts.set(c.campaign_id,attempt)}
   const button=el.querySelector('[data-pb-seal]');
@@ -27747,14 +27799,14 @@ async function pbSealMeasurement(c,el,ctx){
   pbRenderResults(c,el,ctx);
 }
 async function pbComplete(c,ctx){
-  if(!confirm(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
+  if(!await confirmActionV386(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
   const {error}=await sb.rpc('complete_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id});
   if(error)return fail(error);
   toast('Playbook completed');
   if(ctx.isCurrent())renderPlaybooks(ctx);
 }
 async function pbCancel(c,ctx){
-  if(!confirm(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
+  if(!await confirmActionV386(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
   const {error}=await sb.rpc('cancel_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id,p_reason:null});
   if(error)return fail(error);
   toast('Playbook cancelled');
@@ -27770,7 +27822,7 @@ async function pbActivateDraft(c,ctx){
   const {candidates:cands,truncated}=await pbLoadCandidatesV244(crit.lapsed_days||45,crit.min_visits||3);
   if(truncated)return toast('Too many customers match this playbook to freeze safely — start a fresh one with a narrower rule');
   if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
-  if(!confirm(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
+  if(!await confirmActionV386(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
   const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
   if(error)return fail(error);
   toast('Playbook started');
@@ -27874,7 +27926,7 @@ function pbOpenIssueModal(c,targets,ctx){
       return toast(message);
     }
     const channel=retryChannel.channel;
-    if(!confirm(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
+    if(!await confirmActionV386(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
     const button=$('pbConfirmExposure'),status=$('pbExposureStatus');
     button.disabled=true;status.textContent='Recording manual receipt confirmations…';
     let confirmed=0;const failed=[];
@@ -28371,10 +28423,10 @@ function studioEmergencyPauseActorLabel(actor){
    version (set_studio_rule_active); emergency pause/lift writes an append-only pause row and stops
    NEW effects without deleting any historical fulfilment/discount/reservation. The chip that
    re-renders afterwards is the server's fresh state — no client guessing. */
-function studioSetRuleActive(item,active,onDone){
+async function studioSetRuleActive(item,active,onDone){
   if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
   const verb=active?'Resume':'Pause';
-  if(!confirm(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
+  if(!await confirmActionV386(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
   sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
     if(error){
       if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
@@ -31942,7 +31994,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   document.querySelectorAll('.studioEditRule').forEach(b=>b.onclick=()=>{
     const r=rules.find(x=>x.rule_id===b.dataset.id);if(r)openEditor(modelFromRule(r));});
   document.querySelectorAll('.studioDelRule').forEach(b=>b.onclick=async()=>{
-    if(!confirm(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
+    if(!await confirmActionV386(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
     b.disabled=true;
     const {error}=await sb.rpc('delete_program_rule_draft',{p_config_version:draftVersionId,p_rule_id:b.dataset.id,p_expected_snapshot_hash:snapshotHash});
     if(!isCurrent())return;
@@ -33997,7 +34049,7 @@ async function appointmentsPage(){
     routeMain.querySelectorAll('[data-delete-block]').forEach(button=>button.onclick=async()=>{
       const blockId=button.dataset.deleteBlock;
       const block=calendarBlocks.find(item=>item.id===blockId);
-      if(!block||!confirm(`Remove ${staffName[block.staff_id]||'this team member'}’s blocked time?`))return;
+      if(!block||!await confirmActionV386(`Remove ${staffName[block.staff_id]||'this team member'}’s blocked time?`))return;
       let attempt=blockDeleteAttempts.get(blockId);
       if(!attempt){attempt=crypto.randomUUID();blockDeleteAttempts.set(blockId,attempt)}
       button.disabled=true;$('calendarSelection').innerHTML='';
@@ -34020,7 +34072,7 @@ async function appointmentsPage(){
     if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item)){toast('This outcome can only be recorded after the appointment starts.');return false}
     if(status==='completed'&&!canComplete){toast('Create-sales access is required to complete an appointment.');return false}
     const words=status==='completed'?'Complete this appointment? Peekaa will create the configured checkout record. Review Sales for the final points outcome.':status==='cancelled'?'Cancel this appointment?':'Mark this appointment as a no-show?';
-    if(!confirm(words))return false;
+    if(!await confirmActionV386(words))return false;
     const stillCurrent=statusGate.begin();
     const {data,error}=await sb.rpc('set_appointment_status_v47',{p_business:S.biz.id,p_appointment:id,p_status:status});
     if(!stillCurrent())return;
@@ -34983,11 +35035,11 @@ async function bottleSetupPageV275(){
     host.querySelectorAll('[data-location-name]').forEach(input=>input.oninput=()=>{
       locations[Number(input.dataset.locationName)].name=input.value;
     });
-    host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=()=>{
+    host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=async ()=>{
       const index=Number(button.dataset.removeLocation);
       const removed=locations[index];
       if(!removed)return;
-      if(removed?.in_use&&!confirm(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
+      if(removed?.in_use&&!await confirmActionV386(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
       locations=locations.filter((_,position)=>position!==index);
       paintLocations();
     });
@@ -35796,8 +35848,8 @@ async function bottlesPage(){
          than the rule. finish_bottle_v275 stays deployed for anything still holding it, but this
          screen no longer offers two buttons for one physical event. */
       const retrieveButton=host.querySelector('[data-retrieve]');
-      if(retrieveButton)retrieveButton.onclick=()=>{
-        if(!confirm(`Mark ${bottleNameV275(bottle)} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.`))return;
+      if(retrieveButton)retrieveButton.onclick=async ()=>{
+        if(!await confirmActionV386(`Mark ${bottleNameV275(bottle)} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.`))return;
         runAction(retrieveButton,`status:${bottleId}:retrieved`,
           key=>sb.rpc('set_bottle_status_v275',{p_business:S.biz.id,p_bottle:bottleId,
             p_status:'retrieved',p_idempotency_key:key}),'Bottle retrieved');
@@ -36131,7 +36183,7 @@ async function waitlistPage(){
   }
   window.wlRemove=async id=>{
     const row=currentRows.find(r=>r.id===id);
-    if(!confirm(`Remove ${row?.name||'this person'} from the waitlist? They'll drop out of the queue.`))return;
+    if(!await confirmActionV386(`Remove ${row?.name||'this person'} from the waitlist? They'll drop out of the queue.`))return;
     if(await updateWl(id,'removed')){toast('Removed');loadWl()}
   };
   window.wlDecideBookingV73=async(requestId,decision)=>{
@@ -36506,7 +36558,7 @@ async function packagesPage(){
     });
     document.querySelectorAll('[data-package-delete]').forEach(button=>button.onclick=async()=>{
       const id=button.dataset.packageDelete,name=button.dataset.packageName||'this package';
-      if(!confirm(`Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
+      if(!await confirmActionV386(`Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('business_manage_package_plan_v193',
         {p_business:S.biz.id,p_plan:id,p_action:'delete',p_name:null});
@@ -36771,7 +36823,7 @@ async function branchesPage(){
     const branch=branchList.find(item=>item.id===branchId);
     if(!branch)return;
     if(branch.is_default)return toast('Your main branch cannot be deleted.');
-    if(!confirm(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. Past sales, bookings and expenses stay in your reports but stop naming a live branch. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
+    if(!await confirmActionV386(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. Past sales, bookings and expenses stay in your reports but stop naming a live branch. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
     const typed=String(prompt(`Type the branch name to confirm deletion: ${branch.name}`)||'').trim();
     if(typed!==String(branch.name||'').trim())return toast('The name did not match — nothing was deleted');
     if(button)button.disabled=true;
@@ -38594,7 +38646,7 @@ async function expensesPage(){
   renderReportScopeNoteV272(isCurrent);
   window.voidExp=async(id)=>{
     if(!canWrite)return;
-    if(!confirm('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
+    if(!await confirmActionV386('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
     const {error}=await sb.rpc('set_expense_void',{p_business:S.biz.id,p_expense:id,p_void:true});
     if(error) return fail(error);
     toast('Expense voided');load();
@@ -39621,7 +39673,7 @@ async function settingsPage(){
     $('tplList').querySelectorAll('[data-template-delete]').forEach(button=>button.onclick=async()=>{
       const template=templates.find(item=>item.id===button.dataset.templateDelete);
       if(!template)return;
-      if(!confirm(`Delete the "${template.name}" template? Teammates who were given these modules keep them — only the saved shortcut goes.`))return;
+      if(!await confirmActionV386(`Delete the "${template.name}" template? Teammates who were given these modules keep them — only the saved shortcut goes.`))return;
       const {error}=await sb.from('module_templates').delete()
         .eq('id',template.id).eq('business_id',S.biz.id);
       if(error)return fail(error);
@@ -39642,7 +39694,7 @@ async function settingsPage(){
   };
   window.setStaffActiveV285=async(id,active,button)=>{
     const name=button?.dataset?.name||'this teammate';
-    if(!active&&!confirm(`Switch ${name} off? They lose access straight away and stop using a paid seat. Everything they have already done stays on record, and you can switch them back on any time.`))return;
+    if(!active&&!await confirmActionV386(`Switch ${name} off? They lose access straight away and stop using a paid seat. Everything they have already done stays on record, and you can switch them back on any time.`))return;
     if(button)button.disabled=true;
     const {error}=await sb.from('staff').update({active}).eq('id',id).eq('business_id',S.biz.id);
     if(button)button.disabled=false;
@@ -39656,7 +39708,7 @@ async function settingsPage(){
      would take the person's name off history that has to keep answering "who did this". */
   window.rmStaff=async(id,btn)=>{
     const name=btn?.dataset?.name||'this teammate';
-    if(!confirm(`Delete ${name}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.`))return;
+    if(!await confirmActionV386(`Delete ${name}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.`))return;
     if(btn)btn.disabled=true;
     const [saleCount,appointmentCount]=await Promise.all([
       sb.from('sales').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('staff_id',id),
@@ -39669,7 +39721,7 @@ async function settingsPage(){
       toast(workspaceTemplateTextV97(worked===1?'staffKeptHasRecord':'staffKeptHasRecords',{name,count:worked}));
       return;
     }
-    if(!confirm(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;
+    if(!await confirmActionV386(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;
     const removedUserId=teamRowsById.get(id)?.user_id||'';
     const {error}=await sb.from('staff').delete().eq('id',id);
     if(error)return fail(error);
@@ -40180,7 +40232,7 @@ async function loadSignupConfig(host){
     a.download=`${BRAND.downloadPrefix}-signup-qr-${S.biz.slug}.png`;a.click();
   };
   $('revokeJoinQr').onclick=async()=>{
-    if(!confirm('Revoke every active customer join QR for this business? Printed and saved copies will stop working.'))return;
+    if(!await confirmActionV386('Revoke every active customer join QR for this business? Printed and saved copies will stop working.'))return;
     const button=$('revokeJoinQr');button.disabled=true;
     $('joinQrStatus').textContent='Revoking active join QRs…';
     const {data,error}=await sb.rpc('business_revoke_customer_join_qrs_v90',{p_business:S.biz.id});

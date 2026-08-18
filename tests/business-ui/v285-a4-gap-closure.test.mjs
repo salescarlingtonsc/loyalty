@@ -162,7 +162,7 @@ test('a bundle can be edited, switched off and deleted', () => {
     'enable/disable must send only the active flag, so it cannot rename or reprice by accident');
   assert.match(app, /sb\.rpc\('delete_service_bundle_v285',\{p_business:S\.biz\.id,p_bundle:bundle\.id\}\)/);
   assert.match(app, /function openBundleEditV285\(bundleId\)\{/);
-  assert.match(app, /use Disable instead/, 'the delete confirm must name the reversible alternative');
+  assert.match(app, /use Turn off instead/, 'the delete confirm must name the reversible alternative');
 });
 
 test('the bundle writers exist server-side because the tables are read-only to the browser', () => {
@@ -211,7 +211,7 @@ test('a teammate is deactivated, not deleted, unless they never worked', () => {
   assert.match(remove, /sb\.from\('sales'\)\.select\('id',\{count:'exact',head:true\}\)/);
   assert.match(remove, /sb\.from\('appointments'\)\.select\('id',\{count:'exact',head:true\}\)/);
   assert.match(remove, /if\(worked>0\)\{/, 'a teammate with history must not be deletable at all');
-  assert.equal((remove.match(/confirm\(/g) || []).length, 2,
+  assert.equal((remove.match(/confirmActionV386\(/g) || []).length, 2,
     'deleting a person must pass two separate confirmations');
 });
 

@@ -1775,7 +1775,7 @@ async function renderCustomerBookings(){
     $('walletBody').querySelectorAll('[data-withdraw-request]').forEach(button=>{
       button.onclick=async()=>{
         if(button.disabled)return;
-        if(!confirm('Withdraw this booking request? The business will not see it any more.'))return;
+        if(!await confirmActionV386('Withdraw this booking request? The business will not see it any more.'))return;
         button.disabled=true;button.setAttribute('aria-busy','true');
         const result=await customerRpc('customer_withdraw_booking_request_v290',{p_request:button.dataset.withdrawRequest});
         if(result.error){
