@@ -368,7 +368,8 @@ const sqlTestByMigrationName = new Map([
   ['nestly_v384_stamp_conversion_switch', 'db/tests/v384_stamp_conversion_switch.sql'],
   ['nestly_v385_profile_save_and_industry_label', 'db/tests/v385_profile_save_and_industry_label.sql'],
   ['nestly_v386_customer_company_branches', 'db/tests/v386_customer_company_branches.sql'],
-  ['nestly_v386_dated_programme_usage', 'db/tests/v386_dated_programme_usage.sql']
+  ['nestly_v386_dated_programme_usage', 'db/tests/v386_dated_programme_usage.sql'],
+  ['nestly_v391_capabilities_undefined_column', 'db/tests/v391_capabilities_undefined_column.sql']
 ]);
 
 // Production ledger evidence was read from gadpooereceldfpfxsod on 2026-08-04.
@@ -872,7 +873,7 @@ async function pendingMigrations() {
 
 test('all pending migrations and SQL acceptance suites have atomic boundaries', async () => {
   const pending = await pendingMigrations();
-  assert.equal(pending.length, 312); // + v386 dated programme usage (a second, independent v386 -- parallel-session number collision, not a real conflict) // + v386 customer company branches (NOT applied to prod) + v384 stamp conversion switch + v385 profile save // + v384 stamp conversion switch + v371 programme-off reaches the customer + v365 tier benefit limits & merchant issuance (applied to prod 2026-08-17) // + the 2026-08-16 rewards wave (v343/v345/v347/v348/v350/v353/v354/v355/v359/v361/v362), all applied to prod and sharing one acceptance suite // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
+  assert.equal(pending.length, 313); // + v391 P0: v384 read running_since/paused_since as columns that do not exist (42703 on every wallet load) // + v386 dated programme usage (a second, independent v386 -- parallel-session number collision, not a real conflict) // + v386 customer company branches (NOT applied to prod) + v384 stamp conversion switch + v385 profile save // + v384 stamp conversion switch + v371 programme-off reaches the customer + v365 tier benefit limits & merchant issuance (applied to prod 2026-08-17) // + the 2026-08-16 rewards wave (v343/v345/v347/v348/v350/v353/v354/v355/v359/v361/v362), all applied to prod and sharing one acceptance suite // + v311 money kernel + v312 pot migration + v315 lead score repair + v316 taxonomy/match queue repair + v317 restored dependencies + v318 system-managed flag alignment + v313/v314 W6 increment 1 (reward programme identity + switchboard inversion) + v322 owner programme rulings + v325 business bio + v326/v326a points-gift lifecycle + v327 customer branch choice + v327 global customer QR (parallel-session v327 number collision) + v328 staff-choice manual confirm + v329 owner reschedule booking request + v330 pending slot block & confirmation template + v329 membership plan lifecycle (parallel-session v329 number collision) + v331 tier lifecycle + v332 retention program lifecycle + v340 reward purchase requirement (NOT applied)
   const mappedSuites = new Map(pending.map((migration) => [
     migrationIdentity(migration),
     rollbackSuiteFor(migration)

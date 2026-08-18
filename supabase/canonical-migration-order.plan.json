@@ -2146,6 +2146,12 @@
       "version": "20260818000003",
       "name": "nestly_v386_dated_programme_usage",
       "sourcePath": "db/migrations/20260818_nestly_v386_dated_programme_usage.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260818000004",
+      "name": "nestly_v391_capabilities_undefined_column",
+      "sourcePath": "db/migrations/20260818_nestly_v391_capabilities_undefined_column.sql"
     }
   ]
 }
