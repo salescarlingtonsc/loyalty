@@ -1,11 +1,11 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d89a4fe84b5d971bf1f0a5139691f6e9d9347393f928a1a4568879a03df04a93"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c29c92cce8371bb98681d2f6df0db25f959a7d5f4a477ac582856c46572b95cb"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
    borders instead of heavy strokes · layered low-opacity shadows (never one big
    blur) · frosted glass on floating surfaces · springy motion on interaction.
-   Fraunces is now reserved for the wordmark ONLY — headings run on the system
+   The wordmark is an image asset, not type — headings run on the system
    (SF on Apple) stack, which is what makes it read as a native app rather than a
    generic web dashboard.
    ============================================================================ */
@@ -66,13 +66,21 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .password-icon-button[disabled]{opacity:.38;cursor:not-allowed}
 .password-icon-button[aria-pressed="true"]{background:var(--tint);color:var(--coral)}
 /* Buttons: press-down on :active is the single strongest "native app" tell */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--control-h);background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:100px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--control-h);background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:999px;
   box-shadow:0 1px 2px rgba(194,65,53,.2),0 6px 16px rgba(194,65,53,.22);
   transition:transform var(--motion-ui) var(--spring),box-shadow var(--motion-ui) var(--ease),opacity .15s,background var(--motion-fast) var(--ease),border-color var(--motion-fast) var(--ease)}
 .btn:hover{transform:translateY(-1.5px);box-shadow:0 2px 4px rgba(255,107,94,.22),0 10px 26px rgba(255,107,94,.3)}
 .btn:active{transform:scale(.965) translateY(0);transition-duration:.06s}
 .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--control-border);box-shadow:var(--shadow)}
 .btn.ghost:hover{border-color:#DDD7CD;box-shadow:var(--shadow-lg)}
+/* Button hierarchy: `primary` and `secondary` were used in markup (Dashboard, Till, Settings,
+   editors) but never defined, so every `btn secondary` rendered as a full coral primary and the
+   Dashboard showed three competing primaries. These are explicit aliases of the two styles the
+   shared component already maps them to (CUI.action: secondary -> ghost). Presentation only. */
+.btn.primary{background:var(--grad);color:#fff;border:none;
+  box-shadow:0 1px 2px rgba(194,65,53,.2),0 6px 16px rgba(194,65,53,.22)}
+.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--control-border);box-shadow:var(--shadow)}
+.btn.secondary:hover{border-color:#DDD7CD;box-shadow:var(--shadow-lg)}
 .btn.sm{padding:8px 14px;font-size:13px;min-height:44px}
 .btn.danger{background:#fff;color:var(--red);border:1px solid #D9A29C;box-shadow:none}
 .btn[disabled]{opacity:.48;pointer-events:none;box-shadow:none}
@@ -83,11 +91,11 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
   box-shadow:var(--shadow);padding:22px;transition:box-shadow var(--motion-ui) var(--ease),border-color var(--motion-fast) var(--ease),transform var(--motion-ui) var(--ease),background var(--motion-fast) var(--ease)}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3.5px 10px;border-radius:100px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
 .pill.on{background:#E7F6EE;color:var(--green)} .pill.off{background:#F1EEE9;color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:#E7F6EE;color:var(--green)} .pill.no{background:#FBEAE7;color:var(--red)}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
-.pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
+.pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:#E7F6EE;color:var(--green)}
 .pill-toggle-v334.off{background:#FBEAE7;color:var(--red)}
 /* V343 (owner mockup, photo 4): each gift on the Points System page is now a card — photo,
@@ -103,7 +111,7 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grow-row-menu-v351>summary::marker{display:none}
 .grow-row-menu-v351 .menu{position:absolute;top:calc(100% + 6px);right:0;z-index:20;min-width:150px;
   background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg)}
-.grow-row-menu-v351 .menu button{display:flex;width:100%;align-items:center;min-height:40px;padding:8px 10px;
+.grow-row-menu-v351 .menu button{display:flex;width:100%;align-items:center;min-height:var(--control-h);padding:8px 10px;
   border-radius:8px;font-size:13.5px;font-weight:600;color:var(--ink2);text-align:left;background:transparent}
 .grow-row-menu-v351 .menu button:hover{background:#F2EFEA;color:var(--ink)}
 .grow-row-menu-v351 .menu button.danger{color:var(--red)}
@@ -151,9 +159,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .cui-page-title{display:flex;align-items:flex-start;gap:12px}.cui-page-title>svg{color:var(--coral);margin-top:4px}
 .cui-page-title h1{font-size:1.85rem;font-weight:700}.cui-page-title p{color:var(--muted);font-size:13px;margin-top:3px;max-width:72ch;line-height:1.5}
 .cui-page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.v150-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
-.v150-titlebar h1{font-size:1.85rem;font-weight:700}.v150-titlebar p{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.45}
-.v150-title-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+/* Page header: .v150-titlebar (Dashboard, Customers, Sales, Services, Programmes) and
+   .cui-page-head (Till, Appointments, Loyalty, Retention, Waitlist, ...) are the same component
+   built twice and had drifted apart on vertical alignment, bottom margin, action gap and
+   subtitle measure. Matched to .cui-page-head above. Presentation only. */
+.v150-titlebar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.v150-titlebar h1{font-size:1.85rem;font-weight:700}.v150-titlebar p{color:var(--muted);font-size:13px;margin-top:3px;max-width:72ch;line-height:1.5}
+.v150-title-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .v150-section{margin-top:18px}.v150-section-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .v150-section-title h2{font-size:1.25rem}.v150-section-title p{font-size:12.5px;color:var(--muted);margin-top:2px}
 .v150-soft-head{background:linear-gradient(180deg,#FFF7F4,#FFFDFC);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;margin:-22px -22px 16px;padding:16px 22px}
@@ -249,8 +261,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 @media(max-width:760px){.section-subtabs-v200{border-radius:999px}}
 .v150-filterbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .v150-filterbar>*{min-width:0}.v150-filterbar label{margin-top:0}
-.v150-kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750}
-.v150-kpi .v{font-size:1.65rem;font-weight:760;margin-top:8px}.v150-kpi .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:6px}
+/* KPI tiles: `.kpi` and `.v150-kpi` are the same tile built twice and specified different label
+   weight/tracking and value size/spacing. P&L sets BOTH classes, so `.kpi` (later in this sheet)
+   already won and these values never applied there. Matched to `.kpi` so the tile has one type
+   spec whichever class is present. `.v150-kpi-head` and `.hint` are unchanged. */
+.v150-kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.v150-kpi .v{font-size:1.75rem;font-weight:680;margin-top:3px;letter-spacing:-.035em;font-variant-numeric:tabular-nums}.v150-kpi .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:6px}
 .v150-kpi-head{background:var(--tint);border-radius:14px;padding:10px 12px;margin:-8px -8px 12px;color:var(--coral)}
 .nav-label{min-width:0;overflow-wrap:anywhere}.nav-badge{margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--coral);color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
 .dashboard-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -341,7 +357,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
 .dashboard-schedule-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
-.dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:100px;font-size:13px;min-height:34px}
+.dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:999px;font-size:13px;min-height:34px}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
 /* V375: the whole chip is the tap target now that it opens the appointment. */
 .dashboard-schedule-chip-link-v375{display:flex;align-items:baseline;gap:7px;color:inherit;text-decoration:none}
@@ -383,7 +399,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .insight-card[data-tone="attention"]{border-color:#F0C8BF;background:#FFF8F5}.insight-card[data-tone="positive"]{border-color:#BFE3D3;background:#F7FCF9}.insight-card[data-tone="neutral"]{background:#fff}
 .insight-card-head{display:flex;align-items:flex-start;gap:10px}.insight-card-head .insight-icon{width:34px;height:34px;border-radius:12px;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex:0 0 auto}
 .insight-card h3{margin:0;font-size:1.04rem}.insight-card p{margin:0;line-height:1.45}.insight-meta{display:flex;flex-wrap:wrap;gap:6px}.insight-meta .pill{font-size:11px}
-.insight-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.insight-actions .btn{min-height:38px}
+.insight-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}.insight-actions .btn{min-height:var(--control-h)}
 .business-health-list{display:grid;gap:8px}.health-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px}.health-row:first-child{border-top:0;padding-top:0}.health-row b{font-size:13px}.health-row span{font-size:12px;color:var(--muted);text-align:right}
 /* V194 (owner: "alignment issue" on the From / To / Appointment status row). Each cell holds a
    label above a control, and 'Appointment status' wraps to two lines at this column width while
@@ -423,7 +439,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-rank-card .rank-visual{display:flex;gap:4px;margin-bottom:10px;align-items:flex-end}.staff-rank-card .rank-visual i{display:block;width:9px;border-radius:999px;background:#E9B6AA}.staff-rank-card .rank-visual i:nth-child(1){height:12px}.staff-rank-card .rank-visual i:nth-child(2){height:22px;background:var(--coral)}.staff-rank-card .rank-visual i:nth-child(3){height:16px}
 .staff-rank-card b{display:block;font-size:15px;overflow-wrap:anywhere}.staff-rank-card p{margin-top:5px;color:var(--muted)}
 .staff-rank-basis{font-size:12px;color:var(--muted);margin:6px 0 0}
-.programme-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.programme-tabs a{min-height:40px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:750;color:var(--ink)}.programme-tabs a.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+.programme-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}.programme-tabs a{min-height:var(--control-h);display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 14px;font-weight:750;color:var(--ink)}.programme-tabs a.act{background:var(--ink);color:#fff;border-color:var(--ink)}
 .programme-category{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;margin-top:12px}.programme-category-title{background:#FFF7F4;padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);font-weight:850}
 /* V385: Settings has exactly one visible section now (owner, photo 10), so the tablist has
    nothing left to switch between. The buttons stay in the DOM for staffMembersPage. */
@@ -465,7 +481,9 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .promotion-scope-options label{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.35}
 .promotion-scope-options input{width:auto;min-height:auto;margin-top:2px}.promotion-scope-options b{display:block;font-size:13px}.promotion-branch-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .promotion-branch-list label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:7px 10px;font-size:12px;font-weight:700}
-.sortable-th{background:transparent;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0}
+/* Weight matched to the plain `th` above — sortable and non-sortable headers sit side by side in
+   the same row and were 700 vs 600. Presentation only. */
+.sortable-th{background:transparent;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0}
 .till-found-card{background:linear-gradient(135deg,#F0FFF7,#FFFDFC);border:1px solid #CDEADA!important}
 .choice-button{border:1px solid var(--control-border);background:#fff;border-radius:18px;padding:14px;text-align:left;min-height:58px;box-shadow:var(--shadow);transition:background .16s var(--ease),border-color .16s var(--ease),transform .18s var(--spring)}
 .choice-button:hover{background:#FBFAF8;border-color:#D6CFC6;transform:translateY(-1px)}
@@ -505,7 +523,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 /* Toast: frosted, springs up from the bottom like a native banner */
 .toast{position:fixed;bottom:26px;left:50%;background:rgba(23,22,26,.9);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
-  color:#fff;padding:12px 22px;border-radius:100px;font-size:13.5px;font-weight:500;
+  color:#fff;padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:500;
   box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:99;opacity:0;pointer-events:none;
   transform:translateX(-50%) translateY(12px) scale(.96);
   transition:opacity .26s var(--ease),transform .32s var(--spring)}
@@ -543,7 +561,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .ind.sel{border-color:var(--coral);background:var(--tint);box-shadow:0 0 0 3.5px rgba(255,107,94,.13)}
 .ind .em{font-size:22px;display:block;margin-bottom:6px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.chip{background:#F1EEE9;border-radius:100px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted)}
+.chip{background:#F1EEE9;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted)}
 .chip.on{background:var(--tint);color:#D0562E}
 /* ---------- shell: light rail (mockup) + frosted top bar, profile TOP-RIGHT ---------- */
 .shell{display:grid;grid-template-columns:246px 1fr;min-height:100dvh}
@@ -581,13 +599,13 @@ tr[aria-selected="true"] td{background:var(--tint)}
   background:rgba(232,227,218,.94);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .profile{position:relative}
-.profile .who{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border-radius:100px;
+.profile .who{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px 6px 6px;border-radius:999px;
   cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .profile .who:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
 .profile .who:active{transform:scale(.975)}
 .profile .who .chev{font-size:9px;color:var(--muted);margin-left:2px}
-.profile .avatar{width:30px;height:30px;border-radius:100px;background:var(--grad);color:#fff;
+.profile .avatar{width:30px;height:30px;border-radius:999px;background:var(--grad);color:#fff;
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;flex-shrink:0;
   box-shadow:0 2px 6px rgba(255,107,94,.3)}
 /* menu now drops DOWN from the top-right chip (was: up from the bottom-left rail) */
@@ -603,7 +621,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .profile-menu-section{padding:8px 12px;border-top:1px solid var(--hair);margin-top:4px}
 .profile-menu-section:first-child{border-top:0;margin-top:0}
 .profile-menu-section label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin:0 0 6px;display:block}
-.profile-menu-section input,.profile-menu-section select{min-height:40px;font-size:14px;border-radius:12px}
+.profile-menu-section input,.profile-menu-section select{min-height:var(--control-h);font-size:14px;border-radius:12px}
 .profile-menu-section .row{gap:6px;align-items:center}
 .profile-menu-saved{font-size:12px;color:var(--ok);min-height:16px;margin-top:4px}
 .business-workspace-switch,.customer-workspace-switch{position:relative}
@@ -617,12 +635,12 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .business-workspace-switch .menu a:hover,.customer-workspace-switch .menu a:hover{background:#F2EFEA;color:var(--ink)}
 /* notification bell — sits left of the profile chip, same frosted-popover language */
 .bellwrap{position:relative}
-.bellbtn{position:relative;width:44px;height:44px;border-radius:100px;display:flex;align-items:center;
+.bellbtn{position:relative;width:44px;height:44px;border-radius:999px;display:flex;align-items:center;
   justify-content:center;cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   font-size:16px;transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .bellbtn:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
 .bellbtn:active{transform:scale(.94)}
-.bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:100px;
+.bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
 .notif-menu{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-width:calc(100vw - 40px);
@@ -640,7 +658,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
    jobs used all day (find a customer, quick earn, new appointment) are one reach from any route */
 .global-actions{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;margin-right:auto}
 .global-search{display:flex;align-items:center;gap:6px;flex:0 1 340px;min-width:0;height:44px;padding-left:13px;
-  background:#fff;border:1px solid var(--hair);border-radius:100px;box-shadow:var(--shadow);
+  background:#fff;border:1px solid var(--hair);border-radius:999px;box-shadow:var(--shadow);
   transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
 .global-search:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px rgba(255,107,94,.18)}
 .global-search-ic{display:inline-flex;align-items:center;color:var(--muted);flex-shrink:0}
@@ -648,7 +666,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
   box-shadow:none;padding:0 4px;font-size:13.5px;color:var(--ink)}
 .global-search input:focus{outline:none;border:0;box-shadow:none}
 .global-search-go{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;
-  border-radius:100px;background:var(--grad);color:#fff;box-shadow:0 1px 2px rgba(194,65,53,.2)}
+  border-radius:999px;background:var(--grad);color:#fff;box-shadow:0 1px 2px rgba(194,65,53,.2)}
 .global-search-go:active{transform:scale(.92)}
 .global-quick{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .global-act{white-space:nowrap}.global-act svg{flex-shrink:0}
@@ -695,7 +713,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .staff-invite-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.09em;font-weight:800;color:var(--ink)}
 .staff-invite-meta{display:grid;gap:4px;margin-top:7px;color:var(--muted);font-size:12.5px}
 .staff-invite-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.staff-invite-actions .btn{min-height:40px}
+.staff-invite-actions .btn{min-height:var(--control-h)}
 /* settings — tabbed sections so each save has a clear, small scope instead of one long page */
 .settings-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line)}
 .settings-tab{min-height:44px;padding:10px 15px;border:0;border-bottom:2px solid transparent;background:transparent;
@@ -712,11 +730,11 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .workspace-logo-fields{min-width:0}
 .settings-scope{color:var(--muted);font-size:12px;line-height:1.4;flex:1 1 160px;min-width:0}
 .switchrow{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 4px;font-size:12.5px;color:var(--ink2)}
-.tglsw{position:relative;width:44px;height:44px;border-radius:100px;background:transparent;cursor:pointer}
-.tglsw::before{content:'';position:absolute;left:4px;top:11px;width:36px;height:21px;border-radius:100px;background:var(--line);
+.tglsw{position:relative;width:44px;height:44px;border-radius:999px;background:transparent;cursor:pointer}
+.tglsw::before{content:'';position:absolute;left:4px;top:11px;width:36px;height:21px;border-radius:999px;background:var(--line);
   transition:background .18s var(--ease);flex-shrink:0}
 .tglsw.on::before{background:var(--green)}
-.tglsw::after{content:'';position:absolute;top:13px;left:6px;width:17px;height:17px;border-radius:100px;
+.tglsw::after{content:'';position:absolute;top:13px;left:6px;width:17px;height:17px;border-radius:999px;
   background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s var(--spring)}
 .tglsw.on::after{transform:translateX(15px)}
 /* universal importer modal */
@@ -805,8 +823,8 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .birthday-gift-modal-v366 .grow-secondary{margin-top:14px}
 .birthday-gift-modal-v366 .grow-secondary summary{font-size:14px}
 .birthday-gift-modal-v366 label{margin-top:12px}
-.seg{display:inline-flex;gap:4px;background:#F1EEE9;border-radius:100px;padding:3px}
-.seg button{background:transparent;border-radius:100px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg{display:inline-flex;gap:4px;background:#F1EEE9;border-radius:999px;padding:3px}
+.seg button{background:transparent;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .seg button.act{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
 .imp-prev{border:1px solid var(--hair);border-radius:var(--r-sm);overflow:hidden;margin-top:14px}
 .imp-prev table{font-size:12px}.imp-prev th,.imp-prev td{padding:7px 10px}
@@ -834,8 +852,8 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .gb-meter{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 13px;background:#FBFAF8}
 .gb-meter-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .gb-meter-figure{font-size:1.45rem;font-weight:700;letter-spacing:-.02em;line-height:1}
-.gb-meter-bar{margin-top:10px;height:9px;border-radius:100px;background:#EFEAE3;overflow:hidden}
-.gb-meter-fill{display:block;height:100%;border-radius:100px;transition:width .22s var(--ease),background-color .22s var(--ease)}
+.gb-meter-bar{margin-top:10px;height:9px;border-radius:999px;background:#EFEAE3;overflow:hidden}
+.gb-meter-fill{display:block;height:100%;border-radius:999px;transition:width .22s var(--ease),background-color .22s var(--ease)}
 .gb-meter.is-good .gb-meter-figure{color:var(--green)} .gb-meter.is-good .gb-meter-fill{background:var(--green)}
 .gb-meter.is-watch .gb-meter-figure{color:var(--amber)} .gb-meter.is-watch .gb-meter-fill{background:var(--amber)}
 .gb-meter.is-high .gb-meter-figure{color:var(--red)} .gb-meter.is-high .gb-meter-fill{background:var(--red)}
@@ -883,7 +901,7 @@ input[type=range]:focus{box-shadow:none}
 .wl-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
 .wl-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
 .wl-row.contacted{background:#FBFAF8}
-.wl-rank{flex:0 0 auto;width:38px;height:38px;border-radius:100px;display:flex;align-items:center;justify-content:center;background:var(--tint);color:var(--coral);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.wl-rank{flex:0 0 auto;width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--tint);color:var(--coral);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums}
 .wl-main{flex:1 1 auto;min-width:0}
 .wl-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:1.02rem}
 .wl-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
@@ -902,7 +920,7 @@ input[type=range]:focus{box-shadow:none}
 .range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .range input{width:auto}
 /* segmented control, iOS-style */
-.qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:100px;padding:9px 14px;font-size:12.5px;
+.qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
   transition:transform .18s var(--spring),color .14s,background .14s}
 .qbtn:hover{color:var(--ink)}
@@ -1096,7 +1114,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .edCondValCell,.edEffValCell{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1 1 170px;min-width:0}
 .edCondValCell input,.edCondValCell select,.edEffValCell input,.edEffValCell select{min-width:96px;min-height:44px}
 .edEffLbl{font-size:12px;color:var(--muted)}
-.edDowLbl{display:inline-flex;align-items:center;gap:5px;font-size:13px;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:100px}
+.edDowLbl{display:inline-flex;align-items:center;gap:5px;font-size:13px;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:999px}
 .studio-advanced{margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}
 .studio-advanced summary{cursor:pointer;font-weight:600;color:var(--coral);min-height:44px;display:flex;align-items:center}
 .studio-canon{margin-top:10px}
@@ -1120,7 +1138,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .studio-impact-eff{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:5px 0;flex-wrap:wrap;border-top:1px solid var(--hair)}
 .studio-impact-eff:first-of-type{border-top:none}
 .studio-impact-flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.studio-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:100px;border:1px solid var(--line);color:var(--muted)}
+.studio-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .studio-tag.fin{border-color:var(--red);color:var(--red)}
 .studio-tag.cust{border-color:var(--coral);color:var(--coral)}
 @media(max-width:520px){.stCond>select,.stEff>select,.edCondValCell,.edEffValCell{flex:1 1 100%}
@@ -1206,7 +1224,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-cart-line .till-cart-line-label{flex:1;min-width:0;font-weight:600}
 .till-cart-line .till-cart-line-sub{display:block;font-weight:400;color:var(--muted);font-size:12px}
 .till-cart-qty{display:flex;align-items:center;gap:8px}
-.till-cart-qty .btn{min-width:40px;min-height:40px;padding:0;font-size:20px;font-weight:700}
+.till-cart-qty .btn{min-width:var(--control-h);min-height:var(--control-h);padding:0;font-size:20px;font-weight:700}
 .till-cart-qty output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
 .till-cart-line-amount{min-width:76px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .till-cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font-size:1.5rem;font-weight:800;letter-spacing:-.03em}
@@ -1658,7 +1676,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* Customer 360 (competitive audit §10 Phase 2): one header, one next-best-action, one timeline.
    Pictogram-first, big tap targets, numbers over words — low-literacy-first per CLAUDE.md. */
 .c360-badges{display:flex;gap:7px;flex-wrap:wrap;margin:-4px 0 16px}
-.c360-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:100px;font-size:12px;font-weight:650;border:1px solid var(--hair);background:#FBF7F3;color:var(--ink2)}
+.c360-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:650;border:1px solid var(--hair);background:#FBF7F3;color:var(--ink2)}
 .c360-badge svg{color:currentColor}
 .c360-badge.vip{background:#F6EFFC;color:#7A2E9D;border-color:#E6D3F3}
 .c360-badge.regular{background:#E7F6EE;color:var(--green);border-color:#CBEAD8}
@@ -1985,10 +2003,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   color:var(--ink2);font-size:12.5px;font-weight:650;text-align:center;transition:background .14s var(--ease),color .14s var(--ease),transform .18s var(--spring)}
 .customer-primary-nav button{font-family:inherit;background:transparent;cursor:pointer}
 .customer-primary-nav a:hover,.customer-primary-nav button:hover{background:#F2EFEA;color:var(--ink);transform:translateY(-1px)}
-.customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}
+/* The customer nav active state was declared four times across this sheet in two different reds
+   (--coral #C24135 and --peekaa-red #F06A4F); the two --coral declarations were already dead,
+   overridden by the --peekaa-red rules below. Removed so the customer accent has one source. */
 .customer-primary-nav a span,.customer-primary-nav button span{min-width:0;overflow-wrap:break-word;hyphens:auto}
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
-.workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:100px;background:#fff;font-size:13px;font-weight:650}
+.workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:999px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
@@ -2623,7 +2643,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-grid-v96{gap:24px}.customer-programme-category-head{justify-content:space-between}.customer-programme-category-head h2{font-family:Georgia,'Times New Roman',serif;font-size:1.35rem;color:#111}.customer-programme-category-grid{grid-template-columns:1fr;gap:12px}.customer-programme-card-v95{border-radius:17px;min-height:136px}.customer-programme-card-accent{display:none}.customer-programme-card-body{grid-template-columns:78px minmax(0,1fr) auto;gap:14px;padding:16px}.customer-programme-card-v95 .customer-programme-logo{width:72px;height:72px;border-radius:18px}.customer-programme-card-copy .customer-quest-kicker{color:var(--coral);letter-spacing:.16em}.customer-programme-card-copy h2{font-family:Georgia,'Times New Roman',serif;font-size:1.35rem}.customer-programme-card-balance{grid-column:auto;display:grid;justify-items:end;margin:0;padding:0;border:0}.customer-programme-card-balance b{font-size:1.65rem}.customer-programme-holdings,.customer-reward-progress{grid-column:2/-1}
 .customer-booking-tabs{border-radius:18px;padding:7px;margin:0 0 18px}.customer-booking-tab{min-height:52px;border-radius:14px;font-size:.98rem}.customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--coral)}
 .customer-booking-business{border-radius:22px;padding:18px 20px}.customer-booking-business>.wallet-section-head{padding-bottom:15px;border-bottom:1px solid var(--hair)}.customer-booking-logo{width:76px;height:76px;border-radius:18px}.customer-booking-business h2{font-family:Georgia,'Times New Roman',serif;font-size:1.45rem}.wallet-appt{align-items:center;margin-top:10px;padding:14px;border:1px solid var(--hair);border-radius:18px;background:linear-gradient(135deg,#FFFDFC,#FAF1EA);border-bottom:1px solid var(--hair)}.wallet-appt b{font-size:1.02rem}.wallet-appt .pill{border-radius:999px}
-.customer-primary-nav{border:0;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:0 12px 34px rgba(54,44,35,.13)}.customer-primary-nav a[aria-current="page"]{background:var(--tint);color:var(--coral)}.customer-nav-scan{color:#111}.customer-nav-scan-fab{width:60px;height:60px;background:var(--grad);box-shadow:0 14px 30px rgba(226,68,53,.35),0 0 0 5px #fff}
+.customer-primary-nav{border:0;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:0 12px 34px rgba(54,44,35,.13)}.customer-nav-scan{color:#111}.customer-nav-scan-fab{width:60px;height:60px;background:var(--grad);box-shadow:0 14px 30px rgba(226,68,53,.35),0 0 0 5px #fff}
 .customer-scan-modal{align-items:flex-end;background:rgba(18,17,19,.58);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}.customer-scan-modal .modal-card{width:min(560px,calc(100vw - 32px));margin-bottom:max(74px,env(safe-area-inset-bottom));border-radius:28px;padding:26px 28px 30px;background:linear-gradient(145deg,#FFFDFB,#FDF6F0);box-shadow:0 -18px 50px rgba(16,14,15,.24)}.customer-scan-modal .modal-card::before{content:"";display:block;width:60px;height:8px;margin:-8px auto 22px;border-radius:999px;background:#E6DAD6}.customer-scan-modal h2{font-size:2rem;line-height:1.05}.customer-scan-modal #customerMyQrSlotV329{max-width:290px!important;min-height:290px!important;border-color:#FACAC2!important;border-radius:18px!important}.customer-scan-modal #customerMyQrSwitchToScan{min-height:56px;margin-top:18px!important;border-color:#9B95A1;color:#17161A;background:#fff}
 @media(max-width:720px){
   .customer-shell{padding-top:max(18px,env(safe-area-inset-top));padding-bottom:calc(118px + env(safe-area-inset-bottom))}
@@ -2865,7 +2885,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d89a4fe84b5d971bf1f0a5139691f6e9d9347393f928a1a4568879a03df04a93</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · c29c92cce8371bb98681d2f6df0db25f959a7d5f4a477ac582856c46572b95cb</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6249,7 +6269,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'d89a4fe84b5d971bf1f0a5139691f6e9d9347393f928a1a4568879a03df04a93',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'c29c92cce8371bb98681d2f6df0db25f959a7d5f4a477ac582856c46572b95cb',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
