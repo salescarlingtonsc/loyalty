@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="494c166aec285b9ea3e0fe065961c989bfb4a774b5db5926324ed56382843914"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1c67c5d83004901f48e359812cd72a87f8635f7ca1fd722371d4507a31e5a5f3"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3012,6 +3012,19 @@ function customerLoadReferenceV389(error){
   const code=String(error.code||'').trim();
   if(/^[A-Za-z0-9_]{2,12}$/.test(code))return code;
   return 'network';
+}
+/* v390 (owner: "maybe because i was out of credit?" — and that is very likely what it was: the
+   app shell is served by the service worker, so the page renders from cache while the data call
+   dies on a phone with no mobile data left). The app already knows how to say this: the inbox
+   has printed "You appear to be offline" since C46, and customerAuthFailureKindV289 already
+   classifies a codeless fetch failure as 'network'. The wallet's own retry card was the one
+   surface still reporting a dead connection as though the BUSINESS were broken — which sends
+   the customer to the shop to complain about a problem their phone bill caused. Reuses that
+   classifier rather than adding a second opinion about what 'offline' means. */
+function customerWalletOfflineV390(error){
+  if(globalThis.navigator?.onLine===false)return true;
+  if(!error)return false;
+  return customerAuthFailureKindV289(error)==='network';
 }
   function renderPersonaResolutionUnavailable(){
   globalThis.document?.documentElement?.setAttribute('lang','en');

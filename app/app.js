@@ -6848,13 +6848,31 @@ function customerLoadReferenceV389(error){
   if(/^[A-Za-z0-9_]{2,12}$/.test(code))return code;
   return 'network';
 }
+/* v390 (owner: "maybe because i was out of credit?" — and that is very likely what it was: the
+   app shell is served by the service worker, so the page renders from cache while the data call
+   dies on a phone with no mobile data left). The app already knows how to say this: the inbox
+   has printed "You appear to be offline" since C46, and customerAuthFailureKindV289 already
+   classifies a codeless fetch failure as 'network'. The wallet's own retry card was the one
+   surface still reporting a dead connection as though the BUSINESS were broken — which sends
+   the customer to the shop to complain about a problem their phone bill caused. Reuses that
+   classifier rather than adding a second opinion about what 'offline' means. */
+function customerWalletOfflineV390(error){
+  if(globalThis.navigator?.onLine===false)return true;
+  if(!error)return false;
+  return customerAuthFailureKindV289(error)==='network';
+}
 function renderCustomerWalletRetry(message,businessSlug,retry=()=>renderCustomerWallet(businessSlug),error=null){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
   const expired=walletSessionExpired(error);
   if(error)try{console.error('[peekaa] wallet load failed',{businessSlug,code:error.code||null,message:error.message||null,details:error.details||null,hint:error.hint||null})}catch{}
+  const offline=!expired&&customerWalletOfflineV390(error);
   const reference=expired?'':customerLoadReferenceV389(error);
-  body.innerHTML=`<div class="card" style="text-align:center"><h2>Could not load ${esc(BRAND.customerLabel)}</h2><p class="muted small" style="margin-top:8px">${esc(expired?'Your sign-in expired. Sign in again.':message)}</p>${reference?`<p class="muted small customer-load-reference-v389" style="margin-top:6px">Reference: <code>${esc(reference)}</code></p>`:''}<button class="btn sm" id="walletRetry" style="margin-top:14px">${expired?'Sign in':'Retry'}</button></div>`;
+  const heading=offline?'You appear to be offline':`Could not load ${esc(BRAND.customerLabel)}`;
+  const sentence=expired?'Your sign-in expired. Sign in again.'
+    :offline?'Check your connection, then retry. Nothing you have earned is affected.'
+    :message;
+  body.innerHTML=`<div class="card" style="text-align:center"><h2>${offline?esc(heading):heading}</h2><p class="muted small" style="margin-top:8px">${esc(sentence)}</p>${reference?`<p class="muted small customer-load-reference-v389" style="margin-top:6px">Reference: <code>${esc(reference)}</code></p>`:''}<button class="btn sm" id="walletRetry" style="margin-top:14px">${expired?'Sign in':'Retry'}</button></div>`;
   $('walletRetry').onclick=expired?(()=>customerSessionExpiredSignIn()):retry;
 }
 

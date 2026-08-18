@@ -157,3 +157,18 @@ test('v389: a failed wallet load says which transport code it failed with',()=>{
   const ref=app.slice(app.indexOf('function customerLoadReferenceV389'),app.indexOf('function renderCustomerWalletRetry'));
   assert.match(ref,/if\(!error\)return ''/,'no reference line when there is no error object');
 });
+
+/* v390 (owner: "maybe because i was out of credit?"). A phone with no data left renders the
+   cached shell and fails the data call — the customer must not be told the BUSINESS is broken. */
+test('v390: a dead connection says so, and does not blame the business',()=>{
+  const off=app.slice(app.indexOf('function customerWalletOfflineV390'),app.indexOf('function renderCustomerWalletRetry'));
+  assert.match(off,/globalThis\.navigator\?\.onLine===false/);
+  assert.match(off,/customerAuthFailureKindV289\(error\)==='network'/,
+    'reuses the existing classifier rather than a second opinion about what offline means');
+  const retry=app.slice(app.indexOf('function renderCustomerWalletRetry'),app.indexOf('function walletDate'));
+  assert.match(retry,/You appear to be offline/);
+  assert.match(retry,/Nothing you have earned is affected/,
+    'the one thing a customer actually worries about when their wallet will not load');
+  assert.match(retry,/const offline=!expired&&customerWalletOfflineV390\(error\)/,
+    'expiry still wins — it has its own Sign in action');
+});
