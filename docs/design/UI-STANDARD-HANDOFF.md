@@ -133,10 +133,9 @@ get proper translations by reusing the verified `Delete` strings already present
 In the order recommended in the audit. The first two are **Must-fix** items from
 the report that no decision was taken on.
 
-1. **Money column alignment.** `class="num"` (right-align + tabular numerals)
-   exists in the CSS and is used **zero** times. Business Insights right-aligns
-   20 cells with inline styles; Sales and Daily report left-align money in bare
-   `<td>`. Markup-only change across ~35 tables.
+1. ~~**Money column alignment.**~~ **DONE** — `a3acb9a`. Every money cell and its
+   header now uses the shared `.num` helper; `th.num` was added to the rule and
+   the plain responsive table's stacked label pinned left.
 2. **KPI tiles.** Three implementations — `.card.kpi`, `.card.kpi.v150-kpi`,
    `.dashboard-metric.kpi` — and a loading skeleton that doesn't match the tile
    replacing it, so Dashboard and Waitlist visibly jump on load.
