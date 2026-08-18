@@ -4965,8 +4965,8 @@ async function clientDetail(id){
       <td data-label="When">${esc(sgt(entry.created_at)||'—')}</td>
       <td data-label="What happened">${esc(what)}</td>
       <td data-label="Source">${source}</td>
-      <td data-label="Points" style="text-align:right;font-variant-numeric:tabular-nums">${amount>0?'+':''}${amount}</td>
-      <td data-label="Balance" style="text-align:right;font-variant-numeric:tabular-nums">${balance}</td>
+      <td class="num" data-label="Points">${amount>0?'+':''}${amount}</td>
+      <td class="num" data-label="Balance">${balance}</td>
     </tr>`;
   }
   async function renderPointsHistoryBodyV259(){
@@ -4997,7 +4997,7 @@ async function clientDetail(id){
     let running=0;
     const withBalance=rows.map(entry=>{running+=Number(entry.points)||0;return {entry,balance:running}});
     body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
-      <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th style="text-align:right">Points</th><th style="text-align:right">Balance</th></tr></thead>
+      <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th class="num">Points</th><th class="num">Balance</th></tr></thead>
       <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
       <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}. ${programmePausedV259
         ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
@@ -7830,11 +7830,11 @@ async function salesPage(){
     const host=$('recent');if(!host)return;
     const rows=salesFilteredRowsV291,W=salesWorkflowV291;
     const shown=rows.slice(0,salesVisibleCountV291);
-    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
       ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
-        <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
+        <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
@@ -7917,11 +7917,11 @@ async function servicesPage(){
   let svCache=[];
   function renderSvc(){
     const sv=svCache;
-    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th>Price</th><th>Mins</th><th>Status</th><th></th></tr>
+    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th>Mins</th><th>Status</th><th></th></tr>
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
-        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
+        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td>${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
         <div class="field-grid">
@@ -8047,8 +8047,8 @@ async function servicesPage(){
        bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
        rather than table DML. */
     bundleCacheV285=bu||[];
-    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
+    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
@@ -21100,8 +21100,8 @@ async function giftcardsPage(){
     }
     const gcs=Array.isArray(data?.cards)?data.cards:[],total=Math.max(0,Number(data?.total||0)),pages=Math.max(1,Math.ceil(total/GIFT_CARD_PAGE_SIZE));
     if(giftCardPage>=pages&&giftCardPage>0){giftCardPage=pages-1;loadCards();return}
-    $('glist').innerHTML=gcs.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Issued gift cards"><table class="cui-table" data-responsive="true"><thead><tr><th>Code</th><th>Value</th><th>Balance</th><th>Status</th><th>Issued</th></tr></thead><tbody>
-      ${gcs.map(g=>`<tr><td data-label="Code"><b>•••• ${esc(g.code_suffix)}</b></td><td data-label="Value">${money(g.initial_cents)}</td><td data-label="Balance">${money(g.balance_cents)}</td>
+    $('glist').innerHTML=gcs.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Issued gift cards"><table class="cui-table" data-responsive="true"><thead><tr><th>Code</th><th class="num">Value</th><th class="num">Balance</th><th>Status</th><th>Issued</th></tr></thead><tbody>
+      ${gcs.map(g=>`<tr><td data-label="Code"><b>•••• ${esc(g.code_suffix)}</b></td><td class="num" data-label="Value">${money(g.initial_cents)}</td><td class="num" data-label="Balance">${money(g.balance_cents)}</td>
       <td data-label="Status"><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
       <td data-label="Issued">${g.created_at.slice(0,10)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} card${total===1?'':'s'} · page ${giftCardPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="giftPrev" ${giftCardPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="giftNext" ${giftCardPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canIssue?'Issue the first card from the transaction panel.':'Issued cards will appear here.'});
@@ -24356,9 +24356,9 @@ async function inventoryPage(){
     const pr=productsResult.data,st=stockResult.data;
     const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
     if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Sell for</th><th>Stock</th><th></th></tr></thead><tbody>
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th>Stock</th><th></th></tr></thead><tbody>
       ${pr.map(p=>{const s=SM[p.id]||0;return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
-      <td data-label="Sell for">${money(p.retail_price_cents)}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
+      <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
       <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
@@ -25419,37 +25419,37 @@ async function reportsPage(){
     target.innerHTML=`
       ${moneyVerdictV297}
       <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
-        ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
-        <tr><td><b>Net total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
+        ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td class="num"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
+        <tr><td><b>Net total</b></td><td class="num"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
         ${/* V297: the mix is the point of this card and a column of figures does not show it. */''}
         ${reportShareBarV297(Object.entries(byKind).map(([k,v])=>[k.replace('_',' '),v]),{format:money})}
         <p class="muted small" style="margin-top:8px">What you sold, split by type. The bar shows the mix at a glance; the figures above it are the exact amounts.</p>
         ${Object.keys(nonRevByKind).length?`<p class="muted small" style="margin-top:8px">Non-revenue sale amounts recorded: ${Object.entries(nonRevByKind).map(([k,v])=>`<b>${money(v)}</b> ${k.replace('_',' ')}`).join(', ')}. These are sale ledger amounts, not verified payment or cash-collection totals.</p>`:''}</div>
       <div class="card"><b>Reversal reconciliation</b><table style="margin-top:8px">
-        <tr><td>Compensating rows</td><td style="text-align:right"><b>${reversalRows}</b></td></tr>
-        <tr><td>Revenue reversed</td><td style="text-align:right"><b>−${money(reversedCents)}</b></td></tr>
-        <tr><td>Net revenue from immutable rows</td><td style="text-align:right"><b>${money(netRevenue)}</b></td></tr></table>
+        <tr><td>Compensating rows</td><td class="num"><b>${reversalRows}</b></td></tr>
+        <tr><td>Revenue reversed</td><td class="num"><b>−${money(reversedCents)}</b></td></tr>
+        <tr><td>Net revenue from immutable rows</td><td class="num"><b>${money(netRevenue)}</b></td></tr></table>
         ${/* V297: "Reversal reconciliation" and "compensating row" are accounting words. One plain
              line says what they are and why the net is not the gross. */''}
         <p class="muted small" style="margin-top:8px">In plain words: a compensating row is a correction that cancels an earlier sale instead of deleting it, so the money comes back out of the total. That is why the net is lower than the gross.</p>
         <p class="muted small" style="margin-top:8px">Originals remain on record. Negative reversal rows link back to them and reduce the net.</p></div>
       ${loyaltyAvailable?`<div class="card"><b>Loyalty flow (business-wide, selected period)</b><table style="margin-top:8px">
-        <tr><td>Points earned</td><td style="text-align:right"><b>${pt.earn||0}</b></td></tr>
-        <tr><td>Points redeemed</td><td style="text-align:right"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
-        <tr><td>Points expired</td><td style="text-align:right"><b>${Math.abs(pt.expire||0)}</b></td></tr>
-        <tr><td>Manual adjustments</td><td style="text-align:right"><b>${pt.adjust||0}</b></td></tr></table>
+        <tr><td>Points earned</td><td class="num"><b>${pt.earn||0}</b></td></tr>
+        <tr><td>Points redeemed</td><td class="num"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
+        <tr><td>Points expired</td><td class="num"><b>${Math.abs(pt.expire||0)}</b></td></tr>
+        <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr></table>
         ${/* V297: 78,232 points earned means nothing without knowing which way each row points. */''}
         <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
-        <tr><td>Customer credit outstanding</td><td style="text-align:right"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
-        <tr><td>Gift cards unredeemed</td><td style="text-align:right"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
+        <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
+        <tr><td>Gift cards unredeemed</td><td class="num"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
         ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
         <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
       ${membershipsAvailable?`<div class="card"><b>Memberships</b><table style="margin-top:8px">
-        <tr><td>Active members (business-wide, now)</td><td style="text-align:right"><b>${actMs}</b></td></tr>
-        <tr><td>Membership revenue (selected period/branch)</td><td style="text-align:right"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`:
+        <tr><td>Active members (business-wide, now)</td><td class="num"><b>${actMs}</b></td></tr>
+        <tr><td>Membership revenue (selected period/branch)</td><td class="num"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`:
         '<div class="card"><b>Memberships</b><p class="muted small" style="margin-top:8px">Unavailable because complete Memberships access could not be confirmed. No zero is inferred.</p></div>'}`;
   }
   const appointmentSummary=rows=>{
@@ -25596,10 +25596,10 @@ async function reportsPage(){
       target.innerHTML=`${busyVerdictV297}<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
           <p class="muted small">${current.total} appointments in this period.</p></div>
         <div class="card"><b>Appointment outcomes</b><table style="margin-top:8px">
-          <tr><td>Booked</td><td style="text-align:right"><b>${current.booked}</b></td></tr>
-          <tr><td>Completed</td><td style="text-align:right"><b>${current.completed}</b></td></tr>
-          <tr><td>Cancelled</td><td style="text-align:right"><b>${current.cancelled}</b></td></tr>
-          <tr><td>No-show</td><td style="text-align:right"><b>${current.noShow}</b></td></tr></table></div>
+          <tr><td>Booked</td><td class="num"><b>${current.booked}</b></td></tr>
+          <tr><td>Completed</td><td class="num"><b>${current.completed}</b></td></tr>
+          <tr><td>Cancelled</td><td class="num"><b>${current.cancelled}</b></td></tr>
+          <tr><td>No-show</td><td class="num"><b>${current.noShow}</b></td></tr></table></div>
         <div class="card"><b>Scheduled capacity</b>${capacity.known?`<div class="metric" style="margin-top:8px">${utilization===null?'—':`${utilization.toFixed(1)}%`}</div>
           <p class="muted small">${current.serviceHours.toFixed(1)} booked service hours out of ${capacity.hours.toFixed(1)} branch-open active-team hours after merged breaks, staff blocks, and full-day time off.</p>
           ${utilization!=null&&utilization>100?`<p class="err small">Overbooked by ${(current.serviceHours-capacity.hours).toFixed(1)} service hours in this period.</p>`:''}`:
@@ -25664,9 +25664,9 @@ async function reportsPage(){
         <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period.</p>
         <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
-        <tr><td>New customers</td><td style="text-align:right"><b>${Number(cm.new_customers||0)}</b></td></tr>
-        <tr><td>Reactivated customers</td><td style="text-align:right"><b>${Number(cm.reactivated_customers||0)}</b></td></tr>
-        <tr><td>Identified customers</td><td style="text-align:right"><b>${Number(cm.transacting_identified_customers||0)}</b></td></tr></table></div>
+        <tr><td>New customers</td><td class="num"><b>${Number(cm.new_customers||0)}</b></td></tr>
+        <tr><td>Reactivated customers</td><td class="num"><b>${Number(cm.reactivated_customers||0)}</b></td></tr>
+        <tr><td>Identified customers</td><td class="num"><b>${Number(cm.transacting_identified_customers||0)}</b></td></tr></table></div>
       <div class="card"><b>Repeat purchasing</b><div class="metric" style="margin-top:8px">${pct(cm.repeat_in_period_rate_pct)}</div>
         <p class="muted small">${Number(cm.repeat_purchasers_in_period||0)} customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.</p></div>`;
   }
@@ -26026,10 +26026,10 @@ async function staffPerfPage(drillId){
     $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}`;
     $('staffRankBasis').textContent=workspaceTranslationV97('Ranked by')+' '+selectedSort.label;
     if(!displayKeys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No matching staff records',body:'Clear the staff search or adjust the selected range.'});return}
-    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th>Signed revenue attributed</th><th>Signed commission</th></tr>
+    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th class="num">Signed revenue attributed</th><th class="num">Signed commission</th></tr>
       ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
-        <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td>${money(agg[k].revenue)}</td><td>${money(agg[k].commission)}</td></tr>`).join('')}
-      <tr><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table></div>
+        <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td class="num">${money(agg[k].revenue)}</td><td class="num">${money(agg[k].commission)}</td></tr>`).join('')}
+      <tr><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td class="num"><b>${money(totals.revenue)}</b></td><td class="num"><b>${money(totals.commission)}</b></td></tr></table></div>
       <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue, such as gift-card issuance. Ledger records and frozen commission remain visible for traceability.</p>`;
   }
   load();
@@ -26116,13 +26116,13 @@ async function staffPerfDrill(idParam){
     }
     if(!isLatest())return;
     const rows=[...sc].sort((a,b)=>b.occurred_at.localeCompare(a.occurred_at));
-    $('dbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Date</th><th>Customer</th><th>Kind</th><th>Revenue treatment</th><th>Signed amount</th><th>Signed commission</th></tr>
+    $('dbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Date</th><th>Customer</th><th>Kind</th><th>Revenue treatment</th><th class="num">Signed amount</th><th class="num">Signed commission</th></tr>
       ${rows.map(r=>{
         const cid=clientBySale[r.sale_id];
         const cust=!clientsAvailable?'<span class="muted">Customer details unavailable</span>'
           :cid&&clientName[cid]?`<a href="#/client/${cid}" style="color:#D06A2E"><b>${esc(clientName[cid])}</b></a>`
           :cid?'<span class="muted">Customer record unavailable</span>':'<span class="muted">Walk-in</span>';
-        return `<tr><td>${sgt(r.occurred_at)}</td><td>${cust}</td><td>${esc((r.kind||'').replace('_',' '))}</td><td>${r.counts_as_revenue?'<span class="pill on">Revenue</span>':'<span class="pill off">Non-revenue</span>'}</td><td>${money(r.amount_cents)}</td><td>${money(r.commission_cents||0)}</td></tr>`;
+        return `<tr><td>${sgt(r.occurred_at)}</td><td>${cust}</td><td>${esc((r.kind||'').replace('_',' '))}</td><td>${r.counts_as_revenue?'<span class="pill on">Revenue</span>':'<span class="pill off">Non-revenue</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="num">${money(r.commission_cents||0)}</td></tr>`;
       }).join('')}</table></div>`;
   }
   load();
@@ -26458,9 +26458,9 @@ async function dailyReportPage(){
       <div class="charts"><div class="card"><b>Revenue by staff</b><div class="chart-frame"><canvas id="drC1"></canvas></div></div>
         <div class="card"><b>Signed revenue by kind</b><div class="chart-frame"><canvas id="drC2"></canvas></div></div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
-        ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th>Signed amount</th><th>Staff</th></tr>
+        ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
@@ -29006,11 +29006,11 @@ async function platformPage(){
   const rows=data||[];
   if(!rows.length){$('platBody').innerHTML=`<div class="empty"><div class="big">🏢</div>No companies yet.</div>`;return}
   const totals=rows.reduce((t,r)=>({companies:t.companies+1,monthly:t.monthly+(r.est_monthly_cents||0)}),{companies:0,monthly:0});
-  $('platBody').innerHTML=`<table><tr><th>Company</th><th>Industry</th><th>Branches</th><th>Staff</th><th>Customers</th><th>Billable seats</th><th>Subscription</th><th>Est. monthly</th></tr>
+  $('platBody').innerHTML=`<table><tr><th>Company</th><th>Industry</th><th>Branches</th><th>Staff</th><th>Customers</th><th>Billable seats</th><th>Subscription</th><th class="num">Est. monthly</th></tr>
     ${rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="small">${esc(INDUSTRIES[r.industry]?.label||r.industry||'—')}</td>
       <td>${r.branch_count}</td><td>${r.staff_count}</td><td>${r.client_count}</td><td>${r.billable_seats}</td>
       <td><span class="pill ${r.subscription_status==='active'?'ok':r.subscription_status==='trialing'?'new':'off'}">${esc(r.subscription_status||'—')}</span></td>
-      <td>${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
-    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td><b>${money(totals.monthly)}</b></td></tr></table>`;
+      <td class="num">${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
+    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"><b>${money(totals.monthly)}</b></td></tr></table>`;
 }
 
