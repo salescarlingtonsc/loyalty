@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="f53c2796f381df628ca061fb98866b54172ebd73c7edef65168aa7ed002d6829">
+<meta name="v104-production-source-sha256" content="6aa72133f77edb906dbcc1783fd2c2a463ee8c9b2ef126937807fb02b27496a5">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -987,6 +987,25 @@ input[type=range]:focus{box-shadow:none}
    deleted — on a tablet the gift rows lost their indent AND ran into the parent note. */
 .grow-overview-child-v324{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:start}
 .grow-overview-arrow-v385{color:var(--muted);font-size:13px;line-height:1.45}
+/* V386: the usage window filter and the comparison chart under the usage table. The chart is
+   plain DOM — the app's CSP forbids loading a charting library, and these bars are drawn from
+   the numbers already in the table above them. */
+.grow-usage-filter-v386{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:0;border:0;background:none;box-shadow:none}
+.grow-usage-filter-v386 label{margin-top:0}
+.grow-usage-chart-v386{margin:16px 0 0}
+.grow-usage-chart-legend-v386{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--muted)}
+.grow-usage-chart-legend-v386 li{display:flex;align-items:center;gap:6px}
+.grow-usage-chart-key-v386{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.grow-usage-chart-rows-v386{display:grid;gap:10px;margin-top:12px}
+.grow-usage-chart-row-v386{display:grid;grid-template-columns:minmax(90px,26%) minmax(0,1fr) auto;gap:10px;align-items:center}
+.grow-usage-chart-label-v386{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
+.grow-usage-chart-track-v386{display:grid;gap:3px;min-width:0}
+.grow-usage-chart-bar-v386{display:block;height:11px;border-radius:999px;min-width:2px}
+.grow-usage-chart-bar-v386.is-now-v386,.grow-usage-chart-key-v386.is-now-v386{background:var(--chart-1)}
+.grow-usage-chart-bar-v386.is-was-v386,.grow-usage-chart-key-v386.is-was-v386{background:var(--chart-6);opacity:.5}
+.grow-usage-chart-value-v386{text-align:right;font-weight:750;font-size:13px;white-space:nowrap}
+.grow-usage-chart-value-v386 small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
+@media(max-width:600px){.grow-usage-chart-row-v386{grid-template-columns:minmax(0,1fr) auto}.grow-usage-chart-track-v386{grid-column:1/-1;order:3}}
 .grow-overview-child-v324>b{min-width:0}
 .grow-overview-parent-v375{display:block;grid-column:2}
 .grow-hero{display:grid;grid-template-columns:minmax(0,1fr);justify-items:start;gap:14px;padding:20px;
@@ -2920,7 +2939,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source f53c2796f381df628ca061fb98866b54172ebd73c7edef65168aa7ed002d6829</p>
+  <p class="v104-provenance">Local production-render harness · source 6aa72133f77edb906dbcc1783fd2c2a463ee8c9b2ef126937807fb02b27496a5</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -2932,7 +2951,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="f53c2796f381df628ca061fb98866b54172ebd73c7edef65168aa7ed002d6829";
+const PRODUCTION_SOURCE_SHA256="6aa72133f77edb906dbcc1783fd2c2a463ee8c9b2ef126937807fb02b27496a5";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

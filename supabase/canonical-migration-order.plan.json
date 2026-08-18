@@ -2140,6 +2140,12 @@
       "version": "20260818000002",
       "name": "nestly_v386_customer_company_branches",
       "sourcePath": "db/migrations/20260818_nestly_v386_customer_company_branches.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260818000003",
+      "name": "nestly_v386_dated_programme_usage",
+      "sourcePath": "db/migrations/20260818_nestly_v386_dated_programme_usage.sql"
     }
   ]
 }

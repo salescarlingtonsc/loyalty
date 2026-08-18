@@ -2139,6 +2139,18 @@
       "path": "db/migrations/20260818_nestly_v385_profile_save_and_industry_label.sql",
       "semanticVersion": "v385",
       "proposedDeployVersion": "20260818000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260818_nestly_v386_customer_company_branches.sql",
+      "semanticVersion": "v386",
+      "proposedDeployVersion": "20260818000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260818_nestly_v386_dated_programme_usage.sql",
+      "semanticVersion": "v386",
+      "proposedDeployVersion": "20260818000003"
     }
   ]
 }

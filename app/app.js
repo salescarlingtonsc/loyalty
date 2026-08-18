@@ -755,6 +755,12 @@ let growPointsViewKindV350=null;
    the window survives growPage's re-render, exactly like growPointsViewKindV350 above. */
 let growHistoryFromV375='';
 let growHistoryToV375='';
+/* V386 (owner, photo 7: "filter by date" drawn across the usage table). Module-scoped so the
+   window survives growPage's re-render, exactly like the History pair above. Deliberately its
+   OWN window and not the History one: they filter different questions on different cards, and
+   sharing one would move a table the owner did not touch. */
+let growUsageFromV386='';
+let growUsageToV386='';
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
@@ -24246,6 +24252,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :Promise.resolve([]);
   /* Already a Promise.all, but it was CREATED after the five awaits above had each finished, so
      it could never overlap them. Creating it here is the whole of its change. */
+  /* V386: the windowed reads for the analytics card, and ONLY that card. The Overview table's
+     "Customers used" column keeps the unbounded v271 read below — the owner drew the filter on
+     the analytics table, so narrowing a column they did not touch would be a change nobody asked
+     for. With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
+     contract (db/tests/v386 check 03), so the card reads the figures already on their way.
+     The previous-equal-window read is what makes the chart a COMPARISON rather than a snapshot;
+     it uses previousEquivalentRangeV153, the same derivation the dashboard's delta chips use. */
+  const growUsageWindowedV386=Boolean(growUsageFromV386&&growUsageToV386);
+  const growUsagePreviousRangeV386=growUsageWindowedV386
+    ?previousEquivalentRangeV153(growUsageFromV386,growUsageToV386):null;
+  const growUsageWindowRequestV386=(canRewards&&growUsageWindowedV386)
+    ?Promise.all([
+      sb.rpc('business_programme_usage_v386',{p_business:S.biz.id,p_from:growUsageFromV386,p_to:growUsageToV386})
+        .then(result=>result.error?null:(result.data||null)).catch(()=>null),
+      sb.rpc('business_programme_usage_v386',{p_business:S.biz.id,
+        p_from:growUsagePreviousRangeV386.previousFrom,p_to:growUsagePreviousRangeV386.previousTo})
+        .then(result=>result.error?null:(result.data||null)).catch(()=>null)
+    ])
+    :Promise.resolve([null,null]);
   const growProgrammeReadsRequestV271=Promise.all([
     canRewards?sb.rpc('business_programme_usage_v271',{p_business:S.biz.id})
       .then(result=>result.error?null:(result.data||null)).catch(()=>null):Promise.resolve(null),
@@ -24320,6 +24345,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growProgrammeReadsV271=await growProgrammeReadsRequestV271;
   if(!isGrowCurrent())return;
   const growUsageV271=growProgrammeReadsV271[0];
+  const [growUsageWindowV386,growUsagePreviousV386]=await growUsageWindowRequestV386;
+  /* Unwindowed, the card reads the same all-time figures the Overview does. Windowed, it reads
+     the window — and a failed windowed read falls back to nothing rather than silently showing
+     all-time numbers under a date range, which would be the worst of both. */
+  const growUsageForAnalyticsV386=growUsageWindowedV386?growUsageWindowV386:growUsageV271;
   const growFirstPublishedV271=growProgrammeReadsV271[1];
   /* V314 (W6 increment 1): derived from the four-row spine, not from the frozen businesses
      column. Nothing writes points_mode any more, so on every tenant created after the inversion
@@ -25000,7 +25030,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const entries=[];
     const milestoneById=new Map();
     rewardJourney.milestones.forEach(item=>milestoneById.set(String(item.id),item));
-    if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',
+    if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',usageScopeV386:'point_system',
       started:growFirstPublishedV271,ended:null,
       state:rewardJourney.earning.availableToCustomers?'live':'paused',
       customers:growUsageV271?(growUsageV271.point_system?.customers??null):null,
@@ -25017,6 +25047,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          last year still says Stamp card after the firm switched to points. A gift with no
          programme link says nothing rather than guessing. */
       entries.push({name:reward.customer_name||reward.name||'Reward',type:'Reward',
+        usageScopeV386:'reward',usageIdV386:reward.id,
         parent:growRewardParentNameV375(reward),parentKind:growRewardParentKindV385(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
         customers:growRewardUsageV271.get(String(reward.id))??null,
@@ -25025,17 +25056,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     (snapshot.retention||[]).forEach(program=>{
       const overview=retentionOverviewState(program);
       entries.push({name:program.name||'Bring-back reward',type:'Bring-back',
+        usageScopeV386:'retention',usageIdV386:program.id,
         started:program.starts_on||program.created_at||null,ended:null,
         state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
         customers:growRetentionUsageV271.get(String(program.id))??null,
         detail:`${Math.max(0,Number(program.goal_visits)||0)} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days)||0)} days`});
     });
-    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',
+    if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',usageScopeV386:'birthday',
       started:growUsageV271?.birthday?.started_at||null,ended:null,
       state:rewardJourney.birthday.active?'live':'paused',
       customers:growUsageV271?(growUsageV271.birthday?.customers??null):null,
       detail:rewardJourney.birthday.value});
-    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',
+    if(welcomeOfferStatusV215?.configured)entries.push({name:'Welcome offer',type:'Welcome offer',usageScopeV386:'welcome',
       started:null,ended:null,
       state:welcomeOfferStatusV215.active===true&&welcomeOfferStatusV215.item_available!==false?'live':'paused',
       customers:growUsageV271?(growUsageV271.welcome?.customers??null):null,
@@ -25058,12 +25090,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         endsAt:promotion?.ends_at||null,state:lifecycle.state,
         customers:null,detail:promotion?.tagline||''});
     });
-    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',
+    if(snapshot.referral)entries.push({name:'Referrals',type:'Referrals',usageScopeV386:'referrals',
       started:snapshot.referral.created_at||null,ended:null,
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
       detail:snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:''});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
+      usageScopeV386:'membership',usageIdV386:plan?.id,
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
       customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
@@ -25260,26 +25293,74 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growAnalyticsCategoryV385=entry=>growOverviewChildRowV324(entry)
     ?(entry.parent?`${entry.parent} gifts`:'Gifts')
     :(entry.type||'Programme');
-  const growAnalyticsRowsV375=(()=>{
+  /* V386: one entry's count, read out of ANY usage payload — the all-time one or a windowed one.
+     Each entry carries the scope it was built from (usageScopeV386) rather than the category
+     being re-derived from its label, so a firm that renames a programme cannot silently detach
+     its own figures. An entry with no scope, or a scope this schema does not measure, resolves
+     to null and stays "Not tracked" — the V271 honesty rule, unchanged by the window. */
+  const growUsageForEntryV386=(usage,entry)=>{
+    if(!usage||!entry?.usageScopeV386)return null;
+    const listed=(list,idKey)=>{
+      const row=(Array.isArray(list)?list:[]).find(item=>String(item?.[idKey])===String(entry.usageIdV386));
+      return row?.customers==null?null:Number(row.customers);
+    };
+    switch(entry.usageScopeV386){
+      case 'reward':return listed(usage.rewards,'reward_id');
+      case 'retention':return listed(usage.retention,'program_id');
+      case 'membership':return listed(usage.memberships,'plan_id');
+      case 'point_system':return usage.point_system?.customers??null;
+      case 'birthday':return usage.birthday?.customers??null;
+      case 'welcome':return usage.welcome?.customers??null;
+      case 'referrals':return usage.referrals?.customers??null;
+      default:return null;
+    }
+  };
+  const growAnalyticsRowsFromUsageV386=usage=>{
     const buckets=new Map();
     growProgrammeEntriesV271.forEach(entry=>{
       const category=growAnalyticsCategoryV385(entry);
       const current=buckets.get(category)||{category,customers:null,programmes:0};
       current.programmes+=1;
-      if(entry.customers!=null)current.customers=(current.customers||0)+Number(entry.customers||0);
+      const customers=growUsageForEntryV386(usage,entry);
+      if(customers!=null)current.customers=(current.customers||0)+Number(customers);
       buckets.set(category,current);
     });
     return [...buckets.values()].sort((a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
       ||String(a.category).localeCompare(String(b.category)));
-  })();
+  };
+  const growAnalyticsRowsV375=growAnalyticsRowsFromUsageV386(growUsageForAnalyticsV386);
+  const growAnalyticsPreviousRowsV386=growUsageWindowedV386
+    ?new Map(growAnalyticsRowsFromUsageV386(growUsagePreviousV386).map(row=>[row.category,row.customers]))
+    :null;
+  /* V386 (owner, photo 7: "filter by date" across the usage table, and "down here can put
+     analytics by graph / chart comparison" beneath it).
+     The filter is scoped to THIS table and says so, because the card above it already carries a
+     30/60/90 filter of its own and two unlabelled date controls on one card would read as one.
+     Both dates are required together: a half-open window would have to invent the other end, and
+     which end it invented would change every figure. */
+  const growUsageFilterBarV386=`<div class="v150-filterbar grow-usage-filter-v386" data-grow-usage-filter-v386 style="margin-top:8px">
+    <div><label for="growUsageFromV386">From</label><input type="date" id="growUsageFromV386" value="${esc(growUsageFromV386)}"></div>
+    <div><label for="growUsageToV386">To</label><input type="date" id="growUsageToV386" value="${esc(growUsageToV386)}"></div>
+    <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growUsageApplyV386">Apply</button><button type="button" class="btn ghost sm" id="growUsageClearV386" ${growUsageWindowedV386?'':'disabled'}>Clear</button></div>
+    <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
+      ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
+      :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
+  </div>`;
+  /* The windowed read failing is not the same as nobody having used anything. Saying so beats
+     printing an all-time table under a date range, or a page of zeroes. */
+  const growUsageWindowFailedV386=growUsageWindowedV386&&!growUsageWindowV386;
   const growAnalyticsCardV375=`<section class="card" style="margin-top:16px" aria-labelledby="growAnalyticsHeadV375">
     <h2 id="growAnalyticsHeadV375">Are the programmes bringing customers back?</h2>
     <p class="muted small" style="margin-top:4px">Observed visits and redemptions only. These figures describe what happened; they do not claim a programme caused it.</p>
     <div id="comebackHost" style="margin-top:14px"></div>
     <div style="margin-top:16px"><b class="small">Customers who used each programme</b>
-      ${growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
-        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
-      </tbody></table></div>`
+      ${growUsageFilterBarV386}
+      ${growUsageWindowFailedV386
+        ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
+        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th>${growUsageWindowedV386?'<th>Previous period</th>':''}</tr></thead><tbody>
+        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td>${growUsageWindowedV386?`<td data-label="Previous period">${growCountCellV271(growAnalyticsPreviousRowsV386?.get(row.category)??null)}</td>`:''}</tr>`).join('')}
+      </tbody></table></div>
+      ${growUsageComparisonChartV386(growAnalyticsRowsV375,growAnalyticsPreviousRowsV386,growUsagePreviousRangeV386)}`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
     </div>
   </section>`;
@@ -26952,6 +27033,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growHistoryClearV375=$('growHistoryClearV375');
   if(growHistoryClearV375)growHistoryClearV375.onclick=()=>{
     growHistoryFromV375='';growHistoryToV375='';growRerenderV322({quiet:true});
+  };
+  /* V386: the usage window. Both dates or neither — Apply with only one is refused rather than
+     guessed, because whichever end the page invented would change every figure in the table. */
+  const growUsageApplyV386=$('growUsageApplyV386');
+  if(growUsageApplyV386)growUsageApplyV386.onclick=()=>{
+    const from=$('growUsageFromV386')?.value||'',to=$('growUsageToV386')?.value||'';
+    if(!from||!to)return toast('Choose both a From and a To date, or press Clear for all time.');
+    if(from>to)return toast('The From date must come before the To date.');
+    growUsageFromV386=from;growUsageToV386=to;growRerenderV322({quiet:true});
+  };
+  const growUsageClearV386=$('growUsageClearV386');
+  if(growUsageClearV386)growUsageClearV386.onclick=()=>{
+    growUsageFromV386='';growUsageToV386='';growRerenderV322({quiet:true});
   };
   const growTopicBack=$('growTopicBackV229');
   if(growTopicBack)growTopicBack.onclick=()=>{growTopicV229='';growPage(routedSurface,hashParam,routedFocus).catch(fail)};
@@ -37414,6 +37508,54 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
    out of the bar (a reversal is not a share of anything) while the table above keeps them. */
 /* V299: the palette moved onto :root tokens (--chart-1..6) so every DOM proportion bar in the
    product reads from one place instead of six literals only this file knew about. */
+/* V386 (owner, photo 7: "down here can put analytics by graph / chart comparison" drawn under
+   the usage table). A plain DOM bar chart built from the very numbers in the table above it —
+   no charting library, which the app's CSP forbids loading anyway, and no second fetch.
+
+   What it compares depends on what the owner asked for. With a window set there are two series
+   per category, this period against the previous equal one, and that contrast IS the question
+   "are the programmes bringing customers back". With no window there is no previous period to
+   compare against, so the chart compares the categories with each other instead.
+
+   Bars are scaled against the largest value ACROSS BOTH series, so the two periods are drawn on
+   one axis and a shorter bar always means a smaller number. A category the schema cannot measure
+   is left out entirely rather than drawn as a zero-length bar, which would read as "measured,
+   and nobody used it" — the same rule the table's "Not tracked" cell keeps. */
+function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
+  const measured=(rows||[]).filter(row=>row.customers!=null);
+  if(measured.length<1)return '';
+  const windowed=Boolean(previousByCategory&&previousRange);
+  const previousOf=row=>windowed?(previousByCategory.get(row.category)??null):null;
+  const peak=Math.max(1,...measured.map(row=>Math.max(Number(row.customers)||0,Number(previousOf(row))||0)));
+  if(!measured.some(row=>Number(row.customers)>0||Number(previousOf(row))>0))
+    return `<p class="muted small" style="margin-top:12px">Nobody used a programme in this period, so there is nothing to chart yet.</p>`;
+  const width=value=>`${Math.max(Number(value)>0?2:0,(Number(value)||0)/peak*100).toFixed(2)}%`;
+  const legend=windowed
+    ? `<ul class="grow-usage-chart-legend-v386"><li><span class="grow-usage-chart-key-v386 is-now-v386" aria-hidden="true"></span>This period</li><li><span class="grow-usage-chart-key-v386 is-was-v386" aria-hidden="true"></span>Previous period · ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}</li></ul>`
+    : '';
+  /* The whole chart is one labelled image to a screen reader: the table above already states
+     every figure a row by row reading would repeat. */
+  const summary=measured.map(row=>windowed
+    ?`${row.category}: ${row.customers} this period, ${previousOf(row)==null?'not tracked':previousOf(row)} previously`
+    :`${row.category}: ${row.customers}`).join('; ');
+  return `<figure class="grow-usage-chart-v386" data-grow-usage-chart-v386>
+    <figcaption class="small"><b>${windowed?'This period against the one before it':'Customers used, by category'}</b></figcaption>
+    ${legend}
+    <div class="grow-usage-chart-rows-v386" role="img" data-merchant-content aria-label="${esc(`Customers who used each programme. ${summary}`)}">
+      ${measured.map(row=>{
+        const was=previousOf(row);
+        return `<div class="grow-usage-chart-row-v386">
+          <span class="grow-usage-chart-label-v386" data-merchant-content>${esc(row.category)}</span>
+          <span class="grow-usage-chart-track-v386">
+            <span class="grow-usage-chart-bar-v386 is-now-v386" style="width:${width(row.customers)}"></span>
+            ${windowed?`<span class="grow-usage-chart-bar-v386 is-was-v386" style="width:${was==null?'0%':width(was)}"></span>`:''}
+          </span>
+          <span class="grow-usage-chart-value-v386">${esc(String(row.customers))}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </figure>`;
+}
 const REPORT_SHARE_COLOURS_V297=['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)','var(--chart-6)'];
 function reportShareBarV297(entries,{format=value=>String(value)}={}){
   const usable=(entries||[]).filter(([,value])=>Number(value)>0);
