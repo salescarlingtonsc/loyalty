@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="63705dcede87bf98675ed4b94d8a85b002ce7dcd608d063ea35fd670c5b6fe94"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="494c166aec285b9ea3e0fe065961c989bfb4a774b5db5926324ed56382843914"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2997,6 +2997,21 @@ function renderCustomerNotJoinedV289(businessSlug){
   };
   const scan=$('customerNotJoinedScan');
   if(scan)scan.onclick=openCustomerJoinScanner;
+}
+/* v389 (owner, 2026-08-18: a screenshot of this exact card asking "why failed to load?").
+   This card was handed the error object and used it for ONE thing — the session-expiry branch —
+   then dropped it. Every other cause printed the same sentence, so neither the customer nor
+   anyone reading their screenshot could tell a dropped mobile request from a broken function
+   from a permissions change, and the only way to find out was to reproduce it as that customer.
+   The full error now goes to the console for anyone with the device in hand, and a SHORT
+   reference is printed under the message. It is deliberately just the transport's own code
+   (PGRST…/five-digit SQLSTATE) or the word "network" when the request never reached the
+   database — never the server's message, which can name internals. */
+function customerLoadReferenceV389(error){
+  if(!error)return '';
+  const code=String(error.code||'').trim();
+  if(/^[A-Za-z0-9_]{2,12}$/.test(code))return code;
+  return 'network';
 }
   function renderPersonaResolutionUnavailable(){
   globalThis.document?.documentElement?.setAttribute('lang','en');

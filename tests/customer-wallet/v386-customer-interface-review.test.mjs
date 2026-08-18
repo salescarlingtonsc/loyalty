@@ -143,3 +143,17 @@ test('photo 9: the offer card itself opens the detail sheet, and the address get
   assert.match(app,/data-company-address-line-v386/);
   assert.match(indexHtml,/\.customer-business-address-line-v386\{/);
 });
+
+/* v389 (owner sent a screenshot of the failed-load card asking "why failed to load?"). */
+test('v389: a failed wallet load says which transport code it failed with',()=>{
+  const retry=app.slice(app.indexOf('function customerLoadReferenceV389'),app.indexOf('function walletDate'));
+  assert.match(retry,/console\.error\('\[peekaa\] wallet load failed'/,
+    'the full error reaches the console for whoever holds the device');
+  assert.match(retry,/Reference: <code>/,'and a short reference reaches the screen');
+  assert.match(retry,/\/\^\[A-Za-z0-9_\]\{2,12\}\$\//,'only a code-shaped string is ever printed');
+  assert.match(retry,/return 'network'/,'a request that never reached the database says so');
+  assert.doesNotMatch(retry,/error\.message\}|esc\(error\.message/,
+    'never the server message — it can name internals');
+  const ref=app.slice(app.indexOf('function customerLoadReferenceV389'),app.indexOf('function renderCustomerWalletRetry'));
+  assert.match(ref,/if\(!error\)return ''/,'no reference line when there is no error object');
+});

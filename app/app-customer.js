@@ -2454,11 +2454,28 @@ function renderCustomerNotJoinedV289(businessSlug){
   const scan=$('customerNotJoinedScan');
   if(scan)scan.onclick=openCustomerJoinScanner;
 }
+/* v389 (owner, 2026-08-18: a screenshot of this exact card asking "why failed to load?").
+   This card was handed the error object and used it for ONE thing — the session-expiry branch —
+   then dropped it. Every other cause printed the same sentence, so neither the customer nor
+   anyone reading their screenshot could tell a dropped mobile request from a broken function
+   from a permissions change, and the only way to find out was to reproduce it as that customer.
+   The full error now goes to the console for anyone with the device in hand, and a SHORT
+   reference is printed under the message. It is deliberately just the transport's own code
+   (PGRST…/five-digit SQLSTATE) or the word "network" when the request never reached the
+   database — never the server's message, which can name internals. */
+function customerLoadReferenceV389(error){
+  if(!error)return '';
+  const code=String(error.code||'').trim();
+  if(/^[A-Za-z0-9_]{2,12}$/.test(code))return code;
+  return 'network';
+}
 function renderCustomerWalletRetry(message,businessSlug,retry=()=>renderCustomerWallet(businessSlug),error=null){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
   const expired=walletSessionExpired(error);
-  body.innerHTML=`<div class="card" style="text-align:center"><h2>Could not load ${esc(BRAND.customerLabel)}</h2><p class="muted small" style="margin-top:8px">${esc(expired?'Your sign-in expired. Sign in again.':message)}</p><button class="btn sm" id="walletRetry" style="margin-top:14px">${expired?'Sign in':'Retry'}</button></div>`;
+  if(error)try{console.error('[peekaa] wallet load failed',{businessSlug,code:error.code||null,message:error.message||null,details:error.details||null,hint:error.hint||null})}catch{}
+  const reference=expired?'':customerLoadReferenceV389(error);
+  body.innerHTML=`<div class="card" style="text-align:center"><h2>Could not load ${esc(BRAND.customerLabel)}</h2><p class="muted small" style="margin-top:8px">${esc(expired?'Your sign-in expired. Sign in again.':message)}</p>${reference?`<p class="muted small customer-load-reference-v389" style="margin-top:6px">Reference: <code>${esc(reference)}</code></p>`:''}<button class="btn sm" id="walletRetry" style="margin-top:14px">${expired?'Sign in':'Retry'}</button></div>`;
   $('walletRetry').onclick=expired?(()=>customerSessionExpiredSignIn()):retry;
 }
 
