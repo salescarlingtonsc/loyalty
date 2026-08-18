@@ -39696,7 +39696,20 @@ async function settingsPage(){
       <label class="row sales-mix-row"><input type="checkbox" id="sellsProducts" style="width:auto" ${(S.biz.enabled_modules||[]).includes('inventory')?'checked':''}> <span><b>Products</b><br><span class="muted small">Physical items you stock and sell.</span></span></label>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="salesMixSave">Save</button><span class="muted small" id="salesMixStatus" role="status" aria-live="polite"></span></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">`:''}<b>Modules</b><p class="muted small" style="margin:6px 0 10px">Everything else is set by Peekaa for your sector. Contact Peekaa if your business needs a different module entitlement.</p>
-      <div class="platform-module-list" aria-label="Enabled modules">${mods.filter(m=>(S.biz.enabled_modules||[]).includes(m)).map(m=>`<span class="chip on">${CUI.icon(MODULES[m][0],{size:16})} ${MODULES[m][1]}${dependencyText(m)?` · uses ${esc(dependencyText(m))}`:''}</span>`).join('')||'<span class="muted small">No optional modules are assigned.</span>'}</div></div>
+      ${/* V389 (owner, photo 1: "the modules are lump together, very messy ... i need you to have a
+            structure and frame it easier to read").
+            The mess had a cause, not just a look. `.chip` is styled in this app's stylesheet, but
+            it sets a background, a radius and padding and NO display — it is a <span>, so it is
+            inline. What made that work elsewhere is its container `.platform-module-list`, whose
+            `display:flex` blockified it; and that rule lives only in platform-console.css, which
+            app.js fetches on demand for #/platform routes (loadPlatformConsoleAssetsV184) and
+            which this page never loads. So each chip stayed inline, and a padded background on a
+            wrapping inline element paints exactly the overlap in the owner's photo.
+            So this list gets its OWN class and its own rules in this app's stylesheet, rather than
+            borrowing a console's. The console keeps .platform-module-list for its own lists.
+            One module per framed cell, name first and its dependencies on a quieter second line —
+            "uses Customers, Sales & refunds" is a footnote, not half the title. */''}
+      <div class="settings-module-grid-v389" aria-label="Enabled modules">${mods.filter(m=>(S.biz.enabled_modules||[]).includes(m)).map(m=>`<div class="settings-module-v389"><span class="settings-module-name-v389">${CUI.icon(MODULES[m][0],{size:15})}<b>${esc(MODULES[m][1])}</b></span>${dependencyText(m)?`<span class="settings-module-uses-v389">uses ${esc(dependencyText(m))}</span>`:''}</div>`).join('')||'<p class="muted small">No optional modules are assigned.</p>'}</div></div>
       <div class="card" id="billingWrap">${CUI.skeletonGrid({cards:2,lines:3})}</div></div></section>
     <section class="settings-panel" id="setpanel-catalogue" role="tabpanel" aria-labelledby="settab-catalogue" tabindex="-1" hidden>
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
