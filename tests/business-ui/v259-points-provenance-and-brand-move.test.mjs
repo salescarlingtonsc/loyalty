@@ -112,7 +112,7 @@ test('V259 a paused programme is still distinguished from one that was never bui
   /* And the paused note reaches the row, so "paused" is still told apart from "never built" at
      the place the 0 is now printed. */
   assert.match(clientDetail, /balanceLeadHtmlV319\([^)]*\),pointsPausedNoteV259\)/);
-  assert.match(clientDetail, /<span class="pill \$\{live\?'on':'off'\}">\$\{esc\(label\|\|\(live\?'Live':'Paused'\)\)\}<\/span>/);
+  assert.match(clientDetail, /<span class="pill \$\{live\?'on':'off'\}">\$\{esc\(label\|\|statusOnOff\(live\)\)\}<\/span>/);
 });
 
 test('V259 the dialog explains the 0 on the card instead of contradicting it', () => {

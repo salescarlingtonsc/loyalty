@@ -491,6 +491,28 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   bottles:['bottle','Bottles'],bottlesetup:['bottle','Bottle keep']};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
+/* ===== STATUS VOCABULARY (owner ruling 2026-08-18) ==========================================
+   Status pills answer one of THREE different questions, and flattening them into one word is
+   what produced twelve words for "on" (Active, active, Live, live, ON, on, Ongoing, Selected,
+   yes, Yes, Ready, Published) and thirteen for "off".
+
+     1. AVAILABILITY  "can this be sold or used right now?"   -> On / Off
+        services, bundles, products, packages, membership plans, branches, booking types,
+        programmes, rewards
+     2. PUBLICATION   "can customers see it?"                 -> Draft / Scheduled / Live / Ended
+        promotions and any other scheduled customer-facing content. Note a promotion can be
+        PUBLISHED BUT NOT LIVE, which is why this axis cannot collapse into On/Off.
+     3. LIFECYCLE     "what happened to this record?"         -> domain words, sentence case
+        memberships, appointments, gift cards, referrals, bookings, waitlist. Deliberately NOT
+        mapped onto On/Off — "cancelled" is not "off".
+
+   TO CHANGE A STATUS WORD: edit STATUS_WORDS below. Every availability pill in the app reads
+   it through statusOnOff(); nothing else hardcodes these words. */
+const STATUS_WORDS=Object.freeze({
+  on:'On',off:'Off',
+  draft:'Draft',scheduled:'Scheduled',live:'Live',ended:'Ended'
+});
+const statusOnOff=isOn=>isOn?STATUS_WORDS.on:STATUS_WORDS.off;
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
 /* V207: the roles an owner may hand out. 'owner' is deliberately absent — it is not invitable
    (v14 ruling). The add form and the invite form both read this list so they cannot drift. */
@@ -15716,7 +15738,7 @@ async function clientsPage(){
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
         <td>${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
-        <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
+        <td>${c.marketing_consent?'<span class="pill ok">Yes</span>':'<span class="pill off">No</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
@@ -16343,7 +16365,7 @@ async function clientDetail(id){
   /* V319: `copyHtml` is an OPT-IN escape hatch for the one row that needs a control inside its
      copy — the balance, which stays clickable through to the points history the owner asked for
      in V259. Every other caller keeps passing `copy` and keeps being escaped. */
-  const programmeRowHtmlV294=(name,copy,live,label=null,copyHtml=null,footHtml='')=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${copyHtml??esc(copy)}</p>${footHtml}</div><span class="pill ${live?'on':'off'}">${esc(label||(live?'Live':'Paused'))}</span></div>`;
+  const programmeRowHtmlV294=(name,copy,live,label=null,copyHtml=null,footHtml='')=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${copyHtml??esc(copy)}</p>${footHtml}</div><span class="pill ${live?'on':'off'}">${esc(label||statusOnOff(live))}</span></div>`;
   const programmeRowsV294=[];
   if(loyaltyFactsAvailable&&prog){
     /* V314 (W6 increment 1): the same two frozen reads the Grow pill carried. This row's
@@ -19513,7 +19535,7 @@ async function servicesPage(){
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
-      <td><span class="pill ${s.active?'on':'off'}">${s.active?'Active':'Inactive'}</span></td>
+      <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="svcEditName">Name</label><input id="svcEditName" value="${esc(s.name||'')}"></div>
@@ -19639,7 +19661,7 @@ async function servicesPage(){
        rather than table DML. */
     bundleCacheV285=bu||[];
     $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Disable':'Enable'}</button>
@@ -20213,7 +20235,7 @@ async function bookingsPage(){
         const editingV291=editingTableTypeV291===t.id;
         return `<tr><td data-label="Name"><b data-merchant-content>${esc(t.name)}</b></td><td data-label="Pax">${t.pax??'—'}</td><td data-label="Qty">${t.quantity}</td>
         <td class="small" data-label="Live">${a?`${a.held} held · ${a.available} free`:'—'}</td>
-        <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${t.active?'active':'off'}</span></td>
+        <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${statusOnOff(t.active)}</span></td>
         <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
         <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Disable':'Enable'}</button>
         <button class="btn ghost sm" onclick="rmTable('${t.id}')">Remove</button></td></tr>${editingV291?`<tr><td colspan="6">
@@ -22352,7 +22374,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       if(retentionTabV332==='history')return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=retentionDeletePendingV332===String(r.program_id||r.id);
       return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
-        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'paused'}</span>
+        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${statusOnOff(r.active)}</span>
         ${isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
           <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>
           <button type="button" class="btn ghost sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
@@ -22671,7 +22693,7 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
     ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
     :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
   const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
-    :active?'Live':'Paused';
+    :active?STATUS_WORDS.on:STATUS_WORDS.off;
   const tone=active&&status?.item_available!==false?'on':'off';
   const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
     ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
@@ -24197,7 +24219,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      The nav calls the same thing "Ongoing programmes", so the badge said one word and the menu
      another for one state. Mapped at the single render point rather than at the ~8 call sites,
      so the STATUS value stays 'Live' everywhere it is compared against (see bringBackCount). */
-  const PROGRAMME_STATUS_LABEL_V180={Live:'Ongoing'};
+  const PROGRAMME_STATUS_LABEL_V180={Live:STATUS_WORDS.on};
   const programmeStatus=(label,tone='off')=>`<span class="pill ${esc(tone)}">${esc(PROGRAMME_STATUS_LABEL_V180[label]||label)}</span>`;
   const programmeAction=({canWrite,kind,href=null,editKind=null,rewardId=null,programId=null,label})=>{
     if(!canWrite)return '';
@@ -25147,7 +25169,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        working without modification. */
     return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        <span class="pill ${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
         <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(name)}">•••</summary><div class="menu">
           <button type="button" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
@@ -25246,8 +25268,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
             <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add gift</button>
-            <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
-            :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
+            <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
+            :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
             <span class="spacer"></span>
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
@@ -25306,7 +25328,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <span class="muted small">${expiry?`Voucher expires ${expiry} days after it is sent`:'Voucher does not expire'}</span>
       </span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        <span class="pill ${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-edit-v361="${esc(campaign.id)}">Edit</button>
         <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(campaign.name)}">•••</summary><div class="menu">
           <button type="button" data-grow-bb-toggle-v361="${esc(campaign.id)}" aria-checked="${!paused}" role="switch">${paused?'Turn on':'Turn off'}</button>
@@ -25354,7 +25376,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growBirthdayV382.customer_label||'Birthday treat')}</b>
             ${growBirthdayV382.customer_description?`<p class="muted small" style="margin-top:4px" data-merchant-content>${esc(growBirthdayV382.customer_description)}</p>`:''}</div>
-          <span class="pill ${growBirthdayV382.active?'on':'off'}">${growBirthdayV382.active?'Live':'Paused'}</span>
+          <span class="pill ${growBirthdayV382.active?'on':'off'}">${statusOnOff(growBirthdayV382.active)}</span>
         </div>
         <dl class="appointment-detail-list" style="margin-top:12px">
           <div><dt>What they get</dt><dd data-merchant-content>${esc(growBirthdayBenefitTextV382)}</dd></div>
@@ -25447,10 +25469,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${canSetupGrow?`<label class="btn ghost sm service-photo-uploader-v158">${photoUrl?'Change photo':'Choose photo'}<input type="file" accept="image/png,image/jpeg,image/webp" data-workspace-i18n aria-label="Upload photo for level ${index+1}" data-grow-stamps-photo-v356="${esc(reward.id)}"${busy?' disabled':''}></label>
         <span class="muted small">Optional</span>`:`<span class="muted small">${photoUrl?'':'No photo'}</span>`}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
+        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${statusOnOff(!paused)}</button>
         <button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
         <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
-        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
+        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${statusOnOff(!paused)}</span>`}
       </div>
       <div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="grid-column:1/-1;margin-top:4px"${confirmOpen?'':' hidden'}>
         <b>Delete Level ${index+1} (${esc(name)})?</b>
@@ -25515,7 +25537,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growStampsDatesV356?`<span class="muted small">${growStampsDatesV356}</span>`:''}
     </span>
     <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-      <span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>
+      <span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>
       ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>`:''}
     </span>
   </div>`:'';
@@ -25542,8 +25564,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
           ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
           <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add level</button>
-          <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
-          :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
+          <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
+          :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
         </span>
       </div>
       <div class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
@@ -25617,7 +25639,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
       <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
         <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(tier.name)}">•••</summary><div class="menu">
           <button type="button" class="danger" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>
@@ -32774,7 +32796,7 @@ async function membershipsPage(){
       if(plansTabV329==='history')return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=plansDeletePendingV329===String(p.id);
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
-        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span>
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
         ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button>
         <button type="button" class="btn ghost sm" data-plan-delete-v329="${esc(p.id)}">Delete</button>`:''}
         </div>
@@ -36405,7 +36427,7 @@ async function packagesPage(){
       <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
         <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''}</span>
           <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'} — frozen. They keep their original price, sessions and service snapshot, so create a new version to change anything.`:'Not sold to anyone yet, so it can still be renamed or deleted.'}</div></div>
-        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'archived'}</span>
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
         ${canWrite?(packagePurchaseCount[p.id]?`${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}`
           :`<div class="row" style="gap:6px;flex-wrap:wrap">${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button><button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}">Delete</button></div>`):''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
     <section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel" aria-labelledby="pkgTabCustomers" hidden>
@@ -36721,7 +36743,7 @@ async function branchesPage(){
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
-          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${b.active?'Active':'Inactive'}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':''}
+          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${statusOnOff(b.active)}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':''}
           <div data-merchant-content class="muted small" style="margin-top:4px">${esc(b.address||'No address set')}${b.phone?' · '+esc(b.phone):''}${b.email?' · '+esc(b.email):''}</div></div>
           <span class="spacer"></span>
           <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>

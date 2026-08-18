@@ -18,6 +18,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
+/* The status vocabulary is a top-level constant in app.js. Slice the REAL definitions in
+   rather than restating the words here, so this harness can never drift from the app. */
+const STATUS_PRELUDE_SRC=app.match(/const STATUS_WORDS=[\s\S]*?const statusOnOff=[^\n]*\n/)[0];
 
 function slice(startMarker, endMarker) {
   const start = app.indexOf(startMarker);
@@ -180,6 +183,7 @@ function harness() {
       customerMediaUrlV95 = () => '',
     } = opts;
     const src = [
+      STATUS_PRELUDE_SRC,
       PROGRAMME_SWITCHES_V314_src, PROGRAMME_KINDS_W6I2_src, programmeSwitchSetV314_src, programmeSpineRowsV314_src,
       programmeSpineOnV314_src, PROGRAMME_ACCRUAL_EXCLUSIVE_V322_src, programmeExclusionsV322_src,
       promotionDateShortV324_src, pageBlockSrc,
@@ -229,7 +233,7 @@ test('V326 a configured programme shows the Point system row, earn rate, and on/
   assert.match(r.growPointsManageV326, /Turn Point system off for customers\?/);
   assert.match(r.growPointsManageV326, /Earn 1 points per SGD 1 spent/);
   /* V334: "ON for customers" text replaced by a compact ON/OFF toggle pill (owner markup photo 4). */
-  assert.match(r.growPointsManageV326, /pill-toggle-v334 on"[^>]*data-grow-switchtoggle-v322="points"[^>]*>ON</);
+  assert.match(r.growPointsManageV326, /pill-toggle-v334 on"[^>]*data-grow-switchtoggle-v322="points"[^>]*>On</);
   assert.match(r.growPointsManageV326, /data-grow-switchtoggle-v322="points"/);
   assert.match(r.growPointsManageV326, /data-grow-points-edit-v326="1"/);
   assert.match(r.growPointsManageV326, /data-grow-points-add-v326="1"/);
@@ -254,7 +258,7 @@ test('V326 Published tab shows live and paused gifts with correct per-row state,
      pill plus an Edit button and a "•••" menu holding Turn on/off + Delete — the pill states the
      gift's state, it is no longer itself the toggle. The per-row state is what this test is about
      and it is still read straight off the row's own `paused`. */
-  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /<span class="pill on">Live<\/span>/, 'a live gift reads Live');
+  assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /<span class="pill on">On<\/span>/, 'a live gift reads Live');
   assert.match(html.slice(muffinIdx, muffinIdx + 700), /<span class="pill off">Off<\/span>/, 'a paused gift reads Off');
   assert.match(html.slice(coffeeIdx, coffeeIdx + 700), /data-grow-points-gift-toggle-v326="r1"/,
     'and the on/off control is still on the row, in its menu');
@@ -313,7 +317,7 @@ test('V326 read-only staff (canSetupGrow=false) sees state but no interactive co
   const html = r.growPointsManageV326;
   assert.match(html, /Free Coffee/);
   /* V334: read-only state still shows the ON/OFF pill, just as a non-interactive <span>. */
-  assert.match(html, /pill-toggle-v334 on">ON</);
+  assert.match(html, /pill-toggle-v334 on">On</);
   for (const selector of ['data-grow-points-edit-v326', 'data-grow-points-add-v326',
     'data-grow-switchtoggle-v322="points"', 'data-grow-points-gift-toggle-v326', 'data-grow-points-gift-delete-v326']) {
     assert.doesNotMatch(html, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));

@@ -382,8 +382,6 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
      that lives in Operations setup, never an entitlement a staff member can be granted. */
   bottles:['bottle','Bottles'],bottlesetup:['bottle','Bottle keep']};
-/* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
-   frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
 const ROLE_CAPABILITIES={
   owner:new Set(['create_sales','view_finance']),manager:new Set(['create_sales','view_finance']),staff:new Set(['create_sales']),
@@ -5581,44 +5579,6 @@ function revealSectionTabV200(node){
   if(!tab)return false;
   tab.click();
   return true;
-}
-/* v215 — welcome offer for first-time sign-ups.
-   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
-   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
-   minimum spend and free xx product."
-   It lives in the Programmes list next to the other rewards because that is where an owner
-   looks for "what do my customers get", not in Settings. */
-/* V291: the welcome offer is the one lifestyle reward that is NOT versioned — it is stored in
-   business_welcome_offers_v215 and a save is live immediately, with no draft and no publish
-   step. When a draft is open, saying so is the honest marker; inventing a pending state for it
-   would be a lie in the other direction. */
-function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
-  if(!canRewards)return '';
-  const configured=!!status?.configured;
-  const active=configured&&status.active===true;
-  const min=Number(status?.min_spend_cents)||0;
-  const label=status?.reward_label||'';
-  const copy=!status
-    ?'Status could not be confirmed. Retry the programme overview.'
-    :!configured
-    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
-    :status.item_available===false
-    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
-    :active
-    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
-    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
-  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
-    :active?'Live':'Paused';
-  const tone=active&&status?.item_available!==false?'on':'off';
-  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
-    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
-  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
-    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p>${draftOpen?'<p class="muted small" data-welcome-not-versioned-v291>Not part of your draft \u2014 changes here go live as soon as you save them.</p>':''}</div>`
-    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
-    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
-  return canSetup
-    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
-    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
 }
 function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;
