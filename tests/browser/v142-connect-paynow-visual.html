@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="a3e4f7ded5c55e10ba4e3571a17fa60ec3a4a8a05a3482657c793491434a8320"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="98e731493620e0052b091619c980e1fde584618a6fad88283d1381438ed3c4c5"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -983,6 +983,8 @@ input[type=range]:focus{box-shadow:none}
 /* V386: the usage window filter and the comparison chart under the usage table. The chart is
    plain DOM — the app's CSP forbids loading a charting library, and these bars are drawn from
    the numbers already in the table above them. */
+/* V387: the previous period's own figure, under the value it is compared with. */
+.metric-was-v387{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--muted)}
 .grow-usage-filter-v386{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:0;border:0;background:none;box-shadow:none}
 .grow-usage-filter-v386 label{margin-top:0}
 .grow-usage-chart-v386{margin:16px 0 0}
@@ -2928,7 +2930,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a3e4f7ded5c55e10ba4e3571a17fa60ec3a4a8a05a3482657c793491434a8320</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 98e731493620e0052b091619c980e1fde584618a6fad88283d1381438ed3c4c5</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5619,7 +5621,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'a3e4f7ded5c55e10ba4e3571a17fa60ec3a4a8a05a3482657c793491434a8320',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'98e731493620e0052b091619c980e1fde584618a6fad88283d1381438ed3c4c5',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

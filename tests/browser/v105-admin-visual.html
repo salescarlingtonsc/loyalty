@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="34145185dfcb0507fee46a7c6ea11c8f2cb09de2bb86ecd5b2776e7a08bb82c6">
+<meta name="v105-production-component-sha256" content="7fe4d3a058f97df76dff742634fa34cdc65bde525156a04db525abbf3998cbf8">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -989,6 +989,8 @@ input[type=range]:focus{box-shadow:none}
 /* V386: the usage window filter and the comparison chart under the usage table. The chart is
    plain DOM — the app's CSP forbids loading a charting library, and these bars are drawn from
    the numbers already in the table above them. */
+/* V387: the previous period's own figure, under the value it is compared with. */
+.metric-was-v387{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--muted)}
 .grow-usage-filter-v386{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:0;border:0;background:none;box-shadow:none}
 .grow-usage-filter-v386 label{margin-top:0}
 .grow-usage-chart-v386{margin:16px 0 0}
@@ -3742,7 +3744,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 34145185dfcb</span>
+<span class="v105-provenance">v105 production-component harness · 7fe4d3a058f9</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3867,7 +3869,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'34145185dfcb0507fee46a7c6ea11c8f2cb09de2bb86ecd5b2776e7a08bb82c6',
+  sourceHash:'7fe4d3a058f97df76dff742634fa34cdc65bde525156a04db525abbf3998cbf8',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -1014,6 +1014,8 @@ input[type=range]:focus{box-shadow:none}
 /* V386: the usage window filter and the comparison chart under the usage table. The chart is
    plain DOM — the app's CSP forbids loading a charting library, and these bars are drawn from
    the numbers already in the table above them. */
+/* V387: the previous period's own figure, under the value it is compared with. */
+.metric-was-v387{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--muted)}
 .grow-usage-filter-v386{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:0;border:0;background:none;box-shadow:none}
 .grow-usage-filter-v386 label{margin-top:0}
 .grow-usage-chart-v386{margin:16px 0 0}
@@ -3003,7 +3005,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=168511fe5347","business":"/app-business.js?b=589b6c874459","i18n":"/app-i18n.js?b=593b878a43a9"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=168511fe5347","business":"/app-business.js?b=2aa5fe35333e","i18n":"/app-i18n.js?b=593b878a43a9"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

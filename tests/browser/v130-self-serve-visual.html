@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="31e4bf92138c19b872cbc9bd34c3de630b09a18d5fec29ef8fca50d419c0a9b7"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="08e9c3f379d7e808f69586db3980742465fb60dad100c31d9e56251bfb293fbd"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -982,6 +982,8 @@ input[type=range]:focus{box-shadow:none}
 /* V386: the usage window filter and the comparison chart under the usage table. The chart is
    plain DOM — the app's CSP forbids loading a charting library, and these bars are drawn from
    the numbers already in the table above them. */
+/* V387: the previous period's own figure, under the value it is compared with. */
+.metric-was-v387{display:block;margin-top:2px;font-size:12px;font-weight:600;color:var(--muted)}
 .grow-usage-filter-v386{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:0;border:0;background:none;box-shadow:none}
 .grow-usage-filter-v386 label{margin-top:0}
 .grow-usage-chart-v386{margin:16px 0 0}

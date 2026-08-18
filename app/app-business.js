@@ -3118,12 +3118,32 @@ function wireHelpDotsV385(root){
     };
   });
 }
+/* V387 (owner, second pass on photo 1: the ▲400% chip ringed again — "the 400% still unknown").
+   The V385 legend answered "which period", which is not the question. The question a percentage
+   raises is "400% of WHAT", and the only answer is the previous period's own number. It is
+   printed on the tile it belongs to, directly under the figure it is compared with, so the two
+   numbers can be read against each other without the eye leaving the tile.
+   Drawn only when there IS a comparison: a tile with no delta has no previous figure worth
+   stating, and a first-ever period would otherwise print "was 0" and invite the reading that
+   the business went from nothing to something when nobody was measured at all. */
+function dashboardMetricWasLineV387(metric,previousRange){
+  if(metric?.was==null||metric?.delta==null||!Number.isFinite(Number(metric.delta)))return '';
+  /* Only the NUMBER here. The period is stated once in the legend under the row — every tile is
+     measured against the same window, so printing the dates three times would be three readings
+     of one fact, which is what V200 deleted a whole headline for. */
+  return `<span class="metric-was-v387">was ${esc(metric.was)}</span>`;
+}
 function dashboardDeltaLegendV385(metrics,previousRange){
-  const comparable=(metrics||[]).some(metric=>Number.isFinite(Number(metric?.delta)));
+  /* V387: `Number(null)` is 0, which IS finite — so the original guard treated "no comparison"
+     as a comparison and printed the legend under a row of tiles that had none. Every caller of
+     percentageChangeV153 returns null for an absent previous period, so null and undefined are
+     the two values that must be rejected before the number is looked at. */
+  const hasDeltaV387=metric=>metric?.delta!=null&&Number.isFinite(Number(metric.delta));
+  const comparable=(metrics||[]).some(hasDeltaV387);
   if(!comparable||!previousRange?.previousFrom||!previousRange?.previousTo)return '';
   const days=Number(previousRange.days)||0;
   const span=days===1?'day':`${days} days`;
-  return `<p class="muted small dashboard-delta-legend-v385" style="grid-column:1/-1;margin:2px 0 0">▲▼ compares each figure with the previous ${esc(span)}: ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}.</p>`;
+  return `<p class="muted small dashboard-delta-legend-v385" style="grid-column:1/-1;margin:2px 0 0">"was" and ▲▼ are the previous ${esc(span)}: ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}.</p>`;
 }
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
@@ -3562,9 +3582,18 @@ async function dashboard(){
     const metrics=[
       /* V224: the owner struck out every KPI hint line. The scope is already stated once in the
          top bar, and repeating it under four tiles is the noise, not the information. */
-      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange},
-      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange}
+      /* V387 (owner, second pass on photo 1: "the 400% still unknown"). V385 printed the period
+         the chip compares against; the owner was asking for the FIGURE. A percentage with no
+         denominator is unreadable — +400% on this tile means 5 against a previous 1, and until
+         that 1 is on the screen the chip is a number nobody can check. `was` carries the
+         previous period's own value, formatted exactly like the tile's, or null when there is
+         no previous period to state. */
+      {key:'visits',value:String(d.visits||0),hint:'',delta:visitsChange,
+        was:previousSummary?String(previousSummary.visits||0):null},
+      {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange,
+        was:previousSummary?money(previousSummary.revenue_cents||0):null},
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange,
+        was:(previousSummary&&previousSummary.availability?.clients!==false)?String(previousSummary.new_customers||0):null}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
       /* V287 narrowed this tile to 30-59 because "all inactive" was not a destination the
@@ -3575,7 +3604,7 @@ async function dashboard(){
       const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
       metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
+    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
