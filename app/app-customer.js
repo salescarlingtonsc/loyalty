@@ -26,6 +26,157 @@ async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurr
   }
   return publicGateway('public-booking',{body,accessToken});
 }
+let turnstileLoader;
+/* V206: Turnstile must never be able to strand the sign-in form.
+   Two failure shapes were reaching users on iPadOS/WebKit:
+   (1) the api.js request hangs with NEITHER onload NOR onerror — a content blocker, a captive
+       portal, or a stalled TLS handshake to challenges.cloudflare.com. The promise never settled,
+       so `await loadTurnstile()` never returned, the status stayed on "Loading security check…"
+       with the Retry button hidden, and Sign in stayed disabled forever.
+   (2) the loader promise was CACHED after it rejected, so once the first attempt failed every
+       later Retry re-awaited the same rejected promise and could never recover.
+   Both are fixed here: a hard deadline settles the promise, and every failure path drops the
+   cached promise so a Retry genuinely re-requests the script. */
+const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
+/* How long a rendered widget may sit with no callback of any kind before the UI declares it
+   wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
+   SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
+const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
+/* V286: every primary button on an auth screen is disabled until Turnstile hands back a
+   token. When the widget is merely slow — not wedged, so none of the error callbacks fire —
+   the screen offers no way out for 20s. This is the shorter, honest line: after 12s without a
+   token the user is told the one thing that actually helps. It never re-enables a button and
+   never bypasses the check. */
+const TURNSTILE_SLOW_FALLBACK_MS_V286=12000;
+const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
+function loadTurnstile(){
+  const ready=turnstileApiReady();
+  if(ready) return Promise.resolve(ready);
+  if(turnstileLoader) return turnstileLoader;
+  turnstileLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;script.defer=true;
+    let settled=false;
+    const fail=(message,{remove=true}={})=>{
+      if(settled)return;
+      settled=true;clearTimeout(deadline);turnstileLoader=null;
+      if(remove)script.remove();
+      reject(new Error(message));
+    };
+    const succeed=()=>{
+      if(settled)return;
+      const api=turnstileApiReady();
+      /* onload fired but the global is absent: the response was not the real api.js (a captive
+         portal or an interception proxy). Treat it as a load failure, not as success. */
+      if(!api)return fail('Security check unavailable.');
+      settled=true;clearTimeout(deadline);resolve(api);
+    };
+    /* The script element is deliberately LEFT in place on timeout: a slow-but-alive request may
+       still define window.turnstile, and the next Retry then resolves instantly from the global. */
+    const deadline=setTimeout(()=>fail('Security check timed out.',{remove:false}),TURNSTILE_SCRIPT_TIMEOUT_MS);
+    script.onload=succeed;
+    script.onerror=()=>fail('Security check unavailable.');
+    document.head.appendChild(script);
+  });
+  return turnstileLoader;
+}
+async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
+  const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
+  const security=key=>authSecurityCopy(locale,key);
+  let tokenSeenV286=false;
+  const slowNoteV286=document.createElement('p');
+  slowNoteV286.className='challenge-status';
+  slowNoteV286.id=`${status}-slow-note`;
+  slowNoteV286.hidden=true;
+  slowNoteV286.textContent=security('slowFallback');
+  statusEl.insertAdjacentElement('afterend',slowNoteV286);
+  const slowTimerV286=setTimeout(()=>{
+    if(destroyed||tokenSeenV286)return;
+    slowNoteV286.hidden=false;
+  },TURNSTILE_SLOW_FALLBACK_MS_V286);
+  const stopSlowNoteV286=()=>{clearTimeout(slowTimerV286);slowNoteV286.hidden=true};
+  /* A passed check should be invisible: red status text and a "Retry" link after
+     success read as failure. The block only surfaces while loading or on error. */
+  const setPassed=passed=>{
+    statusEl.hidden=passed;
+    const host=document.getElementById(container);
+    if(host)host.style.display=passed?'none':'';
+    statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
+  };
+  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const logTurnstileError=(errorCode)=>{
+    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
+    console.warn('Turnstile error code:',code);
+  };
+  const removeWidget=()=>{
+    const host=document.getElementById(container);
+    if(api&&widgetId!==undefined&&host){
+      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    }
+    widgetId=undefined;
+    host?.replaceChildren();
+  };
+  /* Every render attempt gets a generation. A widget torn down by a Retry (or by a re-render of
+     the screen) can still invoke its callbacks afterwards on WebKit; without this, a stale
+     challenge could write its token into the CURRENT form — or blank a token the user had
+     already earned. A callback from an older generation is ignored outright. */
+  let generation=0;
+  let stall=null;
+  const stopStall=()=>{clearTimeout(stall);stall=null};
+  /* The widget rendered but nothing came back: no token, no checkbox prompt, no error callback.
+     Turnstile has no client-side guarantee that any of its callbacks ever fire, so this is the
+     backstop that converts "silently wedged" into an actionable failure with a Retry. */
+  const armStall=(mine)=>{
+    stopStall();
+    stall=setTimeout(()=>{
+      if(destroyed||mine!==generation)return;
+      clear(security('timeout'),true);retryEl.hidden=false;
+    },TURNSTILE_SOLVE_TIMEOUT_MS);
+  };
+  const render=async()=>{
+    if(destroyed)return;
+    generation+=1;
+    const mine=generation;
+    const live=()=>!destroyed&&mine===generation;
+    message(security('loading'));retryEl.hidden=true;
+    armStall(mine);
+    try{
+      api=await loadTurnstile();
+      if(!live()||!document.getElementById(container)){stopStall();return}
+      removeWidget();
+      if(!live()){stopStall();return}
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
+        callback:(token)=>{if(!live())return;stopStall();tokenSeenV286=true;stopSlowNoteV286();onToken(token);retryEl.hidden=true;setPassed(true)},
+        /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
+           security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
+           and the passkey button looked broken while the app was simply waiting for a tick. */
+        'before-interactive-callback':()=>{if(!live())return;stopStall();message(security('interactive'))},
+        'after-interactive-callback':()=>{if(!live())return;armStall(mine);message(security('loading'))},
+        'expired-callback':()=>{if(!live())return;stopStall();clear(security('expired'),true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(!live())return;stopStall();clear(security('timeout'),true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(!live())return true;stopStall();logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
+    }catch{
+      stopStall();
+      /* The one guarantee this whole block exists to make: on ANY failure the user sees what
+         happened and gets a Retry. Never a hidden button under a permanent "Loading…". */
+      if(live()){clear(security('load'),true);retryEl.hidden=false}
+    }
+  };
+  const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
+  const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const destroy=()=>{
+    if(destroyed)return;
+    destroyed=true;generation+=1;stopStall();stopSlowNoteV286();
+    retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
+  };
+  const control={reset,destroy};
+  mountedTurnstileControls.add(control);
+  retryEl.onclick=retryRender;
+  await render();
+  return control;
+}
 /* Phone OTP is an explicit runtime provider seam. No provider secret is
    present in the browser. Fixed Auth test OTPs belong only in local/staging
    Supabase configuration and must never create a production phone bypass. */
@@ -486,17 +637,11 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     <p class="muted small" id="customerOtpHelp" style="margin-top:6px">The code is valid for a few minutes.</p>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
     <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:18})}<span>${recovering?'Verify and reset password':'Verify and create account'}</span></button>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
     <button class="btn ghost" id="customerOtpResend" type="button" disabled style="width:100%;margin-top:10px">Resend available in 30 seconds</button>
     <button class="btn ghost" id="customerOtpVerifyBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:18})}<span>Back</span></button>
   </section>`);
   $('customerOtpVerifyBack').onclick=()=>renderCustomerOtpStart(isRouteCurrent,purpose);
-  let resendCaptcha='',resendControl=null,seconds=30;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
-    onToken:(token)=>{if(isRouteCurrent())resendCaptcha=token;}}).then(control=>{
-      if(!isRouteCurrent()||!$('customerOtpVerify')?.isConnected){control?.destroy();return}
-      resendControl=control;
-    });
+  let seconds=30;
   const resend=$('customerOtpResend');
   const countdown=setInterval(()=>{
     if(!resend?.isConnected)return clearInterval(countdown);
@@ -532,16 +677,15 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     }
     const available=await customerPhoneOtpAvailable(channel);
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
-    if(!available||!resendCaptcha){
+    if(!available){
       otpError.innerHTML='<div class="err">Customer mobile verification is unavailable. Please return and try again later.</div>';return;
     }
     resend.disabled=true;
-    const options={captchaToken:resendCaptcha};if(channel==='whatsapp')options.channel='whatsapp';
+    const options={};if(channel==='whatsapp')options.channel='whatsapp';
     const {error}=recovering
       ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
       :await sb.auth.resend({type:'sms',phone,options});
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
-    resendCaptcha='';resendControl?.reset();
     if(error){resend.disabled=false;otpError.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'otp_send'))}</div>`;return;}
     seconds=30;resend.textContent='Resend available in 30 seconds';
     const nextCountdown=setInterval(()=>{
@@ -687,8 +831,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     <label for="customerPassword">Password</label>
     ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerPasswordSignIn" type="submit" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="submit" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Sign in</span></button>
     </form>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
@@ -700,7 +843,6 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
   const installedApp=globalThis.navigator?.standalone===true
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
-  let captchaToken='',captchaControl=null;
   if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
   /* V286: renderCustomerOtpStart awaits the phone-OTP capability RPC before it paints anything,
      so on a slow connection the most important tap on this screen looked like nothing happened —
@@ -714,39 +856,23 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     finally{if(button.isConnected)idle()}
   };
   $('customerForgotPassword').onclick=()=>renderCustomerOtpStart(isRouteCurrent,'recovery');
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_password',
-    onToken:(token)=>{
-      if(!isRouteCurrent()||!signIn.isConnected)return;
-      captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
-      /* v193: "Checking…" claimed the APP was busy. Until a token arrives the app is waiting for
-         the security check — and if that check is a checkbox, for the person. */
-      signIn.querySelector('span').textContent=token?'Sign in':'Waiting for security check…';
-      if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
-        customerAutomaticPasskeyAttempted=true;
-        runPasskeySignIn({automatic:true});
-      }
-    }}).then(control=>{
-      if(!isRouteCurrent()||!signIn.isConnected){control?.destroy();return}
-      captchaControl=control;
-    });
+  /* V388: customer sign-in no longer waits on a security check. Supabase Auth CAPTCHA is off
+     server-side, so the form is usable the moment it paints — Cloudflare being slow, blocked or
+     down can no longer keep a customer out of their own account. The automatic passkey attempt
+     used to hang off the Turnstile token callback; it now fires once runPasskeySignIn exists,
+     at the bottom of this function. */
   const submitSignIn=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value),password=passwordInput.value;
     if(!phone||!password){
       errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
     }
-    if(!captchaToken){
-      errorHost.innerHTML='<div class="err">Security check is still running. Please wait, or retry the security check if an error appears.</div>';return;
-    }
     signIn.disabled=true;
     signIn.querySelector('span').textContent='Signing in…';
-    const challenge=captchaToken;captchaToken='';
     passkeyButton.disabled=true;
-    const {data,error}=await sb.auth.signInWithPassword({phone,password,options:{captchaToken:challenge}});
+    const {data,error}=await sb.auth.signInWithPassword({phone,password});
     if(!isRouteCurrent()||!signIn.isConnected)return;
-    captchaControl?.reset();
     if(error||!data?.user){
-      // The captcha gate above already blocks a submit without a fresh token, so the
-      // button stays usable — a failed sign-in must not become a dead end.
+      // A failed sign-in must not become a dead end — hand the form straight back.
       signIn.disabled=false;
       passkeyButton.disabled=!passkeySupported;
       signIn.querySelector('span').textContent='Sign in';
@@ -769,20 +895,18 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   if(signInForm)signInForm.onsubmit=event=>{event.preventDefault();submitSignIn()};
   else signIn.onclick=submitSignIn;
   const runPasskeySignIn=async({automatic=false}={})=>{
-    if(!passkeySupported||!captchaToken){
+    if(!passkeySupported){
       if(!automatic){
-        passkeyStatus.textContent=passkeySupported
-          ?'Complete the security check above first — then Face ID, Touch ID or your passkey.'
-          :'Passkeys are not supported in this browser. Sign in with your password.';
+        passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
       }
       return;
     }
-    const challenge=captchaToken;captchaToken='';passkeyButton.disabled=true;signIn.disabled=true;
+    passkeyButton.disabled=true;signIn.disabled=true;
     passkeyStatus.textContent='Waiting for your device…';
-    const {data,error}=await sb.auth.signInWithPasskey({options:{captchaToken:challenge}});
+    const {data,error}=await sb.auth.signInWithPasskey();
     if(!isRouteCurrent()||!passkeyButton.isConnected)return;
-    captchaControl?.reset();
     if(error||!data?.user){
+      passkeyButton.disabled=!passkeySupported;signIn.disabled=false;
       passkeyStatus.textContent=error?.code==='passkey_disabled'
         ?'Face ID and passkeys aren’t available yet. Use your password.'
         :(automatic?'Passkey sign-in was not completed. Use your password or the Face ID button.':customerPasskeyErrorMessage(error,{action:'sign-in'}));
@@ -791,6 +915,12 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     resetClientSessionState({preserveInvitation:true});route();
   };
   passkeyButton.onclick=()=>runPasskeySignIn();
+  /* V388: declared above as a const, so this trigger must sit after it — calling it from where
+     the Turnstile callback used to live would hit the temporal dead zone. */
+  if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
+    customerAutomaticPasskeyAttempted=true;
+    runPasskeySignIn({automatic:true});
+  }
 }
 async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
   const recovering=purpose==='recovery';
@@ -836,8 +966,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       ${whatsappAvailable?`<label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp</span></label>`:''}
     </fieldset>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
+    <button class="btn" id="customerOtpSend" type="button" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
     <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
   </section>`);
   bindPasswordVisibility(root);
@@ -846,13 +975,6 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     renderCustomerPasswordSignIn(isRouteCurrent);
   };
   const send=$('customerOtpSend'),phoneInput=$('customerPhone'),errorHost=$('customerOtpError');
-  let captchaToken='',captchaControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
-    onToken:(token)=>{if(isRouteCurrent()&&send.isConnected){captchaToken=token;send.disabled=!token}}})
-    .then(control=>{
-      if(!isRouteCurrent()||!send.isConnected){control?.destroy();return}
-      captchaControl=control;
-    });
   send.onclick=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value);
     const channel=document.querySelector('input[name="customerOtpChannel"]:checked')?.value||'sms';
@@ -862,7 +984,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     }
     const available=await customerPhoneOtpAvailable(channel);
     if(!isRouteCurrent()||!send.isConnected)return;
-    if(!available||!captchaToken){
+    if(!available){
       errorHost.innerHTML='<div class="err">Mobile verification is unavailable right now.</div>';return;
     }
     let password='';
@@ -892,13 +1014,11 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       rememberCustomerSignupProfile({fullName:signupFullName,birthDate:signupBirthDate,gender:signupGender});
     }
     send.disabled=true;
-    const challenge=captchaToken;captchaToken='';
-    const options={captchaToken:challenge};if(channel==='whatsapp')options.channel='whatsapp';
+    const options={};if(channel==='whatsapp')options.channel='whatsapp';
     const result=recovering
       ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
       :await sb.auth.signUp({phone,password,options});
     if(!isRouteCurrent()||!send.isConnected)return;
-    captchaControl?.reset();
     if(result.error||(recovering&&result.data?.session)){
       send.disabled=false;
       /* V289 (G6): the two sentences below are deliberately non-committal about whether the

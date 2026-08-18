@@ -162,64 +162,21 @@ async function publicGateway(name,{method='POST',body=null,query='',accessToken=
   if(!response.ok) throw new Error(payload?.error||'We could not process that request.');
   return payload;
 }
-let turnstileLoader;
 const mountedTurnstileControls=new Set();
+/* V388: route() calls this on every navigation, so it lives in the CORE chunk — but after the
+   auth screens stopped mounting challenges, mountTurnstile and this registry are reachable only
+   from the customer surface, and the bundle splitter correctly ships them in app-customer.js.
+   Core would then reference a registry that is undefined on the merchant surface, which threw
+   `mountedTurnstileControls is not defined` and left the business sign-in screen blank.
+
+   The typeof guard is the idiom split-app-bundle.mjs documents for exactly this shape, and it is
+   sound rather than defensive: the only writer is mountTurnstile, which ships in the same chunk
+   as the registry, so if the registry is absent no widget can have been mounted and there is
+   nothing to destroy. Verified in a browser on the merchant surface with the customer chunk
+   absent — see the V384 notes on the auth-captcha removal. */
 function destroyMountedTurnstiles(){
+  if(typeof mountedTurnstileControls==='undefined')return;
   [...mountedTurnstileControls].forEach(control=>control.destroy());
-}
-/* V206: Turnstile must never be able to strand the sign-in form.
-   Two failure shapes were reaching users on iPadOS/WebKit:
-   (1) the api.js request hangs with NEITHER onload NOR onerror — a content blocker, a captive
-       portal, or a stalled TLS handshake to challenges.cloudflare.com. The promise never settled,
-       so `await loadTurnstile()` never returned, the status stayed on "Loading security check…"
-       with the Retry button hidden, and Sign in stayed disabled forever.
-   (2) the loader promise was CACHED after it rejected, so once the first attempt failed every
-       later Retry re-awaited the same rejected promise and could never recover.
-   Both are fixed here: a hard deadline settles the promise, and every failure path drops the
-   cached promise so a Retry genuinely re-requests the script. */
-const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
-/* How long a rendered widget may sit with no callback of any kind before the UI declares it
-   wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
-   SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
-const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
-/* V286: every primary button on an auth screen is disabled until Turnstile hands back a
-   token. When the widget is merely slow — not wedged, so none of the error callbacks fire —
-   the screen offers no way out for 20s. This is the shorter, honest line: after 12s without a
-   token the user is told the one thing that actually helps. It never re-enables a button and
-   never bypasses the check. */
-const TURNSTILE_SLOW_FALLBACK_MS_V286=12000;
-const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
-function loadTurnstile(){
-  const ready=turnstileApiReady();
-  if(ready) return Promise.resolve(ready);
-  if(turnstileLoader) return turnstileLoader;
-  turnstileLoader=new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-    script.async=true;script.defer=true;
-    let settled=false;
-    const fail=(message,{remove=true}={})=>{
-      if(settled)return;
-      settled=true;clearTimeout(deadline);turnstileLoader=null;
-      if(remove)script.remove();
-      reject(new Error(message));
-    };
-    const succeed=()=>{
-      if(settled)return;
-      const api=turnstileApiReady();
-      /* onload fired but the global is absent: the response was not the real api.js (a captive
-         portal or an interception proxy). Treat it as a load failure, not as success. */
-      if(!api)return fail('Security check unavailable.');
-      settled=true;clearTimeout(deadline);resolve(api);
-    };
-    /* The script element is deliberately LEFT in place on timeout: a slow-but-alive request may
-       still define window.turnstile, and the next Retry then resolves instantly from the global. */
-    const deadline=setTimeout(()=>fail('Security check timed out.',{remove:false}),TURNSTILE_SCRIPT_TIMEOUT_MS);
-    script.onload=succeed;
-    script.onerror=()=>fail('Security check unavailable.');
-    document.head.appendChild(script);
-  });
-  return turnstileLoader;
 }
 const authSecurityCopy=(locale,key)=>{
   const copy={
@@ -259,116 +216,21 @@ const authSecurityCopy=(locale,key)=>{
   };
   return copy[locale]?.[key]||copy.en[key]||key;
 };
-async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
-  const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
-  const security=key=>authSecurityCopy(locale,key);
-  let tokenSeenV286=false;
-  const slowNoteV286=document.createElement('p');
-  slowNoteV286.className='challenge-status';
-  slowNoteV286.id=`${status}-slow-note`;
-  slowNoteV286.hidden=true;
-  slowNoteV286.textContent=security('slowFallback');
-  statusEl.insertAdjacentElement('afterend',slowNoteV286);
-  const slowTimerV286=setTimeout(()=>{
-    if(destroyed||tokenSeenV286)return;
-    slowNoteV286.hidden=false;
-  },TURNSTILE_SLOW_FALLBACK_MS_V286);
-  const stopSlowNoteV286=()=>{clearTimeout(slowTimerV286);slowNoteV286.hidden=true};
-  /* A passed check should be invisible: red status text and a "Retry" link after
-     success read as failure. The block only surfaces while loading or on error. */
-  const setPassed=passed=>{
-    statusEl.hidden=passed;
-    const host=document.getElementById(container);
-    if(host)host.style.display=passed?'none':'';
-    statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
-  };
-  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
-  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
-  const logTurnstileError=(errorCode)=>{
-    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
-    console.warn('Turnstile error code:',code);
-  };
-  const removeWidget=()=>{
-    const host=document.getElementById(container);
-    if(api&&widgetId!==undefined&&host){
-      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
-    }
-    widgetId=undefined;
-    host?.replaceChildren();
-  };
-  /* Every render attempt gets a generation. A widget torn down by a Retry (or by a re-render of
-     the screen) can still invoke its callbacks afterwards on WebKit; without this, a stale
-     challenge could write its token into the CURRENT form — or blank a token the user had
-     already earned. A callback from an older generation is ignored outright. */
-  let generation=0;
-  let stall=null;
-  const stopStall=()=>{clearTimeout(stall);stall=null};
-  /* The widget rendered but nothing came back: no token, no checkbox prompt, no error callback.
-     Turnstile has no client-side guarantee that any of its callbacks ever fire, so this is the
-     backstop that converts "silently wedged" into an actionable failure with a Retry. */
-  const armStall=(mine)=>{
-    stopStall();
-    stall=setTimeout(()=>{
-      if(destroyed||mine!==generation)return;
-      clear(security('timeout'),true);retryEl.hidden=false;
-    },TURNSTILE_SOLVE_TIMEOUT_MS);
-  };
-  const render=async()=>{
-    if(destroyed)return;
-    generation+=1;
-    const mine=generation;
-    const live=()=>!destroyed&&mine===generation;
-    message(security('loading'));retryEl.hidden=true;
-    armStall(mine);
-    try{
-      api=await loadTurnstile();
-      if(!live()||!document.getElementById(container)){stopStall();return}
-      removeWidget();
-      if(!live()){stopStall();return}
-      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(!live())return;stopStall();tokenSeenV286=true;stopSlowNoteV286();onToken(token);retryEl.hidden=true;setPassed(true)},
-        /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
-           security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
-           and the passkey button looked broken while the app was simply waiting for a tick. */
-        'before-interactive-callback':()=>{if(!live())return;stopStall();message(security('interactive'))},
-        'after-interactive-callback':()=>{if(!live())return;armStall(mine);message(security('loading'))},
-        'expired-callback':()=>{if(!live())return;stopStall();clear(security('expired'),true);retryEl.hidden=false},
-        'timeout-callback':()=>{if(!live())return;stopStall();clear(security('timeout'),true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{if(!live())return true;stopStall();logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
-    }catch{
-      stopStall();
-      /* The one guarantee this whole block exists to make: on ANY failure the user sees what
-         happened and gets a Retry. Never a hidden button under a permanent "Loading…". */
-      if(live()){clear(security('load'),true);retryEl.hidden=false}
-    }
-  };
-  const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
-  const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
-  const destroy=()=>{
-    if(destroyed)return;
-    destroyed=true;generation+=1;stopStall();stopSlowNoteV286();
-    retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
-  };
-  const control={reset,destroy};
-  mountedTurnstileControls.add(control);
-  retryEl.onclick=retryRender;
-  await render();
-  return control;
-}
-/* Supabase Auth has CAPTCHA protection enabled (Cloudflare Turnstile), so every
-   signUp / signInWithPassword / resetPasswordForEmail call must carry a captchaToken.
-   The site key is public by design (the join/booking pages already expose the same
-   widget's key); the secret lives only in Supabase Auth settings. */
-const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
+/* V388 (owner ruling 2026-08-17): Supabase Auth CAPTCHA is OFF server-side
+   (security_captcha_enabled=false), so no signUp / signInWithPassword /
+   resetPasswordForEmail call carries a captchaToken any more, and no auth screen mounts a
+   challenge. Turnstile being slow, blocked or down can no longer keep an owner, a staff
+   member or a customer out of their own account — which is what it had been doing.
+   The provider and secret are still stored in Auth settings, so re-enabling is one flag.
+
+   This does NOT touch the public gateway. public-join, public-booking and
+   public-business-application still verify Turnstile server-side and still fail closed,
+   with their own site key (biz.turnstile_site_key / the join page's) and their own
+   cf-connecting-ip rate limiting. mountTurnstile below stays for exactly those. */
 /* The private database flags are the normal release authority. This build-time
    switch exists only for an emergency fail-closed build; it must never enable a
    server-disabled feature. */
 const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
-function authChallengeHtml(locale='en'){
-  return `<div class="challenge"><div id="authTurnstile"></div>
-    <p class="challenge-status" id="authTurnstileStatus" role="status" aria-live="polite">${esc(authSecurityCopy(locale,'loading'))}</p>
-    <button class="challenge-retry" id="authTurnstileRetry" type="button" hidden>${esc(authSecurityCopy(locale,'retry'))}</button></div>`;
-}
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
@@ -4576,8 +4438,7 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     <div id="staffInviteAuthError"></div>
     ${businessGoogleButtonHtml('staffInviteGoogleV158')}
     <p class="muted small" style="margin-top:8px">Google works for invited staff too. Peekaa still validates the company invite and role on the server before access is created.</p>
-    ${authChallengeHtml()}
-    <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px" disabled>${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
+    <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px">${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
     <button class="btn ghost" id="staffInviteBack" style="width:100%;margin-top:10px">Back</button>
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
@@ -4604,11 +4465,6 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
   };
   if(saved)previewStaffInviteV151(saved,'staffInvitePreviewV151');
   $('staffInviteCodeV151').addEventListener('blur',()=>previewStaffInviteV151($('staffInviteCodeV151').value,'staffInvitePreviewV151'));
-  let authToken='',authControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_staff_invite',
-    onToken:(token)=>{authToken=token;$('staffInviteAuthGo').disabled=!token}})
-    .then(control=>authControl=control);
   $('staffInviteAuthGo').onclick=async()=>{
     const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
     const email=$('staffInviteEmailV151').value.trim();
@@ -4620,26 +4476,23 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     if(mode==='up'&&(!validNewPassword(password)||password!==$('staffInvitePasswordConfirmV151').value)){
       $('staffInviteAuthError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
     }
-    if(!authToken)return;
     $('staffInviteAuthGo').disabled=true;
-    const captchaToken=authToken;authToken='';
     try{
       if(mode==='up'){
         const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('staff_invite',code);
-        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken,emailRedirectTo:returnUrl.toString(),data:{account_type:'business_staff_invite'}}});
+        const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:returnUrl.toString(),data:{account_type:'business_staff_invite'}}});
         if(error)throw error;
         if(!data.session){
-          if(authControl)authControl.reset();
+          $('staffInviteAuthGo').disabled=false;
           $('staffInviteAuthError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
         }
       }else{
-        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        const {error}=await sb.auth.signInWithPassword({email,password});
         if(error)throw error;
       }
       history.replaceState(null,'',`/business?staff_invite=${encodeURIComponent(code)}`);
       resetClientSessionState({preserveInvitation:true});route();
     }catch(error){
-      if(authControl)authControl.reset();
       $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Invite sign-in could not be completed.')}</div>`;
       $('staffInviteAuthGo').disabled=false;
     }
@@ -4819,8 +4672,7 @@ function renderBusinessApplication(){
     <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
     <div id="businessApplicationError"></div>
-    ${authChallengeHtml(locale)}
-    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
+    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px">${esc(a.create)}</button>
     <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(a.back)}</button>
     ${legalLinks(locale)}</div></div>`;
   bindPasswordVisibility(root);
@@ -4837,11 +4689,6 @@ function renderBusinessApplication(){
     }
     startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',intent:'signup',legalAccepted:true});
   };
-  let token='',control=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',locale,
-    onToken:value=>{token=value;$('businessApplicationSubmit').disabled=!value}})
-    .then(value=>control=value);
   $('businessApplicationSubmit').onclick=async()=>{
     const email=$('applicationContactEmail').value.trim().toLowerCase();
     const password=$('businessOwnerPassword').value;
@@ -4857,12 +4704,10 @@ function renderBusinessApplication(){
        that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
     const {data,error}=await sb.auth.signUp({
-      email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
+      email,password,options:{emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}
     });
-    token='';
     if(error){
-      if(control)control.reset();
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.error)}</div>`;
       $('businessApplicationSubmit').disabled=false;return;
     }
@@ -4883,15 +4728,10 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
     <label>${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
     <label for="approvedOwnerPassword">${esc(t('password'))}</label>${passwordControlHtml('approvedOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="approvedOwnerPasswordConfirm">${esc(t('confirm'))}</label>${passwordControlHtml('approvedOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
-    <div id="approvedOwnerError"></div>${authChallengeHtml(locale)}
-    <button class="btn" id="approvedOwnerCreate" style="width:100%;margin-top:18px" disabled>${esc(t('create'))}</button>
+    <div id="approvedOwnerError"></div>
+    <button class="btn" id="approvedOwnerCreate" style="width:100%;margin-top:18px">${esc(t('create'))}</button>
     ${legalLinks(locale)}</div></div>`;
   bindPasswordVisibility(root);
-  let token='',control=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',locale,
-    onToken:value=>{token=value;$('approvedOwnerCreate').disabled=!value}})
-    .then(value=>control=value);
   $('approvedOwnerCreate').onclick=async()=>{
     const password=$('approvedOwnerPassword').value;
     if(!validNewPassword(password)||password!==$('approvedOwnerPasswordConfirm').value){
@@ -4901,11 +4741,9 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('invite',inviteToken);
     const {data,error}=await sb.auth.signUp({
       email:invitation.approved_email,password,
-      options:{captchaToken:token,emailRedirectTo:returnUrl.toString()}
+      options:{emailRedirectTo:returnUrl.toString()}
     });
-    token='';
     if(error){
-      if(control)control.reset();
       $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('genericError'))}</div>`;$('approvedOwnerCreate').disabled=false;return;
     }
     if(!data.session){
@@ -4927,28 +4765,20 @@ function renderAuth(mode='in',{admin=false}={}){
       <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
       <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
       <div id="autherr"></div>
-      ${authChallengeHtml()}
-      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest">Send reset link</button>
       <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
       ${legalLinks()}</section></main>`;
-    let authToken='',authControl=null;
-    mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-      retry:'authTurnstileRetry',action:'frenly_auth',
-      onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
-      .then(control=>authControl=control);
     $('backSignIn').onclick=()=>renderAuth('in',{admin});
     $('resetRequest').onclick=async()=>{
       const email=$('em').value.trim();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
         $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
       }
-      if(!authToken) return;
       $('resetRequest').disabled=true;
       const redirect=new URL(NestlyNativeBridge.publicUrl(admin?'/admin':'/business'));
       redirect.searchParams.set('recovery','1');
-      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
-      /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
-      authToken='';if(authControl)authControl.reset();
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
+      $('resetRequest').disabled=false;
       $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
     };
     return;
@@ -4963,9 +4793,8 @@ function renderAuth(mode='in',{admin=false}={}){
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
-    ${authChallengeHtml()}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go" disabled>${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
+      <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
     ${legalLinks()}</section></main>`;
@@ -4974,35 +4803,28 @@ function renderAuth(mode='in',{admin=false}={}){
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
-  let authToken='',authControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',
-    onToken:(token)=>{authToken=token;$('go').disabled=!token}})
-    .then(control=>authControl=control);
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
     startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'autherr',intent:'signin'});
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
-    if(!authToken) return;
     $('go').disabled=true;
-    /* Tokens are single-use: consume, then reset the widget for any follow-up attempt. */
-    const captchaToken=authToken;authToken='';
     try{
       if(mode==='up'){
-        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken}});
+        const {data,error}=await sb.auth.signUp({email,password});
         if(error) throw error;
         if(!data.session){
-          if(authControl)authControl.reset();
           $('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';return}
       }else{
-        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        const {error}=await sb.auth.signInWithPassword({email,password});
         if(error) throw error;
       }
       resetClientSessionState({preserveInvitation:true});route();
     }catch(e){
-      if(authControl)authControl.reset();
+      /* V388: re-enable the button rather than resetting a challenge widget. Auth no longer
+         carries a captcha, so a failed attempt just needs the form back, not a fresh token. */
+      $('go').disabled=false;
       $('autherr').innerHTML=`<div class="err">${esc(humanErrorV295(e,'We could not sign you in. Please try again.'))}</div>`;
     }
   };

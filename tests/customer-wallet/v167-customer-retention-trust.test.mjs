@@ -85,10 +85,11 @@ test('customer account trust controls use positioned UI and shared capability tr
 test('security readiness is explicit instead of allowing a silent sign-in no-op',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const signIn=section(app,'function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
-  assert.match(signIn,/id="customerPasswordSignIn"[^>]*disabled[^>]*>[\s\S]*?<span>Checking…<\/span>/);
-  assert.match(signIn,/signIn\.querySelector\('span'\)\.textContent=token\?'Sign in':'Waiting for security check…'/);
-  assert.match(signIn,/if\(!captchaToken\)\{[\s\S]*Security check is still running/);
-  // v176: a failed sign-in must leave the control usable; the captcha gate still blocks invalid submits.
+  /* V388: there is no security check to be ready FOR. The control is live on paint and says
+     "Sign in", never "Checking…". A failed attempt must still leave the control usable. */
+  assert.match(signIn,/id="customerPasswordSignIn" type="submit" style=[^>]*>[\s\S]*?<span>Sign in<\/span>/);
+  assert.doesNotMatch(signIn,/id="customerPasswordSignIn"[^>]*disabled/);
+  assert.doesNotMatch(signIn,/Waiting for security check|Security check is still running|captchaToken/);
   assert.match(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]*signIn\.disabled=false;[\s\S]*passkeyButton\.disabled=!passkeySupported;[\s\S]*textContent='Sign in'/);
   assert.doesNotMatch(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]{0,200}signIn\.disabled=true/);
 });

@@ -187,7 +187,19 @@ async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurr
 }
 let turnstileLoader;
 const mountedTurnstileControls=new Set();
+/* V388: route() calls this on every navigation, so it lives in the CORE chunk — but after the
+   auth screens stopped mounting challenges, mountTurnstile and this registry are reachable only
+   from the customer surface, and the bundle splitter correctly ships them in app-customer.js.
+   Core would then reference a registry that is undefined on the merchant surface, which threw
+   `mountedTurnstileControls is not defined` and left the business sign-in screen blank.
+
+   The typeof guard is the idiom split-app-bundle.mjs documents for exactly this shape, and it is
+   sound rather than defensive: the only writer is mountTurnstile, which ships in the same chunk
+   as the registry, so if the registry is absent no widget can have been mounted and there is
+   nothing to destroy. Verified in a browser on the merchant surface with the customer chunk
+   absent — see the V384 notes on the auth-captcha removal. */
 function destroyMountedTurnstiles(){
+  if(typeof mountedTurnstileControls==='undefined')return;
   [...mountedTurnstileControls].forEach(control=>control.destroy());
 }
 /* V206: Turnstile must never be able to strand the sign-in form.
@@ -378,11 +390,17 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
   await render();
   return control;
 }
-/* Supabase Auth has CAPTCHA protection enabled (Cloudflare Turnstile), so every
-   signUp / signInWithPassword / resetPasswordForEmail call must carry a captchaToken.
-   The site key is public by design (the join/booking pages already expose the same
-   widget's key); the secret lives only in Supabase Auth settings. */
-const AUTH_TURNSTILE_SITE_KEY='0x4AAAAAAD4_7rnuzB3ug-NF';
+/* V388 (owner ruling 2026-08-17): Supabase Auth CAPTCHA is OFF server-side
+   (security_captcha_enabled=false), so no signUp / signInWithPassword /
+   resetPasswordForEmail call carries a captchaToken any more, and no auth screen mounts a
+   challenge. Turnstile being slow, blocked or down can no longer keep an owner, a staff
+   member or a customer out of their own account — which is what it had been doing.
+   The provider and secret are still stored in Auth settings, so re-enabling is one flag.
+
+   This does NOT touch the public gateway. public-join, public-booking and
+   public-business-application still verify Turnstile server-side and still fail closed,
+   with their own site key (biz.turnstile_site_key / the join page's) and their own
+   cf-connecting-ip rate limiting. mountTurnstile below stays for exactly those. */
 /* The private database flags are the normal release authority. This build-time
    switch exists only for an emergency fail-closed build; it must never enable a
    server-disabled feature. */
@@ -407,11 +425,6 @@ const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
   CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
   && window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__===true
 );
-function authChallengeHtml(locale='en'){
-  return `<div class="challenge"><div id="authTurnstile"></div>
-    <p class="challenge-status" id="authTurnstileStatus" role="status" aria-live="polite">${esc(authSecurityCopy(locale,'loading'))}</p>
-    <button class="challenge-retry" id="authTurnstileRetry" type="button" hidden>${esc(authSecurityCopy(locale,'retry'))}</button></div>`;
-}
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 /* Chart.js global defaults (design system v2). Chart.js out of the box is the single
@@ -3539,17 +3552,11 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     <p class="muted small" id="customerOtpHelp" style="margin-top:6px">The code is valid for a few minutes.</p>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
     <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:18})}<span>${recovering?'Verify and reset password':'Verify and create account'}</span></button>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
     <button class="btn ghost" id="customerOtpResend" type="button" disabled style="width:100%;margin-top:10px">Resend available in 30 seconds</button>
     <button class="btn ghost" id="customerOtpVerifyBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:18})}<span>Back</span></button>
   </section>`);
   $('customerOtpVerifyBack').onclick=()=>renderCustomerOtpStart(isRouteCurrent,purpose);
-  let resendCaptcha='',resendControl=null,seconds=30;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
-    onToken:(token)=>{if(isRouteCurrent())resendCaptcha=token;}}).then(control=>{
-      if(!isRouteCurrent()||!$('customerOtpVerify')?.isConnected){control?.destroy();return}
-      resendControl=control;
-    });
+  let seconds=30;
   const resend=$('customerOtpResend');
   const countdown=setInterval(()=>{
     if(!resend?.isConnected)return clearInterval(countdown);
@@ -3585,16 +3592,15 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     }
     const available=await customerPhoneOtpAvailable(channel);
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
-    if(!available||!resendCaptcha){
+    if(!available){
       otpError.innerHTML='<div class="err">Customer mobile verification is unavailable. Please return and try again later.</div>';return;
     }
     resend.disabled=true;
-    const options={captchaToken:resendCaptcha};if(channel==='whatsapp')options.channel='whatsapp';
+    const options={};if(channel==='whatsapp')options.channel='whatsapp';
     const {error}=recovering
       ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
       :await sb.auth.resend({type:'sms',phone,options});
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
-    resendCaptcha='';resendControl?.reset();
     if(error){resend.disabled=false;otpError.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'otp_send'))}</div>`;return;}
     seconds=30;resend.textContent='Resend available in 30 seconds';
     const nextCountdown=setInterval(()=>{
@@ -3740,8 +3746,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     <label for="customerPassword">Password</label>
     ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerPasswordSignIn" type="submit" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Checking…</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="submit" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Sign in</span></button>
     </form>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
@@ -3753,7 +3758,6 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
   const installedApp=globalThis.navigator?.standalone===true
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
-  let captchaToken='',captchaControl=null;
   if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
   /* V286: renderCustomerOtpStart awaits the phone-OTP capability RPC before it paints anything,
      so on a slow connection the most important tap on this screen looked like nothing happened —
@@ -3767,39 +3771,23 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     finally{if(button.isConnected)idle()}
   };
   $('customerForgotPassword').onclick=()=>renderCustomerOtpStart(isRouteCurrent,'recovery');
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_password',
-    onToken:(token)=>{
-      if(!isRouteCurrent()||!signIn.isConnected)return;
-      captchaToken=token;signIn.disabled=!token;passkeyButton.disabled=!passkeySupported||!token;
-      /* v193: "Checking…" claimed the APP was busy. Until a token arrives the app is waiting for
-         the security check — and if that check is a checkbox, for the person. */
-      signIn.querySelector('span').textContent=token?'Sign in':'Waiting for security check…';
-      if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
-        customerAutomaticPasskeyAttempted=true;
-        runPasskeySignIn({automatic:true});
-      }
-    }}).then(control=>{
-      if(!isRouteCurrent()||!signIn.isConnected){control?.destroy();return}
-      captchaControl=control;
-    });
+  /* V388: customer sign-in no longer waits on a security check. Supabase Auth CAPTCHA is off
+     server-side, so the form is usable the moment it paints — Cloudflare being slow, blocked or
+     down can no longer keep a customer out of their own account. The automatic passkey attempt
+     used to hang off the Turnstile token callback; it now fires once runPasskeySignIn exists,
+     at the bottom of this function. */
   const submitSignIn=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value),password=passwordInput.value;
     if(!phone||!password){
       errorHost.innerHTML='<div class="err">Enter your Singapore mobile number and password.</div>';return;
     }
-    if(!captchaToken){
-      errorHost.innerHTML='<div class="err">Security check is still running. Please wait, or retry the security check if an error appears.</div>';return;
-    }
     signIn.disabled=true;
     signIn.querySelector('span').textContent='Signing in…';
-    const challenge=captchaToken;captchaToken='';
     passkeyButton.disabled=true;
-    const {data,error}=await sb.auth.signInWithPassword({phone,password,options:{captchaToken:challenge}});
+    const {data,error}=await sb.auth.signInWithPassword({phone,password});
     if(!isRouteCurrent()||!signIn.isConnected)return;
-    captchaControl?.reset();
     if(error||!data?.user){
-      // The captcha gate above already blocks a submit without a fresh token, so the
-      // button stays usable — a failed sign-in must not become a dead end.
+      // A failed sign-in must not become a dead end — hand the form straight back.
       signIn.disabled=false;
       passkeyButton.disabled=!passkeySupported;
       signIn.querySelector('span').textContent='Sign in';
@@ -3822,20 +3810,18 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   if(signInForm)signInForm.onsubmit=event=>{event.preventDefault();submitSignIn()};
   else signIn.onclick=submitSignIn;
   const runPasskeySignIn=async({automatic=false}={})=>{
-    if(!passkeySupported||!captchaToken){
+    if(!passkeySupported){
       if(!automatic){
-        passkeyStatus.textContent=passkeySupported
-          ?'Complete the security check above first — then Face ID, Touch ID or your passkey.'
-          :'Passkeys are not supported in this browser. Sign in with your password.';
+        passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
       }
       return;
     }
-    const challenge=captchaToken;captchaToken='';passkeyButton.disabled=true;signIn.disabled=true;
+    passkeyButton.disabled=true;signIn.disabled=true;
     passkeyStatus.textContent='Waiting for your device…';
-    const {data,error}=await sb.auth.signInWithPasskey({options:{captchaToken:challenge}});
+    const {data,error}=await sb.auth.signInWithPasskey();
     if(!isRouteCurrent()||!passkeyButton.isConnected)return;
-    captchaControl?.reset();
     if(error||!data?.user){
+      passkeyButton.disabled=!passkeySupported;signIn.disabled=false;
       passkeyStatus.textContent=error?.code==='passkey_disabled'
         ?'Face ID and passkeys aren’t available yet. Use your password.'
         :(automatic?'Passkey sign-in was not completed. Use your password or the Face ID button.':customerPasskeyErrorMessage(error,{action:'sign-in'}));
@@ -3844,6 +3830,12 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     resetClientSessionState({preserveInvitation:true});route();
   };
   passkeyButton.onclick=()=>runPasskeySignIn();
+  /* V388: declared above as a const, so this trigger must sit after it — calling it from where
+     the Turnstile callback used to live would hit the temporal dead zone. */
+  if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
+    customerAutomaticPasskeyAttempted=true;
+    runPasskeySignIn({automatic:true});
+  }
 }
 async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
   const recovering=purpose==='recovery';
@@ -3889,8 +3881,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       ${whatsappAvailable?`<label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp</span></label>`:''}
     </fieldset>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    <div style="margin-top:14px">${authChallengeHtml()}</div>
-    <button class="btn" id="customerOtpSend" type="button" disabled style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
+    <button class="btn" id="customerOtpSend" type="button" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
     <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
   </section>`);
   bindPasswordVisibility(root);
@@ -3899,13 +3890,6 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     renderCustomerPasswordSignIn(isRouteCurrent);
   };
   const send=$('customerOtpSend'),phoneInput=$('customerPhone'),errorHost=$('customerOtpError');
-  let captchaToken='',captchaControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',retry:'authTurnstileRetry',action:'frenly_customer_otp',
-    onToken:(token)=>{if(isRouteCurrent()&&send.isConnected){captchaToken=token;send.disabled=!token}}})
-    .then(control=>{
-      if(!isRouteCurrent()||!send.isConnected){control?.destroy();return}
-      captchaControl=control;
-    });
   send.onclick=async()=>{
     const phone=normalizeSingaporeCustomerPhone(phoneInput.value);
     const channel=document.querySelector('input[name="customerOtpChannel"]:checked')?.value||'sms';
@@ -3915,7 +3899,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     }
     const available=await customerPhoneOtpAvailable(channel);
     if(!isRouteCurrent()||!send.isConnected)return;
-    if(!available||!captchaToken){
+    if(!available){
       errorHost.innerHTML='<div class="err">Mobile verification is unavailable right now.</div>';return;
     }
     let password='';
@@ -3945,13 +3929,11 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       rememberCustomerSignupProfile({fullName:signupFullName,birthDate:signupBirthDate,gender:signupGender});
     }
     send.disabled=true;
-    const challenge=captchaToken;captchaToken='';
-    const options={captchaToken:challenge};if(channel==='whatsapp')options.channel='whatsapp';
+    const options={};if(channel==='whatsapp')options.channel='whatsapp';
     const result=recovering
       ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
       :await sb.auth.signUp({phone,password,options});
     if(!isRouteCurrent()||!send.isConnected)return;
-    captchaControl?.reset();
     if(result.error||(recovering&&result.data?.session)){
       send.disabled=false;
       /* V289 (G6): the two sentences below are deliberately non-committal about whether the
@@ -11537,8 +11519,7 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     <div id="staffInviteAuthError"></div>
     ${businessGoogleButtonHtml('staffInviteGoogleV158')}
     <p class="muted small" style="margin-top:8px">Google works for invited staff too. Peekaa still validates the company invite and role on the server before access is created.</p>
-    ${authChallengeHtml()}
-    <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px" disabled>${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
+    <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px">${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
     <button class="btn ghost" id="staffInviteBack" style="width:100%;margin-top:10px">Back</button>
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
@@ -11565,11 +11546,6 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
   };
   if(saved)previewStaffInviteV151(saved,'staffInvitePreviewV151');
   $('staffInviteCodeV151').addEventListener('blur',()=>previewStaffInviteV151($('staffInviteCodeV151').value,'staffInvitePreviewV151'));
-  let authToken='',authControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_staff_invite',
-    onToken:(token)=>{authToken=token;$('staffInviteAuthGo').disabled=!token}})
-    .then(control=>authControl=control);
   $('staffInviteAuthGo').onclick=async()=>{
     const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
     const email=$('staffInviteEmailV151').value.trim();
@@ -11581,26 +11557,23 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     if(mode==='up'&&(!validNewPassword(password)||password!==$('staffInvitePasswordConfirmV151').value)){
       $('staffInviteAuthError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
     }
-    if(!authToken)return;
     $('staffInviteAuthGo').disabled=true;
-    const captchaToken=authToken;authToken='';
     try{
       if(mode==='up'){
         const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('staff_invite',code);
-        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken,emailRedirectTo:returnUrl.toString(),data:{account_type:'business_staff_invite'}}});
+        const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:returnUrl.toString(),data:{account_type:'business_staff_invite'}}});
         if(error)throw error;
         if(!data.session){
-          if(authControl)authControl.reset();
+          $('staffInviteAuthGo').disabled=false;
           $('staffInviteAuthError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
         }
       }else{
-        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        const {error}=await sb.auth.signInWithPassword({email,password});
         if(error)throw error;
       }
       history.replaceState(null,'',`/business?staff_invite=${encodeURIComponent(code)}`);
       resetClientSessionState({preserveInvitation:true});route();
     }catch(error){
-      if(authControl)authControl.reset();
       $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Invite sign-in could not be completed.')}</div>`;
       $('staffInviteAuthGo').disabled=false;
     }
@@ -11817,8 +11790,7 @@ function renderBusinessApplication(){
     <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
     <div id="businessApplicationError"></div>
-    ${authChallengeHtml(locale)}
-    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
+    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px">${esc(a.create)}</button>
     <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(a.back)}</button>
     ${legalLinks(locale)}</div></div>`;
   bindPasswordVisibility(root);
@@ -11835,11 +11807,6 @@ function renderBusinessApplication(){
     }
     startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',intent:'signup',legalAccepted:true});
   };
-  let token='',control=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',locale,
-    onToken:value=>{token=value;$('businessApplicationSubmit').disabled=!value}})
-    .then(value=>control=value);
   $('businessApplicationSubmit').onclick=async()=>{
     const email=$('applicationContactEmail').value.trim().toLowerCase();
     const password=$('businessOwnerPassword').value;
@@ -11855,12 +11822,10 @@ function renderBusinessApplication(){
        that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
     const {data,error}=await sb.auth.signUp({
-      email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
+      email,password,options:{emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}
     });
-    token='';
     if(error){
-      if(control)control.reset();
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.error)}</div>`;
       $('businessApplicationSubmit').disabled=false;return;
     }
@@ -11881,15 +11846,10 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
     <label>${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
     <label for="approvedOwnerPassword">${esc(t('password'))}</label>${passwordControlHtml('approvedOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="approvedOwnerPasswordConfirm">${esc(t('confirm'))}</label>${passwordControlHtml('approvedOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
-    <div id="approvedOwnerError"></div>${authChallengeHtml(locale)}
-    <button class="btn" id="approvedOwnerCreate" style="width:100%;margin-top:18px" disabled>${esc(t('create'))}</button>
+    <div id="approvedOwnerError"></div>
+    <button class="btn" id="approvedOwnerCreate" style="width:100%;margin-top:18px">${esc(t('create'))}</button>
     ${legalLinks(locale)}</div></div>`;
   bindPasswordVisibility(root);
-  let token='',control=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',locale,
-    onToken:value=>{token=value;$('approvedOwnerCreate').disabled=!value}})
-    .then(value=>control=value);
   $('approvedOwnerCreate').onclick=async()=>{
     const password=$('approvedOwnerPassword').value;
     if(!validNewPassword(password)||password!==$('approvedOwnerPasswordConfirm').value){
@@ -11899,11 +11859,9 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));returnUrl.searchParams.set('invite',inviteToken);
     const {data,error}=await sb.auth.signUp({
       email:invitation.approved_email,password,
-      options:{captchaToken:token,emailRedirectTo:returnUrl.toString()}
+      options:{emailRedirectTo:returnUrl.toString()}
     });
-    token='';
     if(error){
-      if(control)control.reset();
       $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('genericError'))}</div>`;$('approvedOwnerCreate').disabled=false;return;
     }
     if(!data.session){
@@ -11962,28 +11920,20 @@ function renderAuth(mode='in',{admin=false}={}){
       <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
       <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
       <div id="autherr"></div>
-      ${authChallengeHtml()}
-      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest">Send reset link</button>
       <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
       ${legalLinks()}</section></main>`;
-    let authToken='',authControl=null;
-    mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-      retry:'authTurnstileRetry',action:'frenly_auth',
-      onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
-      .then(control=>authControl=control);
     $('backSignIn').onclick=()=>renderAuth('in',{admin});
     $('resetRequest').onclick=async()=>{
       const email=$('em').value.trim();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
         $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
       }
-      if(!authToken) return;
       $('resetRequest').disabled=true;
       const redirect=new URL(NestlyNativeBridge.publicUrl(admin?'/admin':'/business'));
       redirect.searchParams.set('recovery','1');
-      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
-      /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
-      authToken='';if(authControl)authControl.reset();
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
+      $('resetRequest').disabled=false;
       $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
     };
     return;
@@ -11998,9 +11948,8 @@ function renderAuth(mode='in',{admin=false}={}){
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
-    ${authChallengeHtml()}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go" disabled>${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
+      <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
     ${legalLinks()}</section></main>`;
@@ -12009,35 +11958,28 @@ function renderAuth(mode='in',{admin=false}={}){
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
-  let authToken='',authControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',
-    onToken:(token)=>{authToken=token;$('go').disabled=!token}})
-    .then(control=>authControl=control);
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
     startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'autherr',intent:'signin'});
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
-    if(!authToken) return;
     $('go').disabled=true;
-    /* Tokens are single-use: consume, then reset the widget for any follow-up attempt. */
-    const captchaToken=authToken;authToken='';
     try{
       if(mode==='up'){
-        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken}});
+        const {data,error}=await sb.auth.signUp({email,password});
         if(error) throw error;
         if(!data.session){
-          if(authControl)authControl.reset();
           $('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';return}
       }else{
-        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        const {error}=await sb.auth.signInWithPassword({email,password});
         if(error) throw error;
       }
       resetClientSessionState({preserveInvitation:true});route();
     }catch(e){
-      if(authControl)authControl.reset();
+      /* V388: re-enable the button rather than resetting a challenge widget. Auth no longer
+         carries a captcha, so a failed attempt just needs the form back, not a fresh token. */
+      $('go').disabled=false;
       $('autherr').innerHTML=`<div class="err">${esc(humanErrorV295(e,'We could not sign you in. Please try again.'))}</div>`;
     }
   };

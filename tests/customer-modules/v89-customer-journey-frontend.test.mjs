@@ -125,7 +125,8 @@ test('scanned QR waits for a completed profile, then outranks wallet destination
   assert.match(registration,/customer_get_profile[\s\S]*if\(profile\?\.profile!==null&&profile\?\.profile!==undefined\)\{[\s\S]*customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\);return;/);
   assert.match(registration,/return renderCustomerRegistrationProfile\(isRouteCurrent\)/);
   const passwordEntry=section(app,'function renderCustomerPasswordSignIn','async function renderCustomerOtpStart');
-  assert.match(passwordEntry,/signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)[\s\S]*resetClientSessionState\(\{preserveInvitation:true\}\);route\(\)/);
+  // V388: no captchaToken — passkey sign-in no longer waits on a Turnstile token.
+  assert.match(passwordEntry,/signInWithPasskey\(\)[\s\S]*resetClientSessionState\(\{preserveInvitation:true\}\);route\(\)/);
   assert.match(app,/if\(h==='#\/join'\)return renderCustomerQrJoin\(\)/);
   const consume=section(app,'async function renderCustomerQrJoin','async function renderCustomerClaim');
   assert.match(consume,/customer_join_business_from_qr_v89/);
@@ -142,9 +143,10 @@ test('passkey sign-in and complete customer passkey management are capability ga
   assert.match(app,/sb\.auth\.passkey\.list\(\)[\s\S]*if\(passkeys\.length\)return false/);
   assert.match(app,/\.modal\{position:fixed;inset:0;z-index:210/,
     'passkey setup must stay above the delayed PWA install prompt on mobile');
-  assert.match(app,/sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)/);
-  assert.match(app,/if\(!passkeySupported\|\|!captchaToken\)[\s\S]*Complete the security check above first — then Face ID, Touch ID or your passkey/);
-  assert.match(app,/captchaToken='';[\s\S]*signInWithPasskey[\s\S]*captchaControl\?\.reset\(\)/);
+  assert.match(app,/sb\.auth\.signInWithPasskey\(\)/);
+  /* V388: the only honest remaining reason a passkey is unavailable is browser support. */
+  assert.match(app,/if\(!passkeySupported\)\{[\s\S]*Passkeys are not supported in this browser/);
+  assert.doesNotMatch(app,/Complete the security check above first/);
   assert.match(app,/sb\.auth\.registerPasskey\(\)/);
   assert.match(app,/sb\.auth\.passkey\.list\(\)/);
   assert.match(app,/sb\.auth\.passkey\.update\(\{passkeyId:button\.dataset\.passkeyRename,friendlyName:name\}\)/);

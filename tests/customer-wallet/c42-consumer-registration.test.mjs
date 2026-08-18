@@ -119,7 +119,8 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.match(customerRoute, /preAuthSb\.rpc\('get_customer_phone_otp_capabilities'\)/);
   assert.match(customerRoute, /await customerPhoneOtpAvailable\(channel\)/);
   assert.match(customerRoute, /serverCapabilities\.whatsapp===true/);
-  assert.match(customerRoute, /signInWithPassword\(\{phone,password,options:\{captchaToken:challenge\}\}\)/);
+  // V388: normal customer login carries no captchaToken and cannot be blocked by Turnstile.
+  assert.match(customerRoute, /signInWithPassword\(\{phone,password\}\)/);
   assert.match(customerRoute, /signUp\(\{phone,password,options\}\)/);
   assert.match(customerRoute, /signInWithOtp\(\{phone,options:\{\.\.\.options,shouldCreateUser:false\}\}\)/);
   assert.match(customerRoute, /auth\.resend\(\{type:'sms',phone,options\}\)/);
@@ -135,8 +136,11 @@ test('customer authentication defaults to password while signup and recovery alo
      protecting (never offer a control that cannot work) is stronger, not weaker. */
   assert.match(customerRoute, /Sign-up by SMS is unavailable/);
   assert.match(customerRoute, /No account has been created/);
-  assert.match(customerRoute, /id="customerOtpSend" type="button" disabled/,
-    'the primary OTP action must start disabled until the security check completes');
+  /* V388: there is no security check to wait for. The OTP send button is live on paint; the
+     assertion below still guards the real hazard — an unavailable SMS provider must not render
+     an enabled button with no handler. */
+  assert.match(customerRoute, /id="customerOtpSend" type="button" style=/);
+  assert.doesNotMatch(customerRoute, /id="customerOtpSend" type="button" disabled/);
   assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
     'an unavailable SMS provider must not render an enabled button without a handler');
   assert.match(customerRoute, /id="customerDob" type="date"/);

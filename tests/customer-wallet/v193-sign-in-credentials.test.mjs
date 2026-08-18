@@ -69,19 +69,21 @@ test('a Cloudflare checkbox stops pretending the app is still loading', () => {
   assert.match(appJs, /interactive:'Tandakan “Verify you are human” di atas untuk meneruskan\.'/);
 });
 
-test('the blocked buttons explain what is actually blocking them', () => {
-  assert.match(signIn, /signIn\.querySelector\('span'\)\.textContent=token\?'Sign in':'Waiting for security check…'/,
-    '"Checking…" claimed the app was busy when it was waiting for the person');
-  assert.match(signIn, /Complete the security check above first — then Face ID, Touch ID or your passkey\./);
+/* V388 (owner ruling 2026-08-17): there is no longer a security check to be blocked BY. The
+   customer sign-in button is live as soon as the form paints, and the only remaining reason a
+   passkey button can be unavailable is that the browser does not support passkeys. */
+test('customer sign-in is never blocked by a security check', () => {
+  assert.match(signIn, /<button class="btn" id="customerPasswordSignIn" type="submit" style=/);
+  assert.doesNotMatch(signIn, /id="customerPasswordSignIn" type="submit" disabled/);
+  assert.doesNotMatch(signIn, /Waiting for security check/);
+  assert.doesNotMatch(signIn, /Complete the security check above first/);
+  assert.doesNotMatch(signIn, /captchaToken|mountTurnstile|authChallengeHtml/);
   assert.match(signIn, /Passkeys are not supported in this browser\. Sign in with your password\./);
-  // the gate itself is unchanged: no token, no sign-in
-  assert.match(signIn, /passkeyButton\.disabled=!passkeySupported\|\|!token/);
-  assert.match(signIn, /if\(!captchaToken\)\{/);
 });
 
 test('passkey sign-in still runs through the enabled client', () => {
   assert.match(appJs, /experimental:\{passkey:true\}/,
     'signInWithPasskey throws unless the client opts into the experimental API');
-  assert.match(signIn, /await sb\.auth\.signInWithPasskey\(\{options:\{captchaToken:challenge\}\}\)/);
+  assert.match(signIn, /await sb\.auth\.signInWithPasskey\(\)/);
   assert.match(signIn, /typeof sb\.auth\.signInWithPasskey==='function'/);
 });

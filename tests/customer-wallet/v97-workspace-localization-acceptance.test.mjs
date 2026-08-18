@@ -558,7 +558,7 @@ test('v97 package and sales tables split interface prose from customer, package 
 });
 
 test('v97 public application security and password controls follow its locale while customer auth stays English',()=>{
-  const challenge=section('const authSecurityCopy','/* Supabase Auth has CAPTCHA protection enabled');
+  const challenge=section('const authSecurityCopy','/* V388 (owner ruling 2026-08-17)');
   const application=section('function renderBusinessApplication','async function renderApprovedBusinessInviteSignup');
   const invite=section('async function renderApprovedBusinessInviteSignup','async function renderApprovedBusinessActivation');
   const customer=section('function passwordControlHtml','function normalizeSingaporeCustomerPhone');
@@ -568,18 +568,17 @@ test('v97 public application security and password controls follow its locale wh
     'Log masuk dengan Face ID, Touch ID atau kunci laluan',
     '正在加载安全验证…','显示密码','隐藏密码',
   ]) assert.ok(challenge.includes(phrase),phrase);
-  assert.match(application,/authChallengeHtml\(locale\)/);
-  assert.match(application,/action:'frenly_auth',locale/);
+  /* V388: the business application and invite screens no longer mount an auth challenge.
+     Their localized PASSWORD controls are the remaining locale-bearing security copy. */
+  assert.doesNotMatch(application,/authChallengeHtml|action:'frenly_auth'/);
   assert.match(invite,/passwordControlHtml\('approvedOwnerPassword',\{autocomplete:'new-password',locale\}\)/);
-  assert.match(invite,/authChallengeHtml\(locale\)/);
-  assert.match(invite,/action:'frenly_auth',locale/);
+  assert.doesNotMatch(invite,/authChallengeHtml|action:'frenly_auth'/);
   assert.match(customer,/locale='en'/);
   assert.match(customer,/data-password-show-label/);
   assert.match(customer,/data-password-hide-label/);
   for(const customerCall of [
     "passwordControlHtml('customerPassword'",
     "passwordControlHtml('customerSignupPassword'",
-    'authChallengeHtml()',
   ]) assert.ok(app.includes(customerCall),`customer English default remains: ${customerCall}`);
 });
 

@@ -61,7 +61,7 @@ test('390px navigation uses a bounded persistent dock and a discoverable module 
 });
 
 test('Turnstile controls are destroyed before route and direct-render replacement',()=>{
-  const turnstile=section('const mountedTurnstileControls=new Set()','/* Supabase Auth has CAPTCHA protection enabled');
+  const turnstile=section('const mountedTurnstileControls=new Set()','/* V388 (owner ruling 2026-08-17)');
   const route=section('async function route()','/* ---------- customer wallet ---------- */');
   const auth=section("function renderAuth(mode='in',{admin=false}={})",'function validNewPassword');
   const registration=section('function customerRegistrationShell(body)','function renderCustomerOtpVerification');

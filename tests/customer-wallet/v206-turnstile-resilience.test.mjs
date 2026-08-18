@@ -14,7 +14,12 @@ function section(source, start, end) {
 }
 
 const loadTurnstile = section(appJs, 'function loadTurnstile(', 'const authSecurityCopy=');
-const mountTurnstile = section(appJs, 'async function mountTurnstile(', 'const AUTH_TURNSTILE_SITE_KEY=');
+/* V388: the end marker was `const AUTH_TURNSTILE_SITE_KEY=`, which no longer exists — Supabase
+   Auth CAPTCHA is off and no auth screen mounts a challenge. The loader and mounter themselves
+   are NOT dead: the public-booking gateway still mounts a widget with the business's own
+   `biz.turnstile_site_key`, and public-join does the same on its own page. Every resilience
+   invariant below therefore still has a live consumer and still has to hold. */
+const mountTurnstile = section(appJs, 'async function mountTurnstile(', '\n/* V388 (owner ruling');
 
 /* V206: Turnstile must never be able to strand the sign-in form on "Loading security check…"
    with the Retry button hidden. These tests pin the structural invariants that guarantee that,

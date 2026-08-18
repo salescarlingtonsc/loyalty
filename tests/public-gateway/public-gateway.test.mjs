@@ -445,15 +445,24 @@ test('public write forms render and reset explicit Turnstile widgets under exact
   assert.match(docs, /both are required before exposing public join[\s\S]+booking writes/);
 });
 
-test('staff auth submit stays disabled until Turnstile returns a token', async () => {
+/* V388 (owner ruling 2026-08-17) — this asserted the OPPOSITE contract: that the business submit
+   button stayed disabled until Turnstile returned a token. Supabase Auth CAPTCHA is now off
+   server-side and the requirement is the inverse — Cloudflare being unreachable must never keep an
+   owner, a staff member or a customer out of their own account. The gateway assertions above
+   (public_join / public_booking / public_business_application) are untouched: those endpoints
+   still verify Turnstile server-side and still fail closed. */
+test('business auth does not depend on Turnstile loading', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const authStart = app.indexOf("function renderAuth(mode='in',{admin=false}={})");
   const authEnd = app.indexOf('function validNewPassword', authStart);
   const auth = app.slice(authStart, authEnd);
-  assert.match(auth, /<button class="btn" id="go" disabled>/);
-  assert.match(auth, /let authToken='',authControl=null/);
-  assert.match(auth, /onToken:\(token\)=>\{authToken=token;\$\(\'go\'\)\.disabled=!token\}/);
-  assert.match(auth, /if\(!authToken\) return/);
+  assert.match(auth, /<button class="btn" id="go">/);
+  assert.doesNotMatch(auth, /<button class="btn" id="go" disabled>/);
+  assert.doesNotMatch(auth, /mountTurnstile/);
+  assert.doesNotMatch(auth, /authChallengeHtml/);
+  assert.doesNotMatch(auth, /authToken|captchaToken/);
+  assert.match(auth, /businessGoogleButtonHtml\('businessGoogleSignIn'\)/);
+  assert.match(auth, /signInWithPassword\(\{email,password\}\)/);
 });
 
 test('booking capabilities are scrubbed from current history and change retries retain an intent ID', async () => {
@@ -472,11 +481,14 @@ test('booking capabilities are scrubbed from current history and change retries 
 
 test('password recovery is complete and non-enumerating', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  // Supabase Auth CAPTCHA is enabled in production: every recovery request must carry a
-  // single-use Turnstile captchaToken alongside the redirect (and reset the widget after use).
-  assert.match(app, /resetPasswordForEmail\(email,\{redirectTo:redirect\.toString\(\),captchaToken:authToken\}\)/);
-  assert.match(app, /signUp\(\{email,password,options:\{captchaToken\}\}\)/);
-  assert.match(app, /signInWithPassword\(\{email,password,options:\{captchaToken\}\}\)/);
+  /* V388: Supabase Auth CAPTCHA is off server-side, so recovery, signup and sign-in carry no
+     captchaToken. Recovery must keep working when Cloudflare does not — that is the point of the
+     change. The non-enumerating behaviour below is unaffected and still pinned. */
+  assert.match(app, /resetPasswordForEmail\(email,\{redirectTo:redirect\.toString\(\)\}\)/);
+  assert.match(app, /signUp\(\{email,password\}\)/);
+  assert.match(app, /signInWithPassword\(\{email,password\}\)/);
+  // the CALL syntax, not the word — the V388 comment in app.js legitimately names it
+  assert.doesNotMatch(app, /options:\{captchaToken/);
   assert.match(app, /event==='PASSWORD_RECOVERY'/);
   assert.match(app, /hash\.get\('type'\)==='recovery'/);
   assert.match(app, /flowType:'implicit'/);

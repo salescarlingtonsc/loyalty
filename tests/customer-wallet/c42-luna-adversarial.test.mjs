@@ -123,7 +123,9 @@ test('Luna C42: OTP UI has labelled numeric entry, generic failure copy, challen
   assert.match(registrationUi, /<label for="customerPhone">Singapore mobile number<\/label>/);
   assert.match(registrationUi, /id="customerOtp" inputmode="numeric" autocomplete="one-time-code" pattern="\[0-9\]\{6\}" maxlength="6"/);
   assert.match(registrationUi, /id="customerOtpError" role="alert" aria-live="assertive"/);
-  assert.match(registrationUi, /action:'frenly_customer_otp'/);
+  /* V388: the OTP screen no longer mounts an auth challenge — Supabase Auth CAPTCHA is off.
+     OTP itself is unchanged and still the only path for signup and recovery. */
+  assert.doesNotMatch(registrationUi, /action:'frenly_customer_otp'|authChallengeHtml/);
   assert.match(registrationUi, /<button[^>]*id="customerOtpResend"[^>]*disabled[^>]*>Resend available in 30 seconds<\/button>/);
   assert.match(registrationUi, /That code could not be verified\. Check it and try again\./);
   assert.match(registrationUi, /We could not (?:start account creation|resend a code)/);
@@ -133,8 +135,8 @@ test('Luna C42: OTP UI has labelled numeric entry, generic failure copy, challen
 
 test('Luna C42: staff email/password authentication remains a separate path', () => {
   const auth = appBlock('function renderAuth(', 'function validNewPassword(');
-  assert.match(auth, /sb\.auth\.signUp\(\{email,password,options:\{captchaToken\}\}\)/);
-  assert.match(auth, /sb\.auth\.signInWithPassword\(\{email,password,options:\{captchaToken\}\}\)/);
+  assert.match(auth, /sb\.auth\.signUp\(\{email,password\}\)/);
+  assert.match(auth, /sb\.auth\.signInWithPassword\(\{email,password\}\)/);
   assert.match(auth, /href="\/business" aria-current="page"/);
   /* V274: bare "/" serves the marketing landing now, so the customer-app link says /app. */
   assert.match(auth, /href="\/app"/);

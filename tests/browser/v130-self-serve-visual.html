@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="50e60d816299d360e41fa5783be557b29e12ee2cccdf5b4fc4998abe953b3cdd"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="3f9f98f8422ff1eb270216c82ff884c025a4f1236583c3cba48820e386edd81c"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3055,8 +3055,7 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
     <label for="businessOwnerPassword">${esc(a.password)}</label>${passwordControlHtml('businessOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="businessOwnerPasswordConfirm">${esc(a.confirm)}</label>${passwordControlHtml('businessOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
     <div id="businessApplicationError"></div>
-    ${authChallengeHtml(locale)}
-    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px" disabled>${esc(a.create)}</button>
+    <button class="btn" id="businessApplicationSubmit" style="width:100%;margin-top:18px">${esc(a.create)}</button>
     <button class="btn ghost" id="businessApplicationBack" style="width:100%;margin-top:10px">${esc(a.back)}</button>
     ${legalLinks(locale)}</div></div>`;
   bindPasswordVisibility(root);
@@ -3073,11 +3072,6 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
     }
     startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'businessApplicationError',intent:'signup',legalAccepted:true});
   };
-  let token='',control=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',locale,
-    onToken:value=>{token=value;$('businessApplicationSubmit').disabled=!value}})
-    .then(value=>control=value);
   $('businessApplicationSubmit').onclick=async()=>{
     const email=$('applicationContactEmail').value.trim().toLowerCase();
     const password=$('businessOwnerPassword').value;
@@ -3093,12 +3087,10 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
        that does not exist. /business already resolves the right screen from the session. */
     const returnUrl=new URL(NestlyNativeBridge.publicUrl('/business'));
     const {data,error}=await sb.auth.signUp({
-      email,password,options:{captchaToken:token,emailRedirectTo:returnUrl.toString(),
+      email,password,options:{emailRedirectTo:returnUrl.toString(),
         data:{account_type:'business_owner',preferred_locale:locale}}
     });
-    token='';
     if(error){
-      if(control)control.reset();
       $('businessApplicationError').innerHTML=`<div class="err">${esc(a.error)}</div>`;
       $('businessApplicationSubmit').disabled=false;return;
     }
@@ -3119,28 +3111,20 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
       <p class="muted small" style="margin-top:6px">Enter your account email and we will send a secure reset link.</p>
       <label for="em">Email</label><input id="em" type="email" autocomplete="email" placeholder="you@business.com">
       <div id="autherr"></div>
-      ${authChallengeHtml()}
-      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest" disabled>Send reset link</button>
+      <div class="row" style="margin-top:18px"><button class="btn" id="resetRequest">Send reset link</button>
       <span class="spacer"></span><button class="btn ghost sm" id="backSignIn">Back to sign in</button></div>
       ${legalLinks()}</section></main>`;
-    let authToken='',authControl=null;
-    mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-      retry:'authTurnstileRetry',action:'frenly_auth',
-      onToken:(token)=>{authToken=token;$('resetRequest').disabled=!token}})
-      .then(control=>authControl=control);
     $('backSignIn').onclick=()=>renderAuth('in',{admin});
     $('resetRequest').onclick=async()=>{
       const email=$('em').value.trim();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
         $('autherr').innerHTML='<div class="err">Enter a valid email address.</div>';return;
       }
-      if(!authToken) return;
       $('resetRequest').disabled=true;
       const redirect=new URL(NestlyNativeBridge.publicUrl(admin?'/admin':'/business'));
       redirect.searchParams.set('recovery','1');
-      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString(),captchaToken:authToken})}catch{}
-      /* Turnstile tokens are single-use: clear and reset so a retry gets a fresh challenge. */
-      authToken='';if(authControl)authControl.reset();
+      try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
+      $('resetRequest').disabled=false;
       $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
     };
     return;
@@ -3155,9 +3139,8 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
-    ${authChallengeHtml()}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go" disabled>${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
+      <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
     ${legalLinks()}</section></main>`;
@@ -3166,35 +3149,28 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
-  let authToken='',authControl=null;
-  mountTurnstile(AUTH_TURNSTILE_SITE_KEY,{container:'authTurnstile',status:'authTurnstileStatus',
-    retry:'authTurnstileRetry',action:'frenly_auth',
-    onToken:(token)=>{authToken=token;$('go').disabled=!token}})
-    .then(control=>authControl=control);
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
     startBusinessGoogleAuth({button:event.currentTarget,errorHostId:'autherr',intent:'signin'});
   $('go').onclick=async()=>{
     const email=$('em').value.trim(),password=$('pw').value;
-    if(!authToken) return;
     $('go').disabled=true;
-    /* Tokens are single-use: consume, then reset the widget for any follow-up attempt. */
-    const captchaToken=authToken;authToken='';
     try{
       if(mode==='up'){
-        const {data,error}=await sb.auth.signUp({email,password,options:{captchaToken}});
+        const {data,error}=await sb.auth.signUp({email,password});
         if(error) throw error;
         if(!data.session){
-          if(authControl)authControl.reset();
           $('autherr').innerHTML='<div class="err">Check your email to confirm your account, then sign in.</div>';return}
       }else{
-        const {error}=await sb.auth.signInWithPassword({email,password,options:{captchaToken}});
+        const {error}=await sb.auth.signInWithPassword({email,password});
         if(error) throw error;
       }
       resetClientSessionState({preserveInvitation:true});route();
     }catch(e){
-      if(authControl)authControl.reset();
+      /* V388: re-enable the button rather than resetting a challenge widget. Auth no longer
+         carries a captcha, so a failed attempt just needs the form back, not a fresh token. */
+      $('go').disabled=false;
       $('autherr').innerHTML=`<div class="err">${esc(humanErrorV295(e,'We could not sign you in. Please try again.'))}</div>`;
     }
   };
