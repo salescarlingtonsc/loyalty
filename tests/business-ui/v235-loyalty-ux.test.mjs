@@ -97,7 +97,7 @@ test('(d) the table-seating question is sector-gated, and booking rules survive'
      markup, just moved, per the V259 pattern. Bookings keeps a pointer instead of a second copy. */
   assert.doesNotMatch(bookings, /When you're full/, 'the overflow rule must not have a second copy in Bookings');
   assert.match(bookings, /Booking rules, opening hours and who customers may choose now live in <a href="#\/customer-interface\/appointment">/);
-  assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label>When you're full<\/label>/);
+  assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label for="setOverflow">When you're full<\/label>/);
   // Booking rules are NOT inside the seating gate — every sector still sets its hold timer.
   const rules = bookingRules.slice(bookingRules.indexOf('Booking rules'), bookingRules.indexOf('id="setSave"'));
   assert.ok(!rules.includes('${seatingSectorV235?'), 'the booking-rules block must render for every sector');

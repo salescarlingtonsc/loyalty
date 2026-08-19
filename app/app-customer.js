@@ -5875,7 +5875,7 @@ async function renderPortal(slug){
          formatter, the same one every other date here already goes through. */
       $('mlist').innerHTML=`<div style="padding:10px 0"><b>${esc(walletDate(when,true))||'Time pending'}</b>
         <div class="muted small">${esc(data.service_name||'general visit')} · ${esc(data.status||'pending')}</div></div>
-        ${data.can_change?`<label>New preferred time</label><input type="datetime-local" id="mdt">
+        ${data.can_change?`<label for="mdt">New preferred time</label><input type="datetime-local" id="mdt">
         <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="mcancel" type="button">Request cancellation</button>
         <button class="btn sm" id="mresched" type="button">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
       /* v294: real listeners on the freshly-rendered buttons. The old inline onclick reached

@@ -4846,8 +4846,8 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
   globalThis.document?.documentElement?.setAttribute('lang',locale);
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div>
     <h2 style="margin-top:18px">${esc(t('approved'))}</h2><p class="muted small" style="margin-top:6px">${esc(t('approvedIntro'))}</p>
-    <label>${esc(t('businessName'))}</label><input value="${esc(invitation.business_name||'')}" disabled>
-    <label>${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
+    <label for="approvedBusinessName">${esc(t('businessName'))}</label><input id="approvedBusinessName" value="${esc(invitation.business_name||'')}" disabled>
+    <label for="approvedOwnerEmail">${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
     <label for="approvedOwnerPassword">${esc(t('password'))}</label>${passwordControlHtml('approvedOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="approvedOwnerPasswordConfirm">${esc(t('confirm'))}</label>${passwordControlHtml('approvedOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
     <div id="approvedOwnerError"></div>${authChallengeHtml(locale)}

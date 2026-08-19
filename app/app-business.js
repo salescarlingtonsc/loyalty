@@ -7898,17 +7898,17 @@ async function servicesPage(){
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
     <div class="services-segment-body" id="serviceSegmentBody">${canWrite?`<div class="card" id="serviceFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add service</b><p>Save one bookable service, then return to the catalogue.</p></div>
-      <label>Name</label><input id="sn" placeholder="e.g. Signature Facial">
-      <label>Variation (optional)</label><input id="sv" placeholder="e.g. 30 min, 60 min, Deep tissue">
+      <label for="sn">Name</label><input id="sn" placeholder="e.g. Signature Facial">
+      <label for="sv">Variation (optional)</label><input id="sv" placeholder="e.g. 30 min, 60 min, Deep tissue">
       <p class="muted small" style="margin-top:5px">Use the same service name with different variations, durations and prices.</p>
-      <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
-      <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
+      <label for="sp">Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
+      <label for="sd">Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
       <!-- V325 (owner-authorized exception #3, 2026-08-14 Customer Interface cosmetics brief):
            buffer_before_min/buffer_after_min already existed on services with no UI anywhere.
            Two more fields on the existing add form, wired into the existing insert — no new
            save path, no new RPC. -->
-      <label>Buffer before (minutes)</label><input id="sbb" type="number" min="0" step="5" value="0">
-      <label>Buffer after (minutes)</label><input id="sba" type="number" min="0" step="5" value="0">
+      <label for="sbb">Buffer before (minutes)</label><input id="sbb" type="number" min="0" step="5" value="0">
+      <label for="sba">Buffer after (minutes)</label><input id="sba" type="number" min="0" step="5" value="0">
       <div style="margin-top:16px" class="row"><button class="btn" id="sadd">Save service</button><button class="btn ghost sm" id="cancelServiceForm">Cancel</button></div></div>`:''}
     <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
     <div id="commissionWrap"></div></div>`;
@@ -8022,8 +8022,8 @@ async function servicesPage(){
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
     <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
       ${canWrite?`
-      <label>Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
-      <label>Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+      <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
+      <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
       <label>Included services</label><div id="bsv" class="small"></div>
       <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
       <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
@@ -9121,20 +9121,20 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         return `<div class="branch-override" style="padding:12px 0;border-bottom:1px solid var(--line)">
           <b>${esc(branch.name)}</b>
           <div class="field-grid">
-            <div><label>Loyalty status</label><select data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
+            <div><label for="bo-active-${idx}">Loyalty status</label><select id="bo-active-${idx}" data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
               <option value="" ${o.active==null?'selected':''}>Inherit firm setting</option>
               <option value="true" ${o.active===true?'selected':''}>Active here</option>
               <option value="false" ${o.active===false?'selected':''}>Paused here</option>
             </select></div>
-            <div><label>Points per $1</label><input data-merchant-content data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
-            <div><label>Spend per stamp</label><input data-merchant-content data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
-            <div><label>Expiry</label><select data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
+            <div><label for="bo-earn-${idx}">Points per $1</label><input id="bo-earn-${idx}" data-merchant-content data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
+            <div><label for="bo-stamp-${idx}">Spend per stamp</label><input id="bo-stamp-${idx}" data-merchant-content data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
+            <div><label for="bo-expiry-${idx}">Expiry</label><select id="bo-expiry-${idx}" data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
               <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
               <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
               <option value="inactivity" ${o.expiry_mode==='inactivity'?'selected':''}>After inactivity</option>
               <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
             </select></div>
-            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label>Expiry days</label><input data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
+            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label for="bo-days-${idx}">Expiry days</label><input id="bo-days-${idx}" data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
           </div>
           ${canManageLoyalty?`<div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>`:''}
         </div>`;
@@ -9959,15 +9959,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Done</button></div>
       <div class="field-grid">
         <div class="full"><label for="rwCatalogueSource">Start from a product or service</label><select id="rwCatalogueSource"><option value="">Custom reward</option>${rewardCatalogueSources.map(item=>`<option value="${esc(item.type+'|'+item.id)}">${esc(item.type==='product'?'Product':'Service')} · ${esc(item.name)}</option>`).join('')}</select><div id="rwCatalogueEconomics" class="muted small" style="margin-top:6px">Choose an existing product or service to fill the reward, or keep Custom reward.</div></div>
-        <div class="full"><label>Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
-        <div><label>Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
-        <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
+        <div class="full"><label for="rwCustomerName">Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
+        <div><label for="rwEstimate">Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
+        <div><label for="rwCost">${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
         ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
       </div>
       <details><summary>More options</summary>
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
-          <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
+          <div class="full"><label for="rwDescription">What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
           ${/* V375 (owner, photo 3: "i don't want credit feature"). The Fulfilment chooser and its
                 store-credit amount are gone — every reward is an item or a benefit the counter
                 hands over. Both ids are kept as hidden inputs so the save path below, the archive
@@ -9977,15 +9977,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <input type="hidden" id="rwKind" value="manual_item">
           <input type="hidden" id="rwCredit" value="0">
           <div class="full" style="margin-top:6px"><b>Limits and timing</b></div>
-          <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
-          <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+          <div><label for="rwExpiry">Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
+          <div><label for="rwUsage">Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
           ${rewardPurchaseFieldAvailableV340?`<div class="full"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwRequiresPurchaseV340" type="checkbox" style="width:auto;margin-top:2px" ${r.requires_purchase===true?'checked':''}> Customer must also make a purchase to claim this</label><p class="muted small help">Leave this off and customers are told <b>“No purchase required”</b>. Your counter enforces the condition either way — the app never blocks a redemption on it, so only tick this if your team really will ask for a purchase.</p></div>`:''}
           ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
             <option value="">Everyone</option>
             ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
           </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
-          <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
-          <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
+          <div><label for="rwFrom">Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
+          <div><label for="rwUntil">Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
           <div class="full" style="margin-top:6px"><b>Reward photo</b></div>
           <div class="full">
             <div id="rwPhotoPreviewV340" class="reward-photo-preview-v340">${customerMediaUrlV95(r.image_ref)?`<img src="${esc(customerMediaUrlV95(r.image_ref))}" alt="Current photo for ${esc(r.customer_name||r.name||'this reward')}">`:'<span class="muted small">No photo yet — customers see a gift icon.</span>'}</div>
@@ -9994,7 +9994,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             <p class="muted small help" id="rwPhotoStateV340">PNG, JPG or WebP, under 10 MB. It appears on the reward card in the customer app. Saved with the reward, so it reaches customers when you publish.</p>
           </div>
           <div class="full" style="margin-top:6px"><b>Team and visibility</b></div>
-          <div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
+          <div class="full"><label for="rwInternalName">Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwActive" type="checkbox" style="width:auto" ${r.active!==false?'checked':''}> Available for customers</label>
         <p class="muted small help">Archived rewards stay in history and cannot be newly redeemed.</p>
@@ -10621,7 +10621,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
         :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
-    ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label style="margin:0">Restore prior version</label>
+    ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label for="retentionRollback" style="margin:0">Restore prior version</label>
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
@@ -10635,15 +10635,15 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       <button class="qbtn" data-t='{"name":"Loyal half-year","g":2,"p":180,"rt":"credit","rv":1000}'>2 visits / 6 months → $10 credit</button>
     </div></div>`:''}
     <div class="split"><div class="card"><b>${editing?'Edit program':draftVersionId?'New program':'Programs'}</b>
-      ${draftVersionId&&isOwner&&!exactProgramMissing?`<label>Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
-      <div class="split"><div><label>Goal — visits</label><input id="rg" type="number" min="1" value="${editing?.goal_visits||2}"></div>
-      <div><label>Within — days</label><input id="rp" type="number" min="1" value="${editing?.period_days||7}"></div></div>
-      <label>Starts on</label><input id="rs" type="date" value="${editing?.starts_on||sgDateInputValue()}">
-      <label>Reward</label><select id="rt" ${rewardTypes.length?'':'disabled'}>${rewardTypes.map(t=>`<option value="${t.id}" data-kind="${t.fulfillment_kind}" ${editing?.reward_taxonomy_id===t.id?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
+      ${draftVersionId&&isOwner&&!exactProgramMissing?`<label for="rn">Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
+      <div class="split"><div><label for="rg">Goal — visits</label><input id="rg" type="number" min="1" value="${editing?.goal_visits||2}"></div>
+      <div><label for="rp">Within — days</label><input id="rp" type="number" min="1" value="${editing?.period_days||7}"></div></div>
+      <label for="rs">Starts on</label><input id="rs" type="date" value="${editing?.starts_on||sgDateInputValue()}">
+      <label for="rt">Reward</label><select id="rt" ${rewardTypes.length?'':'disabled'}>${rewardTypes.map(t=>`<option value="${t.id}" data-kind="${t.fulfillment_kind}" ${editing?.reward_taxonomy_id===t.id?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
       ${rewardTypes.length?'':'<p class="err">Add or reactivate a reward type before adding a program.</p>'}
-      <div><label id="rvl">Reward value</label><input id="rv"></div>
-      <label>Customer description (optional)</label><textarea id="rcd">${esc(editing?.customer_description||'')}</textarea>
-      <label>Staff instructions (optional)</label><textarea id="rsi">${esc(editing?.staff_description||'')}</textarea>
+      <div><label for="rv" id="rvl">Reward value</label><input id="rv"></div>
+      <label for="rcd">Customer description (optional)</label><textarea id="rcd">${esc(editing?.customer_description||'')}</textarea>
+      <label for="rsi">Staff instructions (optional)</label><textarea id="rsi">${esc(editing?.staff_description||'')}</textarea>
       <label><input id="ra" type="checkbox" ${editing?.active!==false?'checked':''}> Active after publication</label>
       <div class="row" style="margin-top:16px"><button class="btn" id="saveRetentionProgram" ${rewardTypes.length?'':'disabled'}>${editing?'Save draft changes':'Add to draft'}</button>${editing?'<button class="btn ghost" id="cancelRetentionEdit">Cancel</button>':''}</div>`
       :`<p class="muted small" style="margin-top:8px">${isOwner?'Create an editing draft to add or change rules.':'Only the owner can change retention rules.'}</p>`}
@@ -10658,7 +10658,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
         <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div></div>`).join('')}</div>
-      <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
+      <details><summary>Add a new reward type</summary><label for="rtName">Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label for="rtKind">Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
     </div>`:''}`;
 
   /* V291 (audit A2 #13). On the published view a rule could only be READ: Edit and Pause were
@@ -20684,10 +20684,10 @@ async function referralsPage(){
   const referralStatusCopy=referralEnabled
     ?'Referral programme is Enabled. The first qualifying sale can reward the referrer once.'
     :'Referral programme is Off. Referral links are saved, but no reward is paid while it remains Off.';
-  const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>Enabled</option><option value="false" ${!p||!p.enabled?'selected':''}>Off</option></select>
+  const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>${STATUS_WORDS.on}</option><option value="false" ${!p||!p.enabled?'selected':''}>${STATUS_WORDS.off}</option></select>
       <label for="fr">Points to referrer</label><input id="fr" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(p?.reward_points)||0))}">
       <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
-    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${p?.enabled?'Enabled':'Off'}</dd></div><div class="cui-readonly-row"><dt>Points to referrer</dt><dd>${esc(growPointsWordV322(p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
+    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>Points to referrer</dt><dd>${esc(growPointsWordV322(p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
     <div class="split"><div class="card"><div class="cui-card-head"><h2>Program settings</h2></div>
       ${referralSettings}
@@ -24299,14 +24299,14 @@ async function inventoryPage(){
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
     <div class="split">
     ${canWrite?`<div class="card"><b>Add product</b>
-      <label>Name</label><input id="pn2"><label>SKU (optional)</label><input id="ps2">
+      <label for="pn2">Name</label><input id="pn2"><label for="ps2">SKU (optional)</label><input id="ps2">
       <label for="pp2">Sell for (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00">
       <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div>
       <details class="till-sale-package-options" style="margin-top:20px"><summary>Count stock too (optional)</summary>
       <p class="muted small" style="margin:0 0 8px">Only for goods you count — a batch with a quantity and an optional expiry date. Selling never needs this: a product with no stock recorded still sells normally.</p>
-      <label>Product</label><select id="bp2"></select>
-      <div class="split"><div><label>Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
-      <div><label>Expiry (optional)</label><input id="be2" type="date"></div></div>
+      <label for="bp2">Product</label><select id="bp2"></select>
+      <div class="split"><div><label for="bq2">Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
+      <div><label for="be2">Expiry (optional)</label><input id="be2" type="date"></div></div>
       <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></details></div>`:''}
     <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:5})}</div></div></div>`;
   /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
@@ -24440,10 +24440,10 @@ async function packagesPage(){
     <section class="package-panel-v157" id="pkgPanelPlans" role="tabpanel" aria-labelledby="pkgTabPlans">
     <div class="card">${canWrite?`<b id="kFormTitle">Create a package</b>
       <input id="kid" type="hidden">
-      <label>Name</label><input id="kn" placeholder="e.g. 5x Facial">
-      <div class="split"><div><label>Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
-      <div><label>Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
-      <label>Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
+      <label for="kn">Name</label><input id="kn" placeholder="e.g. 5x Facial">
+      <div class="split"><div><label for="kp">Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
+      <div><label for="ks">Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
+      <label for="kv">Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
       <div class="permission-banner" id="kDiscount" style="margin-top:14px"><b>Choose a service to calculate value</b><p class="muted small" style="margin-top:4px">Peekaa compares the package price with the exact service price × sessions.</p></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="kadd">Save package</button><button class="btn ghost" id="kcancel" style="display:none">Cancel edit</button></div>
       ${S.myRole==='owner'&&preferencesAvailable?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
@@ -24682,10 +24682,10 @@ async function branchesPage(){
     editId=b?b.id:null;
     $('brForm').style.display='block';
     $('brForm').innerHTML=`<b>${b?'Edit branch':'New branch'}</b>
-      <div class="split"><div><label>Name *</label><input id="brName" value="${b?esc(b.name):''}"></div>
-      <div><label>Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
-      <div class="split"><div><label>Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
-      <div><label>Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
+      <div class="split"><div><label for="brName">Name *</label><input id="brName" value="${b?esc(b.name):''}"></div>
+      <div><label for="brPhone">Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
+      <div class="split"><div><label for="brEmail">Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
+      <div><label for="brAddr">Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
       ${b?`<label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="brActive" style="width:auto" ${b.active?'checked':''}> Active</label>`
        :`<label for="brCopyFrom" style="margin-top:16px">Copy settings from</label>
@@ -25877,7 +25877,7 @@ async function staffPerfPage(drillId){
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div></div>
     <div class="range">
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
-      <input type="date" id="pf" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" value="${today}">
+      <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
       <button class="btn sm" id="papply">Apply</button>
     </div></div>
     <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
@@ -26355,7 +26355,7 @@ async function dailyReportPage(){
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
-    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
@@ -26511,12 +26511,12 @@ async function expensesPage(){
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
     <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
-      <label>Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
-      <label>Supplier (optional)</label><input id="exSup">
-      <label>Description</label><input id="exDesc">
-      <label>Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
-      <label>Date</label><input id="exDate" type="date" value="${todayIso}">
-      <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
+      <label for="exCat">Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
+      <label for="exSup">Supplier (optional)</label><input id="exSup">
+      <label for="exDesc">Description</label><input id="exDesc">
+      <label for="exAmt">Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
+      <label for="exDate">Date</label><input id="exDate" type="date" value="${todayIso}">
+      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
     <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
@@ -26640,8 +26640,8 @@ async function pnlPage(){
      with it: it closed the topbar a second time, so every element after it sat one level shallower
      than the markup claims. */
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('pnl',{size:24})}<div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div></div>
-    <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
+    <div class="range no-print"><input type="date" id="plFrom" aria-label="From date" value="${d30}"> <span class="muted">→</span>
+      <input type="date" id="plTo" aria-label="To date" value="${today}"> <button class="btn sm" id="plGo">Run</button>
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
     <div style="margin:10px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="plBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a range',body:'Choose a date range and run the P&L to compare sales and expenses.'})}</div></div>`;
@@ -28225,7 +28225,7 @@ async function loadCommissionConfig(){
       <p class="muted small" style="margin:6px 0 10px">Overrides the staff default for this one service. Blank = inherit staff default; 0% = explicitly no commission on this service.</p>
       ${(svcList&&svcList.length)?`<table><tr><th>Service</th><th>Override %</th><th></th></tr>
         ${svcList.map(s=>`<tr><td>${esc(s.name)}</td>
-          <td><input data-cv="${s.id}" type="number" min="0" step="0.1" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
+          <td><input data-cv="${s.id}" type="number" min="0" step="0.1" aria-label="Commission override %" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
           <td><button class="btn ghost sm" data-savesvc="${s.id}">Save</button></td></tr>`).join('')}</table>`
         :'<p class="muted small">No services yet.</p>'}</div></div>`;
   document.querySelectorAll('[data-savesvc]').forEach(b=>b.onclick=async()=>{
@@ -28450,10 +28450,10 @@ function bookingRulesCardHtmlV325(){
            booking rules button instead of the profile Save. */''}
       <label for="bp">Booking policy (shown to customers when they book)</label>
       <textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
-      <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
+      <label for="setHold">Auto-cancel unconfirmed after (minutes, 0 = never)</label>
       <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
       <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
-      ${seatsGuestsV235?`<label>When you're full</label><select id="setOverflow">
+      ${seatsGuestsV235?`<label for="setOverflow">When you're full</label><select id="setOverflow">
         <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
         <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
       <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">

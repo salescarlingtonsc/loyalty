@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d6ee39b3bb3ead387ea8c4a58fd35baf847ddbde3002ba9c9ddf30e525661e42"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3088ff80e7d999416735bfaed7e0762985fae2ae4b0defc6ea29e06730bc7e16"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2921,7 +2921,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d6ee39b3bb3ead387ea8c4a58fd35baf847ddbde3002ba9c9ddf30e525661e42</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3088ff80e7d999416735bfaed7e0762985fae2ae4b0defc6ea29e06730bc7e16</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5701,7 +5701,7 @@ function renderHistPage(history,n){
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
-    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
@@ -5855,12 +5855,12 @@ function renderHistPage(history,n){
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
     <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
-      <label>Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
-      <label>Supplier (optional)</label><input id="exSup">
-      <label>Description</label><input id="exDesc">
-      <label>Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
-      <label>Date</label><input id="exDate" type="date" value="${todayIso}">
-      <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
+      <label for="exCat">Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
+      <label for="exSup">Supplier (optional)</label><input id="exSup">
+      <label for="exDesc">Description</label><input id="exDesc">
+      <label for="exAmt">Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
+      <label for="exDate">Date</label><input id="exDate" type="date" value="${todayIso}">
+      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
     <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
@@ -5982,8 +5982,8 @@ function renderHistPage(history,n){
      with it: it closed the topbar a second time, so every element after it sat one level shallower
      than the markup claims. */
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('pnl',{size:24})}<div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div></div>
-    <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
+    <div class="range no-print"><input type="date" id="plFrom" aria-label="From date" value="${d30}"> <span class="muted">→</span>
+      <input type="date" id="plTo" aria-label="To date" value="${today}"> <button class="btn sm" id="plGo">Run</button>
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
     <div style="margin:10px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="plBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a range',body:'Choose a date range and run the P&L to compare sales and expenses.'})}</div></div>`;
@@ -6305,7 +6305,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'d6ee39b3bb3ead387ea8c4a58fd35baf847ddbde3002ba9c9ddf30e525661e42',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'3088ff80e7d999416735bfaed7e0762985fae2ae4b0defc6ea29e06730bc7e16',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

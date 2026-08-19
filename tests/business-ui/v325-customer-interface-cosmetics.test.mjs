@@ -142,8 +142,8 @@ test('V325 the businesses.bio migration is additive, nullable and exposes the pu
 /* --------------------------------------------------------------- (c) buffer times, exception 3 */
 
 test('V325 buffer-before/after are wired into the existing add and edit service saves, not a new path', () => {
-  assert.match(servicesPage, /<label>Buffer before \(minutes\)<\/label><input id="sbb"/);
-  assert.match(servicesPage, /<label>Buffer after \(minutes\)<\/label><input id="sba"/);
+  assert.match(servicesPage, /<label for="sbb">Buffer before \(minutes\)<\/label><input id="sbb"/);
+  assert.match(servicesPage, /<label for="sba">Buffer after \(minutes\)<\/label><input id="sba"/);
   assert.match(servicesPage, /<label for="svcEditBufferBefore">Buffer before \(minutes\)<\/label><input id="svcEditBufferBefore"/);
   assert.match(servicesPage, /<label for="svcEditBufferAfter">Buffer after \(minutes\)<\/label><input id="svcEditBufferAfter"/);
   // The add path: one insert, buffer fields included.
