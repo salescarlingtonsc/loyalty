@@ -2438,13 +2438,15 @@ function renderCustomerNotJoinedV289(businessSlug){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
   const label=customerBusinessSlugLabelV289(businessSlug);
-  body.innerHTML=`<section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
+  body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:Georgia,'Times New Roman',serif">${esc(label)}</b><small>Not joined yet</small></span></span></header>
+  <section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
     <div aria-hidden="true">${CUI.icon('loyalty',{size:34})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:1.45rem">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
     <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:18})}<span>Join ${esc(label)}</span></button>
     <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>${esc(ct('scanBusinessQr'))}</span></button>
-    <p class="muted small" style="margin-top:12px"><a href="#/customer/programmes" style="color:var(--coral);text-decoration:underline">Back to My Rewards</a></p>
+    <div class="cui-stamp-dots-v2b is-demo-v2b" aria-hidden="true">${'<i></i>'.repeat(8)}</div>
+    <p class="muted small" style="margin-top:8px">Collect stamps or points here once you join.</p>
   </section>`;
   const join=$('customerNotJoinedJoin');
   if(join)join.onclick=()=>{
@@ -2707,9 +2709,9 @@ function customerHomeOfferMarkupV167(item,seen){
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
     ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(businessInitial)}</span></div>`}
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
-    <p class="customer-home-offer-business">${logo
+    <p class="customer-home-offer-business">${image?(logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
-      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`}<span class="muted small">${esc(business.name||'Your business')}${category?` · ${esc(category)}`:''}</span></p>
+      :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`):''}<span class="muted small">${esc(business.name||'Your business')}${category?` · ${esc(category)}`:''}</span></p>
     ${/* V392 (owner, photo 7: a clock drawn onto the "Ends in 13 days" pill). The countdown was
          already red; the icon is what makes it read as a deadline at a glance rather than as one
          more line of small text. */''}
@@ -2788,7 +2790,7 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
      stacked kicker read as filler above the real title. One icon-led title line instead. */
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers <span aria-hidden="true">🎁</span></span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -3768,12 +3770,12 @@ function customerProgrammeTileMarkupV96(card){
   const tier=String(loyalty.tier_name||'').trim(),
     metric=customerProgrammeDirectoryMetricV346(card),
     status=customerProgrammeDirectoryStatusV346(card);
-  return `<a class="card customer-programme-card customer-programme-card-v95" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${/* V392 (owner, photo 4): the FACIAL kicker is struck
+  return `<a class="card customer-programme-card customer-programme-card-v95${customerCardMoodV2B(card)}" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${/* V392 (owner, photo 4): the FACIAL kicker is struck
       through — every tile in this list already sits under a heading naming its category, so the
       kicker repeated the row above it on every card. And "1 reward ready" is ringed with "make
       this more prominent": it is the one line that tells the customer to walk in, and it was the
       quietest thing on the card. It leads now, and only when something really is ready — the
-      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${CUI.icon('redeem',{size:15})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${CUI.icon('redeem',{size:15})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -3821,6 +3823,43 @@ function customerHomeGreetingV343(profile=null){
 function customerRewardReadyCountV343(cards=[]){
   return (Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
 }
+/* Wave 2B (Top-20 #8): progress is the product — stamp dots for small ladders, a thin track for
+   points, both computed from fields every wallet card already carries. */
+function customerCardProgressV2B(card){
+  const reward=card?.next_eligible_reward||{};
+  const unit=customerProgrammeCardMetricKindV360(card);
+  const balance=Math.max(0,Number(card?.loyalty?.balance)||0);
+  const remaining=Math.max(0,Number(reward.remaining_units)||0);
+  if(reward.available_now===true||!remaining)return '';
+  const total=balance+remaining;
+  if(unit==='stamps'&&total>=2&&total<=10)
+    return `<span class="cui-stamp-dots-v2b" role="img" aria-label="${balance} of ${total} stamps">${Array.from({length:total},(_,i)=>`<i${i<balance?' class="on"':''}></i>`).join('')}</span>`;
+  const pct=Math.max(4,Math.min(100,Math.round(balance/total*100)));
+  return `<span class="cui-progress-track-v2b" role="img" aria-label="${balance} of ${total} toward the next reward"><i style="width:${pct}%"></i></span>`;
+}
+function customerCardMoodV2B(card){
+  const reward=card?.next_eligible_reward||{};
+  if(reward.available_now===true)return ' is-reward-ready-v2b';
+  const unit=customerProgrammeCardMetricKindV360(card);
+  const balance=Math.max(0,Number(card?.loyalty?.balance)||0);
+  const remaining=Math.max(0,Number(reward.remaining_units)||0);
+  if(!remaining)return '';
+  if(unit==='stamps')return remaining===1?' is-near-goal-v2b':'';
+  return remaining/(balance+remaining)<=0.1?' is-near-goal-v2b':'';
+}
+function customerNearestGoalV2B(cards=[]){
+  let best=null;
+  for(const card of (Array.isArray(cards)?cards:[])){
+    const reward=card?.next_eligible_reward||{};
+    if(reward.available_now===true)continue;
+    const remaining=Math.max(0,Number(reward.remaining_units)||0);
+    if(!remaining)continue;
+    if(!best||remaining<best.remaining)best={remaining,unit:customerProgrammeCardMetricKindV360(card),name:card?.business?.name||''};
+  }
+  if(!best||!best.name)return '';
+  const word=best.unit==='stamps'?`stamp${best.remaining===1?'':'s'}`:'points';
+  return `${customerPointTotalV103(best.remaining)} ${word} from a reward at ${best.name}`;
+}
 function customerHomeSummaryV343(cards=[]){
   const rewardCount=customerRewardReadyCountV343(cards);
   const expiringCount=customerExpiringRowsV286(cards).length;
@@ -3830,9 +3869,10 @@ function customerHomeSummaryV343(cards=[]){
      the number already printed one line up ("0 rewards ready / across 0 businesses"), and it read
      as a second, contradictory-looking figure. The count of businesses is not a fact this card
      needs: "Your Peekaa" directly below lists them by name. */
-  return `<a class="customer-home-ready-card-v343" href="#/customer/programmes" aria-label="${esc(rewardCount)} ${esc(rewardWord)} ready">
+  const nearestV2B=rewardCount?'':customerNearestGoalV2B(cards);
+  return `<a class="customer-home-ready-card-v343${rewardCount?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardCount?`${esc(rewardCount)} ${esc(rewardWord)} ready`:esc(nearestV2B||'No rewards ready yet')}">
     <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:42})}</span>
-    <span class="customer-home-ready-copy-v343"><b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b>${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
+    <span class="customer-home-ready-copy-v343">${rewardCount?`<b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
@@ -3857,16 +3897,16 @@ function customerHomeBusinessCardV345(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),
     status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier_name||'').trim(),
     accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
-  return `<a class="customer-home-business-card-v345" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
+  return `<a class="customer-home-business-card-v345${customerCardMoodV2B(card)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
     <span class="customer-home-business-logo-v345">${customerProgrammeTileLogoV96(business)}</span>
-    <span class="customer-home-business-copy-v345"><b>${esc(name)}</b>${tier?`<em>${esc(tier)}</em>`:''}<strong>${esc(customerHomeBusinessBalanceV345(card))}</strong>${status?`<small>${esc(status)}</small>`:''}</span>
+    <span class="customer-home-business-copy-v345"><b>${esc(name)}</b>${tier?`<em>${esc(tier)}</em>`:''}<strong>${esc(customerHomeBusinessBalanceV345(card))}</strong>${customerCardProgressV2B(card)}${status?`<small>${esc(status)}</small>`:''}</span>
     <span class="customer-home-business-arrow-v345" aria-hidden="true">›</span>
   </a>`;
 }
 function customerHomeBusinessRailV343(cards=[]){
   const rows=(Array.isArray(cards)?cards:[]).slice(0,8);
   if(!rows.length)return '';
-  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa <span aria-hidden="true">👀</span></h2><a href="#/customer/programmes">See all</a></div>
+  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa</span></h2><a href="#/customer/programmes">See all</a></div>
     <div class="customer-home-business-track-v343">${rows.map(customerHomeBusinessCardV345).join('')}</div></section>`;
 }
 function customerHomeBookingTimeV345(value){
