@@ -53,7 +53,7 @@ test('warm-coral text and component boundary tokens meet WCAG contrast targets',
   assert.ok(contrast(token('coral'),token('bg'))>=4.5,'primary coral must be readable on the app background');
   assert.ok(contrast(token('muted'),token('bg'))>=4.5,'muted text must be readable on the app background');
   assert.ok(contrast(token('control-border'),'#FFFFFF')>=3,'control boundary must reach non-text 3:1 contrast');
-  assert.match(app,/input,select,textarea\{[^}]*border:1px solid var\(--control-border\)/s);
+  assert.match(app,/input:not\(\[type=\"checkbox\"\]\):not\(\[type=\"radio\"\]\),select,textarea\{[^}]*border:1px solid var\(--control-border\)/s);
   assert.match(app,/\.btn\.ghost\{[^}]*border:1px solid var\(--control-border\)/s);
   assert.match(app,/\.qbtn\{[^}]*border:1px solid var\(--control-border\)/s);
 });
@@ -156,7 +156,7 @@ test('targets, mobile layouts, reflowing tables, and reduced motion are explicit
   /* The 44px minimum touch target on form controls is intact but tokenised: the rule now says
      min-height:var(--control-h) and --control-h is 44px. Assert both halves rather than the old
      literal, so a real shrink still fails but a token refactor does not. */
-  assert.match(app,/input,select,textarea\{[^}]*min-height:var\(--control-h\)/s);
+  assert.match(app,/input:not\(\[type=\"checkbox\"\]\):not\(\[type=\"radio\"\]\),select,textarea\{[^}]*min-height:var\(--control-h\)/s);
   assert.match(app,/--control-h:\s*44px/);
   assert.match(app,/@media\(max-width:375px\)/);
   assert.match(app,/@media\(min-width:376px\) and \(max-width:768px\)/);

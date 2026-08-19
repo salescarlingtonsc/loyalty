@@ -223,7 +223,7 @@ test('V327 the preview is honestly labelled for the screen it actually shows, an
 test('V243 the phone frame is a real device mock that still fits a 390px screen', () => {
   assert.match(preview, /<div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">/);
   assert.match(indexHtml, /\.customer-preview-phone-v243\{[^}]*width:390px;max-width:100%/);
-  assert.match(indexHtml, /\.customer-preview-screen-v243\{[^}]*height:640px;max-height:70vh;[^}]*overflow:hidden/);
+  assert.match(indexHtml, /\.customer-preview-screen-v243\{[^}]*height:640px;max-height:70vh;[^}]*overflow-y:auto/);
   // The workspace page must never scroll sideways because of it.
   assert.match(indexHtml, /\.settings-page,\.settings-page \.split,\.settings-page \.card\{[^}]*min-width:0[^}]*max-width:100%/s);
   assert.match(page, /<div class="settings-page" data-workspace-i18n>/);

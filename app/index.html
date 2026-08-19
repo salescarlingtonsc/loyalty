@@ -127,7 +127,11 @@ a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;font-size:14px;letter-spacing:-.01em}
 :where(a,button,input,select,textarea,[tabindex]:not([tabindex="-1"])):focus-visible{outline:3px solid var(--coral);outline-offset:3px}
 :where(main,h1,h2,h3)[tabindex="-1"]:focus{outline:none}
-input,select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--control-border);
+/* Checks and radios are real controls, not text fields: fixed 18px, brand accent, never
+   stretched by field-width rules (audit P0-7: the compact input rule detached them from their
+   labels as ~48px system-blue squares; desktop rendered 13px native minis). */
+input[type="checkbox"],input[type="radio"]{width:18px!important;height:18px!important;display:inline-block!important;padding:0;margin:0;flex:0 0 auto!important;accent-color:var(--brand-red)}
+input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--control-border);
   border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;min-height:var(--control-h);
   transition:border-color var(--motion-fast) var(--ease),box-shadow var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
 input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
@@ -144,7 +148,7 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .password-icon-button[disabled]{opacity:.38;cursor:not-allowed}
 .password-icon-button[aria-pressed="true"]{background:var(--tint);color:var(--coral)}
 /* Buttons: press-down on :active is the single strongest "native app" tell */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--control-h);background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:999px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--control-h);background:var(--grad);color:#fff;font-weight:600;padding:10px 20px;border-radius:999px;white-space:nowrap;
   box-shadow:0 1px 2px rgba(194,65,53,.2),0 6px 16px rgba(194,65,53,.22);
   transition:transform var(--motion-ui) var(--spring),box-shadow var(--motion-ui) var(--ease),opacity .15s,background var(--motion-fast) var(--ease),border-color var(--motion-fast) var(--ease)}
 .btn:hover{transform:translateY(-1.5px);box-shadow:0 2px 4px rgba(194,65,53,.22),0 10px 26px rgba(194,65,53,.3)}
@@ -175,6 +179,9 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
    deliberately off; warn means "needs a look". Unbuilt must not read the same as turned-off. */
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
+/* .pill's display would otherwise beat the UA's [hidden] rule — an empty count badge then
+   renders as a blank chip (audit P0-12a). */
+.pill[hidden]{display:none}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:var(--success-bg);color:var(--green)}
@@ -260,6 +267,26 @@ tr[aria-selected="true"] td{background:var(--tint)}
    bookmark or open in a new tab), so the segment's own button styling is extended to <a>. */
 .v150-segment a{min-height:44px;display:inline-flex;align-items:center;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;padding:8px 16px;text-decoration:none}
 .v150-segment a[aria-pressed="true"]{background:var(--ink);color:#fff}
+/* Compact widths: the segmented control scrolls instead of clipping (Reports @390 hid two of its
+   four sections behind the viewport edge) or wrapping into two rows (Grow @390). */
+@media(max-width:768px){
+  .v150-segment{max-width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .v150-segment::-webkit-scrollbar{display:none}
+  .v150-segment button,.v150-segment a{flex:0 0 auto;white-space:nowrap}
+  /* The app-bar page title must survive against the Customer-view button: label collapses to its
+     icon, the title keeps one readable line (audit P0-9: every route truncated to ~5 chars). */
+  .mobile-page-title{flex:1 1 auto;min-width:0}
+  .mobile-page-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .appbar a[aria-label="Open customer view"] span{display:none}
+  /* The raised Scan-QR circle pushed its label ~8px below the other four nav labels. */
+  .customer-primary-nav .customer-nav-scan>span{position:relative;top:-8px}
+  /* Label/value metric tables have no column headers; the responsive collapse was stamping every
+     cell "DETAILS". The row's first cell IS the label — drop the generic pseudo-label. */
+  table[data-responsive="true"] td[data-label="Details"]{display:block}
+  table[data-responsive="true"] td[data-label="Details"]::before{content:none}
+}
+/* Numeric identity cells never break mid-token (audit P0-12b: SKU "CL200" wrapped as CL20/0). */
+td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-space:nowrap}
 .ci-tabs-v368{margin:14px 0 4px;max-width:100%;overflow-x:auto}
 /* V369 — the tier-benefit editor row and the till's benefit list.
    The editor row is a grid so the kind, its value, the limit, the period and Remove line up
@@ -1428,7 +1455,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-topic-card-v343 .grow-topic-tile-icon-v229{width:58px;height:58px;border-radius:999px;background:var(--tint)}
 .grow-topic-card-v343 .grow-topic-tile-corner-v335{position:static;background:transparent;color:var(--muted)}
 @media(max-width:1100px){.grow-topic-card-grid-v343{grid-template-columns:repeat(2,minmax(220px,1fr))}}
-@media(max-width:720px){.grow-programme-tabs-v343{grid-template-columns:1fr 1fr}.grow-topic-card-grid-v343{grid-template-columns:1fr}.grow-programme-toolbar-v343{border-radius:18px;padding:10px}}
+/* Compact: the filter joins the standard scrolling segment instead of breaking into a 2x2 grid
+   (audit P0-8). */
+@media(max-width:720px){.grow-programme-tabs-v343{display:inline-flex;width:auto;max-width:100%}.grow-topic-card-grid-v343{grid-template-columns:1fr}.grow-programme-toolbar-v343{border-radius:18px;padding:10px}}
 .grow-topic-row-v343{position:relative;display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);padding:14px 16px;cursor:pointer;color:inherit}
 .grow-topic-row-v343:last-child{border-bottom:none}
 .grow-topic-row-v343:hover{background:var(--tint)}
@@ -2479,7 +2508,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-home-offers-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}.customer-home-offers-head h2{font-size:1.25rem}.customer-home-offers-track{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;padding:2px 2px 10px}.customer-home-offer{position:relative;display:flex;flex-direction:column;flex:0 0 min(78vw,320px);overflow:hidden;padding:0;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:var(--shadow);scroll-snap-align:start}.customer-home-offer-media{position:relative;width:100%;aspect-ratio:16/9;flex:0 0 auto;overflow:hidden;background:var(--bg)}.customer-home-offer-media img{display:block;width:100%;height:100%;object-fit:contain}.customer-home-offer-media--fallback{display:grid;place-items:center;background:linear-gradient(135deg,var(--tint),var(--card))}.customer-home-offer-media--fallback::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 16%,rgba(194,65,53,.10),transparent 55%),radial-gradient(circle at 12% 88%,rgba(194,65,53,.07),transparent 45%)}.customer-home-offer-media--fallback span{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:17px;font-weight:750;letter-spacing:-.03em;color:var(--coral)}.customer-home-offer-copy{min-width:0;padding:12px}.customer-home-offer-copy h3,.customer-home-offer-copy p{overflow-wrap:anywhere}.customer-home-offer-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}.customer-offer-new{background:var(--tint);color:var(--coral)}.customer-offer-urgent{background:var(--warn-bg);color:var(--warn)}.customer-home-offers-state{min-height:88px;padding:16px}.customer-reward-progress{height:9px;margin-top:9px;overflow:hidden;border-radius:999px;background:var(--hair)}.customer-reward-progress span{display:block;height:100%;width:var(--reward-progress,0%);border-radius:inherit;background:var(--merchant-accent,var(--coral))}.customer-points-explainer{display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:13px 14px}.customer-points-explainer p{min-width:0;flex:1}.customer-points-explainer button{flex:0 0 auto}
 /* V243 customer-app preview — restored after a rebase conflict resolution dropped it */
 .customer-preview-phone-v243{width:390px;max-width:100%;margin:14px auto 0;border:10px solid var(--ink);border-radius:34px;background:var(--ink);box-shadow:0 12px 30px rgba(23,22,26,.18)}
-.customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow:hidden;background:#fff}
+/* The frame clipped the wallet mid-sentence with no way to see the rest (audit P0-4). The screen
+   scrolls inside the bezel; the visible scrollbar is the affordance. */
+.customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow-y:auto;overscroll-behavior:contain;background:#fff}
 .ci-live-preview-inner-v326{height:100%;min-height:0;overflow-y:auto;box-sizing:border-box}
 .ci-live-preview-sample-badge-v326{background:var(--warn-bg);color:#8a6d1a;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-weight:600}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
@@ -2601,7 +2632,8 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-sections{display:grid;gap:14px;margin-top:22px}
 .wallet-section{padding:18px;overflow:hidden}
 .wallet-section h2{font-size:18px;margin-bottom:4px}
-.wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wallet-section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.wallet-section-head>h2{min-width:0}
 .wallet-rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
 .wallet-reward{border:1px solid var(--hair);border-radius:14px;padding:15px 16px;background:var(--bg);min-width:0}
 .wallet-reward-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -2893,7 +2925,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 @media(max-width:560px){.customer-next-action>.row{align-items:stretch}.customer-next-action .btn{width:100%;justify-content:center}}
 /* V347 exact customer visual spec: final cosmetic sizing pass from the supplied boards.
    Data wiring, hrefs, ids and action hooks are unchanged. */
-.customer-shell.customer-surface{--bg:var(--peekaa-bg);--card:var(--peekaa-card);--ink:var(--peekaa-text);--ink2:var(--peekaa-text);--muted:var(--peekaa-text-secondary);--hair:var(--peekaa-border);--line:var(--peekaa-divider);--control-border:var(--peekaa-border);--tint:var(--peekaa-red-soft);--coral:var(--peekaa-red);--coral-hover:var(--peekaa-red-dark);--red:var(--peekaa-red);--green:var(--peekaa-success);--amber:var(--peekaa-gold);--grad:linear-gradient(135deg,var(--peekaa-red),#F03328);padding-top:max(16px,env(safe-area-inset-top));padding-bottom:calc(88px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--peekaa-bg),var(--peekaa-bg));font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;color:var(--peekaa-text)}
+.customer-shell.customer-surface{--bg:var(--peekaa-bg);--card:var(--peekaa-card);--ink:var(--peekaa-text);--ink2:var(--peekaa-text);--muted:var(--peekaa-text-secondary);--hair:var(--peekaa-border);--line:var(--peekaa-divider);--control-border:var(--peekaa-border);--tint:var(--peekaa-red-soft);--coral:var(--peekaa-red);--coral-hover:var(--peekaa-red-dark);--red:var(--peekaa-red);--green:var(--peekaa-success);--amber:var(--peekaa-gold);--grad:linear-gradient(135deg,var(--peekaa-red),var(--peekaa-red-dark));padding-top:max(16px,env(safe-area-inset-top));padding-bottom:calc(88px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--peekaa-bg),var(--peekaa-bg));font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;color:var(--peekaa-text)}
 .customer-shell .wallet-inner{width:min(100%,390px);max-width:390px;margin:0 auto;padding:0 16px}
 .customer-shell .wallet-head{min-height:82px;margin:0 0 6px;padding:0}.customer-shell .wallet-head .brand-logo{width:82px;max-height:52px}.customer-shell .customer-inbox-bell{min-width:42px;min-height:42px;border:0;background:var(--peekaa-white);box-shadow:var(--shadow-warm);color:var(--peekaa-text)}.customer-shell .customer-inbox-badge{top:-1px;right:-1px;min-width:17px;height:17px;font-size:10px;background:var(--peekaa-red);border:2px solid #fff}
 .customer-shell .card,.customer-shell .customer-booking-business,.customer-shell .customer-booking-chooser,.customer-shell .customer-booking-tabs,.customer-shell .customer-programme-card-v95,.customer-shell .customer-home-offer,.customer-shell .wallet-reward,.customer-shell .wallet-section,.customer-shell .customer-programme-card-v310{border-color:var(--peekaa-border);background:var(--peekaa-card);box-shadow:var(--shadow-warm)}
@@ -3138,7 +3170,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=72c9e9b31ce5","business":"/app-business.js?b=8bd733a2c694","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=57d2bb572500","business":"/app-business.js?b=7358e5bc735a","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
