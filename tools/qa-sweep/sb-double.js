@@ -22,6 +22,20 @@
   const BIZ = '10000000-0000-4000-8000-000000000001';
   const USER = '20000000-0000-4000-8000-000000000001';
   const ok = (data) => Promise.resolve({ data, error: null });
+  /* A PostgREST-style result: awaitable, and every modifier (.abortSignal, .select, .single,
+     .maybeSingle, .throwOnError, .setHeader) returns itself so chains resolve the same value. */
+  function chainable(data) {
+    const payload = { data, error: null, count: Array.isArray(data) ? data.length : null, status: 200 };
+    const proxy = new Proxy({}, {
+      get(_t, prop) {
+        if (prop === 'then') return (res, rej) => Promise.resolve(payload).then(res, rej);
+        if (prop === 'catch') return (rej) => Promise.resolve(payload).catch(rej);
+        if (prop === 'finally') return (f) => Promise.resolve(payload).finally(f);
+        return () => proxy;
+      },
+    });
+    return proxy;
+  }
 
   /* ---- table rows -------------------------------------------------------------------- */
   const money = (c) => c;
@@ -77,7 +91,8 @@
       role: 'owner', is_super_admin: false, modules: ROWS.businesses[0].enabled_modules,
       module_perms: Object.fromEntries(ROWS.businesses[0].enabled_modules.map((m) => [m, 'rw'])),
     }),
-    get_workspace_locale_preference_v97: () => ({ locale: 'en' }),
+    /* The harness sets __QA_LOCALE to sweep the workspace in zh-CN / ms. */
+    get_workspace_locale_preference_v97: () => ({ locale: global.__QA_LOCALE || 'en' }),
     get_customer_feature_capabilities: () => ({
       customer_wallet: true, customer_in_app_inbox: true, customer_actionable_wallet: true,
       customer_phone_registration: true, customer_bookings: true,
@@ -130,9 +145,13 @@
     return {
       auth: authApi,
       from: (table) => builder(table),
+      /* Real supabase-js returns a chainable builder from .rpc(), not a bare Promise — the app
+         uses .abortSignal() on the customer paths (customerRpc). Returning a plain Promise made
+         every customer interaction throw "abortSignal is not a function", which looked like 65
+         product bugs and was entirely this double's fault. */
       rpc: (name, params) => {
         QA.rpc.push({ name, params: params || null });
-        if (Object.prototype.hasOwnProperty.call(RPC, name)) return ok(RPC[name](params));
+        if (Object.prototype.hasOwnProperty.call(RPC, name)) return chainable(RPC[name](params));
         QA.unfixtured.add(name);
         /* No fixture: resolve to a benign EMPTY value so the screen renders its empty state.
            Returning null here would crash any call site that reads data.foo without a guard —
@@ -140,7 +159,7 @@
            is hunted exhaustively by .qa/null-guard.mjs instead, which is more reliable than
            whatever this double happens to return. */
         const listy = /(^|_)(list|search|all)|s$|_v\d+$/.test(name);
-        return ok(listy ? [] : {});
+        return chainable(listy ? [] : {});
       },
       channel: () => {
         const ch = { on: () => ch, subscribe: (cb) => { if (cb) cb('SUBSCRIBED'); return ch; }, unsubscribe: () => Promise.resolve('ok') };

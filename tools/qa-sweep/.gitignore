@@ -1,2 +1,6 @@
 shots/
 results.json
+click-results.json
+dom-health-results.json
+locale-results.json
+xss-results.json
