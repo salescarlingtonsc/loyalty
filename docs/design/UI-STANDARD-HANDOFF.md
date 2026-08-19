@@ -210,7 +210,17 @@ routes are now in every sweep's route list.
 Note the click sweep uses a **route-dependent** control scope: the business
 workspace excludes the sidebar rail (same 25 links on every route), the
 customer app does not (its bottom nav is a per-screen surface, and scoping it
-like the workspace tested 3 of 16 controls).
+like the workspace tested 3 of 16 controls). With the right scope the customer
+app is 144 controls over 8 routes, all clean, 19 dialogs opened and closed.
+
+**Counting copy-table keys is not a coverage measure.** `CUSTOMER_COPY` is
+complete on paper — 230 keys each in zh-CN, ms and ta, nothing missing against
+en — and the rendered customer screens still measure 22–38% translated,
+*worse* than most workspace screens. The gap is text that never became a
+`ct()` key: the greeting, section headings, category chips, booking tabs,
+"View all", "See all", "Book now". Measure the rendered screen, not the table.
+(The customer percentages are a floor — business names and amounts the
+collector cannot tell from prose count against them.)
 
 ---
 
