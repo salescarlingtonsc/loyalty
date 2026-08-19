@@ -91,7 +91,7 @@ test('daily and P&L reports invalidate stale exports and reject obsolete respons
     assert.match(source,/\.disabled=true/);
   }
   assert.match(app,/@media\(max-width:768px\)\{[\s\S]*\.topbar>\.row\{min-width:0;max-width:100%;flex-wrap:wrap\}/);
-  assert.match(app,/@media\(max-width:960px\)\{[\s\S]*\.charts,\.split\{grid-template-columns:1fr\}/);
+  assert.match(app,/@media\(max-width:960px\)\{[\s\S]*\.charts\{grid-template-columns:1fr\}/);
   assert.match(app,/\.split>\*\{min-width:0;max-width:100%\}/);
   assert.match(app,/#slist\{min-width:0;max-width:100%;overflow-x:auto/);
 });

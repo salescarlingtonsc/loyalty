@@ -31,7 +31,7 @@ test('no surface offers self-service account deletion any more', () => {
 test('closing an account is a real action, not a sentence with an address in it', () => {
   const card = app.slice(app.indexOf('function accountDeletionCardHtml'), app.indexOf('async function wireAccountDeletionButton'));
   // v189: the owner found the route "hidden inside here, small button".
-  assert.match(card, /<a class="btn" href="mailto:admin\.peekaa@gmail\.com\?subject=\$\{closureSubject\}&amp;body=\$\{closureBody\}">Request account closure<\/a>/,
+  assert.match(card, /<a class="btn" style="width:100%" href="mailto:admin\.peekaa@gmail\.com\?subject=\$\{closureSubject\}&amp;body=\$\{closureBody\}">Request account closure<\/a>/,
     'the primary action must be the closure request itself');
   assert.match(card, /Peekaa account closure request/, 'the mail arrives pre-addressed and pre-titled');
   assert.match(card, /Name:.*Phone or email used:/s, 'the body asks for what Peekaa needs to act');

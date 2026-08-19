@@ -1778,7 +1778,7 @@ const CUSTOMER_COPY=Object.freeze({
     '{section} didn’t load':'{section} didn’t load',
     'Your sign-in expired. Sign in again.':'Your sign-in expired. Sign in again.',
     'Sign in':'Sign in',
-    'Book again':'Book again',
+    'Book again':'Rebook',
     'Open programme':'Open programme',
     'Withdraw':'Withdraw',
     'Waitlisted':'Waitlisted',
@@ -4920,7 +4920,7 @@ function accountDeletionCardHtml(){
     <p class="muted small" style="margin-top:6px">Peekaa handles account closure for you and replies within 30 days. You can also speak to your assigned consultant.</p>
     <div id="accountDeletionStatus" role="status"></div>
     <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
-      <a class="btn" href="mailto:admin.peekaa@gmail.com?subject=${closureSubject}&amp;body=${closureBody}">Request account closure</a>
+      <a class="btn" style="width:100%" href="mailto:admin.peekaa@gmail.com?subject=${closureSubject}&amp;body=${closureBody}">Request account closure</a>
       <a class="btn ghost" href="/data-request.html">Ask what data is held</a>
     </div>
     <p class="muted small" style="margin-top:12px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
