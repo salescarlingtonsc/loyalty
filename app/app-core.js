@@ -1647,7 +1647,7 @@ function passwordControlHtml(id,{autocomplete='current-password',minlength='',de
   return `<div class="password-control${passkeyButtonId?' has-passkey':''}"><input ${inputAttributes}>
     <span class="password-control-actions">
       <button class="password-icon-button" type="button" data-password-toggle="${esc(id)}" data-password-show-label="${esc(showLabel)}" data-password-hide-label="${esc(hideLabel)}" aria-controls="${esc(id)}" aria-pressed="false" aria-label="${esc(showLabel)}" title="${esc(showLabel)}">${CUI.icon('eye',{size:20})}</button>
-      ${passkeyButtonId?`<button class="password-icon-button" id="${esc(passkeyButtonId)}" type="button" disabled aria-label="${esc(authSecurityCopy(locale,'passkey'))}" title="${esc(authSecurityCopy(locale,'passkeyTitle'))}">${CUI.icon('faceId',{size:21})}</button>`:''}
+      ${passkeyButtonId?`<button class="password-icon-button" id="${esc(passkeyButtonId)}" type="button" disabled aria-label="${esc(authSecurityCopy(locale,'passkey'))}" title="${esc(authSecurityCopy(locale,'passkeyTitle'))}">${CUI.icon('faceId',{size:20})}</button>`:''}
     </span>
   </div>`;
 }
@@ -2549,8 +2549,8 @@ function customerPrimaryNavigation(active,counts={}){
   };
   return `<nav class="customer-primary-nav" aria-label="${esc(BRAND.customerLabel)}">
     ${CUSTOMER_PRIMARY_NAV.map(item=>item.key==='scan'
-      ?`<button type="button" id="customerNavScan" class="customer-nav-scan" aria-label="${esc(ct(item.copy))}"><span class="customer-nav-scan-fab">${CUI.icon(item.icon,{size:22})}</span><span>${esc(ct(item.copy))}</span></button>`
-      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:19})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
+      ?`<button type="button" id="customerNavScan" class="customer-nav-scan" aria-label="${esc(ct(item.copy))}"><span class="customer-nav-scan-fab">${CUI.icon(item.icon,{size:20})}</span><span>${esc(ct(item.copy))}</span></button>`
+      :`<a href="${item.href}"${item.key===active?' aria-current="page"':''} aria-label="${esc(label(item))}">${CUI.icon(item.icon,{size:20})}<span>${esc(ct(item.copy))}</span>${badge(item.key)}</a>`).join('')}
   </nav>`;
 }
 function customerJoinTokenFromQr(value,currentUrl=location.href){
@@ -2577,17 +2577,17 @@ function openCustomerJoinScanner(){
   overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker" id="customerScanSheetKicker">${esc(ct('My Peekaa QR'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('My Peekaa QR'))}</h2><p class="muted small" id="customerScanSheetSubtitle" style="margin-top:5px">${esc(ct('Show this at any Peekaa business to be recognised as you.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:18})}</button></div>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker" id="customerScanSheetKicker">${esc(ct('My Peekaa QR'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('My Peekaa QR'))}</h2><p class="muted small" id="customerScanSheetSubtitle" style="margin-top:5px">${esc(ct('Show this at any Peekaa business to be recognised as you.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:20})}</button></div>
     <div id="customerMyQrPanelV329" aria-busy="true">
       <div class="customer-my-qr-stage-v344"><span class="customer-qr-sparkle-v344 s1" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s2" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s3" aria-hidden="true">✦</span><div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div><span class="customer-qr-heart-v344" aria-hidden="true"><span>•ᴗ•</span></span></div>
       <p id="customerMyQrStatusV329" class="muted small" role="status" aria-live="polite"></p>
-      <button class="btn ghost sm" id="customerMyQrSwitchToScan" type="button" style="width:100%;margin-top:6px">${CUI.icon('scan',{size:17})}<span>${esc(ct('Scan a business QR instead'))}</span></button>
+      <button class="btn ghost sm" id="customerMyQrSwitchToScan" type="button" style="width:100%;margin-top:6px">${CUI.icon('scan',{size:16})}<span>${esc(ct('Scan a business QR instead'))}</span></button>
     </div>
     <div id="customerJoinScanPanelV329" hidden>
-      <button class="btn ghost sm" id="customerMyQrSwitchToMine" type="button" style="width:100%;margin-bottom:12px">${CUI.icon('scan',{size:17})}<span>${esc(ct('Show my QR instead'))}</span></button>
+      <button class="btn ghost sm" id="customerMyQrSwitchToMine" type="button" style="width:100%;margin-bottom:12px">${CUI.icon('scan',{size:16})}<span>${esc(ct('Show my QR instead'))}</span></button>
       <p class="muted small">${esc(ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.'))}</p>
       <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="${esc(ct('Camera preview for business join QR'))}"></video></div>
-      <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:18})}<span>${esc(ct('Open camera'))}</span></button>
+      <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:20})}<span>${esc(ct('Open camera'))}</span></button>
       <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
       <button class="btn ghost sm" id="customerJoinScannerManual" type="button" style="width:100%;margin-top:12px">${esc(ct("Can't scan? Use a photo or link"))}</button>
       <div class="scanner-fallback" id="customerJoinScannerFallback" hidden><label for="customerJoinScannerImage">${esc(ct('Or choose a QR image'))}</label><input id="customerJoinScannerImage" type="file" accept="image/*">
@@ -2725,9 +2725,9 @@ function customerWorkspaceSwitchHtml(staffWorkspaces=[]){
   if(workspaces.length===1){
     const workspace=workspaces[0];
     const name=workspace.business_name||workspace.business_slug||'Business';
-    return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:17})}<span>${esc(name)} workspace</span></a>`;
+    return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:16})}<span>${esc(name)} workspace</span></a>`;
   }
-  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:17})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
+  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:16})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
 }
 function renderNoCustomerDestination(staffWorkspaces=[]){
   const workspaces=sortStaffWorkspaces(staffWorkspaces);
@@ -2767,9 +2767,9 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
      including its #walletBack id and its nav() handler below. */
   const shellBackHrefV340=compactBusinessHeadV339?'':backHref;
   root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head${compactBusinessHeadV339?' wallet-head-compact-v339':''}">
-    ${shellBackHrefV340?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:18})}</button>`:''}
+    ${shellBackHrefV340?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:20})}</button>`:''}
     ${compactBusinessHeadV339?'':`<a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>`}
-    <span class="spacer"></span><span id="customerInboxBellSlot"${compactBusinessHeadV339?' hidden':''}>${compactBusinessHeadV339?'':(inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:19})}</a>`:'')}</span>
+    <span class="spacer"></span><span id="customerInboxBellSlot"${compactBusinessHeadV339?' hidden':''}>${compactBusinessHeadV339?'':(inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:20})}</a>`:'')}</span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
     <!-- v296 (owner, annotated: "remove this — here got profile already"). The avatar menu was a
          second door to a place the navigation already owns: Profile has been a first-class tab
@@ -2950,7 +2950,7 @@ function customerExploreResultsMarkupV244(state){
      ranked, because a list that silently mixes "2 km away" with "somewhere unknown" is misleading. */
   const unlocated=state.near?rows.filter(row=>row?.located!==true).length:0;
   const order=state.near
-    ?`<p class="muted small customer-explore-order">${CUI.icon('bookings',{size:14})} Nearest first${unlocated?` · ${unlocated} ${unlocated===1?'business has':'businesses have'} no address yet, shown last`:''}</p>`
+    ?`<p class="muted small customer-explore-order">${CUI.icon('bookings',{size:16})} Nearest first${unlocated?` · ${unlocated} ${unlocated===1?'business has':'businesses have'} no address yet, shown last`:''}</p>`
     :'';
   return `${order}<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
     <p class="muted small customer-explore-note">Points and rewards are separate for every business.</p>`;
@@ -2961,7 +2961,7 @@ async function renderCustomerExplore(){
   renderCustomerShell({active:'explore',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,
     body:`<header class="customer-page-head"><div><h1>Explore</h1><p class="muted small">Every business on Peekaa — find one by what it sells.</p></div></header>
     <div class="customer-explore-search"><label class="sr-only" for="customerExploreQuery">Search businesses</label>
-      ${CUI.icon('search',{size:18})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
+      ${CUI.icon('search',{size:20})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
     <div class="customer-explore-tools"><button class="btn ghost sm" id="customerExploreNear" type="button" aria-pressed="false">${CUI.icon('bookings',{size:16})}<span>Near me</span></button>
       <p class="muted small" id="customerExploreNearNote" role="status"></p></div>
     <div id="customerExploreResults" role="region" aria-live="polite" aria-label="Search results">${customerExploreResultsMarkupV244({status:'loading'})}</div>`});
@@ -3340,9 +3340,9 @@ function customerPointsExplainerMarkupV167(business={}){
   const key=`peekaa.customer.points-explainer.v1.${String(business.id||business.slug||'programme')}`;
   try{if(localStorage.getItem(key)==='dismissed')return ''}catch{}
   return `<button class="card customer-points-explainer customer-points-explainer-v339" type="button" data-points-explainer data-points-explainer-key="${esc(key)}" data-points-explainer-open-v339 aria-label="How rewards work at ${esc(business.name||'this business')}">
-    <span class="customer-points-explainer-icon-v339" aria-hidden="true">${CUI.icon('info',{size:19})}</span>
+    <span class="customer-points-explainer-icon-v339" aria-hidden="true">${CUI.icon('info',{size:20})}</span>
     <span class="customer-points-explainer-copy-v339"><b>How rewards work</b><span class="muted small">Collect points here and use them for available rewards.</span></span>
-    <span class="customer-points-explainer-chevron-v339" aria-hidden="true">${CUI.icon('forward',{size:17})}</span>
+    <span class="customer-points-explainer-chevron-v339" aria-hidden="true">${CUI.icon('forward',{size:16})}</span>
   </button>`;
 }
 function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},bookingEnabled=false}={}){
@@ -3622,7 +3622,7 @@ function customerPointsExpiryLineV386({expiry=null,loyalty={},presentation={}}={
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const soon=Math.max(0,Number(expiry?.expiring_7_units)||0)>0;
   return `<p class="muted small customer-points-expiry-v386"${soon?' data-points-expiry-soon-v386="true"':''} style="margin-top:6px">
-    ${CUI.icon('appointments',{size:14})} <span>${esc(customerPointTotalV103(units))} ${esc(unitLabel)} expire on <time datetime="${esc(at)}">${esc(walletDate(at))}</time></span>
+    ${CUI.icon('appointments',{size:16})} <span>${esc(customerPointTotalV103(units))} ${esc(unitLabel)} expire on <time datetime="${esc(at)}">${esc(walletDate(at))}</time></span>
   </p>`;
 }
 /* In tiers mode the balance is not a wallet — it is the distance travelled — so it is stated as
@@ -3641,13 +3641,13 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
   const mode=customerProgrammeModeV230(capabilities);
   if(mode==='tiers'){
     return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Your tier">
-      <h2 class="customer-programme-single-head">${CUI.icon('star',{size:17})}<span>Tier</span></h2>
+      <h2 class="customer-programme-single-head">${CUI.icon('star',{size:16})}<span>Tier</span></h2>
       ${customerProgrammeTierPanelV230({tier,loyalty,presentation})}
     </section>`;
   }
   if(mode==='redeem'){
     return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Reward points">
-      <h2 class="customer-programme-single-head">${CUI.icon('redeem',{size:17})}<span>Reward points</span></h2>
+      <h2 class="customer-programme-single-head">${CUI.icon('redeem',{size:16})}<span>Reward points</span></h2>
       ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
     </section>`;
   }
@@ -3659,8 +3659,8 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
     :`<span class="customer-programme-tab-balance" aria-label="${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))} ${esc(ct(presentation.unit))} to spend">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}<small>${esc(ct(presentation.unit))}</small></span>`;
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
     <div class="customer-programme-tablist${tabBalanceV299?' customer-programme-tablist--with-balance':''}" role="tablist" aria-label="Tier and reward points">
-      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:17})}<span>Tier</span></button>
-      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:17})}<span>Reward points</span></button>
+      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:16})}<span>Tier</span></button>
+      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:16})}<span>Reward points</span></button>
       ${tabBalanceV299}
     </div>
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
@@ -3782,7 +3782,7 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
   const figure=paused?''
     :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
   return `<section class="card customer-programme-card-v310" data-programme-card="stamps" aria-label="${esc(ct('stampsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:17})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry):`${figure}
     <p class="muted small customer-programme-card-line-v310">${esc(sentence)}</p>`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}
@@ -3793,7 +3793,7 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
 function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false,expiry=null}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:17})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
       :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,expiry,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
@@ -3850,12 +3850,12 @@ function customerProgrammeTierCardV310({tier={},entry=null,pointsCardPresent=fal
     .map(value=>String(value||'').trim()).filter(Boolean);
   return `<section class="card customer-programme-card-v310 customer-tier-card-v339" data-programme-card="tiers" aria-label="${esc(ct('tierCardTitle'))}">
     <div class="customer-tier-card-head-v339">
-      <span class="customer-tier-avatar-v339" aria-hidden="true">${CUI.icon(avatarIconV339,{size:22})}</span>
+      <span class="customer-tier-avatar-v339" aria-hidden="true">${CUI.icon(avatarIconV339,{size:20})}</span>
       <h2 class="customer-programme-card-head-v310"><span>${esc(ct('tierCardTitle'))}</span></h2>
     </div>
     ${paused?customerProgrammePausedMarkupV310(entry):`${customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
     ${standingV339?`<p class="muted small customer-tier-standing-v339">${esc(standingV339)}</p>`:''}
-    ${perksV339.length?`<ul class="customer-tier-perks-v339">${perksV339.map(perk=>`<li class="pill customer-tier-perk-v339">${CUI.icon('giftcard',{size:14})}<span>${esc(perk)}</span></li>`).join('')}</ul>`:''}`}
+    ${perksV339.length?`<ul class="customer-tier-perks-v339">${perksV339.map(perk=>`<li class="pill customer-tier-perk-v339">${CUI.icon('giftcard',{size:16})}<span>${esc(perk)}</span></li>`).join('')}</ul>`:''}`}
   </section>`;
 }
 /* The claimable-now strip. It fires NO new read: it is built only from facts the page already
@@ -4002,7 +4002,7 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
       <div class="customer-points-hero-bar-v337" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
       ${tierPill?`<span class="pill customer-points-hero-pill-v337">${tierPill}</span>`:''}
     </div>
-    <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:22})}</span>
+    <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:20})}</span>
   </section>`;
 }
 /* The "reward ready" banner. Renders only when the server's own next_eligible_reward is
@@ -4014,7 +4014,7 @@ function customerClaimableRewardBannerMarkupV337({reward=null}={}){
   if(!reward||reward.available_now!==true)return '';
   const name=esc(String(reward.name||'').trim()||ct('rewardsTab'));
   return `<section class="card customer-claimable-banner-v337" data-claimable-banner-v337 role="status">
-    <span class="customer-claimable-banner-icon-v337" aria-hidden="true">${CUI.icon('giftcard',{size:26})}</span>
+    <span class="customer-claimable-banner-icon-v337" aria-hidden="true">${CUI.icon('giftcard',{size:24})}</span>
     <div class="customer-claimable-banner-copy-v337">
       <p class="customer-claimable-banner-kicker-v337">You have a reward ready!</p>
       <b class="customer-claimable-banner-name-v337">${name}</b>
@@ -4126,8 +4126,8 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const showRewardLinesV386=modeV386!=='tiers'||rewardReady;
   return `<section class="card customer-business-summary-v346" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
     <div class="customer-business-summary-top-v347">
-      <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(heroLabel)}</span></span>
-      <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:14})}<span>${esc(subline)}</span></span>
+      <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
+      <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
     </div>
     ${figureV386}
     ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
@@ -4171,7 +4171,7 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   if(!modules.length)return '';
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
     ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}" data-business-shortcut-v347="${esc(item.action)}">
-      <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:22})}</span>
+      <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:20})}</span>
       <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small>${esc(item.body)}</small></span>
       <span class="customer-business-module-chevron-v347" aria-hidden="true">›</span>
     </a>`).join('')}
@@ -4241,14 +4241,14 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      compactBusinessHeadV339 which drops the wordmark and bell in the bar above. */
   if(collapsedHeaderV339)return `<div class="customer-business-profile-v346">
     <header class="customer-business-header-v346" style="--merchant-accent:${accentV326}">
-      ${backHrefV340?`<a class="customer-programme-back-v340 customer-business-back-v346" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:18})}</a>`:''}
+      ${backHrefV340?`<a class="customer-programme-back-v340 customer-business-back-v346" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:20})}</a>`:''}
       <button class="customer-business-identity-v346" type="button" data-company-detail aria-label="Company details for ${headV327}">
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
         <span><b>${headV327}</b>${customerBusinessTaglineV385(business)}</span>
       </button>
       <div class="customer-programme-contact-v326 customer-business-actions-v346" data-company-contact-inline-v326>
-        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>Directions</span></button>
-        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:20})}<span>Directions</span></button>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:20})}<span>Call</span></button>
       </div>
     </header>
     ${/* v386 (owner photo 9): the header chip truncated the address to "313 Orcha…", which the
@@ -4276,22 +4276,22 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
   </div>`;
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
     <header class="customer-programme-compact-head customer-programme-compact-head-v337${collapsedHeaderV339?' customer-programme-compact-head-v339':''}" style="--merchant-accent:${accentV326}">
-      ${backHrefV340?`<a class="customer-programme-back-v340" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:18})}</a>`:''}
+      ${backHrefV340?`<a class="customer-programme-back-v340" href="${esc(backHrefV340)}" aria-label="${esc(ct('backProgrammes'))}">${CUI.icon('back',{size:20})}</a>`:''}
       <button class="customer-programme-identity" type="button" data-company-detail aria-label="Company details for ${headV327}">
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
         <span class="customer-programme-compact-copy"><b>${headV327}</b></span>
       </button>
-      <span class="customer-programme-head-icons-v337" aria-hidden="true">${CUI.icon('phone',{size:17})}${CUI.icon('branch',{size:17})}</span>
+      <span class="customer-programme-head-icons-v337" aria-hidden="true">${CUI.icon('phone',{size:16})}${CUI.icon('branch',{size:16})}</span>
       ${hasTier&&currentTierLabel?`<button type="button" class="customer-programme-identity-hint customer-programme-tier-jump-v327" data-tier-scroll-v327>${esc(currentTierLabel)}</button>`:''}
     </header>
     ${customerProgrammePointsHeroMarkupV337({loyalty,reward,tier,presentation,programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled})}
     <div class="customer-programme-contact-row-v337">
       <div class="customer-programme-contact-v326" data-company-contact-inline-v326>
-        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:18})}<span>Address</span></button>
-        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:18})}<span>Call</span></button>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:20})}<span>Address</span></button>
+        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:20})}<span>Call</span></button>
       </div>
-      ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:18})}<span>${esc(ct('bookNow'))}</span></a>`:''}
+      ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:20})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </div>
     ${programmeStackV310(programmeCapabilities)
       ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:collapsedHeaderV339})
@@ -4427,9 +4427,9 @@ function renderBusinessSignupChoice(){
     <h1 id="businessSignupChoiceTitle" style="font-size:clamp(1.8rem,6vw,2.45rem);margin-top:18px">How would you like to use Peekaa?</h1>
     <p class="muted" style="margin-top:7px;line-height:1.55">Choose the path that matches what you are doing now.</p>
     <div class="entry-choice-grid">
-      <button type="button" class="entry-choice" id="requestDemoChoice"><span class="entry-choice-icon">${CUI.icon('info',{size:25})}</span><div><h2>Request a demo</h2><p class="muted">Ask Peekaa consultants to contact you. No account or workspace is created.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Request demo ${CUI.icon('forward',{size:17})}</span></button>
-      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:25})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Stripe Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:17})}</span></button>
-      <button type="button" class="entry-choice" id="joinBusinessChoice"><span class="entry-choice-icon">${CUI.icon('staff',{size:25})}</span><div><h2>Join an existing business</h2><p class="muted">Use an invitation from your business owner or manager.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Enter invite ${CUI.icon('forward',{size:17})}</span></button>
+      <button type="button" class="entry-choice" id="requestDemoChoice"><span class="entry-choice-icon">${CUI.icon('info',{size:24})}</span><div><h2>Request a demo</h2><p class="muted">Ask Peekaa consultants to contact you. No account or workspace is created.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Request demo ${CUI.icon('forward',{size:16})}</span></button>
+      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:24})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Stripe Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:16})}</span></button>
+      <button type="button" class="entry-choice" id="joinBusinessChoice"><span class="entry-choice-icon">${CUI.icon('staff',{size:24})}</span><div><h2>Join an existing business</h2><p class="muted">Use an invitation from your business owner or manager.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Enter invite ${CUI.icon('forward',{size:16})}</span></button>
     </div>
     <button class="btn ghost" id="businessSignupBack" style="width:100%;margin-top:18px">Back to sign in</button>
     ${legalLinks()}</section></main>`;
@@ -4852,7 +4852,7 @@ function renderAuth(mode='in',{admin=false}={}){
   }
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:17})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:17})}<span>I’m a customer</span></a></nav>`}
+    ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:16})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:16})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
     ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
@@ -5186,7 +5186,7 @@ window.openImport=function(moduleKey,onDone){
   const close=()=>deactivateDialog?deactivateDialog():wrap.remove();
   function render(){
     wrap.innerHTML=`<div class="modal-card">
-      <div class="row"><h2 id="impTitle" style="font-size:1.3rem">${CUI.icon('import',{size:21})} <span data-workspace-i18n>Import</span> <span data-workspace-i18n>${esc(cfg.title)}</span></h2><span class="spacer"></span>
+      <div class="row"><h2 id="impTitle" style="font-size:1.3rem">${CUI.icon('import',{size:20})} <span data-workspace-i18n>Import</span> <span data-workspace-i18n>${esc(cfg.title)}</span></h2><span class="spacer"></span>
         <button class="btn ghost sm" id="impX">Close</button></div>
       <div class="imp-note">${esc(cfg.hint)}</div>
       <div style="margin:16px 0 6px"><div class="seg">
@@ -5810,7 +5810,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const blocked=Array.isArray(pv.blockers)&&pv.blockers.length>0;
       const spendable=pv.spendable===true;
       body=`<div class="cui-card-head"><h3>Confirm this top-up</h3></div>
-        <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+        <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:20})}<div>
           <b>You are collecting ${esc(cur)} ${(cash/100).toFixed(2)} and issuing ${esc(cur)} ${(cash/100).toFixed(2)} paid value${bonus>0?` plus ${esc(cur)} ${(bonus/100).toFixed(2)} promotional bonus`:''}.</b>
           <p>${spendable?'This value will be spendable by the customer.':'This is a test in this phase — the value is <b>not</b> spendable and no real money is collected.'}</p></div></aside>
         <dl class="cui-readonly-list" style="margin-top:12px">

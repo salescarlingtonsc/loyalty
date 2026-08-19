@@ -127,11 +127,11 @@ test('inactive-access legal links are semantic WCAG targets on desktop and 390px
 
 test('target customer routes use SVG icons instead of raw structural glyphs',()=>{
   for(const source of [detail,till,loyalty])assert.doesNotMatch(source,/[⏳🏆🎁⏸←]/u);
-  assert.match(detail,/CUI\.icon\('waitlist',\{size:15\}\)/);
-  assert.match(detail,/CUI\.icon\('loyalty',\{size:17\}\)/);
-  assert.match(till,/CUI\.icon\('back',\{size:17\}\)/);
-  assert.match(till,/CUI\.icon\('forward',\{size:18\}\)/);
-  assert.match(loyalty,/CUI\.icon\('retention',\{size:15\}\)/);
+  assert.match(detail,/CUI\.icon\('waitlist',\{size:16\}\)/);
+  assert.match(detail,/CUI\.icon\('loyalty',\{size:16\}\)/);
+  assert.match(till,/CUI\.icon\('back',\{size:16\}\)/);
+  assert.match(till,/CUI\.icon\('forward',\{size:20\}\)/);
+  assert.match(loyalty,/CUI\.icon\('retention',\{size:16\}\)/);
 });
 
 test('shell and route accessibility provide skip, focus, landmarks, and one announcement per event',()=>{

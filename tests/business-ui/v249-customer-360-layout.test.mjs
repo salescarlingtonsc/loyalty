@@ -81,7 +81,7 @@ test('V249/V294 the KPI tiles fold into the summary card and the identity line k
   assert.match(profile, /canReadSales&&netVisits<=0\?`<p class="muted small"[^`]*Record an eligible first purchase; points are earned only when an active published loyalty programme applies\./);
   assert.match(profile, /Sales and reward figures are hidden because this role does not have access to those modules\./);
   // Chips carry text, not colour alone.
-  assert.match(profile, /class="c360-badge \$\{b\.cls\}">\$\{CUI\.icon\(b\.icon,\{size:14\}\)\}\$\{esc\(b\.label\)\}/);
+  assert.match(profile, /class="c360-badge \$\{b\.cls\}">\$\{CUI\.icon\(b\.icon,\{size:16\}\)\}\$\{esc\(b\.label\)\}/);
 });
 
 test('V249 the expiry note and both collapsibles live inside the POINTS card, once each', () => {

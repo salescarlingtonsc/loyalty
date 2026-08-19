@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ce59240f89a1b9d1abbc75f1b5ac2e04c5b205feec3403358f4683f703c73f96"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ee5d5e032fe63ee690d32aab0089227651efda920dd3cc7d190f1f02d6309326"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3126,7 +3126,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ce59240f89a1b9d1abbc75f1b5ac2e04c5b205feec3403358f4683f703c73f96</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ee5d5e032fe63ee690d32aab0089227651efda920dd3cc7d190f1f02d6309326</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -3730,7 +3730,7 @@ function insightCardV153(insight){
   const actions=(insight.actions||[]).map(action=>action.href
     ?`<a class="btn ${action.variant||'ghost'} sm" href="${action.href}" ${action.dataset||''}>${esc(action.label)}</a>`
     :`<button type="button" class="btn ${action.variant||'ghost'} sm" ${action.dataset||''}>${esc(action.label)}</button>`).join('');
-  return `<article class="insight-card" data-tone="${esc(tone)}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon(insight.icon||'reports',{size:18})}</span><div><p class="eyebrow">${esc(insight.category||'Insight')}</p><h3>${esc(insight.title)}</h3></div></div><p>${esc(insight.explanation)}</p>${insight.why?`<p class="muted small">${esc(insight.why)}</p>`:''}${actions?`<div class="insight-actions">${actions}</div>`:''}</article>`;
+  return `<article class="insight-card" data-tone="${esc(tone)}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon(insight.icon||'reports',{size:20})}</span><div><p class="eyebrow">${esc(insight.category||'Insight')}</p><h3>${esc(insight.title)}</h3></div></div><p>${esc(insight.explanation)}</p>${insight.why?`<p class="muted small">${esc(insight.why)}</p>`:''}${actions?`<div class="insight-actions">${actions}</div>`:''}</article>`;
 }
 function customerCountTextV154(count){
   const n=Number(count)||0;
@@ -3746,7 +3746,7 @@ function businessHealthSummaryV153({current,previous,inactive60Total,from,to}){
      zero — both are claims about customers this page never received an answer about. */
   const retentionUnreadV288=inactive60Total===null||inactive60Total===undefined;
   const retentionStatus=retentionUnreadV288?'Could not be read':Number(inactive60Total)>0?'Needs attention':'Stable';
-  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:18})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,retentionUnreadV288?'Retry the inactive customer count above':`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
+  return `<article class="insight-card business-health" data-tone="${revenueStatus==='Needs attention'||retentionStatus==='Needs attention'?'attention':'neutral'}"><div class="insight-card-head"><span class="insight-icon" aria-hidden="true">${CUI.icon('info',{size:20})}</span><div><p class="eyebrow">Business health summary</p><h3>Business health</h3></div></div><div class="business-health-list">${status('Revenue',revenueStatus,revenueChange===null?'More data needed':`${revenueChange>0?'+':''}${revenueChange}% vs previous period`)}${status('Visits',visitsStatus,visitsChange===null?'More data needed':`${visitsChange>0?'+':''}${visitsChange}% vs previous period`)}${status('Retention',retentionStatus,retentionUnreadV288?'Retry the inactive customer count above':`${Number(inactive60Total)||0} inactive 60+ days`)}</div></article>`;
 }
 function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,previousFrom,previousTo,branchId,branchName}){
   const scope=insightScopeLabelV153(branchId,branchName);
@@ -4443,7 +4443,7 @@ async function clientsPage(){
   if(canReadMemberships&&activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
   if(canReadPackages&&activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
   if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
-  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`
+  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:16})}${esc(b.label)}</span>`).join('')}</div>`
     /* V249: the deleted banner was the only place that told staff earning is CONDITIONAL when a
        customer has no visits yet. Peekaa must never imply points arrive automatically, so the
        same reviewed sentence (translations already carry it verbatim) stays on the page. */
@@ -4457,7 +4457,7 @@ async function clientsPage(){
      still happens there, via the branch-scoped Record sale scanner), and every secondary entry
      was a duplicate of the Record sale / New appointment buttons already in the page header. */
   const detailSubtitle=[c.phone,c.email].filter(Boolean).join(' · ')||'No contact details';
-  const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
+  const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:16})}<span>All customers</span></a>`;
   const headerActions=[
     canQuickEarn?CUI.action({id:'c360QuickEarn',label:'Record sale',iconName:'till'}):'',
     canBookAppt?CUI.action({id:'c360NewAppt',label:'New appointment',iconName:'appointments',variant:'secondary'}):'',
@@ -4542,7 +4542,7 @@ async function clientsPage(){
         <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
       :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
         <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
-      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:16})}<span>Open Record sale scanner</span></a>`:''}
       ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
     pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
@@ -4550,7 +4550,7 @@ async function clientsPage(){
              out of reach. V320 removed it with the row (owner: "i do not want spendable credits to
              exist in the app") — there is no longer a figure to keep reachable. */''}
         <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
-        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:16})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else if(prog){
@@ -4581,7 +4581,7 @@ async function clientsPage(){
   const nextExpiryLabel=nextExp
     ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
     :'No actionable points are currently scheduled to expire.';
-  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span></div>`;
+  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:16})}<span>${esc(nextExpiryLabel)}</span></div>`;
   const wholeBusinessLabels=S.myRole==='owner'||S.myRole==='manager';
   /* V294 (owner sketch 2026-08-12): the V249 POINTS and SPENDABLE CREDIT tiles are gone; both
      figures fold into the compact summary card at the upper right of the content area, beside
@@ -4728,14 +4728,14 @@ async function clientsPage(){
      programmes card renders nothing when it has no rows. */
   const limitedOfferCardV319=limitedOfferRowsV319.length
     ?`<section class="card c360-rewards-card c360-offers-card-v319" id="c360-offers-v319">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Limited offers</b><span>Current promotions everyone can use</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:20})}<div><b>Limited offers</b><span>Current promotions everyone can use</span></div></header>
         <div class="c360-rewards-body"><div class="c360-programmes-v294">${limitedOfferRowsV319.join('')}</div></div>
       </section>`
     :'';
   const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
     <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b><button class="btn ghost sm" id="copyRef">Copy</button></div>`:'';
   const retentionMarkup=canReadRetention?`<div class="card"><b>Retention reward history</b>
-    ${(rg&&rg.length)?rg.map(g=>{const campaign=campaignEntitlementDisplayV99(g);return `<div class="row" style="margin-top:10px;align-items:flex-start"><span class="inline-status">${CUI.icon('loyalty',{size:17})}<span>${esc(g.program_name||'Program')}</span></span><span class="spacer"></span>
+    ${(rg&&rg.length)?rg.map(g=>{const campaign=campaignEntitlementDisplayV99(g);return `<div class="row" style="margin-top:10px;align-items:flex-start"><span class="inline-status">${CUI.icon('loyalty',{size:16})}<span>${esc(g.program_name||'Program')}</span></span><span class="spacer"></span>
       ${campaign.pending
         ?`<span class="muted small" style="text-align:right"><b data-workspace-i18n>${esc(campaign.title)}</b> · <span data-workspace-i18n>Merchant fulfilment pending</span><br><span data-workspace-i18n>No wallet value was posted.</span> · ${esc(g.granted_at.slice(0,10))}</span>`
         :`<span class="muted small">${esc(g.display_label||'Reward')} · ${g.display_amount_cents!=null?money(g.display_amount_cents):g.display_discount_percent!=null?g.display_discount_percent+'% off':esc(g.display_item||'free item')} · ${g.granted_at.slice(0,10)}</span>`}</div>`}).join('')
@@ -4807,7 +4807,7 @@ async function clientsPage(){
       :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
     <div class="split c360-content-split-v295" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:20})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${programmesListV294}${rewardsMarkupTrailingV392}</div>
       </section>`:''}
       ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
@@ -4823,7 +4823,7 @@ async function clientsPage(){
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
         ${referralMarkup}
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
-        ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:17})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
+        ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:16})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
       </div>
       ${retentionMarkup}
       ${birthdayCardMarkup}${feedbackStripMarkup}</div>
@@ -5339,7 +5339,7 @@ function renderHistPage(history,n){
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
     return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
-      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
+      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:16})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
       <td data-label="${esc(activityEarnedHeadV378())}" class="c360-act-earned-cell-v378">${cell.earned||DASH_V252}</td>
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
@@ -5794,13 +5794,13 @@ async function tillPage(){
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
-        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
+        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:20})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
         ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:17})} Walk-in sale (no customer)</button>
+        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale (no customer)</button>
         <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
@@ -5837,7 +5837,7 @@ async function tillPage(){
     busy=true;$('tFind').disabled=true;$('tFind').textContent='Looking…';
     const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
     if(!isTillCurrent())return;
-    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('forward',{size:19})} Next`;
+    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('forward',{size:20})} Next`;
     if(error) return fail(error);
     if(data.status==='found'){cust=data;notFoundPhone=null;invalidMsg=null;step=2;draw();return}
     if(data.status==='not_found'){cust=null;notFoundPhone=data.phone;invalidMsg=null;quickAddIdem=crypto.randomUUID();step=2;draw();return}
@@ -5857,26 +5857,26 @@ async function tillPage(){
   function drawWalkinUnavailable(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Walk-in sales need itemized checkout.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('info',{size:40})}
+        ${CUI.icon('info',{size:32})}
         <h2 style="margin:8px 0 2px">Walk-in is not available</h2>
         <p class="muted small">This firm records sales by customer phone number. Nothing was charged.</p>
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:14px">${CUI.icon('back',{size:17})} Back to phone number</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:14px">${CUI.icon('back',{size:16})} Back to phone number</button>
       </div>`;
     $('tBack').onclick=backToPhoneStep;
   }
   function drawInvalid(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('info',{size:40})}
+        ${CUI.icon('info',{size:32})}
         <div class="err" style="margin-top:10px">${esc(invalidMsg)}</div>
-        <button class="btn ghost sm" id="tBack" style="margin-top:14px">${CUI.icon('back',{size:17})} Try another number</button>
+        <button class="btn ghost sm" id="tBack" style="margin-top:14px">${CUI.icon('back',{size:16})} Try another number</button>
       </div>`;
     $('tBack').onclick=()=>{invalidMsg=null;step=1;draw()};
   }
   function drawNewCustomer(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'This number is new. Add the customer once, then continue.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('customers',{size:40})}
+        ${CUI.icon('customers',{size:32})}
         <h2 style="margin:8px 0 2px">New customer</h2>
         <p class="muted small"><span data-merchant-content>${esc(notFoundPhone||phone)}</span> <span data-workspace-i18n>isn't in your system yet</span></p>
         <div style="text-align:left"><label for="tName">Name</label><input id="tName" placeholder="Customer's name">
@@ -5884,7 +5884,7 @@ async function tillPage(){
           <input type="checkbox" id="tConsent" style="width:auto"> Marketing consent given</label></div>
         <div id="tErr2"></div>
         ${canAddClient()?'<button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>':'<div class="err">Customer creation is read only at this branch.</div>'}
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{quickAddIdem=null;step=1;draw()};
     if($('tAdd'))$('tAdd').onclick=async()=>{
@@ -5914,7 +5914,7 @@ async function tillPage(){
         <div style="text-align:center">
           <div data-merchant-content style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
           <p class="muted small" data-merchant-content>${esc(cust.phone||'')}</p>
-          <p class="inline-status" style="justify-content:center;margin-top:9px;color:var(--green)">${CUI.icon('check',{size:17})}<span>Customer found</span></p>
+          <p class="inline-status" style="justify-content:center;margin-top:9px;color:var(--green)">${CUI.icon('check',{size:16})}<span>Customer found</span></p>
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
         ${canRecordSales?`${accessibleTillBranches.length>1
@@ -5931,8 +5931,8 @@ async function tillPage(){
           </div>
         </fieldset>
         <div id="tErr3"></div>
-        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
     if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
@@ -6356,7 +6356,7 @@ async function tillPage(){
     const scopeTxt=lvl==='bill'?' (whole bill)':lvl==='line'?' (item)':'';
     if(suppressed){
       const why={stacking:'not stackable with another offer',budget_exhausted:'offer budget used up',no_target:'not applicable'}[e.suppression_reason]||'not applied';
-      return `<li class="ck-effect ck-effect-off"><span class="ck-effect-label">${CUI.icon('info',{size:14})}<span>Discount${scopeTxt}</span></span><span class="ck-effect-why">${esc(why)}</span></li>`;
+      return `<li class="ck-effect ck-effect-off"><span class="ck-effect-label">${CUI.icon('info',{size:16})}<span>Discount${scopeTxt}</span></span><span class="ck-effect-why">${esc(why)}</span></li>`;
     }
     const amt=e.amount_cents!=null?e.amount_cents:(e.discount_cents!=null?e.discount_cents:(e.amount!=null?e.amount:0));
     /* V370: the automatic tier discount arrives in the same applied_effects list as a Studio rule
@@ -6366,7 +6366,7 @@ async function tillPage(){
     const labelV370=e.source==='tier_benefit'
       ?`${String(e.label||'Tier benefit')}${scopeTxt}`
       :`Discount${scopeTxt}`;
-    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:14})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
+    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
   // The server-priced checkout panel. Every payable figure here is copied verbatim from the last
   // evaluate_checkout — the client never computes a total or a discount.
@@ -6393,7 +6393,7 @@ async function tillPage(){
     if(!walkin&&sv&&sv.spendable===true&&(sv.available_cents||0)>0&&!staleConfirm&&evalState==='ready'&&!payError){
       if(svTender)
         svHtml=`<div class="ck-panel" style="margin-top:10px" aria-label="Stored value applied">
-          <div class="ck-row"><span>${CUI.icon('loyalty',{size:14})} Stored value</span><span>−${money(svTender.reserved_cents)}</span></div>
+          <div class="ck-row"><span>${CUI.icon('loyalty',{size:16})} Stored value</span><span>−${money(svTender.reserved_cents)}</span></div>
           <div class="ck-total"><span>Cash due</span><span>${money(svTender.remaining_due_cents)}</span></div>
           <button type="button" class="btn ghost sm" id="tSvRemove" style="width:100%;margin-top:8px">Remove stored value</button></div>`;
       else
@@ -6412,19 +6412,19 @@ async function tillPage(){
   function checkoutActionHtml(){
     const hasSale=cartSaleLines().length>0, extras=extraLines();
     if(!hasSale)
-      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale · ${money(extrasTotalCents())}</button>`:'';
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(extrasTotalCents())}</button>`:'';
     if(staleConfirm)
-      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
+      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
     if(payError&&payError.kind==='retry')
-      return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Retry payment</button>`;
+      return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Retry payment</button>`;
     if(payError&&payError.kind==='conflict')
-      return `<button class="btn" id="tNewCheckout" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Start a new checkout</button>`;
+      return `<button class="btn" id="tNewCheckout" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Start a new checkout</button>`;
     if(evalState==='evaluating')
       return `<button class="btn" id="tEvalWait" style="width:100%;margin-top:16px;padding:18px;font-size:18px" disabled>Checking price…</button>`;
     if(evalState==='expired')
-      return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Refresh price</button>`;
+      return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Refresh price</button>`;
     if(evalState==='error')
-      return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Try again</button>`:'';
+      return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Try again</button>`:'';
     if(evalState==='ready'&&evalResult){
       /* V257: this one button finalises the cart AND sells every extra, so it names the whole
          amount collected — not just the kernel total, which is what made the till look like it
@@ -6434,7 +6434,7 @@ async function tillPage(){
          this button now, so the money has already been taken by the time a hand reaches it — the
          button's job is to record what happened. The FIGURE is unchanged: still the whole amount
          across both records, still the evaluation's. */
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale · ${money(dueV257)}</button>`;
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(dueV257)}</button>`;
     }
     return '';
   }
@@ -6785,7 +6785,7 @@ async function tillPage(){
     return `${strip}
       <div class="till-stage-panel-v374">${panel}</div>
       <div id="tcErr"></div>
-      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
+      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:28})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
       ${tillLeaveRowV373()}`;
   }
   /* Tab 1 — what they had today: the services and products tapped most often, and one door to
@@ -6925,11 +6925,11 @@ async function tillPage(){
     return `<div class="till-sticky-cart-v373">
       <div class="till-sticky-figures-v373"><b>${count} item${count===1?'':'s'}${amount?` · ${esc(amount)}`:''}</b>
         ${saved?`<span class="ok small">${esc(saved)}</span>`:''}</div>
-      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:18})} Review sale</button>
+      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:20})} Review sale</button>
     </div>`;
   }
   function tillLeaveRowV373(){
-    return `<button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} ${walkin?'Switch to customer':'Different number'}</button>`;
+    return `<button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} ${walkin?'Switch to customer':'Different number'}</button>`;
   }
 
   /* ----------------------------------------------------------------------- stage 2: review */
@@ -6955,14 +6955,14 @@ async function tillPage(){
     const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
-      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted
+      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:16})}<span>${saleCommitted
         ?saleResult?.duplicate
           ?'Sale already recorded earlier · no extra points added'
           :Number(saleResult?.pointsEarned)>0
             ?`Sale recorded · +${Number(saleResult.pointsEarned)} points`
             :'Sale recorded · no points earned'
         :'No points-earning sale in this cart'}</span></div>
-      <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
+      <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:20})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
     /* Points are the server's answer, worked out when the sale is written (record_cart_sale
@@ -6982,7 +6982,7 @@ async function tillPage(){
       ${paynowHtml}
       ${partialHtml}
       ${actionHtml}
-      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Add more items</button>`}
+      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}
       ${tillLeaveRowV373()}`;
   }
   // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
@@ -7016,7 +7016,7 @@ async function tillPage(){
     return `<div style="margin-top:14px"><b class="small">Also on this bill · kept as its own receipt</b>
       <ul class="ck-extras">${extras.map(l=>{
         const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
-        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
+        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:16})}</button>`;
         return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
       }).join('')}</ul></div>`;
   }
@@ -7315,7 +7315,7 @@ async function tillPage(){
       <label for="tCustomReason">Note (optional)</label>
       <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
       <div id="tCustomErr"></div>
-      <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
+      <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:16})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
     let deactivate;
     const close=()=>{if(deactivate)deactivate();else $('tCustomModal')?.remove();};
@@ -7626,14 +7626,14 @@ async function tillPage(){
     const outcome=legacySaleReceiptV145(doneInfo);
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('check',{size:56})}
+        ${CUI.icon('check',{size:32})}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
           :`<p class="muted">${outcome.message}</p>`}
         <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
-        ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
-        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
+        ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
+        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
     if($('tRedeemOffer'))$('tRedeemOffer').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
@@ -7670,7 +7670,7 @@ async function tillPage(){
       <div class="ck-panel" style="margin-top:8px"><div class="ck-total"><span>Total collected</span><span>${money(collectedV257)}</span></div></div></div>`:'';
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
-        ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
+        ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
         ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
@@ -7697,13 +7697,13 @@ async function tillPage(){
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
-        ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
+        ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         ${d.walkin?'':`<div class="receipt-qr-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)">
           <div id="receiptWalletQr" style="display:flex;justify-content:center"></div>
           <p class="muted small" style="margin-top:8px">Scan to open your rewards, points and past visits at ${esc(S.biz.name)}.</p>
         </div>`}
         <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
-        <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
+        <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
     if($('tRedeemOffer'))$('tRedeemOffer').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
@@ -7808,7 +7808,7 @@ async function salesPage(){
   /* V291: Export CSV is only offered on the render that has a ledger behind it. The loading,
      denied and load-error headers reuse the same markup WITHOUT it, so the page never paints a
      download button that has nothing to download and no handler bound to it. */
-  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:24})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:24})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:16})}<span>Record sale</span></a></div></header>`;
   const salesHead=salesHeadHtmlV291(false);
   routeMain.innerHTML=`${salesHead}
     <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
@@ -8611,7 +8611,7 @@ async function bookingsPage(){
     /* V288 (audit A2, MEDIUM 19): a failed read used to raise a toast and leave the card on
        "Loading…" for ever. Say what happened, in the card, with a way back. */
     if(error){
-      list.innerHTML=`<div class="cui-empty">${CUI.icon('bookings',{size:38})}<h2>Booking requests unavailable</h2><p>${esc(error.message||'Your booking requests could not be loaded.')}</p><button type="button" class="btn ghost" id="bookingListRetryV288">Try again</button></div>`;
+      list.innerHTML=`<div class="cui-empty">${CUI.icon('bookings',{size:32})}<h2>Booking requests unavailable</h2><p>${esc(error.message||'Your booking requests could not be loaded.')}</p><button type="button" class="btn ghost" id="bookingListRetryV288">Try again</button></div>`;
       const retry=$('bookingListRetryV288');
       if(retry)retry.onclick=()=>{list.innerHTML='<div class="empty">Loading…</div>';load()};
       return;
@@ -8619,7 +8619,7 @@ async function bookingsPage(){
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
       ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"${b.appointment_id?` class="booking-row-openable-v378" data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
-        ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:15})} ${esc(b.phone)}</a>`
+        ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
         : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
@@ -9304,7 +9304,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      Reward history below — each row still opens Edit, so a retired reward can be un-archived. */
   const rewardIsHistoryV294=r=>r?.active===false||rewardBoundary(r).label==='Ended';
   const rewardItemHtmlV294=(r,state)=>`<div class="reward-item">
-      <div class="meta"><div><b class="inline-status">${r.active===false?CUI.icon('retention',{size:15}):''}${esc(rewardLabel(r))}</b>
+      <div class="meta"><div><b class="inline-status">${r.active===false?CUI.icon('retention',{size:16}):''}${esc(rewardLabel(r))}</b>
         <div class="muted small" style="margin-top:4px">${r.cost_points} ${unit} · ${rewardKind(r)==='credit'?money(r.credit_cents||0)+' store credit':'manual fulfilment'} · ${eligibilitySummary(r)}</div>
         ${rewardIdentityLineV271(r)}
         ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
@@ -11188,7 +11188,7 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
     :active?'on':'off';
   const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
     ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
-  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
+  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:20})}</span>`
     +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p>${draftOpen?'<p class="muted small" data-welcome-not-versioned-v291>Not part of your draft \u2014 changes here go live as soon as you save them.</p>':''}</div>`
     +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
     +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
@@ -11224,7 +11224,7 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       <div class="row" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="birthdayBenefitTitleV364" style="margin-top:4px">Birthday gift</h2>
         <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></div>
-        <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('loyalty',{size:34})}</span>
+        <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('loyalty',{size:32})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="birthdayCloseV364" aria-label="Close birthday gift">Close</button>
       <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('loyalty',{size:16})}</span><b>Give customers a birthday gift</b><input type="checkbox" id="birthdayActiveV364" ${current?.active?'checked':''}></label>
@@ -11388,7 +11388,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
       <div class="row" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="welcomeOfferTitleV215" style="margin-top:4px">Welcome offer</h2>
         <p class="muted small" style="margin-top:6px">Given automatically the moment someone new joins through your QR code. One per customer, ever — an existing customer never receives it.</p></div>
-        <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('giftcard',{size:34})}</span>
+        <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('giftcard',{size:32})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="welcomeCloseV215" aria-label="Close welcome offer">Close</button>
       <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><b>Give new sign-ups a welcome offer</b><input type="checkbox" id="welcomeActiveV215" ${current?.active?'checked':''}></label>
@@ -11865,7 +11865,7 @@ async function promotionsPage(selectedPromotionId=null){
         <div class="promotion-branch-list" id="promotionBranchList" aria-label="Selected promotion branches"></div>
         <p class="muted small" id="promotionScopeHelp" role="status" style="margin-top:8px"></p>
       </div>
-      <div class="row" style="margin-top:14px"><button type="button" class="btn ghost" id="promotionPolish">${CUI.icon('loyalty',{size:17})}<span>Polish wording — free</span></button><p class="muted small">Uses verified templates; no API credits.</p></div>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn ghost" id="promotionPolish">${CUI.icon('loyalty',{size:16})}<span>Polish wording — free</span></button><p class="muted small">Uses verified templates; no API credits.</p></div>
       <label for="promotionName">Headline</label><input id="promotionName" maxlength="70" value="${esc(initial.name)}">
       <label for="promotionMessage">Customer message</label><textarea id="promotionMessage" maxlength="600" rows="4">${esc(initial.description||initial.tagline)}</textarea>
       <label for="promotionTerms">Terms (optional)</label><textarea id="promotionTerms" maxlength="500" rows="3" placeholder="Eligibility, exclusions, or redemption details">${esc(initial.terms)}</textarea>
@@ -13065,7 +13065,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-card-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}">
     <span class="grow-topic-card-head-v343"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:28})}</span><span><b>${esc(topic.title)}</b><small>${esc(topic.blurb)}</small></span></span>
     <span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span>
-    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:14})}</span></span>
+    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:16})}</span></span>
   </button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
@@ -13768,8 +13768,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const photoUrl=customerMediaUrlV95(reward.image_ref);
     /* V351 (owner: "the $ symbol makes the reward look like money/cash instead of a redeemable
        gift"): swapped for the same gift icon the Welcome offer editor and Stamp Card page use. */
-    const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('giftcard',{size:22})}</span>`;
-    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:12})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
+    const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('giftcard',{size:20})}</span>`;
+    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:16})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
     if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}<span class="pill off">In history</span></li>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
@@ -13933,7 +13933,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const confirmOpen=growBbDeletePendingV361===String(campaign.id);
     const expiry=Number(campaign.expiry_days)||0;
     return `<li class="grow-tier-card-row-v351" data-grow-bb-row-v361="${esc(campaign.id)}">
-      <span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon('retention',{size:18})}</span>
+      <span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon('retention',{size:20})}</span>
       <span class="grow-tier-card-body-v351">
         <b data-merchant-content>${esc(campaign.name)}</b>
         <span class="muted small" data-merchant-content>Away ${Math.max(0,Number(campaign.away_days)||0)} days → ${esc(campaign.reward_label)}</span>
@@ -14116,7 +14116,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growStampsLevelsSortedV350.map((reward,index)=>{
         const stamps=Math.max(0,Number(reward.cost_points||0));
         return `<div class="grow-stamps-milestone-v356"${index?' data-linked="1"':''}>
-          <span class="grow-stamps-milestone-gift-v356" aria-hidden="true">${CUI.icon('giftcard',{size:18})}</span>
+          <span class="grow-stamps-milestone-gift-v356" aria-hidden="true">${CUI.icon('giftcard',{size:20})}</span>
           <span class="grow-stamps-milestone-circle-v356"><b data-merchant-content>${stamps}</b></span>
           <small class="muted">stamp${stamps===1?'':'s'}</small>
           <span class="grow-stamps-milestone-name-v356" data-merchant-content>${esc(reward.customer_name||reward.name||'Reward')}</span>
@@ -14124,7 +14124,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       }).join('')}
     </div>
     <div class="grow-stamps-slots-v356" aria-hidden="true">
-      ${Array.from({length:growStampsSlotCountV356},()=>`<span class="grow-stamps-slot-v356">${CUI.icon('star',{size:15})}</span>`).join('')}
+      ${Array.from({length:growStampsSlotCountV356},()=>`<span class="grow-stamps-slot-v356">${CUI.icon('star',{size:16})}</span>`).join('')}
     </div>
     <p class="muted small" style="margin-top:10px">0 of ${growStampsMaxV350} stamps collected</p>`
     :'<p class="muted small" style="margin-top:14px">Add a level below to see the preview.</p>'}
@@ -14142,7 +14142,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     return created?`Created ${esc(created)}${updated&&updated!==created?` · Last level added ${esc(updated)}`:''}`:'';
   })();
   const growStampsSummaryV356=growStampsLevelsSortedV350.length?`<div class="grow-stamps-summary-v356">
-    <span class="grow-stamps-summary-icon-v356" aria-hidden="true">${CUI.icon('giftcard',{size:22})}</span>
+    <span class="grow-stamps-summary-icon-v356" aria-hidden="true">${CUI.icon('giftcard',{size:20})}</span>
     <span class="grow-stamps-summary-body-v356">
       <b data-merchant-content>${esc(S.biz?.name||'Stamp card')} rewards</b>
       <span class="muted small" data-merchant-content>${growStampsLevelsSortedV350.map(r=>`${Math.max(0,Number(r.cost_points||0))} stamps: ${esc(r.customer_name||r.name||'Reward')}`).join(' · ')}</span>
@@ -14239,7 +14239,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const perkHtmlV363=perkLinesV363.length
       ?`<span class="muted small" data-merchant-content>${perkLinesV363.length===1?`Benefit: ${esc(perkLinesV363[0])}`:`Benefits: ${perkLinesV363.map(line=>esc(line)).join(' · ')}`}</span>`
       :'';
-    const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:18});
+    const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
       <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
@@ -14389,23 +14389,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      above still resolves 'overview', 'history' and the legacy 'ongoing' / 'available' / 'settings'
      hashes, so #/grow/overview, #/grow/history, every rail child and every existing deep link or
      history entry still lands on exactly the view it always did. */
-  const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:18})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
+  const growTiersModeNoteV229=`<div class="grow-programme-row" data-programme-kind="redeemable" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('loyalty',{size:20})}</span><div><b>Redemption is off</b><p class="muted small">Points here count toward tier membership. Rewards created earlier are kept, and customers cannot claim them while tiers run.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`;
   /* V319: the promotions category, lifted out of the page template so the drilled Promotions
      topic and the new Limited Offer rail child render the SAME rows from one definition rather
      than two copies that can drift. Every row, permission gate and destination is exactly what
      the drill already had — the owner asked for a place to edit these, not for a new editor. */
   const growLimitedOfferListHtmlV319=snapshot.overviewErrors?.promotions
-    ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
+    ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
     :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. Customers see up to six current offers.`:'No promotion has been created yet.'}</p>
       ${growPromotionItemsV296.map(item=>{const life=promotionLifecycleV186(item);
         const detailV296=[life.label,String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120)].filter(Boolean).join(' · ');
-        return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
+        return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),
           title:item.name||item.offerFacts||'Untitled draft',copy:detailV296,merchant:true,
           status:life.state==='live'?'Live':life.state==='scheduled'?'Scheduled':life.state==='ended'?'Ended':'Draft',
           statusTone:life.live?'on':life.state==='draft'?'new':'off',
           canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
           href:`#/promotions/${encodeURIComponent(item.id)}`,actionLabel:'Edit'})}).join('')}
-      ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:18}),
+      ${programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),
         title:growPromotionItemsV296.length?'Add another promotion':'Create your first promotion',
         copy:'One factual offer and a photo, ready for the customer programme.',
         status:'Not set up',statusTone:'off',canWrite:isOwner&&canRewards,readOnly:canRewards&&!isOwner,
@@ -14583,7 +14583,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${(()=>{
         const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
         const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
-        const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
+        const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:20})} `:'';
         /* Wave 2A: the landing's h2 repeats the page h1 verbatim — keep it for structure, hide it from eyes. */
         const hideH2V2A=dedicatedViewV341||h2TextV341==='Rewards Programme';
         return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${hideH2V2A?' class="sr-only"':''}>${hideH2V2A?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
@@ -14615,22 +14615,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            bring-back for someone who has drifted — are their own group. -->
       <div class="programme-category" data-programme-category-v268="points"><div class="programme-category-title">Point system</div><div class="grow-programme-list">
         ${growActiveTopicV229&&growPointsChooserRowV271?`<div class="grow-programme-row points-mode-row-v229">${growPointsChooserRowV271}</div>`:''}
-        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:18}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
-          <span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
-          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
-          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:18})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
+        ${snapshot.overviewErrors?.loyalty?programmeRow({kind:'earning',icon:CUI.icon('till',{size:20}),title:'Point system',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardJourney.earning?(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning">
+          <span class="reward-milestone-number">${CUI.icon('till',{size:20})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}<span class="grow-programme-action">Edit →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:20})}</span><div><b>Point system</b><p class="muted small">${esc(earningOverviewCopy)}</p>${growPendingBlockV268(growPendingEarningV268)}</div><span class="grow-programme-meta">${programmeStatus(rewardJourney.earning.availableToCustomers?'Live':'Paused',rewardJourney.earning.availableToCustomers?'on':'off')}${canRewards&&!canSetupGrow?'<span class="grow-programme-access">Read only</span>':''}</span></article>`)
+          :(canSetupGrow?`<button type="button" class="grow-programme-row" data-programme-kind="earning" data-rewards-overview-edit="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:20})}</span><div><b>Point system</b><p class="muted small">Choose points or stamps and set the earning rate.</p></div><span class="grow-programme-meta">${programmeStatus('Not set up')}<span class="grow-programme-action">Set up →</span></span></button>`
+          :`<article class="grow-programme-row" data-programme-kind="earning"><span class="reward-milestone-number">${CUI.icon('till',{size:20})}</span><div><b>Point system</b><p class="muted small">${canRewards?'No earning rule is published.':'Loyalty is not included in this workspace.'}</p>${canRewards?'<span class="grow-programme-access">Read only</span>':''}</div><span class="grow-programme-meta">${programmeStatus(canRewards?'Not set up':'Not included')}</span></article>`)}
         ${pointsModeV229==='tiers'?growTiersModeNoteV229:`
-        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:18}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardCardGridV250}
+        ${snapshot.overviewErrors?.rewards?programmeRow({kind:'redeemable',icon:CUI.icon('loyalty',{size:20}),title:'Redeemable rewards',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'}):rewardCardGridV250}
         `}
       </div></div>
       `:''}
       ${topicOnV229('tiers')?`<div class="programme-category" data-programme-category-v268="tiers"><div class="programme-category-title">Tiered membership</div><div class="grow-programme-list">
         ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
-        ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
+        ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:20})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
           :(growTiersPublishedV331.length?growTiersPublishedV331.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'&&!tier.paused?'on':'off'}">${pointsModeV229==='tiers'&&!tier.paused?'Live':tier.paused?'Off':'Saved'}</span></span></div>`).join('')
-          :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:18})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
+          :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:20})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',growTiersPublishedV331.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
       ${/* V362: the Lifestyle rewards drilled-topic block is DELETED. V358 removed the
@@ -14651,7 +14651,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </div>`:''}
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
-        ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:18}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
+        ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:20}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
         ${growReferralSummaryV375}${growReferralSettingsPanelV364}
       </div></div>
       `:''}
@@ -14660,7 +14660,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            management from the business workspace altogether (owner: "remove gift cards from the
            business UI entirely"), so there is no destination left to point at here either. -->
       <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
-        ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:18}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
+        ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
     </section>
     ${/* V364 (owner markup 2026-08-16, photos 6 and 7: the whole "How the programme fits
@@ -16237,14 +16237,14 @@ async function pbActivateCampaign(campaignId,clientIds){
 async function renderPlaybooks(ctx){
   const host=$('pbHost');
   if(!host)return;
-  host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:18})}<b>Bring-back playbooks</b></div><p class="muted small" role="status" style="margin-top:8px">Loading playbooks…</p></div>`;
+  host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:20})}<b>Bring-back playbooks</b></div><p class="muted small" role="status" style="margin-top:8px">Loading playbooks…</p></div>`;
   const {data,error}=await sb.rpc('list_retention_campaigns',{p_business:S.biz.id});
   if(!ctx.isCurrent())return;
   if(error){
     const denied=error.code==='42501'||/authorization|owner or manager/i.test(error.message||'');
-    host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:18})}<b>Bring-back playbooks</b></div>
+    host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:20})}<b>Bring-back playbooks</b></div>
       ${denied
-        ?`<p class="muted small" style="margin-top:10px;display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:15})}<span>Playbook results need finance viewing. Ask an owner for retention + finance read access.</span></p>`
+        ?`<p class="muted small" style="margin-top:10px;display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:16})}<span>Playbook results need finance viewing. Ask an owner for retention + finance read access.</span></p>`
         :`<div class="err" style="margin-top:10px" role="alert">Could not load playbooks. ${esc(error.message||'')}</div><button class="btn ghost sm" id="pbRetry" style="margin-top:10px">Try again</button>`}</div>`;
     if(!denied&&$('pbRetry'))$('pbRetry').onclick=()=>renderPlaybooks(ctx);
     return;
@@ -16252,7 +16252,7 @@ async function renderPlaybooks(ctx){
   const campaigns=Array.isArray(data)?data:[];
   const newBtn=`<button class="btn sm" id="pbNew">${CUI.icon('add',{size:16})}<span>New playbook</span></button>`;
   host.innerHTML=`<div class="card">
-    <div class="row"><span style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:18})}<b>Bring-back playbooks</b></span><span class="spacer"></span>${(ctx.isOwner&&campaigns.length)?newBtn:''}</div>
+    <div class="row"><span style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:20})}<b>Bring-back playbooks</b></span><span class="spacer"></span>${(ctx.isOwner&&campaigns.length)?newBtn:''}</div>
     <p class="muted small" style="margin-top:6px">Prepare real customer-history reward entitlements, manually confirm actual receipt, then compare observed return rates with a held-back group.</p>
     ${campaigns.length
       ?`<div id="pbList" style="margin-top:6px">${campaigns.map(pbCampaignRow).join('')}</div>`
@@ -16307,7 +16307,7 @@ async function pbRenderResults(c,el,ctx){
   if(error){
     const denied=error.code==='42501';
     el.innerHTML=denied
-      ?`<p class="muted small" style="display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:15})}<span>Results need finance + retention viewing access.</span></p>`
+      ?`<p class="muted small" style="display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:16})}<span>Results need finance + retention viewing access.</span></p>`
       :`<div class="err" role="alert">Could not load results. ${esc(error.message||'')}</div><button class="btn ghost sm" data-pb-resretry style="margin-top:8px">Try again</button>`;
     const r=el.querySelector('[data-pb-resretry]');if(r)r.onclick=()=>pbRenderResults(c,el,ctx);
     return;
@@ -18328,7 +18328,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
            neighbours — checkbox, not radio, for the same reason A2 below tests that flipping one
            leaves the other three untouched. */
         return `<button type="button" class="grow-setup-option-v301${on?' is-picked':''}" role="checkbox" aria-checked="${on}" data-grow-setup-switch-w6i2="${esc(kind)}">
-        <span class="grow-setup-option-icon-v301">${CUI.icon(icon,{size:26})}</span><b>${esc(title)}</b>
+        <span class="grow-setup-option-icon-v301">${CUI.icon(icon,{size:24})}</span><b>${esc(title)}</b>
         <span class="muted small">${esc(blurb)}</span>
         <span class="pill ${on?'on':'off'}" data-grow-setup-switch-state-w6i2="${on?'on':'off'}">${on?'Selected':'Not selected'}</span></button>`;
       }).join('')}
@@ -18782,7 +18782,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     :'';
   const stepFourHtml=()=>{
     if(state.published)return `<div class="grow-setup-done-v301" role="status">
-      <span class="grow-setup-done-icon-v301">${CUI.icon('check',{size:34})}</span>
+      <span class="grow-setup-done-icon-v301">${CUI.icon('check',{size:32})}</span>
       <h3>Published — customers can use this now</h3>
       <p class="grow-setup-sentence-v301">${esc(state.publishedSummary?.earn||'')}</p>
       <p class="grow-setup-sentence-v301" data-merchant-content>${esc(state.publishedSummary?.reward||'')}</p>
@@ -20161,7 +20161,7 @@ async function studioOverview(routeMain,isCurrent){
   const legacyRows=legacy.map(x=>rowFor(x,'legacy')).join('');
   const studioRows=studio.map(x=>rowFor(x,'studio')).join('');
   routeMain.innerHTML=`${CUI.pageHeader({title:'Advanced rule controls',subtitle:'Review and pause published advanced rules without changing everyday reward setup.',iconName:'loyalty',canWrite:true,moduleLabel:'Advanced rule controls'})}
-    <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+    <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:20})}<div>
       <b>Real execution state</b><p>Each published rule below shows its server-confirmed state. Pause a rule when any action is not operating as expected; ordinary loyalty, retention, referral, birthday and membership programmes remain managed from Grow.</p></div></aside>
     <section class="card"><div class="cui-card-head"><h2>Live engines</h2><p>These are running now. State comes straight from each engine.</p></div>
       ${legacy.length?legacyRows:CUI.emptyState({iconName:'loyalty',title:'No live programmes yet',body:'Set up loyalty, retention or other programmes to see them here.'})}</section>
@@ -21005,7 +21005,7 @@ async function storedValuePage(){
      the server's authority_state, which the browser never infers. */
   const svLive=state==='live';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:svLive?'Owner-only stored-value authority, reconciliation and safety controls. Stored value is LIVE for this business.':'Owner-only stored-value authority, reconciliation and safety controls. Not live for this business.',iconName:'wallet',canWrite:true,moduleLabel:'Stored value'})}
-    <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+    <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:20})}<div>
       ${svLive
         ? `<b>Live — this is real customer money</b><p>Customers can top up and spend stored value at this business. Every figure below comes straight from the server. If anything looks wrong, use <b>Pause &amp; safety</b> to stop new operations immediately — history is always kept.</p>`
         : `<b>Not live — nothing moves real money yet</b><p>Stored value is not switched on for any customer here: nothing on this screen moves real money or can be used to pay. Every state below comes straight from the server.</p>`}</div></aside>
@@ -21233,7 +21233,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const blocked=Array.isArray(pv.blockers)&&pv.blockers.length>0;
       const spendable=pv.spendable===true;
       body=`<div class="cui-card-head"><h3>Confirm this top-up</h3></div>
-        <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:19})}<div>
+        <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:20})}<div>
           <b>You are collecting ${esc(cur)} ${(cash/100).toFixed(2)} and issuing ${esc(cur)} ${(cash/100).toFixed(2)} paid value${bonus>0?` plus ${esc(cur)} ${(bonus/100).toFixed(2)} promotional bonus`:''}.</b>
           <p>${spendable?'This value will be spendable by the customer.':'This is a test in this phase — the value is <b>not</b> spendable and no real money is collected.'}</p></div></aside>
         <dl class="cui-readonly-list" style="margin-top:12px">
@@ -21392,7 +21392,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
     return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
-      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
+      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:16})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
       <td data-label="${esc(activityEarnedHeadV378())}" class="c360-act-earned-cell-v378">${cell.earned||DASH_V252}</td>
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
@@ -21649,13 +21649,13 @@ async function svRunTopupFlow({branches,state,testOnly}){
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
         <div id="tErr"></div>
-        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:19})} Next</button>
+        <button class="btn" id="tFind" style="width:100%;margin-top:14px;padding:16px;font-size:17px">${CUI.icon('forward',{size:20})} Next</button>
         <div class="grid frontline-keypad" id="tKeys" aria-label="Phone keypad">
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
         ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:17})} Walk-in sale (no customer)</button>
+        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale (no customer)</button>
         <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
@@ -21692,7 +21692,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     busy=true;$('tFind').disabled=true;$('tFind').textContent='Looking…';
     const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
     if(!isTillCurrent())return;
-    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('forward',{size:19})} Next`;
+    busy=false;$('tFind').disabled=false;$('tFind').innerHTML=`${CUI.icon('forward',{size:20})} Next`;
     if(error) return fail(error);
     if(data.status==='found'){cust=data;notFoundPhone=null;invalidMsg=null;step=2;draw();return}
     if(data.status==='not_found'){cust=null;notFoundPhone=data.phone;invalidMsg=null;quickAddIdem=crypto.randomUUID();step=2;draw();return}
@@ -21712,26 +21712,26 @@ async function svRunTopupFlow({branches,state,testOnly}){
   function drawWalkinUnavailable(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Walk-in sales need itemized checkout.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('info',{size:40})}
+        ${CUI.icon('info',{size:32})}
         <h2 style="margin:8px 0 2px">Walk-in is not available</h2>
         <p class="muted small">This firm records sales by customer phone number. Nothing was charged.</p>
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:14px">${CUI.icon('back',{size:17})} Back to phone number</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:14px">${CUI.icon('back',{size:16})} Back to phone number</button>
       </div>`;
     $('tBack').onclick=backToPhoneStep;
   }
   function drawInvalid(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'The phone number could not be used.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('info',{size:40})}
+        ${CUI.icon('info',{size:32})}
         <div class="err" style="margin-top:10px">${esc(invalidMsg)}</div>
-        <button class="btn ghost sm" id="tBack" style="margin-top:14px">${CUI.icon('back',{size:17})} Try another number</button>
+        <button class="btn ghost sm" id="tBack" style="margin-top:14px">${CUI.icon('back',{size:16})} Try another number</button>
       </div>`;
     $('tBack').onclick=()=>{invalidMsg=null;step=1;draw()};
   }
   function drawNewCustomer(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'This number is new. Add the customer once, then continue.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('customers',{size:40})}
+        ${CUI.icon('customers',{size:32})}
         <h2 style="margin:8px 0 2px">New customer</h2>
         <p class="muted small"><span data-merchant-content>${esc(notFoundPhone||phone)}</span> <span data-workspace-i18n>isn't in your system yet</span></p>
         <div style="text-align:left"><label for="tName">Name</label><input id="tName" placeholder="Customer's name">
@@ -21739,7 +21739,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
           <input type="checkbox" id="tConsent" style="width:auto"> Marketing consent given</label></div>
         <div id="tErr2"></div>
         ${canAddClient()?'<button class="btn" id="tAdd" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Add & continue</button>':'<div class="err">Customer creation is read only at this branch.</div>'}
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{quickAddIdem=null;step=1;draw()};
     if($('tAdd'))$('tAdd').onclick=async()=>{
@@ -21769,7 +21769,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         <div style="text-align:center">
           <div data-merchant-content style="font-size:1.9rem;font-weight:700;letter-spacing:-.035em">${esc(cust.full_name)}</div>
           <p class="muted small" data-merchant-content>${esc(cust.phone||'')}</p>
-          <p class="inline-status" style="justify-content:center;margin-top:9px;color:var(--green)">${CUI.icon('check',{size:17})}<span>Customer found</span></p>
+          <p class="inline-status" style="justify-content:center;margin-top:9px;color:var(--green)">${CUI.icon('check',{size:16})}<span>Customer found</span></p>
         </div>
         <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
         ${canRecordSales?`${accessibleTillBranches.length>1
@@ -21786,8 +21786,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
           </div>
         </fieldset>
         <div id="tErr3"></div>
-        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
-        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Different number</button>
+        <button class="btn" id="tConfirm" style="width:100%;margin-top:14px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale</button>`:'<div class="permission-banner" role="note">Purchases cannot be recorded by this role.</div>'}
+        <button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Different number</button>
       </div>`;
     $('tBack').onclick=()=>{step=1;cust=null;saleIdem=null;draw()};
     if($('tBranch'))$('tBranch').onchange=()=>{tillBranchId=$('tBranch').value;selectedBranchId=tillBranchId;saleIdem=null};
@@ -22211,7 +22211,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const scopeTxt=lvl==='bill'?' (whole bill)':lvl==='line'?' (item)':'';
     if(suppressed){
       const why={stacking:'not stackable with another offer',budget_exhausted:'offer budget used up',no_target:'not applicable'}[e.suppression_reason]||'not applied';
-      return `<li class="ck-effect ck-effect-off"><span class="ck-effect-label">${CUI.icon('info',{size:14})}<span>Discount${scopeTxt}</span></span><span class="ck-effect-why">${esc(why)}</span></li>`;
+      return `<li class="ck-effect ck-effect-off"><span class="ck-effect-label">${CUI.icon('info',{size:16})}<span>Discount${scopeTxt}</span></span><span class="ck-effect-why">${esc(why)}</span></li>`;
     }
     const amt=e.amount_cents!=null?e.amount_cents:(e.discount_cents!=null?e.discount_cents:(e.amount!=null?e.amount:0));
     /* V370: the automatic tier discount arrives in the same applied_effects list as a Studio rule
@@ -22221,7 +22221,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const labelV370=e.source==='tier_benefit'
       ?`${String(e.label||'Tier benefit')}${scopeTxt}`
       :`Discount${scopeTxt}`;
-    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:14})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
+    return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
   // The server-priced checkout panel. Every payable figure here is copied verbatim from the last
   // evaluate_checkout — the client never computes a total or a discount.
@@ -22248,7 +22248,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     if(!walkin&&sv&&sv.spendable===true&&(sv.available_cents||0)>0&&!staleConfirm&&evalState==='ready'&&!payError){
       if(svTender)
         svHtml=`<div class="ck-panel" style="margin-top:10px" aria-label="Stored value applied">
-          <div class="ck-row"><span>${CUI.icon('loyalty',{size:14})} Stored value</span><span>−${money(svTender.reserved_cents)}</span></div>
+          <div class="ck-row"><span>${CUI.icon('loyalty',{size:16})} Stored value</span><span>−${money(svTender.reserved_cents)}</span></div>
           <div class="ck-total"><span>Cash due</span><span>${money(svTender.remaining_due_cents)}</span></div>
           <button type="button" class="btn ghost sm" id="tSvRemove" style="width:100%;margin-top:8px">Remove stored value</button></div>`;
       else
@@ -22267,19 +22267,19 @@ async function svRunTopupFlow({branches,state,testOnly}){
   function checkoutActionHtml(){
     const hasSale=cartSaleLines().length>0, extras=extraLines();
     if(!hasSale)
-      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale · ${money(extrasTotalCents())}</button>`:'';
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(extrasTotalCents())}</button>`:'';
     if(staleConfirm)
-      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
+      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
     if(payError&&payError.kind==='retry')
-      return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Retry payment</button>`;
+      return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Retry payment</button>`;
     if(payError&&payError.kind==='conflict')
-      return `<button class="btn" id="tNewCheckout" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Start a new checkout</button>`;
+      return `<button class="btn" id="tNewCheckout" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Start a new checkout</button>`;
     if(evalState==='evaluating')
       return `<button class="btn" id="tEvalWait" style="width:100%;margin-top:16px;padding:18px;font-size:18px" disabled>Checking price…</button>`;
     if(evalState==='expired')
-      return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Refresh price</button>`;
+      return `<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Refresh price</button>`;
     if(evalState==='error')
-      return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:19})} Try again</button>`:'';
+      return evalError&&evalError.kind==='generic'?`<button class="btn" id="tRefreshEval" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Try again</button>`:'';
     if(evalState==='ready'&&evalResult){
       /* V257: this one button finalises the cart AND sells every extra, so it names the whole
          amount collected — not just the kernel total, which is what made the till look like it
@@ -22289,7 +22289,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
          this button now, so the money has already been taken by the time a hand reaches it — the
          button's job is to record what happened. The FIGURE is unchanged: still the whole amount
          across both records, still the evaluation's. */
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:19})} Record sale · ${money(dueV257)}</button>`;
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(dueV257)}</button>`;
     }
     return '';
   }
@@ -22640,7 +22640,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     return `${strip}
       <div class="till-stage-panel-v374">${panel}</div>
       <div id="tcErr"></div>
-      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:30})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
+      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:28})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
       ${tillLeaveRowV373()}`;
   }
   /* Tab 1 — what they had today: the services and products tapped most often, and one door to
@@ -22780,11 +22780,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
     return `<div class="till-sticky-cart-v373">
       <div class="till-sticky-figures-v373"><b>${count} item${count===1?'':'s'}${amount?` · ${esc(amount)}`:''}</b>
         ${saved?`<span class="ok small">${esc(saved)}</span>`:''}</div>
-      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:18})} Review sale</button>
+      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:20})} Review sale</button>
     </div>`;
   }
   function tillLeaveRowV373(){
-    return `<button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} ${walkin?'Switch to customer':'Different number'}</button>`;
+    return `<button class="btn ghost sm" id="tBack" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} ${walkin?'Switch to customer':'Different number'}</button>`;
   }
 
   /* ----------------------------------------------------------------------- stage 2: review */
@@ -22810,14 +22810,14 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
-      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:17})}<span>${saleCommitted
+      <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:16})}<span>${saleCommitted
         ?saleResult?.duplicate
           ?'Sale already recorded earlier · no extra points added'
           :Number(saleResult?.pointsEarned)>0
             ?`Sale recorded · +${Number(saleResult.pointsEarned)} points`
             :'Sale recorded · no points earned'
         :'No points-earning sale in this cart'}</span></div>
-      <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:18})} Retry unfinished</button>
+      <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:20})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
     /* Points are the server's answer, worked out when the sale is written (record_cart_sale
@@ -22837,7 +22837,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       ${paynowHtml}
       ${partialHtml}
       ${actionHtml}
-      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:17})} Add more items</button>`}
+      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}
       ${tillLeaveRowV373()}`;
   }
   // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
@@ -22871,7 +22871,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     return `<div style="margin-top:14px"><b class="small">Also on this bill · kept as its own receipt</b>
       <ul class="ck-extras">${extras.map(l=>{
         const succeeded=l._status==='issued'||l._status==='done';const failed=l._status==='failed';
-        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:15})}</button>`;
+        const rm=locked?'':`<button type="button" class="btn ghost sm" data-remove="${l.lineId}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:l.label})} style="margin-left:8px">${CUI.icon('close',{size:16})}</button>`;
         return `<li><span>${esc(l.label)}<span class="ck-extra-note">${extraLineBadge(l,succeeded,failed)}</span></span><span style="display:inline-flex;align-items:center;gap:6px">${money(l.unit_cents*l.qty)}${rm}</span></li>`;
       }).join('')}</ul></div>`;
   }
@@ -23170,7 +23170,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       <label for="tCustomReason">Note (optional)</label>
       <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
       <div id="tCustomErr"></div>
-      <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:17})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
+      <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:16})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
     let deactivate;
     const close=()=>{if(deactivate)deactivate();else $('tCustomModal')?.remove();};
@@ -23481,14 +23481,14 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const outcome=legacySaleReceiptV145(doneInfo);
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
-        ${CUI.icon('check',{size:56})}
+        ${CUI.icon('check',{size:32})}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
           :`<p class="muted">${outcome.message}</p>`}
         <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
-        ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
-        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
+        ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
+        <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
     if($('tRedeemOffer'))$('tRedeemOffer').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
@@ -23525,7 +23525,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       <div class="ck-panel" style="margin-top:8px"><div class="ck-total"><span>Total collected</span><span>${money(collectedV257)}</span></div></div></div>`:'';
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
-        ${CUI.icon(anyExtraFailed?'info':'check',{size:52})}
+        ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
         ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
@@ -23552,13 +23552,13 @@ async function svRunTopupFlow({branches,state,testOnly}){
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
-        ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:18})}</button>`:''}
+        ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         ${d.walkin?'':`<div class="receipt-qr-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)">
           <div id="receiptWalletQr" style="display:flex;justify-content:center"></div>
           <p class="muted small" style="margin-top:8px">Scan to open your rewards, points and past visits at ${esc(S.biz.name)}.</p>
         </div>`}
         <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
-        <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:18})}</button>
+        <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
     if($('tRedeemOffer'))$('tRedeemOffer').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
@@ -23695,7 +23695,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
       ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
-      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:15})} Call</a>`:''}
+      ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:16})} Call</a>`:''}
       <button class="btn ghost" id="bookingConfirmedContactCloseV330" type="button">Done</button>
     </div>
   </div></div>`);
@@ -23746,7 +23746,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:15})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${item.status==='booked'&&canWrite?`${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:15})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:15})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:16})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${item.status==='booked'&&canWrite?`${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:16})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:16})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
       ${/* V375 (owner, photo 14: "Change Appointment" and "Complete & Checkout" ringed with arrows
            down onto a tab strip, and "minimise this" written across the amend form). The two
            outcomes of an open booking are now tabs over one panel area, so only one is on screen
@@ -23841,6 +23841,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ce59240f89a1b9d1abbc75f1b5ac2e04c5b205feec3403358f4683f703c73f96',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ee5d5e032fe63ee690d32aab0089227651efda920dd3cc7d190f1f02d6309326',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -54,7 +54,7 @@ test('a redeemable reward is chipped Ready and keeps the QR redemption contract'
      "Ready to claim". It is still driven by the same `ready` expression asserted above, and the
      redemption contract below is untouched. */
   assert.match(rewards,/\$\{ready\?'<span class="pill ok">Ready to claim<\/span>':''\}/);
-  assert.match(rewards,/data-customer-redeem="\$\{esc\(r\.action_key\)\}"><span>Show QR at counter<\/span>|data-customer-redeem="\$\{esc\(r\.action_key\)\}">\$\{CUI\.icon\('scan',\{size:17\}\)\}<span>Show QR at counter<\/span>/);
+  assert.match(rewards,/data-customer-redeem="\$\{esc\(r\.action_key\)\}"><span>Show QR at counter<\/span>|data-customer-redeem="\$\{esc\(r\.action_key\)\}">\$\{CUI\.icon\('scan',\{size:16\}\)\}<span>Show QR at counter<\/span>/);
   assert.match(rewards,/button\.querySelector\('span'\)\.textContent='Show QR at counter'/);
   assert.match(rewards,/customer_create_redemption_intent_v89/);
   assert.doesNotMatch(rewards,/Redeem now/);

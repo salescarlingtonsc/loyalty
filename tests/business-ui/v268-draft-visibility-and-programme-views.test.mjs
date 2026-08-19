@@ -151,7 +151,7 @@ test('V268 (b) the category heading and its blurb stay with the item list', () =
      for the four dedicated views; this h2 keeps computing the same text (now h2TextV341) for
      aria-labelledby, and still carries the icon for a DRILLED topic's points view. */
   assert.match(app, /const h2TextV341=growActiveTopicV229\?esc\(growActiveTopicV229\.title\)/);
-  assert.match(app, /const h2IconV341=programmeView==='points'&&!growActiveTopicV229\?`\$\{CUI\.icon\('star',\{size:18\}\)\} `:''/);
+  assert.match(app, /const h2IconV341=programmeView==='points'&&!growActiveTopicV229\?`\$\{CUI\.icon\('star',\{size:20\}\)\} `:''/);
   assert.match(app, /\$\{growActiveTopicV229\?`<p class="muted small">\$\{esc\(growActiveTopicV229\.blurb\)\}<\/p>`:''\}/);
 });
 

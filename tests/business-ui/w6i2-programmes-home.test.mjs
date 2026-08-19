@@ -93,7 +93,7 @@ test('W6I2 A1 the switchboard is FOUR independently-pickable controls, not one o
     assert.ok(table.includes(`','${title}',`), `${title} must be one of the four`);
   assert.ok([...table.matchAll(/','([A-Za-z][^']*)',\n/g)].every(m => m[1].split(/\s+/).length <= 3),
     'every switch label is at most three words');
-  assert.match(wizard, /\$\{CUI\.icon\(icon,\{size:26\}\)\}/);
+  assert.match(wizard, /\$\{CUI\.icon\(icon,\{size:24\}\)\}/);
   /* V324: was 'ON'/'OFF' — the literal word the LIVE Programmes-page switch uses for "customers
      can use this right now". 'Selected'/'Not selected' says what this control means instead. The
      internal data-state attribute keeps its on/off values — nothing reads it as a live fact, and

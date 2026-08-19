@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="48d4c277404ab49edfe3f9630647ec6cb6dc72ea95968dec43f8980e7762cd88"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="6dbc329d770d7133ea3385c77311d253de6a56f7f0a1a758b9f2d7d261201e67"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3180,11 +3180,11 @@ function renderCustomerNotJoinedV289(businessSlug){
   const label=customerBusinessSlugLabelV289(businessSlug);
   body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:Georgia,'Times New Roman',serif">${esc(label)}</b><small>Not joined yet</small></span></span></header>
   <section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
-    <div aria-hidden="true">${CUI.icon('loyalty',{size:34})}</div>
+    <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:1.45rem">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
-    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:18})}<span>Join ${esc(label)}</span></button>
-    <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>${esc(ct('scanBusinessQr'))}</span></button>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:20})}<span>Join ${esc(label)}</span></button>
+    <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>${esc(ct('scanBusinessQr'))}</span></button>
     <div class="cui-stamp-dots-v2b is-demo-v2b" aria-hidden="true">${'<i></i>'.repeat(8)}</div>
     <p class="muted small" style="margin-top:8px">Collect stamps or points here once you join.</p>
   </section>`;
@@ -3391,10 +3391,10 @@ function renderSelfServePaymentPendingV286(onboarding){
     <h1 id="personaChoiceTitle" style="font-size:clamp(1.8rem,5vw,2.5rem);margin-top:18px">Where would you like to go?</h1>
     <p class="muted" style="margin-top:7px;line-height:1.55">${hasCustomer?'This account has business and customer access.':'This account has more than one business workspace.'} Choose a destination for this visit.</p>
     <div class="entry-choice-grid">
-      <section class="entry-choice" aria-labelledby="personaWorkspacesTitle"><span class="entry-choice-icon">${CUI.icon('branch',{size:25})}</span><div><h2 id="personaWorkspacesTitle">Business workspaces</h2><p class="muted">Choose an authorized workspace. Direct workspace links remain available.</p><div class="row" style="margin-top:12px">${staff.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div></section>
-      ${hasCustomer?`<a class="entry-choice" href="#/wallet"><span class="entry-choice-icon">${CUI.icon('customers',{size:25})}</span><div><h2>${esc(BRAND.customerLabel)}</h2><p class="muted">See your customer programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Open ${esc(BRAND.customerLabel)} ${CUI.icon('forward',{size:17})}</span></a>`:''}
+      <section class="entry-choice" aria-labelledby="personaWorkspacesTitle"><span class="entry-choice-icon">${CUI.icon('branch',{size:24})}</span><div><h2 id="personaWorkspacesTitle">Business workspaces</h2><p class="muted">Choose an authorized workspace. Direct workspace links remain available.</p><div class="row" style="margin-top:12px">${staff.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div></section>
+      ${hasCustomer?`<a class="entry-choice" href="#/wallet"><span class="entry-choice-icon">${CUI.icon('customers',{size:24})}</span><div><h2>${esc(BRAND.customerLabel)}</h2><p class="muted">See your customer programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Open ${esc(BRAND.customerLabel)} ${CUI.icon('forward',{size:16})}</span></a>`:''}
     </div>
-    <button class="btn ghost sm" id="personaChoiceSignOut" type="button" style="margin-top:18px">${CUI.icon('back',{size:17})}<span>Sign out</span></button>
+    <button class="btn ghost sm" id="personaChoiceSignOut" type="button" style="margin-top:18px">${CUI.icon('back',{size:16})}<span>Sign out</span></button>
     ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
   wireAccountDeletionButton();

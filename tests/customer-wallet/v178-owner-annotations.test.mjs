@@ -144,7 +144,7 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.doesNotMatch(sheet,/data-business-detail-nav/);
   assert.match(sheet,/customerBranchContactLinesV386\(branch\)/);
   assert.match(sheet,/data-business-branches-v386/);
-  assert.match(app,/function customerBranchContactLinesV386[\s\S]{0,900}CUI\.icon\('phone',\{size:14\}\)/,
+  assert.match(app,/function customerBranchContactLinesV386[\s\S]{0,900}CUI\.icon\('phone',\{size:16\}\)/,
     'the phone number carries a phone glyph, which is what the owner drew');
   assert.match(app,/function customerCompanyIdentityMarkupV178[\s\S]{0,400}customerMediaUrlV95\(business\?\.logo_url\)/);
   assert.match(app,/\.customer-business-detail-modal \.modal-card\{width:min\(480px/);

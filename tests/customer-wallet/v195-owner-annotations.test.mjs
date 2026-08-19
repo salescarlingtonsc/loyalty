@@ -152,8 +152,8 @@ test('the pictogram is inside the rung marker and stays legible on the coral fil
 });
 
 test('both tabs carry a pictogram beside their name', () => {
-  assert.match(appJs, /data-programme-tab="tier"[^>]*>\$\{CUI\.icon\('star',\{size:17\}\)\}<span>Tier<\/span>/);
-  assert.match(appJs, /data-programme-tab="points"[^>]*>\$\{CUI\.icon\('redeem',\{size:17\}\)\}<span>Reward points<\/span>/);
+  assert.match(appJs, /data-programme-tab="tier"[^>]*>\$\{CUI\.icon\('star',\{size:16\}\)\}<span>Tier<\/span>/);
+  assert.match(appJs, /data-programme-tab="points"[^>]*>\$\{CUI\.icon\('redeem',\{size:16\}\)\}<span>Reward points<\/span>/);
 });
 
 test('the programme header no longer repeats the programme name', () => {

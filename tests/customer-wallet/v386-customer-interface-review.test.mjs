@@ -102,7 +102,7 @@ test('photo 2: the company sheet is company details, with a phone glyph and ever
   assert.match(sheet,/data-business-branches-v386/);
   assert.match(sheet,/\.slice\(1\)/,'branches\[0\] is the default branch already printed above');
   const lines=app.slice(app.indexOf('function customerBranchContactLinesV386'));
-  assert.match(lines.slice(0,900),/CUI\.icon\('phone',\{size:14\}\)/);
+  assert.match(lines.slice(0,900),/CUI\.icon\('phone',\{size:16\}\)/);
   assert.doesNotMatch(lines.slice(0,900),/CUI\.icon\('mail'/,'there is no envelope glyph; an unknown name falls back to INFO');
 });
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="4af3a436eccf8a3057f62f294548cd292e6d50adc73f6b6f7f27a30431b90e54"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="8dec5463372acb45e8c5cc8e63f8c6aaf0a7f79748d280df4d3a4e90d0fa29f4"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3126,7 +3126,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 4af3a436eccf8a3057f62f294548cd292e6d50adc73f6b6f7f27a30431b90e54</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 8dec5463372acb45e8c5cc8e63f8c6aaf0a7f79748d280df4d3a4e90d0fa29f4</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -3855,7 +3855,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         </div><button type="button" class="ux154-section-toggle" id="dashboardPerformanceToggle" aria-controls="dashboardPerformanceBody" aria-expanded="true">Minimise</button></header>
       <div class="performance-body ux154-collapsible-body" id="dashboardPerformanceBody"><div id="dashboardStatus" aria-live="polite"></div><div class="kpis dashboard-kpis v150-dashboard-kpis" id="kpis" aria-live="polite"></div><div id="dashboardLoyalty" aria-live="polite"></div></div>
     </section>
-    <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:21})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
+    <section class="card v150-section understand-business-panel ux154-collapsible" aria-labelledby="understandBusinessTitle"><div class="v150-section-title ux154-collapsible-head">${CUI.icon('reports',{size:20})}<div><h2 id="understandBusinessTitle">Understand your business</h2><p>See visits, revenue and customer mix at a glance.</p></div><button type="button" class="ux154-section-toggle" id="dashboardUnderstandToggle" aria-controls="dashboardUnderstandBody" aria-expanded="true">Minimise</button></div><div class="ux154-collapsible-body" id="dashboardUnderstandBody"><div class="charts dashboard-charts v150-understand" id="charts"></div></div></section><div id="dashboardInsights" aria-live="polite"></div></section>`;
   wireLocalCollapseV154('dashboardPerformanceToggle','dashboardPerformanceBody','peekaa.v164.dashboard.performance.open');
   wireLocalCollapseV154('dashboardUnderstandToggle','dashboardUnderstandBody','peekaa.v164.dashboard.understand.open');
   const dashboardRoot=$('dashboardView');
@@ -4519,7 +4519,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(canReadMemberships&&activeMembership)badges.push({cls:'member',icon:'memberships',label:`Member${activeMembership.membership_plans?.name?' · '+activeMembership.membership_plans.name:''}`});
   if(canReadPackages&&activePackage)badges.push({cls:'package',icon:'packages',label:`Package · ${activePackage.remaining} left`});
   if(canReadLoyalty&&birthdayBenefitsEnabled&&birthdayBenefit&&birthdayBenefit.status==='available')badges.push({cls:'newc',icon:'loyalty',label:'Birthday reward'});
-  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:14})}${esc(b.label)}</span>`).join('')}</div>`
+  const badgesHtml=`<div class="c360-badges" aria-label="Customer status">${badges.map(b=>`<span class="c360-badge ${b.cls}">${CUI.icon(b.icon,{size:16})}${esc(b.label)}</span>`).join('')}</div>`
     /* V249: the deleted banner was the only place that told staff earning is CONDITIONAL when a
        customer has no visits yet. Peekaa must never imply points arrive automatically, so the
        same reviewed sentence (translations already carry it verbatim) stays on the page. */
@@ -4533,7 +4533,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
      still happens there, via the branch-scoped Record sale scanner), and every secondary entry
      was a duplicate of the Record sale / New appointment buttons already in the page header. */
   const detailSubtitle=[c.phone,c.email].filter(Boolean).join(' · ')||'No contact details';
-  const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:17})}<span>All customers</span></a>`;
+  const allCustomersAction=`<a class="btn ghost sm" href="#/clients">${CUI.icon('back',{size:16})}<span>All customers</span></a>`;
   const headerActions=[
     canQuickEarn?CUI.action({id:'c360QuickEarn',label:'Record sale',iconName:'till'}):'',
     canBookAppt?CUI.action({id:'c360NewAppt',label:'New appointment',iconName:'appointments',variant:'secondary'}):'',
@@ -4618,7 +4618,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         <div style="margin-top:8px">${readyRewards.map(reward=>rewardRow(reward,true)).join('')}</div>`
       :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
         <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
-      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:17})}<span>Open Record sale scanner</span></a>`:''}
+      ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:16})}<span>Open Record sale scanner</span></a>`:''}
       ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
     pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
@@ -4626,7 +4626,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
              out of reach. V320 removed it with the row (owner: "i do not want spendable credits to
              exist in the app") — there is no longer a figure to keep reachable. */''}
         <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
-        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:15})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
+        ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:16})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct points balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited.</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else if(prog){
@@ -4657,7 +4657,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const nextExpiryLabel=nextExp
     ?`${nextExp.remaining} ${pointsUnit} expire ${new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(nextExp.expires_at))}`
     :'No actionable points are currently scheduled to expire.';
-  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:14})}<span>${esc(nextExpiryLabel)}</span></div>`;
+  const pointsExpiryMarkup=`<div class="c360-points-expiry">${CUI.icon('waitlist',{size:16})}<span>${esc(nextExpiryLabel)}</span></div>`;
   const wholeBusinessLabels=S.myRole==='owner'||S.myRole==='manager';
   /* V294 (owner sketch 2026-08-12): the V249 POINTS and SPENDABLE CREDIT tiles are gone; both
      figures fold into the compact summary card at the upper right of the content area, beside
@@ -4804,14 +4804,14 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
      programmes card renders nothing when it has no rows. */
   const limitedOfferCardV319=limitedOfferRowsV319.length
     ?`<section class="card c360-rewards-card c360-offers-card-v319" id="c360-offers-v319">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Limited offers</b><span>Current promotions everyone can use</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:20})}<div><b>Limited offers</b><span>Current promotions everyone can use</span></div></header>
         <div class="c360-rewards-body"><div class="c360-programmes-v294">${limitedOfferRowsV319.join('')}</div></div>
       </section>`
     :'';
   const referralMarkup=canReadReferrals?`<p class="muted small" style="margin:8px 0 4px">Personal referral code — friends quote it when they join:</p>
     <div class="row"><b style="font-size:1.3rem;letter-spacing:.15em">${esc(c.referral_code||'—')}</b><button class="btn ghost sm" id="copyRef">Copy</button></div>`:'';
   const retentionMarkup=canReadRetention?`<div class="card"><b>Retention reward history</b>
-    ${(rg&&rg.length)?rg.map(g=>{const campaign=campaignEntitlementDisplayV99(g);return `<div class="row" style="margin-top:10px;align-items:flex-start"><span class="inline-status">${CUI.icon('loyalty',{size:17})}<span>${esc(g.program_name||'Program')}</span></span><span class="spacer"></span>
+    ${(rg&&rg.length)?rg.map(g=>{const campaign=campaignEntitlementDisplayV99(g);return `<div class="row" style="margin-top:10px;align-items:flex-start"><span class="inline-status">${CUI.icon('loyalty',{size:16})}<span>${esc(g.program_name||'Program')}</span></span><span class="spacer"></span>
       ${campaign.pending
         ?`<span class="muted small" style="text-align:right"><b data-workspace-i18n>${esc(campaign.title)}</b> · <span data-workspace-i18n>Merchant fulfilment pending</span><br><span data-workspace-i18n>No wallet value was posted.</span> · ${esc(g.granted_at.slice(0,10))}</span>`
         :`<span class="muted small">${esc(g.display_label||'Reward')} · ${g.display_amount_cents!=null?money(g.display_amount_cents):g.display_discount_percent!=null?g.display_discount_percent+'% off':esc(g.display_item||'free item')} · ${g.granted_at.slice(0,10)}</span>`}</div>`}).join('')
@@ -4883,7 +4883,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
     <div class="split c360-content-split-v295" style="margin-top:16px">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
-        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:21})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
+        <header class="c360-rewards-head">${CUI.icon('loyalty',{size:20})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${programmesListV294}${rewardsMarkupTrailingV392}</div>
       </section>`:''}
       ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
@@ -4899,7 +4899,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
         ${referralMarkup}
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
-        ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:17})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
+        ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:16})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
       </div>
       ${retentionMarkup}
       ${birthdayCardMarkup}${feedbackStripMarkup}</div>
@@ -5415,7 +5415,7 @@ function renderHistPage(history,n){
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
     return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
-      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:15})}</span><span>${esc(cell.type)}</span></span></td>
+      <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:16})}</span><span>${esc(cell.type)}</span></span></td>
       <td data-label="Item">${cell.item}${notes}</td>
       <td data-label="${esc(activityEarnedHeadV378())}" class="c360-act-earned-cell-v378">${cell.earned||DASH_V252}</td>
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
@@ -6352,7 +6352,7 @@ function renderHistPage(history,n){
     if(!walletSectionStillCurrent(host,isCurrent)||!slotCurrent())return null;
     if(error)return {error};
     const unread=Math.max(0,Number(data?.unread_count||0));
-    slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:19})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
+    slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:20})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
     return {unread};
   };
   const render=()=>{
@@ -6399,7 +6399,7 @@ function renderHistPage(history,n){
        the per-business reminder preferences, and (on the Messages page) the device-notification
        switch, which is moved in below. Collapsed by default — photo 8 shows a list, not a
        control panel. */
-    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="false" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:18})}</button></div>
+    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="false" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
       <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" hidden>
         <div class="customer-inbox-filter-row-v386" role="group" aria-label="Show">
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
@@ -6467,7 +6467,7 @@ function renderHistPage(history,n){
       ?'You appear to be offline. Reconnect, then retry to refresh your current programme updates.'
       :'We could not refresh your current programme updates. Programme actions are hidden until refresh succeeds.';
     items=[];nextCursor=null;bell=null;
-    if(slotCurrent())slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open messages" title="Open messages">${CUI.icon('bell',{size:19})}</a>`;
+    if(slotCurrent())slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open messages" title="Open messages">${CUI.icon('bell',{size:20})}</a>`;
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${heading}</h2><p class="muted small" role="status" aria-live="polite">${message}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerInboxSyncRetry">Retry inbox refresh</button></div>`;
     const retry=host.querySelector('#customerInboxSyncRetry');
@@ -6592,7 +6592,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'4af3a436eccf8a3057f62f294548cd292e6d50adc73f6b6f7f27a30431b90e54',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'8dec5463372acb45e8c5cc8e63f8c6aaf0a7f79748d280df4d3a4e90d0fa29f4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

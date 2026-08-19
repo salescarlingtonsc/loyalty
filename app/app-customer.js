@@ -292,7 +292,7 @@ function showPendingPromotionQrV290({intent,businessName,promotionName}={}){
   overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerPromotionQrTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPromotionQrTitle">${esc(promotionName||'Offer')}</h2><p class="muted small" style="margin-top:5px">Show this code to ${esc(businessName||'the team')} at the counter.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPromotionQrClose" type="button" aria-label="Close offer code">${CUI.icon('close',{size:18})}</button></div>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPromotionQrTitle">${esc(promotionName||'Offer')}</h2><p class="muted small" style="margin-top:5px">Show this code to ${esc(businessName||'the team')} at the counter.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPromotionQrClose" type="button" aria-label="Close offer code">${CUI.icon('close',{size:20})}</button></div>
     <div class="redemption-qr" id="customerPromotionQr" aria-label="Offer code"></div>
     <span class="pill new">Waiting for the counter</span>
     <p class="muted small" id="customerPromotionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Nothing is used until the team scans this code.${intent?.expires_at?` <span>${esc(redemptionCountdownText(intent.expires_at))}</span>.`:''}</p>
@@ -325,7 +325,7 @@ function showCustomerPackageQrV347({item={},businessName='',onClose=()=>{}}={}){
   const overlay=document.createElement('div');
   overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerPackageQrTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPackageQrTitle">${esc(name)}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to use one session.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPackageQrClose" type="button" aria-label="Close package QR">${CUI.icon('close',{size:18})}</button></div>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerPackageQrTitle">${esc(name)}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to use one session.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPackageQrClose" type="button" aria-label="Close package QR">${CUI.icon('close',{size:20})}</button></div>
     <div class="redemption-qr" id="customerPackageQr" aria-label="Package session QR code"></div>
     <span class="pill new">${remaining} session${remaining===1?'':'s'} left before scan</span>
     <p class="muted small" id="customerPackageQrStatus" role="status" aria-live="polite" style="margin-top:10px">Nothing is deducted until staff scans and confirms this QR.</p>
@@ -356,7 +356,7 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
   const overlay=document.createElement('div');
   overlay.className='modal customer-redemption-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerRedemptionQrTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerRedemptionQrTitle">${esc(rewardName||'Redeem reward')}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to complete the redemption.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerRedemptionQrClose" type="button" aria-label="Close redemption QR">${CUI.icon('close',{size:18})}</button></div>
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><div style="text-align:left"><h2 id="customerRedemptionQrTitle">${esc(rewardName||'Redeem reward')}</h2><p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code to complete the redemption.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerRedemptionQrClose" type="button" aria-label="Close redemption QR">${CUI.icon('close',{size:20})}</button></div>
     <div class="redemption-qr" id="customerRedemptionQr" aria-label="Pending redemption QR code"></div>
     <span class="pill new" id="customerRedemptionQrState">Pending merchant scan</span>
     <p class="muted small" id="customerRedemptionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Your points are not redeemed until the business scans and confirms this QR.${intent?.expires_at?` <span id="customerRedemptionCountdown">${esc(redemptionCountdownText(intent.expires_at))}</span>.`:''}</p>
@@ -404,7 +404,7 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     if(state==='completed'){
       const receipt=data?.result||{};
       const points=Math.max(0,Number(receipt.points_spent||0));
-      qr.innerHTML=CUI.icon('check',{size:76});
+      qr.innerHTML=CUI.icon('check',{size:32});
       panel.classList.add('customer-redemption-complete');
       pill.className='pill ok';pill.textContent='Redeemed';
       status.setAttribute('aria-live','assertive');
@@ -505,7 +505,7 @@ function showGrowthOfferQr({intent,businessName,offerLabel,onClose=()=>{}}={}){
   overlay.innerHTML=`<section class="modal-card" style="width:460px;text-align:center">
     <div class="row"><div style="text-align:left"><h2 id="growthOfferQrTitle">${esc(offerLabel||'Redeem offer')}</h2>
     <p class="muted small" style="margin-top:5px">${esc(businessName||'The business')} must scan this code before the offer is used.</p></div>
-    <span class="spacer"></span><button class="btn ghost sm" id="growthOfferQrClose" type="button" aria-label="Close offer QR">${CUI.icon('close',{size:18})}</button></div>
+    <span class="spacer"></span><button class="btn ghost sm" id="growthOfferQrClose" type="button" aria-label="Close offer QR">${CUI.icon('close',{size:20})}</button></div>
     <div class="redemption-qr" id="growthOfferQr" aria-label="Pending growth offer QR code"></div>
     <span class="pill new">Ready to scan</span>
     <p class="muted small" role="status" aria-live="polite" style="margin-top:10px">This offer remains unused until the business scans it.${intent?.expires_at?` This QR expires ${esc(walletDate(intent.expires_at,true))}.`:''}</p>
@@ -636,9 +636,9 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     <input id="customerOtp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" aria-describedby="customerOtpHelp" required>
     <p class="muted small" id="customerOtpHelp" style="margin-top:6px">The code is valid for a few minutes.</p>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:18})}<span>${recovering?'Verify and reset password':'Verify and create account'}</span></button>
+    <button class="btn" id="customerOtpVerify" type="button" style="width:100%;margin-top:16px">${CUI.icon('check',{size:20})}<span>${recovering?'Verify and reset password':'Verify and create account'}</span></button>
     <button class="btn ghost" id="customerOtpResend" type="button" disabled style="width:100%;margin-top:10px">Resend available in 30 seconds</button>
-    <button class="btn ghost" id="customerOtpVerifyBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:18})}<span>Back</span></button>
+    <button class="btn ghost" id="customerOtpVerifyBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:20})}<span>Back</span></button>
   </section>`);
   $('customerOtpVerifyBack').onclick=()=>renderCustomerOtpStart(isRouteCurrent,purpose);
   let seconds=30;
@@ -772,8 +772,8 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
     <label for="customerRecoveryPasswordConfirm">Confirm new password</label>
     ${passwordControlHtml('customerRecoveryPasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
     <div id="customerRecoveryPasswordError" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="customerRecoveryPasswordSave" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Save new password</span></button>
-    <button class="btn ghost" id="customerRecoveryPasswordBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:18})}<span>Cancel and return to sign in</span></button>
+    <button class="btn" id="customerRecoveryPasswordSave" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:20})}<span>Save new password</span></button>
+    <button class="btn ghost" id="customerRecoveryPasswordBack" type="button" style="width:100%;margin-top:10px">${CUI.icon('back',{size:20})}<span>Cancel and return to sign in</span></button>
   </section>`);
   bindPasswordVisibility(root);
   const save=$('customerRecoveryPasswordSave'),password=$('customerRecoveryPassword');
@@ -831,7 +831,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     <label for="customerPassword">Password</label>
     ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
-    <button class="btn" id="customerPasswordSignIn" type="submit" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>Sign in</span></button>
+    <button class="btn" id="customerPasswordSignIn" type="submit" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:20})}<span>Sign in</span></button>
     </form>
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
@@ -966,7 +966,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       ${whatsappAvailable?`<label class="row" for="customerOtpWhatsapp" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="customerOtpWhatsapp" name="customerOtpChannel" type="radio" value="whatsapp" style="width:20px;min-width:20px;min-height:20px"> <span>WhatsApp</span></label>`:''}
     </fieldset>
     <div id="customerOtpError" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="customerOtpSend" type="button" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:18})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
+    <button class="btn" id="customerOtpSend" type="button" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:20})}<span>${recovering?'Send password reset code':'Send account verification code'}</span></button>
     <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
   </section>`);
   bindPasswordVisibility(root);
@@ -1060,7 +1060,7 @@ function renderCustomerRegistrationDestinationRetry(isRouteCurrent=()=>true){
   customerRegistrationShell(`<section class="card" aria-labelledby="customerDestinationRetryTitle">
     <div class="row"><span aria-hidden="true">${CUI.icon('wallet',{size:24})}</span><div><h1 id="customerDestinationRetryTitle">Your account is ready</h1><p class="muted small" style="margin-top:5px">We could not load your programme destination. Retry this lookup—your customer account will not be created again.</p></div></div>
     <div id="customerDestinationRetryError" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="customerDestinationRetry" type="button" style="width:100%;margin-top:18px">${CUI.icon('forward',{size:18})}<span>Try destination again</span></button>
+    <button class="btn" id="customerDestinationRetry" type="button" style="width:100%;margin-top:18px">${CUI.icon('forward',{size:20})}<span>Try destination again</span></button>
   </section>`);
   const retry=$('customerDestinationRetry');
   retry.onclick=async()=>{
@@ -1120,7 +1120,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     <select id="customerLanguage" autocomplete="language"><option value="en">English</option><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="ta">தமிழ்</option></select>
     <p class="muted small" style="margin-top:14px">${signupConsentRecorded?`Your Terms and Privacy Notice acceptance was captured before phone verification.${customerSignupMarketingOptedIn()?' You also opted in to offers and updates — you can change this anytime in Profile.':''}`:'Consent was not recorded for this browser session. Return to Create account and tick the Terms agreement box before verifying your phone.'}</p>
     <div id="customerProfileError" role="alert" aria-live="assertive"></div>
-    <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:18})}<span>Create my customer account</span></button>
+    <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:20})}<span>Create my customer account</span></button>
     <div class="row" style="margin-top:12px"><button class="btn ghost sm" id="customerProfileStartOver" type="button">Start again</button><span class="spacer"></span></div>
   </section>`);
   /* V289 (audit A3, G6): a fresh crypto.randomUUID() per click made every retry a NEW
@@ -1341,9 +1341,9 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
     overlay.className='modal customer-surface appointment-detail-modal';overlay.tabIndex=-1;
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
     overlay.setAttribute('aria-labelledby','customerPasskeyPromptTitle');
-    overlay.innerHTML=`<section class="modal-card" style="max-width:500px"><div class="row appointment-detail-head"><div><h2 id="customerPasskeyPromptTitle">Enable Face ID or Touch ID?</h2><p class="muted small" style="margin-top:5px">Add a passkey on this device so next time you can sign in without typing your password.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPasskeyPromptClose" type="button" aria-label="Close passkey setup">${CUI.icon('close',{size:18})}</button></div>
+    overlay.innerHTML=`<section class="modal-card" style="max-width:500px"><div class="row appointment-detail-head"><div><h2 id="customerPasskeyPromptTitle">Enable Face ID or Touch ID?</h2><p class="muted small" style="margin-top:5px">Add a passkey on this device so next time you can sign in without typing your password.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPasskeyPromptClose" type="button" aria-label="Close passkey setup">${CUI.icon('close',{size:20})}</button></div>
       <div class="appointment-detail-section"><p class="muted small">Your face or fingerprint stays on your device. Peekaa only stores the public passkey needed to recognise this login.</p><p id="customerPasskeyPromptStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px"></p></div>
-      <div class="appointment-detail-actions"><button class="btn" id="customerPasskeyPromptAdd" type="button">${CUI.icon('add',{size:17})}<span>Enable now</span></button><button class="btn ghost" id="customerPasskeyPromptSkip" type="button">Not now</button></div></section>`;
+      <div class="appointment-detail-actions"><button class="btn" id="customerPasskeyPromptAdd" type="button">${CUI.icon('add',{size:16})}<span>Enable now</span></button><button class="btn ghost" id="customerPasskeyPromptSkip" type="button">Not now</button></div></section>`;
     document.body.appendChild(overlay);
     let deactivate=null,done=false;
     const close=outcome=>{
@@ -1429,10 +1429,10 @@ function renderLocalCustomerPreviewBookingsV345(){
     ]};
   const bistro={business_slug:'bistro-88',business_name:'Bistro 88',business_logo:'',bookingEnabled:true,tabRequests:[],tabAppointments:[]};
   $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div></header>
-    <div class="customer-my-rewards-search"><label class="sr-only" for="localBookingSearchV345">Search company name</label>${CUI.icon('search',{size:17})}<input id="localBookingSearchV345" type="search" placeholder="Search company name"></div>
+    <div class="customer-my-rewards-search"><label class="sr-only" for="localBookingSearchV345">Search company name</label>${CUI.icon('search',{size:16})}<input id="localBookingSearchV345" type="search" placeholder="Search company name"></div>
     ${customerBookingTablistMarkupV178('bookings',{bookings:1,cancelled:3,history:0})}
     <div class="customer-booking-list"><section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>Cubbly</h2><p class="muted small">0 requests · 1 appointment</p></div><span class="spacer"></span><button class="btn sm" type="button" disabled>Rebook</button></div>
-      <h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:18})}<span>Upcoming appointments</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,false)).join('')}</section>
+      <h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>Upcoming appointments</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,false)).join('')}</section>
       <section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(bistro)}<div><h2>Bistro 88</h2><p class="muted small">2 appointments</p></div><span class="spacer"></span><button class="btn sm" type="button" disabled>Rebook</button></div></section></div>`;
   focusCustomerRoute();
 }
@@ -1709,7 +1709,7 @@ function customerBookingChooserV291(groups=[]){
      search pattern already used for the customer's reward-account list
      (wireCustomerProgrammeSearchV195/#customerProgrammeSearch) — filters what already
      rendered, no new request. */
-  const searchHead=`<div class="customer-booking-search"><label class="sr-only" for="customerBookingSearch">Search company name</label>${CUI.icon('search',{size:17})}<input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerBookingSearchStatus"></div><p class="muted small" id="customerBookingSearchStatus" role="status" hidden></p>`;
+  const searchHead=`<div class="customer-booking-search"><label class="sr-only" for="customerBookingSearch">Search company name</label>${CUI.icon('search',{size:16})}<input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerBookingSearchStatus"></div><p class="muted small" id="customerBookingSearchStatus" role="status" hidden></p>`;
   const industries=[...new Set(businesses.map(group=>String(group.industry||'').trim()).filter(Boolean))];
   if(industries.length>1){
     const bySector=new Map();
@@ -1857,7 +1857,7 @@ async function renderCustomerBookings(){
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${esc(ct('Book again'))}</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
-      ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:18})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
+      ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
     </section>`).join('')}</div>`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
@@ -1952,7 +1952,7 @@ async function renderCustomerMessages(){
          #customerPushMessagesControl by id, and the push-permission tests read it — but it now
          renders inside the settings panel the gear opens, with the reminder preferences, which is
          where the owner drew both of them. */''}
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerMessagesNotifications" hidden><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:6px">Get these updates on your lock screen too. Which ones you receive is set in <a href="#/customer/communications">Communications</a>.</p></div><button class="btn ghost sm" id="customerPushMessagesControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}`});
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerMessagesNotifications" hidden><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:6px">Get these updates on your lock screen too. Which ones you receive is set in <a href="#/customer/communications">Communications</a>.</p></div><button class="btn ghost sm" id="customerPushMessagesControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:16})}<span data-push-label>Turn on device notifications</span></button></section>`}`});
   focusCustomerRoute();
   /* v296 (owner drew it onto this page): the switch that governs whether these updates also
      reach the lock screen now sits with the inbox it governs, not behind an avatar menu. */
@@ -2040,10 +2040,10 @@ async function renderCustomerProfile(){
       <label for="customerProfileLanguage">${esc(ct('preferredLanguage'))}</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
       <p class="muted small" style="margin-top:6px">${esc(ct('languageHelp',{product:BRAND.productName}))}</p>
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
-      <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:17})}<span>Save profile</span></button>
+      <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>`
     :detailsLoadFailedV286
-      ?`<section class="card" id="customerProfileDetailsError"><h2>We couldn’t load your details</h2><p class="muted small" style="margin-top:6px">Your name and date of birth did not load just now. Nothing has been changed, and everything below still works.</p><button class="btn" id="customerProfileDetailsRetry" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>Try again</span></button></section>`
+      ?`<section class="card" id="customerProfileDetailsError"><h2>We couldn’t load your details</h2><p class="muted small" style="margin-top:6px">Your name and date of birth did not load just now. Nothing has been changed, and everything below still works.</p><button class="btn" id="customerProfileDetailsRetry" type="button" style="margin-top:16px">${CUI.icon('check',{size:16})}<span>Try again</span></button></section>`
       :'<section class="card"><h2>Profile editing is not available</h2><p class="muted small" style="margin-top:6px">Profile editing isn’t available for this account.</p></section>';
   /* v327: one Peekaa-wide QR, not tied to any single business — shown only once the platform
      identity capability itself is on (independent of profile/phone-registration availability). */
@@ -2065,27 +2065,27 @@ async function renderCustomerProfile(){
     <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>${esc(ct('Marketing choices'))}</h2><p class="muted small" style="margin-top:5px">${esc(ct('Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.',{product:BRAND.productName}))}</p>
       ${marketingPreference?`<label class="row" for="customerProfileMarketing" style="align-items:flex-start;margin-top:14px;color:var(--ink);font-weight:500"><span class="cui-switch" style="margin-top:1px"><input id="customerProfileMarketing" type="checkbox" ${marketingPreference.opted_in===true?'checked':''}><i></i></span> <span>${ct('Yes — send me these offers and updates. I can turn this off here, or in {link}, at any time. {product} stops sending straight away. Partners are told to stop within 10 business days. Turning it off does not affect my points, bookings or service messages.',{link:`<a href="#/customer/communications" style="color:var(--coral);text-decoration:underline">${esc(ct('Communications'))}</a>`,product:esc(BRAND.productName)})}</span></label>
       <div id="customerProfileMarketingStatus" role="status" aria-live="polite"></div>
-      <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:17})}<span>${esc(ct('Save marketing choice'))}</span></button>`
+      <button class="btn ghost" id="customerProfileMarketingSave" type="button" style="margin-top:16px">${CUI.icon('check',{size:16})}<span>${esc(ct('Save marketing choice'))}</span></button>`
       /* v286: a failed read used to render this sentence ALONE — no checkbox, no save button, and
          nothing to press. Withdrawing marketing consent is the one control here the customer can
          demand at any time, so the read is retryable instead of a dead end. */
       :`<p class="err" role="status" style="margin-top:12px">${esc(ct('Your marketing choice could not be loaded. No change has been made.'))}</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">${esc(ct('retry'))}</button>`}
     </section>
-    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('Communications'))}</h2><p class="muted small">${esc(ct('Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.'))}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:17})}<span>${esc(ct('Open communications'))}</span></a></div></section>
+    <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('Communications'))}</h2><p class="muted small">${esc(ct('Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.'))}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:16})}<span>${esc(ct('Open communications'))}</span></a></div></section>
     <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(ct('Your consent history'))}</h2><p class="muted small">${esc(ct('Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.'))}</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">${esc(ct('Loading your consent history…'))}</p></div></section>
     <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
       <div id="customerProfilePasswordStatus" role="status" aria-live="polite"></div>
-      <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:17})}<span>Update password</span></button>
+      <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Update password</span></button>
     </section>
-    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:17})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
-    ${NestlyNativeBridge.isNative?`<section class="card" id="customerDeviceNotificationsNative" style="margin-top:14px"><h2>Notifications</h2><p class="muted small" style="margin-top:6px">Reward, offer and booking updates arrive in your Peekaa inbox — tap the bell at the top of any screen. Alerts on your lock screen are not switched on for this app yet.</p><a class="btn ghost sm" href="#/customer/messages" style="margin-top:12px">Open inbox</a></section>`:`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:17})}<span data-push-label>Turn on device notifications</span></button></section>`}
+    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
+    ${NestlyNativeBridge.isNative?`<section class="card" id="customerDeviceNotificationsNative" style="margin-top:14px"><h2>Notifications</h2><p class="muted small" style="margin-top:6px">Reward, offer and booking updates arrive in your Peekaa inbox — tap the bell at the top of any screen. Alerts on your lock screen are not switched on for this app yet.</p><a class="btn ghost sm" href="#/customer/messages" style="margin-top:12px">Open inbox</a></section>`:`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:16})}<span data-push-label>Turn on device notifications</span></button></section>`}
     ${accountDeletionCardHtml()}
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
          the last thing on the page it acts on — deliberately after account & privacy, so it is
          reached by finishing the page rather than by hunting an icon. -->
-    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></div></section>`;
+    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button">${CUI.icon('back',{size:16})}<span>${esc(ct('signOut'))}</span></button></div></section>`;
   bindPasswordVisibility($('walletBody'));
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -2440,11 +2440,11 @@ function renderCustomerNotJoinedV289(businessSlug){
   const label=customerBusinessSlugLabelV289(businessSlug);
   body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:Georgia,'Times New Roman',serif">${esc(label)}</b><small>Not joined yet</small></span></span></header>
   <section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
-    <div aria-hidden="true">${CUI.icon('loyalty',{size:34})}</div>
+    <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:1.45rem">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
-    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:18})}<span>Join ${esc(label)}</span></button>
-    <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>${esc(ct('scanBusinessQr'))}</span></button>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:20})}<span>Join ${esc(label)}</span></button>
+    <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>${esc(ct('scanBusinessQr'))}</span></button>
     <div class="cui-stamp-dots-v2b is-demo-v2b" aria-hidden="true">${'<i></i>'.repeat(8)}</div>
     <p class="muted small" style="margin-top:8px">Collect stamps or points here once you join.</p>
   </section>`;
@@ -2715,7 +2715,7 @@ function customerHomeOfferMarkupV167(item,seen){
     ${/* V392 (owner, photo 7: a clock drawn onto the "Ends in 13 days" pill). The countdown was
          already red; the icon is what makes it read as a deadline at a glance rather than as one
          more line of small text. */''}
-    ${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:14})}<span>${esc(countdown)}</span></p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+    ${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
 /* v173: with many linked businesses each posting offers, a plain ends-soonest
@@ -2750,7 +2750,7 @@ function customerExpiringRewardsMarkupV195(cards=[]){
   if(!(Array.isArray(cards)&&cards.length))return '';
   return `<section class="card customer-expiring-glance" aria-labelledby="customerExpiringTitle">
     <div class="customer-expiring-head">
-      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:18})}<span>Expiring rewards</span></h2>
+      <h2 id="customerExpiringTitle">${CUI.icon('retention',{size:20})}<span>Expiring rewards</span></h2>
       ${all.length?`<span class="pill new">${all.length} to use</span>`:'<span class="muted small">Nothing in 30 days</span>'}
     </div>
     ${list.length
@@ -2790,7 +2790,7 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
      stacked kicker read as filler above the real title. One icon-led title line instead. */
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:18})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:20})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -2840,7 +2840,7 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
   overlay.className='modal customer-surface customer-business-detail-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerBusinessDetailTitle');
   overlay.innerHTML=`<section class="modal-card customer-offer-detail customer-business-detail">
-    <div class="row"><p class="customer-quest-kicker">Company details</p><span class="spacer"></span><button class="btn ghost sm" id="customerBusinessDetailClose" type="button" aria-label="Close company details">${CUI.icon('close',{size:18})}</button></div>
+    <div class="row"><p class="customer-quest-kicker">Company details</p><span class="spacer"></span><button class="btn ghost sm" id="customerBusinessDetailClose" type="button" aria-label="Close company details">${CUI.icon('close',{size:20})}</button></div>
     <div class="customer-business-detail-head">${customerCompanyIdentityMarkupV178(business)}<div><h2 id="customerBusinessDetailTitle">${esc(name)}</h2>${industry?`<p class="muted small" style="margin-top:2px">${esc(industry)}</p>`:''}</div></div>
     <div class="customer-offer-detail-meta" data-business-contact><p class="muted small">Loading contact details…</p></div>
     <div data-business-branches-v386></div>
@@ -2895,8 +2895,8 @@ function customerBranchContactLinesV386(branch={}){
      customer icon set and CUI.icon falls back to the INFO glyph for an unknown name, so the
      email line is left unprefixed rather than labelled with a wrong picture. */
   return [
-    branch?.address?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('branch',{size:14})} <span>${esc(branch.address)}</span></p>`:'',
-    phone?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('phone',{size:14})} <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
+    branch?.address?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('branch',{size:16})} <span>${esc(branch.address)}</span></p>`:'',
+    phone?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('phone',{size:16})} <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
     branch?.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
   ].filter(Boolean).join('');
 }
@@ -2915,7 +2915,7 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   overlay.className='modal customer-surface customer-offer-detail-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerOfferDetailTitle');
   overlay.innerHTML=`<section class="modal-card customer-offer-detail">
-    <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:18})}</button></div>
+    <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
     ${factsV195?`<p class="customer-offer-detail-facts">${esc(factsV195)}</p>`:''}
@@ -2974,7 +2974,7 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
         const branch=data?.branch||{},host=overlay.querySelector('[data-offer-contact]');
         if(!host)return;
         const lines=[
-          branch.address?`<p class="muted small">${CUI.icon('bookings',{size:14})} ${esc(branch.address)}</p>`:'',
+          branch.address?`<p class="muted small">${CUI.icon('bookings',{size:16})} ${esc(branch.address)}</p>`:'',
           branch.phone?`<p class="muted small"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:'',
           branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
         ].filter(Boolean).join('');
@@ -3120,15 +3120,15 @@ function customerShareLockupV267(business={}){
 function customerShareSheetMarkupV264({text,url,business={},title='Share this offer'}){
   const message=customerShareMessageV267(text,business);
   const channels=CUSTOMER_SHARE_CHANNELS_V264
-    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text:message,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:18})}<span>${esc(channel.label)}</span></a>`)
+    .map(channel=>`<a class="customer-share-channel" href="${esc(channel.href({text:message,url}))}" target="_blank" rel="noopener noreferrer" data-share-channel="${esc(channel.key)}">${CUI.icon(channel.icon,{size:20})}<span>${esc(channel.label)}</span></a>`)
     .join('');
   return `<section class="modal-card customer-share-sheet">
     <div class="row"><h2 id="customerShareTitle">${esc(title)}</h2><span class="spacer"></span>
-      <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+      <button class="btn ghost sm" id="customerShareClose" type="button" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
     ${customerShareLockupV267(business)}
     <p class="muted small">${esc(text)}</p>
     <div class="customer-share-channels">${channels}</div>
-    <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:17})}<span>Copy link</span></button>
+    <button class="btn ghost sm customer-share-copy" id="customerShareCopy" type="button" data-share-channel="copy">${CUI.icon('copy',{size:16})}<span>Copy link</span></button>
     <p class="muted small customer-share-note">Instagram, TikTok and WeChat can be reached from your phone's own share button.</p>
   </section>`;
 }
@@ -3309,7 +3309,7 @@ function openCustomerPointsExplainerV339(trigger){
   const business=String(trigger?.getAttribute('aria-label')||'').replace(/^How rewards work at /,'');
   $('customerPointsExplainerModalV339')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerPointsExplainerModalV339" role="dialog" aria-modal="true" aria-labelledby="customerPointsExplainerTitleV339" tabindex="-1"><div class="modal-card" style="max-width:460px">
-    <div class="row"><h2 id="customerPointsExplainerTitleV339">How rewards work at ${esc(business||'this business')}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPointsExplainerCloseV339" aria-label="Close">${CUI.icon('close',{size:18})}</button></div>
+    <div class="row"><h2 id="customerPointsExplainerTitleV339">How rewards work at ${esc(business||'this business')}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerPointsExplainerCloseV339" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
     <p class="muted" style="margin-top:14px">Collect points here and use them for available rewards.</p>
     <button type="button" class="btn" id="customerPointsExplainerGotItV339" style="margin-top:18px">Got it</button>
   </div></div>`);
@@ -3609,7 +3609,7 @@ function customerMemberCodeMarkupW6I2(code){
   const value=String(code||'').trim();
   if(!value)return '';
   return `<section class="card customer-programme-card-v310" data-member-code-w6i2 aria-label="${esc(ct('showMyCode'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('customers',{size:17})}<span>${esc(ct('showMyCode'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('customers',{size:16})}<span>${esc(ct('showMyCode'))}</span></h2>
     <p class="muted small">${esc(ct('showMyCodeBody'))}</p>
     <!-- Inline layout rather than a new class: this stylesheet is inlined verbatim into nine
          checked-in browser fixtures that carry captured Chrome measurements under a
@@ -3672,8 +3672,8 @@ function renderCustomerFirstProgrammeQuest(){
       this is the only way out — it stays, but as a plain button rather than the avatar menu the
       owner asked to remove. "Profile & passkeys" is dropped: a customer who has not joined a
       business yet has nothing to open there. -->
-      <button class="btn ghost sm" id="walletSignOut" type="button">${CUI.icon('back',{size:17})}<span>${esc(ct('signOut'))}</span></button></header>
-    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks(customerLocale)}</div></div>`;
+      <button class="btn ghost sm" id="walletSignOut" type="button">${CUI.icon('back',{size:16})}<span>${esc(ct('signOut'))}</span></button></header>
+    <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:32})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks(customerLocale)}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   focusCustomerRoute();
@@ -3775,7 +3775,7 @@ function customerProgrammeTileMarkupV96(card){
       kicker repeated the row above it on every card. And "1 reward ready" is ringed with "make
       this more prominent": it is the one line that tells the customer to walk in, and it was the
       quietest thing on the card. It leads now, and only when something really is ready — the
-      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${CUI.icon('redeem',{size:15})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${CUI.icon('redeem',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -3871,8 +3871,8 @@ function customerHomeSummaryV343(cards=[]){
      needs: "Your Peekaa" directly below lists them by name. */
   const nearestV2B=rewardCount?'':customerNearestGoalV2B(cards);
   return `<a class="customer-home-ready-card-v343${rewardCount?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardCount?`${esc(rewardCount)} ${esc(rewardWord)} ready`:esc(nearestV2B||'No rewards ready yet')}">
-    <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:42})}</span>
-    <span class="customer-home-ready-copy-v343">${rewardCount?`<b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:15})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:14})}</em>`:''}</span>
+    <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:32})}</span>
+    <span class="customer-home-ready-copy-v343">${rewardCount?`<b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:16})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:16})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
@@ -3939,8 +3939,8 @@ function customerHomeBookingStripV344(cards=[]){
 function customerMyRewardsHeadingV156(count=0,{scanId=''}={}){
   return `<div class="customer-my-rewards-title"><div><h1>${esc(ct('yourProgrammes'))}</h1></div>
     <div class="customer-my-rewards-search"><label class="sr-only" for="customerProgrammeSearch">Search company name</label>
-      ${CUI.icon('search',{size:17})}<input id="customerProgrammeSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerProgrammeSearchStatus"></div>
-    ${scanId?`<button class="btn sm" id="${esc(scanId)}" type="button">${CUI.icon('scan',{size:18})}<span>${esc(ct('addProgramme'))}</span></button>`:''}</div>
+      ${CUI.icon('search',{size:16})}<input id="customerProgrammeSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerProgrammeSearchStatus"></div>
+    ${scanId?`<button class="btn sm" id="${esc(scanId)}" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('addProgramme'))}</span></button>`:''}</div>
     <div class="customer-rewards-filter-chips-v344" aria-label="Reward categories"><span class="is-active">All</span><span>Beauty</span><span>Food & drink</span><span>Fitness</span></div>
     <p class="muted small" id="customerProgrammeSearchStatus" role="status" hidden></p>`;
 }
@@ -3990,7 +3990,7 @@ function customerHomeGuidanceV167({pendingRedemption=null,actionableCards=[],leg
    always true on Home is adding the next business, which is scan-only, so reuse the existing
    scan copy keys and the existing #customerHomeScan wiring rather than inventing a new control. */
 function customerHomeEmptyActionV286(){
-  return `<section class="card customer-first-quest customer-home-empty-action" aria-labelledby="customerHomeEmptyTitle"><div class="customer-first-quest-copy"><div class="customer-first-quest-icon">${CUI.icon('scan',{size:34})}</div><h2 id="customerHomeEmptyTitle">${esc(ct('scanLoyaltyQr'))}</h2><p class="muted small">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerHomeScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:12px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
+  return `<section class="card customer-first-quest customer-home-empty-action" aria-labelledby="customerHomeEmptyTitle"><div class="customer-first-quest-copy"><div class="customer-first-quest-icon">${CUI.icon('scan',{size:32})}</div><h2 id="customerHomeEmptyTitle">${esc(ct('scanLoyaltyQr'))}</h2><p class="muted small">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerHomeScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:12px">${esc(ct('qrOnlyHelp'))}</p></div></section>`;
 }
 /* v244: the v242 "All businesses" directory moved off the bottom of Home into the Explore tab,
    where it is the empty-query result of the ecosystem search. Same rules (an unjoined business
@@ -4010,7 +4010,7 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     $('walletBody').innerHTML=html;return true;
   };
   if(!cards.length){
-    if(!paint(`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:38})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`))return;
+    if(!paint(`${isHome?customerHomeOffersMarkupV167(offersState):''}<section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:32})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section>`))return;
     $('customerFirstScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(repaint);
     return true;
@@ -4319,7 +4319,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const paintCustomerInboxBellV286=unread=>{
         const inboxSlot=$('customerInboxBellSlot');
         if(!inboxSlot||customerFeatures.customer_in_app_inbox!==true)return;
-        inboxSlot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread===null?'Open messages':`Open messages, ${unread} unread`}" title="Open messages">${CUI.icon('bell',{size:19})}${Number(unread)>0?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
+        inboxSlot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread===null?'Open messages':`Open messages, ${unread} unread`}" title="Open messages">${CUI.icon('bell',{size:20})}${Number(unread)>0?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
       };
       paintCustomerInboxBellV286(customerHomeOverview.messageCount);
       /* v286: same epoch guard as every other post-await write — a slow badge from an abandoned
@@ -4521,7 +4521,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     </div>
     <section class="customer-business-shortcut-page-v348" id="customerBusinessShortcutPageV348" hidden aria-labelledby="customerBusinessShortcutTitleV348">
       <header class="customer-business-shortcut-head-v348">
-        <button class="btn ghost sm customer-business-shortcut-back-v348" id="customerBusinessShortcutBackV348" type="button">${CUI.icon('back',{size:18})}<span>Back</span></button>
+        <button class="btn ghost sm customer-business-shortcut-back-v348" id="customerBusinessShortcutBackV348" type="button">${CUI.icon('back',{size:20})}<span>Back</span></button>
         <h1 id="customerBusinessShortcutTitleV348">Details</h1>
       </header>
       <div class="customer-business-shortcut-content-v348" id="customerBusinessShortcutContentV348"></div>
@@ -4591,15 +4591,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         const addressTitleV366=branch.address?String(branch.address):'Address';
         const callTitleV366=branch.phone?`Call ${branch.phone}`:'Call';
         const openSheet=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
-        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366" data-company-detail aria-label="${esc(addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:18})}<span>${esc(rawAddressLabelV366)}</span></button>${
+        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366" data-company-detail aria-label="${esc(addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:20})}<span>${esc(rawAddressLabelV366)}</span></button>${
           branch.phone
-            ?`<a class="customer-programme-contact-item-v337 customer-business-call-icon-v366" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}" aria-label="${esc(callTitleV366)}" title="${esc(callTitleV366)}">${CUI.icon('phone',{size:18})}${compactHeaderContactV366?'':`<span>Call</span>`}</a>`
-            :`<button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:18})}${compactHeaderContactV366?'':`<span>Call</span>`}</button>`
+            ?`<a class="customer-programme-contact-item-v337 customer-business-call-icon-v366" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}" aria-label="${esc(callTitleV366)}" title="${esc(callTitleV366)}">${CUI.icon('phone',{size:20})}${compactHeaderContactV366?'':`<span>Call</span>`}</a>`
+            :`<button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:20})}${compactHeaderContactV366?'':`<span>Call</span>`}</button>`
         }`;
         contactHostV326.querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=openSheet);
         const addressLineV386=$('walletBody').querySelector('[data-company-address-line-v386]');
         if(addressLineV386&&branch.address){
-          addressLineV386.innerHTML=`${CUI.icon('branch',{size:15})}<span>${esc(String(branch.address))}</span>`;
+          addressLineV386.innerHTML=`${CUI.icon('branch',{size:16})}<span>${esc(String(branch.address))}</span>`;
           addressLineV386.hidden=false;
         }
       }).catch(()=>{});
@@ -5047,7 +5047,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       return `<article class="wallet-reward customer-reward-card-v339${inProgressV340?' customer-reward-card-progress-v340':''}">
       <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
-        :CUI.icon('loyalty',{size:26})}</div><div class="customer-reward-card-head-v339">${ready?'<span class="pill ok">Ready to claim</span>':''}${inProgressV340?'<span class="pill customer-reward-progress-pill-v340">In progress</span>':''}${r.availability==='tier_locked'?`<span class="pill customer-reward-locked-v339">${esc(r.tier_requirement?.tier_label?`${r.tier_requirement.tier_label} only`:'Locked')}</span>`:''}</div>
+        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339">${ready?'<span class="pill ok">Ready to claim</span>':''}${inProgressV340?'<span class="pill customer-reward-progress-pill-v340">In progress</span>':''}${r.availability==='tier_locked'?`<span class="pill customer-reward-locked-v339">${esc(r.tier_requirement?.tier_label?`${r.tier_requirement.tier_label} only`:'Locked')}</span>`:''}</div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       <p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>
       ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}${short||inProgressV340?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap customer-reward-progress-read-v340"><b>${esc(customerPointTotalV103(Math.min(rewardBalance,cost)))}/${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</b><span class="muted"> · ${esc(customerPointTotalV103(gap))} more to go</span></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
@@ -5056,7 +5056,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
       <div class="wallet-reward-actions">${ready
-        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:17})}<span>Show QR at counter</span></button>`
+        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button>`
         :''}</div></article>`}).join('')}</div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
     /* v340 (gap 4): never a broken image. A stored object that has since been deleted, or a
@@ -5066,7 +5066,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     host.querySelectorAll('[data-reward-photo-v340]').forEach(image=>{image.onerror=()=>{
       const frame=image.closest('.customer-reward-photo-v340');if(!frame)return;
       frame.classList.add('customer-reward-photo-empty-v340');
-      frame.innerHTML=CUI.icon('loyalty',{size:26});
+      frame.innerHTML=CUI.icon('loyalty',{size:24});
     }});
     /* v339 (task A): the "reward ready" banner's validity line. The wallet payload that painted
        the banner has no expiry field on next_eligible_reward, but THIS catalogue read does — the
@@ -5241,7 +5241,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const remaining=Math.max(0,Number(item.sessions_remaining||0));
       return `<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${remaining} of ${Number(item.sessions_purchased||0)} left</span></div>
       <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
-      ${remaining>0&&packageId?`<button class="btn sm" type="button" data-customer-package-qr-v347="${esc(packageId)}" style="margin-top:10px">${CUI.icon('scan',{size:17})}<span>Show package QR</span></button>`:''}
+      ${remaining>0&&packageId?`<button class="btn sm" type="button" data-customer-package-qr-v347="${esc(packageId)}" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>Show package QR</span></button>`:''}
       ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`;
     }).join('')}
       ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
@@ -5343,7 +5343,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const host=$('walletFeedback');if(!host||!walletReviewUrl)return;
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
-      <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:17})}<span>Leave a public review</span></a>`;
+      <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:16})}<span>Leave a public review</span></a>`;
   };
   await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadStampCardV323(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
   if(!isWalletCurrent())return;
@@ -5378,7 +5378,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     if(!walletSectionStillCurrent(host,isCurrent)||!slotCurrent())return null;
     if(error)return {error};
     const unread=Math.max(0,Number(data?.unread_count||0));
-    slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:19})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
+    slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:20})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
     return {unread};
   };
   const render=()=>{
@@ -5425,7 +5425,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        the per-business reminder preferences, and (on the Messages page) the device-notification
        switch, which is moved in below. Collapsed by default — photo 8 shows a list, not a
        control panel. */
-    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="false" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:18})}</button></div>
+    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="false" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
       <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" hidden>
         <div class="customer-inbox-filter-row-v386" role="group" aria-label="Show">
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
@@ -5493,7 +5493,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       ?'You appear to be offline. Reconnect, then retry to refresh your current programme updates.'
       :'We could not refresh your current programme updates. Programme actions are hidden until refresh succeeds.';
     items=[];nextCursor=null;bell=null;
-    if(slotCurrent())slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open messages" title="Open messages">${CUI.icon('bell',{size:19})}</a>`;
+    if(slotCurrent())slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="Open messages" title="Open messages">${CUI.icon('bell',{size:20})}</a>`;
     host.setAttribute('aria-busy','false');
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${heading}</h2><p class="muted small" role="status" aria-live="polite">${message}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerInboxSyncRetry">Retry inbox refresh</button></div>`;
     const retry=host.querySelector('#customerInboxSyncRetry');
@@ -5824,7 +5824,7 @@ async function renderPortal(slug){
   catch(error){
     if(isPortalCurrent()){
       const card=root.querySelector('.card');
-      if(card){card.innerHTML=`<div class="empty"><div class="big">${CUI.icon('bookings',{size:30})}</div><h2>${error?.name==='AbortError'?'Booking page took too long':'Booking page could not load'}</h2><p class="muted small" style="margin-top:6px">Check your connection, then retry. Your account session has not been changed.</p><button class="btn" id="portalRetry" type="button" style="margin-top:14px">Retry booking page</button></div>`;const retry=$('portalRetry');if(retry)retry.onclick=()=>renderPortal(slug)}
+      if(card){card.innerHTML=`<div class="empty"><div class="big">${CUI.icon('bookings',{size:28})}</div><h2>${error?.name==='AbortError'?'Booking page took too long':'Booking page could not load'}</h2><p class="muted small" style="margin-top:6px">Check your connection, then retry. Your account session has not been changed.</p><button class="btn" id="portalRetry" type="button" style="margin-top:14px">Retry booking page</button></div>`;const retry=$('portalRetry');if(retry)retry.onclick=()=>renderPortal(slug)}
     }
     return;
   }finally{clearTimeout(portalLoadTimer)}
@@ -6003,7 +6003,7 @@ async function renderPortal(slug){
     </section>`;
     const stepBody={service:serviceStep,branch:branchStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
     root.innerHTML=`<div class="portal customer-surface" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},${bc})">
-      <div class="head">${portalBackHrefV192?`<a class="btn ghost sm portal-back" href="${esc(portalBackHrefV192)}">${CUI.icon('back',{size:17})}<span>Back</span></a>`:''}<h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p>${biz.bio?`<p class="muted small" style="margin-top:6px">${esc(biz.bio)}</p>`:''}</div>
+      <div class="head">${portalBackHrefV192?`<a class="btn ghost sm portal-back" href="${esc(portalBackHrefV192)}">${CUI.icon('back',{size:16})}<span>Back</span></a>`:''}<h1 style="font-size:2rem">${esc(biz.name)}</h1><p class="muted">Book with us — it takes 30 seconds.</p>${biz.bio?`<p class="muted small" style="margin-top:6px">${esc(biz.bio)}</p>`:''}</div>
       <div id="portalSignedInSlot"></div>
       <div class="card" id="bookingFormCard">
         ${progressHtml}

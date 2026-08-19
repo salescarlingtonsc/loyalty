@@ -25,7 +25,7 @@ const between=(source,start,end)=>{
 test('Appointments owns blocked-time authoring without a new module or navigation item',()=>{
   const appointments=between(app,'async function appointmentsPage(){','/* ---------- waitlist');
   const moduleMap=between(app,'const MODULES=','const ROLE_LABELS=');
-  assert.match(appointments,/id="openBlockTime"[\s\S]{0,120}CUI\.icon\('staff',\{size:18\}\)\} Block time/);
+  assert.match(appointments,/id="openBlockTime"[\s\S]{0,120}CUI\.icon\('staff',\{size:20\}\)\} Block time/);
   assert.match(appointments,/function openBlockedTimeDialog/);
   assert.match(appointments,/id="blockTimeStaff"/);
   assert.match(appointments,/id="blockTimeDate"/);
