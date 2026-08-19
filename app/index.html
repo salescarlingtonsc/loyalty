@@ -58,6 +58,12 @@
      second brand. Change these two together with --brand-red above. */
   --brand-red-on-dark:#E4776B;   /* accent text/icons on a dark ground */
   --brand-red-on-dark-2:#F0A199; /* hover step on a dark ground */
+  /* The two tinted steps also need a dark counterpart: #F7DCD7 and #FDEEEB are pale pinks that
+     become near-white plates on a #191C22 card. These are the same two roles (selected chip /
+     progress track ground, and large tinted surface) inverted for a dark ground. Change all four
+     on-dark steps together with --brand-red above. */
+  --brand-red-soft-on-dark:#3A211F;
+  --brand-red-faint-on-dark:#2A1917;
   /* ===== LAYOUT BREAKPOINTS (owner ruling 2026-08-18) ==================================
      The workspace shell is governed by TWO thresholds, and only these two:
        <= 768px   compact layout — mobile page padding, stacked page headers, responsive
@@ -3129,9 +3135,47 @@ html[data-customer-theme="dark"] .customer-business-detail-modal .modal-card{
     --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
     --coral:var(--brand-red-on-dark);--coral-hover:var(--brand-red-on-dark-2);--amber:#F2C078;--green:#78D5A7;--red:#FF9E95;
-    --grad:linear-gradient(135deg,var(--brand-red-on-dark),var(--brand-red-dark));--tint:#3A211F;
+    /* A FILLED brand surface keeps the deeper gradient. --brand-red-on-dark exists to carry brand
+       red as TEXT or an icon on a dark ground; white on #E4776B measures 2.9:1, so a button painted
+       with it fails the label it carries. #C24135 under white is 5.8:1 and still reads as Peekaa. */
+    --grad:linear-gradient(135deg,var(--brand-red),var(--brand-red-dark));--tint:#3A211F;
+    --brand-red-soft:var(--brand-red-soft-on-dark);--brand-red-faint:var(--brand-red-faint-on-dark);
+    /* ===== the semantic pairs get dark GROUNDS, not light ones ===============================
+       Wave 1 introduced one colour pair per meaning; this block was written before it, so a
+       "Ends soon" chip painted #FFF3D6 and an "Appointment" pill painted #E7F6EE straight onto a
+       #191C22 card. Dark inverts the pair — a deep desaturated ground carrying light type — rather
+       than dimming the light one, which would have kept dark text on a pale plate. */
+    --success:#78D5A7;--success-bg:#183A2D;
+    --danger:#FF9E95; --danger-bg:#432321;
+    --warn:#F2C078;   --warn-bg:#4A3816;
+    --neutral-bg:#292C33;
+    --gold:#E3C173;   --gold-bg:#3D3218;
+    --bg-cust:#0F1115;--head-tint:#20242C;
     --shadow:0 1px 2px rgba(0,0,0,.2),0 5px 16px rgba(0,0,0,.24);
-    --shadow-lg:0 3px 8px rgba(0,0,0,.28),0 20px 52px rgba(0,0,0,.4)
+    --shadow-lg:0 3px 8px rgba(0,0,0,.28),0 20px 52px rgba(0,0,0,.4);
+    /* Warm shadows are cast in a brown ink at 5-11% alpha — literally invisible over #0F1115.
+       Dark separates surfaces with a deeper, blacker shadow; the brand glow keeps its hue but needs
+       roughly double the alpha to register at all. */
+    --shadow-warm:0 1px 2px rgba(0,0,0,.34),0 8px 24px rgba(0,0,0,.36);
+    --shadow-warm-lg:0 4px 10px rgba(0,0,0,.42),0 18px 44px rgba(0,0,0,.48);
+    --glow-brand:0 8px 26px rgba(194,65,53,.5);
+    /* ===== the --peekaa-* aliases are NOT self-following — measured, not assumed ==============
+       At :root they read `--peekaa-card:var(--card)`, and a custom property containing var() is
+       substituted at computed-value time ON THE ELEMENT THAT DECLARES IT. :root is light, so every
+       alias froze to its light value there and inherited down as a literal; redefining --card on
+       this descendant could never move them. Before this block, dark measured --peekaa-card
+       #FFFFFF, --peekaa-text #17161A and --peekaa-bg #F8F4F1 — and the V343/V345 customer shell
+       paints its page, its cards and its type from exactly those three, so the customer app was
+       still light beige under a dark <body>, with dark ink on dark cards where the base tokens did
+       reach. They are re-declared HERE, on the element the dark values live on, which is the only
+       place the substitution can pick them up. Keep them in step with the base tokens above. */
+    --peekaa-bg:#0F1115;--peekaa-card:#191C22;--peekaa-white:#191C22;
+    --peekaa-text:#F7F4EF;--peekaa-text-secondary:#AAA3AD;--peekaa-text-muted:#AAA3AD;
+    --peekaa-border:#343841;--peekaa-divider:#343841;
+    --peekaa-success:#78D5A7;--peekaa-success-bg:#183A2D;
+    --peekaa-gold:#E3C173;--peekaa-gold-bg:#3D3218;
+    --peekaa-red:var(--brand-red-on-dark);--peekaa-red-dark:var(--brand-red-dark);
+    --peekaa-red-soft:var(--brand-red-soft-on-dark);--peekaa-red-faint:var(--brand-red-faint-on-dark)
   }
 html[data-customer-theme="dark"] .customer-surface.portal{--coral:var(--brand-red-on-dark)!important;--grad:linear-gradient(135deg,var(--brand-red-on-dark),var(--brand-red-dark))!important}
   /* v176: doubled class (.customer-surface.customer-surface) + :is() so these dark remaps
@@ -3169,6 +3213,39 @@ html[data-customer-theme="dark"] .customer-surface .customer-merchant-hero .bran
 html[data-customer-theme="dark"] .customer-surface .redemption-qr{color-scheme:light;background:#fff;color:#17161A;border-color:#EAE6DF}
 html[data-customer-theme="dark"] .customer-surface .redemption-qr :where(img,canvas){filter:none}
 html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:linear-gradient(90deg,var(--bg),#252930,var(--bg));background-size:200% 100%}
+/* ---- components written after the token block, which carry light values in their own rules ----
+   A token remap cannot reach a literal. Each rule below closes one failure measured by
+   tools/qa-sweep/dark-sweep.mjs; all are scoped to the customer dark surface, so light mode and the
+   business workspace are untouched. */
+/* Wave 2B progress components: the unfilled stamp dot was a WHITE disc with a pale-pink hairline —
+   a near-white plate on a #191C22 card — and the filled dot and the track fill both painted
+   var(--brand-red) directly, which is 2.9:1 on the tinted card behind them. */
+html[data-customer-theme="dark"] .customer-surface .cui-stamp-dots-v2b i{background:rgba(255,255,255,.08);border-color:var(--coral)}
+html[data-customer-theme="dark"] .customer-surface .cui-stamp-dots-v2b i.on{background:var(--coral);border-color:var(--coral)}
+html[data-customer-theme="dark"] .customer-surface .cui-progress-track-v2b i{background:var(--coral)}
+/* The near-goal ring mixes gold towards #fff, which is a white band on a dark card; on dark the
+   same 55% gold is mixed towards black so the ring still reads as a gold edge, not a highlight. */
+html[data-customer-theme="dark"] .customer-surface .is-near-goal-v2b{box-shadow:var(--shadow-warm),inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,#000)!important}
+/* V344/V345 literal light plates that survive the token remap. */
+html[data-customer-theme="dark"] .customer-surface .customer-booking-date-tile-v344{background:var(--card);color:var(--ink)}
+html[data-customer-theme="dark"] .customer-surface .wallet-appt{background:linear-gradient(135deg,var(--card),#20242C)}
+html[data-customer-theme="dark"] .customer-surface .customer-programme-compact-head-v339.customer-programme-compact-head-v337{background:var(--card)}
+html[data-customer-theme="dark"] .customer-surface .customer-programme-compact-head-v339 .customer-programme-tier-jump-v327{background:#22262E}
+/* Filled brand marks: same reasoning as --grad above, plus the white "cutout" rings that separate
+   them from the nav must be the nav's colour, not white. */
+html[data-customer-theme="dark"] .customer-surface .customer-nav-scan-fab{background:var(--brand-red)!important;border-color:var(--card)}
+html[data-customer-theme="dark"] .customer-surface .customer-inbox-badge{background:var(--brand-red);border-color:var(--card)}
+/* The claimable banner's icon and kicker are literal creams/browns from the light gold ramp. */
+html[data-customer-theme="dark"] .customer-surface .customer-claimable-banner-icon-v337{background:#4A3D1C!important;color:var(--gold)!important}
+html[data-customer-theme="dark"] .customer-surface .customer-claimable-banner-kicker-v337,
+html[data-customer-theme="dark"] .customer-surface .customer-claimable-strip-label{color:var(--gold)!important}
+/* The merchant hero paints a saturated BRAND ground in both themes — it is not a theme surface —
+   so its accents stay the light ones. Re-tinting the tier pill and the progress gold for a dark
+   ground here would invent a second design for a card that never went dark. */
+html[data-customer-theme="dark"] .customer-surface .card.customer-business-summary-v346,
+html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
+    --gold:#D8B15A;--gold-bg:#FFF3D6;--warn:#8A6D1A;--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;
+    --coral:#fff;--ink:#fff;--muted:rgba(255,255,255,.82)}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
 .fb-stars{border:0;padding:0;margin:0;min-width:0}
