@@ -5,7 +5,7 @@ import {extname,join,normalize} from 'node:path';
 const ROOT='/home/user/loyalty',PORT=4191;
 const MIME={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
 const srv=createServer(async(q,s)=>{try{const p=normalize(decodeURIComponent(q.url.split('?')[0])).replace(/^(\.\.[/\\])+/,'');
- if(p==='/sb-double.js'){s.writeHead(200,{'content-type':'text/javascript'});return s.end(await readFile(join(ROOT,'.qa/sb-double.js')))}
+ if(p==='/sb-double.js'){s.writeHead(200,{'content-type':'text/javascript'});return s.end(await readFile(join(ROOT,'tools/qa-sweep/sb-double.js')))}
  const f=join(ROOT,p==='/'?'/app/index.html':(p.startsWith('/app/')?p:'/app'+p));const b=await readFile(f);
  s.writeHead(200,{'content-type':MIME[extname(f)]||'application/octet-stream'});s.end(b)}catch{s.writeHead(404);s.end('nf')}});
 await new Promise(r=>srv.listen(PORT,'127.0.0.1',r));
@@ -19,11 +19,12 @@ const open=async(route,w=1280)=>{const p=await br.newPage({viewport:{width:w,hei
   await p.waitForTimeout(1500);return p;};
 
 // A. error cards — what do they actually say?
-for(const route of ['dashboard','expenses','customer-interface']){
+for(const route of ['dashboard','customer-interface','staffmembers']){
   const p=await open(route);
-  const t=await p.evaluate(()=>[...document.querySelectorAll('.err,#routeRetry,[data-error]')]
-    .map(e=>e.textContent.trim().replace(/\s+/g,' ').slice(0,110)).slice(0,3));
-  console.log(`ERROR-CARD ${route}:`, t); await p.close();
+  const t=await p.evaluate(()=>[...document.querySelectorAll('button,a[href]')]
+    .map(e=>({t:(e.getAttribute('aria-label')||e.textContent||'').trim().replace(/\s+/g,' ').slice(0,40),h:Math.round(e.getBoundingClientRect().height),c:e.className.slice(0,44)}))
+    .filter(x=>x.h>0&&x.h<44));
+  console.log(`${route}:`, t.length?t:'no sub-44px controls'); await p.close();
 }
 // B. do my six rulings hold in a real render?
 const p=await open('services');

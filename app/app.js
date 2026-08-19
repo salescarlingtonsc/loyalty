@@ -14918,7 +14918,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const shown=rows.slice(0,DASHBOARD_SCHEDULE_CHIP_LIMIT_V180);
   const overflow=rows.length-shown.length;
   host.innerHTML=`<ol class="dashboard-schedule-chips">${shown.map(row=>{
-    const time=sgt(row.starts_at).slice(11,16);
+    const time=(sgt(row.starts_at)||'').slice(11,16);
     const who=row.clients?.full_name||'Walk-in';
     const what=row.services?.name||'';
     /* V375 (owner, photo 15: the 11:30 row ringed — "clickable to pop-up see details & to
@@ -38485,7 +38485,7 @@ async function dailyReportPage(){
         <div class="card"><b>Signed revenue by kind</b><div class="chart-frame"><canvas id="drC2"></canvas></div></div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
-          ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
+          ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;

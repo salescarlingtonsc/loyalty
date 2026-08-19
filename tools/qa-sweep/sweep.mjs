@@ -2,7 +2,7 @@
  *
  * For each route it records: console errors, uncaught page errors, whether anything rendered,
  * every interactive control found, controls with no handler, duplicate DOM ids, images that
- * failed, and elements overflowing the viewport. Screenshots go to .qa/shots/.
+ * failed, and elements overflowing the viewport. Screenshots go to tools/qa-sweep/shots/.
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
@@ -25,7 +25,7 @@ const server = createServer(async (req, res) => {
     const p = normalize(decodeURIComponent(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
     if (p === '/sb-double.js') {
       res.writeHead(200, { 'content-type': 'text/javascript' });
-      return res.end(await readFile(join(ROOT, '.qa/sb-double.js')));
+      return res.end(await readFile(join(ROOT, 'tools/qa-sweep/sb-double.js')));
     }
     const file = join(ROOT, p === '/' ? '/app/index.html' : (p.startsWith('/app/') ? p : '/app' + p));
     const body = await readFile(file);
@@ -34,8 +34,8 @@ const server = createServer(async (req, res) => {
   } catch { res.writeHead(404); res.end('nf'); }
 });
 
-const double = await readFile(join(ROOT, '.qa/sb-double.js'), 'utf8');
-await mkdir(join(ROOT, '.qa/shots'), { recursive: true });
+const double = await readFile(join(ROOT, 'tools/qa-sweep/sb-double.js'), 'utf8');
+await mkdir(join(ROOT, 'tools/qa-sweep/shots'), { recursive: true });
 
 async function sweep(browser, routes, label, viewport) {
   const out = [];
@@ -96,7 +96,7 @@ async function sweep(browser, routes, label, viewport) {
     }).catch(e => ({ evalError: String(e.message).slice(0, 160) }));
 
     const safe = route.replace(/\//g, '_');
-    await page.screenshot({ path: join(ROOT, `.qa/shots/${label}-${safe}.png`), fullPage: true }).catch(() => {});
+    await page.screenshot({ path: join(ROOT, `tools/qa-sweep/shots/${label}-${safe}.png`), fullPage: true }).catch(() => {});
     out.push({ route, nav, consoleErrors, pageErrors, failedReq, ...audit });
     await ctx.close();
     process.stdout.write(`  ${label}/${route}${audit.rendered === false ? '  *** BLANK ***' : ''}${(pageErrors.length ? '  *** JS ERROR ***' : '')}\n`);
@@ -110,6 +110,6 @@ try {
   const desktop = await sweep(browser, BUSINESS, 'biz-desktop', { width: 1280, height: 900 });
   const mobile = await sweep(browser, BUSINESS.slice(0, 12), 'biz-mobile', { width: 390, height: 844 });
   const cust = await sweep(browser, CUSTOMER, 'cust-mobile', { width: 390, height: 844 });
-  await writeFile(join(ROOT, '.qa/results.json'), JSON.stringify({ desktop, mobile, cust }, null, 2));
-  console.log('\nwrote .qa/results.json');
+  await writeFile(join(ROOT, 'tools/qa-sweep/results.json'), JSON.stringify({ desktop, mobile, cust }, null, 2));
+  console.log('\nwrote tools/qa-sweep/results.json');
 } finally { await browser.close(); server.close(); }

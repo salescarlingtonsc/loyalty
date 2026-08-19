@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="668db0acd82dc983d32b71a436dbab85792223cfc79a4d9cb26dd18ba23f7342"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d6ee39b3bb3ead387ea8c4a58fd35baf847ddbde3002ba9c9ddf30e525661e42"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -316,7 +316,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:#FFF7F4;border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
-.dashboard-chart-head .dashboard-chart-link{color:var(--coral);font-weight:750;font-size:12px;white-space:nowrap;min-height:32px;display:inline-flex;align-items:center}
+.dashboard-chart-head .dashboard-chart-link{color:var(--coral);font-weight:750;font-size:12px;white-space:nowrap;min-height:var(--control-h);display:inline-flex;align-items:center}
 .metric-action-label{display:inline-flex;margin-top:10px;min-height:32px;align-items:center;color:var(--coral);font-weight:800;font-size:12.5px}
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:#FBFAF8;color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#fff8f4);border-color:#E8D8D0}
@@ -384,10 +384,10 @@ tr[aria-selected="true"] td{background:var(--tint)}
    booking is worse than a taller card on the one surface an owner checks before opening. */
 .dashboard-schedule-today:not(:empty){margin-top:14px;padding-top:13px;border-top:1px solid #EEDFD7}
 .dashboard-schedule-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
-.dashboard-schedule-chip{display:flex;align-items:baseline;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:999px;font-size:13px;min-height:34px}
+.dashboard-schedule-chip{display:flex;align-items:center;gap:7px;padding:7px 12px;background:#fff;border:1px solid #EEDFD7;border-radius:999px;font-size:13px;min-height:var(--control-h)}
 .dashboard-schedule-chip>b{color:var(--coral);font-variant-numeric:tabular-nums}
 /* V375: the whole chip is the tap target now that it opens the appointment. */
-.dashboard-schedule-chip-link-v375{display:flex;align-items:baseline;gap:7px;color:inherit;text-decoration:none}
+.dashboard-schedule-chip-link-v375{display:flex;align-items:center;gap:7px;color:inherit;text-decoration:none;min-height:var(--control-h)}
 .dashboard-schedule-chip-link-v375>b{color:var(--coral);font-variant-numeric:tabular-nums}
 .dashboard-schedule-chip:has(.dashboard-schedule-chip-link-v375){padding:0}
 .dashboard-schedule-chip-link-v375{padding:7px 12px}
@@ -472,7 +472,7 @@ tr[aria-selected="true"] td{background:var(--tint)}
    nothing left to switch between. The buttons stay in the DOM for staffMembersPage. */
 .settings-tabs{display:none}
 .staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
-.staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
+.staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:var(--control-h);padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
 @media(min-width:769px) and (max-width:1180px){
   .appbar{gap:8px;padding:10px 14px;overflow:visible}
   .global-actions{gap:6px;min-width:0}
@@ -1916,7 +1916,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
     calc(86px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));overflow-x:hidden}
   input,select,textarea{font-size:16px}
   .dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 10px}
-  .dashboard-chart-link{grid-column:2;justify-self:start;min-height:36px;padding:4px 0;white-space:normal}
+  .dashboard-chart-link{grid-column:2;justify-self:start;min-height:var(--control-h);padding:4px 0;white-space:normal}
   .dashboard-chart-card .chart-frame{height:190px;margin:8px 10px 12px}
   .dashboard-chart-empty{min-height:150px;margin:8px 10px 12px}
   .dashboard-mobile-branch{display:block;flex:1 1 100%}
@@ -2799,7 +2799,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.82)!important;font-size:12px!important;line-height:1.2!important}
 .customer-business-summary-actions-v349{margin-top:13px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
 .customer-business-summary-actions-v349:has(>:only-child){grid-template-columns:1fr!important}
-.customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:36px!important;border-radius:10px!important;font-size:13px!important}
+.customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:var(--control-h)!important;border-radius:10px!important;font-size:13px!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{background:#fff!important;color:var(--brand-red-dark)!important;box-shadow:0 8px 18px rgba(83,26,21,.14)!important}
 .customer-business-book-inline-v349{background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
 .customer-referral-card-v300{padding:16px!important}.customer-referral-card-v300 .wallet-section-head h2{font-size:17px!important;line-height:1.08!important}.customer-referral-card-v300 .wallet-section-head p{max-width:100%;font-size:12.5px!important;line-height:1.28!important}
@@ -2818,7 +2818,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-business-back-v346{grid-column:1!important;grid-row:1!important}
 .customer-business-identity-v346{grid-column:2!important;grid-row:1!important;min-width:0!important}
 .customer-business-actions-v346{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax(0,1fr) 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important}
-.customer-business-actions-v346 .customer-programme-contact-item-v337{min-width:0!important;min-height:34px!important;padding:0 8px!important;border-radius:13px!important;font-size:12px!important}
+.customer-business-actions-v346 .customer-programme-contact-item-v337{min-width:0!important;min-height:var(--control-h)!important;padding:0 8px!important;border-radius:13px!important;font-size:12px!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337 svg{width:15px!important;height:15px!important;flex:0 0 auto!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337 span{min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 .customer-business-actions-v346 .customer-business-address-v366{justify-content:flex-start!important}
@@ -2921,7 +2921,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 668db0acd82dc983d32b71a436dbab85792223cfc79a4d9cb26dd18ba23f7342</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d6ee39b3bb3ead387ea8c4a58fd35baf847ddbde3002ba9c9ddf30e525661e42</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5805,7 +5805,7 @@ function renderHistPage(history,n){
         <div class="card"><b>Signed revenue by kind</b><div class="chart-frame"><canvas id="drC2"></canvas></div></div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
-          ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
+          ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;
@@ -6305,7 +6305,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'668db0acd82dc983d32b71a436dbab85792223cfc79a4d9cb26dd18ba23f7342',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'d6ee39b3bb3ead387ea8c4a58fd35baf847ddbde3002ba9c9ddf30e525661e42',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
