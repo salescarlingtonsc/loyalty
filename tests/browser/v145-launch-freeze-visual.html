@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1643bbeaa7d00496aa6e1f387b5cffd2f2b7b791ea85effc9352ec4fbe49e3d1"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f09e69c4fd20e68fdef7c7579f7cbea87709a47dd18ca896e68695bcb7553971"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -135,9 +135,12 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
   box-shadow:var(--shadow);padding:22px;transition:box-shadow var(--motion-ui) var(--ease),border-color var(--motion-fast) var(--ease),transform var(--motion-ui) var(--ease),background var(--motion-fast) var(--ease)}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
+/* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
+   deliberately off; warn means "needs a look". Unbuilt must not read the same as turned-off. */
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:var(--success-bg);color:var(--green)}
@@ -3057,7 +3060,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 1643bbeaa7d00496aa6e1f387b5cffd2f2b7b791ea85effc9352ec4fbe49e3d1</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f09e69c4fd20e68fdef7c7579f7cbea87709a47dd18ca896e68695bcb7553971</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6085,7 +6088,7 @@ function renderHistPage(history,n){
     $('exList').innerHTML=(ex&&ex.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Expense records"><table data-responsive="true"><tr><th>Date</th><th>Scope</th><th>Category</th><th>Supplier</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr>
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
-        <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">voided</span>':'<span class="pill ok">active</span>'}</td>
+        <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
@@ -6517,7 +6520,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'1643bbeaa7d00496aa6e1f387b5cffd2f2b7b791ea85effc9352ec4fbe49e3d1',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'f09e69c4fd20e68fdef7c7579f7cbea87709a47dd18ca896e68695bcb7553971',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

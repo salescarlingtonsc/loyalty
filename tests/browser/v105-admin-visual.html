@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="575b53d48f38b49f7215a384973edd32750d3f2aa172933271f7f42ecd292490">
+<meta name="v105-production-component-sha256" content="29d1bafdd29af9b6f5f60c3176a667b3ce249655730965d5498c15d828e99c05">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -141,9 +141,12 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
   box-shadow:var(--shadow);padding:22px;transition:box-shadow var(--motion-ui) var(--ease),border-color var(--motion-fast) var(--ease),transform var(--motion-ui) var(--ease),background var(--motion-fast) var(--ease)}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
+/* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
+   deliberately off; warn means "needs a look". Unbuilt must not read the same as turned-off. */
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:var(--success-bg);color:var(--green)}
@@ -3871,7 +3874,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 575b53d48f38</span>
+<span class="v105-provenance">v105 production-component harness · 29d1bafdd29a</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -3996,7 +3999,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'575b53d48f38b49f7215a384973edd32750d3f2aa172933271f7f42ecd292490',
+  sourceHash:'29d1bafdd29af9b6f5f60c3176a667b3ce249655730965d5498c15d828e99c05',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

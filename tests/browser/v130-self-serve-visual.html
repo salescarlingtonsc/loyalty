@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="f5537837e80734e66532b19ecdab4b54ca247d07673be38f6b903a223e98a5c0"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="151d7dca2890b21ed4d0433e9f7badcbb9de34fbfa8b14cc1e2e06e2164de46e"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -134,9 +134,12 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
   box-shadow:var(--shadow);padding:22px;transition:box-shadow var(--motion-ui) var(--ease),border-color var(--motion-fast) var(--ease),transform var(--motion-ui) var(--ease),background var(--motion-fast) var(--ease)}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
+/* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
+   deliberately off; warn means "needs a look". Unbuilt must not read the same as turned-off. */
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:var(--success-bg);color:var(--green)}

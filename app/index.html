@@ -169,9 +169,12 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
   box-shadow:var(--shadow);padding:22px;transition:box-shadow var(--motion-ui) var(--ease),border-color var(--motion-fast) var(--ease),transform var(--motion-ui) var(--ease),background var(--motion-fast) var(--ease)}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
+/* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
+   deliberately off; warn means "needs a look". Unbuilt must not read the same as turned-off. */
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:var(--success-bg);color:var(--green)}
@@ -3127,7 +3130,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      initial load is optional: the native bridge, PWA, push and brand/runtime config all run at
      load time, and customer-ui.js is read while the core boots. -->
 <script type="application/json" id="appSurfaceAssets">
-{"auth":{"js":[],"css":[]},"customer":{"js":["/growth-offers.js?v=20260807-v200"],"css":["/growth-offers.css?v=20260807-v200"]},"business":{"js":["/grow-recommender.js?v=20260807-v200","/v95-media-sync.js?v=20260728-atomic-media","/revenue-truth.js?v=20260807-v200","/growth-offers.js?v=20260807-v200","/sector-economics.js?v=20260807-v200"],"css":["/revenue-truth.css?v=20260819-w1tokens","/growth-offers.css?v=20260807-v200","/sector-economics.css?v=20260819-w1tokens"]}}
+{"auth":{"js":[],"css":[]},"customer":{"js":["/growth-offers.js?v=20260807-v200"],"css":["/growth-offers.css?v=20260819-w1tokens"]},"business":{"js":["/grow-recommender.js?v=20260807-v200","/v95-media-sync.js?v=20260728-atomic-media","/revenue-truth.js?v=20260807-v200","/growth-offers.js?v=20260807-v200","/sector-economics.js?v=20260807-v200"],"css":["/revenue-truth.css?v=20260819-w1tokens","/growth-offers.css?v=20260819-w1tokens","/sector-economics.css?v=20260819-w1tokens"]}}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <!-- v185: app/app.js is split by surface at build time. The core loads here; the auth, customer or
@@ -3135,7 +3138,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=72c9e9b31ce5","business":"/app-business.js?b=660c0dde2f28","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=2e1b3d2b265c","customer":"/app-customer.js?b=72c9e9b31ce5","business":"/app-business.js?b=8bd733a2c694","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

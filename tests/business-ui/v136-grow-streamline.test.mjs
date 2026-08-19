@@ -81,7 +81,7 @@ test('overview reads enough server state to label programme status without inven
      never invented — is now carried by that tile's own status expression, which distinguishes
      "no module", "live", "configured but paused" and "not set up" from the same snapshot. */
   assert.match(grow,/const bringBackLiveV229=\(snapshot\.retention\|\|\[\]\)\.filter\(program=>program\?\.active!==false\)\.length;/);
-  assert.match(grow,/bringBackLiveV229\?\['Live','on'\]:snapshot\.retention\?\.length\?\['Paused','off'\]:\['Not set up','off'\]/);
+  assert.match(grow,/bringBackLiveV229\?\[STATUS_WORDS\.on,'on'\]:snapshot\.retention\?\.length\?\['Paused','warn'\]:\['Not set up','warn'\]/);
   assert.match(grow,/const retentionOverviewState=program=>/);
   assert.match(grow,/startsOn>growAsOfDate/);
   assert.match(grow,/status:'Scheduled'/);
@@ -100,7 +100,7 @@ test('overview reads enough server state to label programme status without inven
   /* V371: birthday moved from a row to a topic tile and lost its unavailable state on the way —
      a failed read fell through to "Not set up", stating as fact that nothing is configured. Every
      tile now routes its status through growTileStatusV371, which names the read it depends on. */
-  assert.match(grow,/const growTileStatusV371=\(errorKey,status\)=>\s*\n?\s*snapshot\.overviewErrors\?\.\[errorKey\]\?\['Unavailable','off'\]:status;/);
+  assert.match(grow,/const growTileStatusV371=\(errorKey,status\)=>\s*\n?\s*snapshot\.overviewErrors\?\.\[errorKey\]\?\['Unavailable','warn'\]:status;/);
   for(const source of ['loyalty','rewards','birthday','retention','referrals']){
     assert.match(grow,new RegExp(`growTileStatusV371\\('${source}'`),`${source} read failures need an honest unavailable state`);
   }

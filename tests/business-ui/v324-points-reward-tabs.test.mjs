@@ -24,7 +24,7 @@ const statement = (start, end) => {
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const programmeStatus = (label, tone) => `<span class="pill ${tone||'off'}">${esc(label)}</span>`;
 
-const rewardCardStatusSrc = statement('const rewardCardStatusV250=milestone=>', "['Paused','off'];");
+const rewardCardStatusSrc = statement('const rewardCardStatusV250=milestone=>', "['Paused','warn'];");
 const rewardCardHtmlSrc = statement('const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId,pending=null})=>{', '};');
 const gridBody = statement('const rewardTabStripV324=`<div class="v150-segment" role="group"', "</div>`:''}`;");
 

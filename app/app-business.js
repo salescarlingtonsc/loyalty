@@ -11371,7 +11371,9 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
     :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
   const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
     :active?STATUS_WORDS.on:STATUS_WORDS.off;
-  const tone=active&&status?.item_available!==false?'on':'off';
+  /* Wave 1 pill semantics: unavailable / unbuilt / broken-item states carry the warn tone. */
+  const tone=!status||!configured||status.item_available===false?'warn'
+    :active?'on':'off';
   const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
     ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
   const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
@@ -12877,9 +12879,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V240: 'both' makes TWO tiles live at once (points and tiers), which is the whole point of
      the Chagee shape. The stamp card is still mutually exclusive with the points engine. */
   const liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'?['redeem','tiers']:[liveLoyaltyModelV235];
+  /* Wave 1 pill semantics: running = green 'On' (ruling-4 vocabulary); running-but-unpublished
+     keeps its compound truth but moves to the warn tone — it is earning, and it needs a look.
+     'Not included' stays quietly grey; plain 'Off' stays grey. */
   const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
-    :!liveLoyaltyModelKeysV240.includes(key)?['Off','off']
-    :loyaltyLive?['Active','on']:['Active · paused','off'];
+    :!liveLoyaltyModelKeysV240.includes(key)?[STATUS_WORDS.off,'off']
+    :loyaltyLive?[STATUS_WORDS.on,'on']:[`${STATUS_WORDS.on} · unpublished`,'warn'];
   /* V296 (owner markup 2026-08-12, "X NO — not linked to point" across the Tiered membership and
      Stamp card cards): otherModelLiveV235() rendered "<other model> is the live model" as those
      cards' subtitle, so a card about tiers spent its one line talking about points. A pending card
@@ -13083,7 +13088,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      claim. Each tile now names the read it depends on and says 'Unavailable' instead, which is the
      same honest-unknown state the drilled rows (growProgrammeRow) have always used. */
   const growTileStatusV371=(errorKey,status)=>
-    snapshot.overviewErrors?.[errorKey]?['Unavailable','off']:status;
+    snapshot.overviewErrors?.[errorKey]?['Unavailable','warn']:status;
   const growTopicDefsV229=[
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
     /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
@@ -13111,21 +13116,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        here, each with its own status and its own door, so nothing is one level deeper than the
        thing it sits beside. */
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
-      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
     {key:'birthday',icon:'loyalty',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
-      status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?[STATUS_WORDS.on,'on']:rewardJourney.birthday?['Paused','warn']:['Not set up','warn']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
         ?`${rewardJourney.birthday.value}`:'Set the birthday treat and its window'},
     {key:'bringback',icon:'retention',title:'Bring-back rewards',blurb:'Win back customers who have gone quiet.',
-      status:growTileStatusV371('retention',!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('retention',!canWinback?['Not included','off']:bringBackLiveV229?[STATUS_WORDS.on,'on']:snapshot.retention?.length?['Paused','warn']:['Not set up','warn']),
       summary:bringBackLiveV229?`${bringBackLiveV229} running`:'Reward customers who return after a break'},
     /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Let customers refer friends and earn rewards.',
-      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?[STATUS_WORDS.on,'on']:referralConfigured?['Paused','warn']:['Not set up','warn']),
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
@@ -13135,7 +13140,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        entirely"). The status stays
        honest: a tenant with live plans still reads Live, not "pending". */
     {key:'recurring',icon:'memberships',title:'Memberships',blurb:'Let customers subscribe and save',
-      status:activeMembershipCount?['Live','on']:membershipConfigured?['Paused','off']:['Not set up','off'],
+      status:activeMembershipCount?[STATUS_WORDS.on,'on']:membershipConfigured?['Paused','warn']:['Not set up','warn'],
       summary:activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:membershipConfigured?'Membership plans exist but are currently paused':'Let customers subscribe and save'},
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
@@ -13404,10 +13409,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      owner deliberately retired, both showed the identical grey "Paused"). They are undone by
      different actions — one by turning the programme back on, the other by re-publishing the
      reward — so they get different words. A live reward is untouched. */
-  const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
+  const rewardCardStatusV250=milestone=>milestone.availableToCustomers?[STATUS_WORDS.on,'on']
     :milestone.availability==='not_started'?['Scheduled','off']
     :milestone.availability==='ended'?['Ended','off']
-    :milestone.availability==='programme_paused'?['Paused with programme','off']:['Paused','off'];
+    :milestone.availability==='programme_paused'?['Paused with programme','off']:['Paused','warn'];
   const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId,pending=null})=>{
     const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>${growPendingBlockV268(pending)}`;
     return canSetupGrow
@@ -27166,7 +27171,7 @@ async function expensesPage(){
     $('exList').innerHTML=(ex&&ex.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Expense records"><table data-responsive="true"><tr><th>Date</th><th>Scope</th><th>Category</th><th>Supplier</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr>
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
-        <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">voided</span>':'<span class="pill ok">active</span>'}</td>
+        <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});

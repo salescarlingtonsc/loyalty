@@ -111,7 +111,7 @@ test('V240 the wallet shows the ladder and the rewards together', () => {
 
 test('V240 the overview can show two live models at once', () => {
   assert.match(app, /liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'\?\['redeem','tiers'\]:\[liveLoyaltyModelV235\]/);
-  assert.match(app, /:!liveLoyaltyModelKeysV240\.includes\(key\)\?\['Off','off'\]/);
+  assert.match(app, /:!liveLoyaltyModelKeysV240\.includes\(key\)\?\[STATUS_WORDS\.off,'off'\]/);
   /* V296 retarget: that sentence was otherModelLiveV235()'s output, printed as the SUBTITLE of a
      pending card; the owner struck those subtitles out ("X NO — not linked to point") on
      2026-08-12 and the helper went with them. What this test is really about — 'both' making two

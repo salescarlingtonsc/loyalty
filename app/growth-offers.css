@@ -1,7 +1,7 @@
 .growth-owner-console,
 .growth-active-execution,
 .growth-customer-offers{
-  --growth-accent:var(--red,#c83b32);
+  --growth-accent:var(--brand-red,#C24135);
   border:1px solid rgba(27,24,31,.1);
   border-radius:22px;
   background:#fff;
@@ -81,7 +81,7 @@
   opacity:.62;
 }
 .growth-button--primary{
-  background:var(--growth-accent);
+  background:var(--grad,var(--growth-accent));
   color:#fff;
 }
 .growth-button--secondary{

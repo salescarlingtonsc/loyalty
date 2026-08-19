@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b1cb6c500bfa401e6efe1b7677d3710d4302245f2614baeaeeb0af780242238c"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="7bdbd63e1443dfc18c3d089e3012356990cabd1dcb83588fd50b60de2f507523"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -135,9 +135,12 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
   box-shadow:var(--shadow);padding:22px;transition:box-shadow var(--motion-ui) var(--ease),border-color var(--motion-fast) var(--ease),transform var(--motion-ui) var(--ease),background var(--motion-fast) var(--ease)}
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
-.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+.pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
+/* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
+   deliberately off; warn means "needs a look". Unbuilt must not read the same as turned-off. */
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
 /* V334 (owner markup, photo 4: "change to small button on/off — when on show green, when off show red") */
 .pill-toggle-v334{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:3.5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;border:none;cursor:pointer}
 .pill-toggle-v334.on{background:var(--success-bg);color:var(--green)}
@@ -3057,7 +3060,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b1cb6c500bfa401e6efe1b7677d3710d4302245f2614baeaeeb0af780242238c</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7bdbd63e1443dfc18c3d089e3012356990cabd1dcb83588fd50b60de2f507523</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -11114,7 +11117,9 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
     :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
   const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
     :active?STATUS_WORDS.on:STATUS_WORDS.off;
-  const tone=active&&status?.item_available!==false?'on':'off';
+  /* Wave 1 pill semantics: unavailable / unbuilt / broken-item states carry the warn tone. */
+  const tone=!status||!configured||status.item_available===false?'warn'
+    :active?'on':'off';
   const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
     ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
   const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
@@ -12629,9 +12634,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V240: 'both' makes TWO tiles live at once (points and tiers), which is the whole point of
      the Chagee shape. The stamp card is still mutually exclusive with the points engine. */
   const liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'?['redeem','tiers']:[liveLoyaltyModelV235];
+  /* Wave 1 pill semantics: running = green 'On' (ruling-4 vocabulary); running-but-unpublished
+     keeps its compound truth but moves to the warn tone — it is earning, and it needs a look.
+     'Not included' stays quietly grey; plain 'Off' stays grey. */
   const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
-    :!liveLoyaltyModelKeysV240.includes(key)?['Off','off']
-    :loyaltyLive?['Active','on']:['Active · paused','off'];
+    :!liveLoyaltyModelKeysV240.includes(key)?[STATUS_WORDS.off,'off']
+    :loyaltyLive?[STATUS_WORDS.on,'on']:[`${STATUS_WORDS.on} · unpublished`,'warn'];
   /* V296 (owner markup 2026-08-12, "X NO — not linked to point" across the Tiered membership and
      Stamp card cards): otherModelLiveV235() rendered "<other model> is the live model" as those
      cards' subtitle, so a card about tiers spent its one line talking about points. A pending card
@@ -12835,7 +12843,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      claim. Each tile now names the read it depends on and says 'Unavailable' instead, which is the
      same honest-unknown state the drilled rows (growProgrammeRow) have always used. */
   const growTileStatusV371=(errorKey,status)=>
-    snapshot.overviewErrors?.[errorKey]?['Unavailable','off']:status;
+    snapshot.overviewErrors?.[errorKey]?['Unavailable','warn']:status;
   const growTopicDefsV229=[
     /* V294 (owner markup 2026-08-12): pending-setup cards carry the owner's own benefit lines. */
     /* V296: "Points redemption" renamed to "Points System" here too — the tile is the door the
@@ -12863,21 +12871,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        here, each with its own status and its own door, so nothing is one level deeper than the
        thing it sits beside. */
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
-      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?['Live','on']:welcomeOfferStatusV215?.configured?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
     {key:'birthday',icon:'loyalty',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
-      status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?['Live','on']:rewardJourney.birthday?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?[STATUS_WORDS.on,'on']:rewardJourney.birthday?['Paused','warn']:['Not set up','warn']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
         ?`${rewardJourney.birthday.value}`:'Set the birthday treat and its window'},
     {key:'bringback',icon:'retention',title:'Bring-back rewards',blurb:'Win back customers who have gone quiet.',
-      status:growTileStatusV371('retention',!canWinback?['Not included','off']:bringBackLiveV229?['Live','on']:snapshot.retention?.length?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('retention',!canWinback?['Not included','off']:bringBackLiveV229?[STATUS_WORDS.on,'on']:snapshot.retention?.length?['Paused','warn']:['Not set up','warn']),
       summary:bringBackLiveV229?`${bringBackLiveV229} running`:'Reward customers who return after a break'},
     /* V334 (owner markup, photo 3: "delete this tab"): the Promotions tile is struck out of the
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Let customers refer friends and earn rewards.',
-      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?['Ongoing','on']:referralConfigured?['Paused','off']:['Not set up','off']),
+      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?[STATUS_WORDS.on,'on']:referralConfigured?['Paused','warn']:['Not set up','warn']),
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
@@ -12887,7 +12895,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        entirely"). The status stays
        honest: a tenant with live plans still reads Live, not "pending". */
     {key:'recurring',icon:'memberships',title:'Memberships',blurb:'Let customers subscribe and save',
-      status:activeMembershipCount?['Live','on']:membershipConfigured?['Paused','off']:['Not set up','off'],
+      status:activeMembershipCount?[STATUS_WORDS.on,'on']:membershipConfigured?['Paused','warn']:['Not set up','warn'],
       summary:activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:membershipConfigured?'Membership plans exist but are currently paused':'Let customers subscribe and save'},
   ];
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
@@ -13156,10 +13164,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      owner deliberately retired, both showed the identical grey "Paused"). They are undone by
      different actions — one by turning the programme back on, the other by re-publishing the
      reward — so they get different words. A live reward is untouched. */
-  const rewardCardStatusV250=milestone=>milestone.availableToCustomers?['Live','on']
+  const rewardCardStatusV250=milestone=>milestone.availableToCustomers?[STATUS_WORDS.on,'on']
     :milestone.availability==='not_started'?['Scheduled','off']
     :milestone.availability==='ended'?['Ended','off']
-    :milestone.availability==='programme_paused'?['Paused with programme','off']:['Paused','off'];
+    :milestone.availability==='programme_paused'?['Paused with programme','off']:['Paused','warn'];
   const rewardCardHtmlV250=({name,cost,unit,status,tone,editKind,rewardId,pending=null})=>{
     const body=`${programmeStatus(status,tone)}<b class="reward-card-name-v250" data-merchant-content>${esc(name)}</b><span class="reward-card-cost-v250" data-merchant-content>${esc(`${cost} ${unit}`)}</span>${growPendingBlockV268(pending)}`;
     return canSetupGrow
@@ -23765,6 +23773,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'b1cb6c500bfa401e6efe1b7677d3710d4302245f2614baeaeeb0af780242238c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'7bdbd63e1443dfc18c3d089e3012356990cabd1dcb83588fd50b60de2f507523',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -290,7 +290,7 @@ test('V271 (c) retired and programme-paused rewards carry different, plain-langu
   assert.match(cards, /milestone\.availability==='programme_paused'\?\['Paused with programme','off'\]/);
   assert.match(cards, /status:'Retired',tone:'off'/);
   // A genuinely live reward still reads as live (V180 renders 'Live' as the house word 'Ongoing').
-  assert.match(cards, /milestone\.availableToCustomers\?\['Live','on'\]/);
+  assert.match(cards, /milestone\.availableToCustomers\?\[STATUS_WORDS\.on,'on'\]/);
   assert.match(app, /const PROGRAMME_STATUS_LABEL_V180=\{Live:STATUS_WORDS\.on\}/);
   // The two labels are genuinely different strings, so neither can be mistaken for the other.
   assert.notEqual('Retired', 'Paused with programme');
