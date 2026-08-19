@@ -128,6 +128,29 @@ get proper translations by reusing the verified `Delete` strings already present
 
 ---
 
+## Render sweep (18 Aug, `6f7679e`)
+
+`tools/qa-sweep/` boots the real app against a Supabase test double and sweeps
+46 routes. It found and fixed two defect classes:
+
+- **11 tap targets under 44px** — 5 were a miss in the earlier 44px pass
+  (Dashboard affordances classified as "inline links" without measuring; the
+  customer app never covered). Note the schedule chip needed the *anchor*
+  raised, not its wrapper.
+- **2 unguarded `sgt()` calls** — `sgt()` returns null for a falsy date and
+  both sites called `.slice()` on it.
+
+Four candidates were checked and **dismissed** — see the artifact. The one to
+remember: a `data-*` "dead handler" scan returned 55 hits, nearly all false
+because selectors are built from template literals. That whole pass was
+discarded rather than reported.
+
+**The sweep proves nothing server-side.** 407 rpc + 226 from + 63 auth calls
+are stubbed. Auth, RLS, the ledger, payments, realtime and the
+business↔customer interaction remain untested and need a QA tenant.
+
+---
+
 ## What to pick up next
 
 In the order recommended in the audit. The first two are **Must-fix** items from
