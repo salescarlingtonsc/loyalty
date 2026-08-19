@@ -5,7 +5,7 @@ function renderPersonaResolutionUnavailable(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="accountAccessTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <h1 id="accountAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">We couldn't load your account</h1>
+    <h1 id="accountAccessTitle" style="font-size:24px;margin:14px 0 6px">We couldn't load your account</h1>
     <p class="muted" style="line-height:1.6">Your account is still signed in. Retry to open the correct business or customer view.</p>
     <button class="btn" id="accountAccessRetry" style="width:100%;margin-top:18px">Retry</button>
     <button class="btn ghost" id="accountAccessSignOut" style="width:100%;margin-top:10px">Sign out</button>
@@ -20,7 +20,7 @@ function renderPersonaResolutionUnavailable(){
 function renderWorkspaceAccessUnavailable(){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceAccessTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
-    <h1 id="workspaceAccessTitle" style="font-size:1.5rem;margin:14px 0 6px">Workspace access unavailable</h1>
+    <h1 id="workspaceAccessTitle" style="font-size:24px;margin:14px 0 6px">Workspace access unavailable</h1>
     <p class="muted" style="line-height:1.6">Your staff access is inactive or no longer assigned. Ask the workspace owner to reactivate your access before trying again.</p>
     <button class="btn ghost" id="workspaceAccessSignOut" style="width:100%;margin-top:18px">Sign out</button>
     ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
@@ -142,7 +142,7 @@ function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
   if(approvalStatus==='pending'&&control._selfServeChecked!==true){
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.5rem;margin-top:18px">Checking payment status…</h1></section></main>`;
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:24px;margin-top:18px">Checking payment status…</h1></section></main>`;
     sb.rpc('get_self_serve_checkout_v130',{p_business:control.business_id}).then(({data})=>{
       const onboarding=data?.onboarding;
       if(!onboarding||onboarding.status!=='payment_pending'){
@@ -210,7 +210,7 @@ function renderBusinessStaffInviteAcceptV151(code){
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="staffInviteAcceptTitle" style="margin:14px 0 2px">Join business workspace</h1>
     <p class="muted small" style="margin-top:6px">Peekaa will validate this invite on the server. The company, role, module access, expiry, and reuse rules come from the invitation record.</p>
-    <section class="card" style="margin-top:16px;background:var(--sand);text-align:left"><span class="muted small">Company invite code</span><p class="staff-invite-code" style="font-size:1.15rem;margin-top:6px">${esc(normalized)}</p><p class="muted small" style="margin-top:8px;overflow-wrap:anywhere">Signed in as ${esc(S.user?.email||'Email unavailable')}</p></section>
+    <section class="card" style="margin-top:16px;background:var(--sand);text-align:left"><span class="muted small">Company invite code</span><p class="staff-invite-code" style="font-size:18px;margin-top:6px">${esc(normalized)}</p><p class="muted small" style="margin-top:8px;overflow-wrap:anywhere">Signed in as ${esc(S.user?.email||'Email unavailable')}</p></section>
     <div id="staffInviteAcceptPreviewV151" role="status" aria-live="polite" style="margin-top:10px">${staffInvitePreviewMarkupV151(null)}</div>
     <div id="staffInviteAcceptStatus" role="alert" aria-live="assertive"></div>
     <button class="btn" id="staffInviteAcceptGo" style="width:100%;margin-top:18px">Join business</button>

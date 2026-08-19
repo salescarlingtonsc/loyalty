@@ -26,7 +26,7 @@ const indexHtml=await readFile(new URL('../../app/index.html',import.meta.url),'
 
 test('.metric and .report-scope-card have real rules',()=>{
   assert.match(indexHtml,/\.metric\{font-size:1\.6rem;font-weight:750/);
-  assert.match(indexHtml,/@media\(max-width:720px\)\{\.metric\{font-size:1\.4rem\}\}/);
+  assert.match(indexHtml,/@media\(max-width:720px\)\{\.metric\{font-size:22px\}\}/);
   assert.match(indexHtml,/\.report-scope-card\{padding:16px 18px\}/);
   assert.match(indexHtml,/\.report-scope-card \.range input\[type=date\]\{width:auto;min-width:150px\}/);
 });

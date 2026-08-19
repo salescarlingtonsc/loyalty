@@ -3177,7 +3177,7 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
   const def=dashboardMetricDefinitionsV141[key]||{};
   document.getElementById('metricRowsModalV388')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="metricRowsModalV388" role="dialog" aria-modal="true" aria-labelledby="metricRowsTitleV388" tabindex="-1"><div class="modal-card" style="max-width:640px">
-    <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:1.05rem">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${key==='inactive'?'':` · ${esc(promotionDateShortV324(from))} – ${esc(promotionDateShortV324(to))}`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
+    <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:16px">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${key==='inactive'?'':` · ${esc(promotionDateShortV324(from))} – ${esc(promotionDateShortV324(to))}`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
     <div id="metricRowsBodyV388" style="margin-top:14px" aria-live="polite">${CUI.loadingState({title:'Loading',iconName:'reports'})}</div>
     ${def.route?`<div class="row" style="margin-top:14px"><a class="btn ghost sm" href="${esc(def.route)}" id="metricRowsGoV388">${esc(def.buttonLabel||'View details')}</a></div>`:''}
   </div></div>`);
@@ -5696,7 +5696,7 @@ function serviceDisplayName(service={}){
 function openWalletQrDialogV388(url,businessName){
   document.getElementById('walletQrModalV388')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="walletQrModalV388" role="dialog" aria-modal="true" aria-labelledby="walletQrTitleV388" tabindex="-1"><div class="modal-card" style="max-width:420px">
-    <div class="row"><div><h2 id="walletQrTitleV388" style="font-size:1.05rem">Customer rewards code</h2><p class="muted small" style="margin-top:4px">Scan to open rewards, points and past visits at <span data-merchant-content>${esc(businessName)}</span>.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletQrCloseV388" type="button">Close</button></div>
+    <div class="row"><div><h2 id="walletQrTitleV388" style="font-size:16px">Customer rewards code</h2><p class="muted small" style="margin-top:4px">Scan to open rewards, points and past visits at <span data-merchant-content>${esc(businessName)}</span>.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletQrCloseV388" type="button">Close</button></div>
     <div id="walletQrHostV388" class="wallet-qr-host-v388" role="status">Drawing the code…</div>
     <p class="small" style="word-break:break-all;margin-top:10px"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a></p>
     <div class="row" style="margin-top:14px;gap:8px"><button class="btn sm" id="walletQrSaveV388" type="button" disabled>Save image</button></div>
@@ -7895,7 +7895,7 @@ async function tillPage(){
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
           :d.pointsEarned>0
-          ?`<p style="font-size:1.5rem;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`
+          ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`
           :d.hasSale?(d.duplicate
           ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
@@ -16557,8 +16557,8 @@ function pbResultsHtml(r,ctx){
     <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(118px,1fr))">
       <div class="card kpi"><div class="l">Campaign grant records</div><div class="v">${grantRecords}</div></div>
       <div class="card kpi"><div class="l">Manual receipt confirmations</div><div class="v">${verifiedExposures}/${treatmentMembers}</div></div>
-      <div class="card kpi"><div class="l">Observed return-rate difference</div><div class="v" style="font-size:1.2rem">${esc(differenceText)}</div></div>
-      <div class="card kpi"><div class="l">Window ends</div><div class="v" style="font-size:1.05rem">${esc(windowEnds)}</div></div>
+      <div class="card kpi"><div class="l">Observed return-rate difference</div><div class="v" style="font-size:20px">${esc(differenceText)}</div></div>
+      <div class="card kpi"><div class="l">Window ends</div><div class="v" style="font-size:16px">${esc(windowEnds)}</div></div>
     </div>
     ${awaiting&&unverifiedGrantRecords?`<div class="imp-note"><b>${unverifiedGrantRecords} campaign grant record${unverifiedGrantRecords===1?' is':'s are'} not verified as received.</b> A manual confirmation must reflect actual customer receipt; it is not a provider delivery receipt.</div>`:''}
     <div class="imp-note" style="background:var(--tint)"><b>Descriptive only.</b> ${esc(serverNote)}</div>
@@ -16853,7 +16853,7 @@ function openPlaybookWizard(ctx){
     const n=state.candidates.length;
     const names=state.candidates.slice(0,8).map(c=>esc(c.full_name||'Customer')).join(', ');
     return `<div class="card" style="background:var(--tint);border:none">
-      <div style="font-size:1.5rem;font-weight:700">${n} customer${n===1?'':'s'} match</div>
+      <div style="font-size:24px;font-weight:700">${n} customer${n===1?'':'s'} match</div>
       ${state.truncated?`<div class="err" role="alert" style="margin-top:6px">Too many customers match to freeze safely. Narrow the rule — raise the days or the visit count.</div>`:''}
       <p class="muted small" style="margin-top:6px">${n?`${names}${n>8?` and ${n-8} more`:''}`:'No customers match yet — widen the days or lower the visit count.'}</p>
       <p class="muted small" style="margin-top:6px">Regulars with ${state.minVisits}+ past visits and none in over ${state.lapsedDays} days — the same rule a customer profile uses to flag someone as overdue.</p>
@@ -28993,7 +28993,7 @@ function customerInterfaceStepperHtmlV325(activeKey){
 function customerInterfaceDoneCardHtmlV325(){
   return `<div class="card" style="margin-top:16px;text-align:center;padding:36px 20px">
     <div style="font-size:2.4rem;line-height:1" aria-hidden="true">${CUI.icon('check',{size:32})}</div>
-    <h2 style="margin:14px 0 6px;font-size:1.15rem">You're all set</h2>
+    <h2 style="margin:14px 0 6px;font-size:18px">You're all set</h2>
     <p class="muted small">Customers will see these details in their app.</p>
   </div>`;
 }
@@ -29396,7 +29396,7 @@ function wireCustomerInterfacePreviewV243(){
    any label saying which is which, so an owner arriving from the deleted Settings tabs could not
    tell where the thing they used to open had landed. Headings only — no panel moved. */
 function customerInterfaceSectionHeadingV269(id,label,hint){
-  return `<h2 class="customer-interface-section-v269" id="${esc(id)}" style="margin:26px 0 0;font-size:1.05rem">${esc(label)}<span class="muted small" style="display:block;font-weight:400;margin-top:4px">${esc(hint)}</span></h2>`;
+  return `<h2 class="customer-interface-section-v269" id="${esc(id)}" style="margin:26px 0 0;font-size:16px">${esc(label)}<span class="muted small" style="display:block;font-weight:400;margin-top:4px">${esc(hint)}</span></h2>`;
 }
 /* V375 (owner, photo 16). Three marks on one screen:
      - "Customer Action" -> "Customer Permissions" (the tab and the page title above);

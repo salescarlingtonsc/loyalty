@@ -2441,7 +2441,7 @@ function renderCustomerNotJoinedV289(businessSlug){
   body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:Georgia,'Times New Roman',serif">${esc(label)}</b><small>Not joined yet</small></span></span></header>
   <section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
     <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
-    <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:1.45rem">You haven’t joined ${esc(label)} yet</h1>
+    <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:22px">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
     <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:20})}<span>Join ${esc(label)}</span></button>
     <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>${esc(ct('scanBusinessQr'))}</span></button>

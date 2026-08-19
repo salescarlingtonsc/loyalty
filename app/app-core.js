@@ -1218,7 +1218,7 @@ async function route(){
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1" aria-labelledby="platformBootTitle">
         <section class="card" style="width:420px;max-width:100%;text-align:center" role="status" aria-live="polite">
           <div class="loader" aria-hidden="true"></div>
-          <h1 id="platformBootTitle" style="font-size:1.5rem;margin:14px 0 6px">Opening Peekaa admin</h1>
+          <h1 id="platformBootTitle" style="font-size:24px;margin:14px 0 6px">Opening Peekaa admin</h1>
           <p class="muted small">Checking your access and loading current work…</p>
         </section>
       </main>`;
@@ -1369,7 +1369,7 @@ async function route(){
       S.staffWorkspaces=sortStaffWorkspaces(personas?.staff||[]);
       workspaceStaffPersona=!personaError&&(personas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
       if(!workspaceStaffPersona){
-        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p><button class="btn" id="workspaceHome" style="margin-top:16px">Continue</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
         $('main').focus();
         wireAccountDeletionButton();
         $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
@@ -1388,7 +1388,7 @@ async function route(){
       const {data:workspace,error:workspaceError}=await loadBusinessRecordV370(workspaceSlug);
       if(!isRouteCurrent())return;
       if(workspaceError||!workspace){
-        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:1.5rem">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
+        root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
       }
       if(S.biz?.id!==workspace.id){
         S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
