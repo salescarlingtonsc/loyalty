@@ -4,7 +4,7 @@ Written so a fresh session can pick this up cold. Read this first, then
 `docs/design/PEEKAA-UI-STANDARD.md` for the operating manual.
 
 **Branch:** `claude/peekaa-ui-ux-audit-lhaa4o` — pushed, nothing deployed.
-**Head at handoff:** `92ce739` (+ this doc and the regen script).
+**Head at handoff:** `8c688a8`.
 **Base:** `7721a49`.
 
 ---
@@ -148,6 +148,69 @@ discarded rather than reported.
 **The sweep proves nothing server-side.** 407 rpc + 226 from + 63 auth calls
 are stubbed. Auth, RLS, the ledger, payments, realtime and the
 business↔customer interaction remain untested and need a QA tenant.
+
+---
+
+## Sweeps round 2 (19 Aug, `0821fd4` + `8c688a8`)
+
+Four more passes were added to `tools/qa-sweep/`, all driving the real app
+headlessly over the Supabase double.
+
+| Sweep | Scope | Result |
+|---|---|---|
+| `click-sweep.mjs` | 481 controls on 30 routes | clean; 27 dialogs opened and closed by Escape |
+| `dom-health.mjs` | 30 routes × 390/768/1440 | 63 unnamed fields (fixed), 10 duplicate ids (latent) |
+| `xss-sweep.mjs` | 29 routes, every fixture string poisoned | 0 injections; payload proven on screen on 26 |
+| `locale-sweep.mjs` | 25 routes in zh-CN | 18–67% of chrome translated per screen |
+
+**The first click run reported 65 problems and every one was the harness.**
+Real supabase-js returns a chainable builder from `.rpc()`; the double
+returned a bare Promise, and the customer paths call `.abortSignal()` on it.
+Fixed with a Proxy in `sb-double.js`. Treat any uniform failure across many
+routes as a harness fault until proven otherwise — that is now twice.
+
+### Fixed
+
+- **57 labels that were not labels.** A `<label>` immediately before its
+  field with no `for=`. 404 labels in the same file already did it correctly,
+  so this was drift. Also 6 date/number pickers with no name at all.
+- **`On` was untranslated while `Off` was translated.** Ruling 4's own gap:
+  five `Live` pills (zh 已启用) became `On`, which had no entry. On / Turn on /
+  Turn off / Scheduled / Ended are now in both tables.
+- **`Resume` renders as 简历** — the noun for a CV — from the generated
+  catalogue, live on the Memberships resume button. Corrected to 恢复.
+- **Referrals paired "Enabled" with "Off"** in one select. Now `STATUS_WORDS`.
+
+### Found, verified, deliberately not fixed
+
+- **10 duplicate ids on `customer-interface`.** V325 pairs Steps 1 and 2 each
+  with a copy of the same live-preview card and V296 hides rather than omits,
+  so two copies of the customer wallet markup coexist. **Latent, not live** —
+  the 38 `$('walletBody')` lookups belong to the customer render path, which
+  does not run on that business route. Fixing it means editing preview markup
+  shared with the real customer wallet, which is not cosmetic.
+- **28 of 46 literal `.pill` words have no translation in either locale.**
+  Status badges are the least-translated surface in the app.
+- **`CACHE_VERSION` in `app/sw.js` is still `v11-20260813-…`.** The worker is
+  network-first so online users get new code immediately, but the offline
+  shell is only re-cached when the worker file changes. Bump it as the last
+  commit before deploying.
+
+### Customer app coverage
+
+The customer app was only reachable through 3 `local/customer-preview` routes
+until the double gained fixtures for `customer_get_actionable_wallet`,
+`customer_get_wallet`, `customer_list_programmes_v89`,
+`customer_get_booking_requests`, `customer_get_home_offers_v167`,
+`customer_get_business_actions_v89`, `customer_get_appointments_page`,
+`customer_get_communication_preferences_v263` and the inbox trio. Shapes came
+from the migrations that define them, not from guesses. Eight real customer
+routes are now in every sweep's route list.
+
+Note the click sweep uses a **route-dependent** control scope: the business
+workspace excludes the sidebar rail (same 25 links on every route), the
+customer app does not (its bottom nav is a per-screen surface, and scoping it
+like the workspace tested 3 of 16 controls).
 
 ---
 

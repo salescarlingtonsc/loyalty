@@ -26,7 +26,11 @@ const ROUTES = process.argv[2]
   : ['dashboard','till','clients','sales','services','bookings','waitlist','appointments','inventory',
      'packages','branches','grow','loyalty','retention','promotions','referrals','memberships','reports',
      'customerintel','staffperf','staffmembers','dailyreport','pnl','expenses','setup','settings',
-     'customer-interface','local/customer-preview','local/customer-preview/rewards','local/customer-preview/bookings'];
+     /* the real customer app, now that the double fixtures its RPCs — the three
+      local/customer-preview routes are a visual harness, not these screens */
+   'wallet','wallet/qa-cafe','customer/programmes','customer/bookings','customer/messages',
+   'customer/communications','customer/explore','customer/profile',
+   'customer-interface','local/customer-preview','local/customer-preview/rewards','local/customer-preview/bookings'];
 
 const server = createServer(async (req, res) => {
   try {
@@ -39,9 +43,18 @@ const server = createServer(async (req, res) => {
   } catch { res.writeHead(404); res.end('nf'); }
 });
 
-/* Scope to the page's own content and top bar. The sidebar rail carries the same ~25 nav links on
-   every route; clicking them 30 times over adds no coverage and buries the real findings. */
-const SEL = ':is(#main, .main, main, .appbar) :is(button:not([disabled]), a[href]:not([href^="http"]), summary, [role="switch"])';
+/* What counts as a control depends on which app the route belongs to.
+
+   The BUSINESS workspace is scoped to its own content and top bar: the sidebar rail carries the
+   same ~25 nav links on every route, and clicking them 26 times over adds no coverage while
+   burying the real findings.
+
+   The CUSTOMER app has no such rail. Its bottom nav is a primary, per-screen surface — Home,
+   Rewards, Scan QR, Bookings, Profile, with live badges — so its routes are swept whole. Scoping
+   it the same way as the workspace left 3 of 16 controls tested. */
+const CONTROLS = ':is(button:not([disabled]), a[href]:not([href^="http"]), summary, [role="switch"])';
+const isCustomerRoute = (r) => r === 'wallet' || r.startsWith('wallet/') || r.startsWith('customer/') || r.startsWith('local/customer-preview');
+const scopeFor = (r) => (isCustomerRoute(r) ? CONTROLS : `:is(#main, .main, main, .appbar) ${CONTROLS}`);
 
 await new Promise(r => server.listen(PORT, '127.0.0.1', r));
 const browser = await chromium.launch({ headless: true, executablePath: CHROME });
@@ -68,6 +81,7 @@ for (const route of ROUTES) {
   await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => {});
   await page.waitForTimeout(1300);
 
+  const SEL = scopeFor(route);
   const total = await page.locator(SEL).count().catch(() => 0);
   const results = [];
 

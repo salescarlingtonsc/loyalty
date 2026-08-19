@@ -20,6 +20,7 @@
   };
 
   const BIZ = '10000000-0000-4000-8000-000000000001';
+  const NOW = '2026-08-19T02:00:00Z', SOON = '2026-08-24T02:00:00Z', PAST = '2026-08-12T02:00:00Z';
   const USER = '20000000-0000-4000-8000-000000000001';
   const ok = (data) => Promise.resolve({ data, error: null });
   /* A PostgREST-style result: awaitable, and every modifier (.abortSignal, .select, .single,
@@ -97,10 +98,135 @@
       customer_wallet: true, customer_in_app_inbox: true, customer_actionable_wallet: true,
       customer_phone_registration: true, customer_bookings: true,
     }),
-    customer_get_profile: () => ({ profile: { id: 'cust1', display_name: 'Jamie Tan', full_name: 'Jamie Tan' } }),
+    /* preferred_language is what drives customerLocale, so __QA_LOCALE steers the CUSTOMER
+       app's translations the same way it steers the workspace's. */
+    customer_get_profile: () => ({ profile: { id: 'cust1', display_name: 'Jamie Tan', full_name: 'Jamie Tan',
+      preferred_language: global.__QA_LOCALE || 'en' } }),
     customer_get_actionable_wallet: () => ({ cards: [] }),
     get_sale_policy: () => ({ policies: [] }),
     get_programs_overview: () => ({ programmes: [] }),
+
+    /* ---- customer app -------------------------------------------------------------------
+       Shapes taken from the migrations that define them, not guessed: c44_actionable_wallet_card
+       (v44/v45), customer_get_wallet + customer_live_loyalty_v384 (v384), customer_list_
+       programmes_v89, customer_get_booking_requests (v72), customer_get_home_offers_v167.
+       Without these the customer app renders its empty state on every screen, which looks like
+       coverage and is not: the populated card, the reward ladder, the tier panel and the booking
+       list are exactly the markup worth sweeping. */
+    customer_get_actionable_wallet: () => ({
+      as_of: NOW, truncated: false,
+      cards: [
+        {
+          business: { slug: 'qa-cafe', name: 'QA Test Cafe', industry: 'fnb', currency: 'SGD' },
+          logo_url: '',
+          loyalty: { enabled: true, model: 'redeem', unit: 'points', balance: 320 },
+          credit: { balance_cents: 0 },
+          packages: { sessions_remaining: 3 },
+          expiry: { mode: 'rolling', expiring_within_7_days: 40, expiring_units: 40, next_expiry_at: SOON },
+          next_eligible_reward: { name: 'Free flat white', cost_units: 400, remaining_units: 80, available_now: false },
+          visits_remaining: 2,
+          visit_progress: { remaining: 2, goal_visits: 5, period_ends_at: SOON, customer_description: 'Visit 5 times this month' },
+          action: { reason: 'expiring_soon', deadline_at: SOON, sort_band: 1, sort_units: 40 },
+          birthday_benefit: null,
+        },
+        {
+          business: { slug: 'qa-spa', name: 'QA Day Spa', industry: 'beauty', currency: 'SGD' },
+          logo_url: '',
+          loyalty: { enabled: true, model: 'stamps', unit: 'stamps', balance: 7 },
+          credit: { balance_cents: 0 },
+          packages: { sessions_remaining: 0 },
+          expiry: { mode: 'none', expiring_within_7_days: 0, expiring_units: 0, next_expiry_at: null },
+          next_eligible_reward: { name: 'Free scalp massage', cost_units: 8, remaining_units: 1, available_now: false },
+          visits_remaining: null, visit_progress: null,
+          action: { reason: 'close_to_reward', deadline_at: null, sort_band: 2, sort_units: 1 },
+          birthday_benefit: null,
+        },
+      ],
+    }),
+    customer_get_wallet: () => ([
+      {
+        business: { slug: 'qa-cafe', name: 'QA Test Cafe', industry: 'fnb', currency: 'SGD' },
+        loyalty: {
+          enabled: true, model: 'redeem', unit: 'points', balance: 320,
+          ledger_balance: 320, batch_balance: 320, credit_balance_cents: 0,
+          programme: { id: 'p-points', kind: 'points', active: true, balance_scope: 'programme_pot' },
+          programmes_contract: 'v384',
+        },
+        packages: { enabled: true, active_count: 1, sessions_remaining: 3 },
+        membership: { enabled: true, active: false, current_period_ends_at: null },
+        upcoming_appointments: { enabled: true, count: 1 },
+      },
+    ]),
+    customer_list_programmes_v89: () => ({
+      truncated: false,
+      programmes: [{
+        business: { id: BIZ, slug: 'qa-cafe', name: 'QA Test Cafe', industry: 'fnb', currency: 'SGD' },
+        capabilities: { booking_enabled: true, redemption_enabled: true, appointment_changes_enabled: true },
+        loyalty: { balance: 320, unit: 'points' },
+        upcoming_appointments: { count: 1 },
+      }],
+    }),
+    customer_get_booking_requests: () => ({
+      truncated: false, next_cursor: null,
+      items: [
+        { request_id: 'req1', business_slug: 'qa-cafe', business_name: 'QA Test Cafe', service_name: 'Flat white tasting',
+          status: 'pending', party_size: 2, preferred_at: SOON, created_at: NOW },
+        { request_id: 'req2', business_slug: 'qa-spa', business_name: 'QA Day Spa', service_name: 'Signature Facial 60',
+          status: 'declined', party_size: 1, preferred_at: PAST, created_at: PAST },
+      ],
+      pending: 1, declined: 1, expired: 0, new: 1,
+    }),
+    customer_get_home_offers_v167: () => ({
+      as_of: NOW, truncated: false, limit: 6,
+      items: [{
+        intent_id: 'off1', version_id: 'v1', id: 'off1',
+        business: { slug: 'qa-cafe', name: 'QA Test Cafe', logo_url: '' },
+        name: 'Two for one on pastries', reward_name: 'Free pastry',
+        tagline: 'Bring a friend this week', description: 'Any pastry, one per visit.',
+        terms: 'One per customer per day.', availability_label: 'This week',
+        branch_names: ['Main'], image_url: '', image_alt: '',
+        starts_at: PAST, ends_at: SOON, expires_at: SOON,
+        display_order: 1, pending_redemption: false, metadata: {},
+      }],
+    }),
+    customer_get_programme_selector_media_v96: () => ([]),
+    /* v263: one category ('marketing') crossed with five channels. Unfixtured, the screen
+       rendered with no switches at all — zero controls to press. */
+    customer_get_communication_preferences_v263: () => ({
+      all_enabled: true,
+      categories: [{
+        category: 'marketing',
+        channels: ['email', 'sms', 'whatsapp', 'push', 'in_app'].map((channel) => ({ channel, enabled: true })),
+      }],
+    }),
+    customer_get_business_actions_v89: () => ({
+      business: { id: BIZ, slug: 'qa-cafe', name: 'QA Test Cafe', industry: 'fnb', currency: 'SGD' },
+      booking: { enabled: true, public_slug: 'qa-cafe' },
+      redemption: { enabled: true, classic: null, rewards: [
+        { reward_id: 'rw1', name: 'Free flat white', cost_points: 400, availability: 'not_enough_points' },
+      ] },
+      appointment_changes: { enabled: true },
+    }),
+    customer_get_appointments_page: () => ({
+      as_of: NOW, limit: 20, next_cursor: null,
+      items: [
+        { appointment_id: 'ap1', id: 'ap1', service_name: 'Flat white tasting', branch_name: 'Main',
+          starts_at: SOON, ends_at: SOON, status: 'booked', sort_group: 'booked' },
+        { appointment_id: 'ap0', id: 'ap0', service_name: 'Signature Facial 60', branch_name: 'Main',
+          starts_at: PAST, ends_at: PAST, status: 'completed', sort_group: 'completed' },
+      ],
+      booked: 1, completed: 1, cancelled: 0,
+    }),
+    customer_sync_in_app_inbox_global: () => ({ synced: 0 }),
+    customer_get_in_app_inbox_global_count: () => ({ count: 1, unread: 1 }),
+    customer_list_in_app_inbox_global: () => ({
+      truncated: false, next_cursor: null,
+      items: [{
+        message_id: 'msg1', business_slug: 'qa-cafe', business_name: 'QA Test Cafe',
+        title: 'Your points expire soon', body: '40 points expire in 7 days.',
+        created_at: NOW, read_at: null, kind: 'expiry',
+      }],
+    }),
   };
 
   /* A query builder: every PostgREST modifier returns itself, and awaiting it yields rows. */

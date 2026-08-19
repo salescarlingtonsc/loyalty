@@ -28,7 +28,11 @@ const LOCALES = ['zh-CN', 'ms'];
 const ROUTES = process.argv[2] ? [process.argv[2]] :
   ['dashboard','till','clients','sales','services','bookings','waitlist','appointments','inventory',
    'packages','branches','grow','loyalty','promotions','referrals','memberships','reports',
-   'customerintel','staffperf','staffmembers','dailyreport','pnl','expenses','setup','settings'];
+   'customerintel','staffperf','staffmembers','dailyreport','pnl','expenses','setup','settings',
+   /* the customer app runs its own copy table (CUSTOMER_COPY / ct()), driven by the profile's
+      preferred_language rather than the workspace preference — worth measuring separately,
+      because the two systems have very different coverage */
+   'wallet','customer/programmes','customer/bookings','customer/messages','customer/profile'];
 
 const server = createServer(async (req, res) => {
   try {
@@ -42,7 +46,7 @@ const server = createServer(async (req, res) => {
 });
 
 const COLLECT = (locale) => {
-  const shell = document.querySelector('.shell') || document.body;
+  const shell = document.querySelector('.shell, .wallet-shell') || document.body;
   const walker = document.createTreeWalker(shell, NodeFilter.SHOW_TEXT);
   const english = [], translated = [];
   const hasCjk = (s) => /[一-鿿]/.test(s);
