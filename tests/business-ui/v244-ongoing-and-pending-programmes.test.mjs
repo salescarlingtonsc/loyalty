@@ -96,7 +96,8 @@ test('V343 the tile keeps its topic hook and becomes the screenshot card shape',
   assert.match(tile, /class="grow-topic-card-v343/);
   assert.match(tile, /data-grow-topic-v229="\$\{topic\.key\}"/, 'the existing click contract survives');
   assert.match(tile, /aria-label="\$\{esc\(topic\.title\)\} — \$\{esc\(growTopicActionV244\(topic\)\)\}"/);
-  assert.match(tile, /<span class="grow-topic-tile-corner-v335" aria-hidden="true">\$\{CUI\.icon\('forward',\{size:18\}\)\}<\/span>/);
+  /* Wave 2A (audit §grow, approved): one affordance per tile — the corner chevron is gone. */
+  assert.doesNotMatch(tile, /grow-topic-tile-corner-v335/);
   assert.match(tile, /<span class="grow-topic-tile-icon-v229">\$\{CUI\.icon\(topic\.icon,\{size:28\}\)\}<\/span>/);
   assert.match(tile, /<span class="pill \$\{topic\.status\[1\]\}">\$\{esc\(topic\.status\[0\]\)\}<\/span>/);
   assert.match(tile, /<small>\$\{esc\(topic\.blurb\)\}<\/small>/);
@@ -105,7 +106,6 @@ test('V343 the tile keeps its topic hook and becomes the screenshot card shape',
   assert.match(tile, /\$\{growTopicOngoingV244\(topic\)\?'':' grow-topic-tile-pending-v244'\}/);
   assert.match(shell, /\.grow-topic-tile-pending-v244\{border-style:dashed\}/);
   assert.match(shell, /\.grow-topic-card-grid-v343\{/);
-  assert.match(shell, /\.grow-topic-tile-corner-v335\{/);
 });
 
 test('V244 the grid is not double-wrapped at the render site', () => {

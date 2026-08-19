@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="80c96f2d2efdb3e294664322cd08ca32129f069bd18fdb2ca725888d06a16af1"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0b146fbf30a9d9cf1db6a3d69b3da24dc1026fe154c68c4d98ffc9726661641b"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -129,7 +129,7 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--control-border);box-shadow:var(--shadow)}
 .btn.secondary:hover{border-color:#DDD7CD;box-shadow:var(--shadow-lg)}
 .btn.sm{padding:8px 14px;font-size:13px;min-height:44px}
-.btn.danger{background:#fff;color:var(--red);border:1px solid #D9A29C;box-shadow:none}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%,#fff);box-shadow:none}
 .btn[disabled]{opacity:.48;pointer-events:none;box-shadow:none}
 .btn.is-loading{position:relative}
 .cui-button-spinner{width:16px;height:16px;border-radius:999px;border:2px solid currentColor;border-right-color:transparent;display:inline-block;animation:cui-spin .75s linear infinite}
@@ -577,7 +577,8 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-empty.tone-success>svg{color:var(--green)}.cui-empty.tone-warning>svg{color:var(--amber)}
 .cui-table-wrap{width:100%;overflow-x:auto;border-radius:var(--r-sm);-webkit-overflow-scrolling:touch;background:#fff}
 .cui-table-wrap:focus-visible{outline-offset:2px}
-.cui-table{background:#fff}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.cui-table{background:#fff}
+.cui-table tr.total-row td{border-top:1.5px solid var(--line);font-weight:680}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}

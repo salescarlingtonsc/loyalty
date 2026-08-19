@@ -100,7 +100,7 @@ test('packages and expenses retain reads while their write actions follow the ex
   /* V285 retarget: Void is still the same canWrite-gated control; it is now preceded by the
      equally gated Edit, so the pin follows the pair rather than the exact adjacency. */
   assert.match(expenses,/canWrite\?`<button class="btn ghost sm" onclick="editExpenseV285/);
-  assert.match(expenses,/<button class="btn ghost sm" onclick="voidExp/);
+  assert.match(expenses,/<button class="btn danger sm" onclick="voidExp/);
   assert.match(expenses,/id="expensesRetry"/);
 });
 

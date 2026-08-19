@@ -1589,7 +1589,11 @@ function navHtml(page,idPrefix='nav'){
     const navViewActiveV296=href=>{
       const parts=String(href||'').replace(/^#\//,'').split('/');
       const routeKey=parts[0]||'',routeView=parts[1]||'';
-      if(page[0]!==routeKey)return false;
+      /* Wave 2A: #/loyalty is an alias route onto the Rewards Programme landing — the rail child
+         must light there too, not only on #/grow (audit §2F: two of eight screens had no
+         location signal). */
+      const pageKeyV2A=page[0]==='loyalty'?'grow':page[0];
+      if(pageKeyV2A!==routeKey)return false;
       /* V319: 'offers' joins the set of #/grow hashes that belong to a SIBLING child rather than
          to the Rewards Programme list, so opening it no longer lights two rail rows at once. */
       if(routeKey==='grow')return routeView?page[1]===routeView:!['overview','history','offers'].includes(String(page[1]||''));
@@ -8231,11 +8235,11 @@ async function servicesPage(){
   let svCache=[];
   function renderSvc(){
     const sv=svCache;
-    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th>Mins</th><th>Status</th><th></th></tr>
+    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th class="num">Mins</th><th>Status</th><th></th></tr>
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
-        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td>${s.duration_min}</td>
+        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
         <div class="field-grid">
@@ -8366,7 +8370,7 @@ async function servicesPage(){
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
-        <button class="btn ghost sm" type="button" data-bundle-delete="${b.id}">Delete</button>
+        <button class="btn danger sm" type="button" data-bundle-delete="${b.id}">Delete</button>
       </div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
     if(!canWrite)return;
@@ -8857,7 +8861,7 @@ async function bookingsPage(){
       <td class="small" data-label="Note">${esc(c.note||'—')}</td>
       <td data-label="Actions">${canDecideChange?`<button class="btn sm" onclick="decideCr('${c.id}',true)">Approve</button>
       <button class="btn ghost sm" onclick="decideCr('${c.id}',false)">Decline</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</tbody></table></div>`
-      :`<div class="empty small">No pending change requests.</div>`;
+      :CUI.emptyState({iconName:'bookings',title:'No pending change requests',body:'Customer reschedule requests appear here for your approval.'});
   }
   window.decideBookingRequestV73=async(id,decision)=>{
     const authorized=decision==='confirm'?canConvertBooking:decision==='decline'?canDeclineBooking:false;
@@ -8915,7 +8919,7 @@ async function bookingsPage(){
         <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${statusOnOff(t.active)}</span></td>
         <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
         <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Turn off':'Turn on'}</button>
-        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
+        <button class="btn danger sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
           <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
             <div style="flex:1 1 180px"><label for="tblEditNameV291">Name</label><input id="tblEditNameV291" value="${esc(t.name||'')}"></div>
             <div><label for="tblEditPaxV291">Pax</label><input id="tblEditPaxV291" type="number" min="1" style="max-width:90px" value="${t.pax??''}"></div>
@@ -11054,7 +11058,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${statusOnOff(r.active)}</span>
         ${isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
           <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>
-          <button type="button" class="btn ghost sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
+          <button type="button" class="btn danger sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-retention-deleteconfirm-v332="${esc(r.program_id||r.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
           <b>Delete ${esc(r.name)}?</b>
@@ -12065,7 +12069,7 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn danger sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):CUI.emptyState({iconName:'giftcard',title:'No promotions yet',body:'Start with one timely offer — it appears here as a draft you can publish.'})}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -13244,7 +13248,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-card-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}">
     <span class="grow-topic-card-head-v343"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:28})}</span><span><b>${esc(topic.title)}</b><small>${esc(topic.blurb)}</small></span></span>
     <span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span>
-    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:14})}</span><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:18})}</span></span>
+    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:14})}</span></span>
   </button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
@@ -14210,7 +14214,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growBbFormV361}
       </ul>
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-bb-list-v361>
-        ${growBbRowsV361.length?growBbRowsV361.map(growBbRowV361).join(''):'<li class="muted small" style="cursor:default">No campaign yet — add one above.</li>'}
+        ${growBbRowsV361.length?growBbRowsV361.map(growBbRowV361).join(''):`<li style="cursor:default;display:block">${CUI.emptyState({iconName:'customers',title:'No campaign yet',body:'Add one above — pick how long away counts as gone.'})}</li>`}
       </ul></div>`;
   const growStampsLevelsSortedV350=growPointsPublishedV326.slice()
     .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0));
@@ -14763,7 +14767,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
         const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
-        return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
+        /* Wave 2A: the landing's h2 repeats the page h1 verbatim — keep it for structure, hide it from eyes. */
+        const hideH2V2A=dedicatedViewV341||h2TextV341==='Rewards Programme';
+        return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${hideH2V2A?' class="sr-only"':''}>${hideH2V2A?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
       })()}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
@@ -21353,7 +21359,7 @@ async function membershipsPage(){
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
         <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
         ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Turn off':'Turn on'}</button>
-        <button type="button" class="btn ghost sm" data-plan-delete-v329="${esc(p.id)}">Delete</button>`:''}
+        <button type="button" class="btn danger sm" data-plan-delete-v329="${esc(p.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-plan-deleteconfirm-v329="${esc(p.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
           <b>Delete ${esc(p.name)}?</b>
@@ -26623,7 +26629,7 @@ async function staffPerfPage(drillId){
     $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th class="num">Signed revenue attributed</th><th class="num">Signed commission</th></tr>
       ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
         <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td class="num">${money(agg[k].revenue)}</td><td class="num">${money(agg[k].commission)}</td></tr>`).join('')}
-      <tr><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td class="num"><b>${money(totals.revenue)}</b></td><td class="num"><b>${money(totals.commission)}</b></td></tr></table></div>
+      <tr class="total-row"><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td class="num"><b>${money(totals.revenue)}</b></td><td class="num"><b>${money(totals.commission)}</b></td></tr></table></div>
       <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue, such as gift-card issuance. Ledger records and frozen commission remain visible for traceability.</p>`;
   }
   load();
@@ -27049,12 +27055,12 @@ async function dailyReportPage(){
         <div class="card kpi"><div class="l">Customer records with valid visits</div><div class="v">${uniqueCustomerRecords}</div></div>
         <div class="card kpi"><div class="l">Gift-card issuance amount recorded</div><div class="v">${money(giftCash)}</div></div>
       </div>
-      <div class="charts"><div class="card"><b>Revenue by staff</b><div class="chart-frame"><canvas id="drC1"></canvas></div></div>
-        <div class="card"><b>Signed revenue by kind</b><div class="chart-frame"><canvas id="drC2"></canvas></div></div></div>
+      <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
+        <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total</b></td><td class="num"><b>${money(revenue)}</b></td></tr></table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
@@ -27062,7 +27068,8 @@ async function dailyReportPage(){
     const byStaff={};rows.filter(r=>r.counts_as_revenue).forEach(r=>{byStaff[r.staffName]=(byStaff[r.staffName]||0)+r.amount_cents});
     const byKind={};rows.filter(r=>r.counts_as_revenue).forEach(r=>{byKind[r.kind]=(byKind[r.kind]||0)+r.amount_cents});
     const coral='#FF6B5E',amber='#FFB86B';
-    const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
+    /* The empty-day cards render the empty state instead of a canvas — paint only what exists. */
+    const C=(id,cfg)=>{const el=$(id);if(el)S.charts.push(new Chart(el,cfg))};
     C('drC1',{type:'bar',data:{labels:Object.keys(byStaff),datasets:[{data:Object.values(byStaff).map(v=>v/100),backgroundColor:amber,borderRadius:8}]},options:{plugins:{legend:{display:false}}}});
     const kindValues=Object.values(byKind).map(v=>v/100);
     C('drC2',{type:'bar',data:{labels:Object.keys(byKind).map(k=>k.replace('_',' ')),datasets:[{data:kindValues,
@@ -27172,7 +27179,7 @@ async function expensesPage(){
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
-        <td>${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn ghost sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
+        <td style="white-space:nowrap">${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn danger sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
     const prev=$('expensesPrev'),next=$('expensesNext');
@@ -27321,7 +27328,7 @@ async function pnlPage(){
       </div>
       <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Gift card issuance is deferred revenue. Only recorded eligible payments count toward cash-basis revenue; the gift-card value becomes accrual revenue when it is redeemed and spent.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
-        <div class="card"><div class="v150-soft-head"><b>${mk.length?'Accrual revenue vs expenses by month':'Add a wider range to see month-by-month'}</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':''}</div></div>`;
+        <div class="card"><div class="v150-soft-head"><b>Accrual revenue vs expenses by month</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'Add a wider range to see month-by-month',body:'Pick a range covering two or more months and run again.'})}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
     if(!isLatest())return;
     const coral='#FF6B5E',amber='#FFB86B',green='var(--success)';

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="3c4297fc135f0d187559fa274549bc227dea101352df626cbae8007dfebe9891"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="58f384c2fe4e3ac70c97dcf4d29bf281348051f25507fb201f35250077c0903b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -130,7 +130,7 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--control-border);box-shadow:var(--shadow)}
 .btn.secondary:hover{border-color:#DDD7CD;box-shadow:var(--shadow-lg)}
 .btn.sm{padding:8px 14px;font-size:13px;min-height:44px}
-.btn.danger{background:#fff;color:var(--red);border:1px solid #D9A29C;box-shadow:none}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%,#fff);box-shadow:none}
 .btn[disabled]{opacity:.48;pointer-events:none;box-shadow:none}
 .btn.is-loading{position:relative}
 .cui-button-spinner{width:16px;height:16px;border-radius:999px;border:2px solid currentColor;border-right-color:transparent;display:inline-block;animation:cui-spin .75s linear infinite}
@@ -578,7 +578,8 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-empty.tone-success>svg{color:var(--green)}.cui-empty.tone-warning>svg{color:var(--amber)}
 .cui-table-wrap{width:100%;overflow-x:auto;border-radius:var(--r-sm);-webkit-overflow-scrolling:touch;background:#fff}
 .cui-table-wrap:focus-visible{outline-offset:2px}
-.cui-table{background:#fff}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.cui-table{background:#fff}
+.cui-table tr.total-row td{border-top:1.5px solid var(--line);font-weight:680}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
@@ -3097,7 +3098,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 3c4297fc135f0d187559fa274549bc227dea101352df626cbae8007dfebe9891</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 58f384c2fe4e3ac70c97dcf4d29bf281348051f25507fb201f35250077c0903b</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7990,11 +7991,11 @@ async function servicesPage(){
   let svCache=[];
   function renderSvc(){
     const sv=svCache;
-    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th>Mins</th><th>Status</th><th></th></tr>
+    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th class="num">Mins</th><th>Status</th><th></th></tr>
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
-        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td>${s.duration_min}</td>
+        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
       <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
         <div class="field-grid">
@@ -8125,7 +8126,7 @@ async function servicesPage(){
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
-        <button class="btn ghost sm" type="button" data-bundle-delete="${b.id}">Delete</button>
+        <button class="btn danger sm" type="button" data-bundle-delete="${b.id}">Delete</button>
       </div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
     if(!canWrite)return;
@@ -8640,7 +8641,7 @@ async function bookingsPage(){
       <td class="small" data-label="Note">${esc(c.note||'—')}</td>
       <td data-label="Actions">${canDecideChange?`<button class="btn sm" onclick="decideCr('${c.id}',true)">Approve</button>
       <button class="btn ghost sm" onclick="decideCr('${c.id}',false)">Decline</button>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</tbody></table></div>`
-      :`<div class="empty small">No pending change requests.</div>`;
+      :CUI.emptyState({iconName:'bookings',title:'No pending change requests',body:'Customer reschedule requests appear here for your approval.'});
   }
   window.decideBookingRequestV73=async(id,decision)=>{
     const authorized=decision==='confirm'?canConvertBooking:decision==='decline'?canDeclineBooking:false;
@@ -8698,7 +8699,7 @@ async function bookingsPage(){
         <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${statusOnOff(t.active)}</span></td>
         <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
         <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Turn off':'Turn on'}</button>
-        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
+        <button class="btn danger sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
           <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
             <div style="flex:1 1 180px"><label for="tblEditNameV291">Name</label><input id="tblEditNameV291" value="${esc(t.name||'')}"></div>
             <div><label for="tblEditPaxV291">Pax</label><input id="tblEditPaxV291" type="number" min="1" style="max-width:90px" value="${t.pax??''}"></div>
@@ -10837,7 +10838,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${statusOnOff(r.active)}</span>
         ${isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
           <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>
-          <button type="button" class="btn ghost sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
+          <button type="button" class="btn danger sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-retention-deleteconfirm-v332="${esc(r.program_id||r.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
           <b>Delete ${esc(r.name)}?</b>
@@ -11857,7 +11858,7 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn danger sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):CUI.emptyState({iconName:'giftcard',title:'No promotions yet',body:'Start with one timely offer — it appears here as a draft you can publish.'})}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -13036,7 +13037,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-card-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}">
     <span class="grow-topic-card-head-v343"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:28})}</span><span><b>${esc(topic.title)}</b><small>${esc(topic.blurb)}</small></span></span>
     <span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span>
-    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:14})}</span><span class="grow-topic-tile-corner-v335" aria-hidden="true">${CUI.icon('forward',{size:18})}</span></span>
+    <span class="grow-topic-card-foot-v343"><span class="btn sm ${growTopicOngoingV244(topic)?'':'ghost'}">${esc(growTopicButtonLabelV343(topic))} ${CUI.icon('forward',{size:14})}</span></span>
   </button>`;
   /* ============ V322 — OWNER RULING R6: THE SEPARATE ON/OFF CONTROL ==========================
      "if i unselect the program does not mean i want to turn off (i need a seperate button) — it
@@ -14002,7 +14003,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growBbFormV361}
       </ul>
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-bb-list-v361>
-        ${growBbRowsV361.length?growBbRowsV361.map(growBbRowV361).join(''):'<li class="muted small" style="cursor:default">No campaign yet — add one above.</li>'}
+        ${growBbRowsV361.length?growBbRowsV361.map(growBbRowV361).join(''):`<li style="cursor:default;display:block">${CUI.emptyState({iconName:'customers',title:'No campaign yet',body:'Add one above — pick how long away counts as gone.'})}</li>`}
       </ul></div>`;
   const growStampsLevelsSortedV350=growPointsPublishedV326.slice()
     .sort((a,b)=>Number(a.cost_points||0)-Number(b.cost_points||0));
@@ -14555,7 +14556,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
         const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:18})} `:'';
-        return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${dedicatedViewV341?' class="sr-only"':''}>${dedicatedViewV341?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
+        /* Wave 2A: the landing's h2 repeats the page h1 verbatim — keep it for structure, hide it from eyes. */
+        const hideH2V2A=dedicatedViewV341||h2TextV341==='Rewards Programme';
+        return `<div class="grow-section-heading"><div><h2 id="rewardJourneyTitle"${hideH2V2A?' class="sr-only"':''}>${hideH2V2A?'':h2IconV341}${h2TextV341}</h2>${growActiveTopicV229?`<p class="muted small">${esc(growActiveTopicV229.blurb)}</p>`:''}</div></div>`;
       })()}
       ${growUnpublishedMarkerV198}
       ${rewardsOverviewIncomplete?`<div class="notice warn" role="alert" style="margin-top:14px"><b>Some programme details could not be loaded.</b><p class="small" style="margin-top:5px">Unavailable rows are not assumed to be off. Retry before making a decision.</p><button type="button" class="btn ghost sm" id="growRewardsRetry" style="margin-top:10px">Retry programme overview</button></div>`:''}
@@ -23810,6 +23813,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'3c4297fc135f0d187559fa274549bc227dea101352df626cbae8007dfebe9891',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'58f384c2fe4e3ac70c97dcf4d29bf281348051f25507fb201f35250077c0903b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

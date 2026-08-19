@@ -53,7 +53,7 @@ test('V332 History rows are read-only: no edit/toggle/delete attributes, "In his
 test('V332 the live row keeps Edit/Pause AND gains a Delete button, all owner-gated', () => {
   const rowFn = slice('const rowHtml=r=>{', '    };');
   assert.match(rowFn,
-    /\$\{isOwner\?`<button class="retentionEditLiveV291 btn ghost sm" data-id="\$\{r\.program_id\|\|r\.id\}">Edit<\/button>\s*\n\s*<button class="retentionToggleLiveV291 btn ghost sm" data-id="\$\{r\.program_id\|\|r\.id\}" data-to="\$\{!r\.active\}">\$\{r\.active\?'Turn off':'Turn on'\}<\/button>\s*\n\s*<button type="button" class="btn ghost sm" data-retention-delete-v332="\$\{esc\(r\.program_id\|\|r\.id\)\}">Delete<\/button>`:''\}/);
+    /\$\{isOwner\?`<button class="retentionEditLiveV291 btn ghost sm" data-id="\$\{r\.program_id\|\|r\.id\}">Edit<\/button>\s*\n\s*<button class="retentionToggleLiveV291 btn ghost sm" data-id="\$\{r\.program_id\|\|r\.id\}" data-to="\$\{!r\.active\}">\$\{r\.active\?'Turn off':'Turn on'\}<\/button>\s*\n\s*<button type="button" class="btn danger sm" data-retention-delete-v332="\$\{esc\(r\.program_id\|\|r\.id\)\}">Delete<\/button>`:''\}/);
 });
 
 test('V332 delete is confirm-gated: opening it does not itself call the RPC', () => {
