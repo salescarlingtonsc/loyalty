@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="496c86558150f5130974c602920ed50d5aaae700603033551e6bc3dc1667a4ec">
+<meta name="v104-production-source-sha256" content="598563f25ed26fcb84ab6306747b127088a2b21a2915bab9db032d1423d0e7d8">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -107,7 +107,25 @@ input[type="checkbox"],input[type="radio"]{width:18px!important;height:18px!impo
 input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--control-border);
   border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;min-height:var(--control-h);
   transition:border-color var(--motion-fast) var(--ease),box-shadow var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
-input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
+input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+/* Wave 2C (Top-20 #12): native OS chrome leaves the custom forms. */
+select:not([multiple]){appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236B6673' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+input[type="file"]{padding:8px 10px}
+input[type="file"]::file-selector-button{margin-right:10px;border:1px solid var(--control-border);border-radius:999px;background:#fff;padding:8px 14px;font-weight:650;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+/* The switch component (adopted on customer Profile in wave 2D). */
+.cui-switch{position:relative;display:inline-block;width:44px;height:26px;flex:0 0 auto}
+.cui-switch input{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;opacity:0;cursor:pointer}
+.cui-switch i{position:absolute;inset:0;border-radius:999px;background:var(--neutral-bg);transition:background var(--motion-fast) var(--ease);pointer-events:none}
+.cui-switch i::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(23,22,26,.25);transition:transform var(--motion-fast) var(--ease)}
+.cui-switch input:checked+i{background:var(--success)}
+.cui-switch input:checked+i::before{transform:translateX(18px)}
+.cui-switch input:focus-visible+i{box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+/* Setup step tokens + the demoted dismissal. */
+.setup-step-token-v2c{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--coral);flex:0 0 auto}
+.setup-step-token-v2c.is-done{background:var(--success-bg);color:var(--success)}
+.setup-step-done-v2c{padding:12px 18px;opacity:.82}
+.btn-textlink-v2c{background:none;border:0;min-height:44px;padding:0 8px;color:var(--muted);text-decoration:underline;font-size:12.5px;cursor:pointer}
+.staff-performance-filterbar{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:0 0 14px}
 input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--red);box-shadow:0 0 0 3px rgba(157,53,44,.12)}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
 .field-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
@@ -888,8 +906,6 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    around the select; inside this modal focus is a thin coral border with a soft 2px halo. */
 .birthday-gift-modal-v366 select,.birthday-gift-modal-v366 input[type="text"],
 .birthday-gift-modal-v366 input:not([type]),.birthday-gift-modal-v366 textarea{box-shadow:none}
-.birthday-gift-modal-v366 select:focus,.birthday-gift-modal-v366 input:focus,
-.birthday-gift-modal-v366 textarea:focus{border-color:var(--coral);box-shadow:0 0 0 2px rgba(194,65,53,.12)}
 /* Issues 3 and 4 — compact selectable rows (~30% tighter) with a normal-sized radio. */
 .birthday-gift-modal-v366 .welcome-offer-optioncard-v350{display:flex;align-items:center;gap:10px;
   min-height:auto;padding:11px 14px;border:1px solid var(--control-border);border-radius:12px;margin-top:6px;cursor:pointer}
@@ -1668,13 +1684,13 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 .dashboard-metric{border-left:4px solid transparent}
-.dashboard-metric[data-dashboard-metric="visits"]{background:#F2F9F5;border-left-color:var(--green)}
-.dashboard-metric[data-dashboard-metric="revenue"]{background:#FFF4F1;border-left-color:var(--coral)}
-.dashboard-metric[data-dashboard-metric="new"]{background:#FDF7EC;border-left-color:var(--amber)}
-.dashboard-metric[data-dashboard-metric="inactive"]{background:#F4F4F7;border-left-color:#6B6673}
+.dashboard-metric[data-dashboard-metric="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.dashboard-metric[data-dashboard-metric="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.dashboard-metric[data-dashboard-metric="new"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.dashboard-metric[data-dashboard-metric="inactive"]{background:var(--shell);border-left-color:var(--muted)}
 .dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
 .dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
-.dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
+.dashboard-metric .v{font-size:1.75rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
 .dashboard-metric .metric-value-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .metric-delta{flex:0 0 auto;letter-spacing:0;text-transform:none}
 .dashboard-loyalty{margin-top:16px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#FBF8F5}
@@ -3121,7 +3137,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 496c86558150f5130974c602920ed50d5aaae700603033551e6bc3dc1667a4ec</p>
+  <p class="v104-provenance">Local production-render harness · source 598563f25ed26fcb84ab6306747b127088a2b21a2915bab9db032d1423d0e7d8</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3133,7 +3149,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="496c86558150f5130974c602920ed50d5aaae700603033551e6bc3dc1667a4ec";
+const PRODUCTION_SOURCE_SHA256="598563f25ed26fcb84ab6306747b127088a2b21a2915bab9db032d1423d0e7d8";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

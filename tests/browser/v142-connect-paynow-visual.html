@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="1e3e957fe79cbf2755ef24179d01becc5d9b02e1eaaa5bfda58f7a789f6af64a"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="45dcc9e8ad95d9283dba31f66b6f5d3cbfb83a6c73e1cad0ce99e36b270b073c"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -100,7 +100,25 @@ input[type="checkbox"],input[type="radio"]{width:18px!important;height:18px!impo
 input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--control-border);
   border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;min-height:var(--control-h);
   transition:border-color var(--motion-fast) var(--ease),box-shadow var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
-input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
+input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+/* Wave 2C (Top-20 #12): native OS chrome leaves the custom forms. */
+select:not([multiple]){appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236B6673' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+input[type="file"]{padding:8px 10px}
+input[type="file"]::file-selector-button{margin-right:10px;border:1px solid var(--control-border);border-radius:999px;background:#fff;padding:8px 14px;font-weight:650;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+/* The switch component (adopted on customer Profile in wave 2D). */
+.cui-switch{position:relative;display:inline-block;width:44px;height:26px;flex:0 0 auto}
+.cui-switch input{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;opacity:0;cursor:pointer}
+.cui-switch i{position:absolute;inset:0;border-radius:999px;background:var(--neutral-bg);transition:background var(--motion-fast) var(--ease);pointer-events:none}
+.cui-switch i::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(23,22,26,.25);transition:transform var(--motion-fast) var(--ease)}
+.cui-switch input:checked+i{background:var(--success)}
+.cui-switch input:checked+i::before{transform:translateX(18px)}
+.cui-switch input:focus-visible+i{box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+/* Setup step tokens + the demoted dismissal. */
+.setup-step-token-v2c{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--coral);flex:0 0 auto}
+.setup-step-token-v2c.is-done{background:var(--success-bg);color:var(--success)}
+.setup-step-done-v2c{padding:12px 18px;opacity:.82}
+.btn-textlink-v2c{background:none;border:0;min-height:44px;padding:0 8px;color:var(--muted);text-decoration:underline;font-size:12.5px;cursor:pointer}
+.staff-performance-filterbar{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:0 0 14px}
 input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--red);box-shadow:0 0 0 3px rgba(157,53,44,.12)}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
 .field-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
@@ -881,8 +899,6 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    around the select; inside this modal focus is a thin coral border with a soft 2px halo. */
 .birthday-gift-modal-v366 select,.birthday-gift-modal-v366 input[type="text"],
 .birthday-gift-modal-v366 input:not([type]),.birthday-gift-modal-v366 textarea{box-shadow:none}
-.birthday-gift-modal-v366 select:focus,.birthday-gift-modal-v366 input:focus,
-.birthday-gift-modal-v366 textarea:focus{border-color:var(--coral);box-shadow:0 0 0 2px rgba(194,65,53,.12)}
 /* Issues 3 and 4 — compact selectable rows (~30% tighter) with a normal-sized radio. */
 .birthday-gift-modal-v366 .welcome-offer-optioncard-v350{display:flex;align-items:center;gap:10px;
   min-height:auto;padding:11px 14px;border:1px solid var(--control-border);border-radius:12px;margin-top:6px;cursor:pointer}
@@ -1661,13 +1677,13 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 .dashboard-metric{border-left:4px solid transparent}
-.dashboard-metric[data-dashboard-metric="visits"]{background:#F2F9F5;border-left-color:var(--green)}
-.dashboard-metric[data-dashboard-metric="revenue"]{background:#FFF4F1;border-left-color:var(--coral)}
-.dashboard-metric[data-dashboard-metric="new"]{background:#FDF7EC;border-left-color:var(--amber)}
-.dashboard-metric[data-dashboard-metric="inactive"]{background:#F4F4F7;border-left-color:#6B6673}
+.dashboard-metric[data-dashboard-metric="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.dashboard-metric[data-dashboard-metric="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.dashboard-metric[data-dashboard-metric="new"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.dashboard-metric[data-dashboard-metric="inactive"]{background:var(--shell);border-left-color:var(--muted)}
 .dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
 .dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
-.dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
+.dashboard-metric .v{font-size:1.75rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
 .dashboard-metric .metric-value-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .metric-delta{flex:0 0 auto;letter-spacing:0;text-transform:none}
 .dashboard-loyalty{margin-top:16px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#FBF8F5}
@@ -3110,7 +3126,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 1e3e957fe79cbf2755ef24179d01becc5d9b02e1eaaa5bfda58f7a789f6af64a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 45dcc9e8ad95d9283dba31f66b6f5d3cbfb83a6c73e1cad0ce99e36b270b073c</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5995,7 +6011,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'1e3e957fe79cbf2755ef24179d01becc5d9b02e1eaaa5bfda58f7a789f6af64a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'45dcc9e8ad95d9283dba31f66b6f5d3cbfb83a6c73e1cad0ce99e36b270b073c',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

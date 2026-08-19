@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="40365fc1cca8ea98e65816d6bb6d38efb286c38299026853ae7faac3b9e5be7b"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="e9224a7c62c645ba547f9bfcd17e5464e47a23ff0f7084d783762433b6f5de80"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -100,7 +100,25 @@ input[type="checkbox"],input[type="radio"]{width:18px!important;height:18px!impo
 input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-family:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--control-border);
   border-radius:var(--r-sm);background:#fff;color:var(--ink);width:100%;min-height:var(--control-h);
   transition:border-color var(--motion-fast) var(--ease),box-shadow var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
-input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3.5px rgba(194,65,53,.16)}
+input:focus,select:focus,textarea:focus{border-color:var(--coral);box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+/* Wave 2C (Top-20 #12): native OS chrome leaves the custom forms. */
+select:not([multiple]){appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236B6673' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+input[type="file"]{padding:8px 10px}
+input[type="file"]::file-selector-button{margin-right:10px;border:1px solid var(--control-border);border-radius:999px;background:#fff;padding:8px 14px;font-weight:650;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+/* The switch component (adopted on customer Profile in wave 2D). */
+.cui-switch{position:relative;display:inline-block;width:44px;height:26px;flex:0 0 auto}
+.cui-switch input{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;opacity:0;cursor:pointer}
+.cui-switch i{position:absolute;inset:0;border-radius:999px;background:var(--neutral-bg);transition:background var(--motion-fast) var(--ease);pointer-events:none}
+.cui-switch i::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(23,22,26,.25);transition:transform var(--motion-fast) var(--ease)}
+.cui-switch input:checked+i{background:var(--success)}
+.cui-switch input:checked+i::before{transform:translateX(18px)}
+.cui-switch input:focus-visible+i{box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+/* Setup step tokens + the demoted dismissal. */
+.setup-step-token-v2c{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--coral);flex:0 0 auto}
+.setup-step-token-v2c.is-done{background:var(--success-bg);color:var(--success)}
+.setup-step-done-v2c{padding:12px 18px;opacity:.82}
+.btn-textlink-v2c{background:none;border:0;min-height:44px;padding:0 8px;color:var(--muted);text-decoration:underline;font-size:12.5px;cursor:pointer}
+.staff-performance-filterbar{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:0 0 14px}
 input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--red);box-shadow:0 0 0 3px rgba(157,53,44,.12)}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
 .field-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 6px;letter-spacing:-.005em}
@@ -881,8 +899,6 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    around the select; inside this modal focus is a thin coral border with a soft 2px halo. */
 .birthday-gift-modal-v366 select,.birthday-gift-modal-v366 input[type="text"],
 .birthday-gift-modal-v366 input:not([type]),.birthday-gift-modal-v366 textarea{box-shadow:none}
-.birthday-gift-modal-v366 select:focus,.birthday-gift-modal-v366 input:focus,
-.birthday-gift-modal-v366 textarea:focus{border-color:var(--coral);box-shadow:0 0 0 2px rgba(194,65,53,.12)}
 /* Issues 3 and 4 — compact selectable rows (~30% tighter) with a normal-sized radio. */
 .birthday-gift-modal-v366 .welcome-offer-optioncard-v350{display:flex;align-items:center;gap:10px;
   min-height:auto;padding:11px 14px;border:1px solid var(--control-border);border-radius:12px;margin-top:6px;cursor:pointer}
@@ -1661,13 +1677,13 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .staff-row-open>b{overflow-wrap:anywhere}
 .staff-profile-panel .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 .dashboard-metric{border-left:4px solid transparent}
-.dashboard-metric[data-dashboard-metric="visits"]{background:#F2F9F5;border-left-color:var(--green)}
-.dashboard-metric[data-dashboard-metric="revenue"]{background:#FFF4F1;border-left-color:var(--coral)}
-.dashboard-metric[data-dashboard-metric="new"]{background:#FDF7EC;border-left-color:var(--amber)}
-.dashboard-metric[data-dashboard-metric="inactive"]{background:#F4F4F7;border-left-color:#6B6673}
+.dashboard-metric[data-dashboard-metric="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.dashboard-metric[data-dashboard-metric="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.dashboard-metric[data-dashboard-metric="new"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.dashboard-metric[data-dashboard-metric="inactive"]{background:var(--shell);border-left-color:var(--muted)}
 .dashboard-metric:hover,.dashboard-metric:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:#DDB9AE}
 .dashboard-metric .metric-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.dashboard-metric .metric-arrow{color:var(--coral)}
-.dashboard-metric .v{font-size:1.55rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
+.dashboard-metric .v{font-size:1.75rem}.dashboard-metric .metric-hint{display:block;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35;text-transform:none;letter-spacing:0}
 .dashboard-metric .metric-value-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .metric-delta{flex:0 0 auto;letter-spacing:0;text-transform:none}
 .dashboard-loyalty{margin-top:16px;padding:16px;border:1px solid var(--hair);border-radius:var(--r);background:#FBF8F5}
@@ -3110,7 +3126,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 40365fc1cca8ea98e65816d6bb6d38efb286c38299026853ae7faac3b9e5be7b</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e9224a7c62c645ba547f9bfcd17e5464e47a23ff0f7084d783762433b6f5de80</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5445,10 +5461,10 @@ function renderHistPage(history,n){
       ${/* V299: quick ranges fill the SAME From/To pair and press the same Run — nothing new is
            computed, the owner just stops hand-typing "last quarter". The comparison stays the
            derived previous equal-length window on every choice. */''}
-      <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
+      <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="qbtn" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
       ${/* V300: calendar grains — each fills From/To AND the explicit compare pair with the
            matching previous calendar window, then presses the same Run. */''}
-      <div class="report-scope-presets" role="group" aria-label="Calendar ranges">${[['month','This month'],['lastmonth','Last month'],['quarter','This quarter'],['lastquarter','Last quarter'],['year','This year']].map(([presetKind,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-cal="${presetKind}">${presetLabel}</button>`).join('')}</div>
+      <div class="report-scope-presets" role="group" aria-label="Calendar ranges">${[['month','This month'],['lastmonth','Last month'],['quarter','This quarter'],['lastquarter','Last quarter'],['year','This year']].map(([presetKind,presetLabel])=>`<button type="button" class="qbtn" data-report-preset-cal="${presetKind}">${presetLabel}</button>`).join('')}</div>
       <details id="reportCompareDetailsV300" style="margin-top:10px"><summary class="small" style="cursor:pointer;font-weight:650">Compare with different dates</summary>
         <div class="range" style="margin-top:8px">
           <label class="small">Compare from <input type="date" id="rcf"></label>
@@ -5851,7 +5867,10 @@ function renderHistPage(history,n){
     ensureMoneyRanV297();
     if(key&&!reportTabsRunV294.has(key)){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
   };
+  const markReportPresetV2C=presetButton=>routeMain.querySelectorAll('[data-report-preset-days],[data-report-preset-cal]')
+    .forEach(b=>b.classList.toggle('act',b===presetButton));
   routeMain.querySelectorAll('[data-report-preset-days]').forEach(presetButton=>presetButton.onclick=()=>{
+    markReportPresetV2C(presetButton);
     const presetDays=Math.max(1,Number(presetButton.dataset.reportPresetDays)||30);
     $('rt2').value=today;
     $('rf').value=shiftSgDateInput(today,-(presetDays-1));
@@ -5860,6 +5879,7 @@ function renderHistPage(history,n){
     $('rgo').click();
   });
   routeMain.querySelectorAll('[data-report-preset-cal]').forEach(presetButton=>presetButton.onclick=()=>{
+    markReportPresetV2C(presetButton);
     const preset=reportCalendarPresetV300(presetButton.dataset.reportPresetCal,today);
     $('rf').value=preset.from;$('rt2').value=preset.to;
     if($('rcf'))$('rcf').value=preset.cf;
@@ -5868,6 +5888,7 @@ function renderHistPage(history,n){
     if(compareDetails)compareDetails.open=true;
     $('rgo').click();
   });
+  [$('rf'),$('rt2')].forEach(el=>{if(el)el.addEventListener('input',()=>markReportPresetV2C(null))});
   if($('rcf'))$('rcf').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
   if($('rct'))$('rct').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
   if($('reportCompareClear'))$('reportCompareClear').onclick=()=>{
@@ -5918,7 +5939,7 @@ function renderHistPage(history,n){
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
-    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Run report</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
@@ -6571,7 +6592,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'40365fc1cca8ea98e65816d6bb6d38efb286c38299026853ae7faac3b9e5be7b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'e9224a7c62c645ba547f9bfcd17e5464e47a23ff0f7084d783762433b6f5de80',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

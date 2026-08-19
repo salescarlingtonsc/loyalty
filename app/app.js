@@ -37651,9 +37651,9 @@ async function customerIntelligencePage(){
      because it is an accurate description of what the page produces. The per-page branch picker is
      gone for the V260/V272 reason — the top bar owns branch scope. */
   routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div></div>
-    <div class="range"><label class="sr-only" for="cif">Customer intelligence start date</label><input type="date" id="cif" value="${from}">
-      <span class="muted" aria-hidden="true">→</span><label class="sr-only" for="cit">Customer intelligence end date</label><input type="date" id="cit" value="${today}">
-      <button class="btn sm" id="ciRun">Run</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
+    <div class="range"><label class="small">From <input type="date" id="cif" value="${from}"></label>
+      <span class="muted" aria-hidden="true">→</span><label class="small">To <input type="date" id="cit" value="${today}"></label>
+      <button class="btn sm" id="ciRun">Run report</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="customerIntelBody"><div class="card"><div class="empty">Loading customer intelligence…</div></div></div>`;
   const body=$('customerIntelBody');
@@ -38200,10 +38200,10 @@ async function reportsPage(){
       ${/* V299: quick ranges fill the SAME From/To pair and press the same Run — nothing new is
            computed, the owner just stops hand-typing "last quarter". The comparison stays the
            derived previous equal-length window on every choice. */''}
-      <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
+      <div class="report-scope-presets" role="group" aria-label="Quick date ranges">${[[7,'7 days'],[30,'30 days'],[90,'90 days'],[182,'6 months'],[365,'12 months']].map(([presetDays,presetLabel])=>`<button type="button" class="qbtn" data-report-preset-days="${presetDays}">${presetLabel}</button>`).join('')}</div>
       ${/* V300: calendar grains — each fills From/To AND the explicit compare pair with the
            matching previous calendar window, then presses the same Run. */''}
-      <div class="report-scope-presets" role="group" aria-label="Calendar ranges">${[['month','This month'],['lastmonth','Last month'],['quarter','This quarter'],['lastquarter','Last quarter'],['year','This year']].map(([presetKind,presetLabel])=>`<button type="button" class="btn ghost sm" data-report-preset-cal="${presetKind}">${presetLabel}</button>`).join('')}</div>
+      <div class="report-scope-presets" role="group" aria-label="Calendar ranges">${[['month','This month'],['lastmonth','Last month'],['quarter','This quarter'],['lastquarter','Last quarter'],['year','This year']].map(([presetKind,presetLabel])=>`<button type="button" class="qbtn" data-report-preset-cal="${presetKind}">${presetLabel}</button>`).join('')}</div>
       <details id="reportCompareDetailsV300" style="margin-top:10px"><summary class="small" style="cursor:pointer;font-weight:650">Compare with different dates</summary>
         <div class="range" style="margin-top:8px">
           <label class="small">Compare from <input type="date" id="rcf"></label>
@@ -38606,7 +38606,10 @@ async function reportsPage(){
     ensureMoneyRanV297();
     if(key&&!reportTabsRunV294.has(key)){reportTabsRunV294.add(key);runAnswer(reportRunnersV294[key])}
   };
+  const markReportPresetV2C=presetButton=>routeMain.querySelectorAll('[data-report-preset-days],[data-report-preset-cal]')
+    .forEach(b=>b.classList.toggle('act',b===presetButton));
   routeMain.querySelectorAll('[data-report-preset-days]').forEach(presetButton=>presetButton.onclick=()=>{
+    markReportPresetV2C(presetButton);
     const presetDays=Math.max(1,Number(presetButton.dataset.reportPresetDays)||30);
     $('rt2').value=today;
     $('rf').value=shiftSgDateInput(today,-(presetDays-1));
@@ -38615,6 +38618,7 @@ async function reportsPage(){
     $('rgo').click();
   });
   routeMain.querySelectorAll('[data-report-preset-cal]').forEach(presetButton=>presetButton.onclick=()=>{
+    markReportPresetV2C(presetButton);
     const preset=reportCalendarPresetV300(presetButton.dataset.reportPresetCal,today);
     $('rf').value=preset.from;$('rt2').value=preset.to;
     if($('rcf'))$('rcf').value=preset.cf;
@@ -38623,6 +38627,7 @@ async function reportsPage(){
     if(compareDetails)compareDetails.open=true;
     $('rgo').click();
   });
+  [$('rf'),$('rt2')].forEach(el=>{if(el)el.addEventListener('input',()=>markReportPresetV2C(null))});
   if($('rcf'))$('rcf').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
   if($('rct'))$('rct').onchange=()=>{if($('rcf').value&&$('rct').value)$('rgo').click()};
   if($('reportCompareClear'))$('reportCompareClear').onclick=()=>{
@@ -38723,43 +38728,45 @@ async function setupPage(){
   const activeStaffCount=(st||[]).length;
   const soloOwner=setupFlagOn(SETUP_SOLO_OWNER_V170);
   const steps=[
-    {id:'services',em:'🛠️',title:'Add your services or products',
+    {id:'services',icon:'services',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
       done:(sv||[]).length>0||(pr||[]).length>0,link:'#/services',cta:'Add a service or product →'},
-    ...(showBottleStepV276?[{id:'bottles',em:'🍾',title:'Park your first bottle',
+    ...(showBottleStepV276?[{id:'bottles',icon:'products',title:'Park your first bottle',
       why:'Bottle keep is the reason a regular comes back for the rest of it — park one and the customer sees it in their own app.',
       done:(Array.isArray(bottleProbe?.items)?bottleProbe.items:[]).length>0,
       link:'#/bottles',cta:'Park a bottle →'}]:[]),
-    {id:'loyalty',em:'🎁',title:'Publish loyalty earning settings',
+    {id:'loyalty',icon:'giftcard',title:'Publish loyalty earning settings',
       why:'An active published earning programme is available. Add and publish reward milestones separately in Grow.',
       done:canReadModule('loyalty')&&(lp||[]).length>0,link:'#/loyalty',cta:'Review loyalty →'},
-    {id:'reward',em:'🏆',title:'Add a reward customers can claim',
+    {id:'reward',icon:'loyalty',title:'Add a reward customers can claim',
       why:'Earning points means nothing until there is something to claim — publish at least one live reward.',
       done:canReadModule('loyalty')&&(rwd||[]).length>0,link:'#/loyalty',cta:'Add a reward →'},
-    {id:'team',em:'👥',title:'Add your team',
+    {id:'team',icon:'staff',title:'Add your team',
       why:soloOwner?'Marked as not needed — you run this solo.'
         :'Staff logins let you track who\'s on shift and (if you use it) commission per person.',
       /* V285: this pointed at #/settings, which since V269 opens on Modules & plan — the owner
          was dropped one tab away from the thing the step asks for. #/staffmembers IS the roster. */
       done:soloOwner||activeStaffCount>1,soloDone:soloOwner,link:'#/staffmembers',cta:'Add a teammate →'},
-    {id:'customer',em:'🙋',title:'Add your first customer',
+    {id:'customer',icon:'customers',title:'Add your first customer',
       why:'Customer-linked eligible sales can earn loyalty when an active published programme applies.',
       done:(cl||[]).length>0,link:'#/clients',cta:'Add a customer →'}
   ];
   const doneCount=steps.filter(s=>s.done).length;
   $('sp_progress').innerHTML=`<div class="row"><b>${doneCount} of ${steps.length} done</b><span class="spacer"></span>
-    <button class="btn ghost sm" id="sp_dismiss">Don't show this again</button>
+    <button class="btn-textlink-v2c" id="sp_dismiss" type="button">Don't show this again</button>
     <button class="btn ghost sm" id="sp_hide">Back to dashboard</button></div>
-    <div style="background:var(--line);border-radius:100px;height:10px;margin-top:12px;overflow:hidden">
+    <div style="background:var(--line);border-radius:999px;height:8px;margin-top:12px;overflow:hidden">
       <div style="background:var(--grad);height:100%;width:${Math.round(doneCount/steps.length*100)}%"></div></div>`;
   $('sp_hide').onclick=()=>nav('#/dashboard');
   $('sp_dismiss').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,true);nav('#/dashboard')};
-  $('sp_steps').innerHTML=steps.map(s=>`<div class="card" style="display:flex;gap:14px;align-items:flex-start">
-    <div style="font-size:22px">${s.done?'✅':s.em}</div>
+  /* Wave 2C (Top-20 #15): the first screen a new owner sees speaks the product's icon language.
+     Done steps collapse to quiet rows; the next job is the only expanded card. */
+  $('sp_steps').innerHTML=steps.map(s=>`<div class="card${s.done?' setup-step-done-v2c':''}" style="display:flex;gap:14px;align-items:${s.done?'center':'flex-start'}">
+    <span class="setup-step-token-v2c${s.done?' is-done':''}" aria-hidden="true">${CUI.icon(s.done?'check':s.icon,{size:18})}</span>
     <div style="flex:1">
       <b>${esc(s.title)}</b>
-      <p class="muted small" style="margin-top:4px">${esc(s.why)}</p>
-      <div class="row" style="margin-top:10px">
+      ${s.done?'':`<p class="muted small" style="margin-top:4px">${esc(s.why)}</p>`}
+      <div class="row" style="margin-top:${s.done?'0':'10px'}">
         ${s.link&&!s.done?`<a class="btn sm" href="${s.link}">${esc(s.cta)}</a>`:''}
         ${s.link&&s.done&&!s.soloDone?`<a class="btn ghost sm" href="${s.link}">Review →</a>`:''}
         ${s.soloDone?`<button class="btn ghost sm" id="sp_solo_undo">Undo</button>`:''}
@@ -38781,16 +38788,14 @@ async function staffPerfPage(drillId){
     <div class="range">
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
-      <button class="btn sm" id="papply">Apply</button>
+      <button class="btn sm" id="papply">Run report</button>
     </div></div>
     <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
     <div style="margin:-6px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
-    <div class="card staff-performance-filterbar" aria-label="Staff performance filters">
+    <div class="staff-performance-filterbar" aria-label="Staff performance filters">
       <label class="small">Staff search <input type="search" id="staffPerfSearch" placeholder="Name or email"></label>
       <label class="small">Sort by <select id="staffPerfSort"><option value="revenue">Attributed revenue</option><option value="commission">Signed commission</option><option value="revenueRecords">Revenue-qualified records</option><option value="ledgerRecords">Ledger-record count</option></select></label>
       <label class="small">Direction <select id="staffPerfDir"><option value="desc">High to low</option><option value="asc">Low to high</option></select></label>
-      <button class="btn sm" id="staffPerfFilterApply">Apply filters</button>
-      <button class="btn ghost sm" id="staffPerfFilterClear">Clear filters</button>
     </div>
     ${/* V297 (owner markup 2026-08-12): the Team Performance tab of Business Insights opens this
          page, so it gets the same opening verdict the other three tabs now carry — one headline
@@ -38811,18 +38816,17 @@ async function staffPerfPage(drillId){
   };
   $('pf').onchange=$('pt').onchange=invalidate;
   $('papply').onclick=()=>load();
-  $('staffPerfFilterApply').onclick=()=>{
+  /* Wave 2C (Top-20 #9): the second filter card and its second commit verb are gone — search and
+     sort apply as you type, like a filter should. */
+  const staffPerfApplyFiltersV2C=()=>{
     staffPerfSearch=String($('staffPerfSearch').value||'').trim().toLowerCase();
     staffPerfSort=$('staffPerfSort').value||'revenue';
     staffPerfDir=$('staffPerfDir').value||'desc';
     load();
   };
-  $('staffPerfSearch').onkeydown=e=>{if(e.key==='Enter')$('staffPerfFilterApply').click()};
-  $('staffPerfFilterClear').onclick=()=>{
-    staffPerfSearch='';staffPerfSort='revenue';staffPerfDir='desc';
-    $('staffPerfSearch').value='';$('staffPerfSort').value='revenue';$('staffPerfDir').value='desc';
-    load();
-  };
+  $('staffPerfSearch').oninput=staffPerfApplyFiltersV2C;
+  $('staffPerfSort').onchange=staffPerfApplyFiltersV2C;
+  $('staffPerfDir').onchange=staffPerfApplyFiltersV2C;
   renderReportScopeNoteV272(isCurrent);
   async function load(){
     const isLatest=requestGate.begin(),fromDate=$('pf').value,toDate=$('pt').value;
@@ -39258,7 +39262,7 @@ async function dailyReportPage(){
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
-    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Run report</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;

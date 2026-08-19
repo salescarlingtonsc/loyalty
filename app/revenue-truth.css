@@ -117,7 +117,7 @@
 .revenue-truth-metric>strong{
   margin-top:5px;
   color:var(--ink);
-  font-size:clamp(1.15rem,2vw,1.55rem);
+  font-size:clamp(1.15rem,2vw,1.75rem);
   font-variant-numeric:tabular-nums;
   line-height:1.15;
   overflow-wrap:anywhere;
