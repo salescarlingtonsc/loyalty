@@ -2158,6 +2158,12 @@
       "version": "20260819000001",
       "name": "nestly_v393_customer_tier_visibility",
       "sourcePath": "db/migrations/20260819_nestly_v393_customer_tier_visibility.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260820000001",
+      "name": "nestly_v394_tier_lifecycle_checkout",
+      "sourcePath": "db/migrations/20260820_nestly_v394_tier_lifecycle_checkout.sql"
     }
   ]
 }
