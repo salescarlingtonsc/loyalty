@@ -22,7 +22,10 @@ const app=await readFile(new URL('../../app/app.js',import.meta.url),'utf8');
 const indexHtml=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
 
 test('offer artwork fallbacks carry the business monogram, not the offer-name initial',()=>{
-  assert.match(app,/customer-home-offer-media--fallback" aria-hidden="true"><span>\$\{esc\(businessInitial\)\}<\/span>/);
+  /* Wave 4 moved the countdown chip inside the media block, so the block now holds real text and
+     its aria-hidden moved down onto the monogram span — the monogram is still the decoration, the
+     countdown is not. The monogram itself is unchanged: the BUSINESS initial, never the offer's. */
+  assert.match(app,/customer-home-offer-media--fallback"><span aria-hidden="true">\$\{esc\(businessInitial\)\}<\/span>/);
   assert.doesNotMatch(app,/const initial=\(String\(item\?\.name\|\|'Offer'\)\.trim\(\)\[0\]\|\|'O'\)\.toUpperCase\(\)/);
   assert.match(app,/const initial=\(String\(business\?\.name\|\|item\?\.name\|\|'P'\)\.trim\(\)\[0\]\|\|'P'\)\.toUpperCase\(\)/);
   assert.match(app,/initial=\(String\(business\.name\|\|item\?\.name\|\|'P'\)\.trim\(\)\[0\]\|\|'P'\)\.toUpperCase\(\)/);

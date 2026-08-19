@@ -114,8 +114,17 @@ test('photo 7: the hero takes its shape from the business’s own programme spin
   const hero=app.slice(app.indexOf('function customerBusinessRelationshipSummaryV346'),app.indexOf('function customerBusinessSecondaryMarkupV346'));
   assert.match(hero,/customerProgrammeStampRingsV310\(balance,stampTargetV386\)/,'the rings are the existing renderer, not a new one');
   assert.match(hero,/customer-business-tier-meter-v386/);
-  assert.match(hero,/const showRewardLinesV386=modeV386!=='tiers'\|\|rewardReady/,
+  /* v393 adds one clause: with NO tier from either source there is no tier figure to sit above,
+     so the hero falls back to its plain-number form and the reward lines come back with it. */
+  assert.match(hero,/const showRewardLinesV386=modeV386!=='tiers'\|\|!tierBlockV393\|\|rewardReady/,
     'a tiers-only firm gets no sentences about a reward ladder it does not run');
+  assert.match(hero,/const liveTierV393=\(loyalty&&typeof loyalty\.tier==='object'&&loyalty\.tier\)\?loyalty\.tier:null/,
+    'v393: the server tier snapshot is the first source, not a derived one');
+  assert.match(hero,/Math\.round\(tierMetricV393\/tierNextThresholdV393\*100\)/,
+    'the gold track is metric over the NEXT rung threshold, never a fabricated percentage');
+  assert.match(hero,/tierRemainingV386=liveTierV393\s*\n?\s*\?Math\.max\(0,Number\(tierNextV386\?\.remaining\|\|0\)\)/,
+    'the "X to go" line is the server\'s own remaining distance');
+  assert.match(hero,/:'You are at the top tier'/,'no track is invented for the top rung');
   assert.match(hero,/data-hero-mode-v386="\$\{esc\(modeV386\)\}"/);
   assert.match(indexHtml,/\.customer-business-stamp-figure-v386 \.customer-programme-stamp-rings\{display:grid/);
 });

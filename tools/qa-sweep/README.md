@@ -9,7 +9,18 @@ node tools/qa-sweep/sweep.mjs                           # writes results.json + 
 node tools/qa-sweep/null-guard.mjs                      # unguarded null RPC payload reads
 node tools/qa-sweep/verify-null.mjs                     # checks those against the SQL
 node tools/qa-sweep/verify-rulings.mjs                  # asserts the UI standard in a real render
+node tools/qa-sweep/sync-sweep.mjs --root "$PWD"        # business switch -> customer sees it
 ```
+
+`sync-sweep.mjs` is the one script here that crosses the two halves of the product. It layers a
+STATEFUL override on top of `sb-double.js` (`window.__SYNC_STATE`), drives the business's own
+Stamp-card switch on `#/grow`, and then asserts in the customer DOM that the tier is gone and the
+stamp visuals have taken over — and that flipping back brings the tier home. It also measures the
+tiers-only hero against `loyalty.tier` (name, metric/next.threshold, next.remaining) and the offer
+shelf's card width and countdown placement. Unlike the other scripts it takes `--root`, resolves
+Playwright through `PLAYWRIGHT_MODULE`, and launches plain headless chromium (set
+`PLAYWRIGHT_CHROMIUM` only if the local browser cache does not match the resolved build). It exits
+non-zero on the first failed assertion and writes `sync-results.json` + `shots/sync/`.
 
 ## What it covers
 46 route renders (31 business @1280, 12 business @390, 3 customer @390): console/page errors,

@@ -29,7 +29,9 @@ const ROUTES = process.argv[2]
      /* the real customer app, now that the double fixtures its RPCs — the three
       local/customer-preview routes are a visual harness, not these screens */
    'wallet','wallet/qa-cafe','customer/programmes','customer/bookings','customer/messages',
-   'customer/communications','customer/explore','customer/profile',
+   /* v393: #/customer/explore is retired. The route survives only as an alias to #/wallet, so
+      sweeping it would sweep Home twice under a second name. */
+   'customer/communications','customer/profile',
    'customer-interface','local/customer-preview','local/customer-preview/rewards','local/customer-preview/bookings'];
 
 const server = createServer(async (req, res) => {

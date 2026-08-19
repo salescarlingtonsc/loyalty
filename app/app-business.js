@@ -29312,7 +29312,11 @@ function customerInterfaceLivePreviewMarkupV326(){
     tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
     benefits:[],offers:[],rewards:[],products:[],services:[],capabilities:{}
   };
-  const loyalty={balance:77877,unit:'points',enabled:true};
+  /* v393: the preview's loyalty object carries the server's nested tier snapshot, so what the
+     owner sees on this screen is rendered by the same code path a real customer's wallet uses. */
+  const loyalty={balance:77877,unit:'points',enabled:true,
+    tier:{name:'Diamond',threshold:50000,perk_note:null,points_multiplier:1.5,
+      basis:'points_earned',metric:77877,next:{name:'Obsidian',threshold:100000,remaining:22123}}};
   const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
   const actionableCard={loyalty,next_eligible_reward:reward,birthday_benefit:null};
   const merchantExperience=customerMerchantExperienceMarkupV95({

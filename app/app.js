@@ -3164,7 +3164,9 @@ async function route(){
     if(h==='#/join')return renderCustomerQrJoin();
     if(h==='#/customer/programmes')return renderCustomerProgrammes();
     if(h==='#/customer/bookings')return renderCustomerBookings();
-    if(h==='#/customer/explore')return CUSTOMER_EXPLORE_LIVE_V248?renderCustomerExplore():nav('#/wallet');
+    /* v393: Explore is retired (owner decision). The route stays as an ALIAS so an old link must
+       not 404 — the same treatment V368 gave the routes it retired from the workspace rail. */
+    if(h==='#/customer/explore')return nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
     if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
@@ -5110,17 +5112,16 @@ function applyCustomerNavCountsV194(counts={}){
    destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
    claimed a quarter of the navigation and read like a fourth page. It is now the header control
    next to notifications, on every customer screen, and the nav holds only real destinations. */
-/* v248 (owner: "just hide the explore button entire (so will not shown to customers)"): Explore
-   is not offered at all for now — no tab, and the route refuses rather than rendering a page a
-   customer has no way to reach. The search below is finished, shipped and tested (v245 catalogue
-   search, v247 nearest-first); this ONE constant is the whole switch, so nothing is deleted,
-   nothing is half-wired, and turning it on restores the tab and the route together. */
-const CUSTOMER_EXPLORE_LIVE_V248=false;
+/* v248 (owner: "just hide the explore button entire (so will not shown to customers)") kept
+   Explore behind one constant. v393 (owner decision, 2026-08-19) retires the destination: the tab
+   entry is deleted rather than conditional, and the page it pointed at is gone from the bundle.
+   The #/customer/explore route survives as an alias to #/wallet (see route()) so no link a
+   customer already holds can 404. */
 /* v244 (owner, Grab-style reference screenshot): five slots — Home · Rewards · Scan · Explore ·
    Bookings — with Scan as the raised centre control. Scan returned to the nav from the header
    because the reference makes it the app's signature action, not a corner utility; it is still
-   the same openCustomerJoinScanner behind the same id. Explore is new: search the whole Peekaa
-   ecosystem ("chicken rice", "food near me") the way you'd search Google. */
+   the same openCustomerJoinScanner behind the same id. (The Explore slot named here is the one
+   v393 removed; the other four are unchanged.) */
 /* v281 (owner: "change it to scan in the middle and add a profile module at the most right. so 2
    left 1 qrcode scanning"): five slots — Home · Rewards on the left, Scan as the raised centre,
    Bookings · Profile on the right. Profile was reachable only through the header avatar menu, two
@@ -5130,7 +5131,6 @@ const CUSTOMER_PRIMARY_NAV=Object.freeze([
   {key:'home',href:'#/wallet',icon:'home',copy:'home'},
   {key:'programmes',href:'#/customer/programmes',icon:'loyalty',copy:'rewardsTab'},
   {key:'scan',icon:'scan',copy:'scanQr'},
-  ...(CUSTOMER_EXPLORE_LIVE_V248?[{key:'explore',href:'#/customer/explore',icon:'search',copy:'explore'}]:[]),
   {key:'bookings',href:'#/customer/bookings',icon:'bookings',copy:'bookings'},
   {key:'profile',href:'#/customer/profile',icon:'customers',copy:'profileTab'}
 ]);
@@ -5572,7 +5572,14 @@ function localCustomerPreviewProfileV345(){
 function localCustomerPreviewCardsV345(){
   const mk=(name,slug,industry,balance,tier,accent,ready=false,appointments=0,unit='points',extra={})=>({
     business:{id:slug,slug,name,industry,brand_color:accent,currency:'SGD'},
-    loyalty:{balance,unit,tier_name:tier,tier_level:tier?.toLowerCase?.()||''},
+    /* v393: the flat tier_name/tier_level pair was a shape production has never sent. The local
+       preview now carries the SAME nested snapshot app.customer_live_loyalty_v384 emits, so what
+       renders here is what a real wallet renders — and a stamps business carries tier:null, which
+       is the production contract (the tiers spine and stamps are exclusive). */
+    loyalty:{balance,unit,tier:tier&&unit!=='stamps'?{
+      name:tier,threshold:0,perk_note:null,points_multiplier:1,
+      basis:'points_earned',metric:balance,next:null
+    }:null},
     next_eligible_reward:ready?{
       available_now:true,name:name==='Cubbly'?'Free Facial cream':'Reward ready',
       progress_text:name==='Cubbly'?'Free Facial cream is ready to redeem.':'Ready to redeem.'
@@ -5685,148 +5692,13 @@ async function renderCustomerProgrammes(){
   focusCustomerRoute();
 }
 
-/* v244 (owner, nav revamp): Explore — "search for nearby peekaa businessess (can type example
-   food near me, chicken rice, dessert shop etc) - then will pop up relevant business based on
-   search - like google search)". The matching runs on the SERVER, because "chicken rice" should
-   find a business that SELLS chicken rice — a fact only the catalogue knows — not just one named
-   after it. The empty query is the whole ecosystem, joined businesses first, which is the v242
-   directory the owner already approved; it lives here now, behind its own tab, instead of at the
-   bottom of Home. */
-/* v247 (owner: "add the geocoding + nearest first sorting"): a distance is only ever printed when
-   the SERVER computed one from a real geocoded branch. A business with no location shows nothing
-   here rather than a guess, and it still appears in the list — being unlocated is the owner's
-   admin gap, not a reason to hide a business the customer may already belong to. */
-function customerExploreDistanceTextV247(km){
-  /* Number(null) and Number('') are both 0, which would print "50 m" for a business whose
-     location is simply UNKNOWN — the exact fabrication this function exists to prevent. Only a
-     real number counts as a distance. */
-  if(typeof km!=='number'&&typeof km!=='string')return '';
-  if(typeof km==='string'&&!km.trim())return '';
-  const value=Number(km);
-  if(!Number.isFinite(value)||value<0)return '';
-  if(value<1)return `${Math.max(50,Math.round(value*1000/50)*50)} m`;
-  return `${value<10?value.toFixed(1):Math.round(value)} km`;
-}
-function customerExploreRowMarkupV244(row){
-  const name=String(row?.name||'').trim()||'Business',industry=String(row?.industry||'').trim(),
-    joined=row?.joined===true,slug=String(row?.slug||''),
-    logo=customerMediaUrlV95(row?.logo_url),
-    address=String(row?.address||'').trim(),
-    match=String(row?.match_note||'').trim(),
-    distance=customerExploreDistanceTextV247(row?.distance_km),
-    points=Math.max(0,Number(row?.points_balance||0)),
-    initial=(name[0]||'B').toUpperCase();
-  const media=logo
-    ?`<img class="customer-explore-logo" src="${esc(logo)}" alt="" loading="lazy" width="46" height="46">`
-    :`<span class="customer-explore-logo customer-explore-logo--fallback" aria-hidden="true">${esc(initial)}</span>`;
-  const copy=`<div class="customer-explore-copy">
-      <h3 data-merchant-content>${esc(name)}</h3>
-      ${industry?`<p class="muted small" data-merchant-content>${esc(industry)}</p>`:''}
-      ${match?`<p class="small customer-explore-match">Has: ${esc(match)}</p>`:''}
-      ${address||distance?`<p class="muted small customer-explore-address">${distance?`<span class="customer-explore-distance">${esc(distance)}</span>`:''}${address?`<span data-merchant-content>${esc(address)}</span>`:''}</p>`:''}
-    </div>`;
-  const side=joined
-    ?`<div class="customer-explore-side"><span class="pill ok">Member</span><b>${esc(customerPointTotalV103(points))}</b><span class="muted small">points</span></div>`
-    :`<div class="customer-explore-side"><span class="pill off">Not set up</span><span class="muted small customer-explore-join-hint">Scan their QR in store to join</span></div>`;
-  /* Joined rows use the one existing route into a business. An unjoined row deliberately does
-     not navigate — v242's rule: the shop's own QR is the only way in. */
-  return joined
-    ?`<a class="card customer-explore-row" href="#/wallet/${encodeURIComponent(slug)}">${media}${copy}${side}</a>`
-    :`<div class="card customer-explore-row customer-explore-row--locked">${media}${copy}${side}</div>`;
-}
-function customerExploreResultsMarkupV244(state){
-  if(state.status==='loading')return '<div class="card customer-explore-state" aria-busy="true"><p class="muted small">Searching…</p></div>';
-  if(state.status==='error')return '<div class="card customer-explore-state"><p class="muted small">Businesses couldn’t load.</p><button class="btn ghost sm" id="customerExploreRetry" type="button" style="margin-top:10px">Try again</button></div>';
-  const seen=new Set(),rows=(Array.isArray(state.rows)?state.rows:[]).filter(row=>{
-    const id=String(row?.business_id||'');
-    if(!id||seen.has(id))return false;
-    seen.add(id);return true;
-  });
-  if(!rows.length)return state.query
-    ?`<div class="card customer-explore-state"><p class="muted small">Nothing matches “${esc(state.query)}”. Try a food, a service, or a shop name.</p></div>`
-    :'<div class="card customer-explore-state"><p class="muted small">No businesses to show yet.</p></div>';
-  /* When the customer shared a position, say so — and say plainly how many businesses could not be
-     ranked, because a list that silently mixes "2 km away" with "somewhere unknown" is misleading. */
-  const unlocated=state.near?rows.filter(row=>row?.located!==true).length:0;
-  const order=state.near
-    ?`<p class="muted small customer-explore-order">${CUI.icon('bookings',{size:16})} Nearest first${unlocated?` · ${unlocated} ${unlocated===1?'business has':'businesses have'} no address yet, shown last`:''}</p>`
-    :'';
-  return `${order}<div class="customer-explore-list">${rows.map(customerExploreRowMarkupV244).join('')}</div>
-    <p class="muted small customer-explore-note">Points and rewards are separate for every business.</p>`;
-}
-async function renderCustomerExplore(){
-  const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
-  const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
-  renderCustomerShell({active:'explore',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,
-    body:`<header class="customer-page-head"><div><h1>Explore</h1><p class="muted small">Every business on Peekaa — find one by what it sells.</p></div></header>
-    <div class="customer-explore-search"><label class="sr-only" for="customerExploreQuery">Search businesses</label>
-      ${CUI.icon('search',{size:20})}<input id="customerExploreQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Try “chicken rice”, “facial”, “dessert”…"></div>
-    <div class="customer-explore-tools"><button class="btn ghost sm" id="customerExploreNear" type="button" aria-pressed="false">${CUI.icon('bookings',{size:16})}<span>Near me</span></button>
-      <p class="muted small" id="customerExploreNearNote" role="status"></p></div>
-    <div id="customerExploreResults" role="region" aria-live="polite" aria-label="Search results">${customerExploreResultsMarkupV244({status:'loading'})}</div>`});
-  const input=$('customerExploreQuery'),results=$('customerExploreResults'),
-    nearButton=$('customerExploreNear'),nearNote=$('customerExploreNearNote');
-  /* The customer's position is held for this render only and travels no further than the RPC
-     argument — nothing stores it, and turning Near me off forgets it immediately. */
-  let searchEpoch=0,debounce=0,position=null;
-  const run=async(query)=>{
-    const epoch=++searchEpoch;
-    results.innerHTML=customerExploreResultsMarkupV244({status:'loading'});
-    const {data,error}=await customerRpc('customer_explore_businesses_v244',{
-      p_query:query||null,p_lat:position?.lat??null,p_lng:position?.lng??null
-    });
-    /* v255 (audit class E — the highest-value signal the product was losing every day). The
-       SHAPE only: how many words, how long, and whether anything matched. Never the words.
-       Discovery is not business-scoped, so this is the one event recorded with no tenant. */
-    if(!error)typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.explore_searched',null,{
-      context:{query_shape:exploreQueryShapeV256(query,Array.isArray(data)&&data.length>0),
-        surface_key:'explore',entry_point:'customer_explore',surface_version:'v255'}
-    });
-    /* Replies can land out of order — a stale reply must never overwrite a newer query's list. */
-    if(!isCurrent()||epoch!==searchEpoch||!results.isConnected)return;
-    results.innerHTML=customerExploreResultsMarkupV244(error
-      ?{status:'error'}
-      :{status:'ready',rows:Array.isArray(data)?data:[],query,near:!!position});
-    const retry=$('customerExploreRetry');
-    if(retry)retry.onclick=()=>run(input.value.trim());
-  };
-  const setNear=(next,note='')=>{
-    position=next;
-    nearButton.setAttribute('aria-pressed',String(!!next));
-    nearButton.classList.toggle('is-on',!!next);
-    nearNote.textContent=note;
-  };
-  nearButton.onclick=()=>{
-    if(position){setNear(null,'');run(input.value.trim());return}
-    if(!navigator.geolocation){
-      setNear(null,'This browser cannot share your location. Search by name instead.');
-      return;
-    }
-    nearButton.disabled=true;nearNote.textContent='Finding you…';
-    navigator.geolocation.getCurrentPosition(reading=>{
-      nearButton.disabled=false;
-      if(!isCurrent())return;
-      setNear({lat:reading.coords.latitude,lng:reading.coords.longitude},'');
-      run(input.value.trim());
-    },error=>{
-      nearButton.disabled=false;
-      if(!isCurrent())return;
-      /* Denial is a decision, not a failure: say what happened, keep the list the customer has. */
-      setNear(null,error?.code===1
-        ?'Location is off for this site. Turn it on in your browser to sort by distance.'
-        :'Your location could not be read just now. The list is still here, sorted by name.');
-    },{enableHighAccuracy:false,timeout:8000,maximumAge:60000});
-  };
-  input.addEventListener('input',()=>{
-    clearTimeout(debounce);
-    debounce=setTimeout(()=>run(input.value.trim()),300);
-  });
-  input.addEventListener('keydown',event=>{
-    if(event.key==='Enter'){event.preventDefault();clearTimeout(debounce);run(input.value.trim())}
-  });
-  run('');
-  focusCustomerRoute();
-}
+/* v393 (owner decision, 2026-08-19): Explore is REMOVED, not hidden. v248 had already taken the
+   tab away and left the finished surface behind one constant; the owner has now retired the
+   destination itself, so the tab entry, the page and its only call to
+   customer_explore_businesses_v244 are gone from the app. The RPC and its migrations are left
+   untouched on the server — this is a client decision, and nothing else calls it. The route is
+   kept and aliased to #/wallet below: a link a customer already has in a message or a home-screen
+   shortcut must not 404. */
 const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=new Set(['pending','waitlisted','new']);
 const isActiveCustomerBookingRequest=request=>ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES.has(String(request?.status||'').toLowerCase());
 const customerRepeatBookingPreferencesV167=new Map();
@@ -7254,7 +7126,15 @@ function customerHomeOfferMarkupV167(item,seen){
      first letter of the offer name — "2-for-1 lattes" was rendering a huge lone "2". */
   const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
-    ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(businessInitial)}</span></div>`}
+    ${/* Wave 4 (audit): the countdown moves INSIDE the media block so it overlays the artwork's
+         top-right corner instead of taking a line of the copy. It keeps its own class and colours
+         — only where it sits changed. The fallback block's aria-hidden moves down onto the
+         monogram span, because the block now holds real text a screen reader must still reach;
+         the monogram itself is still decoration. The single-mark rule from wave 2B is untouched:
+         the logo circle below still yields when the fallback monogram is the card's mark. */''}
+    ${image
+      ?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy">${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:''}</div>`
+      :`<div class="customer-home-offer-media customer-home-offer-media--fallback"><span aria-hidden="true">${esc(businessInitial)}</span>${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:''}</div>`}
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${image?(logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
@@ -7262,7 +7142,7 @@ function customerHomeOfferMarkupV167(item,seen){
     ${/* V392 (owner, photo 7: a clock drawn onto the "Ends in 13 days" pill). The countdown was
          already red; the icon is what makes it read as a deadline at a glance rather than as one
          more line of small text. */''}
-    ${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+    ${countdown?'':validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
 /* v173: with many linked businesses each posting offers, a plain ends-soonest
@@ -8872,7 +8752,11 @@ function customerBusinessHeroModeV386(capabilities={},loyalty={}){
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={}}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
-  const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
+  /* v393: loyalty.tier is the SERVER's tier snapshot (app.customer_live_loyalty_v384 →
+     app.customer_tier_json_v393), non-null only while the tiers spine row is active. It leads the
+     chain because it is the only source production can actually send; everything after it is a
+     legacy client-side shape kept so no caller that still passes one goes blank. */
+  const tierLabel=String(loyalty.tier?.name||tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
   const unit=String(loyalty.unit||presentation.unit||'points').toLowerCase();
   const rewardReady=reward?.available_now===true;
   const remaining=Math.max(0,Number(reward?.remaining_units||0));
@@ -8908,11 +8792,33 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const stampRingsV386=stampTargetV386?customerProgrammeStampRingsV310(balance,stampTargetV386):'';
   /* TIERS-ONLY: no spendable balance exists, so the hero states the standing and the distance to
      the next rung. tier.progress_percent is the server's own figure — the same one
-     customerTierPanelMarkupV194 renders — never a percentage derived here. */
-  const tierNextV386=tier?.next||null;
-  const tierProgressV386=Math.max(0,Math.min(100,Number(tier?.progress_percent||0)));
-  const tierRemainingV386=tierNextV386
-    ?Math.max(0,Number(tierNextV386.threshold||0)-Number(tier?.metric||0)):0;
+     customerTierPanelMarkupV194 renders — never a percentage derived here.
+     v393: the FIRST source is loyalty.tier, the snapshot app.customer_live_loyalty_v384 now nests
+     in every wallet card. It is non-null only while the tiers spine row is active, so switching a
+     firm to stamps makes this whole block disappear in the same transaction that flips the spine.
+     Its shape is {name,threshold,perk_note,points_multiplier,basis,metric,next:{name,threshold,
+     remaining}|null}; the track is metric-over-next.threshold, and at the top rung (next===null)
+     there is no track to draw, so the meter is full and the line says so — never a fabricated
+     percentage. The legacy presentation.tier shape stays behind it for callers still passing one
+     (the workspace Live preview, customer_get_effective_tier_v143 while it is still read). */
+  const liveTierV393=(loyalty&&typeof loyalty.tier==='object'&&loyalty.tier)?loyalty.tier:null;
+  const tierNextV386=liveTierV393?(liveTierV393.next||null):(tier?.next||null);
+  const tierBasisV393=String((liveTierV393?liveTierV393.basis:tier?.basis)||'visits');
+  const tierMetricV393=Math.max(0,Number((liveTierV393?liveTierV393.metric:tier?.metric)||0));
+  const tierNextThresholdV393=Math.max(0,Number(tierNextV386?.threshold||0));
+  const tierProgressV386=liveTierV393
+    ?(tierNextV386&&tierNextThresholdV393>0
+      ?Math.max(0,Math.min(100,Math.round(tierMetricV393/tierNextThresholdV393*100)))
+      :100)
+    :Math.max(0,Math.min(100,Number(tier?.progress_percent||0)));
+  const tierRemainingV386=liveTierV393
+    ?Math.max(0,Number(tierNextV386?.remaining||0))
+    :(tierNextV386?Math.max(0,tierNextThresholdV393-Number(tier?.metric||0)):0);
+  const tierNextNameV393=String(tierNextV386?.name||tierNextV386?.label||'').trim();
+  /* v393: with no tier from either source there is nothing true to draw, so the tier figure is not
+     rendered at all — the hero falls through to its plain-number form rather than printing a
+     nameless rung above an empty track. */
+  const tierBlockV393=!!(liveTierV393||tierLabel||tierNextV386);
   /* Wave 3 (audit: "the display face never touches a number" and "no progression cue"). The hero
      stated a balance and left the distance to the next reward to a sentence below it. It now draws
      that distance with the SAME dots/track every wallet card already uses — from the same two
@@ -8927,16 +8833,16 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const figureV386=modeV386==='stamps'&&stampRingsV386
     ?`<div class="customer-business-stamp-figure-v386">${stampRingsV386}</div>
       <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
-    :modeV386==='tiers'
+    :modeV386==='tiers'&&tierBlockV393
       ?`<b class="customer-business-balance-v347 customer-business-balance-tier-v386">${esc(tierLabel||heroLabel)}</b>
         <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tierProgressV386}" aria-label="${esc(tierLabel?`${tierLabel} progress`:'Tier progress')}" style="--reward-progress:${tierProgressV386}%"><span></span></div>
         <p class="customer-business-summary-line-v362">${tierNextV386
-          ?`${esc(customerTierDistanceCountV310(tierRemainingV386,String(tier?.basis||'visits')))} ${esc(customerTierUnitWordV310(String(tier?.basis||'visits')))} to ${esc(tierNextV386.label||'next tier')}`
+          ?`${esc(customerTierDistanceCountV310(tierRemainingV386,tierBasisV393))} ${esc(customerTierUnitWordV310(tierBasisV393))} to ${esc(tierNextNameV393||'next tier')}`
           :'You are at the top tier'}</p>`
       :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>${heroProgressV3?`<div class="customer-business-hero-progress-v3">${heroProgressV3}</div>`:''}`;
   /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
      running, so they are suppressed rather than printed against a tier meter. */
-  const showRewardLinesV386=modeV386!=='tiers'||rewardReady;
+  const showRewardLinesV386=modeV386!=='tiers'||!tierBlockV393||rewardReady;
   /* Wave 3: the brand glow stops being decoration and becomes a state. The card's own shadow drops
      to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
      moment it means something — a reward the customer can claim right now — reusing the existing
@@ -8984,7 +8890,8 @@ function customerBusinessReferralDetailMarkupV362(){
   </section>`;
 }
 function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},membership={},loyalty={},capabilities={}}={}){
-  const tierLabel=String(tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
+  /* v393: the server's own tier snapshot leads; the legacy shapes stay as fallbacks. */
+  const tierLabel=String(loyalty.tier?.name||tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
   const sessions=Math.max(0,Number(packages.sessions_remaining)||0);
   const stack=programmeStackV310(capabilities)||[];
   const visibleEntry=kind=>{
@@ -9122,8 +9029,18 @@ function wireCustomerBusinessShortcutPageV348(root=document){
    workspace's Live preview harness (customerInterfaceLivePreviewMarkupV326), which has no
    history and nowhere to go back to — that caller passes nothing and gets no chevron, which is
    why the v339 pass left the control stranded in the shell bar instead of moving it. */
-function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={},collapsedHeaderV339=false,backHrefV340='',packages={},membership={}}){
-  const loyalty=actionableCard?.loyalty||{},reward=actionableCard?.next_eligible_reward||null;
+function customerMerchantExperienceMarkupV95({presentation,business,actionableCard,programmeCards,bookingEnabled,offersStatus='ready',rewardsHost=false,programmeCapabilities={},collapsedHeaderV339=false,backHrefV340='',packages={},membership={},walletLoyalty=null}){
+  /* v393: the tier snapshot rides customer_get_wallet / customer_get_business_summary (both nest
+     app.customer_live_loyalty_v384), NOT customer_get_actionable_wallet — so the caller hands this
+     page the wallet's own loyalty object and the one missing key is folded onto the card's, rather
+     than every downstream reader growing a second parameter. Nothing else is merged: balance,
+     unit and model stay whatever the actionable card said. */
+  const actionableLoyaltyV393=actionableCard?.loyalty||{};
+  const walletTierV393=(walletLoyalty&&typeof walletLoyalty.tier==='object'&&walletLoyalty.tier)?walletLoyalty.tier:null;
+  const loyalty=actionableLoyaltyV393.tier==null&&walletTierV393
+    ?{...actionableLoyaltyV393,tier:walletTierV393}
+    :actionableLoyaltyV393;
+  const reward=actionableCard?.next_eligible_reward||null;
   const tier=presentation.tier||{};
   const hasTier=customerTierHasProgressV103(tier);
   const currentTierLabel=String(tier.current?.label||tier.current||tier.label||'').trim();
@@ -9431,7 +9348,9 @@ function customerProgrammeCardMetricKindV360(card){
   if(hasStamps&&!hasPoints)return 'stamps';
   if(hasPoints)return 'points';
   const loyalty=card?.loyalty||{};
-  const tierLabel=String(loyalty.tier_name||loyalty.tier_level||card?.tier?.current?.label||card?.tier?.label||'').trim();
+  /* v393: loyalty.tier.name is the server's own tier snapshot; the flat fields behind it are
+     legacy client shapes production never sends. */
+  const tierLabel=String(loyalty.tier?.name||loyalty.tier_name||loyalty.tier_level||card?.tier?.current?.label||card?.tier?.label||'').trim();
   if(tierLabel)return 'points';
   const rawModel=String(loyalty.model||loyalty.loyalty_model||card?.loyalty_model||'').toLowerCase();
   const rawUnit=String(loyalty.unit||'points').toLowerCase();
@@ -9470,7 +9389,7 @@ function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   const holdings=customerProgrammeHoldingsMarkupV183(card);
-  const tier=String(loyalty.tier_name||'').trim(),
+  const tier=String(loyalty.tier?.name||loyalty.tier_name||'').trim(),
     metric=customerProgrammeDirectoryMetricV346(card),
     status=customerProgrammeDirectoryStatusV346(card);
   return `<a class="card customer-programme-card customer-programme-card-v95${customerCardMoodV2B(card)}" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${/* V392 (owner, photo 4): the FACIAL kicker is struck
@@ -9598,7 +9517,7 @@ function customerHomeBusinessBalanceV345(card){
 }
 function customerHomeBusinessCardV345(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),
-    status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier_name||'').trim(),
+    status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier?.name||loyalty.tier_name||'').trim(),
     accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   return `<a class="customer-home-business-card-v345${customerCardMoodV2B(card)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
     <span class="customer-home-business-logo-v345">${customerProgrammeTileLogoV96(business)}</span>
@@ -10220,7 +10139,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
   const programmeBodyMarkupV333=`<div id="customerBusinessMainV348" class="customer-business-main-v348">
-      ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
+      ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership,walletLoyalty:loyalty})}
     </div>
     <section class="customer-business-shortcut-page-v348" id="customerBusinessShortcutPageV348" hidden aria-labelledby="customerBusinessShortcutTitleV348">
       <header class="customer-business-shortcut-head-v348">
@@ -41731,7 +41650,11 @@ function customerInterfaceLivePreviewMarkupV326(){
     tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
     benefits:[],offers:[],rewards:[],products:[],services:[],capabilities:{}
   };
-  const loyalty={balance:77877,unit:'points',enabled:true};
+  /* v393: the preview's loyalty object carries the server's nested tier snapshot, so what the
+     owner sees on this screen is rendered by the same code path a real customer's wallet uses. */
+  const loyalty={balance:77877,unit:'points',enabled:true,
+    tier:{name:'Diamond',threshold:50000,perk_note:null,points_multiplier:1.5,
+      basis:'points_earned',metric:77877,next:{name:'Obsidian',threshold:100000,remaining:22123}}};
   const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
   const actionableCard={loyalty,next_eligible_reward:reward,birthday_benefit:null};
   const merchantExperience=customerMerchantExperienceMarkupV95({

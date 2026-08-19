@@ -25,10 +25,14 @@ test('a signed-out deep link to Communications lands on the customer entry, dest
   // every live customer route in the router is covered, so no other one can fall to renderAuth
   const router = between("if(h==='#/customer/programmes')", "if(h==='#/wallet'||");
   for (const match of router.matchAll(/h==='(#\/customer\/[a-z]+)'/g)) {
-    if (match[1] === '#/customer/explore') continue; // CUSTOMER_EXPLORE_LIVE_V248===false, unlinked
+    /* v393: #/customer/explore is retired. It stays in the router ONLY as an alias to #/wallet,
+       so it is not a destination anything can be remembered against. */
+    if (match[1] === '#/customer/explore') continue;
     assert.ok(set.includes(`'${match[1]}'`), `${match[1]} is routable but not a remembered destination`);
   }
-  assert.match(app, /const CUSTOMER_EXPLORE_LIVE_V248=false;/);
+  assert.match(app, /if\(h==='#\/customer\/explore'\)return nav\('#\/wallet'\);/,
+    'the retired Explore route must alias, never 404');
+  assert.doesNotMatch(app, /CUSTOMER_EXPLORE_LIVE_V248/, 'the hidden-Explore switch is gone with the page');
   // and the router still remembers before handing over to the customer sign-in
   const guard = between('const directCustomerDestination=normalizeCustomerDestination(h);', 'if(!S.user&&h===\'#/join\')');
   assert.match(guard, /rememberPendingCustomerDestination\(directCustomerDestination\)/);

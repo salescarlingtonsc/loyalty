@@ -113,15 +113,15 @@ test('the "N linked reward accounts" subtitle is gone, along with its helper', (
 
 test('the scanner is the raised centre of the nav (v244 Grab-style revamp)', () => {
   /* v195 moved Scan to the header; the owner's v244 reference put it back in the nav as the
-     signature centre control. v248 then hid Explore from customers, so four slots show today —
-     Scan is still the centre of what they see. */
+     signature centre control. v248 then hid Explore from customers and v393 removed it, so five
+     slots show — Scan is still the centre of what they see, now with two slots either side. */
   const nav = section(appJs, 'const CUSTOMER_PRIMARY_NAV=Object.freeze([', 'function customerPrimaryNavigation(');
-  assert.equal((nav.match(/\{key:/g) || []).length, 6);
-  assert.match(appJs, /const CUSTOMER_EXPLORE_LIVE_V248=false;/);
+  assert.equal((nav.match(/\{key:/g) || []).length, 5);
+  assert.doesNotMatch(appJs, /CUSTOMER_EXPLORE_LIVE_V248/);
   assert.match(nav, /\{key:'scan',icon:'scan',copy:'scanQr'\}/);
-  assert.match(nav, /\{key:'explore',href:'#\/customer\/explore',icon:'search',copy:'explore'\}/);
+  assert.doesNotMatch(nav, /key:'explore'/);
   assert.ok(nav.indexOf("key:'programmes'") < nav.indexOf("key:'scan'"), 'Scan sits in the centre');
-  assert.ok(nav.indexOf("key:'scan'") < nav.indexOf("key:'explore'"));
+  assert.ok(nav.indexOf("key:'scan'") < nav.indexOf("key:'bookings'"), 'and two slots follow it');
   assert.match(appJs, /id="customerNavScan" class="customer-nav-scan"/);
   assert.match(appJs, /if\(\$\('customerNavScan'\)\)\$\('customerNavScan'\)\.onclick=openCustomerJoinScanner/);
   assert.doesNotMatch(appJs, /customer-head-scan/, 'the header no longer duplicates the scanner');

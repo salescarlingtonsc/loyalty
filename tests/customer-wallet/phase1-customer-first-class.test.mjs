@@ -111,14 +111,14 @@ test('customer navigation keeps destinations focused while notifications and pro
   const nav=section('const CUSTOMER_PRIMARY_NAV=Object.freeze([','function customerPrimaryNavigation(');
   /* v244 (owner's Grab-style reference): Scan is the raised centre action — a BUTTON, not a
      route, so it still cannot intercept merchant navigation, and it stays wired through the same
-     id on every page. v248 hid Explore behind CUSTOMER_EXPLORE_LIVE_V248, so the customer sees
-     four slots today and five when it is switched on; the entry itself is still declared here. */
-  assert.equal((nav.match(/\{key:/g)||[]).length,6);
-  assert.match(nav,/\.\.\.\(CUSTOMER_EXPLORE_LIVE_V248\?\[\{key:'explore'/);
+     id on every page. v248 hid Explore behind CUSTOMER_EXPLORE_LIVE_V248; v393 removed the
+     destination outright on the owner's decision, so the nav declares exactly five slots and the
+     conditional entry is gone with the page it pointed at. */
+  assert.equal((nav.match(/\{key:/g)||[]).length,5);
+  assert.doesNotMatch(nav,/key:'explore'/,'Explore is removed, not conditional');
   for(const [key,href,copy] of [
     ['home','#/wallet','home'],
     ['programmes','#/customer/programmes','rewardsTab'],
-    ['explore','#/customer/explore','explore'],
     ['bookings','#/customer/bookings','bookings'],
     /* v281 (owner): Profile promoted from the header avatar menu to the rightmost slot */
     ['profile','#/customer/profile','profileTab']

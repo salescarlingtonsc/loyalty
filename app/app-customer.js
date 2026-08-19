@@ -1380,7 +1380,14 @@ function localCustomerPreviewProfileV345(){
 function localCustomerPreviewCardsV345(){
   const mk=(name,slug,industry,balance,tier,accent,ready=false,appointments=0,unit='points',extra={})=>({
     business:{id:slug,slug,name,industry,brand_color:accent,currency:'SGD'},
-    loyalty:{balance,unit,tier_name:tier,tier_level:tier?.toLowerCase?.()||''},
+    /* v393: the flat tier_name/tier_level pair was a shape production has never sent. The local
+       preview now carries the SAME nested snapshot app.customer_live_loyalty_v384 emits, so what
+       renders here is what a real wallet renders — and a stamps business carries tier:null, which
+       is the production contract (the tiers spine and stamps are exclusive). */
+    loyalty:{balance,unit,tier:tier&&unit!=='stamps'?{
+      name:tier,threshold:0,perk_note:null,points_multiplier:1,
+      basis:'points_earned',metric:balance,next:null
+    }:null},
     next_eligible_reward:ready?{
       available_now:true,name:name==='Cubbly'?'Free Facial cream':'Reward ready',
       progress_text:name==='Cubbly'?'Free Facial cream is ready to redeem.':'Ready to redeem.'
@@ -1493,6 +1500,13 @@ async function renderCustomerProgrammes(){
   focusCustomerRoute();
 }
 
+/* v393 (owner decision, 2026-08-19): Explore is REMOVED, not hidden. v248 had already taken the
+   tab away and left the finished surface behind one constant; the owner has now retired the
+   destination itself, so the tab entry, the page and its only call to
+   customer_explore_businesses_v244 are gone from the app. The RPC and its migrations are left
+   untouched on the server — this is a client decision, and nothing else calls it. The route is
+   kept and aliased to #/wallet below: a link a customer already has in a message or a home-screen
+   shortcut must not 404. */
 const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=new Set(['pending','waitlisted','new']);
 const isActiveCustomerBookingRequest=request=>ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES.has(String(request?.status||'').toLowerCase());
 const customerRepeatBookingPreferencesV167=new Map();
@@ -2764,7 +2778,15 @@ function customerHomeOfferMarkupV167(item,seen){
      first letter of the offer name — "2-for-1 lattes" was rendering a huge lone "2". */
   const businessInitial=(String(business.name||'B').trim()[0]||'B').toUpperCase();
   return `<a class="customer-home-offer${image?'':' customer-home-offer--no-media'}" href="#/wallet/${encodeURIComponent(business.slug||'')}" data-home-offer data-offer-id="${esc(item?.id||'')}" data-offer-version="${esc(versionId)}">
-    ${image?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`:`<div class="customer-home-offer-media customer-home-offer-media--fallback" aria-hidden="true"><span>${esc(businessInitial)}</span></div>`}
+    ${/* Wave 4 (audit): the countdown moves INSIDE the media block so it overlays the artwork's
+         top-right corner instead of taking a line of the copy. It keeps its own class and colours
+         — only where it sits changed. The fallback block's aria-hidden moves down onto the
+         monogram span, because the block now holds real text a screen reader must still reach;
+         the monogram itself is still decoration. The single-mark rule from wave 2B is untouched:
+         the logo circle below still yields when the fallback monogram is the card's mark. */''}
+    ${image
+      ?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy">${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:''}</div>`
+      :`<div class="customer-home-offer-media customer-home-offer-media--fallback"><span aria-hidden="true">${esc(businessInitial)}</span>${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:''}</div>`}
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${image?(logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
@@ -2772,7 +2794,7 @@ function customerHomeOfferMarkupV167(item,seen){
     ${/* V392 (owner, photo 7: a clock drawn onto the "Ends in 13 days" pill). The countdown was
          already red; the icon is what makes it read as a deadline at a glance rather than as one
          more line of small text. */''}
-    ${countdown?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`:validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+    ${countdown?'':validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
 /* v173: with many linked businesses each posting offers, a plain ends-soonest
@@ -3803,7 +3825,7 @@ function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   const holdings=customerProgrammeHoldingsMarkupV183(card);
-  const tier=String(loyalty.tier_name||'').trim(),
+  const tier=String(loyalty.tier?.name||loyalty.tier_name||'').trim(),
     metric=customerProgrammeDirectoryMetricV346(card),
     status=customerProgrammeDirectoryStatusV346(card);
   return `<a class="card customer-programme-card customer-programme-card-v95${customerCardMoodV2B(card)}" data-programme-name="${esc(String(business.name||'').toLowerCase())}" style="--merchant-accent:${esc(accent)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" aria-label="${esc(ct('openProgramme',{business:business.name||ct('localBusiness')}))}"><div class="customer-programme-card-accent"></div><div class="customer-programme-card-body"><div class="customer-programme-logo">${customerProgrammeTileLogoV96(business)}</div><div class="customer-programme-card-copy">${/* V392 (owner, photo 4): the FACIAL kicker is struck
@@ -3917,7 +3939,7 @@ function customerHomeBusinessBalanceV345(card){
 }
 function customerHomeBusinessCardV345(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),
-    status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier_name||'').trim(),
+    status=customerHomeBusinessStatusV345(card),tier=String(loyalty.tier?.name||loyalty.tier_name||'').trim(),
     accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   return `<a class="customer-home-business-card-v345${customerCardMoodV2B(card)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
     <span class="customer-home-business-logo-v345">${customerProgrammeTileLogoV96(business)}</span>
@@ -4539,7 +4561,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
   if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
   const programmeBodyMarkupV333=`<div id="customerBusinessMainV348" class="customer-business-main-v348">
-      ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership})}
+      ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership,walletLoyalty:loyalty})}
     </div>
     <section class="customer-business-shortcut-page-v348" id="customerBusinessShortcutPageV348" hidden aria-labelledby="customerBusinessShortcutTitleV348">
       <header class="customer-business-shortcut-head-v348">

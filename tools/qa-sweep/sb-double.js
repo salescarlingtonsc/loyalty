@@ -52,7 +52,10 @@
     }],
     business_programmes: [
       { business_id: BIZ, kind: 'points', active: true, programme_id: 'p-points' },
-      { business_id: BIZ, kind: 'tiers', active: false, programme_id: 'p-tiers' },
+      /* v393: the tiers spine row is ACTIVE for QA Test Cafe, because the tier snapshot the
+         wallet fixtures below carry is double-gated on exactly this row. A fixture that showed a
+         tier while the spine said `false` would be describing a state the server cannot produce. */
+      { business_id: BIZ, kind: 'tiers', active: true, programme_id: 'p-tiers' },
       { business_id: BIZ, kind: 'stamps', active: false, programme_id: 'p-stamps' },
       { business_id: BIZ, kind: 'referral', active: true, programme_id: 'p-ref' },
     ],
@@ -113,6 +116,10 @@
        Without these the customer app renders its empty state on every screen, which looks like
        coverage and is not: the populated card, the reward ladder, the tier panel and the booking
        list are exactly the markup worth sweeping. */
+    /* v393 note: these cards deliberately carry NO tier key. public.customer_get_actionable_wallet
+       builds its loyalty object from app.c45_base_actionable_wallet_card, not from
+       app.customer_live_loyalty_v384 — so on production a tier NEVER reaches this reader. Adding
+       one here would put a tier pill on Home that the live server cannot produce. */
     customer_get_actionable_wallet: () => ({
       as_of: NOW, truncated: false,
       cards: [
@@ -143,12 +150,26 @@
         },
       ],
     }),
+    /* v393: `loyalty.tier` is REAL. app.customer_live_loyalty_v384 — which public.customer_get_wallet
+       and public.customer_get_business_summary both nest — now emits it, non-null only while the
+       tiers spine row is active, via app.customer_tier_json_v393. Its exact shape is
+       {name,threshold,perk_note,points_multiplier,basis,metric,next:{name,threshold,remaining}|null}.
+       Before this the double invented a flat `tier_name` string the server has never sent, so every
+       tier pill in a sweep screenshot was fiction. QA Test Cafe runs points + tiers and carries the
+       snapshot; QA Day Spa runs stamps and carries `tier: null`, which is the production contract —
+       business_switch_to_stamps_v384 writes the spine {stamps:true, points:false, tiers:false}, so
+       stamps and a tier can never both be live for one firm. */
     customer_get_wallet: () => ([
       {
         business: { slug: 'qa-cafe', name: 'QA Test Cafe', industry: 'fnb', currency: 'SGD' },
         loyalty: {
           enabled: true, model: 'redeem', unit: 'points', balance: 320,
           ledger_balance: 320, batch_balance: 320, credit_balance_cents: 0,
+          tier: {
+            name: 'Diamond', threshold: 300, perk_note: null, points_multiplier: 1.5,
+            basis: 'points_earned', metric: 320,
+            next: { name: 'Obsidian', threshold: 400, remaining: 80 },
+          },
           programme: { id: 'p-points', kind: 'points', active: true, balance_scope: 'programme_pot' },
           programmes_contract: 'v384',
         },
@@ -156,7 +177,40 @@
         membership: { enabled: true, active: false, current_period_ends_at: null },
         upcoming_appointments: { enabled: true, count: 1 },
       },
+      {
+        business: { slug: 'qa-spa', name: 'QA Day Spa', industry: 'beauty', currency: 'SGD' },
+        loyalty: {
+          enabled: true, model: 'stamps', unit: 'stamps', balance: 7,
+          ledger_balance: 7, batch_balance: 7, credit_balance_cents: 0,
+          tier: null,
+          programme: { id: 'p-stamps', kind: 'stamps', active: true, balance_scope: 'programme_pot' },
+          programmes_contract: 'v384',
+        },
+        packages: { enabled: false, active_count: 0, sessions_remaining: 0 },
+        membership: { enabled: false, active: false, current_period_ends_at: null },
+        upcoming_appointments: { enabled: true, count: 0 },
+      },
     ]),
+    /* Same nested contract, single business: public.customer_get_business_summary nests the very
+       same app.customer_live_loyalty_v384 call, so the merchant page reads the tier from here. */
+    customer_get_business_summary: () => ({
+      business: { id: BIZ, slug: 'qa-cafe', name: 'QA Test Cafe', industry: 'fnb', currency: 'SGD',
+        logo_url: '', review_url: null },
+      loyalty: {
+        enabled: true, model: 'redeem', unit: 'points', balance: 320,
+        ledger_balance: 320, batch_balance: 320, credit_balance_cents: 0,
+        tier: {
+          name: 'Diamond', threshold: 300, perk_note: null, points_multiplier: 1.5,
+          basis: 'points_earned', metric: 320,
+          next: { name: 'Obsidian', threshold: 400, remaining: 80 },
+        },
+        programme: { id: 'p-points', kind: 'points', active: true, balance_scope: 'programme_pot' },
+        programmes_contract: 'v384',
+      },
+      packages: { enabled: true, active_count: 1, sessions_remaining: 3 },
+      membership: { enabled: true, active: false, current_period_ends_at: null },
+      upcoming_appointments: { enabled: true, count: 1 },
+    }),
     customer_list_programmes_v89: () => ({
       truncated: false,
       programmes: [{

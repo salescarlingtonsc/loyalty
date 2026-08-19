@@ -207,7 +207,12 @@ test('the surfaces the audit named are wired, including the one-line customer DA
   assert.match(app,/recordProductInteractionV100\(\s*'customer\.notification_opened'/);
   assert.match(app,/recordProductInteractionV100\('customer\.reward_viewed',businessId,\{/);
   assert.match(app,/recordProductInteractionV100\('customer\.promotion_opened',customerWalletBusinessIdV256,\{/);
-  assert.match(app,/recordProductInteractionV100\('customer\.explore_searched',null,\{/);
+  /* v393: Explore is retired, so its one emit point went with the page. The EVENT NAME stays in
+     the registry (historical rows carry it, and it is the unscoped-event exception the batcher is
+     written around), and exploreQueryShapeV256 stays with it — both are asserted below. What must
+     not exist any more is a call site, because there is no search to record. */
+  assert.doesNotMatch(app,/recordProductInteractionV100\('customer\.explore_searched'/);
+  assert.match(app,/'customer\.explore_searched',\n/,'the event name stays in the registry');
   /* Audit 3: customer_account_open_days_v175 was purpose-built for customer DAU and its wallet
      channel had no caller at all, so only the booking path had ever fired. */
   assert.match(app,/sb\.rpc\('customer_record_account_open_v175',\{p_business:businessId\}\)/);

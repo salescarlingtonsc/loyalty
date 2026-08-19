@@ -76,7 +76,10 @@ test('v100 interaction contexts remain short allowlisted dimensions with no cust
   // sheet, for the businesses whose configured CTA is "Book now" and therefore render no "View
   // details" button at all. Like V286 before it, this is a new CALL SITE re-emitting the SAME
   // customer.promotion_opened event with the same four dimensions — not a new event or dimension.
-  assert.equal(calls.length,20);
+  // v393 retires Explore (owner decision), taking customer.explore_searched's ONE call site with
+  // the page: 20 -> 19. The event name and exploreQueryShapeV256 stay in the registry, which is
+  // asserted in tests/business-ui/v255-interaction-batching.
+  assert.equal(calls.length,19);
   for(const [,context] of calls){
     // V256: query_shape is deliberately allowed and deliberately NOT the typed text — the
     // shape helper is asserted separately in tests/business-ui/v255-interaction-batching.
