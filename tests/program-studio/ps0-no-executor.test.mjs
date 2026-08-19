@@ -321,8 +321,15 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      for stored value. Its acceptance suite is db/tests/v370_tier_discount_at_checkout.sql, which
      proves end to end that the sale is recorded at the discounted total. The PS-2A shadow
      increments (v61-v64) remain barred from all three functions. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout)/;
-  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout)/;
+  /* V394 (owner ruling 2026-08-20: a paused or soft-deleted tier grants nothing). The v393
+     DISPLAY helper filters paused/deleted ladder rows but the checkout authority did not, so a
+     dead tier kept granting its automatic discount while the customer saw no tier at all. The
+     lifecycle filter has to live in the pricing authority itself, same reasoning as v370.
+     nestly_v394 is added to BOTH lists as a named, sanctioned point. Its acceptance suite is
+     db/tests/v394_tier_lifecycle_checkout.sql (14 assertions, proven rolled-back against
+     production before apply). The PS-2A shadow increments (v61-v64) remain barred. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout)/;
+  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
     const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
