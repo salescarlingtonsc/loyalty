@@ -159,6 +159,13 @@ test('expense list preserves original currency and reconciles the exact base-cur
   assert.match(expenses,/used in P&amp;L/);
   assert.match(expenses,/Unavailable — invalid currency conversion metadata/);
   assert.doesNotMatch(expenses,/<td>\$\{money\(e\.amount_cents\)\}<\/td>/);
+  /* Audit P0-5: .err is a page-level alert block, and left INLINE in a cell it shattered into one
+     background fragment per wrapped line (8 of them in the AMOUNT column at 1024px), each
+     starting at the line box while the padding landed only on the first and last. In a cell it
+     must be ONE box. */
+  assert.match(app,/td>\.err\{display:inline-block;max-width:100%;margin:0;/);
+  assert.match(app,/@media\(min-width:769px\)\{td>\.err\{min-width:16ch\}\}/,
+    'in real table mode the chip asks the column for a readable width; .cui-table-wrap scrolls');
 });
 
 test('valid visit helper removes reversal rows and their original visits everywhere retention is derived', () => {

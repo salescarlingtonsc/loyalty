@@ -1637,17 +1637,42 @@ function customerBookingNormaliseRangeV196({from='',to=''}={}){
   const start=customerBookingRangeBoundV195(from),finish=customerBookingRangeBoundV195(to,{end:true});
   return (start!==null&&finish!==null&&finish<start)?{from:to,to:from}:{from,to};
 }
-function customerBookingFilterMarkupV195(range={from:'',to:''}){
+/* v3 (Top-20 #19, "the most clinical, least branded element in the customer app"): the filter
+   used to be the two raw native date fields themselves, side by side — each carrying our own
+   leading calendar icon AND the browser's picker indicator, four calendar glyphs in one 44px
+   row, with no word anywhere saying what was being filtered. The row is now ONE chip that reads
+   its own state ("Any dates" / "12 Aug – 19 Aug") over an inline panel holding the SAME two
+   inputs, same ids, same live-on-change wiring. Apply only closes the panel — it is not a second
+   filter path, because a control that looks like it commits but does not would be a lie. */
+function customerBookingRangeChipLabelV3(range={from:'',to:''}){
+  const {from,to}=range||{};
+  const day=value=>{
+    const at=customerBookingRangeBoundV195(value);
+    /* Singapore time, the zone every other date on this surface is printed in. */
+    return at===null?'':new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',timeZone:'Asia/Singapore'}).format(new Date(at));
+  };
+  const start=day(from),finish=day(to);
+  if(start&&finish)return `${start} – ${finish}`;
+  if(start)return `From ${start}`;
+  if(finish)return `Until ${finish}`;
+  return 'Any dates';
+}
+function customerBookingFilterMarkupV195(range={from:'',to:''},open=false){
   const {from,to}=range||{};
   const active=!!(from||to);
-  return `<div class="customer-booking-filter" role="group" aria-label="Filter bookings by date">
-    ${CUI.icon('appointments',{size:16})}
-    <label class="sr-only" for="customerBookingFrom">From date</label>
-    <input id="customerBookingFrom" type="date" value="${esc(from||'')}" max="2999-12-31">
-    <span aria-hidden="true">–</span>
-    <label class="sr-only" for="customerBookingTo">To date</label>
-    <input id="customerBookingTo" type="date" value="${esc(to||'')}" max="2999-12-31">
-    ${active?`<button class="btn ghost sm" id="customerBookingRangeClear" type="button">Clear</button>`:''}
+  const label=customerBookingRangeChipLabelV3(range);
+  return `<div class="customer-datesheet-wrap-v3">
+    <button type="button" id="customerBookingRangeChip" class="customer-datesheet-chip-v3${active?' is-active':''}" aria-expanded="${open?'true':'false'}" aria-controls="customerBookingDatePanel" aria-label="${esc(`Filter bookings by date: ${label}`)}">${CUI.icon('appointments',{size:16})}<span>${esc(label)}</span></button>
+    <div class="customer-datesheet-v3" id="customerBookingDatePanel" role="group" aria-label="Filter bookings by date"${open?'':' hidden'}>
+      <label for="customerBookingFrom">From date</label>
+      <input id="customerBookingFrom" type="date" value="${esc(from||'')}" max="2999-12-31">
+      <label for="customerBookingTo">To date</label>
+      <input id="customerBookingTo" type="date" value="${esc(to||'')}" max="2999-12-31">
+      <div class="customer-datesheet-actions-v3">
+        <button class="btn ghost sm" id="customerBookingRangeClear" type="button">Clear</button>
+        <button class="btn sm" id="customerBookingRangeApply" type="button">Apply</button>
+      </div>
+    </div>
   </div>`;
 }
 function customerBookingBusinessLogoV195(group={}){
@@ -1821,7 +1846,9 @@ async function renderCustomerBookings(){
     return renderCustomerWalletRetry('Your booking requests and appointments are temporarily unavailable.',null,()=>renderCustomerBookings(),walletResult.error);
   }
   const changesFeatureEnabled=context.features.customer_actions===true;
-  let currentBookingTab='bookings',currentBookingRange={from:'',to:''};
+  /* v3: the panel's open state lives beside the range because every filter change repaints the
+     whole body — without it, setting From would slam the panel shut before To could be set. */
+  let currentBookingTab='bookings',currentBookingRange={from:'',to:''},bookingRangePanelOpenV3=false;
   const paintBookings=()=>{
     if(!isCurrent()||!$('walletBody')?.isConnected)return;
     const allGroups=composeCustomerBookingGroups(programmes,requestPayload,results);
@@ -1844,7 +1871,7 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange)}</header>
+    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange,bookingRangePanelOpenV3)}</header>
     ${partialMessages.length?`<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div>
       <!-- v286 (audit): these six sentences were computed and then thrown away — only
            partialMessages.length was read. A customer whose appointment feed failed saw a list
@@ -1872,6 +1899,26 @@ async function renderCustomerBookings(){
     if(toInput)toInput.onchange=()=>applyRange({from:currentBookingRange.from,to:toInput.value},'customerBookingTo');
     const clearRange=$('customerBookingRangeClear');
     if(clearRange)clearRange.onclick=()=>applyRange({from:'',to:''},'customerBookingFrom');
+    /* v3: the chip owns the panel. Filtering itself is untouched — still live on change, still
+       client-side — so Apply is honest about being nothing more than "I'm done here". */
+    const rangeChip=$('customerBookingRangeChip'),rangePanel=$('customerBookingDatePanel');
+    const setRangePanelOpenV3=(open,focusId='')=>{
+      bookingRangePanelOpenV3=open;
+      if(rangePanel)rangePanel.hidden=!open;
+      if(rangeChip)rangeChip.setAttribute('aria-expanded',open?'true':'false');
+      if(focusId)$(focusId)?.focus();
+    };
+    if(rangeChip)rangeChip.onclick=()=>setRangePanelOpenV3(!bookingRangePanelOpenV3,
+      bookingRangePanelOpenV3?'customerBookingRangeChip':'customerBookingFrom');
+    const applyRangePanel=$('customerBookingRangeApply');
+    if(applyRangePanel)applyRangePanel.onclick=()=>setRangePanelOpenV3(false,'customerBookingRangeChip');
+    const closeRangePanelOnEscape=event=>{
+      if(event.key!=='Escape'||!bookingRangePanelOpenV3)return;
+      event.preventDefault();
+      setRangePanelOpenV3(false,'customerBookingRangeChip');
+    };
+    if(rangeChip)rangeChip.onkeydown=closeRangePanelOnEscape;
+    if(rangePanel)rangePanel.onkeydown=closeRangePanelOnEscape;
     const tabButtons=[...$('walletBody').querySelectorAll('[data-booking-tab]')];
     const selectTab=(tab,focus=false)=>{
       if(!isCurrent()||!CUSTOMER_BOOKING_TABS_V178.some(([name])=>name===tab))return;

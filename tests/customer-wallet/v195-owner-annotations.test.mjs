@@ -249,7 +249,42 @@ test('the date filter is client-side over records already fetched', () => {
   assert.match(appJs, /<input id="customerBookingTo" type="date"/);
   assert.match(appJs, /id="customerBookingRangeClear"/, 'a set range must be clearable in one tap');
   assert.doesNotMatch(bookings, /p_window|p_within|p_from|p_to\b/, 'the range must not become a server argument');
-  assert.match(indexHtml, /\.customer-booking-filter input\[type="date"\]\{[^}]*min-height:44px/);
+  /* Top-20 #19: the 44px touch target moved from the bare inputs to the chip that opens them;
+     the inputs keep their own 44px inside the panel. */
+  assert.match(indexHtml, /\.customer-datesheet-chip-v3\{[^}]*min-height:44px/);
+  assert.match(indexHtml, /\.customer-datesheet-v3 input\[type="date"\]\{[^}]*min-height:44px/);
+});
+
+/* Top-20 #19 ("the most clinical, least branded element in the customer app"): the raw native
+   date pair became one chip that reads its own state over an inline panel holding the SAME two
+   inputs. Filtering stays live on change, so Apply may only close the panel. */
+test('the date chip says what the filter is doing, and Apply is not a second filter path', () => {
+  const label = new Function(`${section(appJs, 'function customerBookingRangeBoundV195', 'function customerBookingWithinRangeV196')}
+    ${section(appJs, 'function customerBookingRangeChipLabelV3', 'function customerBookingFilterMarkupV195')}
+    return customerBookingRangeChipLabelV3;`)();
+  assert.equal(label({ from: '', to: '' }), 'Any dates');
+  assert.equal(label(), 'Any dates');
+  assert.equal(label({ from: '2026-08-12', to: '2026-08-19' }), '12 Aug – 19 Aug');
+  assert.equal(label({ from: '2026-08-12', to: '' }), 'From 12 Aug');
+  assert.equal(label({ from: '', to: '2026-08-19' }), 'Until 19 Aug');
+  assert.equal(label({ from: 'not-a-date', to: '' }), 'Any dates');
+
+  const markup = section(appJs, 'function customerBookingFilterMarkupV195', 'function customerBookingBusinessLogoV195');
+  assert.match(markup, /id="customerBookingRangeChip"[^>]*aria-expanded="\$\{open\?'true':'false'\}"[^>]*aria-controls="customerBookingDatePanel"/);
+  assert.match(markup, /<div class="customer-datesheet-v3" id="customerBookingDatePanel" role="group"[^>]*\$\{open\?'':' hidden'\}>/,
+    'the panel stays closed until the chip is pressed');
+  /* The inputs MOVED into the panel — they were not recreated, so the wiring above still finds
+     them by the same ids. */
+  assert.ok(markup.indexOf('id="customerBookingDatePanel"') < markup.indexOf('id="customerBookingFrom"'));
+  assert.ok(markup.indexOf('id="customerBookingFrom"') < markup.indexOf('id="customerBookingRangeApply"'));
+
+  const bookings = section(appJs, 'async function renderCustomerBookings', 'async function renderCustomerMessages');
+  assert.match(bookings, /if\(fromInput\)fromInput\.onchange=\(\)=>applyRange/, 'filtering stays live on change');
+  assert.match(bookings, /applyRangePanel\.onclick=\(\)=>setRangePanelOpenV3\(false,'customerBookingRangeChip'\)/,
+    'Apply only closes the panel — it must not run a second, different filter');
+  assert.match(bookings, /if\(event\.key!=='Escape'\|\|!bookingRangePanelOpenV3\)return/, 'Escape closes the panel');
+  assert.match(bookings, /customerBookingFilterMarkupV195\(currentBookingRange,bookingRangePanelOpenV3\)/,
+    'the open state survives the repaint every filter change causes');
 });
 
 test('a booking is headed by the company’s own photo, with an honest fallback', () => {

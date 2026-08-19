@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b7e24ce6b629717fbd39374ad70f73815801e2013439a96b02d02bdb3b6b3dd1"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="88ad28f32b764b71bbd4fd9a6b8ce688328706f7db293ce67e72fb86325b4b26"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -630,6 +630,19 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
   transition:opacity .26s var(--ease),transform .32s var(--spring)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 .err{background:var(--danger-bg);color:var(--danger);padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-top:12px}
+/* P0-5 (audit): .err is a page-level alert block, and inside a table cell it was still INLINE —
+   so a sentence too long for the column shattered into one background fragment per line (8 of
+   them in the Expenses AMOUNT column at 1024px), each starting at the line box while the 14px
+   padding landed only on the first and last. Every wrapped line therefore began 14px left of the
+   first line's text, the cell grew to 162px, and margin-top was silently dead on an inline box.
+   In a cell it is ONE chip: a single box that starts at the cell's content edge and wraps its
+   text INSIDE itself. */
+td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-height:1.4;text-align:left}
+/* One box also means one wrap width, so a column squeezed to 55px would set the sentence 3 words
+   tall. In real table mode the chip asks for a readable minimum, which auto table layout hands to
+   the column; .cui-table-wrap already scrolls. Below 769px the row is stacked and there is no
+   column to widen, so the minimum is not asked for. */
+@media(min-width:769px){td>.err{min-width:16ch}}
 /* auth + onboard */
 .center-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right))
@@ -2220,15 +2233,26 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-redemption-complete .redemption-qr .cui-icon{width:76px;height:76px;filter:drop-shadow(0 12px 18px rgba(19,122,71,.16))}
 @keyframes customer-reward-pop{0%{transform:scale(.96);opacity:.65}70%{transform:scale(1.015)}100%{transform:scale(1);opacity:1}}
 .customer-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-.customer-booking-filter{display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
-.customer-booking-filter input[type="date"]{min-height:44px;min-width:0;width:auto;flex:1 1 0;max-width:126px;padding:0 2px;border:0;background:none;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
-.customer-booking-filter input[type="date"]:focus{outline:none}
-.customer-booking-filter>span[aria-hidden]{color:var(--muted)}
-/* v291 (owner: "why the big chunk of box takes up so much space, please reduce it to one
-   liner"): the filter never wraps — on a phone it takes its own full-width row under the title
-   but stays one 44px line: icon · from – to · Clear. */
-@media(max-width:520px){.customer-page-head{flex-wrap:wrap}.customer-booking-filter{width:100%;flex-wrap:nowrap;border-radius:999px;padding:0 10px}}
-.customer-booking-filter:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+/* v291 asked for one 44px line instead of a stacked box; the line it got was two raw native date
+   fields, four calendar glyphs, and no word saying what was being filtered — the most clinical
+   element in the customer app. Top-20 #19 keeps the one 44px line and makes it a CHIP that reads
+   its own state, over an inline panel (not a modal) carrying the same two inputs. */
+.customer-datesheet-wrap-v3{position:relative;display:flex;flex-direction:column;align-items:flex-end}
+.customer-datesheet-chip-v3{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--ink);font:inherit;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);cursor:pointer;white-space:nowrap}
+.customer-datesheet-chip-v3:hover{border-color:var(--coral)}
+.customer-datesheet-chip-v3:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.customer-datesheet-chip-v3 .cui-icon{flex:none;color:var(--muted)}
+.customer-datesheet-chip-v3.is-active{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.customer-datesheet-chip-v3.is-active .cui-icon{color:var(--coral)}
+.customer-datesheet-v3{position:absolute;top:calc(100% + 8px);right:0;z-index:30;display:grid;gap:6px;width:min(320px,calc(100vw - 32px));padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-shadow:var(--shadow-warm-lg);text-align:left}
+.customer-datesheet-v3[hidden]{display:none}
+.customer-datesheet-v3 label{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--muted)}
+.customer-datesheet-v3 label+input[type="date"]{margin-bottom:6px}
+.customer-datesheet-v3 input[type="date"]{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--control-border);border-radius:var(--r-sm);background:var(--card);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
+.customer-datesheet-v3 input[type="date"]:focus-visible{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+.customer-datesheet-actions-v3{display:flex;gap:8px;margin-top:4px}
+.customer-datesheet-actions-v3 .btn{flex:1 1 0}
+@media(max-width:520px){.customer-page-head{flex-wrap:wrap}.customer-datesheet-wrap-v3{width:100%;align-items:stretch}.customer-datesheet-chip-v3{width:100%;justify-content:flex-start}.customer-datesheet-v3{left:0;right:0;width:auto}}
 /* v291 · the Book-with chooser: every joined business, sector-grouped once there is >1 sector */
 .customer-booking-chooser h2{font-size:16px}
 /* v326 · same search-field treatment as .customer-my-rewards-search, filtering the chips below */
@@ -4248,6 +4272,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'b7e24ce6b629717fbd39374ad70f73815801e2013439a96b02d02bdb3b6b3dd1',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'88ad28f32b764b71bbd4fd9a6b8ce688328706f7db293ce67e72fb86325b4b26',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

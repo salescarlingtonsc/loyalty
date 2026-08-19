@@ -72,9 +72,14 @@ test('the chooser opens the Ongoing tab and the empty state no longer duplicates
   assert.match(grouping, /group\.industry=String\(business\.industry\|\|''\)/);
 });
 
+/* Top-20 #19 moved this lock, it did not lift it: the filter is still ONE 44px line under the
+   title, but that line is now a chip that says what it is filtering, and the two date fields it
+   used to be moved into the panel the chip opens. */
 test('the date filter is one 44px line, even on a phone', () => {
-  assert.match(indexHtml, /\.customer-booking-filter input\[type="date"\]\{[^}]*width:auto;flex:1 1 0;max-width:126px/);
-  assert.match(indexHtml, /@media\(max-width:520px\)\{\.customer-page-head\{flex-wrap:wrap\}\.customer-booking-filter\{width:100%;flex-wrap:nowrap/,
+  assert.match(indexHtml, /\.customer-datesheet-chip-v3\{[^}]*min-height:44px[^}]*border-radius:999px/);
+  assert.match(indexHtml, /@media\(max-width:520px\)\{\.customer-page-head\{flex-wrap:wrap\}\.customer-datesheet-wrap-v3\{width:100%;align-items:stretch\}\.customer-datesheet-chip-v3\{width:100%/,
     'the phone keeps the filter on one line under the title — never the stacked box the owner circled');
+  assert.match(indexHtml, /\.customer-datesheet-v3\[hidden\]\{display:none\}/,
+    'the panel is a grid, so it needs its own hidden rule or the attribute does nothing');
   assert.match(indexHtml, /\.customer-booking-chips\{display:flex;gap:10px;overflow-x:auto/);
 });
