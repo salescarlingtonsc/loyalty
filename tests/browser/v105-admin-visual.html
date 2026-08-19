@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="e4dc69a95bf0a14630f6e0a2c87daa886563c27f977dd3b195224c47319dbfad">
+<meta name="v105-production-component-sha256" content="1e1b6a974d8c1c26fb7d8ddecf880dc63ec6a507fbf47f5565ec9a30142e4239">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2186,6 +2186,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
 .customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
 @media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
+/* Top-20 #20: Profile was ~14 visually identical white cards in one flat stack, so account closure,
+   a marketing choice and a sound switch all carried the same weight. Four serif headings sit OUTSIDE
+   the cards, on the ivory ground, in the same section-heading voice the customer Home screen uses —
+   the page gets a skeleton without a single card's markup, id or handler changing. */
+.customer-profile-group-v3{font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.15;font-weight:760;letter-spacing:0;color:var(--ink);margin:26px 0 10px}
+.customer-profile-group-v3:first-of-type{margin-top:6px}
+/* The consent paragraph is legal copy that must stay verbatim; it does not have to be the first
+   thing read. Behind a one-line summary, the CHOICE leads and the wording is one tap away. */
+.customer-profile-consent-v3>summary{cursor:pointer;color:var(--muted)}
 .customer-redemption-modal .modal-card{width:min(460px,calc(100vw - 24px));text-align:center}
 .customer-redemption-modal .redemption-qr{display:grid;place-items:center;width:244px;min-height:244px;margin:18px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink)}
 .customer-confirmation-modal .modal-card{width:min(420px,calc(100vw - 24px))}
@@ -3940,7 +3949,7 @@ html[data-customer-theme="dark"] .customer-surface .wallet-skeleton{background:l
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · e4dc69a95bf0</span>
+<span class="v105-provenance">v105 production-component harness · 1e1b6a974d8c</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -4065,7 +4074,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'e4dc69a95bf0a14630f6e0a2c87daa886563c27f977dd3b195224c47319dbfad',
+  sourceHash:'1e1b6a974d8c1c26fb7d8ddecf880dc63ec6a507fbf47f5565ec9a30142e4239',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
