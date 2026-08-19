@@ -224,6 +224,27 @@ balance, Supabase Auth Site URL config, custom domain, role-scoped UI permission
 Ledger/points-calc correctness; double earn/redeem; loyalty-liability accuracy; PDPA ⚖️;
 WhatsApp/SMS onboarding ⚖️; tenant isolation; scope creep into a full salon OS.
 
+## UI/UX audit branch — READ THIS BEFORE TOUCHING THE UI
+If you are on `claude/peekaa-ui-ux-audit-lhaa4o`, **read
+`docs/design/UI-STANDARD-HANDOFF.md` first, before doing anything else.** It is
+a cold-start handoff: branch state, the three pre-existing test failures (so you
+can tell yours from ours), every commit and what it did, the QA sweep harness in
+`tools/qa-sweep/` and how to run it, defects fixed, defects deliberately left
+with the reasoning, **six false-positive classes already chased down** so you do
+not re-spend those hours, the workflow traps that will otherwise cost you a day,
+and an ordered next-steps list.
+
+Then `docs/design/PEEKAA-UI-STANDARD.md` for the operating manual — the six
+owner rulings, their single-source anchors, and how to change or revert each one.
+
+Two things from it that bite immediately: `app/app.js` is the ONLY editable
+source (`app-business.js`, `app-customer.js`, `app-core.js`, `app-auth.js`,
+`app-i18n.js` are generated — run `npm run bundle-stamp` after editing), and
+eight fixtures under `tests/browser/` embed a verbatim copy of the production
+CSS, so any style change needs
+`node scripts/quality/regen-visual-fixtures.mjs` or the suite fails in a way
+that reads like a real bug.
+
 ## Detailed benchmark docs
 `docs/benchmark/`: EXECUTIVE_SUMMARY, REVIEW_LOG, MODULE_INVENTORY, PAGE_INVENTORY,
 MODULE_RELATIONSHIP_MAP, DATA_ENTITY_MAP, EFFICIENCY_AUTOMATION_AUDIT,

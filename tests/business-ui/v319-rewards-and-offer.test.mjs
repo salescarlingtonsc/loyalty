@@ -21,6 +21,9 @@ import {readFileSync} from 'node:fs';
  */
 
 const appJs=readFileSync(new URL('../../app/app.js',import.meta.url),'utf8');
+/* The status vocabulary is a top-level constant in app.js. Slice the REAL definitions in
+   rather than restating the words here, so this harness can never drift from the app. */
+const STATUS_PRELUDE_SRC=appJs.match(/const STATUS_WORDS=[\s\S]*?const statusOnOff=[^\n]*\n/)[0];
 const indexHtml=readFileSync(new URL('../../app/index.html',import.meta.url),'utf8');
 
 /* Exclusive of `end`, like the sibling suites. */
@@ -46,6 +49,7 @@ const money=cents=>`SGD ${(Number(cents||0)/100).toFixed(2)}`;
    whole question this suite answers is what the counter reads for a GIVEN customer. */
 const customerHarness=({pts,cred,nextExp,prog,loyaltyFactsAvailable=true,pointsMode='redeem'})=>new Function(
   'esc','pts','cred','nextExp','prog','loyaltyFactsAvailable','pointsModeV319','money','CUI',`
+  ${STATUS_PRELUDE_SRC}
   const pointsUnit=prog?.unit==='stamps'?'stamps':'points';
   ${statement('const balanceProgrammeRowV319=','\'points\');')}
   ${statement('const pointsExpiryPhraseV319=(()=>{','})();')}
@@ -107,7 +111,7 @@ test('V319 a paused programme still explains its 0, at the place the 0 is printe
   const row=h.programmeRowHtmlV294('Points System','',false,null,
     h.balanceLeadHtmlV319(h.pointsUnit,''),
     '<p class="muted small customer360-points-paused-v259">Programme paused</p>');
-  assert.match(row,/pill off">Paused</);
+  assert.match(row,/pill off">Off</);
   assert.match(row,/customer360-points-paused-v259/);
   /* The note is a SIBLING of the copy paragraph, never nested inside it — a <p> inside a <p> is
      auto-closed by the parser and the row would come apart in a real browser. */
@@ -152,6 +156,7 @@ test('V319 promotions leave the programmes card for a box of their own', () => {
 /* ------------------------------------------------------------------ 2. programmes module ----- */
 
 const growHarness=()=>new Function('esc','assertOk',`
+  ${STATUS_PRELUDE_SRC}
   ${statement('function promotionDateTextV104(value){','\n}')}
   ${statement('function promotionDateShortV324(value){','\n}')}
   ${statement('const growCountCellV271=','esc(String(Number(value)));')}

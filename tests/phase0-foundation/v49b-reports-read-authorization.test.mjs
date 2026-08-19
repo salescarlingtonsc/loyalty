@@ -70,7 +70,7 @@ test('Reports explains that gift-card liability remains business-wide under a br
 });
 
 test('Reports uses zero-minimum tracks and one column at 390px without shrinking controls',()=>{
-  const mobile=app.slice(app.indexOf('@media(max-width:767px){'),app.indexOf('@media(max-width:375px){'));
+  const mobile=app.slice(app.indexOf('/* === COMPACT LAYOUT SHELL (<=768px)'),app.indexOf('@media(max-width:375px){'));
   // V260: the money-answer grid now renders through a shared decisions.map() template
   // (id="${item.bodyId}") instead of a literal id="rbody" attribute, because the "Money
   // answer" collapsible was folded into its matching "Sales & revenue" decision card rather

@@ -79,7 +79,7 @@ test('V329 Cancel on the confirm just closes it — no RPC, no reload', () => {
 
 test('V329 read-only staff (canWrite=false) gets no Delete button, and delete/tab wiring bails out before touching them', () => {
   const rowFn = slice('const rowHtml=p=>{', 'confirmOpen?\'\':\' hidden\'}>');
-  assert.match(rowFn, /\$\{canWrite\?`<button class="btn ghost sm" onclick="togglePlan\('\$\{p\.id\}',\$\{!p\.active\}\)">\$\{p\.active\?'Disable':'Enable'\}<\/button>\s*<button type="button" class="btn ghost sm" data-plan-delete-v329="\$\{esc\(p\.id\)\}">Delete<\/button>`:''\}/);
+  assert.match(rowFn, /\$\{canWrite\?`<button class="btn ghost sm" onclick="togglePlan\('\$\{p\.id\}',\$\{!p\.active\}\)">\$\{p\.active\?'Turn off':'Turn on'\}<\/button>\s*<button type="button" class="btn ghost sm" data-plan-delete-v329="\$\{esc\(p\.id\)\}">Delete<\/button>`:''\}/);
   const renderFn = slice('const renderPlansV329=()=>{', 'renderPlansV329();\n  if(canWrite)window.togglePlan=');
   assert.match(renderFn, /if\(!canWrite\)return;/,
     'the tab-switch handler must attach regardless of canWrite (tabs are read-only-safe), but delete wiring must bail out before it');

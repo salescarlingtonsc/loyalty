@@ -244,8 +244,6 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
      that lives in Operations setup, never an entitlement a staff member can be granted. */
   bottles:['bottle','Bottles'],bottlesetup:['bottle','Bottle keep']};
-/* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
-   frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Staff',frontdesk:'Front desk',bookkeeper:'Bookkeeper'};
 const ROLE_CAPABILITIES={
   owner:new Set(['create_sales','view_finance']),manager:new Set(['create_sales','view_finance']),staff:new Set(['create_sales']),
@@ -940,6 +938,58 @@ function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
    no future caller has to remember it. route() is safe to re-enter: it takes a fresh
    beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
 function nav(h){if(location.hash===h)route();else location.hash=h}
+/* ===== THE ONE DESTRUCTIVE CONFIRM (owner ruling 2026-08-18) ================================
+   Deleting something used to behave three different ways: 28 sites called the browser's native
+   window.confirm(), five modules expanded an inline .imp-note under the row, and nine used
+   confirmDeliberateV288's typed acknowledgement. The native dialog was the problem — it cannot
+   carry Peekaa's brand, it renders as "peekaa.asia says..." in Chrome, it reads as a browser
+   error inside the installed PWA, and (V291 already said this about four money dialogs) it
+   CANNOT BE TRANSLATED, so it spoke English to a workforce CLAUDE.md says may not read it.
+
+   This is its replacement and the default for every ordinary destructive action.
+   confirmDeliberateV288 stays for the irreversible money and tenant-data actions that deserve a
+   typed acknowledgement; the inline .imp-note expand stays as the pattern for list rows.
+
+   The message keeps the SAME single string the native call passed — the leading question becomes
+   the dialog title and the remainder becomes the explanation, so no copy had to be rewritten and
+   every sentence the owner wrote survives verbatim.
+   TO CHANGE THE CONFIRM PATTERN: change this one function. */
+function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',danger=true}={}){
+  const text=String(message||'').trim();
+  const cut=(()=>{
+    const q=text.indexOf('? ');
+    if(q>=0)return q+1;
+    const dot=text.indexOf('. ');
+    return dot>=0?dot+1:-1;
+  })();
+  const title=cut>0?text.slice(0,cut).trim():text;
+  const body=cut>0?text.slice(cut).trim():'';
+  return new Promise(resolve=>{
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','confirmActionTitleV386');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(460px,100%)">
+      <h2 id="confirmActionTitleV386" style="margin:0;font-size:17px">${esc(title||'Please confirm')}</h2>
+      ${body?`<p class="muted small" style="margin-top:10px">${esc(body)}</p>`:''}
+      <div class="row" style="margin-top:18px"><span class="spacer"></span>
+        <button type="button" class="btn ghost" id="confirmActionCancelV386">${esc(cancelLabel)}</button>
+        <button type="button" class="btn${danger?' danger':''}" id="confirmActionOkV386">${esc(confirmLabel)}</button></div>
+    </div>`;
+    document.body.append(dialog);
+    let settled=false,deactivate=null;
+    const finish=value=>{
+      if(settled)return;
+      settled=true;
+      const close=deactivate;deactivate=null;
+      if(close)close({restoreFocus:true});else dialog.remove();
+      resolve(value);
+    };
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#confirmActionCancelV386'});
+    dialog.onclick=event=>{if(event.target===dialog)finish(false)};
+    dialog.querySelector('#confirmActionOkV386').onclick=()=>finish(true);
+    dialog.querySelector('#confirmActionCancelV386').onclick=()=>finish(false);
+  });
+}
 window.addEventListener('hashchange',route);
 /* "/" or ⌘K / Ctrl+K focuses the global customer search from anywhere in the workspace. "/"
    is ignored while the user is typing in a field so it can't hijack normal input. The listener
@@ -4741,8 +4791,8 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
   globalThis.document?.documentElement?.setAttribute('lang',locale);
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card"><div class="logo">${brandWordmark()}</div>
     <h2 style="margin-top:18px">${esc(t('approved'))}</h2><p class="muted small" style="margin-top:6px">${esc(t('approvedIntro'))}</p>
-    <label>${esc(t('businessName'))}</label><input value="${esc(invitation.business_name||'')}" disabled>
-    <label>${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
+    <label for="approvedBusinessName">${esc(t('businessName'))}</label><input id="approvedBusinessName" value="${esc(invitation.business_name||'')}" disabled>
+    <label for="approvedOwnerEmail">${esc(t('contactEmail'))}</label><input id="approvedOwnerEmail" type="email" value="${esc(invitation.approved_email||'')}" readonly>
     <label for="approvedOwnerPassword">${esc(t('password'))}</label>${passwordControlHtml('approvedOwnerPassword',{autocomplete:'new-password',locale})}
     <label for="approvedOwnerPasswordConfirm">${esc(t('confirm'))}</label>${passwordControlHtml('approvedOwnerPasswordConfirm',{autocomplete:'new-password',locale})}
     <div id="approvedOwnerError"></div>
@@ -5374,6 +5424,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   phoneKeyDigit:Object.freeze({en:'Digit {digit}','zh-CN':'数字 {digit}',ms:'Digit {digit}'}),
   openCustomer:Object.freeze({en:'Open customer {name}','zh-CN':'打开顾客 {name}',ms:'Buka pelanggan {name}'}),
   removeItem:Object.freeze({en:'Remove {item}','zh-CN':'移除 {item}',ms:'Alih keluar {item}'}),
+  deleteItem:Object.freeze({en:'Delete {item}','zh-CN':'删除 {item}',ms:'Padam {item}'}),
   adjustLoyalty:Object.freeze({en:'+/- {unit}','zh-CN':'增加／减少{unit}',ms:'Tambah/tolak {unit}'}),
   viewAppointmentDetails:Object.freeze({en:'View details for {customer}','zh-CN':'查看 {customer} 的预约详情',ms:'Lihat butiran janji temu untuk {customer}'}),
   amendAppointment:Object.freeze({en:'Amend appointment for {customer}','zh-CN':'修改 {customer} 的预约',ms:'Pinda janji temu untuk {customer}'}),
@@ -5431,7 +5482,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'usedSessionReversedBy','preparingExport','imageCleanupPending','imageCleanupsPending',
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
-  'removeItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
+  'removeItem','deleteItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails','explainHelpDotV385',
   /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
@@ -5446,7 +5497,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
 ]);
 const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
-  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
+  'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem','deleteItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
   'explainHelpDotV385'
@@ -5503,44 +5554,6 @@ function revealSectionTabV200(node){
   if(!tab)return false;
   tab.click();
   return true;
-}
-/* v215 — welcome offer for first-time sign-ups.
-   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
-   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
-   minimum spend and free xx product."
-   It lives in the Programmes list next to the other rewards because that is where an owner
-   looks for "what do my customers get", not in Settings. */
-/* V291: the welcome offer is the one lifestyle reward that is NOT versioned — it is stored in
-   business_welcome_offers_v215 and a save is live immediately, with no draft and no publish
-   step. When a draft is open, saying so is the honest marker; inventing a pending state for it
-   would be a lie in the other direction. */
-function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
-  if(!canRewards)return '';
-  const configured=!!status?.configured;
-  const active=configured&&status.active===true;
-  const min=Number(status?.min_spend_cents)||0;
-  const label=status?.reward_label||'';
-  const copy=!status
-    ?'Status could not be confirmed. Retry the programme overview.'
-    :!configured
-    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
-    :status.item_available===false
-    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
-    :active
-    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
-    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
-  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
-    :active?'Live':'Paused';
-  const tone=active&&status?.item_available!==false?'on':'off';
-  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
-    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
-  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
-    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p>${draftOpen?'<p class="muted small" data-welcome-not-versioned-v291>Not part of your draft \u2014 changes here go live as soon as you save them.</p>':''}</div>`
-    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
-    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
-  return canSetup
-    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
-    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
 }
 function growStatus(label,tone=''){
   return `<span class="pill ${tone}" data-grow-status>${esc(label)}</span>`;

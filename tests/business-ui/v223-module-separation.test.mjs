@@ -30,7 +30,7 @@ test('V223 seating controls appear only for a business that seats guests', () =>
      the rest of the hold-timer/auto-confirm booking rules — Bookings keeps a pointer, not a
      second copy. */
   assert.doesNotMatch(bookings, /When you're full/);
-  assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label>When you're full<\/label>/);
+  assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label for="setOverflow">When you're full<\/label>/);
   assert.match(bookings, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
   /* V235 (owner: "how can a spa have table seating at all"): the QUESTION itself is sector-gated,
      so an appointment business is never offered a switch it can never truthfully turn on. */

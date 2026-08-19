@@ -40,7 +40,7 @@ test('V237 the dirty flag is measured against the tier as stored, not a bare boo
 
 test('V237 closing the dialog with unsaved work asks first', () => {
   const open = app.slice(app.indexOf('function openTierDialogV236'), app.indexOf('function closeTierDialogV236'));
-  assert.match(open, /if\(tierDirtyV237&&!confirm\('Discard your unsaved changes to this tier\?'\)\)return;/);
+  assert.match(open, /if\(tierDirtyV237&&!await confirmActionV386\('Discard your unsaved changes to this tier\?'\)\)return;/);
   // One close path feeds the Close button, the backdrop, Escape and Android Back, so all are
   // guarded — V286 moved the last two into CUI.activateDialog's onClose, which is that same path.
   assert.match(open, /querySelector\('#tierDialogCloseV236'\)\.onclick=close/);

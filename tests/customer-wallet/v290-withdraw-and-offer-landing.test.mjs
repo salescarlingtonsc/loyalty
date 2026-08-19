@@ -30,7 +30,7 @@ test('the withdraw control exists only on active requests and goes through the v
   assert.match(appJs, /isActiveCustomerBookingRequest\(item\)&&item\.request_id\?`<button class="btn ghost sm" type="button" data-withdraw-request=/,
     'only a pending/waitlisted request the customer owns gets the button');
   assert.match(bookings, /customerRpc\('customer_withdraw_booking_request_v290',\{p_request:button\.dataset\.withdrawRequest\}\)/);
-  assert.match(bookings, /if\(!confirm\('Withdraw this booking request\?/, 'a destructive act asks first');
+  assert.match(bookings, /if\(!await confirmActionV386\('Withdraw this booking request\?/, 'a destructive act asks first');
   assert.match(bookings, /button\.disabled=true;button\.setAttribute\('aria-busy','true'\)/, 'the tap goes busy');
   assert.match(bookings, /already_actioned/, 'a decided request is explained, not a generic failure');
   assert.match(bookings, /toast\('Request withdrawn'\);\s*renderCustomerBookings\(\)/, 'success repaints from the server');

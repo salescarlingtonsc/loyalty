@@ -75,7 +75,9 @@ test('V259 the dialog carries a running balance, newest first', () => {
   assert.match(clientDetail, /running\+=Number\(entry\.points\)\|\|0;return \{entry,balance:running\}/);
   assert.match(clientDetail, /withBalance\.slice\(\)\.reverse\(\)\.map\(row=>pointsHistoryRowHtmlV259\(row\.entry,row\.balance\)\)/);
   assert.match(clientDetail, /<th>When<\/th><th>What happened<\/th><th>Source<\/th>/);
-  assert.match(clientDetail, /<th style="text-align:right">Balance<\/th>/);
+  /* The numeric columns moved off inline styles onto the shared .num helper, which also
+     brings tabular figures so the balances line up digit for digit. */
+  assert.match(clientDetail, /<th class="num">Balance<\/th>/);
 });
 
 test('V259 an unreadable or empty ledger is explained, never rendered as a silent zero', () => {
@@ -112,7 +114,7 @@ test('V259 a paused programme is still distinguished from one that was never bui
   /* And the paused note reaches the row, so "paused" is still told apart from "never built" at
      the place the 0 is now printed. */
   assert.match(clientDetail, /balanceLeadHtmlV319\([^)]*\),pointsPausedNoteV259\)/);
-  assert.match(clientDetail, /<span class="pill \$\{live\?'on':'off'\}">\$\{esc\(label\|\|\(live\?'Live':'Paused'\)\)\}<\/span>/);
+  assert.match(clientDetail, /<span class="pill \$\{live\?'on':'off'\}">\$\{esc\(label\|\|statusOnOff\(live\)\)\}<\/span>/);
 });
 
 test('V259 the dialog explains the 0 on the card instead of contradicting it', () => {

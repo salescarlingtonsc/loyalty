@@ -66,6 +66,30 @@ const INDUSTRIES={
   retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   other:{em:'🏪',label:'Other',mods:ALLMODS}
 };
+/* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
+   frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
+/* ===== STATUS VOCABULARY (owner ruling 2026-08-18) ==========================================
+   Status pills answer one of THREE different questions, and flattening them into one word is
+   what produced twelve words for "on" (Active, active, Live, live, ON, on, Ongoing, Selected,
+   yes, Yes, Ready, Published) and thirteen for "off".
+
+     1. AVAILABILITY  "can this be sold or used right now?"   -> On / Off
+        services, bundles, products, packages, membership plans, branches, booking types,
+        programmes, rewards
+     2. PUBLICATION   "can customers see it?"                 -> Draft / Scheduled / Live / Ended
+        promotions and any other scheduled customer-facing content. Note a promotion can be
+        PUBLISHED BUT NOT LIVE, which is why this axis cannot collapse into On/Off.
+     3. LIFECYCLE     "what happened to this record?"         -> domain words, sentence case
+        memberships, appointments, gift cards, referrals, bookings, waitlist. Deliberately NOT
+        mapped onto On/Off — "cancelled" is not "off".
+
+   TO CHANGE A STATUS WORD: edit STATUS_WORDS below. Every availability pill in the app reads
+   it through statusOnOff(); nothing else hardcodes these words. */
+const STATUS_WORDS=Object.freeze({
+  on:'On',off:'Off',
+  draft:'Draft',scheduled:'Scheduled',live:'Live',ended:'Ended'
+});
+const statusOnOff=isOn=>isOn?STATUS_WORDS.on:STATUS_WORDS.off;
 /* V207: the roles an owner may hand out. 'owner' is deliberately absent — it is not invitable
    (v14 ruling). The add form and the invite form both read this list so they cannot drift. */
 const STAFF_ROLE_OPTIONS_V207=Object.freeze(
@@ -3333,7 +3357,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const shown=rows.slice(0,DASHBOARD_SCHEDULE_CHIP_LIMIT_V180);
   const overflow=rows.length-shown.length;
   host.innerHTML=`<ol class="dashboard-schedule-chips">${shown.map(row=>{
-    const time=sgt(row.starts_at).slice(11,16);
+    const time=(sgt(row.starts_at)||'').slice(11,16);
     const who=row.clients?.full_name||'Walk-in';
     const what=row.services?.name||'';
     /* V375 (owner, photo 15: the 11:30 row ringed — "clickable to pop-up see details & to
@@ -3383,7 +3407,7 @@ async function dashboard(){
   const greeting=firstName?`Hello, ${firstName}`:'Hello';
   M().innerHTML=`<section id="dashboardView" class="dashboard-page" data-render-epoch="${renderEpoch}" data-workspace-i18n>
     <header class="v150-titlebar">
-      <div class="cui-page-title">${CUI.icon('home',{size:25})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('home',{size:24})}<div><span class="dashboard-greeting">${esc(greeting)}</span><h1>Dashboard</h1></div></div>
       <!-- V319 (owner markup 2026-08-14: the whole period strip circled here, with an arrow drawn
            down to the Performance card — "filter time move here"). Sitting beside the page title
            and above the schedule glance, it read as a filter over the WHOLE page, while what it
@@ -3591,7 +3615,7 @@ async function dashboard(){
     killCharts();
     status.innerHTML='';
     if(loyalty)loyalty.innerHTML='';
-    if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'v150-kpi'})).join('');
+    if(kpis)kpis.innerHTML=Array.from({length:4},()=>CUI.skeletonCard({lines:3,className:'kpi-skel-metric'})).join('');
     if(insights)insights.innerHTML=`<section class="merchant-insights"><div class="merchant-insights-head"><div><h2>Merchant insights</h2><p class="muted small">Loading recommendations…</p></div></div><div class="merchant-insights-grid">${Array.from({length:3},()=>CUI.skeletonCard({lines:4})).join('')}</div></section>`;
     if(charts)charts.innerHTML=['Busiest days','Revenue over time','Age groups','Recorded gender'].map(title=>CUI.chartSkeleton({title})).join('');
     kpis?.setAttribute('aria-busy','true');charts?.setAttribute('aria-busy','true');insights?.setAttribute('aria-busy','true');loyalty?.setAttribute('aria-busy','true');
@@ -3974,7 +3998,7 @@ async function clientsPage(){
     (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
-      <div class="cui-page-title">${CUI.icon('customers',{size:25})}<div><h1>Customers</h1></div></div>
+      <div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customers</h1></div></div>
       <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
@@ -4214,7 +4238,7 @@ async function clientsPage(){
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
         <td>${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
-        <td>${c.marketing_consent?'<span class="pill ok">yes</span>':'<span class="pill off">no</span>'}</td></tr>`).join('')}</table></div>
+        <td>${c.marketing_consent?'<span class="pill ok">Yes</span>':'<span class="pill off">No</span>'}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
@@ -4841,7 +4865,7 @@ async function clientDetail(id){
   /* V319: `copyHtml` is an OPT-IN escape hatch for the one row that needs a control inside its
      copy — the balance, which stays clickable through to the points history the owner asked for
      in V259. Every other caller keeps passing `copy` and keeps being escaped. */
-  const programmeRowHtmlV294=(name,copy,live,label=null,copyHtml=null,footHtml='')=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${copyHtml??esc(copy)}</p>${footHtml}</div><span class="pill ${live?'on':'off'}">${esc(label||(live?'Live':'Paused'))}</span></div>`;
+  const programmeRowHtmlV294=(name,copy,live,label=null,copyHtml=null,footHtml='')=>`<div class="c360-programme-row-v294"><div><b data-merchant-content>${esc(name)}</b><p class="muted small" data-merchant-content>${copyHtml??esc(copy)}</p>${footHtml}</div><span class="pill ${live?'on':'off'}">${esc(label||statusOnOff(live))}</span></div>`;
   const programmeRowsV294=[];
   /* V392 (owner, photo 5: the redeem block circled with "put under point system"). It sat at the
      FOOT of the card, below every other programme, so "5 more points for Free Massage Oil" was
@@ -5068,8 +5092,8 @@ async function clientDetail(id){
       <td data-label="When">${esc(sgt(entry.created_at)||'—')}</td>
       <td data-label="What happened">${esc(what)}</td>
       <td data-label="Source">${source}</td>
-      <td data-label="Points" style="text-align:right;font-variant-numeric:tabular-nums">${amount>0?'+':''}${amount}</td>
-      <td data-label="Balance" style="text-align:right;font-variant-numeric:tabular-nums">${balance}</td>
+      <td class="num" data-label="Points">${amount>0?'+':''}${amount}</td>
+      <td class="num" data-label="Balance">${balance}</td>
     </tr>`;
   }
   async function renderPointsHistoryBodyV259(){
@@ -5100,7 +5124,7 @@ async function clientDetail(id){
     let running=0;
     const withBalance=rows.map(entry=>{running+=Number(entry.points)||0;return {entry,balance:running}});
     body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
-      <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th style="text-align:right">Points</th><th style="text-align:right">Balance</th></tr></thead>
+      <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th class="num">Points</th><th class="num">Balance</th></tr></thead>
       <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
       <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}. ${programmePausedV259
         ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
@@ -7996,7 +8020,7 @@ async function salesPage(){
   /* V291: Export CSV is only offered on the render that has a ledger behind it. The loading,
      denied and load-error headers reuse the same markup WITHOUT it, so the page never paints a
      download button that has nothing to download and no handler bound to it. */
-  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:25})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
+  const salesHeadHtmlV291=(withExport=false)=>`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('sales',{size:24})}<div><h1>Sales</h1><p>Every sale you have recorded. Fix or cancel one here.</p></div></div><div class="v150-title-actions">${withExport?CUI.action({id:'salesExportV291',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'}):''}<a class="btn" href="#/till">${CUI.icon('till',{size:17})}<span>Record sale</span></a></div></header>`;
   const salesHead=salesHeadHtmlV291(false);
   routeMain.innerHTML=`${salesHead}
     <section class="card sales-ledger-card" id="salesShell"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
@@ -8120,11 +8144,11 @@ async function salesPage(){
     const host=$('recent');if(!host)return;
     const rows=salesFilteredRowsV291,W=salesWorkflowV291;
     const shown=rows.slice(0,salesVisibleCountV291);
-    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Gross</th><th>Net</th><th></th></tr>
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
       ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
-        <td>${money(s.amount_cents)}</td><td><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
+        <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
@@ -8183,22 +8207,22 @@ async function servicesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
-  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:25})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
     <div class="v150-title-actions">${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
     <div class="services-segment-body" id="serviceSegmentBody">${canWrite?`<div class="card" id="serviceFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add service</b><p>Save one bookable service, then return to the catalogue.</p></div>
-      <label>Name</label><input id="sn" placeholder="e.g. Signature Facial">
-      <label>Variation (optional)</label><input id="sv" placeholder="e.g. 30 min, 60 min, Deep tissue">
+      <label for="sn">Name</label><input id="sn" placeholder="e.g. Signature Facial">
+      <label for="sv">Variation (optional)</label><input id="sv" placeholder="e.g. 30 min, 60 min, Deep tissue">
       <p class="muted small" style="margin-top:5px">Use the same service name with different variations, durations and prices.</p>
-      <label>Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
-      <label>Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
+      <label for="sp">Price (${S.biz.currency||'SGD'})</label><input id="sp" type="number" min="0" step="0.01">
+      <label for="sd">Duration (minutes)</label><input id="sd" type="number" min="5" step="5" value="60">
       <!-- V325 (owner-authorized exception #3, 2026-08-14 Customer Interface cosmetics brief):
            buffer_before_min/buffer_after_min already existed on services with no UI anywhere.
            Two more fields on the existing add form, wired into the existing insert — no new
            save path, no new RPC. -->
-      <label>Buffer before (minutes)</label><input id="sbb" type="number" min="0" step="5" value="0">
-      <label>Buffer after (minutes)</label><input id="sba" type="number" min="0" step="5" value="0">
+      <label for="sbb">Buffer before (minutes)</label><input id="sbb" type="number" min="0" step="5" value="0">
+      <label for="sba">Buffer after (minutes)</label><input id="sba" type="number" min="0" step="5" value="0">
       <div style="margin-top:16px" class="row"><button class="btn" id="sadd">Save service</button><button class="btn ghost sm" id="cancelServiceForm">Cancel</button></div></div>`:''}
     <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
     <div id="commissionWrap"></div></div>`;
@@ -8207,13 +8231,13 @@ async function servicesPage(){
   let svCache=[];
   function renderSvc(){
     const sv=svCache;
-    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th>Price</th><th>Mins</th><th>Status</th><th></th></tr>
+    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th>Mins</th><th>Status</th><th></th></tr>
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
-        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td>${money(s.price_cents)}</td><td>${s.duration_min}</td>
-      <td><span class="pill ${s.active?'on':'off'}">${s.active?'Active':'Inactive'}</span></td>
-      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
+        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td>${s.duration_min}</td>
+      <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
+      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="svcEditName">Name</label><input id="svcEditName" value="${esc(s.name||'')}"></div>
           <div><label for="svcEditVariant">Variation (optional)</label><input id="svcEditVariant" value="${esc(s.variant_label||'')}"></div>
@@ -8312,8 +8336,8 @@ async function servicesPage(){
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
     <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
       ${canWrite?`
-      <label>Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
-      <label>Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+      <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
+      <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
       <label>Included services</label><div id="bsv" class="small"></div>
       <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
       <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
@@ -8337,11 +8361,11 @@ async function servicesPage(){
        bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
        rather than table DML. */
     bundleCacheV285=bu||[];
-    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th>Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td>${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${b.active?'Active':'Inactive'}</span></td>
+    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
-        <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Disable':'Enable'}</button>
+        <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
         <button class="btn ghost sm" type="button" data-bundle-delete="${b.id}">Delete</button>
       </div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No bundles yet',body:'Create a bundle when you want to sell several services together at one combined price.'});
@@ -8361,7 +8385,7 @@ async function servicesPage(){
     $('blist3').querySelectorAll('[data-bundle-delete]').forEach(button=>button.onclick=async()=>{
       const bundle=bundleCacheV285.find(item=>item.id===button.dataset.bundleDelete);
       if(!bundle)return;
-      if(!confirm(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Disable instead — that keeps it here.`))return;
+      if(!await confirmActionV386(`Delete "${bundle.name}"? It disappears from the catalogue for good. If you only want to stop selling it, use Turn off instead — that keeps it here.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('delete_service_bundle_v285',{p_business:S.biz.id,p_bundle:bundle.id});
       if(!isCurrent())return;
@@ -8708,7 +8732,7 @@ async function bookingsPage(){
      the when-you-are-full rule and auto-confirm. A bar has tables. */
   const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
-  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div>
+  routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div class="cui-page-title">${CUI.icon('bookings',{size:24})}<div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline here.</p>
@@ -8888,10 +8912,10 @@ async function bookingsPage(){
         const editingV291=editingTableTypeV291===t.id;
         return `<tr><td data-label="Name"><b data-merchant-content>${esc(t.name)}</b></td><td data-label="Pax">${t.pax??'—'}</td><td data-label="Qty">${t.quantity}</td>
         <td class="small" data-label="Live">${a?`${a.held} held · ${a.available} free`:'—'}</td>
-        <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${t.active?'active':'off'}</span></td>
+        <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${statusOnOff(t.active)}</span></td>
         <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
-        <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Disable':'Enable'}</button>
-        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Remove</button></td></tr>${editingV291?`<tr><td colspan="6">
+        <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Turn off':'Turn on'}</button>
+        <button class="btn ghost sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
           <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
             <div style="flex:1 1 180px"><label for="tblEditNameV291">Name</label><input id="tblEditNameV291" value="${esc(t.name||'')}"></div>
             <div><label for="tblEditPaxV291">Pax</label><input id="tblEditPaxV291" type="number" min="1" style="max-width:90px" value="${t.pax??''}"></div>
@@ -8946,7 +8970,7 @@ async function bookingsPage(){
     toast('Updated');loadCapacity();
   };
   window.rmTable=async(id)=>{
-    if(!confirm('Remove this table type? Existing bookings against it are unaffected.')) return;
+    if(!await confirmActionV386('Remove this table type? Existing bookings against it are unaffected.')) return;
     const {error}=await sb.from('booking_tables').delete().eq('id',id);
     if(!isCurrent())return;
     if(error) return fail(error);
@@ -9248,7 +9272,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:draft,error:draftError}=await loyaltyDraftRequestV379;
     if(!isLoyaltyCurrent())return;
     if(draftError){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('loyalty',{size:24})}<div><h1>Loyalty</h1><p class="muted small">Draft could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(draftError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -9263,7 +9287,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {data:branchOverrides,error:boError}=await branchOverridesRequest;
     if(!isLoyaltyCurrent())return;
     if(boError){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('loyalty',{size:24})}<div><h1>Loyalty</h1><p class="muted small">Draft branch settings could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(boError.message)}</p><button class="btn" id="reloadLoyaltyDraft">Retry</button></div>`;
       $('reloadLoyaltyDraft').onclick=()=>loyaltyPage(modelOverride,draftVersionId,recommendation);
       return;
@@ -9411,20 +9435,20 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         return `<div class="branch-override" style="padding:12px 0;border-bottom:1px solid var(--line)">
           <b>${esc(branch.name)}</b>
           <div class="field-grid">
-            <div><label>Loyalty status</label><select data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
+            <div><label for="bo-active-${idx}">Loyalty status</label><select id="bo-active-${idx}" data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
               <option value="" ${o.active==null?'selected':''}>Inherit firm setting</option>
               <option value="true" ${o.active===true?'selected':''}>Active here</option>
               <option value="false" ${o.active===false?'selected':''}>Paused here</option>
             </select></div>
-            <div><label>Points per $1</label><input data-merchant-content data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
-            <div><label>Spend per stamp</label><input data-merchant-content data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
-            <div><label>Expiry</label><select data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
+            <div><label for="bo-earn-${idx}">Points per $1</label><input id="bo-earn-${idx}" data-merchant-content data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
+            <div><label for="bo-stamp-${idx}">Spend per stamp</label><input id="bo-stamp-${idx}" data-merchant-content data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
+            <div><label for="bo-expiry-${idx}">Expiry</label><select id="bo-expiry-${idx}" data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
               <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
               <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
               <option value="inactivity" ${o.expiry_mode==='inactivity'?'selected':''}>After inactivity</option>
               <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
             </select></div>
-            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label>Expiry days</label><input data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
+            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label for="bo-days-${idx}">Expiry days</label><input id="bo-days-${idx}" data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
           </div>
           ${canManageLoyalty?`<div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>`:''}
         </div>`;
@@ -10090,7 +10114,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
       both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis you chose above.'};
     if(loyaltySelectionV230!=='stamps'&&liveModeForAskV314&&targetModeV230!==liveModeForAskV314
-       &&!confirm(modeSwitchAskV240[targetModeV230]))return;
+       &&!await confirmActionV386(modeSwitchAskV240[targetModeV230]))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -10249,15 +10273,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="row" style="justify-content:space-between;gap:12px"><b>${reward?'Edit reward':'New reward'}</b><button class="btn ghost sm" id="rwClose" type="button">Done</button></div>
       <div class="field-grid">
         <div class="full"><label for="rwCatalogueSource">Start from a product or service</label><select id="rwCatalogueSource"><option value="">Custom reward</option>${rewardCatalogueSources.map(item=>`<option value="${esc(item.type+'|'+item.id)}">${esc(item.type==='product'?'Product':'Service')} · ${esc(item.name)}</option>`).join('')}</select><div id="rwCatalogueEconomics" class="muted small" style="margin-top:6px">Choose an existing product or service to fill the reward, or keep Custom reward.</div></div>
-        <div class="full"><label>Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
-        <div><label>Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
-        <div><label>${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
+        <div class="full"><label for="rwCustomerName">Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
+        <div><label for="rwEstimate">Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
+        <div><label for="rwCost">${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
         ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
       </div>
       <details><summary>More options</summary>
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
-          <div class="full"><label>What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
+          <div class="full"><label for="rwDescription">What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
           ${/* V375 (owner, photo 3: "i don't want credit feature"). The Fulfilment chooser and its
                 store-credit amount are gone — every reward is an item or a benefit the counter
                 hands over. Both ids are kept as hidden inputs so the save path below, the archive
@@ -10267,15 +10291,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <input type="hidden" id="rwKind" value="manual_item">
           <input type="hidden" id="rwCredit" value="0">
           <div class="full" style="margin-top:6px"><b>Limits and timing</b></div>
-          <div><label>Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
-          <div><label>Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
+          <div><label for="rwExpiry">Reward expires after (days)</label><input id="rwExpiry" type="number" min="1" step="1" value="${r.entitlement_expiry_days??''}" placeholder="Leave blank for no expiry"></div>
+          <div><label for="rwUsage">Uses per customer</label><input id="rwUsage" type="number" min="1" step="1" value="${r.usage_limit??''}" placeholder="Leave blank for unlimited"></div>
           ${rewardPurchaseFieldAvailableV340?`<div class="full"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwRequiresPurchaseV340" type="checkbox" style="width:auto;margin-top:2px" ${r.requires_purchase===true?'checked':''}> Customer must also make a purchase to claim this</label><p class="muted small help">Leave this off and customers are told <b>“No purchase required”</b>. Your counter enforces the condition either way — the app never blocks a redemption on it, so only tick this if your team really will ask for a purchase.</p></div>`:''}
           ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
             <option value="">Everyone</option>
             ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
           </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
-          <div><label>Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
-          <div><label>Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
+          <div><label for="rwFrom">Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
+          <div><label for="rwUntil">Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
           <div class="full" style="margin-top:6px"><b>Reward photo</b></div>
           <div class="full">
             <div id="rwPhotoPreviewV340" class="reward-photo-preview-v340">${customerMediaUrlV95(r.image_ref)?`<img src="${esc(customerMediaUrlV95(r.image_ref))}" alt="Current photo for ${esc(r.customer_name||r.name||'this reward')}">`:'<span class="muted small">No photo yet — customers see a gift icon.</span>'}</div>
@@ -10284,7 +10308,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             <p class="muted small help" id="rwPhotoStateV340">PNG, JPG or WebP, under 10 MB. It appears on the reward card in the customer app. Saved with the reward, so it reaches customers when you publish.</p>
           </div>
           <div class="full" style="margin-top:6px"><b>Team and visibility</b></div>
-          <div class="full"><label>Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
+          <div class="full"><label for="rwInternalName">Internal name</label><input id="rwInternalName" value="${esc(r.name||r.customer_name||'')}" placeholder="Only your team sees this"></div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwActive" type="checkbox" style="width:auto" ${r.active!==false?'checked':''}> Available for customers</label>
         <p class="muted small help">Archived rewards stay in history and cannot be newly redeemed.</p>
@@ -10295,7 +10319,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         </div>
         <p class="muted small help">Choose specific items to restrict eligibility. Leaving a group empty means all of that resource type.</p>
       </details>
-      <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Archive</button>':''}</div>
+      <div class="row" style="margin-top:16px"><button class="btn" id="rwSave">${reward?'Save changes':'Create reward'}</button><span class="spacer"></span>${reward?'<button class="btn danger sm" id="rwArchive" type="button">Delete</button>':''}</div>
     </div>`;
     if(isExactRewardIntentV139)pruneRewardSiblingsV139(routeMain);
     /* V238: Done closes the dialog when the editor is inside one; outside a dialog it keeps its
@@ -10686,8 +10710,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     dialog.querySelector('#tierDialogSlotV236').append(form);
     form.hidden=false;
     setTierDirtyStateV237(tierDirtyV237);
-    const close=()=>{
-      if(tierDirtyV237&&!confirm('Discard your unsaved changes to this tier?'))return;
+    const close=async()=>{
+      if(tierDirtyV237&&!await confirmActionV386('Discard your unsaved changes to this tier?'))return;
       closeTierDialogV236(true);opener?.focus?.()};
     dialog.querySelector('#tierDialogCloseV236').onclick=close;
     dialog.onclick=e=>{if(e.target===dialog)close()};
@@ -10851,7 +10875,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     const {data:draft,error}=await sb.rpc('get_retention_config_draft',{p_config_version:draftVersionId});
     if(!isRetentionCurrent())return;
     if(error){
-      routeMain.innerHTML=`<div class="topbar"><div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div>
+      routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('retention',{size:24})}<div><h1>Retention programs</h1><p class="muted small">Draft could not load safely.</p></div></div></div>
         <div class="card"><p class="err">${esc(humanErrorV295(error,'This section could not be loaded.'))}</p><button class="btn" id="retryRetention">Retry</button></div>`;
       $('retryRetention').onclick=()=>retentionPage(draftVersionId,editProgramId);return;
     }
@@ -10911,7 +10935,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
         :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
-    ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label style="margin:0">Restore prior version</label>
+    ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label for="retentionRollback" style="margin:0">Restore prior version</label>
       <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
       <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
     </div>`:'';
@@ -10925,15 +10949,15 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       <button class="qbtn" data-t='{"name":"Loyal half-year","g":2,"p":180,"rt":"credit","rv":1000}'>2 visits / 6 months → $10 credit</button>
     </div></div>`:''}
     <div class="split"><div class="card"><b>${editing?'Edit program':draftVersionId?'New program':'Programs'}</b>
-      ${draftVersionId&&isOwner&&!exactProgramMissing?`<label>Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
-      <div class="split"><div><label>Goal — visits</label><input id="rg" type="number" min="1" value="${editing?.goal_visits||2}"></div>
-      <div><label>Within — days</label><input id="rp" type="number" min="1" value="${editing?.period_days||7}"></div></div>
-      <label>Starts on</label><input id="rs" type="date" value="${editing?.starts_on||sgDateInputValue()}">
-      <label>Reward</label><select id="rt" ${rewardTypes.length?'':'disabled'}>${rewardTypes.map(t=>`<option value="${t.id}" data-kind="${t.fulfillment_kind}" ${editing?.reward_taxonomy_id===t.id?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
+      ${draftVersionId&&isOwner&&!exactProgramMissing?`<label for="rn">Name</label><input id="rn" value="${esc(editing?.name||'')}" placeholder="e.g. Weekly regular">
+      <div class="split"><div><label for="rg">Goal — visits</label><input id="rg" type="number" min="1" value="${editing?.goal_visits||2}"></div>
+      <div><label for="rp">Within — days</label><input id="rp" type="number" min="1" value="${editing?.period_days||7}"></div></div>
+      <label for="rs">Starts on</label><input id="rs" type="date" value="${editing?.starts_on||sgDateInputValue()}">
+      <label for="rt">Reward</label><select id="rt" ${rewardTypes.length?'':'disabled'}>${rewardTypes.map(t=>`<option value="${t.id}" data-kind="${t.fulfillment_kind}" ${editing?.reward_taxonomy_id===t.id?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
       ${rewardTypes.length?'':'<p class="err">Add or reactivate a reward type before adding a program.</p>'}
-      <div><label id="rvl">Reward value</label><input id="rv"></div>
-      <label>Customer description (optional)</label><textarea id="rcd">${esc(editing?.customer_description||'')}</textarea>
-      <label>Staff instructions (optional)</label><textarea id="rsi">${esc(editing?.staff_description||'')}</textarea>
+      <div><label for="rv" id="rvl">Reward value</label><input id="rv"></div>
+      <label for="rcd">Customer description (optional)</label><textarea id="rcd">${esc(editing?.customer_description||'')}</textarea>
+      <label for="rsi">Staff instructions (optional)</label><textarea id="rsi">${esc(editing?.staff_description||'')}</textarea>
       <label><input id="ra" type="checkbox" ${editing?.active!==false?'checked':''}> Active after publication</label>
       <div class="row" style="margin-top:16px"><button class="btn" id="saveRetentionProgram" ${rewardTypes.length?'':'disabled'}>${editing?'Save draft changes':'Add to draft'}</button>${editing?'<button class="btn ghost" id="cancelRetentionEdit">Cancel</button>':''}</div>`
       :`<p class="muted small" style="margin-top:8px">${isOwner?'Create an editing draft to add or change rules.':'Only the owner can change retention rules.'}</p>`}
@@ -10943,12 +10967,12 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
         <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'will be live':'paused'}</span>
         ${isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>`:''}</div>`).join('')
+          <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>`:''}</div>`).join('')
         :CUI.emptyState({iconName:'retention',title:'No retention programs',body:'There are no programs in this draft.'})):''}</div></div></div>
     ${isOwner?`<div class="card" style="margin-top:16px"><b>Reward type labels</b><p class="muted small" style="margin-top:6px">Labels may be renamed, sorted, or retired. Their financial behavior can never be changed.</p>
       <div style="margin-top:8px">${taxonomy.map(t=>`<div class="retention-taxonomy-row"><div class="retention-taxonomy-copy"><span>${esc(t.label)}</span><span class="muted small">${esc(t.fulfillment_kind)}</span></div><div class="retention-taxonomy-actions"><span class="pill ${t.active?'on':'off'}">${t.active?'available':'retired'}</span>
         <button class="btn ghost sm taxonomyRename" data-id="${t.id}" data-label="${esc(t.label)}">Rename</button><button class="btn ghost sm taxonomySort" data-id="${t.id}" data-sort="${t.sort||0}">Sort</button>${t.active?`<button class="btn ghost sm taxonomyRetire" data-id="${t.id}">Retire</button>`:''}</div></div>`).join('')}</div>
-      <details><summary>Add a new reward type</summary><label>Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label>Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
+      <details><summary>Add a new reward type</summary><label for="rtName">Label</label><input id="rtName" placeholder="e.g. Complimentary side dish"><label for="rtKind">Immutable behavior</label><select id="rtKind"><option value="free_item">Hand over an item or benefit</option><option value="discount_pct">Apply a percentage discount</option></select><button class="btn ghost sm" id="rtAdd" style="margin-top:10px">Add reward type</button></details>
     </div>`:''}`;
 
   /* V291 (audit A2 #13). On the published view a rule could only be READ: Edit and Pause were
@@ -11027,9 +11051,9 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       if(retentionTabV332==='history')return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=retentionDeletePendingV332===String(r.program_id||r.id);
       return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
-        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'live':'paused'}</span>
+        <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${statusOnOff(r.active)}</span>
         ${isOwner?`<button class="retentionEditLiveV291 btn ghost sm" data-id="${r.program_id||r.id}">Edit</button>
-          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Pause':'Resume'}</button>
+          <button class="retentionToggleLiveV291 btn ghost sm" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>
           <button type="button" class="btn ghost sm" data-retention-delete-v332="${esc(r.program_id||r.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-retention-deleteconfirm-v332="${esc(r.program_id||r.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
@@ -11100,7 +11124,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
-    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!confirm('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
+    document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
   }
   /* Playbooks (v50 campaign/holdout/lift engine) live only in the published view — a campaign
      binds to a PUBLISHED retention version, so it has no meaning while editing a draft. The
@@ -11319,6 +11343,44 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
       retention:Boolean(retentionError),referrals:Boolean(referralsError),memberships:Boolean(membershipsError),
       promotions:Boolean(promotionsError)}
   };
+}
+/* v215 — welcome offer for first-time sign-ups.
+   Owner: "i need to enable new sign ups redeemption (criteria set by boss): - example minimum
+   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no
+   minimum spend and free xx product."
+   It lives in the Programmes list next to the other rewards because that is where an owner
+   looks for "what do my customers get", not in Settings. */
+/* V291: the welcome offer is the one lifestyle reward that is NOT versioned — it is stored in
+   business_welcome_offers_v215 and a save is live immediately, with no draft and no publish
+   step. When a draft is open, saying so is the honest marker; inventing a pending state for it
+   would be a lie in the other direction. */
+function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
+  if(!canRewards)return '';
+  const configured=!!status?.configured;
+  const active=configured&&status.active===true;
+  const min=Number(status?.min_spend_cents)||0;
+  const label=status?.reward_label||'';
+  const copy=!status
+    ?'Status could not be confirmed. Retry the programme overview.'
+    :!configured
+    ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
+    :status.item_available===false
+    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    :active
+    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
+  const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
+    :active?STATUS_WORDS.on:STATUS_WORDS.off;
+  const tone=active&&status?.item_available!==false?'on':'off';
+  const counts=configured&&(Number(status.granted_count)||Number(status.redeemed_count))
+    ?` · ${Number(status.redeemed_count)||0} given, ${Number(status.granted_count)||0} waiting`:'';
+  const inner=`<span class="grow-programme-icon">${CUI.icon('giftcard',{size:18})}</span>`
+    +`<div><b>Welcome offer</b><p class="muted small">${esc(copy+counts)}</p>${draftOpen?'<p class="muted small" data-welcome-not-versioned-v291>Not part of your draft \u2014 changes here go live as soon as you save them.</p>':''}</div>`
+    +`<span class="grow-programme-meta"><span class="pill ${esc(tone)}">${esc(state)}</span>`
+    +`${canSetup?`<span class="grow-programme-action">${configured?'Edit':'Set up'} →</span>`:'<span class="grow-programme-access">Read only</span>'}</span>`;
+  return canSetup
+    ?`<button type="button" class="grow-programme-row" data-programme-kind="welcome" data-welcome-offer-edit-v215>${inner}</button>`
+    :`<article class="grow-programme-row" data-programme-kind="welcome">${inner}</article>`;
 }
 /* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
    with a free item, or no minimum with a free item. The item comes from the live catalogue —
@@ -12001,7 +12063,7 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">${item.active?'Retire':'Delete'}</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn ghost sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):'<p class="muted small">No promotions yet. Start with one timely offer.</p>'}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -12020,7 +12082,7 @@ async function promotionsPage(selectedPromotionId=null){
     const question=published
       ? `End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
-    if(!confirm(question))return;
+    if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
@@ -12849,7 +12911,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      The nav calls the same thing "Ongoing programmes", so the badge said one word and the menu
      another for one state. Mapped at the single render point rather than at the ~8 call sites,
      so the STATUS value stays 'Live' everywhere it is compared against (see bringBackCount). */
-  const PROGRAMME_STATUS_LABEL_V180={Live:'Ongoing'};
+  const PROGRAMME_STATUS_LABEL_V180={Live:STATUS_WORDS.on};
   const programmeStatus=(label,tone='off')=>`<span class="pill ${esc(tone)}">${esc(PROGRAMME_STATUS_LABEL_V180[label]||label)}</span>`;
   const programmeAction=({canWrite,kind,href=null,editKind=null,rewardId=null,programId=null,label})=>{
     if(!canWrite)return '';
@@ -13893,7 +13955,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        working without modification. */
     return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        <span class="pill ${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
         <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(name)}">•••</summary><div class="menu">
           <button type="button" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'Turn on':'Turn off'}</button>
@@ -13938,7 +14000,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      own "Add gifts" button already does. */
   const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
     <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
-    <b>Add a new gift</b>
+    <b>Add reward</b>
     <span class="muted small">Create new gifts for your customers to redeem with ${growPointsUnitV326}s.</span>
   </li>`:'';
   /* V359 (owner: "adding or editing the fields will be auto publish (with a save button that
@@ -13991,9 +14053,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <li data-grow-points-header-v326><span><b>Earning rule</b><p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
-            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add gift</button>
-            <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
-            :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
+            <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add reward</button>
+            <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
+            :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
             <span class="spacer"></span>
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
@@ -14052,7 +14114,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <span class="muted small">${expiry?`Voucher expires ${expiry} days after it is sent`:'Voucher does not expire'}</span>
       </span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="pill ${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        <span class="pill ${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-edit-v361="${esc(campaign.id)}">Edit</button>
         <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(campaign.name)}">•••</summary><div class="menu">
           <button type="button" data-grow-bb-toggle-v361="${esc(campaign.id)}" aria-checked="${!paused}" role="switch">${paused?'Turn on':'Turn off'}</button>
@@ -14100,7 +14162,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growBirthdayV382.customer_label||'Birthday treat')}</b>
             ${growBirthdayV382.customer_description?`<p class="muted small" style="margin-top:4px" data-merchant-content>${esc(growBirthdayV382.customer_description)}</p>`:''}</div>
-          <span class="pill ${growBirthdayV382.active?'on':'off'}">${growBirthdayV382.active?'Live':'Paused'}</span>
+          <span class="pill ${growBirthdayV382.active?'on':'off'}">${statusOnOff(growBirthdayV382.active)}</span>
         </div>
         <dl class="appointment-detail-list" style="margin-top:12px">
           <div><dt>What they get</dt><dd data-merchant-content>${esc(growBirthdayBenefitTextV382)}</dd></div>
@@ -14193,10 +14255,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${canSetupGrow?`<label class="btn ghost sm service-photo-uploader-v158">${photoUrl?'Change photo':'Choose photo'}<input type="file" accept="image/png,image/jpeg,image/webp" data-workspace-i18n aria-label="Upload photo for level ${index+1}" data-grow-stamps-photo-v356="${esc(reward.id)}"${busy?' disabled':''}></label>
         <span class="muted small">Optional</span>`:`<span class="muted small">${photoUrl?'':'No photo'}</span>`}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${paused?'OFF':'ON'}</button>
+        ${canSetupGrow?`<button type="button" class="pill-toggle-v334 ${paused?'off':'on'}" role="switch" aria-checked="${!paused}" data-grow-points-gift-toggle-v326="${esc(reward.id)}">${statusOnOff(!paused)}</button>
         <button type="button" class="btn ghost sm" data-grow-points-gift-edit-v343="${esc(reward.id)}">Edit</button>
         <button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(reward.id)}">Delete</button>`
-        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${paused?'OFF':'ON'}</span>`}
+        :`<span class="pill-toggle-v334 ${paused?'off':'on'}">${statusOnOff(!paused)}</span>`}
       </div>
       <div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(reward.id)}" style="grid-column:1/-1;margin-top:4px"${confirmOpen?'':' hidden'}>
         <b>Delete Level ${index+1} (${esc(name)})?</b>
@@ -14261,7 +14323,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growStampsDatesV356?`<span class="muted small">${growStampsDatesV356}</span>`:''}
     </span>
     <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-      <span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>
+      <span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>
       ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>`:''}
     </span>
   </div>`:'';
@@ -14288,8 +14350,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
           ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
           <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add level</button>
-          <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${growPointsOnV326?'ON':'OFF'}</button>`
-          :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${growPointsOnV326?'ON':'OFF'}</span>`}
+          <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
+          :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
         </span>
       </div>
       <div class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
@@ -14363,7 +14425,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
       <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-        <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${paused?'Off':'Live'}</span>
+        <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
         <details class="grow-row-menu-v351"><summary class="btn ghost sm" data-merchant-content aria-label="More actions for ${esc(tier.name)}">•••</summary><div class="menu">
           <button type="button" class="danger" data-grow-tiers-delete-v331="${esc(tier.id)}">Delete</button>
@@ -15228,7 +15290,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const question=published
       ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
       :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
-    if(!confirm(question))return;
+    if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:S.biz.id,p_promotion_id:id,p_expected_version:null});
@@ -16507,7 +16569,7 @@ async function pbRecordReturns(c,el,ctx){
 }
 const pbSealAttempts=new Map();
 async function pbSealMeasurement(c,el,ctx){
-  if(!confirm('Start the common measurement window now? Every treatment customer has a manual receipt attestation. This does not verify provider delivery or prove lift, and the measurement terms cannot be changed after sealing.'))return;
+  if(!await confirmActionV386('Start the common measurement window now? Every treatment customer has a manual receipt attestation. This does not verify provider delivery or prove lift, and the measurement terms cannot be changed after sealing.'))return;
   let attempt=pbSealAttempts.get(c.campaign_id);
   if(!attempt){attempt=crypto.randomUUID();pbSealAttempts.set(c.campaign_id,attempt)}
   const button=el.querySelector('[data-pb-seal]');
@@ -16528,14 +16590,14 @@ async function pbSealMeasurement(c,el,ctx){
   pbRenderResults(c,el,ctx);
 }
 async function pbComplete(c,ctx){
-  if(!confirm(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
+  if(!await confirmActionV386(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
   const {error}=await sb.rpc('complete_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id});
   if(error)return fail(error);
   toast('Playbook completed');
   if(ctx.isCurrent())renderPlaybooks(ctx);
 }
 async function pbCancel(c,ctx){
-  if(!confirm(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
+  if(!await confirmActionV386(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
   const {error}=await sb.rpc('cancel_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id,p_reason:null});
   if(error)return fail(error);
   toast('Playbook cancelled');
@@ -16551,7 +16613,7 @@ async function pbActivateDraft(c,ctx){
   const {candidates:cands,truncated}=await pbLoadCandidatesV244(crit.lapsed_days||45,crit.min_visits||3);
   if(truncated)return toast('Too many customers match this playbook to freeze safely — start a fresh one with a narrower rule');
   if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
-  if(!confirm(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
+  if(!await confirmActionV386(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
   const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
   if(error)return fail(error);
   toast('Playbook started');
@@ -16655,7 +16717,7 @@ function pbOpenIssueModal(c,targets,ctx){
       return toast(message);
     }
     const channel=retryChannel.channel;
-    if(!confirm(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
+    if(!await confirmActionV386(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
     const button=$('pbConfirmExposure'),status=$('pbExposureStatus');
     button.disabled=true;status.textContent='Recording manual receipt confirmations…';
     let confirmed=0;const failed=[];
@@ -17152,10 +17214,10 @@ function studioEmergencyPauseActorLabel(actor){
    version (set_studio_rule_active); emergency pause/lift writes an append-only pause row and stops
    NEW effects without deleting any historical fulfilment/discount/reservation. The chip that
    re-renders afterwards is the server's fresh state — no client guessing. */
-function studioSetRuleActive(item,active,onDone){
+async function studioSetRuleActive(item,active,onDone){
   if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
   const verb=active?'Resume':'Pause';
-  if(!confirm(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
+  if(!await confirmActionV386(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
   sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
     if(error){
       if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
@@ -20684,7 +20746,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   document.querySelectorAll('.studioEditRule').forEach(b=>b.onclick=()=>{
     const r=rules.find(x=>x.rule_id===b.dataset.id);if(r)openEditor(modelFromRule(r));});
   document.querySelectorAll('.studioDelRule').forEach(b=>b.onclick=async()=>{
-    if(!confirm(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
+    if(!await confirmActionV386(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
     b.disabled=true;
     const {error}=await sb.rpc('delete_program_rule_draft',{p_config_version:draftVersionId,p_rule_id:b.dataset.id,p_expected_snapshot_hash:snapshotHash});
     if(!isCurrent())return;
@@ -21112,10 +21174,10 @@ async function referralsPage(){
   const referralStatusCopy=referralEnabled
     ?'Referral programme is Enabled. The first qualifying sale can reward the referrer once.'
     :'Referral programme is Off. Referral links are saved, but no reward is paid while it remains Off.';
-  const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>Enabled</option><option value="false" ${!p||!p.enabled?'selected':''}>Off</option></select>
+  const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>${STATUS_WORDS.on}</option><option value="false" ${!p||!p.enabled?'selected':''}>${STATUS_WORDS.off}</option></select>
       <label for="fr">Points to referrer</label><input id="fr" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(p?.reward_points)||0))}">
       <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
-    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${p?.enabled?'Enabled':'Off'}</dd></div><div class="cui-readonly-row"><dt>Points to referrer</dt><dd>${esc(growPointsWordV322(p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
+    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>Points to referrer</dt><dd>${esc(growPointsWordV322(p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
     <div class="split"><div class="card"><div class="cui-card-head"><h2>Program settings</h2></div>
       ${referralSettings}
@@ -21284,8 +21346,8 @@ async function membershipsPage(){
       if(plansTabV329==='history')return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=plansDeletePendingV329===String(p.id);
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
-        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'off'}</span>
-        ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Disable':'Enable'}</button>
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
+        ${canWrite?`<button class="btn ghost sm" onclick="togglePlan('${p.id}',${!p.active})">${p.active?'Turn off':'Turn on'}</button>
         <button type="button" class="btn ghost sm" data-plan-delete-v329="${esc(p.id)}">Delete</button>`:''}
         </div>
         <div class="imp-note" data-plan-deleteconfirm-v329="${esc(p.id)}" style="margin-top:4px;width:100%"${confirmOpen?'':' hidden'}>
@@ -21528,8 +21590,8 @@ async function giftcardsPage(){
     }
     const gcs=Array.isArray(data?.cards)?data.cards:[],total=Math.max(0,Number(data?.total||0)),pages=Math.max(1,Math.ceil(total/GIFT_CARD_PAGE_SIZE));
     if(giftCardPage>=pages&&giftCardPage>0){giftCardPage=pages-1;loadCards();return}
-    $('glist').innerHTML=gcs.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Issued gift cards"><table class="cui-table" data-responsive="true"><thead><tr><th>Code</th><th>Value</th><th>Balance</th><th>Status</th><th>Issued</th></tr></thead><tbody>
-      ${gcs.map(g=>`<tr><td data-label="Code"><b>•••• ${esc(g.code_suffix)}</b></td><td data-label="Value">${money(g.initial_cents)}</td><td data-label="Balance">${money(g.balance_cents)}</td>
+    $('glist').innerHTML=gcs.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Issued gift cards"><table class="cui-table" data-responsive="true"><thead><tr><th>Code</th><th class="num">Value</th><th class="num">Balance</th><th>Status</th><th>Issued</th></tr></thead><tbody>
+      ${gcs.map(g=>`<tr><td data-label="Code"><b>•••• ${esc(g.code_suffix)}</b></td><td class="num" data-label="Value">${money(g.initial_cents)}</td><td class="num" data-label="Balance">${money(g.balance_cents)}</td>
       <td data-label="Status"><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
       <td data-label="Issued">${g.created_at.slice(0,10)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} card${total===1?'':'s'} · page ${giftCardPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="giftPrev" ${giftCardPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="giftNext" ${giftCardPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canIssue?'Issue the first card from the transaction panel.':'Issued cards will appear here.'});
@@ -22484,7 +22546,7 @@ async function appointmentsPage(){
     routeMain.querySelectorAll('[data-delete-block]').forEach(button=>button.onclick=async()=>{
       const blockId=button.dataset.deleteBlock;
       const block=calendarBlocks.find(item=>item.id===blockId);
-      if(!block||!confirm(`Remove ${staffName[block.staff_id]||'this team member'}’s blocked time?`))return;
+      if(!block||!await confirmActionV386(`Remove ${staffName[block.staff_id]||'this team member'}’s blocked time?`))return;
       let attempt=blockDeleteAttempts.get(blockId);
       if(!attempt){attempt=crypto.randomUUID();blockDeleteAttempts.set(blockId,attempt)}
       button.disabled=true;$('calendarSelection').innerHTML='';
@@ -22507,7 +22569,7 @@ async function appointmentsPage(){
     if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item)){toast('This outcome can only be recorded after the appointment starts.');return false}
     if(status==='completed'&&!canComplete){toast('Create-sales access is required to complete an appointment.');return false}
     const words=status==='completed'?'Complete this appointment? Peekaa will create the configured checkout record. Review Sales for the final points outcome.':status==='cancelled'?'Cancel this appointment?':'Mark this appointment as a no-show?';
-    if(!confirm(words))return false;
+    if(!await confirmActionV386(words))return false;
     const stillCurrent=statusGate.begin();
     const {data,error}=await sb.rpc('set_appointment_status_v47',{p_business:S.biz.id,p_appointment:id,p_status:status});
     if(!stillCurrent())return;
@@ -22610,7 +22672,7 @@ async function appointmentsPage(){
       :`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time${helpDotMarkupV385('Blocked time','Time your team is marked unavailable. Customers never see the reason.')}</b></div>
         ${calendarBlocks.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Blocked time"><table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>Team member</th><th>Reason</th><th>Actions</th></tr></thead><tbody>
           ${calendarBlocks.map(block=>{const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
-            return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
+            return `<tr><td data-label="When"><b>${esc(from.date)}</b><br><span class="small">${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></td><td data-label="Team member"><span data-merchant-content>${esc(staffName[block.staff_id]||'\u2014')}</span></td><td data-label="Reason">${esc(block.reason||(block.id?'Unavailable':'Busy at another branch'))}</td><td data-label="Actions">${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button> <button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:'<span class="muted small">Another branch</span>'}</td></tr>`;
           }).join('')}</tbody></table></div>`
           :'<p class="muted small" style="margin-top:10px">No blocked time in this window.</p>'}</section>`;
     /* V375 (owner, photo 13: "move there inside" from the Blocked time panel to a new Block tab).
@@ -22955,7 +23017,7 @@ async function appointmentsPage(){
       ...column.blocks.map(block=>{
         const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
         const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-        return {sort:from.minutes,html:`<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</b></span><span><b>Blocked time</b><br><span class="muted small"><span data-merchant-content>${esc(column.label)}</span> · ${esc(reason)}</span></span></span>${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:''}</div>`};
+        return {sort:from.minutes,html:`<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</b></span><span><b>Blocked time</b><br><span class="muted small"><span data-merchant-content>${esc(column.label)}</span> · ${esc(reason)}</span></span></span>${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:''}</div>`};
       })
     ]).sort((a,b)=>a.sort-b.sort);
     const dayAgendaV291=dayAgendaRowsV291.length
@@ -22988,7 +23050,7 @@ async function appointmentsPage(){
           const blocks=column.blocks.map(block=>{
             const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;
             const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-            return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-edit-block="${block.id}">Edit</button><button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','removeItem',{item:reason})}>Remove</button>`:''}</div>`;
+            return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-edit-block="${block.id}">Edit</button><button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','deleteItem',{item:reason})}>Delete</button>`:''}</div>`;
           }).join('');
           const state=schedule.state!=='working'?`<div class="day-track-state"><b>${esc(schedule.label)}</b>${schedule.reason?`<span>${esc(schedule.reason)}</span>`:''}</div>`:'';
           const working=schedule.state==='working'?`<div class="day-schedule-window" style="top:${workingTop}px;height:${workingHeight}px" aria-hidden="true"></div>`:'';
@@ -23071,7 +23133,7 @@ async function appointmentsPage(){
     const blockedAgendaV291=canWrite?calendarBlocks.map(block=>{
       const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
       const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
-      return `<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(block.starts_at))}</b><br><span>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></span><span><b>Blocked time</b><br><span class="muted small" data-merchant-content>${esc(staffName[block.staff_id]||'Team member')} · ${esc(reason)}</span></span></span>${block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Remove</button>`:''}</div>`;
+      return `<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(block.starts_at))}</b><br><span>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></span><span><b>Blocked time</b><br><span class="muted small" data-merchant-content>${esc(staffName[block.staff_id]||'Team member')} · ${esc(reason)}</span></span></span>${block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:''}</div>`;
     }).join(''):'';
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
@@ -23436,11 +23498,11 @@ async function bottleSetupPageV275(){
     host.querySelectorAll('[data-location-name]').forEach(input=>input.oninput=()=>{
       locations[Number(input.dataset.locationName)].name=input.value;
     });
-    host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=()=>{
+    host.querySelectorAll('[data-remove-location]').forEach(button=>button.onclick=async ()=>{
       const index=Number(button.dataset.removeLocation);
       const removed=locations[index];
       if(!removed)return;
-      if(removed?.in_use&&!confirm(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
+      if(removed?.in_use&&!await confirmActionV386(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
       locations=locations.filter((_,position)=>position!==index);
       paintLocations();
     });
@@ -24249,8 +24311,8 @@ async function bottlesPage(){
          than the rule. finish_bottle_v275 stays deployed for anything still holding it, but this
          screen no longer offers two buttons for one physical event. */
       const retrieveButton=host.querySelector('[data-retrieve]');
-      if(retrieveButton)retrieveButton.onclick=()=>{
-        if(!confirm(`Mark ${bottleNameV275(bottle)} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.`))return;
+      if(retrieveButton)retrieveButton.onclick=async ()=>{
+        if(!await confirmActionV386(`Mark ${bottleNameV275(bottle)} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.`))return;
         runAction(retrieveButton,`status:${bottleId}:retrieved`,
           key=>sb.rpc('set_bottle_status_v275',{p_business:S.biz.id,p_bottle:bottleId,
             p_status:'retrieved',p_idempotency_key:key}),'Bottle retrieved');
@@ -24469,7 +24531,7 @@ async function waitlistPage(){
 
   routeMain.innerHTML=
     CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
-    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'v150-kpi'})).join('')}</div>`
+    +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'kpi-skel-plain'})).join('')}</div>`
     +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
         <div class="wl-add-grid">
           <div class="wl-fld" style="flex:1 1 180px"><label for="wn">Name</label><input id="wn" autocomplete="off"></div>
@@ -24584,7 +24646,7 @@ async function waitlistPage(){
   }
   window.wlRemove=async id=>{
     const row=currentRows.find(r=>r.id===id);
-    if(!confirm(`Remove ${row?.name||'this person'} from the waitlist? They'll drop out of the queue.`))return;
+    if(!await confirmActionV386(`Remove ${row?.name||'this person'} from the waitlist? They'll drop out of the queue.`))return;
     if(await updateWl(id,'removed')){toast('Removed');loadWl()}
   };
   window.wlDecideBookingV73=async(requestId,decision)=>{
@@ -24721,19 +24783,19 @@ async function inventoryPage(){
      column is left untouched, so no figure already entered is destroyed, and cost is still
      collected in Programmes -> More reward settings, where it has an actual purpose: deciding
      what a reward can safely cost. It is never asked for twice. */
-  M().innerHTML=`<div class="topbar"><div><h1>Products</h1><p class="muted small">What you sell and what you charge for it. Stock keeping is optional.</p></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('inventory',{size:24})}<div><h1>Products</h1><p class="muted small">What you sell and what you charge for it. Stock keeping is optional.</p></div></div>
     <div class="row">${canWrite?importBtn('inventory'):''}</div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
     <div class="split">
     ${canWrite?`<div class="card"><b>Add product</b>
-      <label>Name</label><input id="pn2"><label>SKU (optional)</label><input id="ps2">
+      <label for="pn2">Name</label><input id="pn2"><label for="ps2">SKU (optional)</label><input id="ps2">
       <label for="pp2">Sell for (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00">
       <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div>
       <details class="till-sale-package-options" style="margin-top:20px"><summary>Count stock too (optional)</summary>
       <p class="muted small" style="margin:0 0 8px">Only for goods you count — a batch with a quantity and an optional expiry date. Selling never needs this: a product with no stock recorded still sells normally.</p>
-      <label>Product</label><select id="bp2"></select>
-      <div class="split"><div><label>Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
-      <div><label>Expiry (optional)</label><input id="be2" type="date"></div></div>
+      <label for="bp2">Product</label><select id="bp2"></select>
+      <div class="split"><div><label for="bq2">Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
+      <div><label for="be2">Expiry (optional)</label><input id="be2" type="date"></div></div>
       <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></details></div>`:''}
     <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:5})}</div></div></div>`;
   /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
@@ -24783,10 +24845,10 @@ async function inventoryPage(){
     const pr=productsResult.data,st=stockResult.data;
     const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
     if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th>Sell for</th><th>Stock</th><th></th></tr></thead><tbody>
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th>Stock</th><th></th></tr></thead><tbody>
       ${pr.map(p=>{const s=SM[p.id]||0;return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
-      <td data-label="Sell for">${money(p.retail_price_cents)}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
-      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Disable':'Enable'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
+      <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
+      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
           <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>
@@ -24825,7 +24887,7 @@ async function inventoryPage(){
 async function packagesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('packages');
-  routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
   const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,duration_min,price_cents,active',{count:'exact'}).eq('business_id',S.biz.id).order('name').order('id')),
@@ -24836,7 +24898,7 @@ async function packagesPage(){
     fetchAllRowsResult(()=>sb.from('client_packages').select('plan_id',{count:'exact'}).eq('business_id',S.biz.id))]);
   if(!isCurrent())return;
   if(plansResult.error||servicesResult.error||branchesResult.error){
-    routeMain.innerHTML=`<div class="topbar"><div><h1>Packages</h1></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
+    routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1></div></div></div><div class="card"><div class="err">Packages could not be loaded.</div><button class="btn ghost sm" id="packagesRetry" style="margin-top:12px">Retry</button></div>`;
     $('packagesRetry').onclick=packagesPage;return;
   }
   const plans=plansResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
@@ -24858,7 +24920,7 @@ async function packagesPage(){
       ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
       :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
   };
-  M().innerHTML=`<div class="topbar"><div><h1>Packages</h1><p class="muted small">Manage prepaid sessions. Sell packages from Record sale.</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Manage prepaid sessions. Sell packages from Record sale.</p></div></div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only packages access</b><p class="muted small" style="margin-top:5px">You can review package plans and customer balances. Ask for Packages edit access to create or use sessions.</p></div>`}
     <div class="settings-tabs package-tabs-v157" role="tablist" aria-label="Package sections">
       <button type="button" class="settings-tab" id="pkgTabPlans" role="tab" aria-selected="true" aria-controls="pkgPanelPlans" data-package-tab="plans">My packages</button>
@@ -24867,10 +24929,10 @@ async function packagesPage(){
     <section class="package-panel-v157" id="pkgPanelPlans" role="tabpanel" aria-labelledby="pkgTabPlans">
     <div class="card">${canWrite?`<b id="kFormTitle">Create a package</b>
       <input id="kid" type="hidden">
-      <label>Name</label><input id="kn" placeholder="e.g. 5x Facial">
-      <div class="split"><div><label>Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
-      <div><label>Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
-      <label>Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
+      <label for="kn">Name</label><input id="kn" placeholder="e.g. 5x Facial">
+      <div class="split"><div><label for="kp">Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
+      <div><label for="ks">Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
+      <label for="kv">Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
       <div class="permission-banner" id="kDiscount" style="margin-top:14px"><b>Choose a service to calculate value</b><p class="muted small" style="margin-top:4px">Peekaa compares the package price with the exact service price × sessions.</p></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="kadd">Save package</button><button class="btn ghost" id="kcancel" style="display:none">Cancel edit</button></div>
       ${S.myRole==='owner'&&preferencesAvailable?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
@@ -24881,7 +24943,7 @@ async function packagesPage(){
       <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
         <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''}</span>
           <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'} — frozen. They keep their original price, sessions and service snapshot, so create a new version to change anything.`:'Not sold to anyone yet, so it can still be renamed or deleted.'}</div></div>
-        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${p.active?'active':'archived'}</span>
+        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
         ${canWrite?(packagePurchaseCount[p.id]?`${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}`
           :`<div class="row" style="gap:6px;flex-wrap:wrap">${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button><button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}">Delete</button></div>`):''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
     <section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel" aria-labelledby="pkgTabCustomers" hidden>
@@ -24959,7 +25021,7 @@ async function packagesPage(){
     });
     document.querySelectorAll('[data-package-delete]').forEach(button=>button.onclick=async()=>{
       const id=button.dataset.packageDelete,name=button.dataset.packageName||'this package';
-      if(!confirm(`Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
+      if(!await confirmActionV386(`Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('business_manage_package_plan_v193',
         {p_business:S.biz.id,p_plan:id,p_action:'delete',p_name:null});
@@ -25099,7 +25161,7 @@ async function saveBranchFieldsV325(branchId,fields){
 async function branchesPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  M().innerHTML=`<div class="topbar"><div><h1>Branches</h1></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('branch',{size:24})}<div><h1>Branches</h1></div></div>
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
@@ -25109,10 +25171,10 @@ async function branchesPage(){
     editId=b?b.id:null;
     $('brForm').style.display='block';
     $('brForm').innerHTML=`<b>${b?'Edit branch':'New branch'}</b>
-      <div class="split"><div><label>Name *</label><input id="brName" value="${b?esc(b.name):''}"></div>
-      <div><label>Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
-      <div class="split"><div><label>Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
-      <div><label>Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
+      <div class="split"><div><label for="brName">Name *</label><input id="brName" value="${b?esc(b.name):''}"></div>
+      <div><label for="brPhone">Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
+      <div class="split"><div><label for="brEmail">Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
+      <div><label for="brAddr">Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
       ${b?`<label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="brActive" style="width:auto" ${b.active?'checked':''}> Active</label>`
        :`<label for="brCopyFrom" style="margin-top:16px">Copy settings from</label>
@@ -25197,7 +25259,7 @@ async function branchesPage(){
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
-          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${b.active?'Active':'Inactive'}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':''}
+          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${statusOnOff(b.active)}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':''}
           <div data-merchant-content class="muted small" style="margin-top:4px">${esc(b.address||'No address set')}${b.phone?' · '+esc(b.phone):''}${b.email?' · '+esc(b.email):''}</div></div>
           <span class="spacer"></span>
           <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>
@@ -25224,7 +25286,7 @@ async function branchesPage(){
     const branch=branchList.find(item=>item.id===branchId);
     if(!branch)return;
     if(branch.is_default)return toast('Your main branch cannot be deleted.');
-    if(!confirm(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. Past sales, bookings and expenses stay in your reports but stop naming a live branch. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
+    if(!await confirmActionV386(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. Past sales, bookings and expenses stay in your reports but stop naming a live branch. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
     const typed=String(prompt(`Type the branch name to confirm deletion: ${branch.name}`)||'').trim();
     if(typed!==String(branch.name||'').trim())return toast('The name did not match — nothing was deleted');
     if(button)button.disabled=true;
@@ -25274,7 +25336,7 @@ async function customerIntelligencePage(){
      itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
      because it is an accurate description of what the page produces. The per-page branch picker is
      gone for the V260/V272 reason — the top bar owns branch scope. */
-  routeMain.innerHTML=`<div class="topbar"><div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div>
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div></div>
     <div class="range"><label class="sr-only" for="cif">Customer intelligence start date</label><input type="date" id="cif" value="${from}">
       <span class="muted" aria-hidden="true">→</span><label class="sr-only" for="cit">Customer intelligence end date</label><input type="date" id="cit" value="${today}">
       <button class="btn sm" id="ciRun">Run</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
@@ -25815,7 +25877,7 @@ async function reportsPage(){
   /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
      here" — the period and the Run report button decide what every card below shows, so they
      are read first. The markup moved; the ids, handlers and the report bodies did not. */
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('reports',{size:24})}<div><h1>Business Insights</h1><p class="muted small">Visual reports for revenue, bookings, retention and team activity.</p></div></div></div>
     <div class="card report-scope-card"><div class="range">
       <label class="small">From <input type="date" id="rf" value="${d30}"></label>
       <span class="muted">→</span><label class="small">To <input type="date" id="rt2" value="${today}"></label>
@@ -25946,37 +26008,37 @@ async function reportsPage(){
     target.innerHTML=`
       ${moneyVerdictV297}
       <div class="card"><b>Revenue by type</b><table style="margin-top:8px">
-        ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td style="text-align:right"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
-        <tr><td><b>Net total</b></td><td style="text-align:right"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
+        ${Object.entries(byKind).map(([k,v])=>`<tr><td>${k.replace('_',' ')}</td><td class="num"><b>${money(v)}</b></td></tr>`).join('')||'<tr><td class="muted">No sales in range</td></tr>'}
+        <tr><td><b>Net total</b></td><td class="num"><b>${money(Object.values(byKind).reduce((a,b)=>a+b,0))}</b></td></tr></table>
         ${/* V297: the mix is the point of this card and a column of figures does not show it. */''}
         ${reportShareBarV297(Object.entries(byKind).map(([k,v])=>[k.replace('_',' '),v]),{format:money})}
         <p class="muted small" style="margin-top:8px">What you sold, split by type. The bar shows the mix at a glance; the figures above it are the exact amounts.</p>
         ${Object.keys(nonRevByKind).length?`<p class="muted small" style="margin-top:8px">Non-revenue sale amounts recorded: ${Object.entries(nonRevByKind).map(([k,v])=>`<b>${money(v)}</b> ${k.replace('_',' ')}`).join(', ')}. These are sale ledger amounts, not verified payment or cash-collection totals.</p>`:''}</div>
       <div class="card"><b>Reversal reconciliation</b><table style="margin-top:8px">
-        <tr><td>Compensating rows</td><td style="text-align:right"><b>${reversalRows}</b></td></tr>
-        <tr><td>Revenue reversed</td><td style="text-align:right"><b>−${money(reversedCents)}</b></td></tr>
-        <tr><td>Net revenue from immutable rows</td><td style="text-align:right"><b>${money(netRevenue)}</b></td></tr></table>
+        <tr><td>Compensating rows</td><td class="num"><b>${reversalRows}</b></td></tr>
+        <tr><td>Revenue reversed</td><td class="num"><b>−${money(reversedCents)}</b></td></tr>
+        <tr><td>Net revenue from immutable rows</td><td class="num"><b>${money(netRevenue)}</b></td></tr></table>
         ${/* V297: "Reversal reconciliation" and "compensating row" are accounting words. One plain
              line says what they are and why the net is not the gross. */''}
         <p class="muted small" style="margin-top:8px">In plain words: a compensating row is a correction that cancels an earlier sale instead of deleting it, so the money comes back out of the total. That is why the net is lower than the gross.</p>
         <p class="muted small" style="margin-top:8px">Originals remain on record. Negative reversal rows link back to them and reduce the net.</p></div>
       ${loyaltyAvailable?`<div class="card"><b>Loyalty flow (business-wide, selected period)</b><table style="margin-top:8px">
-        <tr><td>Points earned</td><td style="text-align:right"><b>${pt.earn||0}</b></td></tr>
-        <tr><td>Points redeemed</td><td style="text-align:right"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
-        <tr><td>Points expired</td><td style="text-align:right"><b>${Math.abs(pt.expire||0)}</b></td></tr>
-        <tr><td>Manual adjustments</td><td style="text-align:right"><b>${pt.adjust||0}</b></td></tr></table>
+        <tr><td>Points earned</td><td class="num"><b>${pt.earn||0}</b></td></tr>
+        <tr><td>Points redeemed</td><td class="num"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
+        <tr><td>Points expired</td><td class="num"><b>${Math.abs(pt.expire||0)}</b></td></tr>
+        <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr></table>
         ${/* V297: 78,232 points earned means nothing without knowing which way each row points. */''}
         <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
-        <tr><td>Customer credit outstanding</td><td style="text-align:right"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
-        <tr><td>Gift cards unredeemed</td><td style="text-align:right"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
+        <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
+        <tr><td>Gift cards unredeemed</td><td class="num"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
         ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
         <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
       ${membershipsAvailable?`<div class="card"><b>Memberships</b><table style="margin-top:8px">
-        <tr><td>Active members (business-wide, now)</td><td style="text-align:right"><b>${actMs}</b></td></tr>
-        <tr><td>Membership revenue (selected period/branch)</td><td style="text-align:right"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`:
+        <tr><td>Active members (business-wide, now)</td><td class="num"><b>${actMs}</b></td></tr>
+        <tr><td>Membership revenue (selected period/branch)</td><td class="num"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`:
         '<div class="card"><b>Memberships</b><p class="muted small" style="margin-top:8px">Unavailable because complete Memberships access could not be confirmed. No zero is inferred.</p></div>'}`;
   }
   const appointmentSummary=rows=>{
@@ -26123,10 +26185,10 @@ async function reportsPage(){
       target.innerHTML=`${busyVerdictV297}<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
           <p class="muted small">${current.total} appointments in this period.</p></div>
         <div class="card"><b>Appointment outcomes</b><table style="margin-top:8px">
-          <tr><td>Booked</td><td style="text-align:right"><b>${current.booked}</b></td></tr>
-          <tr><td>Completed</td><td style="text-align:right"><b>${current.completed}</b></td></tr>
-          <tr><td>Cancelled</td><td style="text-align:right"><b>${current.cancelled}</b></td></tr>
-          <tr><td>No-show</td><td style="text-align:right"><b>${current.noShow}</b></td></tr></table></div>
+          <tr><td>Booked</td><td class="num"><b>${current.booked}</b></td></tr>
+          <tr><td>Completed</td><td class="num"><b>${current.completed}</b></td></tr>
+          <tr><td>Cancelled</td><td class="num"><b>${current.cancelled}</b></td></tr>
+          <tr><td>No-show</td><td class="num"><b>${current.noShow}</b></td></tr></table></div>
         <div class="card"><b>Scheduled capacity</b>${capacity.known?`<div class="metric" style="margin-top:8px">${utilization===null?'—':`${utilization.toFixed(1)}%`}</div>
           <p class="muted small">${current.serviceHours.toFixed(1)} booked service hours out of ${capacity.hours.toFixed(1)} branch-open active-team hours after merged breaks, staff blocks, and full-day time off.</p>
           ${utilization!=null&&utilization>100?`<p class="err small">Overbooked by ${(current.serviceHours-capacity.hours).toFixed(1)} service hours in this period.</p>`:''}`:
@@ -26191,9 +26253,9 @@ async function reportsPage(){
         <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period.</p>
         <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
-        <tr><td>New customers</td><td style="text-align:right"><b>${Number(cm.new_customers||0)}</b></td></tr>
-        <tr><td>Reactivated customers</td><td style="text-align:right"><b>${Number(cm.reactivated_customers||0)}</b></td></tr>
-        <tr><td>Identified customers</td><td style="text-align:right"><b>${Number(cm.transacting_identified_customers||0)}</b></td></tr></table></div>
+        <tr><td>New customers</td><td class="num"><b>${Number(cm.new_customers||0)}</b></td></tr>
+        <tr><td>Reactivated customers</td><td class="num"><b>${Number(cm.reactivated_customers||0)}</b></td></tr>
+        <tr><td>Identified customers</td><td class="num"><b>${Number(cm.transacting_identified_customers||0)}</b></td></tr></table></div>
       <div class="card"><b>Repeat purchasing</b><div class="metric" style="margin-top:8px">${pct(cm.repeat_in_period_rate_pct)}</div>
         <p class="muted small">${Number(cm.repeat_purchasers_in_period||0)} customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.</p></div>`;
   }
@@ -26306,13 +26368,13 @@ const setSetupFlag=(key,on)=>{try{if(on)localStorage.setItem(key,'1');else local
 async function setupPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   if(setupFlagOn(SETUP_GUIDE_HIDDEN_V170)){
-    M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">Setup guide hidden on this device.</p></div></div>
+    M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('setup',{size:24})}<div><h1>Get started</h1><p class="muted small">Setup guide hidden on this device.</p></div></div></div>
       <div class="card"><div class="row"><span class="muted small">Setup guide hidden on this device. Show it again whenever you want.</span><span class="spacer"></span>
         <button class="btn sm" id="sp_show">Show guide</button></div></div>`;
     $('sp_show').onclick=()=>{setSetupFlag(SETUP_GUIDE_HIDDEN_V170,false);setupPage()};
     return;
   }
-  M().innerHTML=`<div class="topbar" data-workspace-i18n><div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div>
+  M().innerHTML=`<div class="topbar" data-workspace-i18n><div class="cui-page-title">${CUI.icon('setup',{size:24})}<div><h1>Get started</h1><p class="muted small">A few things to set up before you open for business — do them in any order.</p></div></div></div>
     <div class="card" id="sp_progress" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     <div id="sp_steps" class="grid"></div>`;
   const bid=S.biz.id;
@@ -26401,10 +26463,10 @@ async function staffPerfPage(drillId){
   const requestGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   let staffPerfSearch='',staffPerfSort='revenue',staffPerfDir='desc';
-  M().innerHTML=`<div class="topbar"><div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div></div>
     <div class="range">
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
-      <input type="date" id="pf" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" value="${today}">
+      <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
       <button class="btn sm" id="papply">Apply</button>
     </div></div>
     <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
@@ -26553,10 +26615,10 @@ async function staffPerfPage(drillId){
     $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}`;
     $('staffRankBasis').textContent=workspaceTranslationV97('Ranked by')+' '+selectedSort.label;
     if(!displayKeys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No matching staff records',body:'Clear the staff search or adjust the selected range.'});return}
-    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th>Signed revenue attributed</th><th>Signed commission</th></tr>
+    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th class="num">Signed revenue attributed</th><th class="num">Signed commission</th></tr>
       ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
-        <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td>${money(agg[k].revenue)}</td><td>${money(agg[k].commission)}</td></tr>`).join('')}
-      <tr><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td><b>${money(totals.revenue)}</b></td><td><b>${money(totals.commission)}</b></td></tr></table></div>
+        <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td class="num">${money(agg[k].revenue)}</td><td class="num">${money(agg[k].commission)}</td></tr>`).join('')}
+      <tr><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td class="num"><b>${money(totals.revenue)}</b></td><td class="num"><b>${money(totals.commission)}</b></td></tr></table></div>
       <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue, such as gift-card issuance. Ledger records and frozen commission remain visible for traceability.</p>`;
   }
   load();
@@ -26643,13 +26705,13 @@ async function staffPerfDrill(idParam){
     }
     if(!isLatest())return;
     const rows=[...sc].sort((a,b)=>b.occurred_at.localeCompare(a.occurred_at));
-    $('dbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Date</th><th>Customer</th><th>Kind</th><th>Revenue treatment</th><th>Signed amount</th><th>Signed commission</th></tr>
+    $('dbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Date</th><th>Customer</th><th>Kind</th><th>Revenue treatment</th><th class="num">Signed amount</th><th class="num">Signed commission</th></tr>
       ${rows.map(r=>{
         const cid=clientBySale[r.sale_id];
         const cust=!clientsAvailable?'<span class="muted">Customer details unavailable</span>'
           :cid&&clientName[cid]?`<a href="#/client/${cid}" style="color:#D06A2E"><b>${esc(clientName[cid])}</b></a>`
           :cid?'<span class="muted">Customer record unavailable</span>':'<span class="muted">Walk-in</span>';
-        return `<tr><td>${sgt(r.occurred_at)}</td><td>${cust}</td><td>${esc((r.kind||'').replace('_',' '))}</td><td>${r.counts_as_revenue?'<span class="pill on">Revenue</span>':'<span class="pill off">Non-revenue</span>'}</td><td>${money(r.amount_cents)}</td><td>${money(r.commission_cents||0)}</td></tr>`;
+        return `<tr><td>${sgt(r.occurred_at)}</td><td>${cust}</td><td>${esc((r.kind||'').replace('_',' '))}</td><td>${r.counts_as_revenue?'<span class="pill on">Revenue</span>':'<span class="pill off">Non-revenue</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="num">${money(r.commission_cents||0)}</td></tr>`;
       }).join('')}</table></div>`;
   }
   load();
@@ -26865,7 +26927,7 @@ async function staffMembersPage(){
   }
   const topbar=M().querySelector('.topbar');
   if(topbar){
-    topbar.innerHTML=`<div><h1>Staff Members</h1></div>`;
+    topbar.innerHTML=`<div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff Members</h1></div></div>`;
   }
   const teamTab=$('settab-team');
   if(teamTab)teamTab.textContent='Staff Members';
@@ -26881,8 +26943,8 @@ async function dailyReportPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
   const todayIso=sgDateInputValue();
-  M().innerHTML=`<div class="topbar"><div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div>
-    <div class="row no-print"><input type="date" id="drDate" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('daily',{size:24})}<div><h1>Daily report</h1><p class="muted small">Recorded sales and adjustments for one Singapore day, with valid-visit totals</p></div></div>
+    <div class="row no-print"><input type="date" id="drDate" aria-label="Report date" value="${todayIso}"><button class="btn sm" id="drGo">Generate</button>
     <button class="btn ghost sm" id="drCsv">Export CSV</button><button class="btn ghost sm" id="drPrint">Print</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="drBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Daily report is ready to run',body:'Pick a Singapore business date, then generate the report.'})}</div></div>`;
@@ -26985,9 +27047,9 @@ async function dailyReportPage(){
       <div class="charts"><div class="card"><b>Revenue by staff</b><div class="chart-frame"><canvas id="drC1"></canvas></div></div>
         <div class="card"><b>Signed revenue by kind</b><div class="chart-frame"><canvas id="drC2"></canvas></div></div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
-        ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th>Signed amount</th><th>Staff</th></tr>
-          ${rows.map(r=>`<tr><td>${sgt(r.occurred_at).slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td>${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
+        ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
+          ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}</table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
@@ -27015,7 +27077,7 @@ async function dailyReportPage(){
 async function expensesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('expenses');
-  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('expenses',{size:24})}<div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div></div>
     <div class="card" id="expGate">${CUI.formSkeleton({fields:3})}</div>`;
   const todayIso=sgDateInputValue();
   let scopeResult;
@@ -27033,17 +27095,17 @@ async function expensesPage(){
     $('expensesGateRetry').onclick=expensesPage;return;
   }
   const expenseBranches=branchResult.data||[];
-  M().innerHTML=`<div class="topbar"><div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('expenses',{size:24})}<div><h1>Expenses</h1><p class="muted small">Track what goes out — feeds the P&L</p></div></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only expenses access</b><p class="muted small" style="margin-top:5px">You can review finance-authorized expenses. Ask for Expenses edit access to add or void entries.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Expenses"><button type="button" id="expenseListSeg" aria-pressed="true">Expense list</button>${canWrite?'<button type="button" id="expenseAddSeg" aria-pressed="false">Add expense</button>':''}</div>
     <div class="expenses-segment-body" id="expenseAddBody" style="display:none">${canWrite?`<div class="card"><div class="v150-soft-head"><b>Add expense</b><p>Record one cost. It appears in P&amp;L after saving.</p></div>
-      <label>Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
-      <label>Supplier (optional)</label><input id="exSup">
-      <label>Description</label><input id="exDesc">
-      <label>Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
-      <label>Date</label><input id="exDate" type="date" value="${todayIso}">
-      <label>Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
+      <label for="exCat">Category</label><input id="exCat" placeholder="e.g. Supplies, Rent, Utilities">
+      <label for="exSup">Supplier (optional)</label><input id="exSup">
+      <label for="exDesc">Description</label><input id="exDesc">
+      <label for="exAmt">Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
+      <label for="exDate">Date</label><input id="exDate" type="date" value="${todayIso}">
+      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
     <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
@@ -27147,7 +27209,7 @@ async function expensesPage(){
   renderReportScopeNoteV272(isCurrent);
   window.voidExp=async(id)=>{
     if(!canWrite)return;
-    if(!confirm('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
+    if(!await confirmActionV386('Void this expense? It stays on record, struck through, and drops out of the P&L.')) return;
     const {error}=await sb.rpc('set_expense_void',{p_business:S.biz.id,p_expense:id,p_void:true});
     if(error) return fail(error);
     toast('Expense voided');load();
@@ -27166,9 +27228,9 @@ async function pnlPage(){
      is offer a second answer to the same question. The stray closing tag after the range row went
      with it: it closed the topbar a second time, so every element after it sat one level shallower
      than the markup claims. */
-  M().innerHTML=`<div class="topbar"><div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div>
-    <div class="range no-print"><input type="date" id="plFrom" value="${d30}"> <span class="muted">→</span>
-      <input type="date" id="plTo" value="${today}"> <button class="btn sm" id="plGo">Run</button>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('pnl',{size:24})}<div><h1>P&L</h1><p class="muted small">Total sales vs total expenses over any period</p></div></div></div>
+    <div class="range no-print"><input type="date" id="plFrom" aria-label="From date" value="${d30}"> <span class="muted">→</span>
+      <input type="date" id="plTo" aria-label="To date" value="${today}"> <button class="btn sm" id="plGo">Run</button>
       <button class="btn ghost sm" id="plCsv">Export CSV</button><button class="btn ghost sm" id="plPrint">Print</button></div>
     <div style="margin:10px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div id="plBody"><div class="card">${CUI.emptyState({iconName:'reports',title:'Choose a range',body:'Choose a date range and run the P&L to compare sales and expenses.'})}</div></div>`;
@@ -27665,7 +27727,7 @@ async function settingsPage(){
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
-  M().innerHTML=`<div class="settings-page"><div class="topbar"><div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div>
+  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
@@ -28187,7 +28249,7 @@ async function settingsPage(){
     $('tplList').querySelectorAll('[data-template-delete]').forEach(button=>button.onclick=async()=>{
       const template=templates.find(item=>item.id===button.dataset.templateDelete);
       if(!template)return;
-      if(!confirm(`Delete the "${template.name}" template? Teammates who were given these modules keep them — only the saved shortcut goes.`))return;
+      if(!await confirmActionV386(`Delete the "${template.name}" template? Teammates who were given these modules keep them — only the saved shortcut goes.`))return;
       const {error}=await sb.from('module_templates').delete()
         .eq('id',template.id).eq('business_id',S.biz.id);
       if(error)return fail(error);
@@ -28208,7 +28270,7 @@ async function settingsPage(){
   };
   window.setStaffActiveV285=async(id,active,button)=>{
     const name=button?.dataset?.name||'this teammate';
-    if(!active&&!confirm(`Switch ${name} off? They lose access straight away and stop using a paid seat. Everything they have already done stays on record, and you can switch them back on any time.`))return;
+    if(!active&&!await confirmActionV386(`Switch ${name} off? They lose access straight away and stop using a paid seat. Everything they have already done stays on record, and you can switch them back on any time.`))return;
     if(button)button.disabled=true;
     const {error}=await sb.from('staff').update({active}).eq('id',id).eq('business_id',S.biz.id);
     if(button)button.disabled=false;
@@ -28222,7 +28284,7 @@ async function settingsPage(){
      would take the person's name off history that has to keep answering "who did this". */
   window.rmStaff=async(id,btn)=>{
     const name=btn?.dataset?.name||'this teammate';
-    if(!confirm(`Delete ${name}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.`))return;
+    if(!await confirmActionV386(`Delete ${name}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.`))return;
     if(btn)btn.disabled=true;
     const [saleCount,appointmentCount]=await Promise.all([
       sb.from('sales').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('staff_id',id),
@@ -28235,7 +28297,7 @@ async function settingsPage(){
       toast(workspaceTemplateTextV97(worked===1?'staffKeptHasRecord':'staffKeptHasRecords',{name,count:worked}));
       return;
     }
-    if(!confirm(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;
+    if(!await confirmActionV386(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;
     const removedUserId=teamRowsById.get(id)?.user_id||'';
     const {error}=await sb.from('staff').delete().eq('id',id);
     if(error)return fail(error);
@@ -28702,7 +28764,7 @@ async function loadSignupConfig(host){
     a.download=`${BRAND.downloadPrefix}-signup-qr-${S.biz.slug}.png`;a.click();
   };
   $('revokeJoinQr').onclick=async()=>{
-    if(!confirm('Revoke every active customer join QR for this business? Printed and saved copies will stop working.'))return;
+    if(!await confirmActionV386('Revoke every active customer join QR for this business? Printed and saved copies will stop working.'))return;
     const button=$('revokeJoinQr');button.disabled=true;
     $('joinQrStatus').textContent='Revoking active join QRs…';
     const {data,error}=await sb.rpc('business_revoke_customer_join_qrs_v90',{p_business:S.biz.id});
@@ -28765,7 +28827,7 @@ async function loadCommissionConfig(){
       <p class="muted small" style="margin:6px 0 10px">Overrides the staff default for this one service. Blank = inherit staff default; 0% = explicitly no commission on this service.</p>
       ${(svcList&&svcList.length)?`<table><tr><th>Service</th><th>Override %</th><th></th></tr>
         ${svcList.map(s=>`<tr><td>${esc(s.name)}</td>
-          <td><input data-cv="${s.id}" type="number" min="0" step="0.1" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
+          <td><input data-cv="${s.id}" type="number" min="0" step="0.1" aria-label="Commission override %" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
           <td><button class="btn ghost sm" data-savesvc="${s.id}">Save</button></td></tr>`).join('')}</table>`
         :'<p class="muted small">No services yet.</p>'}</div></div>`;
   document.querySelectorAll('[data-savesvc]').forEach(b=>b.onclick=async()=>{
@@ -28990,10 +29052,10 @@ function bookingRulesCardHtmlV325(){
            booking rules button instead of the profile Save. */''}
       <label for="bp">Booking policy (shown to customers when they book)</label>
       <textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
-      <label>Auto-cancel unconfirmed after (minutes, 0 = never)</label>
+      <label for="setHold">Auto-cancel unconfirmed after (minutes, 0 = never)</label>
       <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
       <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
-      ${seatsGuestsV235?`<label>When you're full</label><select id="setOverflow">
+      ${seatsGuestsV235?`<label for="setOverflow">When you're full</label><select id="setOverflow">
         <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
         <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
       <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
@@ -29464,7 +29526,7 @@ async function customerInterfacePageV243(hashParam){
      the page (see ciSaveBarV368 below). */
   const ciOnActionPageV368=CUSTOMER_INTERFACE_TABS_V368.includes(customerInterfaceViewV296);
   const ciPageTitleV368=ciOnActionPageV368?'Customer Action':(ciActiveLabelV296||'Customer Interface');
-  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div><h1>${esc(ciPageTitleV368)}</h1></div></div>
+  M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>${esc(ciPageTitleV368)}</h1></div></div></div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
     ${workspaceBrandPanelHtmlV259()}
@@ -29537,7 +29599,7 @@ async function customerInterfacePageV243(hashParam){
    is no separate flag here that could drift out of sync with the database. Read-only: no
    write path to another tenant exists in this page, and the DB enforces that regardless. */
 async function platformPage(){
-  M().innerHTML=`<div class="topbar"><div><h1>Platform</h1><p class="muted small">Every company on ${esc(BRAND.productName)} — read-only, super-admin view.</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('platform',{size:24})}<div><h1>Platform</h1><p class="muted small">Every company on ${esc(BRAND.productName)} — read-only, super-admin view.</p></div></div></div>
     <div class="card" id="platBody"><div class="empty">Loading…</div></div>`;
   const {data,error}=await sb.rpc('super_admin_list_businesses');
   if(error){
@@ -29546,11 +29608,11 @@ async function platformPage(){
   const rows=data||[];
   if(!rows.length){$('platBody').innerHTML=`<div class="empty"><div class="big">🏢</div>No companies yet.</div>`;return}
   const totals=rows.reduce((t,r)=>({companies:t.companies+1,monthly:t.monthly+(r.est_monthly_cents||0)}),{companies:0,monthly:0});
-  $('platBody').innerHTML=`<table><tr><th>Company</th><th>Industry</th><th>Branches</th><th>Staff</th><th>Customers</th><th>Billable seats</th><th>Subscription</th><th>Est. monthly</th></tr>
+  $('platBody').innerHTML=`<table><tr><th>Company</th><th>Industry</th><th>Branches</th><th>Staff</th><th>Customers</th><th>Billable seats</th><th>Subscription</th><th class="num">Est. monthly</th></tr>
     ${rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="small">${esc(INDUSTRIES[r.industry]?.label||r.industry||'—')}</td>
       <td>${r.branch_count}</td><td>${r.staff_count}</td><td>${r.client_count}</td><td>${r.billable_seats}</td>
       <td><span class="pill ${r.subscription_status==='active'?'ok':r.subscription_status==='trialing'?'new':'off'}">${esc(r.subscription_status||'—')}</span></td>
-      <td>${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
-    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td><b>${money(totals.monthly)}</b></td></tr></table>`;
+      <td class="num">${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
+    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"><b>${money(totals.monthly)}</b></td></tr></table>`;
 }
 

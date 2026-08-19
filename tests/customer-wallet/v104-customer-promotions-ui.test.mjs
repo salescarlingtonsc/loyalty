@@ -84,7 +84,7 @@ test('desktop and mobile promotion cards prioritize marketing without overflow o
   /* v326 (owner: "in phone view, please put side by side to swipe, don't arrange above &
      bottom"): below 760px the customer offers row now scrolls horizontally instead of stacking
      to one column; the business-side promotion editor grid keeps its own single-column rule. */
-  assert.match(app,/@media\(max-width:760px\)\{[\s\S]*\.promotion-editor-grid\{grid-template-columns:1fr\}/);
+  assert.match(app,/@media\(max-width:768px\)\{[\s\S]*\.promotion-editor-grid\{grid-template-columns:1fr\}/);
   assert.match(app,/\.customer-promotions-grid\{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory/);
   assert.match(app,/\.customer-promotion-card\{[^}]*border-radius:18px/s);
   assert.match(app,/\.customer-promotion-card-copy\{[^}]*min-width:0/s);

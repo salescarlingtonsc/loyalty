@@ -11,9 +11,11 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readFileSync(resolve(repoRoot, 'app/app.js'),'utf8'));
 
 test('renaming the programme badge cannot empty the Running view', () => {
-  // The row filter used to match the badge TEXT for "live". Renaming the badge to "Ongoing"
-  // would have hidden every row in Running. The tone class is now the primary signal.
-  assert.ok(app.includes("PROGRAMME_STATUS_LABEL_V180={Live:'Ongoing'}"), 'badge relabel missing');
+  // The row filter used to match the badge TEXT for "live". Relabelling the badge would have
+  // hidden every row in Running. The tone class is now the primary signal. The label itself moved
+  // to the canonical status vocabulary (owner ruling 2026-08-18): "Ongoing" is now "On".
+  assert.ok(app.includes("PROGRAMME_STATUS_LABEL_V180={Live:STATUS_WORDS.on}"), 'badge relabel missing');
+  assert.ok(app.includes("on:'On',off:'Off'"), 'canonical status words missing');
   assert.ok(app.includes("pill?.classList.contains('on')"),
     'Running filter must key off the status tone, not the translated badge text');
   const i = app.indexOf("const isOngoing=pill?.classList.contains('on')");

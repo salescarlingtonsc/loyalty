@@ -51,7 +51,7 @@ test('an older deferred business-persona route cannot redirect over newer naviga
 });
 
 test('390px navigation uses a bounded persistent dock and a discoverable module drawer',()=>{
-  const responsive=section('@media(max-width:960px)','@media(max-width:767px)');
+  const responsive=section('@media(max-width:960px)','/* === COMPACT LAYOUT SHELL (<=768px)');
   assert.match(responsive,/\.side\{display:none\}/);
   assert.match(responsive,/\.staff-mobile-dock\{[^}]*position:fixed[^}]*left:0[^}]*right:0[^}]*bottom:0[^}]*display:grid/s);
   assert.match(responsive,/grid-template-columns:repeat\(var\(--staff-mobile-count,4\),minmax\(0,1fr\)\)/);

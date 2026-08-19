@@ -317,7 +317,11 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      the growPublished* keys when their block was removed. */
   /* 134 -> 135: V385 adds explainHelpDotV385, the label on the "?" affordance the owner asked
      for on the Blocked time card (photo 4) — one {topic} placeholder, all three locales. */
-  assert.equal(keys.length,135,'mixed-interface interpolation inventory changed without review');
+  /* 135 -> 136: the terminology standard (owner ruling 2026-08-18) splits Delete from Remove —
+     Delete ends a record, Remove detaches a link. The blocked-time row now says Delete, so it
+     needs a Delete template beside the existing Remove one. Its zh-CN and ms strings reuse the
+     Delete translations already in the workspace tables rather than introducing new wording. */
+  assert.equal(keys.length,136,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -391,7 +395,7 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
 
   const expected=[
     'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
-    'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem',
+    'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem','deleteItem',
     'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
     'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt',
     'viewDashboardMetricDetails',

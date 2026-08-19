@@ -1895,7 +1895,7 @@ async function renderCustomerBookings(){
     $('walletBody').querySelectorAll('[data-withdraw-request]').forEach(button=>{
       button.onclick=async()=>{
         if(button.disabled)return;
-        if(!confirm('Withdraw this booking request? The business will not see it any more.'))return;
+        if(!await confirmActionV386('Withdraw this booking request? The business will not see it any more.'))return;
         button.disabled=true;button.setAttribute('aria-busy','true');
         const result=await customerRpc('customer_withdraw_booking_request_v290',{p_request:button.dataset.withdrawRequest});
         if(result.error){
@@ -2224,7 +2224,7 @@ async function renderCustomerProfile(){
       passkeyList.innerHTML=`<p class="muted small">${error.code==='passkey_disabled'?'Face ID and passkeys aren’t available yet. Use your password.':'Registered passkeys could not be loaded.'}</p>`;return;
     }
     const passkeys=Array.isArray(data)?data:(Array.isArray(data?.passkeys)?data.passkeys:[]);
-    passkeyList.innerHTML=passkeys.length?passkeys.map(item=>`<div class="wallet-line"><div><b>${esc(item.friendly_name||'Passkey')}</b><p class="muted small" style="margin-top:3px">Added ${esc(formatPasskeyDate(item.created_at))}${item.last_used_at?` · last used ${esc(formatPasskeyDate(item.last_used_at))}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" data-passkey-rename="${esc(item.id)}" data-passkey-name="${esc(item.friendly_name||'Passkey')}" aria-label="Rename ${esc(item.friendly_name||'passkey')}">Rename</button><button class="btn danger sm" type="button" data-passkey-delete="${esc(item.id)}" aria-label="Remove ${esc(item.friendly_name||'passkey')}">Remove</button></div>`).join('')
+    passkeyList.innerHTML=passkeys.length?passkeys.map(item=>`<div class="wallet-line"><div><b>${esc(item.friendly_name||'Passkey')}</b><p class="muted small" style="margin-top:3px">Added ${esc(formatPasskeyDate(item.created_at))}${item.last_used_at?` · last used ${esc(formatPasskeyDate(item.last_used_at))}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" data-passkey-rename="${esc(item.id)}" data-passkey-name="${esc(item.friendly_name||'Passkey')}" aria-label="Rename ${esc(item.friendly_name||'passkey')}">Rename</button><button class="btn danger sm" type="button" data-passkey-delete="${esc(item.id)}" aria-label="Delete ${esc(item.friendly_name||'passkey')}">Delete</button></div>`).join('')
       :'<p class="muted small">No passkeys registered yet. Add one on a private device you control.</p>';
     passkeyList.querySelectorAll('[data-passkey-rename]').forEach(button=>button.onclick=async()=>{
       const friendlyName=await showCustomerDecisionDialog({
@@ -6174,7 +6174,7 @@ async function renderPortal(slug){
          formatter, the same one every other date here already goes through. */
       $('mlist').innerHTML=`<div style="padding:10px 0"><b>${esc(walletDate(when,true))||'Time pending'}</b>
         <div class="muted small">${esc(data.service_name||'general visit')} · ${esc(data.status||'pending')}</div></div>
-        ${data.can_change?`<label>New preferred time</label><input type="datetime-local" id="mdt">
+        ${data.can_change?`<label for="mdt">New preferred time</label><input type="datetime-local" id="mdt">
         <div class="row" style="margin-top:10px"><button class="btn ghost sm" id="mcancel" type="button">Request cancellation</button>
         <button class="btn sm" id="mresched" type="button">Request reschedule</button></div>`:'<p class="muted small">Changes are not available for this booking.</p>'}`;
       /* v294: real listeners on the freshly-rendered buttons. The old inline onclick reached
