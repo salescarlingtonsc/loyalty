@@ -104,7 +104,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
     if(host)host.style.display=passed?'none':'';
     statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
   };
-  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'var(--danger)':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
   const logTurnstileError=(errorCode)=>{
     const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';

@@ -21559,7 +21559,7 @@ async function giftcardsPage(){
     if(!isGiftCardsCurrent())return;
     sellButton.disabled=false;
     if(error) return fail(error);
-    $('gcode').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
+    $('gcode').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
     issueGiftCardIdempotencyKey=crypto.randomUUID();
     loadCards();
   };
@@ -27312,14 +27312,14 @@ async function pnlPage(){
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash-basis revenue</div></div><div class="v">${money(cash)}</div><p class="hint">Earned and settled in the selected period.</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Accrual revenue</div></div><div class="v">${money(accrual)}</div><p class="hint">Earned including unpaid amounts.</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
-        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'#2FA36B':'#C0392B'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
       </div>
       <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Gift card issuance is deferred revenue. Only recorded eligible payments count toward cash-basis revenue; the gift-card value becomes accrual revenue when it is redeemed and spent.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
         <div class="card"><div class="v150-soft-head"><b>${mk.length?'Accrual revenue vs expenses by month':'Add a wider range to see month-by-month'}</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':''}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
     if(!isLatest())return;
-    const coral='#FF6B5E',amber='#FFB86B',green='#2FA36B';
+    const coral='#FF6B5E',amber='#FFB86B',green='var(--success)';
     const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
     const catKeys=Object.keys(byCat);
     if(catKeys.length) C('plC1',{type:'doughnut',data:{labels:catKeys,datasets:[{data:catKeys.map(k=>byCat[k]/100),backgroundColor:[coral,amber,'#8B7BC7',green,'#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});

@@ -1,8 +1,8 @@
 .revenue-truth{
   --truth-positive:#1f6b48;
-  --truth-positive-bg:#e7f6ee;
+  --truth-positive-bg:var(--success-bg);
   --truth-caution:#7a4b12;
-  --truth-caution-bg:#fff6e8;
+  --truth-caution-bg:var(--warn-bg);
   display:grid;
   gap:16px;
   max-width:1180px;
@@ -59,13 +59,13 @@
 }
 .revenue-truth-state--partial,
 .revenue-truth-state--stale{
-  border-color:#e7c994;
+  border-color:color-mix(in srgb,var(--warn) 32%,#fff);
   background:var(--truth-caution-bg);
 }
 .revenue-truth-state--permission,
 .revenue-truth-state--error{
   border-color:#d9a29c;
-  background:#fbeae7;
+  background:var(--danger-bg);
 }
 .revenue-truth-section{
   padding:22px;
@@ -105,7 +105,7 @@
   padding:16px;
   border:1px solid var(--line);
   border-radius:var(--r-sm);
-  background:#fbfaf8;
+  background:var(--shell);
 }
 .revenue-truth-metric>span{
   min-height:34px;
@@ -134,7 +134,7 @@
   background:var(--truth-positive-bg);
 }
 .revenue-truth-metric--caution{
-  border-color:#e7c994;
+  border-color:color-mix(in srgb,var(--warn) 32%,#fff);
   background:var(--truth-caution-bg);
 }
 .revenue-truth-limitations{

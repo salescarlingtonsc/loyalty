@@ -99,13 +99,23 @@ test('customer surface uses the warm premium accent palette without changing the
      no rule needed rewriting; this now locks the single source and the aliasing that feeds it. */
   assert.match(indexHtml,/--brand-red:#C24135;/);
   assert.match(indexHtml,/--peekaa-red:var\(--brand-red\);--peekaa-red-dark:var\(--brand-red-dark\);--peekaa-red-soft:var\(--brand-red-soft\);--peekaa-red-faint:var\(--brand-red-faint\);/);
-  assert.match(indexHtml,/--peekaa-bg:#F8F4F1;/,
+  /* Wave 1 (owner-approved 2026-08-19): the --peekaa-* neutrals became aliases of the ONE
+     semantic system. The guarantees below are unchanged in strength — the background value and
+     the semantic colours are still locked to exact hexes, now at their single source — and the
+     aliasing that feeds the customer surface is locked with them. */
+  assert.match(indexHtml,/--bg-cust:#F8F4F1;/,
     'the existing customer app background must stay exactly unchanged');
-  assert.match(indexHtml,/--peekaa-text:#251F1B;--peekaa-text-secondary:#7C746E;/);
-  assert.match(indexHtml,/--peekaa-success:#4F8A72;--peekaa-success-bg:#E7F3ED;/);
-  assert.match(indexHtml,/--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;/);
+  assert.match(indexHtml,/--peekaa-bg:var\(--bg-cust\);/,
+    'the customer background must be fed by the canonical token, not a second literal');
+  assert.match(indexHtml,/--peekaa-text:var\(--ink\);--peekaa-text-secondary:var\(--muted\);/);
+  assert.match(indexHtml,/--success:#1F6B48; --success-bg:#E7F6EE;/);
+  assert.match(indexHtml,/--peekaa-success:var\(--success\);--peekaa-success-bg:var\(--success-bg\);/);
+  assert.match(indexHtml,/--gold:#D8B15A;/);
+  assert.match(indexHtml,/--peekaa-gold:var\(--gold\);--peekaa-gold-bg:var\(--gold-bg\);/);
   assert.match(indexHtml,/\/\* V361: warm premium customer accents\. The page background stays on --peekaa-bg exactly as-is\. \*\//);
-  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:0 8px 22px rgba\(194,65,53,\.28\)!important\}/);
+  assert.match(indexHtml,/--glow-brand:0 8px 22px rgba\(194,65,53,\.28\);/,
+    'the brand glow keeps its exact recipe, now at its single source');
+  assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:var\(--glow-brand\)!important\}/);
   assert.match(indexHtml,/\.customer-primary-nav a\[aria-current="page"\],[^{]+\.is-active\{background:var\(--peekaa-red-soft\)!important;border-color:var\(--peekaa-red\)!important;color:var\(--peekaa-red\)!important\}/);
   assert.match(indexHtml,/\.customer-claimable-banner-v337,\.customer-claimable-strip\{border-color:var\(--peekaa-gold\)!important;background:var\(--peekaa-gold-bg\)!important/);
   assert.match(indexHtml,/\.customer-surface \.pill\.ok\{background:var\(--peekaa-success-bg\)!important;color:var\(--peekaa-success\)!important\}/);

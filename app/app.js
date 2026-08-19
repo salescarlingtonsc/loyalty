@@ -317,7 +317,7 @@ async function mountTurnstile(siteKey,{container,status,retry,action,onToken,loc
     if(host)host.style.display=passed?'none':'';
     statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
   };
-  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'var(--danger)':''};
   const clear=(text,isError=false)=>{onToken('');message(text,isError)};
   const logTurnstileError=(errorCode)=>{
     const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
@@ -11549,7 +11549,7 @@ function staffInvitePreviewMarkupV151(preview){
   if(!preview)return '<p class="muted small">Enter a company invite code to check the business and role.</p>';
   const role=ROLE_LABELS[preview.role]||preview.role||'Team member';
   if(preview.status==='valid'){
-    return `<div class="ok" style="margin-top:10px;background:#E7F6EE;color:var(--green)">
+    return `<div class="ok" style="margin-top:10px;background:var(--success-bg);color:var(--green)">
       <b>${esc(preview.business_name||'Business found')}</b>
       <p class="small" style="margin-top:5px">Role offered: ${esc(role)}</p>
       <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
@@ -11706,7 +11706,7 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
         if(error)throw error;
         if(!data.session){
           $('staffInviteAuthGo').disabled=false;
-          $('staffInviteAuthError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
+          $('staffInviteAuthError').innerHTML='<div class="err" style="background:var(--success-bg);color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
         }
       }else{
         const {error}=await sb.auth.signInWithPassword({email,password});
@@ -11971,7 +11971,7 @@ function renderBusinessApplication(){
       $('businessApplicationSubmit').disabled=false;return;
     }
     if(data.session){history.replaceState(null,'','/business');route();return}
-    $('businessApplicationError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(a.check)}</div>`;
+    $('businessApplicationError').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)">${esc(a.check)}</div>`;
   };
 }
 async function renderApprovedBusinessInviteSignup(inviteToken){
@@ -12006,7 +12006,7 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
       $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('genericError'))}</div>`;$('approvedOwnerCreate').disabled=false;return;
     }
     if(!data.session){
-      $('approvedOwnerError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(t('checkEmail'))}</div>`;return;
+      $('approvedOwnerError').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)">${esc(t('checkEmail'))}</div>`;return;
     }
     route();
   };
@@ -12075,7 +12075,7 @@ function renderAuth(mode='in',{admin=false}={}){
       redirect.searchParams.set('recovery','1');
       try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
       $('resetRequest').disabled=false;
-      $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
+      $('autherr').innerHTML='<div class="err" style="background:var(--success-bg);color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
     };
     return;
   }
@@ -12204,7 +12204,7 @@ function renderPasswordUpdate(){
     await sb.auth.signOut();passwordRecoveryActive=false;resetClientSessionState();
     history.replaceState(null,'',location.pathname+'#/');
     renderAuth('in',{admin:entryRouteForLocation().startsWith('#/platform')});
-    $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Password updated. Sign in with your new password.</div>';
+    $('autherr').innerHTML='<div class="err" style="background:var(--success-bg);color:var(--green)">Password updated. Sign in with your new password.</div>';
   };
 }
 
@@ -12646,7 +12646,7 @@ window.openImport=function(moduleKey,onDone){
       $('impGo').disabled=true;$('impGo').textContent='Importing…';
       if(!importIdem) importIdem=crypto.randomUUID();
       const {inserted,failed,errs,blocked}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
-      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:#E7F6EE;color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
+      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:var(--success-bg);color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
         ${errs.length?`<p class="small muted" style="margin-top:8px"><span data-workspace-i18n>First issues:</span> <span data-merchant-content>${errs.map(e=>esc(e)).join('; ')}</span></p>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="impDone">${blocked?'Close':'Done'}</button></div>`;
       $('impDone').onclick=()=>{close();if(onDone)onDone()};
@@ -33789,7 +33789,7 @@ async function giftcardsPage(){
     if(!isGiftCardsCurrent())return;
     sellButton.disabled=false;
     if(error) return fail(error);
-    $('gcode').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
+    $('gcode').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
     issueGiftCardIdempotencyKey=crypto.randomUUID();
     loadCards();
   };
@@ -39575,14 +39575,14 @@ async function pnlPage(){
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash-basis revenue</div></div><div class="v">${money(cash)}</div><p class="hint">Earned and settled in the selected period.</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Accrual revenue</div></div><div class="v">${money(accrual)}</div><p class="hint">Earned including unpaid amounts.</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
-        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'#2FA36B':'#C0392B'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
       </div>
       <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Gift card issuance is deferred revenue. Only recorded eligible payments count toward cash-basis revenue; the gift-card value becomes accrual revenue when it is redeemed and spent.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
         <div class="card"><div class="v150-soft-head"><b>${mk.length?'Accrual revenue vs expenses by month':'Add a wider range to see month-by-month'}</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':''}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
     if(!isLatest())return;
-    const coral='#FF6B5E',amber='#FFB86B',green='#2FA36B';
+    const coral='#FF6B5E',amber='#FFB86B',green='var(--success)';
     const C=(id,cfg)=>S.charts.push(new Chart($(id),cfg));
     const catKeys=Object.keys(byCat);
     if(catKeys.length) C('plC1',{type:'doughnut',data:{labels:catKeys,datasets:[{data:catKeys.map(k=>byCat[k]/100),backgroundColor:[coral,amber,'#8B7BC7',green,'#E8E4DD']}]},options:{plugins:{legend:{position:'bottom'}}}});

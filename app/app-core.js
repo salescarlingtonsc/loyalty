@@ -4394,7 +4394,7 @@ function staffInvitePreviewMarkupV151(preview){
   if(!preview)return '<p class="muted small">Enter a company invite code to check the business and role.</p>';
   const role=ROLE_LABELS[preview.role]||preview.role||'Team member';
   if(preview.status==='valid'){
-    return `<div class="ok" style="margin-top:10px;background:#E7F6EE;color:var(--green)">
+    return `<div class="ok" style="margin-top:10px;background:var(--success-bg);color:var(--green)">
       <b>${esc(preview.business_name||'Business found')}</b>
       <p class="small" style="margin-top:5px">Role offered: ${esc(role)}</p>
       <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
@@ -4551,7 +4551,7 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
         if(error)throw error;
         if(!data.session){
           $('staffInviteAuthGo').disabled=false;
-          $('staffInviteAuthError').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
+          $('staffInviteAuthError').innerHTML='<div class="err" style="background:var(--success-bg);color:var(--green)">Check your email to confirm your account, then return to this invite link.</div>';return;
         }
       }else{
         const {error}=await sb.auth.signInWithPassword({email,password});
@@ -4779,7 +4779,7 @@ function renderBusinessApplication(){
       $('businessApplicationSubmit').disabled=false;return;
     }
     if(data.session){history.replaceState(null,'','/business');route();return}
-    $('businessApplicationError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(a.check)}</div>`;
+    $('businessApplicationError').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)">${esc(a.check)}</div>`;
   };
 }
 async function renderApprovedBusinessInviteSignup(inviteToken){
@@ -4814,7 +4814,7 @@ async function renderApprovedBusinessInviteSignup(inviteToken){
       $('approvedOwnerError').innerHTML=`<div class="err">${esc(t('genericError'))}</div>`;$('approvedOwnerCreate').disabled=false;return;
     }
     if(!data.session){
-      $('approvedOwnerError').innerHTML=`<div class="err" style="background:#E7F6EE;color:var(--green)">${esc(t('checkEmail'))}</div>`;return;
+      $('approvedOwnerError').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)">${esc(t('checkEmail'))}</div>`;return;
     }
     route();
   };
@@ -4846,7 +4846,7 @@ function renderAuth(mode='in',{admin=false}={}){
       redirect.searchParams.set('recovery','1');
       try{await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect.toString()})}catch{}
       $('resetRequest').disabled=false;
-      $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
+      $('autherr').innerHTML='<div class="err" style="background:var(--success-bg);color:var(--green)">If an account exists for that email, a reset link is on its way.</div>';
     };
     return;
   }
@@ -4975,7 +4975,7 @@ function renderPasswordUpdate(){
     await sb.auth.signOut();passwordRecoveryActive=false;resetClientSessionState();
     history.replaceState(null,'',location.pathname+'#/');
     renderAuth('in',{admin:entryRouteForLocation().startsWith('#/platform')});
-    $('autherr').innerHTML='<div class="err" style="background:#E7F6EE;color:var(--green)">Password updated. Sign in with your new password.</div>';
+    $('autherr').innerHTML='<div class="err" style="background:var(--success-bg);color:var(--green)">Password updated. Sign in with your new password.</div>';
   };
 }
 
@@ -5234,7 +5234,7 @@ window.openImport=function(moduleKey,onDone){
       $('impGo').disabled=true;$('impGo').textContent='Importing…';
       if(!importIdem) importIdem=crypto.randomUUID();
       const {inserted,failed,errs,blocked}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
-      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:#E7F6EE;color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
+      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:var(--success-bg);color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
         ${errs.length?`<p class="small muted" style="margin-top:8px"><span data-workspace-i18n>First issues:</span> <span data-merchant-content>${errs.map(e=>esc(e)).join('; ')}</span></p>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="impDone">${blocked?'Close':'Done'}</button></div>`;
       $('impDone').onclick=()=>{close();if(onDone)onDone()};

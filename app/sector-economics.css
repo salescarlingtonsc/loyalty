@@ -55,12 +55,12 @@
 }
 .sector-economics-state h2{margin-top:3px;font-size:17px}
 .sector-economics-state--disabled,
-.sector-economics-state--empty{background:#fbfaf8}
+.sector-economics-state--empty{background:var(--shell)}
 .sector-economics-state--permission,
 .sector-economics-state--branch,
 .sector-economics-state--error{
   border-color:#d9a29c;
-  background:#fbeae7;
+  background:var(--danger-bg);
 }
 .sector-economics-card{padding:22px}
 .sector-economics-section-head{
@@ -87,17 +87,17 @@
   line-height:1.2;
   white-space:nowrap;
 }
-.sector-economics-badge--ready{background:#e7f6ee;color:#1f6b48}
-.sector-economics-badge--withheld{background:#fff6e8;color:#7a4b12}
+.sector-economics-badge--ready{background:var(--success-bg);color:#1f6b48}
+.sector-economics-badge--withheld{background:var(--warn-bg);color:#7a4b12}
 .sector-economics-coverage{
   display:flex;
   min-width:0;
   align-items:baseline;
   gap:10px;
   padding:14px 16px;
-  border:1px solid #e7c994;
+  border:1px solid color-mix(in srgb,var(--warn) 32%,#fff);
   border-radius:var(--r-sm);
-  background:#fff6e8;
+  background:var(--warn-bg);
 }
 .sector-economics-coverage strong{
   color:var(--ink);
@@ -128,7 +128,7 @@
   padding:15px;
   border:1px solid var(--line);
   border-radius:var(--r-sm);
-  background:#fbfaf8;
+  background:var(--shell);
 }
 .sector-economics-metrics span,
 .sector-policy-parameters span,
@@ -158,8 +158,8 @@
   line-height:1.45;
 }
 .sector-economics-metric--withheld{
-  border-color:#e7c994!important;
-  background:#fff6e8!important;
+  border-color:color-mix(in srgb,var(--warn) 32%,#fff)!important;
+  background:var(--warn-bg)!important;
 }
 .sector-economics-disclosure,
 .sector-policy-override{
@@ -223,7 +223,7 @@
   padding:16px;
   border:1px solid var(--line);
   border-radius:var(--r-sm);
-  background:#fbfaf8;
+  background:var(--shell);
 }
 .sector-line-item-period h3{
   color:var(--ink);
@@ -272,7 +272,7 @@
   padding:12px 14px;
   border-left:3px solid #d6a253;
   border-radius:0 var(--r-sm) var(--r-sm) 0;
-  background:#fff6e8;
+  background:var(--warn-bg);
   color:#6f4513;
   font-size:12.5px;
   line-height:1.55;
@@ -286,14 +286,14 @@
   margin-bottom:14px;
   padding:12px 14px;
   border-radius:var(--r-sm);
-  background:#fff6e8;
+  background:var(--warn-bg);
   color:#6f4513;
   font-size:12.5px;
   line-height:1.5;
 }
 .sector-policy-callout--override{
   margin-top:12px;
-  background:#e7f6ee;
+  background:var(--success-bg);
   color:#1f6b48;
 }
 .sector-policy-evidence-grid{
@@ -323,7 +323,7 @@
   padding:16px;
   border:1px solid var(--line);
   border-radius:var(--r-sm);
-  background:#fbfaf8;
+  background:var(--shell);
 }
 .sector-policy-helper{
   color:var(--muted);
