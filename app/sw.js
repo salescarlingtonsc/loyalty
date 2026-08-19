@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v15-20260819-w4-truth';
+const CACHE_VERSION='v16-20260819-w5-polish';
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 /* V289 (audit A3, G3b): the app document itself is now part of the shell, so an offline
    navigation lands in Peekaa's own "you're offline" state instead of the standalone fallback
