@@ -2157,6 +2157,12 @@
       "path": "db/migrations/20260818_nestly_v391_capabilities_undefined_column.sql",
       "semanticVersion": "v391",
       "proposedDeployVersion": "20260818000004"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260819_nestly_v393_customer_tier_visibility.sql",
+      "semanticVersion": "v393",
+      "proposedDeployVersion": "20260819000001"
     }
   ]
 }
