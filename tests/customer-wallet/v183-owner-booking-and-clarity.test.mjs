@@ -37,7 +37,7 @@ test('the offer card carries the business logo and paints the countdown in the b
   assert.match(card,/logo=customerMediaUrlV95\(business\.logo_url\)/);
   assert.match(card,/class="customer-home-offer-logo"/);
   assert.match(card,/customer-home-offer-logo--fallback/,'a business without a logo still gets an identity chip');
-  assert.match(card,/countdown\?`<p class="customer-home-offer-countdown">/);
+  assert.match(card,/countdown\?`<div class="customer-home-offer-countdown-slot-v5"><p class="customer-home-offer-countdown">/);
   assert.match(card,/:validity\?/,'an offer with no end date keeps its validity line');
   assert.match(app,/\.customer-home-offer-countdown\{[^}]*color:var\(--coral\)/);
 });

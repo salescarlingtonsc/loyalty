@@ -53,7 +53,7 @@ test('offer detail sheet joins the dark token scope', () => {
   // v190: dark is opt-in (Profile → Appearance) rather than device-driven, so the scope is now
   // gated on the attribute. The sheets still have to join it — they render outside .customer-surface.
   assert.match(app, /html\[data-customer-theme="dark"\] \.customer-surface,\s*\n?html\[data-customer-theme="dark"\] \.customer-offer-detail-modal \.modal-card,\s*\n?html\[data-customer-theme="dark"\] \.customer-business-detail-modal \.modal-card\{/);
-  assert.match(app, /\.customer-offer-detail-modal \.modal-card\{width:min\(480px/);
+  assert.match(app, /\.customer-offer-detail-modal \.modal-card\{width:min\(var\(--dialog-w-md\)/);
 });
 
 test('uploaded promotion artwork is never cropped and never painted over', () => {

@@ -33,12 +33,15 @@ test('offer artwork fallbacks carry the business monogram, not the offer-name in
 
 test('fallback CSS renders a small coin while keeping the pinned gradients and aspect ratios',()=>{
   assert.match(indexHtml,/\.customer-home-offer-media--fallback\{[^}]*linear-gradient\(135deg,var\(--tint\),var\(--card\)\)/s);
-  assert.match(indexHtml,/\.customer-home-offer-media--fallback span\{[^}]*width:46px/s);
+  /* W5: the rule is scoped to the DIRECT monogram span. Unscoped, it also matched the
+   countdown chip's inner text span and squashed it to 46x46, clipping the label. */
+  assert.match(indexHtml,/\.customer-home-offer-media--fallback>span\{[^}]*width:46px/s);
+  assert.doesNotMatch(indexHtml,/\.customer-home-offer-media--fallback span\{/);
   assert.match(indexHtml,/\.customer-promotion-card-media--fallback\{[^}]*aspect-ratio:21\/9/s);
   assert.match(indexHtml,/\.customer-promotion-card-media--fallback span\{[^}]*width:52px/s);
   assert.match(indexHtml,/\.customer-offer-detail-media--fallback\{[^}]*aspect-ratio:16\/9/s);
   assert.match(indexHtml,/\.customer-offer-detail-media--fallback span\{[^}]*width:56px/s);
-  assert.doesNotMatch(indexHtml,/\.customer-home-offer-media--fallback span\{font-size:2rem/);
+  assert.doesNotMatch(indexHtml,/\.customer-home-offer-media--fallback>span\{font-size:2rem/);
 });
 
 test('both-mode tab bar carries the spendable balance, suppressed while paused',()=>{

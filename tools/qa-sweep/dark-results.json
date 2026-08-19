@@ -10,7 +10,7 @@
   ],
   "shots": "/private/tmp/claude-501/-Users-cs-Downloads-loyalty-main/63a2ed25-8ad3-4c1d-b98d-6c674fd3d6de/scratchpad/wt-ship/tools/qa-sweep/shots/dark",
   "totals": {
-    "light": 34,
+    "light": 35,
     "dark": 21,
     "darkOnly": 0,
     "sharedWithLight": 21,
@@ -138,7 +138,7 @@
       "kind": "component",
       "route": "#/wallet",
       "sel": "p.customer-home-offer-countdown",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:4/div:2/a:1/div:1/p:2",
+      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:4/div:2/a:1/div:1/div:2/p:1",
       "text": "",
       "fg": "#3a211f",
       "bg": "#3a211f",
@@ -381,7 +381,7 @@
       "kind": "component",
       "route": "#/wallet",
       "sel": "p.customer-home-offer-countdown",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:4/div:2/a:1/div:1/p:2",
+      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:4/div:2/a:1/div:1/div:2/p:1",
       "text": "",
       "fg": "#f7dcd7",
       "bg": "#f7dcd7",
@@ -591,6 +591,19 @@
       "need": 4.5,
       "size": 12,
       "weight": 650
+    },
+    {
+      "kind": "text",
+      "route": "#/wallet",
+      "sel": "span",
+      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:4/div:2/a:1/div:1/div:2/p:1/span:2",
+      "text": "Ends in 4 days",
+      "fg": "#c24135",
+      "bg": "#f7dcd7",
+      "ratio": 3.94,
+      "need": 4.5,
+      "size": 12,
+      "weight": 750
     },
     {
       "kind": "text",
