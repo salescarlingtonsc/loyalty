@@ -2142,7 +2142,7 @@ async function renderCustomerProfile(){
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
          the last thing on the page it acts on — deliberately after account & privacy, so it is
          reached by finishing the page rather than by hunting an icon. -->
-    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button">${CUI.icon('back',{size:16})}<span>${esc(ct('signOut'))}</span></button></div></section>`;
+    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></div></section>`;
   bindPasswordVisibility($('walletBody'));
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -2500,7 +2500,7 @@ function renderCustomerNotJoinedV289(businessSlug){
     <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:22px">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
-    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:20})}<span>Join ${esc(label)}</span></button>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px"><span>Join ${esc(label)}</span>${CUI.icon('forward',{size:20})}</button>
     <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>${esc(ct('scanBusinessQr'))}</span></button>
     <div class="cui-stamp-dots-v2b is-demo-v2b" aria-hidden="true">${'<i></i>'.repeat(8)}</div>
     <p class="muted small" style="margin-top:8px">Collect stamps or points here once you join.</p>
@@ -3729,7 +3729,7 @@ function renderCustomerFirstProgrammeQuest(){
       this is the only way out — it stays, but as a plain button rather than the avatar menu the
       owner asked to remove. "Profile & passkeys" is dropped: a customer who has not joined a
       business yet has nothing to open there. -->
-      <button class="btn ghost sm" id="walletSignOut" type="button">${CUI.icon('back',{size:16})}<span>${esc(ct('signOut'))}</span></button></header>
+      <button class="btn ghost sm" id="walletSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></header>
     <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:32})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks(customerLocale)}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};

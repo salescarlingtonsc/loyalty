@@ -146,7 +146,7 @@ test('each rung carries a pictogram: star at the bottom, gem at the top, crown b
 });
 
 test('the pictogram is inside the rung marker and stays legible on the coral fill', () => {
-  assert.match(appJs, /<i>\$\{CUI\.icon\(customerTierRungIconV195\(index,rungs\.length\),\{size:14\}\)\}<\/i>/);
+  assert.match(appJs, /<i>\$\{CUI\.icon\(customerTierRungIconV195\(index,rungs\.length\),\{size:16\}\)\}<\/i>/);
   assert.match(indexHtml, /\.customer-tier-milestone\.is-current i\{[^}]*color:#fff/);
   assert.match(indexHtml, /\.customer-tier-milestone\.is-achieved i\{[^}]*color:#fff/);
 });

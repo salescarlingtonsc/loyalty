@@ -6580,7 +6580,7 @@ async function renderCustomerProfile(){
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
          the last thing on the page it acts on — deliberately after account & privacy, so it is
          reached by finishing the page rather than by hunting an icon. -->
-    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button">${CUI.icon('back',{size:16})}<span>${esc(ct('signOut'))}</span></button></div></section>`;
+    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></div></section>`;
   bindPasswordVisibility($('walletBody'));
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -6963,7 +6963,7 @@ function renderCustomerNotJoinedV289(businessSlug){
     <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:22px">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
-    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:20})}<span>Join ${esc(label)}</span></button>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px"><span>Join ${esc(label)}</span>${CUI.icon('forward',{size:20})}</button>
     <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>${esc(ct('scanBusinessQr'))}</span></button>
     <div class="cui-stamp-dots-v2b is-demo-v2b" aria-hidden="true">${'<i></i>'.repeat(8)}</div>
     <p class="muted small" style="margin-top:8px">Collect stamps or points here once you join.</p>
@@ -8131,7 +8131,7 @@ function customerTierMilestonesMarkupV194(tier={}){
   const withLabels=!customerTierRailCompactV333(tier);
   return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map((rung,index)=>{
     const at=((index+1)/rungs.length)*100;
-    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:16})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
   }).join('')}</div>`;
 }
 /* v310 (W4b): the two sentences this panel writes in English — the distance to the next rung and
@@ -9354,7 +9354,7 @@ function renderCustomerFirstProgrammeQuest(){
       this is the only way out — it stays, but as a plain button rather than the avatar menu the
       owner asked to remove. "Profile & passkeys" is dropped: a customer who has not joined a
       business yet has nothing to open there. -->
-      <button class="btn ghost sm" id="walletSignOut" type="button">${CUI.icon('back',{size:16})}<span>${esc(ct('signOut'))}</span></button></header>
+      <button class="btn ghost sm" id="walletSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></header>
     <main id="main" tabindex="-1"><section class="card customer-first-quest" aria-labelledby="firstProgrammeTitle"><div class="customer-first-quest-copy"><p class="customer-quest-kicker">${esc(ct('firstQuest'))}</p><div class="customer-first-quest-icon">${CUI.icon('scan',{size:32})}</div><h1 id="firstProgrammeTitle">${esc(ct('scanLoyaltyQr'))}</h1><p class="muted">${esc(ct('firstQuestBody'))}</p><button class="btn" id="customerFirstScan" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('scanBusinessQr'))}</span></button><p class="muted small" style="margin-top:16px">${esc(ct('qrOnlyHelp'))}</p></div></section></main>${legalLinks(customerLocale)}</div></div>`;
   $('customerFirstScan').onclick=openCustomerJoinScanner;
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
@@ -34028,7 +34028,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     <h2 id="bookingConfirmedContactTitleV330">Booking confirmed</h2>
     <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
-      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
+      ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:16,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
       ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:16})} Call</a>`:''}
       <button class="btn ghost" id="bookingConfirmedContactCloseV330" type="button">Done</button>
     </div>
@@ -34201,7 +34201,7 @@ async function appointmentsPage(){
       <section class="card" style="${canWrite?'':'grid-column:1/-1'}"><div class="appointment-toolbar"><div class="v150-segment" role="tablist" aria-label="Appointment view"><button type="button" id="appointmentCalendarSeg" aria-pressed="true">Calendar</button><button type="button" id="appointmentListSeg" aria-pressed="false">Appointment List</button>${canWrite?'<button type="button" id="appointmentBlockSeg" aria-pressed="false">Block</button>':''}</div><span class="spacer"></span>
         
         
-        <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:17,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
+        <label class="sr-only" for="stfFilter">Appointment staff</label><span class="appointment-filter-with-icon">${CUI.icon('staff',{size:16,className:'appointment-filter-icon'})}<select id="stfFilter">${staffOpts(staffFilter,branchId)}</select></span>
         <span id="calendarOnlyControls" class="appointment-toolbar" style="gap:6px;padding:0;border:0;background:transparent">
           <button class="qbtn act" id="vDay">Day</button><button class="qbtn" id="vWeek">Week</button>
 <button class="qbtn" id="wkPrev" aria-label="Previous period">${CUI.icon('back',{size:16})}</button><button class="qbtn" id="wkNext" aria-label="Next period">${CUI.icon('forward',{size:16})}</button>
@@ -34784,7 +34784,7 @@ async function appointmentsPage(){
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
       <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
-      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:16})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:15,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${item.status==='booked'&&canWrite?`${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:16})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:16})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
+      <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:16})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:16,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${item.status==='booked'&&canWrite?`${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:16})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:16})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
       ${/* V375 (owner, photo 14: "Change Appointment" and "Complete & Checkout" ringed with arrows
            down onto a tab strip, and "minimise this" written across the amend form). The two
            outcomes of an open booking are now tabs over one panel area, so only one is on screen
@@ -35179,7 +35179,7 @@ async function appointmentsPage(){
             <div class="small" style="margin-top:4px">
               <b>${esc(r.name||'Customer')}</b>${r.phone?` · ${esc(r.phone)}`:''}
               ${callNumber?` <a class="btn ghost sm" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:16})} Call</a>`:''}
-              ${waUrl?` <a class="btn ghost sm" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:13,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
+              ${waUrl?` <a class="btn ghost sm" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:16,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
             </div>
             <div class="small muted" style="margin-top:2px">${overdue?`<span style="color:var(--red);font-weight:700">preferred time has passed</span> · `:''}${r.party_size?`Party of ${r.party_size}`:''}</div>
             ${r.notes?`<div class="small muted" style="margin-top:2px">${esc(r.notes)}</div>`:''}

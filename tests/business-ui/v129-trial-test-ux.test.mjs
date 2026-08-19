@@ -128,7 +128,7 @@ test('appointment WhatsApp action creates a factual explicit-send link and no fa
      template) instead of calling appointmentWhatsAppUrlV129 directly — appointmentWhatsAppUrlV129
      itself is still used by the pending-request banner's pre-confirm "reach the customer" button,
      so it must still exist in this page, just not as the confirmed-appointment button's builder. */
-  assert.match(appointments,/id="appointmentWhatsApp" href="\$\{esc\(whatsAppUrl\)\}"[^>]*>\$\{CUI\.icon\('chat',\{size:15,className:'icon-whatsapp-v330'\}\)\} WhatsApp</);
+  assert.match(appointments,/id="appointmentWhatsApp" href="\$\{esc\(whatsAppUrl\)\}"[^>]*>\$\{CUI\.icon\('chat',\{size:16,className:'icon-whatsapp-v330'\}\)\} WhatsApp</);
   assert.match(appointments,/appointmentWhatsAppUrlV129/);
   assert.match(appointments,/bookingConfirmationMessageV330/);
   assert.match(appointments,/WhatsApp opens with a draft/);

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="945b748c2a8a8f822fe6179bc5aba377051fda4d33641efabe7e4650775ab030"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="e2c9360ec491178c2972b9705638c025296aedc0cca36d1a345b11cb34af5d50"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3228,7 +3228,7 @@ function renderCustomerNotJoinedV289(businessSlug){
     <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:22px">You haven’t joined ${esc(label)} yet</h1>
     <p class="muted small" style="margin-top:8px">Your Peekaa account is fine — this reward account just isn’t linked to it. Join to see points, rewards and bookings for ${esc(label)}.</p>
-    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px">${CUI.icon('forward',{size:20})}<span>Join ${esc(label)}</span></button>
+    <button class="btn" id="customerNotJoinedJoin" type="button" style="margin-top:18px"><span>Join ${esc(label)}</span>${CUI.icon('forward',{size:20})}</button>
     <button class="btn ghost sm" id="customerNotJoinedScan" type="button" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>${esc(ct('scanBusinessQr'))}</span></button>
     <div class="cui-stamp-dots-v2b is-demo-v2b" aria-hidden="true">${'<i></i>'.repeat(8)}</div>
     <p class="muted small" style="margin-top:8px">Collect stamps or points here once you join.</p>

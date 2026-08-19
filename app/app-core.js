@@ -3446,7 +3446,7 @@ function customerTierMilestonesMarkupV194(tier={}){
   const withLabels=!customerTierRailCompactV333(tier);
   return `<div class="customer-tier-milestones" aria-hidden="true">${rungs.map((rung,index)=>{
     const at=((index+1)/rungs.length)*100;
-    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:14})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
+    return `<span class="customer-tier-milestone${rung.current===true?' is-current':''}${rung.achieved===true?' is-achieved':''}" style="left:${at.toFixed(2)}%"><i>${CUI.icon(customerTierRungIconV195(index,rungs.length),{size:16})}</i>${withLabels?`<b>${esc(rung.label)}</b>`:''}</span>`;
   }).join('')}</div>`;
 }
 /* v310 (W4b): the two sentences this panel writes in English — the distance to the next rung and
