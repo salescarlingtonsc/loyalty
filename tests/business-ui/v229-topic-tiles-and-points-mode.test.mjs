@@ -37,7 +37,7 @@ test('V358 the overview is eight peer topic tiles, and drilling in is the only w
      filter strip over the same tiles. Each count is rendered from the length of a real array, so
      the strip cannot advertise a number the grid does not contain. */
   assert.match(app, /data-grow-tile-filter-v357="all">All \(\$\{growDisplayTopicsV343\.length\}\)/);
-  assert.match(app, /data-grow-tile-filter-v357="live">Live \(\$\{growDisplayLiveV343\.length\}\)/);
+  assert.match(app, /data-grow-tile-filter-v357="live">\$\{STATUS_WORDS\.on\} \(\$\{growDisplayLiveV343\.length\}\)/);
   assert.match(app, /data-grow-tile-filter-v357="pending">Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
   assert.match(app, /data-grow-tile-filter-v357="history">History \(\$\{growDisplayHistoryCountV343\}\)/);
   /* V343 (owner markup: "photo 1 change to become photo 2"): the square-tile grid became a

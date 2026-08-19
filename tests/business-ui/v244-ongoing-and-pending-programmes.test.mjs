@@ -73,7 +73,7 @@ test('V343 the programme landing renders the owner mockup status strip and five-
     'the History tab must not count rows its list does not show');
   assert.doesNotMatch(stripSetup, /growHistoryRowsV271/);
   assert.match(tiles, /All \(\$\{growDisplayTopicsV343\.length\}\)/);
-  assert.match(tiles, /Live \(\$\{growDisplayLiveV343\.length\}\)/);
+  assert.match(tiles, /\$\{STATUS_WORDS\.on\} \(\$\{growDisplayLiveV343\.length\}\)/);
   assert.match(tiles, /Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
   assert.match(tiles, /History \(\$\{growDisplayHistoryCountV343\}\)/);
   /* V357 made the four status tabs real filters, so the grid renders the FILTERED list and shows

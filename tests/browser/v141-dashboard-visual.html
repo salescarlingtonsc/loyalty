@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="4fc35381948c7b6de9b1396ea7bea3ec0074664c02c81ef9a8e51e001f078bff"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="53553c302b6acc0ad68930bfde0655f9fc635487ff13e6a8a2df0d1fd454c446"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -798,11 +798,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .staff-invite-actions .btn{min-height:var(--control-h)}
 /* settings — tabbed sections so each save has a clear, small scope instead of one long page */
 .settings-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--line)}
-.settings-tab{min-height:44px;padding:10px 15px;border:0;border-bottom:2px solid transparent;background:transparent;
-  color:var(--muted);font-size:13.5px;font-weight:600;cursor:pointer;border-radius:10px 10px 0 0;white-space:nowrap;
-  transition:color .14s,background .14s,border-color .14s}
-.settings-tab:hover{color:var(--ink2);background:#F2EFEA}
-.settings-tab[aria-selected="true"]{color:var(--coral);border-bottom-color:var(--coral)}
+/* Wave 1 (Top-20 #4): the folder-tab (red underline, squared top corners) was one of five
+   selected-tab languages. Tabs are now members of the one segmented pattern. */
+.settings-tab{min-height:44px;padding:10px 16px;border:0;background:transparent;
+  color:var(--muted);font-size:13.5px;font-weight:700;cursor:pointer;border-radius:999px;white-space:nowrap;
+  transition:color .14s,background .14s}
+.settings-tab:hover{color:var(--ink2);background:var(--neutral-bg)}
+.settings-tab[aria-selected="true"]{color:#fff;background:var(--ink)}
 .settings-panel[hidden]{display:none}
 .settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
 .settings-save-row .btn{flex:0 0 auto}
@@ -1007,7 +1009,8 @@ input[type=range]:focus{box-shadow:none}
   transition:transform .18s var(--spring),color .14s,background .14s}
 .qbtn:hover{color:var(--ink)}
 .qbtn:active{transform:scale(.94)}
-.qbtn.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* Presets are filter chips, not primary controls: selection is the brand wash, not ink fill. */
+.qbtn.act{background:var(--tint);color:var(--brand-red);border-color:var(--brand-red-soft);font-weight:700}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;max-width:100%}
 .split>*{min-width:0;max-width:100%}
 #slist{min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -1338,7 +1341,7 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-receipt-lines{list-style:none;padding:0;margin:10px 0}
 .till-receipt-lines li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 .till-receipt-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;letter-spacing:.03em}
-.package-tabs-v157{margin-bottom:14px}
+.package-tabs-v157{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:var(--shadow);margin-bottom:14px;max-width:100%;overflow-x:auto}
 .package-panel-v157[hidden]{display:none!important}
 .package-customer-tools-v157{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0 12px}
 .package-customer-tools-v157>div{flex:1 1 220px}
@@ -1408,7 +1411,9 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    list, one row per programme, hairline-separated inside its group card. */
 .grow-topic-tiles-v229{display:flex;flex-direction:column;margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
 .grow-programme-toolbar-v343{margin-top:18px;padding:10px 18px;border-radius:999px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.08);border:1px solid var(--hair)}
-.grow-programme-tabs-v343{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;background:#fff;border-color:var(--line);box-shadow:none}
+/* Wave 1: content-hug like every other segmented control — the full-bleed grid stretched four
+   labels across 1112px with 25% dead space per segment (audit §2F). */
+.grow-programme-tabs-v343{display:inline-flex;width:auto;max-width:100%;gap:4px;background:#fff;border-color:var(--line);box-shadow:none}
 .grow-programme-tabs-v343 button{min-height:46px}
 .grow-topic-card-grid-v343{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:22px;margin-top:24px}
 .grow-topic-card-v343{appearance:none;min-width:0;min-height:198px;display:flex;flex-direction:column;align-items:stretch;gap:16px;padding:20px;border:1px solid var(--hair);border-radius:18px;background:#fff;color:var(--ink);font:inherit;text-align:left;box-shadow:0 18px 42px rgba(48,36,28,.08);cursor:pointer}
@@ -4193,6 +4198,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'4fc35381948c7b6de9b1396ea7bea3ec0074664c02c81ef9a8e51e001f078bff',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'53553c302b6acc0ad68930bfde0655f9fc635487ff13e6a8a2df0d1fd454c446',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

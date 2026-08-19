@@ -25289,7 +25289,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTilesHtmlV229=`<div class="grow-programme-toolbar-v343">
       <div class="v150-segment grow-programme-tabs-v343" role="group" aria-label="Programme status">
         <button type="button" aria-pressed="${growTileFilterV357==='all'}" data-grow-tile-filter-v357="all">All (${growDisplayTopicsV343.length})</button>
-        <button type="button" aria-pressed="${growTileFilterV357==='live'}" data-grow-tile-filter-v357="live">Live (${growDisplayLiveV343.length})</button>
+        <button type="button" aria-pressed="${growTileFilterV357==='live'}" data-grow-tile-filter-v357="live">${STATUS_WORDS.on} (${growDisplayLiveV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='pending'}" data-grow-tile-filter-v357="pending">Not set up (${growDisplayPendingV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='history'}" data-grow-tile-filter-v357="history">History (${growDisplayHistoryCountV343})</button>
       </div>
