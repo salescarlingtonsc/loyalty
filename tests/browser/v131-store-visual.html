@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ae006b1b86271d62fe404120166e23b53a7eb94b7e776abc9f85a566a71f588b"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="60d5e600ec34c57d2b687bcf764d94878b88b9a8f5229dac69f704f783acffef"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3001,13 +3001,25 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* V362: business hero focus and referral shortcut page alignment. */
 .customer-business-profile-v346>.customer-business-referral-v362{display:none!important}
 .customer-business-shortcut-content-v348>.customer-business-referral-v362{display:grid!important}
-.customer-shell .card.customer-business-summary-v346{min-height:166px!important;padding:16px!important;border-radius:20px!important;background:linear-gradient(145deg,var(--brand-red) 0%,var(--brand-red-dark) 100%)!important;box-shadow:0 18px 34px rgba(217,74,56,.24),0 2px 8px rgba(77,55,44,.05)!important;color:#fff!important}
+.customer-shell .card.customer-business-summary-v346{min-height:166px!important;padding:16px!important;border-radius:20px!important;background:linear-gradient(145deg,var(--brand-red) 0%,var(--brand-red-dark) 100%)!important;box-shadow:var(--shadow-warm)!important;color:#fff!important}
+.customer-shell .card.customer-business-summary-v346.is-reward-ready-v2b{box-shadow:var(--glow-brand)!important}
 .customer-shell .card.customer-business-summary-v346::after{opacity:.05!important;right:-24px;bottom:-34px;width:138px;height:138px}
 .customer-business-summary-top-v347{margin-bottom:10px!important}
 .customer-business-tier-pill-v347,.customer-business-ready-v347{min-height:22px!important;padding:0 9px!important;font-size:10.5px!important;background:rgba(117,37,24,.24)!important;color:#fff!important}
 .customer-business-ready-v347{background:rgba(255,255,255,.12)!important}
-.customer-business-balance-v347{display:flex!important;align-items:flex-end!important;gap:7px!important;max-width:100%!important;font-size:56px!important;line-height:.86!important;letter-spacing:-.035em!important;white-space:nowrap!important}
-.customer-business-balance-v347 span{padding-bottom:5px!important;font-size:14px!important;line-height:1!important;font-weight:700!important;letter-spacing:0!important}
+/* W3-4: the standing is the one thing on this page that is EARNED, so it is the one thing that
+   gets the gold. Every other chip on the hero stays translucent white on red. */
+.customer-shell .card.customer-business-summary-v346 .customer-business-tier-pill-v347{background:var(--gold-bg)!important;color:var(--warn)!important;border:1px solid color-mix(in srgb,var(--gold) 60%,#fff)!important;font-weight:800!important;letter-spacing:.06em!important}
+.customer-business-balance-v347{display:flex!important;align-items:flex-end!important;gap:7px!important;max-width:100%!important;font-size:56px!important;line-height:.86!important;letter-spacing:-.035em!important;white-space:nowrap!important;font-family:Georgia,'Times New Roman',serif!important;font-weight:760!important}
+.customer-business-balance-v347 span{padding-bottom:5px!important;font-size:14px!important;line-height:1!important;font-weight:700!important;letter-spacing:0!important;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif!important}
+/* W3-4: the same dots/track the wallet cards draw, recoloured for the red ground — the filled part
+   in gold so the progression cue and the tier pill read as one accent, not two. */
+.customer-shell .card.customer-business-summary-v346 .customer-business-hero-progress-v3{position:relative;z-index:1;margin-top:11px!important}
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.24)!important}
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold)!important}
+.customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b{margin-top:0!important}
+.customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.5)!important}
+.customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i.on{background:var(--gold)!important;border-color:var(--gold)!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-summary-line-v362{margin-top:11px!important;color:#fff!important;font-size:13.5px!important;line-height:1.2!important;font-weight:650!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.82)!important;font-size:12px!important;line-height:1.2!important}
 .customer-business-summary-actions-v349{margin-top:13px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}

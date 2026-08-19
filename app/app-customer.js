@@ -3723,27 +3723,6 @@ function customerProgrammeHoldingsMarkupV183(card){
   if(sessions>0)chips.push(`<span class="customer-programme-holding"><b>${sessions}</b> ${esc(sessions===1?'session left':'sessions left')}</span>`);
   return chips.length?`<div class="customer-programme-holdings">${chips.join('')}</div>`:'';
 }
-function customerProgrammeCardProgrammesV360(card){
-  if(Array.isArray(card?.programmes))return card.programmes;
-  const fromCapabilities=programmeStackV310(card?.programmeCapabilities||card?.capabilities||card?.programme_capabilities);
-  return Array.isArray(fromCapabilities)?fromCapabilities:[];
-}
-function customerProgrammeCardActiveProgrammeV360(card,kind){
-  const entry=programmeStackEntryV310(customerProgrammeCardProgrammesV360(card),kind);
-  return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
-}
-function customerProgrammeCardMetricKindV360(card){
-  const hasPoints=customerProgrammeCardActiveProgrammeV360(card,'points');
-  const hasStamps=customerProgrammeCardActiveProgrammeV360(card,'stamps');
-  if(hasStamps&&!hasPoints)return 'stamps';
-  if(hasPoints)return 'points';
-  const loyalty=card?.loyalty||{};
-  const tierLabel=String(loyalty.tier_name||loyalty.tier_level||card?.tier?.current?.label||card?.tier?.label||'').trim();
-  if(tierLabel)return 'points';
-  const rawModel=String(loyalty.model||loyalty.loyalty_model||card?.loyalty_model||'').toLowerCase();
-  const rawUnit=String(loyalty.unit||'points').toLowerCase();
-  return rawModel==='stamps'||rawUnit==='stamps'?'stamps':'points';
-}
 function customerProgrammeDirectoryMetricV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
     packages=card?.packages||{},membership=card?.membership||{};
@@ -3832,20 +3811,6 @@ function customerHomeGreetingV343(profile=null){
 }
 function customerRewardReadyCountV343(cards=[]){
   return (Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
-}
-/* Wave 2B (Top-20 #8): progress is the product — stamp dots for small ladders, a thin track for
-   points, both computed from fields every wallet card already carries. */
-function customerCardProgressV2B(card){
-  const reward=card?.next_eligible_reward||{};
-  const unit=customerProgrammeCardMetricKindV360(card);
-  const balance=Math.max(0,Number(card?.loyalty?.balance)||0);
-  const remaining=Math.max(0,Number(reward.remaining_units)||0);
-  if(reward.available_now===true||!remaining)return '';
-  const total=balance+remaining;
-  if(unit==='stamps'&&total>=2&&total<=10)
-    return `<span class="cui-stamp-dots-v2b" role="img" aria-label="${balance} of ${total} stamps">${Array.from({length:total},(_,i)=>`<i${i<balance?' class="on"':''}></i>`).join('')}</span>`;
-  const pct=Math.max(4,Math.min(100,Math.round(balance/total*100)));
-  return `<span class="cui-progress-track-v2b" role="img" aria-label="${balance} of ${total} toward the next reward"><i style="width:${pct}%"></i></span>`;
 }
 function customerCardMoodV2B(card){
   const reward=card?.next_eligible_reward||{};

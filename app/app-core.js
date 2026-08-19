@@ -4111,6 +4111,17 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const tierProgressV386=Math.max(0,Math.min(100,Number(tier?.progress_percent||0)));
   const tierRemainingV386=tierNextV386
     ?Math.max(0,Number(tierNextV386.threshold||0)-Number(tier?.metric||0)):0;
+  /* Wave 3 (audit: "the display face never touches a number" and "no progression cue"). The hero
+     stated a balance and left the distance to the next reward to a sentence below it. It now draws
+     that distance with the SAME dots/track every wallet card already uses — from the same two
+     fields this function already reads (balance, remaining_units), so the hero and the card the
+     customer tapped to get here cannot disagree. customerCardProgressV2B takes a wallet card, so
+     the hero hands it the minimal one rather than growing a second copy of the arithmetic; it
+     returns '' when the reward is ready or the distance is unknown, i.e. exactly when there is
+     nothing left to draw. It is emitted only inside the plain-number figure below: the stamps
+     figure already IS its own progress (the rings) and the tiers figure has the meter, so a second
+     cue there would say the same thing twice. */
+  const heroProgressV3=customerCardProgressV2B({loyalty,next_eligible_reward:reward||{},programmeCapabilities});
   const figureV386=modeV386==='stamps'&&stampRingsV386
     ?`<div class="customer-business-stamp-figure-v386">${stampRingsV386}</div>
       <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
@@ -4120,11 +4131,15 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
         <p class="customer-business-summary-line-v362">${tierNextV386
           ?`${esc(customerTierDistanceCountV310(tierRemainingV386,String(tier?.basis||'visits')))} ${esc(customerTierUnitWordV310(String(tier?.basis||'visits')))} to ${esc(tierNextV386.label||'next tier')}`
           :'You are at the top tier'}</p>`
-      :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>`;
+      :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>${heroProgressV3?`<div class="customer-business-hero-progress-v3">${heroProgressV3}</div>`:''}`;
   /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
      running, so they are suppressed rather than printed against a tier meter. */
   const showRewardLinesV386=modeV386!=='tiers'||rewardReady;
-  return `<section class="card customer-business-summary-v346" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
+  /* Wave 3: the brand glow stops being decoration and becomes a state. The card's own shadow drops
+     to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
+     moment it means something — a reward the customer can claim right now — reusing the existing
+     .is-reward-ready-v2b class rather than inventing a second name for it. */
+  return `<section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
     <div class="customer-business-summary-top-v347">
       <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
       <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
@@ -4324,6 +4339,41 @@ function customerProgrammeDirectoryTypeV346(business={}){
   if(/bar|bottle|club/i.test(raw))return 'BAR';
   if(/fitness|gym|yoga|pilates|sport/i.test(raw))return 'FITNESS';
   return raw.toUpperCase().slice(0,18);
+}
+function customerProgrammeCardProgrammesV360(card){
+  if(Array.isArray(card?.programmes))return card.programmes;
+  const fromCapabilities=programmeStackV310(card?.programmeCapabilities||card?.capabilities||card?.programme_capabilities);
+  return Array.isArray(fromCapabilities)?fromCapabilities:[];
+}
+function customerProgrammeCardActiveProgrammeV360(card,kind){
+  const entry=programmeStackEntryV310(customerProgrammeCardProgrammesV360(card),kind);
+  return programmeStackCardVisibleV310(entry)&&entry?.active!==false;
+}
+function customerProgrammeCardMetricKindV360(card){
+  const hasPoints=customerProgrammeCardActiveProgrammeV360(card,'points');
+  const hasStamps=customerProgrammeCardActiveProgrammeV360(card,'stamps');
+  if(hasStamps&&!hasPoints)return 'stamps';
+  if(hasPoints)return 'points';
+  const loyalty=card?.loyalty||{};
+  const tierLabel=String(loyalty.tier_name||loyalty.tier_level||card?.tier?.current?.label||card?.tier?.label||'').trim();
+  if(tierLabel)return 'points';
+  const rawModel=String(loyalty.model||loyalty.loyalty_model||card?.loyalty_model||'').toLowerCase();
+  const rawUnit=String(loyalty.unit||'points').toLowerCase();
+  return rawModel==='stamps'||rawUnit==='stamps'?'stamps':'points';
+}
+/* Wave 2B (Top-20 #8): progress is the product — stamp dots for small ladders, a thin track for
+   points, both computed from fields every wallet card already carries. */
+function customerCardProgressV2B(card){
+  const reward=card?.next_eligible_reward||{};
+  const unit=customerProgrammeCardMetricKindV360(card);
+  const balance=Math.max(0,Number(card?.loyalty?.balance)||0);
+  const remaining=Math.max(0,Number(reward.remaining_units)||0);
+  if(reward.available_now===true||!remaining)return '';
+  const total=balance+remaining;
+  if(unit==='stamps'&&total>=2&&total<=10)
+    return `<span class="cui-stamp-dots-v2b" role="img" aria-label="${balance} of ${total} stamps">${Array.from({length:total},(_,i)=>`<i${i<balance?' class="on"':''}></i>`).join('')}</span>`;
+  const pct=Math.max(4,Math.min(100,Math.round(balance/total*100)));
+  return `<span class="cui-progress-track-v2b" role="img" aria-label="${balance} of ${total} toward the next reward"><i style="width:${pct}%"></i></span>`;
 }
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;
