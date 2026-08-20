@@ -55,9 +55,31 @@ test('a redeemable reward is chipped Ready and keeps the QR redemption contract'
      redemption contract below is untouched. */
   assert.match(rewards,/\$\{ready\?'<span class="pill ok">Ready to claim<\/span>':''\}/);
   assert.match(rewards,/data-customer-redeem="\$\{esc\(r\.action_key\)\}"><span>Show QR at counter<\/span>|data-customer-redeem="\$\{esc\(r\.action_key\)\}">\$\{CUI\.icon\('scan',\{size:16\}\)\}<span>Show QR at counter<\/span>/);
-  assert.match(rewards,/button\.querySelector\('span'\)\.textContent='Show QR at counter'/);
+  /* nestly_v397: the hero swipe's "Redeem now" carries the SAME data-customer-redeem contract and
+     is wired by this same handler, so the handler can no longer hardcode one button's label on
+     restore — it would rename the hero button to "Show QR at counter" mid-flight. Each button now
+     restores the label it was rendered with. The list's own label is asserted above and the
+     redemption contract below is untouched: one intent RPC, one QR sheet, two entry points. */
+  assert.match(rewards,/const restoreLabelV397=button\.querySelector\('span'\)\?\.textContent\|\|''/);
+  assert.match(rewards,/button\.querySelector\('span'\)\.textContent=restoreLabelV397/);
+  assert.match(rewards,/\[data-hero-swipe-v395\] \[data-customer-redeem\]/,
+    'the hero page button is wired by THIS handler, not a second redemption path');
   assert.match(rewards,/customer_create_redemption_intent_v89/);
-  assert.doesNotMatch(rewards,/Redeem now/);
+  assert.equal([...rewards.matchAll(/sb\.rpc\('customer_create_redemption_intent_v89'/g)].length,1,
+    'still exactly one place that mints a redemption intent');
+});
+
+test('the hero reward page offers Redeem only when the SERVER says the counter will honour it',()=>{
+  /* v145 forbids browser-side reward readiness. v395 drew this page's state from balance minus
+     cost, which would offer a Redeem button for a reward that is ended, tier-locked, over its
+     claim limit, or belongs to a firm with redemption switched off. */
+  const hero=section('function customerHeroRewardPagesV395','function customerBusinessSecondaryMarkupV346');
+  assert.match(hero,/const readyV397=!!\(reward\?\.action_key&&customerRewardCanRedeem\(reward,redemptionEnabled\)\)/);
+  assert.doesNotMatch(hero,/remaining===0\?'READY'/,'the pill must not be driven by arithmetic');
+  assert.match(hero,/readyV397\?'READY':'NEXT REWARD'/);
+  assert.match(hero,/data-customer-redeem="\$\{esc\(reward\.action_key\)\}" data-hero-redeem-v397/);
+  /* The meter and the distance line survive only on a reward still being earned. */
+  assert.match(hero,/\$\{readyV397\?'':`<div class="customer-reward-progress/);
 });
 
 test('promotion cards surface the offer facts hook and never render a broken media area',()=>{

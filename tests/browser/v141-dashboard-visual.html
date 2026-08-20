@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="998936cce70ccea0c9f0b5453e5d631ee6bf322b27157153ba8a4fda4f4ebd6a"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="6438c841dc6de4ef21a659775c0cb2271a6f4c6312a86b725596d84bccd4c0d6"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2745,6 +2745,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-business-hero-dots-v395{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 2px}
 .customer-business-hero-dot-v395{width:6px;height:6px;border-radius:50%;background:var(--peekaa-border,#E4DED7);transition:background .18s ease,width .18s ease}
 .customer-business-hero-dot-v395.is-active{width:18px;border-radius:999px;background:var(--peekaa-red,#C24135)}
+/* nestly_v397 (owner photo B, "put here" with the pill redrawn at the card's top-left). The New
+   flag sits on the artwork now instead of taking a line of the copy. It is the same .customer-offer-new
+   pill — same tint, radius and type — only its position changed; the card is already
+   position:relative, and overflow:hidden keeps it inside the rounded corner. */
+.customer-offer-new-corner-v397{position:absolute;z-index:3;top:10px;left:10px;margin:0;pointer-events:none}
 /* A reward NAME is prose, not a figure. It deliberately does NOT reuse .customer-business-balance-v347:
    that face is 56px/white-space:nowrap and every one of its declarations is !important, so
    "Complimentary 60-minute aromatherapy massage with hot stones" ran 1791px wide in a 298px box and
@@ -4435,6 +4440,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'998936cce70ccea0c9f0b5453e5d631ee6bf322b27157153ba8a4fda4f4ebd6a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'6438c841dc6de4ef21a659775c0cb2271a6f4c6312a86b725596d84bccd4c0d6',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

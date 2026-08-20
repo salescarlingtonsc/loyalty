@@ -2775,6 +2775,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-business-hero-dots-v395{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 2px}
 .customer-business-hero-dot-v395{width:6px;height:6px;border-radius:50%;background:var(--peekaa-border,#E4DED7);transition:background .18s ease,width .18s ease}
 .customer-business-hero-dot-v395.is-active{width:18px;border-radius:999px;background:var(--peekaa-red,#C24135)}
+/* nestly_v397 (owner photo B, "put here" with the pill redrawn at the card's top-left). The New
+   flag sits on the artwork now instead of taking a line of the copy. It is the same .customer-offer-new
+   pill — same tint, radius and type — only its position changed; the card is already
+   position:relative, and overflow:hidden keeps it inside the rounded corner. */
+.customer-offer-new-corner-v397{position:absolute;z-index:3;top:10px;left:10px;margin:0;pointer-events:none}
 /* A reward NAME is prose, not a figure. It deliberately does NOT reuse .customer-business-balance-v347:
    that face is 56px/white-space:nowrap and every one of its declarations is !important, so
    "Complimentary 60-minute aromatherapy massage with hot stones" ran 1791px wide in a 298px box and
@@ -3403,7 +3408,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=8aeabb404fef","business":"/app-business.js?b=4ef17a488ecf","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=a8ab7745e002","business":"/app-business.js?b=4ef17a488ecf","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -3427,6 +3432,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=9b94f12b3ad4" defer></script>
+<script src="/app-core.js?b=7d055e9cbcaf" defer></script>
 </body>
 </html>

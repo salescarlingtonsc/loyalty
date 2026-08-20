@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="74b47246310cebb616bb4ab4b2a8be4eb8b641ca67e0ef4fd7ccff6780ddf2a8"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="453825f223f043ee1cfe400f4cad7eb549f733faf4f8742f76e765de768197e2"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2744,6 +2744,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-business-hero-dots-v395{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 2px}
 .customer-business-hero-dot-v395{width:6px;height:6px;border-radius:50%;background:var(--peekaa-border,#E4DED7);transition:background .18s ease,width .18s ease}
 .customer-business-hero-dot-v395.is-active{width:18px;border-radius:999px;background:var(--peekaa-red,#C24135)}
+/* nestly_v397 (owner photo B, "put here" with the pill redrawn at the card's top-left). The New
+   flag sits on the artwork now instead of taking a line of the copy. It is the same .customer-offer-new
+   pill — same tint, radius and type — only its position changed; the card is already
+   position:relative, and overflow:hidden keeps it inside the rounded corner. */
+.customer-offer-new-corner-v397{position:absolute;z-index:3;top:10px;left:10px;margin:0;pointer-events:none}
 /* A reward NAME is prose, not a figure. It deliberately does NOT reuse .customer-business-balance-v347:
    that face is 56px/white-space:nowrap and every one of its declarations is !important, so
    "Complimentary 60-minute aromatherapy massage with hot stones" ran 1791px wide in a 298px box and
@@ -3328,7 +3333,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 74b47246310cebb616bb4ab4b2a8be4eb8b641ca67e0ef4fd7ccff6780ddf2a8</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 453825f223f043ee1cfe400f4cad7eb549f733faf4f8742f76e765de768197e2</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6219,7 +6224,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'74b47246310cebb616bb4ab4b2a8be4eb8b641ca67e0ef4fd7ccff6780ddf2a8',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'453825f223f043ee1cfe400f4cad7eb549f733faf4f8742f76e765de768197e2',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

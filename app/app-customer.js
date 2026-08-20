@@ -2793,7 +2793,14 @@ function customerHomeOfferMarkupV167(item,seen){
     ${image
       ?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`
       :`<div class="customer-home-offer-media customer-home-offer-media--fallback"><span aria-hidden="true">${esc(businessInitial)}</span></div>`}
-    <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
+    ${/* nestly_v397 (owner photo B: "New" ringed where it sat, redrawn at the card's top-left
+         corner with "put here"). It was a line of the copy, which pushed the title down and put a
+         status flag below the business that owns it. It is a corner flag on the artwork now —
+         diagonally opposite the countdown chip's old corner — so the card leads with the picture
+         and the two states never stack. "Ends soon" stays in the copy: it is about the offer's
+         terms, not a newness flag, and the countdown line already carries the deadline. */''}
+    ${isNew?'<span class="pill customer-offer-new customer-offer-new-corner-v397">New</span>':''}
+    <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${image?(logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
       :`<span class="customer-home-offer-logo customer-home-offer-logo--fallback" aria-hidden="true">${esc(businessInitial)}</span>`):''}<span class="muted small">${esc(business.name||'Your business')}${category?` · ${esc(category)}`:''}</span></p>
@@ -3583,12 +3590,18 @@ function wireCustomerClaimRewardV395(root=document){
   }});
   return buttons.length;
 }
-/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
-   catalogue row the server sent — name and cost only — and the distance is the customer's own
-   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
-   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
-   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
-function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName=''}={},root=document){
+function customerRewardReadyCountApplyV397(count,root=document){
+  const ready=Math.max(0,Number(count)||0);
+  const nodes=[...root.querySelectorAll('[data-reward-ready-count-v397]')];
+  nodes.forEach(node=>{
+    /* A firm can lose its last claimable reward between renders (redeemed, expired, limit hit).
+       The node then goes back to whatever it said before a reward was ready, which the renderer
+       stored on it, rather than printing "0 rewards ready". */
+    node.textContent=ready>0?customerRewardReadyLineV397(ready):String(node.dataset.rewardReadyFallbackV397||'');
+  });
+  return nodes.length;
+}
+function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',redemptionEnabled=false,bookAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
   const dots=swipe?.querySelector('[data-hero-dots-v395]');
@@ -3606,17 +3619,35 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
     seen.add(key);
     const remaining=Math.max(0,cost-held);
     const progress=Math.max(0,Math.min(100,Math.round(held/cost*100)));
+    /* nestly_v397 (owner photo D). READINESS IS THE SERVER'S ANSWER, NOT ARITHMETIC. v395 drew
+       this page's state from balance-minus-cost, which is exactly the browser-side readiness v145
+       forbids — it would offer a Redeem button for a reward the counter will refuse (ended,
+       tier-locked, claim-limit reached, redemption switched off). customerRewardCanRedeem is the
+       same check the reward list below uses, over the same catalogue row, so the hero page and
+       that list can never disagree about what is claimable. The points arithmetic stays ONLY for
+       the not-ready distance line, which is a display fact, not permission. */
+    const readyV397=!!(reward?.action_key&&customerRewardCanRedeem(reward,redemptionEnabled));
+    /* Owner struck out the meter and the sentence under a READY reward: at 100% the meter says
+       nothing and "Ready to redeem on your next visit" repeats the pill above it. A reward still
+       being earned keeps both — that is the one state where the distance is the point. */
     return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
-      <section class="card customer-business-summary-v346${remaining===0?' is-reward-ready-v2b':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
+      <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
         <div class="customer-business-summary-top-v347">
-          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(remaining===0?'READY':'NEXT REWARD')}</span></span>
+          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(readyV397?'READY':'NEXT REWARD')}</span></span>
           <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(`${customerPointTotalV103(cost)} ${unitWord}`)}</span></span>
         </div>
         <b class="customer-business-reward-name-v395">${esc(name)}</b>
-        <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
-        <p class="customer-business-summary-line-v362">${esc(remaining===0
-          ?'Ready to redeem on your next visit'
-          :`${customerPointTotalV103(remaining)} ${unitWord} to go`)}</p>
+        ${readyV397?'':`<div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
+        <p class="customer-business-summary-line-v362">${esc(`${customerPointTotalV103(remaining)} ${unitWord} to go`)}</p>`}
+        ${readyV397?`<div class="customer-business-summary-actions-v349">
+          ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show QR
+               to redeem"). It carries the SAME data-customer-redeem action_key contract the
+               reward list's own "Show QR at counter" button carries, and loadRewards wires both
+               with one handler — so this opens the existing intent + QR path and does not invent
+               a second way to redeem. */''}
+          <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
+          ${bookAction}
+        </div>`:''}
       </section>
     </div>`;
   }).filter(Boolean);
@@ -4794,18 +4825,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         const branch=data?.branch||{};
         if(!branch.address&&!branch.phone)return;
         const compactHeaderContactV366=contactHostV326.classList.contains('customer-business-actions-v346');
-        const shortAddressLabelV366=(address)=>{
-          const first=String(address||'').replace(/\s+/g,' ').trim().split(',')[0]?.trim()||'';
-          const short=first.replace(/\b(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln)\.?$/i,'').trim();
-          return short||first||'Address';
-        };
+        /* nestly_v397 (owner photo C: the chip's address struck through, "Locations" written over
+           it). In the compact header the address was clipped to "313 Orcha…" — a truncated string
+           that names nothing and, since v386, is printed IN FULL on its own line directly below.
+           The chip opens the company-details sheet, which lists every branch, so the button now
+           says what it opens. The full address stays as its title/aria for anyone hovering or on
+           a screen reader; the wide (non-compact) header still prints the address itself. */
         const rawAddressLabelV366=branch.address
-          ?(compactHeaderContactV366?shortAddressLabelV366(branch.address):String(branch.address))
-          :'Address';
-        const addressTitleV366=branch.address?String(branch.address):'Address';
+          ?(compactHeaderContactV366?'Locations':String(branch.address))
+          :'Locations';
+        const addressTitleV366=branch.address?String(branch.address):'Locations';
         const callTitleV366=branch.phone?`Call ${branch.phone}`:'Call';
         const openSheet=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
-        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366" data-company-detail aria-label="${esc(addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:20})}<span>${esc(rawAddressLabelV366)}</span></button>${
+        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366" data-company-detail aria-label="${esc(compactHeaderContactV366?`Locations — ${addressTitleV366}`:addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:20})}<span>${esc(rawAddressLabelV366)}</span></button>${
           branch.phone
             ?`<a class="customer-programme-contact-item-v337 customer-business-call-icon-v366" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}" aria-label="${esc(callTitleV366)}" title="${esc(callTitleV366)}">${CUI.icon('phone',{size:20})}${compactHeaderContactV366?'':`<span>Call</span>`}</a>`
             :`<button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:20})}${compactHeaderContactV366?'':`<span>Call</span>`}</button>`
@@ -5168,11 +5200,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     /* nestly_v395: the hero swipe is filled from THIS list — the one the customer can actually
        redeem against — so the card at the top of the profile and the list below it can never
        disagree about what the ladder holds. */
+    const heroRootV397=$('walletBody')||document;
+    /* nestly_v397: the ONE number both the hero pill and the Points & gifts tile now print, taken
+       from the same server-backed check the reward list uses. */
+    const readyCountV397=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled)).length;
+    customerRewardReadyCountApplyV397(readyCountV397,heroRootV397);
     customerHeroRewardPagesV395(rewards,{
       balance:actionableCard?.loyalty?.balance,
       unit:actionableCard?.loyalty?.unit,
-      currentRewardName:actionableCard?.next_eligible_reward?.name
-    },$('walletBody')||document);
+      currentRewardName:actionableCard?.next_eligible_reward?.name,
+      redemptionEnabled,
+      /* The same Book control page 1 carries, so a swiped reward offers the same next step. */
+      bookAction:heroRootV397.querySelector('[data-repeat-booking]')?.outerHTML||''
+    },heroRootV397);
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards',ct('No rewards are available right now.'),businessSlug,'rewards',loadRewards,isWalletCurrent);
     const availability={
       available_at_counter:'Available at counter',
@@ -5293,9 +5333,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       if(lineV339){claimValidityNodeV339.textContent=lineV339;claimValidityNodeV339.hidden=false}
     }
     let redemptionAttempt=null;
-    host.querySelectorAll('[data-customer-redeem]').forEach(button=>button.onclick=async()=>{
+    /* nestly_v397: the hero swipe's "Redeem now" carries the same data-customer-redeem contract,
+       so it is wired HERE rather than growing a second redemption path. It lives outside #walletRewards,
+       hence the second query. Each button restores its OWN label afterwards — the hero says
+       "Redeem now", the list says "Show QR at counter", and the shared handler must not
+       overwrite one with the other. */
+    [...host.querySelectorAll('[data-customer-redeem]'),
+     ...(heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-customer-redeem]')||[])
+    ].forEach(button=>button.onclick=async()=>{
       const reward=rewards.find(item=>item.action_key===button.dataset.customerRedeem);
       if(!reward)return;
+      const restoreLabelV397=button.querySelector('span')?.textContent||'';
       if(!redemptionAttempt||redemptionAttempt.actionKey!==reward.action_key){
         redemptionAttempt={actionKey:reward.action_key,key:crypto.randomUUID()};
       }
@@ -5305,7 +5353,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           businessId,reward,idempotencyKey:redemptionAttempt.key
         }));
       if(!isWalletSectionCurrent(host)||!button.isConnected)return;
-      button.disabled=false;button.querySelector('span').textContent='Show QR at counter';
+      button.disabled=false;button.querySelector('span').textContent=restoreLabelV397;
       if(intentError){
         toast(intentError.code==='PGRST202'||intentError.code==='42883'
           ?'Something’s not working right now. Please try again shortly.'
@@ -5633,12 +5681,20 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        the per-business reminder preferences, and (on the Messages page) the device-notification
        switch, which is moved in below. Collapsed by default — photo 8 shows a list, not a
        control panel. */
-    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="${settingsOpenV395}" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386"${settingsOpenV395?'':' hidden'}>
+    /* nestly_v397 (owner photo A: All and Unread ringed a second time, with a line drawn from them
+       to the gear). v386 filed them as SETTINGS, but they are not settings — they are how you read
+       this page, the only two states the list has, and burying them behind a gear meant the
+       customer had to discover a menu to find out the list could be filtered at all. They sit in
+       the section head now, where the list they govern can be seen changing. The gear keeps what
+       genuinely is configuration: the per-programme reminder preferences and the device-notification
+       switch. v395's open-state fix stays for exactly that panel. */
+    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386">
         <div class="customer-inbox-filter-row-v386" role="group" aria-label="Show">
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
         </div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="${settingsOpenV395}" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
+      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386"${settingsOpenV395?'':' hidden'}>
         <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
         <div id="customerInboxDeviceSlotV386"></div>
       </div>

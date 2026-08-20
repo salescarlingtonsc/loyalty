@@ -152,7 +152,14 @@ test('business detail address and call actions share the merchant header row',()
   assert.match(indexHtml,/\.customer-business-actions-v346 \.customer-business-call-icon-v366 span\{display:none!important\}/);
   assert.match(indexHtml,/\.customer-business-profile-v346 \.customer-business-summary-v346\{margin-top:2px!important\}/);
   assert.match(app,/const compactHeaderContactV366=contactHostV326\.classList\.contains\('customer-business-actions-v346'\)/);
-  assert.match(app,/const shortAddressLabelV366=\(address\)=>/);
+  /* nestly_v397 (owner photo C: the chip's address struck through, "Locations" written over it).
+     The compact chip used to print a truncated address — "313 Orcha…" — which names nothing, and
+     since v386 the full address is printed on its own line directly below it. The chip opens the
+     company-details sheet, which lists every branch, so it says what it opens. The wide header
+     still prints the address itself, and the full address stays as the chip's title. */
+  assert.match(app,/compactHeaderContactV366\?'Locations':String\(branch\.address\)/);
+  assert.doesNotMatch(app,/shortAddressLabelV366/,'the truncating helper is gone with it');
+  assert.match(app,/title="\$\{esc\(addressTitleV366\)\}"/,'the real address survives as the title');
   assert.match(app,/compactHeaderContactV366\?'':`<span>Call<\/span>`/);
 });
 

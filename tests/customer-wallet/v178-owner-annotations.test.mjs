@@ -155,7 +155,13 @@ test('offer details open a company sheet with contact, current offers and a per-
 test('the header notification bell is gated on customer_in_app_inbox and links to the messages history',()=>{
   const shell=section('function renderCustomerShell','function focusCustomerRoute');
   assert.match(shell,/inboxAvailable=messagesAvailable===null\?customerInboxEnabledV178===true:messagesAvailable===true/);
-  assert.match(shell,/inboxAvailable\?`<a class="customer-inbox-bell" href="#\/customer\/messages"/);
+  /* nestly_v397 (owner photo A: an arrow up at the bell, "default page got this"). The bell is
+     the door TO Messages — on Messages itself it navigates nowhere and counts what is already on
+     screen. Still gated on the same feature flag; the gate simply also excludes its own page. */
+  assert.match(shell,/const inboxBellVisibleV397=inboxAvailable&&active!=='messages';/);
+  assert.match(shell,/inboxBellVisibleV397\?`<a class="customer-inbox-bell" href="#\/customer\/messages"/);
+  assert.match(shell,/id="customerInboxBellSlot"\$\{compactBusinessHeadV339\|\|!inboxBellVisibleV397\?' hidden':''\}/,
+    'and the empty slot is hidden with it, so it cannot hold layout open');
   assert.match(app,/customerInboxEnabledV178=features\?\.customer_in_app_inbox===true/);
   // Off by default, so the bell is absent until the platform flag is enabled.
   assert.match(app,/let customerInboxEnabledV178=false/);

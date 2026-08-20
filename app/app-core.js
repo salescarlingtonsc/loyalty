@@ -2766,10 +2766,15 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
      Every other customer screen (compactBusinessHeadV339 false) keeps the bar chevron unchanged,
      including its #walletBack id and its nav() handler below. */
   const shellBackHrefV340=compactBusinessHeadV339?'':backHref;
+  /* nestly_v397 (owner photo A: an arrow drawn up at the bell, "default page got this"). The bell
+     is the entry point TO Messages — its href is #/customer/messages and its badge counts unread.
+     On the Messages screen itself that is a control that navigates nowhere and a count of what is
+     already on screen. Every other customer surface keeps it exactly as it was. */
+  const inboxBellVisibleV397=inboxAvailable&&active!=='messages';
   root.innerHTML=`<div class="wallet-shell customer-shell customer-surface"><div class="wallet-inner"><header class="wallet-head${compactBusinessHeadV339?' wallet-head-compact-v339':''}">
     ${shellBackHrefV340?`<button class="btn ghost sm" id="walletBack" aria-label="${esc(backLabel)}" style="min-width:44px">${CUI.icon('back',{size:20})}</button>`:''}
     ${compactBusinessHeadV339?'':`<a class="logo" href="#/wallet" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>`}
-    <span class="spacer"></span><span id="customerInboxBellSlot"${compactBusinessHeadV339?' hidden':''}>${compactBusinessHeadV339?'':(inboxAvailable?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:20})}</a>`:'')}</span>
+    <span class="spacer"></span><span id="customerInboxBellSlot"${compactBusinessHeadV339||!inboxBellVisibleV397?' hidden':''}>${compactBusinessHeadV339?'':(inboxBellVisibleV397?`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${esc(ct('notifications'))}" title="${esc(ct('notifications'))}">${CUI.icon('bell',{size:20})}</a>`:'')}</span>
     ${customerWorkspaceSwitchHtml(staffWorkspaces)}
     <!-- v296 (owner, annotated: "remove this — here got profile already"). The avatar menu was a
          second door to a place the navigation already owns: Profile has been a first-class tab
@@ -3955,7 +3960,7 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const primary=unit==='stamps'
     ?`${customerPointTotalV103(balance)} stamps`
     :`${customerPointTotalV103(balance)} ${unitLabel}`;
-  const subline=rewardReady?'1 reward ready'
+  const subline=rewardReady?customerRewardReadyLineV397(1)
     :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
     :membership.active===true?'Member'
     :'No reward yet';
@@ -3969,7 +3974,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     :subline;
   const progressLine=remaining>0
     ?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to next reward`
-    :rewardReady?'Ready to redeem on your next visit'
+    /* nestly_v397 (owner photo C struck this sentence out): with the pill above already reading
+       "N rewards ready" and a Claim reward button directly below it, this line was a third way of
+       saying the same thing. A reward still being earned keeps its own distance line above. */
+    :rewardReady?''
       :cost>0?`${customerPointTotalV103(cost)} ${unit==='stamps'?'stamps':unitLabel} reward threshold`
         :'';
   const bookAction=bookingEnabled&&business?.slug
@@ -4054,7 +4062,7 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
         <section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
           <div class="customer-business-summary-top-v347">
             <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
-            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span${rewardReady?' data-reward-ready-count-v397':''}>${esc(subline)}</span></span>
           </div>
           ${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
@@ -4069,6 +4077,20 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     <div class="customer-business-hero-dots-v395" data-hero-dots-v395 role="tablist" aria-label="Rewards" hidden></div>
   </div>`;
 }
+/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
+   catalogue row the server sent — name and cost only — and the distance is the customer's own
+   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
+   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
+   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
+/* nestly_v397 (owner photo C: "now available 2 / why show 1", written against BOTH the hero pill
+   and the Points & gifts tile). Every one of these labels printed the literal string
+   "1 reward ready", because at paint time the only reward the client holds is the server's
+   next_eligible_reward — ONE object. The real count lives in the reward catalogue, which
+   loadRewards fetches moments later, so the honest number can only be filled in then. This is the
+   same shape as the hero swipe pages: paint what is known, correct it from the catalogue, and
+   never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
+   actually honour — not the number the customer could afford. */
+const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
 function customerReferralSlotMarkupV360(){
   return '<div id="walletReferralSlot" hidden></div>';
 }
@@ -4093,8 +4115,8 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasReferral=visibleEntry('referral');
   const hasActivity=capabilities.appointments===true||capabilities.activity===true;
   const modules=[];
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:reward?.available_now===true,fallback:'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:reward?.available_now===true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
@@ -4104,7 +4126,7 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   return `<section class="customer-business-modules-v347" aria-label="Business shortcuts">
     ${modules.map(item=>`<a class="customer-business-module-v347" href="${esc(item.href)}" data-business-shortcut-v347="${esc(item.action)}">
       <span class="customer-business-module-icon-v347" aria-hidden="true">${CUI.icon(item.icon,{size:20})}</span>
-      <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small>${esc(item.body)}</small></span>
+      <span class="customer-business-module-copy-v347"><b>${esc(item.title)}</b><small${item.readyCount?` data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(item.fallback||'')}"`:''}>${esc(item.body)}</small></span>
       <span class="customer-business-module-chevron-v347" aria-hidden="true">›</span>
     </a>`).join('')}
   </section>`;

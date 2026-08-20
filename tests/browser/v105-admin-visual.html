@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="e44c47aba7ede5bb6bcdaa03103a4347ce723eddb41a7d762e83e32606179d9f">
+<meta name="v105-production-component-sha256" content="aee1d34d2f7627902c3396d1ecdec0733e3fb2f9ea96d4b31dd595dfc5847bfd">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2750,6 +2750,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-business-hero-dots-v395{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 2px}
 .customer-business-hero-dot-v395{width:6px;height:6px;border-radius:50%;background:var(--peekaa-border,#E4DED7);transition:background .18s ease,width .18s ease}
 .customer-business-hero-dot-v395.is-active{width:18px;border-radius:999px;background:var(--peekaa-red,#C24135)}
+/* nestly_v397 (owner photo B, "put here" with the pill redrawn at the card's top-left). The New
+   flag sits on the artwork now instead of taking a line of the copy. It is the same .customer-offer-new
+   pill — same tint, radius and type — only its position changed; the card is already
+   position:relative, and overflow:hidden keeps it inside the rounded corner. */
+.customer-offer-new-corner-v397{position:absolute;z-index:3;top:10px;left:10px;margin:0;pointer-events:none}
 /* A reward NAME is prose, not a figure. It deliberately does NOT reuse .customer-business-balance-v347:
    that face is 56px/white-space:nowrap and every one of its declarations is !important, so
    "Complimentary 60-minute aromatherapy massage with hot stones" ran 1791px wide in a 298px box and
@@ -4142,7 +4147,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · e44c47aba7ed</span>
+<span class="v105-provenance">v105 production-component harness · aee1d34d2f76</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -4267,7 +4272,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'e44c47aba7ede5bb6bcdaa03103a4347ce723eddb41a7d762e83e32606179d9f',
+  sourceHash:'aee1d34d2f7627902c3396d1ecdec0733e3fb2f9ea96d4b31dd595dfc5847bfd',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
