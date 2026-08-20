@@ -5685,7 +5685,7 @@ async function renderCustomerProgrammes(){
     Array.isArray(data)?data:[],selectorMediaResult.error?null:selectorMediaResult.data
   );
   if(!cards.length){renderCustomerFirstProgrammeQuest();return}
-  $('walletBody').innerHTML=`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
+  $('walletBody').innerHTML=`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395(cards)})}
     ${customerProgrammeGridMarkupV96(cards)}`;
   $('customerHomeScan').onclick=openCustomerJoinScanner;
   wireCustomerProgrammeSearchV195($('walletBody'));
@@ -7132,9 +7132,15 @@ function customerHomeOfferMarkupV167(item,seen){
          monogram span, because the block now holds real text a screen reader must still reach;
          the monogram itself is still decoration. The single-mark rule from wave 2B is untouched:
          the logo circle below still yields when the fallback monogram is the card's mark. */''}
+    ${/* nestly_v395 (owner photo 2, the countdown ringed with an arrow drawn down to under the
+         title: "put here"). The chip used to be painted INSIDE the media block, absolutely
+         positioned over the artwork's top-right corner — which is why it was the first thing the
+         eye hit and why it sat on top of the very picture the owner says is too small. It is a
+         line of the copy again, after the title, so the card reads picture → who → what → when.
+         Same node, same class, same red-on-soft colours; only its place in the document moved. */''}
     ${image
-      ?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy">${countdown?`<div class="customer-home-offer-countdown-slot-v5"><p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p></div>`:''}</div>`
-      :`<div class="customer-home-offer-media customer-home-offer-media--fallback"><span aria-hidden="true">${esc(businessInitial)}</span>${countdown?`<div class="customer-home-offer-countdown-slot-v5"><p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p></div>`:''}</div>`}
+      ?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`
+      :`<div class="customer-home-offer-media customer-home-offer-media--fallback"><span aria-hidden="true">${esc(businessInitial)}</span></div>`}
     <div class="customer-home-offer-copy"><div class="customer-home-offer-meta">${isNew?'<span class="pill customer-offer-new">New</span>':''}${endsSoon?'<span class="pill customer-offer-urgent">Ends soon</span>':''}</div><h3>${esc(item?.name||'Offer')}</h3>
     <p class="customer-home-offer-business">${image?(logo
       ?`<img class="customer-home-offer-logo" src="${esc(logo)}" alt="" loading="lazy" width="24" height="24">`
@@ -7142,7 +7148,9 @@ function customerHomeOfferMarkupV167(item,seen){
     ${/* V392 (owner, photo 7: a clock drawn onto the "Ends in 13 days" pill). The countdown was
          already red; the icon is what makes it read as a deadline at a glance rather than as one
          more line of small text. */''}
-    ${countdown?'':validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
+    ${countdown
+      ?`<p class="customer-home-offer-countdown">${CUI.icon('waitlist',{size:16})}<span>${esc(countdown)}</span></p>`
+      :validity?`<p class="muted small" style="margin-top:5px">${esc(validity)}</p>`:''}</div>
   </a>`;
 }
 /* v173: with many linked businesses each posting offers, a plain ends-soonest
@@ -8285,9 +8293,30 @@ function wireCustomerProgrammeTabsV194(host=document){
    older they are absent, the gate returns null, and customerProgrammeSummaryTabsV194 runs
    byte-identically to today. That same expression is the rollback path: revert the migration and
    the client falls back on its own, with no deploy. Presence alone is never treated as truth —
-   both the array shape and the contract version are checked. */
+   both the array shape and the contract version are checked.
+
+   nestly_v395 (owner photo 1: "add another tab to see point gift", and "Claim reward" marked
+   "Cannot click"). The version test was EQUALITY against 'v310', and the server has since moved
+   the marker twice — v384 (stamp conversion switch) and v391 (the 42703 fix), both of which build
+   the SAME per-programme object this reads: {id,kind,active,running_since,paused_since,
+   balance_scope,customer_visible}. So against today's production every customer fell through to
+   `null`: no Points & gifts tile, no Stamp card, no Tier benefits, no Refer a friend, the hero
+   dropped to its plain-number form, and "Claim reward" pointed at a tile that was no longer
+   rendered — which is exactly the screen the owner photographed.
+
+   Equality was the wrong shape of test for a marker the server bumps on every additive change: it
+   makes the CDN-window contract one-directional (old client + new server silently loses the whole
+   stack) when the comment above requires it to hold BOTH ways. The gate is now a MINIMUM: v310 is
+   the version that introduced these fields, so anything at or above it carries them. A server
+   older than v310, or one that sends no marker at all, still falls through to the v194 tabs
+   exactly as before, and reverting the migration is still a no-deploy rollback. */
+const PROGRAMME_STACK_MIN_CONTRACT_V395=310;
+const programmeStackContractOkV395=value=>{
+  const digits=/^v(\d+)$/.exec(String(value||'').trim());
+  return !!digits&&Number(digits[1])>=PROGRAMME_STACK_MIN_CONTRACT_V395;
+};
 const programmeStackV310=caps=>
-  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
+  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&programmeStackContractOkV395(caps?.programmes_contract)
     ?caps.programmes:null;
 /* Fixed, regardless of which are on. v333 (owner, 2026-08-15: "shift the tier up — to the top
    of the screen, instead of points & gift"): tier leads. It is the standing that names the
@@ -8692,6 +8721,58 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
    the claimable strip) — never a fabricated reward. The reward object this codebase carries
    here has only name/cost_units/remaining_units/available_now, so the banner does not print a
    description, image or validity window that is not actually in the payload. */
+/* v337: "Claim reward ›" does not invent a new claim path — it takes the customer to the same
+   rewards list the claimable strip already points at, where the matching reward's own "Show QR at
+   counter" button (wired in loadRewards) does the redeem.
+
+   v386 (owner photo 3: "why i click nothing happened"). v337 scrolled to #walletRewards, but
+   v347/v348 moved the rewards list INTO the Points & gifts shortcut page, which is hidden until
+   its tile is opened. scrollIntoView on a hidden element scrolls nowhere, so the button was inert
+   on the collapsed profile. It opens the same shortcut page the tile opens — reusing that one code
+   path rather than inventing a second claim route — and scrolls to the rewards list inside it once
+   it is on screen.
+
+   nestly_v395 (owner photo 1, the button ringed "Cannot click"). Two defects were left, and the
+   owner hit both at once:
+   (1) The lookup was querySelector — SINGULAR — while two different surfaces render the same
+       [data-claim-reward-scroll-v337] contract: the reward-ready banner inside the offers swipe
+       and the hero card's own "Claim reward". Whichever came second in the DOM was never wired at
+       all, so it was a button that genuinely did nothing on click.
+   (2) Even the wired one dead-ended when the rewards tile was absent — which, with the contract
+       gate above rejecting today's server, it always was. It fell through to scrolling
+       #walletRewards, a node that is hidden inside the shortcut page, so scrollIntoView moved
+       nothing and the click had no visible effect whatsoever.
+   Every matching button is now wired, and the fallback order ends somewhere real: the shortcut
+   tile if there is one, else the rewards list if it is actually on screen, else the rewards
+   SECTION (the pre-v347 layout, and the layout a firm with no points tile still renders). It
+   never silently does nothing — with no rewards surface at all it says so, rather than leaving
+   the customer tapping a button that looks broken. */
+function wireCustomerClaimRewardV395(root=document){
+  const scope=root||document;
+  const buttons=[...scope.querySelectorAll('[data-claim-reward-scroll-v337]')];
+  if(!buttons.length)return 0;
+  const smooth=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
+  const onScreen=node=>!!node&&!node.hidden&&!!node.getClientRects?.().length;
+  buttons.forEach(button=>{button.onclick=()=>{
+    const rewardsTile=document.querySelector('[data-business-shortcut-v347="points"],[data-business-shortcut-v347="rewards"]');
+    const rewardsList=$('walletRewards'),rewardsSection=$('customerBusinessRewardsDetailV347');
+    const scrollToRewards=()=>{
+      const target=[rewardsList,rewardsSection].find(onScreen);
+      if(!target)return false;
+      target.scrollIntoView({behavior:smooth(),block:'start'});
+      return true;
+    };
+    if(rewardsTile&&$('customerBusinessShortcutPageV348')?.hidden!==false){
+      rewardsTile.click();
+      requestAnimationFrame(()=>requestAnimationFrame(scrollToRewards));
+      return;
+    }
+    if(scrollToRewards())return;
+    /* Nothing to scroll to: say so instead of absorbing the tap. */
+    toast('Your rewards are still loading. Try again in a moment.');
+  }});
+  return buttons.length;
+}
 function customerClaimableRewardBannerMarkupV337({reward=null}={}){
   if(!reward||reward.available_now!==true)return '';
   const name=esc(String(reward.name||'').trim()||ct('rewardsTab'));
@@ -8847,19 +8928,89 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
      moment it means something — a reward the customer can claim right now — reusing the existing
      .is-reward-ready-v2b class rather than inventing a second name for it. */
-  return `<section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
-    <div class="customer-business-summary-top-v347">
-      <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
-      <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+  /* nestly_v395 (owner photo 1: an arrow to the card's right edge, "scrollable to see next
+     reward"). The hero stated ONE reward — whatever the server named next_eligible_reward — and
+     the ladder above it was invisible until the customer opened Points & gifts. It is a swipe
+     region now: page 1 is this card, unchanged; the pages after it are the REST of that firm's
+     reward catalogue, appended by customerHeroRewardPagesV395 once loadRewards has it. Nothing is
+     rendered speculatively — with one reward (or a catalogue that never arrives) there is exactly
+     one page, no dots, and the region is indistinguishable from the card it replaced. The track is
+     CSS scroll-snap and nothing else, the same mechanism .customer-reward-offer-track-v339 uses:
+     it advances only when the customer swipes, with no timer and no script driving it. */
+  return `<div class="customer-business-hero-swipe-v395" data-hero-swipe-v395>
+    <div class="customer-business-hero-track-v395" data-hero-track-v395>
+      <div class="customer-business-hero-page-v395">
+        <section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
+          <div class="customer-business-summary-top-v347">
+            <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
+            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+          </div>
+          ${figureV386}
+          ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+          ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
+            ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
+            ${bookAction}
+          </div>`:''}
+        </section>
+      </div>
     </div>
-    ${figureV386}
-    ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
-    ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
-    ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
-      ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
-      ${bookAction}
-    </div>`:''}
-  </section>`;
+    <div class="customer-business-hero-dots-v395" data-hero-dots-v395 role="tablist" aria-label="Rewards" hidden></div>
+  </div>`;
+}
+/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
+   catalogue row the server sent — name and cost only — and the distance is the customer's own
+   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
+   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
+   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
+function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName=''}={},root=document){
+  const swipe=root.querySelector('[data-hero-swipe-v395]');
+  const track=swipe?.querySelector('[data-hero-track-v395]');
+  const dots=swipe?.querySelector('[data-hero-dots-v395]');
+  if(!swipe||!track||!dots)return 0;
+  track.querySelectorAll('[data-hero-extra-v395]').forEach(node=>node.remove());
+  const held=Math.max(0,Number(balance)||0);
+  const seen=new Set([String(currentRewardName||'').trim().toLowerCase()].filter(Boolean));
+  const unitWord=ct(unit==='stamps'?'stamps':unit||'points');
+  const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{
+    const name=String(reward?.customer_name||reward?.name||'').trim();
+    const cost=Number(reward?.cost_points??reward?.cost_units);
+    if(!name||!Number.isFinite(cost)||cost<=0)return '';
+    const key=name.toLowerCase();
+    if(seen.has(key))return '';
+    seen.add(key);
+    const remaining=Math.max(0,cost-held);
+    const progress=Math.max(0,Math.min(100,Math.round(held/cost*100)));
+    return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
+      <section class="card customer-business-summary-v346${remaining===0?' is-reward-ready-v2b':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
+        <div class="customer-business-summary-top-v347">
+          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(remaining===0?'READY':'NEXT REWARD')}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(`${customerPointTotalV103(cost)} ${unitWord}`)}</span></span>
+        </div>
+        <b class="customer-business-reward-name-v395">${esc(name)}</b>
+        <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
+        <p class="customer-business-summary-line-v362">${esc(remaining===0
+          ?'Ready to redeem on your next visit'
+          :`${customerPointTotalV103(remaining)} ${unitWord} to go`)}</p>
+      </section>
+    </div>`;
+  }).filter(Boolean);
+  if(pages.length)track.insertAdjacentHTML('beforeend',pages.join(''));
+  const total=track.querySelectorAll('.customer-business-hero-page-v395').length;
+  dots.hidden=total<2;
+  dots.innerHTML=total<2?'':Array.from({length:total},(_,index)=>
+    `<span class="customer-business-hero-dot-v395${index===0?' is-active':''}" aria-hidden="true"></span>`).join('');
+  swipe.dataset.heroPagesV395=String(total);
+  if(total>1&&!track.dataset.heroDotsWiredV395){
+    track.dataset.heroDotsWiredV395='1';
+    track.tabIndex=0;
+    track.addEventListener('scroll',()=>{
+      const width=track.clientWidth||1;
+      const index=Math.round(track.scrollLeft/width);
+      [...dots.children].forEach((dot,position)=>dot.classList.toggle('is-active',position===index));
+    },{passive:true});
+  }
+  return total;
 }
 function customerBusinessSecondaryMarkupV346(presentation={}){
   const products=Array.isArray(presentation.products)?presentation.products:[],
@@ -9397,7 +9548,9 @@ function customerProgrammeTileMarkupV96(card){
       kicker repeated the row above it on every card. And "1 reward ready" is ringed with "make
       this more prominent": it is the one line that tells the customer to walk in, and it was the
       quietest thing on the card. It leads now, and only when something really is ready — the
-      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${CUI.icon('redeem',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+      other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${/* nestly_v395 (owner photo 4: the coin ringed in red, "remove this, change to star"). CUI's
+        'redeem' glyph is a dollar sign, so a reward the customer earned with points read as a
+        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${CUI.icon('star',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -9413,13 +9566,26 @@ function customerBusinessCategoryV122(industry=''){
   if(/retail|shop|fashion|boutique|grocer/.test(value))return 'Shopping';
   return 'Other';
 }
+/* nestly_v395: the category order lives in one place now, because the filter chips above the list
+   and the groups in the list must agree about both the set and the sequence. */
+const CUSTOMER_REWARD_CATEGORY_ORDER_V395=Object.freeze(['Beauty','Food & drink','Fitness','Shopping','Other']);
+/* The three chips the surface has always shown stay put whether or not this customer has one yet —
+   the owner's screen keeps its shape, and a chip that matches nothing says so rather than
+   disappearing. Anything else the customer actually holds (Shopping, Other) is appended, so no
+   tile in the list below is unreachable by chip. */
+const CUSTOMER_REWARD_CHIPS_FIXED_V395=Object.freeze(['Beauty','Food & drink','Fitness']);
+const customerRewardCategoriesPresentV395=(cards=[])=>{
+  const present=new Set((Array.isArray(cards)?cards:[]).map(card=>customerBusinessCategoryV122(card?.business?.industry)));
+  return CUSTOMER_REWARD_CATEGORY_ORDER_V395.filter(category=>
+    CUSTOMER_REWARD_CHIPS_FIXED_V395.includes(category)||present.has(category));
+};
 function customerProgrammeGridMarkupV96(cards=[]){
-  const order=['Beauty','Food & drink','Fitness','Shopping','Other'];
+  const order=CUSTOMER_REWARD_CATEGORY_ORDER_V395;
   const grouped=new Map(order.map(category=>[category,[]]));
   cards.forEach(card=>grouped.get(customerBusinessCategoryV122(card?.business?.industry)).push(card));
   return `<div class="customer-programme-list customer-programme-grid-v96">${order
     .filter(category=>grouped.get(category).length)
-    .map(category=>`<section class="customer-programme-category" aria-labelledby="customerCategory-${category.replaceAll(' ','-').toLowerCase()}">
+    .map(category=>`<section class="customer-programme-category" data-programme-category-v395="${esc(category)}" aria-labelledby="customerCategory-${category.replaceAll(' ','-').toLowerCase()}">
       <div class="customer-programme-category-head"><h2 id="customerCategory-${category.replaceAll(' ','-').toLowerCase()}">${esc(category)}</h2><span class="pill">${grouped.get(category).length}</span></div>
       <div class="customer-programme-category-grid">${grouped.get(category).map(customerProgrammeTileMarkupV96).join('')}</div>
     </section>`).join('')}</div>`;
@@ -9558,27 +9724,50 @@ function customerHomeBookingStripV344(cards=[]){
    already visible — the tab badge carries it and every category prints its own — so the line only
    repeated. The search filters the tiles already on the page: no request, no spinner, and a
    customer with twenty reward accounts can reach one by typing its name. */
-function customerMyRewardsHeadingV156(count=0,{scanId=''}={}){
+function customerMyRewardsHeadingV156(count=0,{scanId='',categories=[]}={}){
   return `<div class="customer-my-rewards-title"><div><h1>${esc(ct('yourProgrammes'))}</h1></div>
     <div class="customer-my-rewards-search"><label class="sr-only" for="customerProgrammeSearch">Search company name</label>
       ${CUI.icon('search',{size:16})}<input id="customerProgrammeSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerProgrammeSearchStatus"></div>
     ${scanId?`<button class="btn sm" id="${esc(scanId)}" type="button">${CUI.icon('scan',{size:20})}<span>${esc(ct('addProgramme'))}</span></button>`:''}</div>
-    <div class="customer-rewards-filter-chips-v344" aria-label="Reward categories"><span class="is-active">All</span><span>Beauty</span><span>Food & drink</span><span>Fitness</span></div>
+    ${/* nestly_v395 (owner photo 4: the Beauty chip ringed, "why i cannot click this"). These
+         were four <span>s with no handler and no state beyond a hardcoded .is-active on "All" —
+         decoration shaped exactly like a control, which is why the owner kept tapping it. They are
+         real buttons now, wired inside wireCustomerProgrammeSearchV195 (one pass, so the search and
+         the category cannot fight over tile.hidden) against the SAME category
+         groups customerProgrammeGridMarkupV96 already renders (customerBusinessCategoryV122 is the
+         single classifier for both, so a chip can never name a category the list below spells
+         differently). The chip list is not hardcoded any more either: it is All plus the
+         categories this customer actually has, so a chip never filters to a guaranteed-empty
+         page. */''}
+    <div class="customer-rewards-filter-chips-v344" role="group" aria-label="Reward categories">${
+      ['All',...CUSTOMER_REWARD_CATEGORY_ORDER_V395.filter(category=>categories.includes(category))]
+        .map((category,index)=>`<button type="button" class="customer-rewards-filter-chip-v395${index===0?' is-active':''}" data-rewards-category-v395="${esc(category)}" aria-pressed="${index===0}">${esc(category)}</button>`).join('')
+    }</div>
     <p class="muted small" id="customerProgrammeSearchStatus" role="status" hidden></p>`;
 }
 /* Filtering is done on the rendered tiles rather than by re-rendering, so a keystroke never
-   re-reads the wallet and an empty search restores every tile exactly as the server sent it. */
+   re-reads the wallet and an empty search restores every tile exactly as the server sent it.
+
+   nestly_v395: the category chips filter the same tiles, so they run through this ONE pass rather
+   than owning a second one. Two independent passes would fight — each writes tile.hidden, so
+   whichever ran last would undo the other, and a customer who typed a name and then tapped a
+   category would get the category alone. A tile is visible iff it matches BOTH the query and the
+   selected category; the status line keeps reporting whatever is actually filtering. */
 function wireCustomerProgrammeSearchV195(host=document){
   const input=host.querySelector('#customerProgrammeSearch');
-  if(!input)return;
+  const chips=[...host.querySelectorAll('[data-rewards-category-v395]')];
+  if(!input&&!chips.length)return;
   const status=host.querySelector('#customerProgrammeSearchStatus');
   const tiles=[...host.querySelectorAll('[data-programme-name]')];
   const groups=[...host.querySelectorAll('.customer-programme-category')];
+  let category='All';
+  const inCategory=tile=>category==='All'
+    ||String(tile.closest('[data-programme-category-v395]')?.dataset.programmeCategoryV395||'')===category;
   const apply=()=>{
-    const query=String(input.value||'').trim().toLowerCase();
+    const query=String(input?.value||'').trim().toLowerCase();
     let shown=0;
     tiles.forEach(tile=>{
-      const match=!query||String(tile.dataset.programmeName||'').includes(query);
+      const match=(!query||String(tile.dataset.programmeName||'').includes(query))&&inCategory(tile);
       tile.hidden=!match;
       if(match)shown++;
     });
@@ -9586,11 +9775,24 @@ function wireCustomerProgrammeSearchV195(host=document){
       const visible=[...group.querySelectorAll('[data-programme-name]')].some(tile=>!tile.hidden);
       group.hidden=!visible;
     });
+    chips.forEach(chip=>{
+      const active=String(chip.dataset.rewardsCategoryV395||'')===category;
+      chip.classList.toggle('is-active',active);
+      chip.setAttribute('aria-pressed',String(active));
+    });
     if(!status)return;
-    status.hidden=!query;
-    status.textContent=query?(shown?`${shown} of ${tiles.length} shown`:`No reward account matches “${query}”.`):'';
+    const filtering=!!query||category!=='All';
+    status.hidden=!filtering;
+    status.textContent=!filtering?''
+      :shown?`${shown} of ${tiles.length} shown`
+      :query?`No reward account matches “${query}”.`
+      :`No reward accounts in ${category} yet.`;
   };
-  input.addEventListener('input',apply);
+  input?.addEventListener('input',apply);
+  chips.forEach(chip=>chip.addEventListener('click',()=>{
+    category=String(chip.dataset.rewardsCategoryV395||'All');
+    apply();
+  }));
   apply();
 }
 /* v178 (owner annotation, crossed out twice): Home no longer carries a "Next best action"
@@ -9654,7 +9856,7 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
     ${customerHomeBusinessRailV343(cards)}
     ${customerHomeBookingStripV344(cards)}
     ${homeGuidance}${homeEmpty?customerHomeEmptyActionV286():''}`
-    :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan'})}
+    :`${customerMyRewardsHeadingV156(cards.length,{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395(cards)})}
     ${customerProgrammeGridMarkupV96(cards)}
     ${payload?.truncated?`<div class="card customer-home-summary-note" role="status"><p class="muted small">Showing the 100 highest-priority linked reward accounts.</p></div>`:''}`}`))return;
   if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
@@ -10226,30 +10428,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         }
       }).catch(()=>{});
   }
-  /* v337: "Claim reward ›" on the reward-ready banner does not invent a new claim path — it
-     scrolls to the same #walletRewards list the claimable strip already points at, where the
-     matching reward's own "Show QR at counter" button (wired in loadRewards) does the redeem. */
-  const claimBannerCtaV337=$('walletBody').querySelector('[data-claim-reward-scroll-v337]');
-  if(claimBannerCtaV337)claimBannerCtaV337.onclick=()=>{
-    /* v386 (owner photo 3: "why i click nothing happened"). v337 scrolled to #walletRewards, but
-       v347/v348 moved the rewards list INTO the Points & gifts shortcut page, which is hidden
-       until its tile is opened. scrollIntoView on a hidden element scrolls nowhere, so the button
-       was inert for every customer on the collapsed profile. It now opens the same shortcut page
-       the tile opens — reusing that one code path rather than inventing a second claim route —
-       and scrolls to the rewards list inside it once it is on screen. The pre-v347 layout, where
-       the list is already in the page, keeps the plain scroll. */
-    const rewardsTile=document.querySelector('[data-business-shortcut-v347="points"],[data-business-shortcut-v347="rewards"]');
-    const scrollToRewards=()=>{
-      const rewardsHostEl=$('walletRewards');
-      (rewardsHostEl||claimBannerCtaV337).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-    };
-    if(rewardsTile&&$('customerBusinessShortcutPageV348')?.hidden!==false){
-      rewardsTile.click();
-      requestAnimationFrame(()=>requestAnimationFrame(scrollToRewards));
-      return;
-    }
-    scrollToRewards();
-  };
+  wireCustomerClaimRewardV395($('walletBody'));
   /* v327 (owner: "clicked tier > auto scroll to tier below"): the header's tier badge jumps to
      the Tier card. Covers both the v310 stack (its own [data-programme-card="tiers"] section)
      and the v194 tabs fallback (switches to the tier tab first, since scrolling to a hidden
@@ -10596,6 +10775,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        offers a retry; this one now does too, and no card claims an availability we could not
        check. */
     const redemptionUncheckedV286=!!actionsResult.error;
+    /* nestly_v395: the hero swipe is filled from THIS list — the one the customer can actually
+       redeem against — so the card at the top of the profile and the list below it can never
+       disagree about what the ladder holds. */
+    customerHeroRewardPagesV395(rewards,{
+      balance:actionableCard?.loyalty?.balance,
+      unit:actionableCard?.loyalty?.unit,
+      currentRewardName:actionableCard?.next_eligible_reward?.name
+    },$('walletBody')||document);
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards',ct('No rewards are available right now.'),businessSlug,'rewards',loadRewards,isWalletCurrent);
     const availability={
       available_at_counter:'Available at counter',
@@ -10986,6 +11173,15 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   const loyaltyUnit=actionableCard?.loyalty?.unit;
   const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
   let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
+  /* nestly_v395 (owner photo 3: All and Unread both ringed on the Messages screen). The filter
+     itself was never broken — it re-requested the list and the rows did change. What was broken is
+     that render() rebuilds host.innerHTML from a template with the settings panel `hidden`, so the
+     panel COLLAPSED on the very tap that used it: the customer opened the gear, pressed Unread,
+     and the row of controls disappeared with no visible confirmation of anything. On an empty
+     inbox — which is the screen the owner photographed — literally nothing on the page changed,
+     so the two controls read as dead. The panel's open state lives out here now and the template
+     reads it, so a filter tap leaves the panel open with its pressed state showing. */
+  let settingsOpenV395=false;
   const topicLabels={
     value_expiry:expiryReminderLabel,reward_ready:'Reward ready reminders',
     visit_progress:'Visit progress reminders',birthday_benefit:'Birthday benefit reminders',
@@ -11047,8 +11243,8 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        the per-business reminder preferences, and (on the Messages page) the device-notification
        switch, which is moved in below. Collapsed by default — photo 8 shows a list, not a
        control panel. */
-    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="false" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" hidden>
+    host.innerHTML=`<div class="wallet-section-head customer-inbox-head-v386"><span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="${settingsOpenV395}" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
+      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386"${settingsOpenV395?'':' hidden'}>
         <div class="customer-inbox-filter-row-v386" role="group" aria-label="Show">
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
@@ -11061,9 +11257,9 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     const settingsPanelV386=host.querySelector('#customerInboxSettingsV386'),settingsToggleV386=host.querySelector('#customerInboxSettingsToggleV386');
     if(settingsToggleV386&&settingsPanelV386)settingsToggleV386.onclick=()=>{
-      const open=settingsPanelV386.hidden;
-      settingsPanelV386.hidden=!open;
-      settingsToggleV386.setAttribute('aria-expanded',String(open));
+      settingsOpenV395=!!settingsPanelV386.hidden;
+      settingsPanelV386.hidden=!settingsOpenV395;
+      settingsToggleV386.setAttribute('aria-expanded',String(settingsOpenV395));
     };
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */

@@ -43,7 +43,7 @@ const harness=new Function('esc','CUI','walletDate',`
   ${section('function customerRewardProgressMarkupV167(','function customerTierHasProgressV103')}
   ${section('function customerTierRungIconV195(','function customerProgrammeSummaryTabsV194')}
   ${section('function customerProgrammeSummaryTabsV194','function wireCustomerProgrammeTabsV194')}
-  ${section('const programmeStackV310=','function customerMerchantExperienceMarkupV95')}
+  ${section('const PROGRAMME_STACK_MIN_CONTRACT_V395=','function customerMerchantExperienceMarkupV95')}
   return {programmeStackV310,customerProgrammeStackV310,programmeStackCardVisibleV310,
     customerStampTargetV310,customerProgrammeSummaryTabsV194,customerProgrammeTierCardV310,
     PROGRAMME_STACK_ORDER_V310,ct,
@@ -93,11 +93,28 @@ test('the gate needs BOTH the array and the contract version, and falls back oth
     'an array with no contract version is not a v310 payload');
   assert.equal(programmeStackV310({programmes:{},programmes_contract:'v310'}),null,
     'presence is never truthiness — the shape is checked too');
-  assert.equal(programmeStackV310({programmes:[],programmes_contract:'v311'}),null,
-    'a future contract the client has not been taught is not assumed compatible');
   assert.equal(programmeStackV310({programmes:[],programmes_contract:'v310'}),null,
     'an EMPTY programmes array is a server-invariant violation (v308: four rows always) — the '
     +'client keeps a floor under it and falls back to the tabs rather than a blank region');
+  assert.equal(programmeStackV310({programmes:spine({points:running()}),programmes_contract:'v309'}),null,
+    'a server OLDER than v310 does not carry these fields — the tabs are still the honest surface');
+  assert.equal(programmeStackV310({programmes:spine({points:running()}),programmes_contract:'nope'}),null,
+    'an unparseable marker is not a version');
+});
+
+/* nestly_v395. The regression this replaces: the gate tested programmes_contract for EQUALITY with
+   'v310', and the server moved the marker to v384 and then v391 while building the same
+   per-programme object. Every customer silently fell through to `null` — no Points & gifts tile,
+   no Stamp card, no Tier benefits, no Refer a friend, and a "Claim reward" button pointing at a
+   tile that was no longer rendered. Equality made the CDN-window contract one-directional; these
+   are the two directions it has to hold in. */
+test('the gate is a MINIMUM version, so a server that moved its marker still opens the stack',()=>{
+  const {programmeStackV310}=harness;
+  const rows=spine({points:running()});
+  for(const contract of ['v310','v384','v391','v420']){
+    assert.deepEqual(programmeStackV310({programmes:rows,programmes_contract:contract}),rows,
+      `${contract} builds the same {kind,active,customer_visible,paused_since} rows this reads`);
+  }
 });
 
 test('with the gate closed the wallet renders the v194 tabs byte-identically to today',()=>{

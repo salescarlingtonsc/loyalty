@@ -212,7 +212,7 @@ test('customer home and destinations reuse existing customer contracts with hone
   assert.doesNotMatch(home,/ct\('chooseProgramme'\)|ct\('programmesIntro'\)/);
   assert.match(home,/id="\$\{esc\(scanId\)\}"/);
   assert.match(home,/ct\('addProgramme'\)/);
-  assert.match(home,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
+  assert.match(home,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395\(cards\)\}\)/);
   assert.match(home,/if\(!cards\.length\)\{[\s\S]*customer-first-quest/,
     'an empty actionable wallet must retain the first-programme QR journey inline');
   assert.match(home,/customerHomeGuidanceV167\(\{pendingRedemption,actionableCards:cards,legacyCards,offers:offersState\.items\}\)/,

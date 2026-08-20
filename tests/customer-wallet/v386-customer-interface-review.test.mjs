@@ -27,7 +27,13 @@ const app=await readFile(new URL('../../app/app.js',import.meta.url),'utf8');
 const indexHtml=await readFile(new URL('../../app/index.html',import.meta.url),'utf8');
 
 test('photo 3: Claim reward opens the rewards shortcut page instead of scrolling to a hidden node',()=>{
-  const handler=app.slice(app.indexOf('const claimBannerCtaV337='),app.indexOf('const tierJumpV327='));
+  /* nestly_v395 moved this out of renderCustomerWallet into wireCustomerClaimRewardV395 so both
+     surfaces that render the [data-claim-reward-scroll-v337] contract get wired — querySelector
+     was SINGULAR, so whichever of the banner and the hero came second in the DOM was a button that
+     genuinely did nothing. Same route, same tile, same two-frame wait. */
+  const handler=app.slice(app.indexOf('function wireCustomerClaimRewardV395'),app.indexOf('function customerClaimableRewardBannerMarkupV337'));
+  assert.match(handler,/querySelectorAll\('\[data-claim-reward-scroll-v337\]'\)/,
+    'EVERY button carrying the contract is wired, not just the first one on the page');
   assert.match(handler,/data-business-shortcut-v347="points"\],\[data-business-shortcut-v347="rewards"/,
     'it reuses the tile the customer could have tapped, not a second claim path');
   assert.match(handler,/rewardsTile\.click\(\)/);
@@ -35,6 +41,11 @@ test('photo 3: Claim reward opens the rewards shortcut page instead of scrolling
     'only when the shortcut page is not already open');
   assert.match(handler,/requestAnimationFrame\(\(\)=>requestAnimationFrame\(scrollToRewards\)\)/,
     'the scroll waits for the page it just opened to be laid out');
+  assert.match(handler,/if\(scrollToRewards\(\)\)return;/);
+  assert.match(handler,/toast\('Your rewards are still loading\. Try again in a moment\.'\)/,
+    'with no rewards surface at all it says so rather than absorbing the tap');
+  assert.match(app,/wireCustomerClaimRewardV395\(\$\('walletBody'\)\);/,
+    'and renderCustomerWallet still calls it');
 });
 
 test('photos 5+10: a paused programme paints no card at all',()=>{
@@ -82,13 +93,22 @@ test('photo 1: the offer card names its business, and the ready card drops the b
   assert.match(indexHtml,/\.customer-home-offer-copy>\.muted\{display:none\}/,
     'direct children only — the nested business-name span must survive');
   /* Un-hiding it was not enough: in flow it landed under the absolutely-positioned
-     "Ends in N days" pill, which painted straight over it. It is hoisted to the first line of
-     the copy block — where the owner drew it, beside the avatar — and the title keeps an
-     explicit flex basis or its 2-line clamp collapses to one clipped line. */
-  assert.match(indexHtml,/\.customer-home-offer-business\{order:-2/);
+     "Ends in N days" pill, which painted straight over it.
+     nestly_v395 (owner photo 2, "move here" drawn to the right of the avatar): v386's order:-2
+     hoisted the name to the first line of the copy but left it IN FLOW, while the 46px avatar is
+     position:absolute at top:-30px — so the name began exactly where the avatar ended and read as
+     a caption UNDER it, not beside it. The row is pinned to the avatar's own box now and the
+     avatar rides inside it as a plain flex child, which is what puts the two on one line.
+     Measured after the change at 390/768/1024: logo and row share top and height, and
+     elementFromPoint at the name's centre returns the name, not the countdown. */
+  assert.match(indexHtml,/\.customer-home-offer-business\{position:absolute!important;top:-30px;left:10px;right:10px;z-index:2;margin:0;min-height:46px;height:46px;display:flex;align-items:center;gap:10px/);
+  assert.match(indexHtml,/\.customer-home-offer-logo\{position:static;top:auto;left:auto;flex:0 0 auto;width:46px;height:46px/,
+    'the avatar sits IN the row rather than being positioned against it');
+  assert.match(indexHtml,/\.customer-home-offer-copy\{position:relative;/,
+    'the copy block is the positioning context at every width, not only under the <=720px layer');
   assert.match(indexHtml,/\.customer-home-offer-copy h3\{order:0;flex:0 0 auto\}/);
-  assert.match(indexHtml,/\.customer-home-offer-copy\{min-height:auto;height:132px/,
-    'and the card gained the room for name + two title lines above the pill strip');
+  assert.match(indexHtml,/\.customer-home-offer-copy\{position:relative;min-height:auto;height:136px/,
+    'and the card gained the room for name + two title lines + the countdown line below them');
   assert.doesNotMatch(indexHtml,/\.customer-home-offer-copy \.muted:not\(\.customer-home-offer-business\)\{display:none\}/);
   const summary=app.slice(app.indexOf('function customerHomeSummaryV343'),app.indexOf('function customerHomeBusinessStatusV345'));
   assert.doesNotMatch(summary,/across \$\{esc\(customerPointTotalV103\(businessCount\)\)\}/);

@@ -76,20 +76,37 @@ test('My Rewards can be searched by company name', () => {
 
 test('the filter hides only what does not match, and restores everything when cleared', () => {
   const wire = section(appJs, 'function wireCustomerProgrammeSearchV195', 'function customerHomeFallbackActionV167');
+  /* nestly_v395: the category chips filter these same tiles, so they run through this ONE pass.
+     Two independent passes would fight — each writes tile.hidden — and a customer who typed a name
+     and then tapped a category would get the category alone. One tile per category, so the two
+     filters can be told apart. */
+  const beauty = { hidden: false, dataset: { programmeCategoryV395: 'Beauty' } };
+  const food = { hidden: false, dataset: { programmeCategoryV395: 'Food & drink' } };
   const tiles = [
-    { dataset: { programmeName: 'cubbly' }, hidden: false },
-    { dataset: { programmeName: 'kopi tiam tyeh' }, hidden: false }
+    { dataset: { programmeName: 'cubbly' }, hidden: false, closest: () => beauty },
+    { dataset: { programmeName: 'kopi tiam tyeh' }, hidden: false, closest: () => food }
   ];
+  beauty.querySelectorAll = () => [tiles[0]];
+  food.querySelectorAll = () => [tiles[1]];
+  const chip = (category) => ({
+    dataset: { rewardsCategoryV395: category }, listeners: [], attrs: {}, classes: new Set(),
+    addEventListener(_, fn) { this.listeners.push(fn); },
+    setAttribute(name, value) { this.attrs[name] = value; },
+    classList: { toggle() {} }
+  });
+  const chips = [chip('All'), chip('Beauty'), chip('Food & drink')];
   const status = { hidden: true, textContent: '' };
   const input = { value: '', listeners: [], addEventListener(_, fn) { this.listeners.push(fn); } };
-  const group = { hidden: false, querySelectorAll: () => tiles };
   const host = {
     querySelector: (sel) => sel === '#customerProgrammeSearch' ? input
       : sel === '#customerProgrammeSearchStatus' ? status : null,
-    querySelectorAll: (sel) => sel === '.customer-programme-category' ? [group] : tiles
+    querySelectorAll: (sel) => sel === '.customer-programme-category' ? [beauty, food]
+      : sel === '[data-rewards-category-v395]' ? chips : tiles
   };
   new Function('host', `${wire}; wireCustomerProgrammeSearchV195(host)`)(host);
   const type = (value) => { input.value = value; input.listeners.forEach((fn) => fn()); };
+  const tap = (category) => chips.find((c) => c.dataset.rewardsCategoryV395 === category)
+    .listeners.forEach((fn) => fn());
 
   type('kopi');
   assert.deepEqual(tiles.map((tile) => tile.hidden), [true, false]);
@@ -97,11 +114,37 @@ test('the filter hides only what does not match, and restores everything when cl
   type('zzz');
   assert.deepEqual(tiles.map((tile) => tile.hidden), [true, true]);
   assert.match(status.textContent, /No reward account matches/);
-  assert.equal(group.hidden, true);
+  assert.equal(beauty.hidden, true);
+  assert.equal(food.hidden, true);
   type('');
   assert.deepEqual(tiles.map((tile) => tile.hidden), [false, false]);
-  assert.equal(group.hidden, false);
+  assert.equal(beauty.hidden, false);
   assert.equal(status.hidden, true);
+
+  /* The chips themselves — the control the owner ringed with "why i cannot click this". */
+  tap('Beauty');
+  assert.deepEqual(tiles.map((tile) => tile.hidden), [false, true], 'a category tap filters the list');
+  assert.equal(food.hidden, true, 'and empties the group it excluded');
+  assert.equal(chips[1].attrs['aria-pressed'], 'true');
+  assert.equal(chips[0].attrs['aria-pressed'], 'false');
+  assert.equal(status.textContent, '1 of 2 shown');
+
+  /* Search AND category, not search OR category. */
+  type('kopi');
+  assert.deepEqual(tiles.map((tile) => tile.hidden), [true, true],
+    'kopi is in Food & drink, so it does not survive the Beauty chip');
+  assert.equal(status.textContent, 'No reward account matches \u201ckopi\u201d.');
+  tap('Food & drink');
+  assert.deepEqual(tiles.map((tile) => tile.hidden), [true, false]);
+  type('');
+  tap('All');
+  assert.deepEqual(tiles.map((tile) => tile.hidden), [false, false], 'All restores everything');
+  assert.equal(status.hidden, true);
+
+  /* A category with nothing in it says so, rather than reading as a broken tap. */
+  tiles.forEach((tile) => { tile.closest = () => ({ dataset: { programmeCategoryV395: 'Fitness' } }); });
+  tap('Beauty');
+  assert.equal(status.textContent, 'No reward accounts in Beauty yet.');
 });
 
 test('the "N linked reward accounts" subtitle is gone, along with its helper', () => {
@@ -376,7 +419,7 @@ test('My Rewards no longer explains how to get what the customer already has', (
   // the rule it explained is unchanged, and the customer with NO accounts still gets it in full
   const quest = section(appJs, 'function renderCustomerFirstProgrammeQuest', 'function customerProgrammeGridMarkupV96');
   assert.match(quest, /ct\('qrOnlyHelp'\)/);
-  assert.match(appJs, /customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/,
+  assert.match(appJs, /customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395\(cards\)\}\)/,
     'Scan to join stays in the heading row');
 });
 

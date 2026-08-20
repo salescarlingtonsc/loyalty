@@ -16,9 +16,9 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
   const home=section('function customerMyRewardsHeadingV156','async function renderCustomerWallet');
   assert.doesNotMatch(home,/ct\('chooseProgramme'\)/,'the "Choose a reward business" kicker was crossed out');
   assert.doesNotMatch(home,/ct\('programmesIntro'\)/,'the "Pick a business to open its rewards…" line was crossed out');
-  assert.match(home,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
+  assert.match(home,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395\(cards\)\}\)/);
   assert.match(home,/\$\('customerHomeScan'\)\.onclick=openCustomerJoinScanner/);
-  assert.match(app,/function customerMyRewardsHeadingV156\(count=0,\{scanId=''\}=\{\}\)/);
+  assert.match(app,/function customerMyRewardsHeadingV156\(count=0,\{scanId='',categories=\[\]\}=\{\}\)/);
   assert.match(app,/scanId\?`<button class="btn sm" id="\$\{esc\(scanId\)\}" type="button">[\s\S]{0,160}ct\('addProgramme'\)/);
 
   /* v333: the markup moved into a named const so a silent refresh can compare it before painting;
@@ -34,7 +34,7 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
   assert.doesNotMatch(legacyHome,/customerHomeQuickLinksV183/);
   assert.match(legacyHome,/applyCustomerNavCountsV194\(\{programmes:cards\.length/);
   const programmesTab=section('async function renderCustomerProgrammes(){','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
-  assert.match(programmesTab,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
+  assert.match(programmesTab,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395\(cards\)\}\)/);
   assert.match(programmesTab,/\$\('customerHomeScan'\)\.onclick=openCustomerJoinScanner/,
     'the relocated Scan to join button must stay wired on the My Rewards tab');
 });
@@ -64,7 +64,7 @@ test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
   // v196 removed the scan-guide note; the surface flag is what this test is about.
   assert.match(programmes,/renderActionableWalletHome\(data,\{surface:'programmes',rerender:\(\)=>renderCustomerProgrammes\(\)\}\)/);
   assert.doesNotMatch(programmes,/customerHomeOffersMarkupV167|customer_get_home_offers_v167|customerHomeGuidanceV167/);
-  assert.match(programmes,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan'\}\)/);
+  assert.match(programmes,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395\(cards\)\}\)/);
 
   const shell=section('function renderCustomerShell','function focusCustomerRoute');
   assert.match(shell,/backHref=businessSlug\?'#\/customer\/programmes':\(backTo\|\|''\)/);

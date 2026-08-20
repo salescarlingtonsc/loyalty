@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="4989d0f0798eea546571f84d3bb126c2c08364094d6b398cebbadb6311c44beb">
+<meta name="v104-production-source-sha256" content="241e524a228636cbbbdbf6aa58804feccf4c6a3d14f49eb05f4378703fbda9da">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -2739,6 +2739,26 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
 .customer-reward-offer-swipe-v339{margin:0 0 10px}
 .customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+/* nestly_v395 (owner photo 1: "scrollable to see next reward"). The hero is a scroll-snap track —
+   the same mechanism the offers region above uses, so there is one swipe idiom on this surface,
+   not two. One page and it behaves exactly like the plain card it replaced: no dots, and with
+   overflow-x:auto on a single full-width child there is nothing to scroll. */
+.customer-business-hero-swipe-v395{min-width:0}
+.customer-business-hero-track-v395{display:flex;align-items:stretch;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.customer-business-hero-track-v395::-webkit-scrollbar{display:none}
+.customer-business-hero-page-v395{flex:0 0 100%;min-width:0;scroll-snap-align:start;display:flex}
+.customer-business-hero-page-v395>*{flex:1;min-width:0;margin-bottom:0}
+.customer-business-hero-dots-v395{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 2px}
+.customer-business-hero-dot-v395{width:6px;height:6px;border-radius:50%;background:var(--peekaa-border,#E4DED7);transition:background .18s ease,width .18s ease}
+.customer-business-hero-dot-v395.is-active{width:18px;border-radius:999px;background:var(--peekaa-red,#C24135)}
+/* A reward NAME is prose, not a figure. It deliberately does NOT reuse .customer-business-balance-v347:
+   that face is 56px/white-space:nowrap and every one of its declarations is !important, so
+   "Complimentary 60-minute aromatherapy massage with hot stones" ran 1791px wide in a 298px box and
+   was clipped straight out of the card (measured). Same Georgia display family and weight as the
+   hero figure it sits in place of, sized to fit and stopped at two lines. */
+.customer-business-reward-name-v395{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;margin:2px 0 0;font-family:Georgia,'Times New Roman',serif;font-weight:760;font-size:clamp(1.35rem,6.4vw,2rem);line-height:1.08;letter-spacing:-.02em;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){.customer-business-hero-dot-v395{transition:none}}
+
 .customer-reward-offer-page-v339{flex:0 0 min(88%,340px);min-width:0;scroll-snap-align:start;display:flex}
 .customer-reward-offer-page-v339>*{flex:1;min-width:0;margin-bottom:0;align-self:flex-start}
 @media(min-width:641px){.customer-reward-offer-page-v339{flex-basis:360px}}
@@ -2971,7 +2991,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 }
 /* V344 exact-structure pass from owner photos: persistent decorations and screenshot-specific
    rows; data-backed merchant content remains editable through Business Profile. */
-.customer-rewards-filter-chips-v344{display:flex;gap:14px;overflow-x:auto;margin:2px 0 22px;padding:8px 1px 10px}.customer-rewards-filter-chips-v344 span{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:16px;background:#F4F0EC;color:#716D75;font-weight:700}.customer-rewards-filter-chips-v344 .is-active{background:var(--grad);color:#fff;box-shadow:0 10px 24px rgba(194,65,53,.22)}
+.customer-rewards-filter-chips-v344{display:flex;gap:14px;overflow-x:auto;margin:2px 0 22px;padding:8px 1px 10px}.customer-rewards-filter-chips-v344 span,.customer-rewards-filter-chip-v395{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border:0;border-radius:16px;background:#F4F0EC;color:#716D75;font-family:inherit;font-size:inherit;font-weight:700;cursor:pointer;-webkit-appearance:none;appearance:none}.customer-rewards-filter-chips-v344 .is-active{background:var(--grad);color:#fff;box-shadow:0 10px 24px rgba(194,65,53,.22)}
 .customer-shell .customer-expiring-glance{display:none}
 .customer-home-booking-strip-v344{display:grid;grid-template-columns:82px minmax(0,1fr) auto;gap:16px;align-items:center;margin:2px 0 12px;padding:18px 22px;border-radius:20px;background:rgba(255,255,255,.9);box-shadow:var(--shadow-warm-lg);color:var(--ink);text-decoration:none}.customer-home-booking-icon-v344{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:var(--tint);color:var(--coral)}.customer-home-booking-copy-v344{display:grid;gap:2px}.customer-home-booking-copy-v344 small{color:var(--coral);font-weight:800}.customer-home-booking-copy-v344 b{font-size:20px}.customer-home-booking-copy-v344 em{font-style:normal;color:var(--muted)}.customer-home-booking-action-v344{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:1px solid var(--coral);border-radius:999px;color:var(--coral);font-weight:760}
 .customer-booking-appointments-head-v344{display:flex;align-items:center;gap:9px;margin:18px 0 8px;font-size:1rem}.customer-booking-appointments-head-v344 svg{color:var(--coral)}.customer-booking-appointments-head-v344 span:last-child{color:#FFBE74}.customer-booking-appointment-row-v344{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:16px}.customer-booking-date-tile-v344{display:grid;place-items:center;align-self:center;width:70px;min-height:86px;border-radius:18px;background:#fff;color:var(--ink);box-shadow:var(--shadow-warm)}.customer-booking-date-tile-v344 small{font-size:12px;font-weight:850;letter-spacing:.08em;color:var(--coral)}.customer-booking-date-tile-v344 b{font-size:2rem;line-height:1;font-weight:500}.customer-booking-date-tile-v344 em{font-size:12px;font-style:normal;color:var(--muted);font-weight:760}
@@ -3025,20 +3045,19 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-home-greeting-v343{margin:0 0 11px}.customer-home-greeting-v343 h1{font-family:Georgia,'Times New Roman',serif!important;font-size:26px!important;line-height:1.05!important;font-weight:760;letter-spacing:0;color:var(--peekaa-text)}.customer-home-greeting-v343 p{margin-top:4px;font-size:14px;line-height:1.2;color:var(--peekaa-text-secondary)}
 .customer-home-ready-card-v343{grid-template-columns:60px minmax(0,1fr) 34px;gap:10px;min-height:88px;margin:0 0 18px;padding:12px 14px;border-radius:20px;background:var(--peekaa-card);box-shadow:var(--shadow-warm)}.customer-home-ready-gift-v343{width:52px;height:52px;border-radius:19px;background:var(--peekaa-red-soft);color:var(--peekaa-red)}.customer-home-ready-gift-v343 svg{width:30px;height:30px}.customer-home-ready-copy-v343{gap:1px}.customer-home-ready-copy-v343 b{font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.05}.customer-home-ready-copy-v343 b span{font-size:30px}.customer-home-ready-copy-v343 small{font-size:15px;line-height:1.12;color:var(--peekaa-text-secondary)}.customer-home-ready-copy-v343 em{display:none}.customer-home-ready-arrow-v343{width:34px;height:34px;border-radius:50%;background:var(--peekaa-red-soft);color:var(--peekaa-red);font-size:22px}
 .customer-home-section-head-v343,.customer-home-offers-head{margin:0 0 10px}.customer-home-section-head-v343 h2,.customer-home-offers-head h2,.customer-programme-category-head h2,.customer-business-group-head-v346 h2{font-family:Georgia,'Times New Roman',serif!important;font-size:18px!important;line-height:1.15!important;font-weight:760;letter-spacing:0;color:var(--peekaa-text)}.customer-home-section-head-v343 a,.customer-home-offers-head a{font-size:14px;color:var(--peekaa-red);font-weight:750}
-.customer-home-offers{margin:0 0 12px}.customer-home-offers-track{gap:12px;margin:0 -16px;padding:0 16px 12px;scroll-padding-inline:16px}.customer-home-offer{flex:0 0 min(72vw,288px)!important;min-height:214px!important;height:214px;border-radius:20px;overflow:hidden}.customer-home-offer-media{aspect-ratio:auto;height:82px}.customer-home-offer-copy{min-height:auto;height:132px;padding:16px 10px 12px}.customer-home-offer-copy::before{top:-22px;height:50px;background:var(--peekaa-card)}.customer-home-offer-logo{top:-30px;left:10px;width:46px;height:46px;border-width:5px}.customer-offer-new{top:9px;left:10px;min-height:24px;padding:0 10px;font-size:12px}.customer-home-offer-copy h3{font-size:15px!important;line-height:1.02!important;font-weight:760;letter-spacing:0;color:var(--peekaa-text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}/* v386 (owner photo 1, "put company name"): this rule was written to drop the validity line, which is a direct child <p class="muted small">, but .muted also matches the business-name <span> NESTED inside .customer-home-offer-business — so the card painted a merchant avatar with no merchant beside it. Scoped to direct children, which is the set it was always meant to hide. */.customer-home-offer-copy>.muted{display:none}/* v386 fix-2 (owner: "i still dont see the company name"). Un-hiding the name was not enough: it sat in flow BELOW the title, in the 38px strip the absolutely-positioned "Ends in N days" pill occupies, so the pill painted straight over it (elementFromPoint at the name's centre returned the countdown). The name is now the FIRST line of the copy block, indented clear of the 46px avatar so it reads beside it — which is exactly where the owner drew it — and the copy block became a flex column so `order` can hoist it without moving it in the markup (the desktop/tablet layouts keep the original order). */.customer-home-offer-copy{display:flex;flex-direction:column}.customer-home-offer-business{order:-2;margin:0 0 4px;min-height:14px;align-items:center;font-size:11px;letter-spacing:.05em;color:var(--peekaa-text-secondary);font-weight:760;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-home-offer-meta{order:-1}.customer-home-offer-copy h3{order:0;flex:0 0 auto}
+.customer-home-offers{margin:0 0 12px}.customer-home-offers-track{gap:12px;margin:0 -16px;padding:0 16px 12px;scroll-padding-inline:16px}.customer-home-offer{flex:0 0 min(72vw,288px)!important;min-height:266px!important;height:266px;border-radius:20px;overflow:hidden}/* nestly_v395 (owner photo 2: "picture too small", drawn across the whole top strip of the card). The artwork had 82px of a 214px card — and because V371 correctly letterboxes it rather than cropping, a landscape photo shrank to a thin band with empty gutters either side. The media block takes 130px now and the card grows to match, so the picture is the thing the customer sees first. object-fit:contain is untouched: the merchant's image is still never cropped. */.customer-home-offer-media{aspect-ratio:auto;height:130px}.customer-home-offer-copy{position:relative;min-height:auto;height:136px;padding:24px 10px 12px}.customer-home-offer-copy::before{top:-22px;height:50px;background:var(--peekaa-card)}.customer-home-offer-logo{position:static;top:auto;left:auto;flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:5px solid var(--peekaa-card);box-shadow:var(--shadow-warm)}.customer-offer-new{top:9px;left:10px;min-height:24px;padding:0 10px;font-size:12px}.customer-home-offer-copy h3{font-size:15px!important;line-height:1.02!important;font-weight:760;letter-spacing:0;color:var(--peekaa-text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}/* v386 (owner photo 1, "put company name"): this rule was written to drop the validity line, which is a direct child <p class="muted small">, but .muted also matches the business-name <span> NESTED inside .customer-home-offer-business — so the card painted a merchant avatar with no merchant beside it. Scoped to direct children, which is the set it was always meant to hide. */.customer-home-offer-copy>.muted{display:none}/* v386 fix-2 (owner: "i still dont see the company name"). Un-hiding the name was not enough: it sat in flow BELOW the title, in the 38px strip the absolutely-positioned "Ends in N days" pill occupies, so the pill painted straight over it (elementFromPoint at the name's centre returned the countdown). The name is now the FIRST line of the copy block, indented clear of the 46px avatar so it reads beside it — which is exactly where the owner drew it — and the copy block became a flex column so `order` can hoist it without moving it in the markup (the desktop/tablet layouts keep the original order). */.customer-home-offer-copy{display:flex;flex-direction:column}/* nestly_v395 (owner photo 2: the avatar and the name ringed together, "move here" with an arrow pointing to the right of the avatar). v386 hoisted the name to the first line of the copy with order:-2 and meant it to sit BESIDE the 46px avatar, but the avatar is position:absolute at top:-30px while the name stayed in flow — so the name began exactly where the avatar ended and read as a caption UNDER it. The row is pinned to the avatar's own box now (same top/left origin, same 46px height) and indented past it, so the two read as one line: coin, then name. Out of flow, so the copy column below is unaffected and nothing can reflow into it. */.customer-home-offer-business{position:absolute!important;top:-30px;left:10px;right:10px;z-index:2;margin:0;min-height:46px;height:46px;display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.05em;color:var(--peekaa-text-secondary);font-weight:760;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-home-offer-meta{order:-1}.customer-home-offer-copy h3{order:0;flex:0 0 auto}/* The countdown is a line of the copy now (see customerHomeOfferMarkupV167), so it sorts after the title rather than floating over the artwork. */.customer-home-offer-copy>.customer-home-offer-countdown{order:1;align-self:flex-start;margin-top:8px}
 /* v400 (owner-diagnosed clip): the chip used to be position:absolute with its own top/right,
    resolving its shrink-to-fit width against its OWN static position rather than the slot it
-   visually occupies — the box stayed a fixed 83px regardless of content, so "Ends in 4 days"
-   rendered as "Ends in 4" and the rest was clipped by .customer-home-offer-media's overflow:hidden.
-   Fix: a dedicated absolutely-positioned flex row (the slot) owns the position; the chip itself
-   goes back to being a normal static flex child, sized by its own content like any inline-flex
-   pill elsewhere in the app. */
-.customer-home-offer-countdown-slot-v5{position:absolute;z-index:2;top:8px;left:8px;right:8px;display:flex;justify-content:flex-end;pointer-events:none}
+   visually occupied — the box stayed a fixed 83px regardless of content, so "Ends in 4 days"
+   rendered as "Ends in 4" and the rest was clipped. The chip has been a normal static flex child
+   ever since, sized by its own content like any inline-flex pill elsewhere in the app, and that is
+   what nestly_v395 carried down into the copy block: the absolutely-positioned slot that used to
+   hold it over the artwork is gone, because nothing emits it any more. */
 .customer-home-offer-countdown{display:inline-flex;align-items:center;gap:5px;margin:0;min-height:24px;padding:0 10px;font-size:12px;background:#FFF0EC;color:var(--peekaa-red-on-soft);white-space:nowrap}
 .customer-home-businesses-v343{margin-top:2px}.customer-home-business-track-v343{gap:10px;margin:0 -16px;padding:0 16px 14px;scroll-padding-inline:16px}.customer-home-business-track-v343 .customer-programme-card-v95{flex:0 0 148px;min-height:80px;height:80px;border-radius:16px}.customer-home-business-track-v343 .customer-programme-card-body{grid-template-columns:38px minmax(0,1fr) 12px;gap:8px;min-height:80px;padding:12px}.customer-home-business-track-v343 .customer-programme-card-v95 .customer-programme-logo{width:38px;height:38px;border-radius:50%;font-size:12px}.customer-home-business-track-v343 .customer-programme-card-copy .customer-quest-kicker{display:none}.customer-home-business-track-v343 .customer-programme-card-copy h2{font-size:13px!important;line-height:1.1!important}.customer-home-business-track-v343 .customer-programme-card-tier-v346,.customer-home-business-track-v343 .customer-programme-card-status-v346{font-size:10.5px;line-height:1.15}.customer-home-business-track-v343 .customer-programme-card-balance{grid-column:2;grid-row:2;align-self:end;justify-items:start;text-align:left}.customer-home-business-track-v343 .customer-programme-card-balance b{font-size:12px!important;max-width:72px;color:var(--peekaa-red)}.customer-home-business-track-v343 .customer-programme-card-balance span{grid-column:3;grid-row:1 / span 2;font-size:20px}
 .customer-home-booking-strip-v344{grid-template-columns:52px minmax(0,1fr) auto;gap:10px;min-height:80px;margin:0 0 10px;padding:12px;border-radius:20px}.customer-home-booking-icon-v344{width:44px;height:44px;border-radius:16px}.customer-home-booking-copy-v344 small{font-size:13px}.customer-home-booking-copy-v344 b{font-size:16px;line-height:1.12}.customer-home-booking-copy-v344 em{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-home-booking-action-v344{min-height:36px;padding:0 14px;font-size:13px}
 .customer-home-booking-strip-v344 .customer-home-booking-action-v344{grid-column:auto!important;width:auto!important;white-space:nowrap}
-.customer-rewards-filter-chips-v344{gap:8px;margin:0 -16px 14px;padding:4px 16px 6px}.customer-rewards-filter-chips-v344 span{min-height:36px;padding:0 14px;border:1px solid var(--peekaa-border);border-radius:18px;background:transparent;font-size:14px;color:var(--peekaa-text-secondary)}.customer-rewards-filter-chips-v344 .is-active{border-color:var(--peekaa-red);background:var(--peekaa-red);color:#fff;box-shadow:none}
+.customer-rewards-filter-chips-v344{gap:8px;margin:0 -16px 14px;padding:4px 16px 6px}.customer-rewards-filter-chips-v344 span,.customer-rewards-filter-chip-v395{min-height:36px;padding:0 14px;border:1px solid var(--peekaa-border);border-radius:18px;background:transparent;font-size:14px;color:var(--peekaa-text-secondary)}.customer-rewards-filter-chips-v344 .is-active{border-color:var(--peekaa-red);background:var(--peekaa-red);color:#fff;box-shadow:none}
 .customer-my-rewards-title{align-items:center;margin:0 0 14px}.customer-my-rewards-title h1{font-family:Georgia,'Times New Roman',serif!important;font-size:26px!important;line-height:1.05!important}.customer-my-rewards-title #customerHomeScan{min-height:44px;padding:0 16px;border-radius:22px;font-size:14px;font-weight:760;background:var(--peekaa-red);box-shadow:0 8px 22px rgba(238,77,58,.24)}.customer-my-rewards-search,.customer-booking-search{min-height:44px;margin:0 0 16px;padding:0 16px;border-radius:22px;background:var(--peekaa-card);box-shadow:var(--shadow-warm)}.customer-my-rewards-search input,.customer-booking-search input{min-height:42px;font-size:14px}
 .customer-programme-grid-v96{gap:22px}.customer-programme-category{gap:12px}.customer-programme-category-head{min-height:28px}.customer-programme-category-head .pill{border:0;background:transparent;color:var(--peekaa-red);font-size:14px;padding:0}.customer-programme-category-grid{gap:12px}.customer-programme-card-v95{min-height:72px!important;height:72px;border-radius:16px}.customer-programme-card-body{grid-template-columns:44px minmax(0,1fr) minmax(66px,auto);gap:10px;min-height:72px!important;height:72px;padding:10px 12px}.customer-programme-card-v95 .customer-programme-logo{width:44px!important;height:44px!important;border-radius:14px;font-size:12px}.customer-programme-card-copy{gap:1px}.customer-programme-card-copy .customer-quest-kicker{font-size:10px;line-height:1;letter-spacing:.12em;color:var(--peekaa-red)}.customer-programme-card-copy h2{font-size:15px!important;font-weight:760;line-height:1.08!important;color:var(--peekaa-text)}.customer-programme-card-tier-v346{font-size:11px;color:var(--peekaa-text-secondary);font-weight:500}.customer-programme-card-status-v346{font-size:11px;color:var(--peekaa-text-secondary)}.customer-programme-card-balance b{font-size:15px!important;max-width:78px;white-space:normal!important;overflow:visible;text-overflow:clip;color:var(--peekaa-text)}.customer-programme-card-balance span{font-size:18px;color:var(--peekaa-text-muted)}.customer-programme-holdings{display:none!important}
 .customer-business-profile-v346{gap:12px}.customer-business-header-v346{grid-template-columns:28px minmax(0,1fr);gap:10px;min-height:64px;padding:0}.customer-business-back-v346{min-width:28px;padding:0;border:0;background:transparent;box-shadow:none}.customer-business-identity-v346 .customer-programme-logo{width:48px!important;height:48px!important;border-radius:14px}.customer-business-identity-v346 b{font-size:20px}.customer-business-identity-v346 small{font-size:14px}.customer-business-actions-v346{grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 0}.customer-business-actions-v346 .btn{min-height:44px;border-radius:14px;font-size:14px}.customer-business-book-v346{min-height:56px;border-radius:14px!important;font-size:16px}
@@ -3320,7 +3339,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 4989d0f0798eea546571f84d3bb126c2c08364094d6b398cebbadb6311c44beb</p>
+  <p class="v104-provenance">Local production-render harness · source 241e524a228636cbbbdbf6aa58804feccf4c6a3d14f49eb05f4378703fbda9da</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3332,7 +3351,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="4989d0f0798eea546571f84d3bb126c2c08364094d6b398cebbadb6311c44beb";
+const PRODUCTION_SOURCE_SHA256="241e524a228636cbbbdbf6aa58804feccf4c6a3d14f49eb05f4378703fbda9da";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -4172,9 +4191,30 @@ function wireCustomerProgrammeTabsV194(host=document){
    older they are absent, the gate returns null, and customerProgrammeSummaryTabsV194 runs
    byte-identically to today. That same expression is the rollback path: revert the migration and
    the client falls back on its own, with no deploy. Presence alone is never treated as truth —
-   both the array shape and the contract version are checked. */
+   both the array shape and the contract version are checked.
+
+   nestly_v395 (owner photo 1: "add another tab to see point gift", and "Claim reward" marked
+   "Cannot click"). The version test was EQUALITY against 'v310', and the server has since moved
+   the marker twice — v384 (stamp conversion switch) and v391 (the 42703 fix), both of which build
+   the SAME per-programme object this reads: {id,kind,active,running_since,paused_since,
+   balance_scope,customer_visible}. So against today's production every customer fell through to
+   `null`: no Points & gifts tile, no Stamp card, no Tier benefits, no Refer a friend, the hero
+   dropped to its plain-number form, and "Claim reward" pointed at a tile that was no longer
+   rendered — which is exactly the screen the owner photographed.
+
+   Equality was the wrong shape of test for a marker the server bumps on every additive change: it
+   makes the CDN-window contract one-directional (old client + new server silently loses the whole
+   stack) when the comment above requires it to hold BOTH ways. The gate is now a MINIMUM: v310 is
+   the version that introduced these fields, so anything at or above it carries them. A server
+   older than v310, or one that sends no marker at all, still falls through to the v194 tabs
+   exactly as before, and reverting the migration is still a no-deploy rollback. */
+const PROGRAMME_STACK_MIN_CONTRACT_V395=310;
+const programmeStackContractOkV395=value=>{
+  const digits=/^v(\d+)$/.exec(String(value||'').trim());
+  return !!digits&&Number(digits[1])>=PROGRAMME_STACK_MIN_CONTRACT_V395;
+};
 const programmeStackV310=caps=>
-  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
+  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&programmeStackContractOkV395(caps?.programmes_contract)
     ?caps.programmes:null;
 /* Fixed, regardless of which are on. v333 (owner, 2026-08-15: "shift the tier up — to the top
    of the screen, instead of points & gift"): tier leads. It is the standing that names the
@@ -4579,6 +4619,58 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
    the claimable strip) — never a fabricated reward. The reward object this codebase carries
    here has only name/cost_units/remaining_units/available_now, so the banner does not print a
    description, image or validity window that is not actually in the payload. */
+/* v337: "Claim reward ›" does not invent a new claim path — it takes the customer to the same
+   rewards list the claimable strip already points at, where the matching reward's own "Show QR at
+   counter" button (wired in loadRewards) does the redeem.
+
+   v386 (owner photo 3: "why i click nothing happened"). v337 scrolled to #walletRewards, but
+   v347/v348 moved the rewards list INTO the Points & gifts shortcut page, which is hidden until
+   its tile is opened. scrollIntoView on a hidden element scrolls nowhere, so the button was inert
+   on the collapsed profile. It opens the same shortcut page the tile opens — reusing that one code
+   path rather than inventing a second claim route — and scrolls to the rewards list inside it once
+   it is on screen.
+
+   nestly_v395 (owner photo 1, the button ringed "Cannot click"). Two defects were left, and the
+   owner hit both at once:
+   (1) The lookup was querySelector — SINGULAR — while two different surfaces render the same
+       [data-claim-reward-scroll-v337] contract: the reward-ready banner inside the offers swipe
+       and the hero card's own "Claim reward". Whichever came second in the DOM was never wired at
+       all, so it was a button that genuinely did nothing on click.
+   (2) Even the wired one dead-ended when the rewards tile was absent — which, with the contract
+       gate above rejecting today's server, it always was. It fell through to scrolling
+       #walletRewards, a node that is hidden inside the shortcut page, so scrollIntoView moved
+       nothing and the click had no visible effect whatsoever.
+   Every matching button is now wired, and the fallback order ends somewhere real: the shortcut
+   tile if there is one, else the rewards list if it is actually on screen, else the rewards
+   SECTION (the pre-v347 layout, and the layout a firm with no points tile still renders). It
+   never silently does nothing — with no rewards surface at all it says so, rather than leaving
+   the customer tapping a button that looks broken. */
+function wireCustomerClaimRewardV395(root=document){
+  const scope=root||document;
+  const buttons=[...scope.querySelectorAll('[data-claim-reward-scroll-v337]')];
+  if(!buttons.length)return 0;
+  const smooth=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
+  const onScreen=node=>!!node&&!node.hidden&&!!node.getClientRects?.().length;
+  buttons.forEach(button=>{button.onclick=()=>{
+    const rewardsTile=document.querySelector('[data-business-shortcut-v347="points"],[data-business-shortcut-v347="rewards"]');
+    const rewardsList=$('walletRewards'),rewardsSection=$('customerBusinessRewardsDetailV347');
+    const scrollToRewards=()=>{
+      const target=[rewardsList,rewardsSection].find(onScreen);
+      if(!target)return false;
+      target.scrollIntoView({behavior:smooth(),block:'start'});
+      return true;
+    };
+    if(rewardsTile&&$('customerBusinessShortcutPageV348')?.hidden!==false){
+      rewardsTile.click();
+      requestAnimationFrame(()=>requestAnimationFrame(scrollToRewards));
+      return;
+    }
+    if(scrollToRewards())return;
+    /* Nothing to scroll to: say so instead of absorbing the tap. */
+    toast('Your rewards are still loading. Try again in a moment.');
+  }});
+  return buttons.length;
+}
 function customerClaimableRewardBannerMarkupV337({reward=null}={}){
   if(!reward||reward.available_now!==true)return '';
   const name=esc(String(reward.name||'').trim()||ct('rewardsTab'));
@@ -4734,19 +4826,89 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
      moment it means something — a reward the customer can claim right now — reusing the existing
      .is-reward-ready-v2b class rather than inventing a second name for it. */
-  return `<section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
-    <div class="customer-business-summary-top-v347">
-      <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
-      <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+  /* nestly_v395 (owner photo 1: an arrow to the card's right edge, "scrollable to see next
+     reward"). The hero stated ONE reward — whatever the server named next_eligible_reward — and
+     the ladder above it was invisible until the customer opened Points & gifts. It is a swipe
+     region now: page 1 is this card, unchanged; the pages after it are the REST of that firm's
+     reward catalogue, appended by customerHeroRewardPagesV395 once loadRewards has it. Nothing is
+     rendered speculatively — with one reward (or a catalogue that never arrives) there is exactly
+     one page, no dots, and the region is indistinguishable from the card it replaced. The track is
+     CSS scroll-snap and nothing else, the same mechanism .customer-reward-offer-track-v339 uses:
+     it advances only when the customer swipes, with no timer and no script driving it. */
+  return `<div class="customer-business-hero-swipe-v395" data-hero-swipe-v395>
+    <div class="customer-business-hero-track-v395" data-hero-track-v395>
+      <div class="customer-business-hero-page-v395">
+        <section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
+          <div class="customer-business-summary-top-v347">
+            <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
+            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+          </div>
+          ${figureV386}
+          ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+          ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
+            ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
+            ${bookAction}
+          </div>`:''}
+        </section>
+      </div>
     </div>
-    ${figureV386}
-    ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
-    ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
-    ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
-      ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
-      ${bookAction}
-    </div>`:''}
-  </section>`;
+    <div class="customer-business-hero-dots-v395" data-hero-dots-v395 role="tablist" aria-label="Rewards" hidden></div>
+  </div>`;
+}
+/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
+   catalogue row the server sent — name and cost only — and the distance is the customer's own
+   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
+   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
+   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
+function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName=''}={},root=document){
+  const swipe=root.querySelector('[data-hero-swipe-v395]');
+  const track=swipe?.querySelector('[data-hero-track-v395]');
+  const dots=swipe?.querySelector('[data-hero-dots-v395]');
+  if(!swipe||!track||!dots)return 0;
+  track.querySelectorAll('[data-hero-extra-v395]').forEach(node=>node.remove());
+  const held=Math.max(0,Number(balance)||0);
+  const seen=new Set([String(currentRewardName||'').trim().toLowerCase()].filter(Boolean));
+  const unitWord=ct(unit==='stamps'?'stamps':unit||'points');
+  const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{
+    const name=String(reward?.customer_name||reward?.name||'').trim();
+    const cost=Number(reward?.cost_points??reward?.cost_units);
+    if(!name||!Number.isFinite(cost)||cost<=0)return '';
+    const key=name.toLowerCase();
+    if(seen.has(key))return '';
+    seen.add(key);
+    const remaining=Math.max(0,cost-held);
+    const progress=Math.max(0,Math.min(100,Math.round(held/cost*100)));
+    return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
+      <section class="card customer-business-summary-v346${remaining===0?' is-reward-ready-v2b':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
+        <div class="customer-business-summary-top-v347">
+          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(remaining===0?'READY':'NEXT REWARD')}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(`${customerPointTotalV103(cost)} ${unitWord}`)}</span></span>
+        </div>
+        <b class="customer-business-reward-name-v395">${esc(name)}</b>
+        <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
+        <p class="customer-business-summary-line-v362">${esc(remaining===0
+          ?'Ready to redeem on your next visit'
+          :`${customerPointTotalV103(remaining)} ${unitWord} to go`)}</p>
+      </section>
+    </div>`;
+  }).filter(Boolean);
+  if(pages.length)track.insertAdjacentHTML('beforeend',pages.join(''));
+  const total=track.querySelectorAll('.customer-business-hero-page-v395').length;
+  dots.hidden=total<2;
+  dots.innerHTML=total<2?'':Array.from({length:total},(_,index)=>
+    `<span class="customer-business-hero-dot-v395${index===0?' is-active':''}" aria-hidden="true"></span>`).join('');
+  swipe.dataset.heroPagesV395=String(total);
+  if(total>1&&!track.dataset.heroDotsWiredV395){
+    track.dataset.heroDotsWiredV395='1';
+    track.tabIndex=0;
+    track.addEventListener('scroll',()=>{
+      const width=track.clientWidth||1;
+      const index=Math.round(track.scrollLeft/width);
+      [...dots.children].forEach((dot,position)=>dot.classList.toggle('is-active',position===index));
+    },{passive:true});
+  }
+  return total;
 }
 function customerBusinessSecondaryMarkupV346(presentation={}){
   const products=Array.isArray(presentation.products)?presentation.products:[],

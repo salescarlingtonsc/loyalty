@@ -3551,9 +3551,30 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
    older they are absent, the gate returns null, and customerProgrammeSummaryTabsV194 runs
    byte-identically to today. That same expression is the rollback path: revert the migration and
    the client falls back on its own, with no deploy. Presence alone is never treated as truth —
-   both the array shape and the contract version are checked. */
+   both the array shape and the contract version are checked.
+
+   nestly_v395 (owner photo 1: "add another tab to see point gift", and "Claim reward" marked
+   "Cannot click"). The version test was EQUALITY against 'v310', and the server has since moved
+   the marker twice — v384 (stamp conversion switch) and v391 (the 42703 fix), both of which build
+   the SAME per-programme object this reads: {id,kind,active,running_since,paused_since,
+   balance_scope,customer_visible}. So against today's production every customer fell through to
+   `null`: no Points & gifts tile, no Stamp card, no Tier benefits, no Refer a friend, the hero
+   dropped to its plain-number form, and "Claim reward" pointed at a tile that was no longer
+   rendered — which is exactly the screen the owner photographed.
+
+   Equality was the wrong shape of test for a marker the server bumps on every additive change: it
+   makes the CDN-window contract one-directional (old client + new server silently loses the whole
+   stack) when the comment above requires it to hold BOTH ways. The gate is now a MINIMUM: v310 is
+   the version that introduced these fields, so anything at or above it carries them. A server
+   older than v310, or one that sends no marker at all, still falls through to the v194 tabs
+   exactly as before, and reverting the migration is still a no-deploy rollback. */
+const PROGRAMME_STACK_MIN_CONTRACT_V395=310;
+const programmeStackContractOkV395=value=>{
+  const digits=/^v(\d+)$/.exec(String(value||'').trim());
+  return !!digits&&Number(digits[1])>=PROGRAMME_STACK_MIN_CONTRACT_V395;
+};
 const programmeStackV310=caps=>
-  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&caps?.programmes_contract==='v310'
+  Array.isArray(caps?.programmes)&&caps.programmes.length>0&&programmeStackContractOkV395(caps?.programmes_contract)
     ?caps.programmes:null;
 /* Fixed, regardless of which are on. v333 (owner, 2026-08-15: "shift the tier up — to the top
    of the screen, instead of points & gift"): tier leads. It is the standing that names the
@@ -3863,11 +3884,6 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
     <span class="customer-points-hero-icon-v337" aria-hidden="true">${CUI.icon('diamond',{size:20})}</span>
   </section>`;
 }
-/* The "reward ready" banner. Renders only when the server's own next_eligible_reward is
-   already claimable (the SAME available_now===true check customerClaimableFactsV310 uses for
-   the claimable strip) — never a fabricated reward. The reward object this codebase carries
-   here has only name/cost_units/remaining_units/available_now, so the banner does not print a
-   description, image or validity window that is not actually in the payload. */
 function customerClaimableRewardBannerMarkupV337({reward=null}={}){
   if(!reward||reward.available_now!==true)return '';
   const name=esc(String(reward.name||'').trim()||ct('rewardsTab'));
@@ -4023,19 +4039,35 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
      moment it means something — a reward the customer can claim right now — reusing the existing
      .is-reward-ready-v2b class rather than inventing a second name for it. */
-  return `<section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
-    <div class="customer-business-summary-top-v347">
-      <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
-      <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+  /* nestly_v395 (owner photo 1: an arrow to the card's right edge, "scrollable to see next
+     reward"). The hero stated ONE reward — whatever the server named next_eligible_reward — and
+     the ladder above it was invisible until the customer opened Points & gifts. It is a swipe
+     region now: page 1 is this card, unchanged; the pages after it are the REST of that firm's
+     reward catalogue, appended by customerHeroRewardPagesV395 once loadRewards has it. Nothing is
+     rendered speculatively — with one reward (or a catalogue that never arrives) there is exactly
+     one page, no dots, and the region is indistinguishable from the card it replaced. The track is
+     CSS scroll-snap and nothing else, the same mechanism .customer-reward-offer-track-v339 uses:
+     it advances only when the customer swipes, with no timer and no script driving it. */
+  return `<div class="customer-business-hero-swipe-v395" data-hero-swipe-v395>
+    <div class="customer-business-hero-track-v395" data-hero-track-v395>
+      <div class="customer-business-hero-page-v395">
+        <section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
+          <div class="customer-business-summary-top-v347">
+            <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
+            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(subline)}</span></span>
+          </div>
+          ${figureV386}
+          ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+          ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
+            ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
+            ${bookAction}
+          </div>`:''}
+        </section>
+      </div>
     </div>
-    ${figureV386}
-    ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
-    ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
-    ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
-      ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
-      ${bookAction}
-    </div>`:''}
-  </section>`;
+    <div class="customer-business-hero-dots-v395" data-hero-dots-v395 role="tablist" aria-label="Rewards" hidden></div>
+  </div>`;
 }
 function customerReferralSlotMarkupV360(){
   return '<div id="walletReferralSlot" hidden></div>';

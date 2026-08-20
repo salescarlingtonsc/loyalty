@@ -37,8 +37,17 @@ test('the offer card carries the business logo and paints the countdown in the b
   assert.match(card,/logo=customerMediaUrlV95\(business\.logo_url\)/);
   assert.match(card,/class="customer-home-offer-logo"/);
   assert.match(card,/customer-home-offer-logo--fallback/,'a business without a logo still gets an identity chip');
-  assert.match(card,/countdown\?`<div class="customer-home-offer-countdown-slot-v5"><p class="customer-home-offer-countdown">/);
+  /* nestly_v395 (owner photo 2: the chip ringed with an arrow drawn to under the title, "put
+     here"). The countdown was painted INSIDE the media block, absolutely positioned over the
+     artwork's top-right corner — on top of the very picture the owner says is too small. Same
+     node, same class, same red-on-soft colours; it is a line of the copy after the title now, so
+     the card reads picture → who → what → when. The absolute slot div is gone with it. */
+  assert.match(card,/countdown\s*\r?\n?\s*\?`<p class="customer-home-offer-countdown">/);
+  assert.doesNotMatch(card,/customer-home-offer-countdown-slot-v5/,
+    'and it is no longer painted over the artwork');
   assert.match(card,/:validity\?/,'an offer with no end date keeps its validity line');
+  assert.match(app,/\.customer-home-offer-copy>\.customer-home-offer-countdown\{order:1/,
+    'it sorts after the title, not before it');
   assert.match(app,/\.customer-home-offer-countdown\{[^}]*color:var\(--coral\)/);
 });
 

@@ -447,11 +447,16 @@ test('W6I2 D2a v327 ships the GLOBAL member QR the owner asked for instead', () 
 });
 
 test('W6I2 D3 the member card is gated exactly like the W4b stack, and the slot is removed otherwise', () => {
-  /* W4b's gate, verbatim: programmes_contract==='v310' with at least one programme row. A firm the
+  /* W4b's gate: at least one programme row on a contract that carries these fields. A firm the
      spine cannot describe has no membership to show a code for, and the pre-v310 tab surface never
-     carried this card — so an old server must render byte-identically to before. */
+     carried this card — so an old server must render byte-identically to before.
+     nestly_v395: the version test is a MINIMUM, not equality. It was equality, and the server moved
+     the marker to v384 and then v391 while building the same rows, which closed this gate (and the
+     whole W4b stack) against production. What matters here is that the card is gated on the SAME
+     helper the stack uses, so the two can never disagree — not the shape of the comparison. */
   assert.match(code, /if\(!MEMBER_CODE_CONTRACT_W6I2\.readerShipped\|\|!programmeStackV310\(programmeCapabilities\)\)\{\s*\r?\n?\s*slot\.remove\(\);return;/);
-  assert.match(code, /const programmeStackV310=caps=>\s*\r?\n?\s*Array\.isArray\(caps\?\.programmes\)&&caps\.programmes\.length>0&&caps\?\.programmes_contract==='v310'/);
+  assert.match(code, /const programmeStackV310=caps=>\s*\r?\n?\s*Array\.isArray\(caps\?\.programmes\)&&caps\.programmes\.length>0&&programmeStackContractOkV395\(caps\?\.programmes_contract\)/);
+  assert.match(code, /const PROGRAMME_STACK_MIN_CONTRACT_V395=310;/);
   // The slot W4b pre-shipped, and the copy it pre-translated into all four locales.
   assert.match(code, /id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden/);
   assert.match(html, /\.customer-member-code-slot\{/);
