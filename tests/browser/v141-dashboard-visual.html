@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e2a3803fd2bed4ffd93cc4d7f5c1514366fd62648f85e8db459ba61104b15431"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="b5e291f8fa47989bde32b5137bf3441b2a4d96da28520b062bfc8c757d8c9742"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -4279,7 +4279,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
              Performance figures to that single day, so the helper states the new truth. -->
         <!-- V295 (owner markup 2026-08-13): the link is two-way now — the period pills above
              move this day as well — so the helper states that instead of only one direction. -->
-        <span class="muted small dashboard-schedule-scope-v266">Linked both ways with the figures below.</span>
+        <span class="muted small dashboard-schedule-scope-v266">Follows the period you choose below. Open calendar shows the full schedule.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -4353,9 +4353,9 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        V294 made the link one-way — a schedule day retargeted the figures, but a period pill left
        the schedule card on whatever day it was already showing, so the two controls disagreed on
        screen. The pill now moves the card to the range's END day (the most recent day in range;
-       for Today that is today itself). syncRangeV295=false because this handler already owns the
-       range and the load below — letting the applier write it back would fight the pill it just lit. */
-    applyScheduleDayV252(dashboardRoot.querySelector('#dt').value,false);
+       for Today that is today itself). V403 removed the opposite direction, so the applier now
+       only ever moves the card — this handler still owns the range and the load below. */
+    applyScheduleDayV252(dashboardRoot.querySelector('#dt').value);
     load();
   });
   /* V252: scoped to the Performance range pair. Unscoped, the new schedule date picker also
@@ -4368,7 +4368,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     /* V295: same rule for the From/To pair — Apply is the moment a custom range becomes the
        period, so the schedule card follows it to that range's last day. */
     const appliedEndV295=dashboardRoot.querySelector('#dt').value;
-    if(appliedEndV295)applyScheduleDayV252(appliedEndV295,false);
+    if(appliedEndV295)applyScheduleDayV252(appliedEndV295);
     load();
   };
   /* V370: this first-paint call and the V288 re-fetch below were both landing on a normal load,
@@ -4388,31 +4388,22 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const scheduleDateInputV252=dashboardRoot.querySelector('#dashboardScheduleDate');
   const scheduleTabsV252=[...dashboardRoot.querySelectorAll('[data-schedule-day-v252]')];
   const scheduleTabDateV252=tab=>shiftSgDateInput(sgDateInputValue(),Number(tab.dataset.scheduleDayV252)||0);
-  /* V295: syncRangeV295 says which control started the move. true = the owner picked a day
-     here, so the period follows (the V294 behaviour below). false = the period pills or Apply
-     started it, so only the card, its tabs and its heading move — there is still exactly one
-     range state, and it is never written twice for one gesture. */
-  const applyScheduleDayV252=(date,syncRangeV295=true)=>{
+  /* V403 (owner, photo 5: "pressing today schedule should not change performance because there
+     is already a button for calendar button"). V294 made a schedule-day pick ALSO rewrite the
+     Performance range to that single day; the owner has now ruled that direction out. Choosing
+     a day here moves the card, its tabs and its heading and nothing else — Performance keeps its
+     own pills, its own From/To and its own Apply, and Open calendar is the door to the full
+     schedule. The syncRangeV295 parameter went with the behaviour it guarded rather than being
+     left as a flag every caller passes the same way.
+     The OTHER direction is untouched: a period pill or Apply still moves this card to the
+     range's end day (see the two callers above), which the owner did not object to. */
+  const applyScheduleDayV252=date=>{
     scheduleTabsV252.forEach(tab=>{
       const on=scheduleTabDateV252(tab)===date;
       tab.classList.toggle('act',on);tab.setAttribute('aria-pressed',on?'true':'false');
     });
     if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
     loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
-    if(!syncRangeV295)return;
-    /* V294 (owner markup 2026-08-12: "I want date linked to data below"). A schedule-day pick
-       ALSO sets the Performance figures to that single day. It writes through the same #df/#dt
-       + load() path the global range pills use, so there is exactly one range state and the
-       pills/Apply keep working and override. Programmatic .value writes fire no oninput, so the
-       pill-clearing input handler above cannot double-fire; the Today pill is re-lit only when
-       the picked day IS today, because that is the one pill whose range equals this day. */
-    const rangeFromV294=dashboardRoot.querySelector('#df'),rangeToV294=dashboardRoot.querySelector('#dt');
-    if(rangeFromV294&&rangeToV294){
-      rangeFromV294.value=date;rangeToV294.value=date;
-      dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>
-        button.classList.toggle('act',button.dataset.d==='1'&&date===sgDateInputValue()));
-      load();
-    }
   };
   scheduleTabsV252.forEach(tab=>{tab.onclick=()=>applyScheduleDayV252(scheduleTabDateV252(tab))});
   if(scheduleDateInputV252)scheduleDateInputV252.onchange=()=>{
@@ -4638,6 +4629,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'e2a3803fd2bed4ffd93cc4d7f5c1514366fd62648f85e8db459ba61104b15431',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'b5e291f8fa47989bde32b5137bf3441b2a4d96da28520b062bfc8c757d8c9742',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

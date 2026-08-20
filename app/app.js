@@ -2062,10 +2062,22 @@ function openMerchantRedemptionScanner({
   overlay.querySelector('#merchantScannerClose').onclick=close;
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   camera.disabled=!cameraAvailable;
+  /* V403: the camera starts itself now, so "will load when you open the camera" described a step
+     that no longer exists. The live status line below narrates the real state (starting / hold the
+     QR inside the frame / access was not available), so this slot stays empty when a camera is
+     there and keeps its one genuinely useful sentence when there is not. */
   overlay.querySelector('#merchantScannerCapability').textContent=cameraAvailable
-    ?'QR scanner will load when you open the camera.':'Live scanning is not supported by this browser. Choose a QR image instead.';
-  camera.onclick=async()=>{
-    if(camera.disabled)return;
+    ?'':'Live scanning is not supported by this browser. Choose a QR image instead.';
+  /* V403 (owner, photo 2: "pressing the qr scan should show the scan function, do not need to
+     click 'Use camera'"). The overlay is only ever opened BY a press on a scan control, so that
+     press is the user gesture getUserMedia needs — asking for a second one inside a dialog whose
+     entire purpose is to scan was a step with nothing behind it.
+     The button is NOT removed: it is the retry. If the browser refuses (permission denied or
+     dismissed, no camera, or a gesture rule this path cannot satisfy) the catch re-enables it and
+     the overlay reads exactly as it did before, with the QR-image and paste fallbacks intact. So
+     the worst case is the old behaviour, and the normal case is one fewer tap at a counter. */
+  const startScannerCameraV403=async()=>{
+    if(camera.disabled||closed)return;
     camera.disabled=true;status.textContent='Starting camera…';
     try{
       await loadScannerLibrary();decoderAvailable=true;
@@ -2074,9 +2086,12 @@ function openMerchantRedemptionScanner({
       video.srcObject=stream;await video.play();frame.hidden=false;status.textContent='Hold the QR inside the frame.';
       detectFrame();
     }catch{
+      if(closed)return;
       camera.disabled=false;status.textContent='Camera access was not available. Choose a QR image or paste the QR content.';
     }
   };
+  camera.onclick=startScannerCameraV403;
+  if(cameraAvailable)startScannerCameraV403();
   overlay.querySelector('#merchantScannerImage').onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
@@ -15792,7 +15807,7 @@ async function dashboard(){
              Performance figures to that single day, so the helper states the new truth. -->
         <!-- V295 (owner markup 2026-08-13): the link is two-way now — the period pills above
              move this day as well — so the helper states that instead of only one direction. -->
-        <span class="muted small dashboard-schedule-scope-v266">Linked both ways with the figures below.</span>
+        <span class="muted small dashboard-schedule-scope-v266">Follows the period you choose below. Open calendar shows the full schedule.</span>
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
@@ -15866,9 +15881,9 @@ async function dashboard(){
        V294 made the link one-way — a schedule day retargeted the figures, but a period pill left
        the schedule card on whatever day it was already showing, so the two controls disagreed on
        screen. The pill now moves the card to the range's END day (the most recent day in range;
-       for Today that is today itself). syncRangeV295=false because this handler already owns the
-       range and the load below — letting the applier write it back would fight the pill it just lit. */
-    applyScheduleDayV252(dashboardRoot.querySelector('#dt').value,false);
+       for Today that is today itself). V403 removed the opposite direction, so the applier now
+       only ever moves the card — this handler still owns the range and the load below. */
+    applyScheduleDayV252(dashboardRoot.querySelector('#dt').value);
     load();
   });
   /* V252: scoped to the Performance range pair. Unscoped, the new schedule date picker also
@@ -15881,7 +15896,7 @@ async function dashboard(){
     /* V295: same rule for the From/To pair — Apply is the moment a custom range becomes the
        period, so the schedule card follows it to that range's last day. */
     const appliedEndV295=dashboardRoot.querySelector('#dt').value;
-    if(appliedEndV295)applyScheduleDayV252(appliedEndV295,false);
+    if(appliedEndV295)applyScheduleDayV252(appliedEndV295);
     load();
   };
   /* V370: this first-paint call and the V288 re-fetch below were both landing on a normal load,
@@ -15901,31 +15916,22 @@ async function dashboard(){
   const scheduleDateInputV252=dashboardRoot.querySelector('#dashboardScheduleDate');
   const scheduleTabsV252=[...dashboardRoot.querySelectorAll('[data-schedule-day-v252]')];
   const scheduleTabDateV252=tab=>shiftSgDateInput(sgDateInputValue(),Number(tab.dataset.scheduleDayV252)||0);
-  /* V295: syncRangeV295 says which control started the move. true = the owner picked a day
-     here, so the period follows (the V294 behaviour below). false = the period pills or Apply
-     started it, so only the card, its tabs and its heading move — there is still exactly one
-     range state, and it is never written twice for one gesture. */
-  const applyScheduleDayV252=(date,syncRangeV295=true)=>{
+  /* V403 (owner, photo 5: "pressing today schedule should not change performance because there
+     is already a button for calendar button"). V294 made a schedule-day pick ALSO rewrite the
+     Performance range to that single day; the owner has now ruled that direction out. Choosing
+     a day here moves the card, its tabs and its heading and nothing else — Performance keeps its
+     own pills, its own From/To and its own Apply, and Open calendar is the door to the full
+     schedule. The syncRangeV295 parameter went with the behaviour it guarded rather than being
+     left as a flag every caller passes the same way.
+     The OTHER direction is untouched: a period pill or Apply still moves this card to the
+     range's end day (see the two callers above), which the owner did not object to. */
+  const applyScheduleDayV252=date=>{
     scheduleTabsV252.forEach(tab=>{
       const on=scheduleTabDateV252(tab)===date;
       tab.classList.toggle('act',on);tab.setAttribute('aria-pressed',on?'true':'false');
     });
     if(scheduleDateInputV252&&scheduleDateInputV252.value!==date)scheduleDateInputV252.value=date;
     loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId,date);
-    if(!syncRangeV295)return;
-    /* V294 (owner markup 2026-08-12: "I want date linked to data below"). A schedule-day pick
-       ALSO sets the Performance figures to that single day. It writes through the same #df/#dt
-       + load() path the global range pills use, so there is exactly one range state and the
-       pills/Apply keep working and override. Programmatic .value writes fire no oninput, so the
-       pill-clearing input handler above cannot double-fire; the Today pill is re-lit only when
-       the picked day IS today, because that is the one pill whose range equals this day. */
-    const rangeFromV294=dashboardRoot.querySelector('#df'),rangeToV294=dashboardRoot.querySelector('#dt');
-    if(rangeFromV294&&rangeToV294){
-      rangeFromV294.value=date;rangeToV294.value=date;
-      dashboardRoot.querySelectorAll('.qbtn[data-d]').forEach(button=>
-        button.classList.toggle('act',button.dataset.d==='1'&&date===sgDateInputValue()));
-      load();
-    }
   };
   scheduleTabsV252.forEach(tab=>{tab.onclick=()=>applyScheduleDayV252(scheduleTabDateV252(tab))});
   if(scheduleDateInputV252)scheduleDateInputV252.onchange=()=>{

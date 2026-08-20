@@ -104,24 +104,26 @@ test('V266 B2 the Performance card states the period it covers, next to the numb
   assert.match(block, /pendingPeriod\.textContent='Date range changed — press Apply\.'/);
 });
 
-test('V266/V294 B3 the Today-schedule day picker drives the Performance figures and says so', () => {
-  /* V294 (owner markup 2026-08-12, arrow from this control to the Performance line: "I want
-     date linked to data below") reversed the V266 disclaimer: a schedule-day pick now retargets
-     the figures through the SAME #df/#dt + load() path the range pills use, and the helper
-     states the new truth. */
+test('V266/V294/V403 B3 the Today-schedule day picker moves the card only', () => {
+  /* HISTORY, because this assertion has now been reversed twice and the reason matters.
+     V266 said the picker changed the bookings only. V294 (owner: "I want date linked to data
+     below") made a schedule-day pick ALSO retarget the Performance figures. V295 made that link
+     run both ways. V403 (owner, photo 5, 2026-08-21) removes the schedule -> Performance
+     direction again: "pressing today schedule should not change performance because there is
+     already a button for calendar button".
+     So the day picker moves the card, its tabs and its heading, and nothing else. The OPPOSITE
+     direction survives untouched — a period pill or Apply still moves the card to that range's
+     end day — which is why the helper still says the card follows the period below. */
   const block = dash();
-  /* V295 retarget (owner markup 2026-08-13: "for date selected should reflect schedule &
-     Performance"): the link now runs BOTH ways — a period pill or Apply moves the schedule card
-     to that range's END day — so the helper says "linked", not "also sets". V294's direction is
-     asserted unchanged below; the second direction is asserted alongside it. */
-  assert.match(block, /Linked both ways with the figures below\./);
-  assert.doesNotMatch(block, /Changes the bookings shown here only/);
-  assert.match(block, /rangeFromV294\.value=date;rangeToV294\.value=date;/);
-  assert.match(block, /button\.dataset\.d==='1'&&date===sgDateInputValue\(\)/);
-  assert.match(block, /applyScheduleDayV252\(dashboardRoot\.querySelector\('#dt'\)\.value,false\)/);
+  assert.match(block, /Follows the period you choose below\./);
+  assert.doesNotMatch(block, /Linked both ways with the figures below\./);
+  // The applier no longer writes the range at all: no flag, and no #df/#dt write inside it.
+  assert.match(block, /const applyScheduleDayV252=date=>/);
+  assert.doesNotMatch(block, /syncRangeV295=true/);
+  assert.doesNotMatch(block, /rangeFromV294\.value=date;rangeToV294\.value=date;/);
+  // The surviving direction, asserted so a future edit cannot silently drop it too.
+  assert.match(block, /applyScheduleDayV252\(dashboardRoot\.querySelector\('#dt'\)\.value\)/);
   assert.match(block, /const appliedEndV295=dashboardRoot\.querySelector\('#dt'\)\.value;/);
-  assert.match(block, /const applyScheduleDayV252=\(date,syncRangeV295=true\)=>/);
-  assert.match(block, /if\(!syncRangeV295\)return;/);
   assert.match(block, /dashboard-schedule-scope-v266/);
   // The note wraps onto its own line at every width, including 390px.
   assert.match(html, /\.dashboard-schedule-scope-v266\{flex-basis:100%/);

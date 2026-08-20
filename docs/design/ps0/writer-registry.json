@@ -2278,7 +2278,7 @@
     {
       "id": "db.fn:public.business_switch_to_stamps_v384/4",
       "surface": "db_function",
-      "latest_file": "20260817162432_nestly_v384_stamp_conversion_switch.sql",
+      "latest_file": "20260821000001_nestly_v403_stamp_conversion_ledger_token.sql",
       "rows_written": "points_batches:UPDATE (FEFO drain of the points pot) and INSERT (the new stamp batch, no expiry), points_ledger:INSERT (two adjust rows per converted customer), programme_stamp_conversions_v384:INSERT (idempotency receipt, written only when converting); via public.set_programmes_v314: business_programmes, loyalty_programs, audit_log",
       "detected_signals": "idem-signal, advisory-lock, FOR UPDATE row-lock",
       "entry_point": "business_switch_to_stamps_v384(p_business, p_convert_existing_points, p_points_per_stamp, p_idempotency_key) — the Wave-4 stamp-conversion switch. Flips the programme spine to stamps-only by delegating to public.set_programmes_v314 (stamps true, points and tiers false, SAME idempotency key), then — only when the owner chose to convert — moves whole multiples of the rate from the points pot into the stamp pot: spendable = clamp(min(points_ledger sum, points_batches remaining sum), >=0) per customer, stamps = floor(spendable / rate), leftover points stay saved.",
