@@ -316,6 +316,9 @@ let growPointsRewardTabV324='published';
    re-renders of this same page visit (an Add-level click must not silently flip the page back to
    Points mid-interaction), reset alongside the rest of this section's per-visit state below. */
 let growPointsViewKindV350=null;
+/* V392 (owner, photo 6, ringed on the PREVIOUS PERIOD column: "can filter compare last month /
+   last year"). Which window this one is measured against. 'previous' is the equal-length window
+   immediately before it — what V386 always used and still the default. */
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
@@ -5909,6 +5912,43 @@ function bottleDaysLabelV275(days){
   if(value<0)return 'Overdue';
   if(value===0)return 'Last day';
   return `${value} day${value===1?'':'s'} left`;
+}
+/* V297: parts of a whole read as a proportion, and a column of exact figures does not. This is a
+   plain CSS bar built from the very numbers in the table beside it — no charting dependency and
+   no network fetch, both of which the app's CSP forbids anyway. Negative or zero parts are left
+   out of the bar (a reversal is not a share of anything) while the table above keeps them. */
+/* V299: the palette moved onto :root tokens (--chart-1..6) so every DOM proportion bar in the
+   product reads from one place instead of six literals only this file knew about. */
+/* V386 (owner, photo 7: "down here can put analytics by graph / chart comparison" drawn under
+   the usage table). A plain DOM bar chart built from the very numbers in the table above it —
+   no charting library, which the app's CSP forbids loading anyway, and no second fetch.
+
+   What it compares depends on what the owner asked for. With a window set there are two series
+   per category, this period against the previous equal one, and that contrast IS the question
+   "are the programmes bringing customers back". With no window there is no previous period to
+   compare against, so the chart compares the categories with each other instead.
+
+   Bars are scaled against the largest value ACROSS BOTH series, so the two periods are drawn on
+   one axis and a shorter bar always means a smaller number. A category the schema cannot measure
+   is left out entirely rather than drawn as a zero-length bar, which would read as "measured,
+   and nobody used it" — the same rule the table's "Not tracked" cell keeps. */
+/* V388: the four windows an owner actually asks for, in Singapore calendar terms. Built from
+   today's SGT date with the existing shiftSgDateInput helper rather than the browser's clock, so
+   a device west of Singapore does not offer yesterday's "this week". Weeks run Monday-Sunday. */
+/* V392: what "the period before" means, when the owner gets to choose.
+   'previous'   the equal-length window immediately before this one — V386's original, and still
+                the default, because it answers "is this fortnight better than the last one".
+   'last_month' / 'last_year'  the SAME calendar dates shifted back, which is the comparison a
+                seasonal business actually wants: this August against last August, not against
+                July. Shifting the dates rather than subtracting 30/365 days keeps the window
+                aligned to the calendar; a 31st that does not exist in the target month clamps to
+                that month's last day rather than rolling into the next one. */
+function growUsageShiftMonthsV392(date,months){
+  const [year,month,day]=String(date).split('-').map(Number);
+  const target=new Date(Date.UTC(year,month-1-months,1));
+  const lastDay=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate();
+  const safeDay=Math.min(day,lastDay);
+  return `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
 }
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){

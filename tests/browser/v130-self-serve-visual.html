@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="186bf6e794f24ec798fde1b2c550d7373fdcea414fab6260b91283c2721cd5e7"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="49ba2aaef54c906f8a47aff139f61f9ec4972044cff3adf55909c8e00662c929"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -321,11 +321,30 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    default direction is row with no wrap, so every benefit stayed a flex item on one line and ran
    off the right of the screen (owner screenshot, Record sale, Diamond benefits). Styling the
    children could never fix that; the parent's own axis had to change. */
+/* V399: V372 set align-items:stretch here at (0,1,0), but .permission-banner sets
+   align-items:flex-start at the same specificity and appears LATER in this sheet, so flex-start
+   won and every row shrank to its own text width — the rows stacked (V372's flex-direction did
+   apply) but stayed a third of the card wide, which is the cramped column in the owner's photo.
+   Qualifying with .permission-banner takes it to (0,2,0) so the rows fill the banner. Measured
+   in Chromium: row width goes from shrink-to-fit to the full content box. */
+.permission-banner.till-tier-benefits-v369{align-items:stretch}
 .till-tier-benefits-v369{flex-direction:column;align-items:stretch;flex-wrap:wrap}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369{display:flex;gap:10px;align-items:center;
   justify-content:space-between;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span{display:flex;flex-direction:column;min-width:0;flex:1}
 .till-tier-benefits-v369 .till-tier-benefit-row-v369 b{overflow-wrap:anywhere}
+/* V399: the tier rows end in a <button>, which the >span rule above never touched; the reward
+   rows end in a status <span class="pill">, which it did — so the pill inherited flex:1 and
+   stretched across half the row. A status pill is sized by its word. */
+.till-tier-benefits-v369 .till-tier-benefit-row-v369>span.pill{flex:0 0 auto;display:inline-flex;
+  align-items:center;justify-content:center}
+
+/* V399 (owner, photo 3: the full-width "Scan customer QR" button crossed out, a small square
+   icon drawn in its place, "smaller button"). Icon-only, square, and sized to stay a comfortable
+   tap target on a counter tablet — 44px is the floor a thumb needs, so "smaller" stops there
+   rather than at whatever the glyph alone would measure. */
+.till-gift-scan-v399{display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;min-height:44px;padding:0;margin-top:10px;flex:0 0 auto}
 
 /* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
    changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
@@ -405,7 +424,16 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .reporting-scope-branches label{display:inline-flex;align-items:center;gap:5px;min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;font-size:12px;font-weight:700}
 .reporting-scope-branches input{width:auto;min-height:auto}
 .scope-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#F7F1EA;border:1px solid var(--line);padding:5px 9px;font-size:11px;font-weight:750;color:var(--muted)}
-.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+/* V399 (owner, photo 6: a line drawn round the whole KPI row out to the card's right edge,
+   "fill until here too empty"). The row was repeat(auto-fit,minmax(170px,1fr)). auto-fit only
+   collapses tracks that NOTHING occupies, and the delta legend under the tiles is a
+   grid-column:1/-1 item — it spans every track, so none of them could ever collapse. On a
+   1040px row that resolved to FIVE tracks for FOUR tiles: each tile took a fifth of the width
+   and the row stopped ~211px short of the card edge, which is the emptiness in the photo.
+   The count is now the real number of tiles (2, 3 or 4 depending on module access), published
+   by the painter as --kpi-count, so the row fills at any tile count and the legend can go on
+   spanning it. Below 1100px the two-column rule after this one still wins. */
+.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(var(--kpi-count,4),minmax(0,1fr))}
 .dashboard-charts.v150-understand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .dashboard-chart-card{overflow:hidden}.dashboard-chart-head{background:var(--tint);border-bottom:1px solid var(--line);margin:-22px -22px 14px;padding:18px 22px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:flex-start}
 .dashboard-chart-head>svg{margin-top:2px}.dashboard-chart-head b{display:block;line-height:1.25;overflow-wrap:anywhere}.dashboard-chart-head p{line-height:1.35}
@@ -1323,7 +1351,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
   .edCondValCell input,.edEffValCell input,.edCondValCell select,.edEffValCell select{flex:1 1 auto;width:100%}}
 .spacer{flex:1}
 .frontline-card{max-width:460px;margin:0 auto}
-.frontline-phone{font-size:34px;text-align:center;height:64px;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+/* V399 (owner, photo 1: the typed number ringed with "number increase size, too small").
+   The keypad digit below it is 22px on a 60px key; the number those keys PRODUCE was barely
+   half a step larger, so the one value the cashier has to read back to a customer was the
+   smallest confident thing on the card.
+   The size was not the whole story. `.frontline-phone` is (0,1,0) and the base control rule
+   `input:not([type="checkbox"]):not([type="radio"])` above is (0,2,1), so the base rule won and
+   the number had been rendering at the ordinary 15px control size all along — the declared 34px
+   never reached the screen once. Measured in Chromium before and after, not read off the
+   stylesheet. Hence the selector carries the card too: (0,2,1), and later in the sheet, so it
+   actually applies. Raised to 46px with a matching height bump — the card keeps its 460px
+   max-width, so nothing around it moves. */
+.frontline-card input.frontline-phone{font-size:46px;font-weight:700;text-align:center;height:76px;
+  letter-spacing:.06em;font-variant-numeric:tabular-nums}
 .frontline-keypad{grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
 .frontline-keypad .btn{height:60px;font-size:22px;font-weight:700}
 .frontline-tenders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
@@ -1534,6 +1574,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-tier-ladder-line-v343{position:absolute;left:0;right:0;top:38px;height:6px;border-radius:999px;background:linear-gradient(90deg,#A46B3D 0%,#C98D32 55%,#C7D8E9 100%)}
 .grow-tier-ladder-stop-v343{position:absolute;top:28px;transform:translateX(-50%);display:grid;justify-items:center;gap:7px;min-width:92px;text-align:center}
 .grow-tier-ladder-stop-v343 i{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid #C98D32;box-shadow:0 0 0 2px #fff}
+/* V399 (owner, photo 8: "logo" against each rail marker). The plain 18px dot becomes a badge
+   big enough to hold the tier's own glyph — same gold ring, so the rail still reads as one
+   continuous ladder rather than three loose icons. */
+.grow-tier-ladder-stop-v343 i.grow-tier-ladder-logo-v399{width:34px;height:34px;border-width:2px;
+  display:inline-flex;align-items:center;justify-content:center;color:#C98D32}
+.grow-tier-ladder-stop-v343 i.grow-tier-ladder-logo-v399 svg{width:16px;height:16px;display:block}
+/* V399: the basis card's controls (state pill, on/off switch, Edit) are one group, so the card
+   keeps its two-part shape — what the programme is on the left, what you can do to it on the
+   right — instead of spreading four children across the row. */
+.grow-tier-basis-actions-v399{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .grow-tier-ladder-stop-v343 b{margin-top:14px;font-size:.95rem}
 .grow-tier-ladder-stop-v343 small{color:var(--muted);font-size:.82rem}
 /* V350 (owner mockup, photo 1): the Stamp Card page's own interface — a numbered level table plus

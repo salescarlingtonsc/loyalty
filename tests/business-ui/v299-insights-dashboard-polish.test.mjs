@@ -10,8 +10,8 @@
  *  4. The report share-bar palette reads from :root --chart-* tokens instead of six literals,
  *     and the bring-back playbook reuses the same bar component instead of a third hand-rolled
  *     idiom, with its headline in ink rather than the disabled grey.
- *  5. The Dashboard KPI grid is tile-count-agnostic (2 or 3 tiles no longer float in a fixed
- *     4-column row).
+ *  5. The Dashboard KPI grid follows its tile count (2 or 3 tiles no longer float in a fixed
+ *     4-column row). V399 changed the mechanism from auto-fit to --kpi-count; see the test.
  *  6. Business Insights has quick date-range presets (7/30/90 days, 6/12 months) that fill the
  *     SAME From/To pair and press the same Run — no new computation path.
  *  7. Customer 360 states Member since from the already-fetched client row; the dead
@@ -49,9 +49,19 @@ test('share-bar palette reads from tokens and the playbook reuses the shared bar
   assert.doesNotMatch(app,/font-size:1\.7rem;font-weight:700;color:var\(--muted\)/);
 });
 
-test('dashboard KPI grid is tile-count-agnostic',()=>{
-  assert.match(indexHtml,/\.dashboard-kpis\.v150-dashboard-kpis\{grid-template-columns:repeat\(auto-fit,minmax\(170px,1fr\)\)\}/);
+test('dashboard KPI grid follows the tile count, never a fixed 4-column row',()=>{
+  /* V299 replaced a hardcoded repeat(4,...) with auto-fit so 2 or 3 tiles would not float in a
+     rigid four-column row. V399 keeps that requirement and changes only the mechanism, because
+     auto-fit could not actually deliver it: the delta legend inside #kpis is a grid-column:1/-1
+     item, and auto-fit only collapses tracks NOTHING occupies, so the spanning legend held every
+     track open. Measured in Chromium at 1440px: five tracks for four tiles, the row ending 211px
+     short of the card edge — the emptiness in the owner's photo 6.
+     --kpi-count is the number of tiles that actually rendered, so 2 tiles give 2 columns and 4
+     give 4, all filling the row. The original prohibition stands. */
+  assert.match(indexHtml,/\.dashboard-kpis\.v150-dashboard-kpis\{grid-template-columns:repeat\(var\(--kpi-count,4\),minmax\(0,1fr\)\)\}/);
   assert.doesNotMatch(indexHtml,/\.dashboard-kpis\.v150-dashboard-kpis\{grid-template-columns:repeat\(4,minmax\(150px,1fr\)\)\}/);
+  // The count must be published from the painter, or the custom property is a dead default.
+  assert.match(app,/kpis\.style\.setProperty\('--kpi-count',String\(Math\.max\(1,metrics\.length\)\)\);/);
 });
 
 test('Business Insights carries quick-range presets that press the existing Run',()=>{

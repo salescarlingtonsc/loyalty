@@ -138,7 +138,11 @@ test('V374 the three sections are three tabs, and only the selected one renders'
   assert.match(till, /let tillItemsTabV374='items';/);
   assert.match(composer, /\{key:'items',label:'Items',count:0\}/);
   assert.match(composer, /\{key:'packages',label:'Packages',count:packagesReady\}/);
-  assert.match(composer, /\{key:'benefits',label:'Benefits',count:rewards\.count\}/);
+  /* V399 (owner, photos 2 and 3): the tab is LABELLED "Rewards" now — it holds point gifts,
+     welcome and bring-back offers and vouchers as well as tier benefits. The state key stays
+     'benefits', which is what the panel selector below and every reader of tillItemsTabV374
+     still switch on, so the rename is copy only. */
+  assert.match(composer, /\{key:'benefits',label:'Rewards',count:rewards\.count\}/);
   // ONE panel is chosen — the other two are never concatenated underneath it.
   assert.match(composer, /const panel=active==='packages'\?tillPackagesPanelHtmlV374\(\)\s*\n\s*:active==='benefits'\?tillBenefitsPanelHtmlV374\(rewards\)\s*\n\s*:tillItemsPanelHtmlV374\(\);/);
   assert.match(composer, /<div class="till-stage-panel-v374">\$\{panel\}<\/div>/);

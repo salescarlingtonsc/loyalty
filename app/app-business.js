@@ -294,10 +294,6 @@ let growHistoryToV375='';
    sharing one would move a table the owner did not touch. */
 let growUsageFromV386='';
 let growUsageToV386='';
-/* V392 (owner, photo 6, ringed on the PREVIOUS PERIOD column: "can filter compare last month /
-   last year"). Which window this one is measured against. 'previous' is the equal-length window
-   immediately before it — what V386 always used and still the default. */
-let growUsageCompareV392='previous';
 /* V349: lazily-created/revoked preview blob URL for a newly-picked (not-yet-uploaded) gift photo
    — reused across rerenders as long as the File reference is unchanged, so choosing a photo
    doesn't leak a fresh object URL on every keystroke-triggered rerender. */
@@ -3705,6 +3701,9 @@ async function dashboard(){
       const inactiveTotal=inactiveResponse.error?'Unavailable':String(Number(inactiveResponse.data?.total)||0);
       metrics.push({key:'inactive',value:inactiveTotal,hint:'Last visit 30+ days ago'});
     }
+    /* V399: the grid is sized from the tiles that actually rendered — see --kpi-count in the
+       stylesheet. Set before innerHTML so the first paint is already the right shape. */
+    kpis.style.setProperty('--kpi-count',String(Math.max(1,metrics.length)));
     kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
@@ -4003,7 +4002,15 @@ async function clientsPage(){
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
       <div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customers</h1></div></div>
-      <div class="client-summary-cards" id="inactiveCards" aria-label="Inactive customer shortcuts">
+      <div class="client-summary-cards" id="inactiveCards" aria-label="Customer shortcuts">
+        ${/* V399 (owner, photo 7: a box drawn in the empty space to the left of the three chips,
+             labelled "All"). The three chips could narrow the list but nothing put it back except
+             the Clear filters button further down the page, so the way OUT of a filter was in a
+             different place from the way in. This card is that way out, and it carries the total
+             so the three inactive figures can be read against the whole book.
+             It is deliberately not a data-inactive-bucket card: those keys are server buckets and
+             "everyone" is not one of them — it clears the filter instead of selecting a group. */''}
+        <button type="button" class="client-summary-card" data-customer-scope-all-v399="1" aria-pressed="false"><b>—</b><span>All</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="30_59" aria-pressed="false"><b>—</b><span>Inactive 30–59 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="60_89" aria-pressed="false"><b>—</b><span>Inactive 60–89 days</span></button>
         <button type="button" class="client-summary-card" data-inactive-bucket="90_plus" aria-pressed="false"><b>—</b><span>Inactive 90+ days</span></button>
@@ -4111,11 +4118,18 @@ async function clientsPage(){
         btn.querySelector('b').textContent=String(Number(counts[btn.dataset.inactiveBucket])||0);
         btn.setAttribute('aria-pressed',String(clientInactiveBucket===btn.dataset.inactiveBucket));
       });
+      /* V399: counts.total is the server's own figure for this reporting scope — the same read
+         that produced the three bucket counts — so "All" can never disagree with them. */
+      const allCardV399=host.querySelector('[data-customer-scope-all-v399]');
+      if(allCardV399){
+        allCardV399.querySelector('b').textContent=String(Number(counts.total)||0);
+        allCardV399.setAttribute('aria-pressed',String(!clientInactiveBucket));
+      }
       if(!clientInactiveBucket){renderSelectedAudienceActionsV154([],false);return}
       const directory=await allCustomerDirectoryRows();
       if(!isCustomersCurrent())return;
       renderSelectedAudienceActionsV154(directory.customers,directory.loyaltyAvailable);
-    }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b').forEach(b=>b.textContent='—')}
+    }catch(error){if(isCustomersCurrent())host.querySelectorAll('[data-inactive-bucket] b,[data-customer-scope-all-v399] b').forEach(b=>b.textContent='—')}
   }
   /* V248 — v155 dropped loyalty_available from the directory payload while the client still read
      `=== true`, so an absent key blanked Points/Credit for every business. An explicit false is
@@ -4169,6 +4183,11 @@ async function clientsPage(){
   $('clientInactivity').onchange=()=>{clientInactiveBucket=$('clientInactivity').value||null;clientPage=0;load();refreshInactiveCards()};
   $('clientSort').onchange=()=>{clientPage=0;load()};
   $('inactiveCards').querySelectorAll('[data-inactive-bucket]').forEach(btn=>btn.onclick=()=>{clientInactiveBucket=clientInactiveBucket===btn.dataset.inactiveBucket?null:btn.dataset.inactiveBucket;$('clientInactivity').value=clientInactiveBucket||'';clientPage=0;load();refreshInactiveCards()});
+  /* V399: the same one state the chips and the select already share — All just writes the empty
+     value into it, so the select, the chips and the fetched page can never disagree. */
+  $('inactiveCards').querySelectorAll('[data-customer-scope-all-v399]').forEach(btn=>btn.onclick=()=>{
+    clientInactiveBucket=null;$('clientInactivity').value='';clientPage=0;load();refreshInactiveCards();
+  });
   $('exp').onclick=async()=>{
     const exportButton=$('exp');exportButton.disabled=true;
     let directory;
@@ -6922,7 +6941,13 @@ async function tillPage(){
     const nextUpV392=giftsV392.filter(gift=>gift.available_now!==true)
       .sort((a,b)=>(Number(a.remaining_units)||0)-(Number(b.remaining_units)||0))[0]||null;
     const giftsBannerV392=(affordableV392.length||nextUpV392)
-      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Rewards this customer can claim</b>
+      ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>Rewards this customer can claim</b>
+        ${/* V399: this banner is the one V372 missed. .permission-banner is display:flex with the
+             default row direction and no wrap, so the heading, the instruction, every reward row
+             and the scan button were all flex items on ONE line — which is why photo 3 shows them
+             squashed side by side and running to the card's edge. till-tier-benefits-v369 is the
+             existing class that turns exactly this container into a column; the sibling tier
+             banner directly above has carried it since V372. Same fix, same class, no new CSS. */''}
         <p class="muted small" style="margin:5px 0">Scan the customer's QR to confirm a redemption.</p>
         ${affordableV392.map(gift=>`<div class="till-tier-benefit-row-v369">
             <span><b class="small" data-merchant-content>${esc(gift.name||'Reward')}</b>
@@ -6934,7 +6959,12 @@ async function tillPage(){
             <span class="muted small">${esc(String(Math.max(0,Number(nextUpV392.remaining_units)||0)))} more ${esc(giftUnitV392)}</span></span>
             <span class="pill off">Not yet</span>
           </div>`:''}
-        ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm" id="tGiftScanV392" style="margin-top:8px">${CUI.icon('scan',{size:16})} Scan customer QR</button>`:''}</div>`
+        ${/* V399 (owner, photo 3: the wide "Scan customer QR" button crossed out and a small square
+           icon drawn beside it, labelled "smaller button"). The control is unchanged — same id,
+           same handler, same scan — it is just the compact icon form now, so it stops competing
+           with the reward rows it sits under. The accessible name is kept in full: shrinking a
+           control must not shrink what a screen reader is told about it. */''}
+        ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm till-gift-scan-v399" id="tGiftScanV392" aria-label="Scan customer QR" title="Scan customer QR">${CUI.icon('scan',{size:18})}</button>`:''}</div>`
       :'';
     const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
@@ -6988,7 +7018,12 @@ async function tillPage(){
     const tabs=[
       {key:'items',label:'Items',count:0},
       {key:'packages',label:'Packages',count:packagesReady},
-      {key:'benefits',label:'Benefits',count:rewards.count}
+      /* V399 (owner, photos 2 and 3: "Benefits" struck through on the tab strip, "Rewards"
+         written above it, on both screenshots). The tab holds point gifts, welcome and
+         bring-back offers and reward vouchers as well as tier benefits, so "Rewards" was
+         already the truer word for what is inside it. The state key stays 'benefits' —
+         renaming that would only churn every reader of tillItemsTabV374 for no gain. */
+      {key:'benefits',label:'Rewards',count:rewards.count}
     ].filter(tab=>!(walkin&&tab.key!=='items'));
     if(!tabs.some(tab=>tab.key===tillItemsTabV374))tillItemsTabV374='items';
     const active=tillItemsTabV374;
@@ -7052,7 +7087,10 @@ async function tillPage(){
     if(noCheckoutItems)
       return `${CUI.emptyState({iconName:'till',title:'No checkout items at this branch',body:'Ask the owner to make a product or service available in Settings → Checkout catalogue.'})}
         <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>`;
-    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${usingHistoryV392?'<span class="muted small">What they had last</span>':hiddenCount>0?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+    return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${/* V399 (owner, photo 2: the "What they had last" caption struck out). The grid still leads
+        with this customer's own history — only the label describing it is gone, because the tiles
+        are self-evident and the caption was competing with the question above it. The
+        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
       <div class="till-item-search-v392">
         <label class="sr-only" for="tillItemSearchV392">Search services and products</label>
         <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services and products" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
@@ -12728,17 +12766,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      The previous-equal-window read is what makes the chart a COMPARISON rather than a snapshot;
      it uses previousEquivalentRangeV153, the same derivation the dashboard's delta chips use. */
   const growUsageWindowedV386=Boolean(growUsageFromV386&&growUsageToV386);
-  const growUsagePreviousRangeV386=growUsageWindowedV386
-    ?growUsageComparisonRangeV392(growUsageFromV386,growUsageToV386,growUsageCompareV392):null;
+  /* V399: the second, previous-window read went with the compare control the owner removed
+     (photo 4, "don't need compare"). Nothing consumed its rows any more, so leaving it in place
+     would have been a per-render round trip paid for a series that is never drawn. */
   const growUsageWindowRequestV386=(canRewards&&growUsageWindowedV386)
-    ?Promise.all([
-      sb.rpc('business_programme_usage_v386',{p_business:S.biz.id,p_from:growUsageFromV386,p_to:growUsageToV386})
-        .then(result=>result.error?null:(result.data||null)).catch(()=>null),
-      sb.rpc('business_programme_usage_v386',{p_business:S.biz.id,
-        p_from:growUsagePreviousRangeV386.previousFrom,p_to:growUsagePreviousRangeV386.previousTo})
-        .then(result=>result.error?null:(result.data||null)).catch(()=>null)
-    ])
-    :Promise.resolve([null,null]);
+    ?sb.rpc('business_programme_usage_v386',{p_business:S.biz.id,p_from:growUsageFromV386,p_to:growUsageToV386})
+      .then(result=>result.error?null:(result.data||null)).catch(()=>null)
+    :Promise.resolve(null);
   const growProgrammeReadsRequestV271=Promise.all([
     canRewards?sb.rpc('business_programme_usage_v271',{p_business:S.biz.id})
       .then(result=>result.error?null:(result.data||null)).catch(()=>null):Promise.resolve(null),
@@ -12813,7 +12847,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growProgrammeReadsV271=await growProgrammeReadsRequestV271;
   if(!isGrowCurrent())return;
   const growUsageV271=growProgrammeReadsV271[0];
-  const [growUsageWindowV386,growUsagePreviousV386]=await growUsageWindowRequestV386;
+  const growUsageWindowV386=await growUsageWindowRequestV386;
   /* Unwindowed, the card reads the same all-time figures the Overview does. Windowed, it reads
      the window — and a failed windowed read falls back to nothing rather than silently showing
      all-time numbers under a date range, which would be the worst of both. */
@@ -13830,9 +13864,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ||String(a.category).localeCompare(String(b.category)));
   };
   const growAnalyticsRowsV375=growAnalyticsRowsFromUsageV386(growUsageForAnalyticsV386);
-  const growAnalyticsPreviousRowsV386=growUsageWindowedV386
-    ?new Map(growAnalyticsRowsFromUsageV386(growUsagePreviousV386).map(row=>[row.category,row.customers]))
-    :null;
   /* V386 (owner, photo 7: "filter by date" across the usage table, and "down here can put
      analytics by graph / chart comparison" beneath it).
      The filter is scoped to THIS table and says so, because the card above it already carries a
@@ -13849,13 +13880,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          window state and a shortcut can never disagree with what the inputs show. The pressed
          state is derived by comparing the shortcut's own dates with the applied window, so it
          lights up when the owner types those dates by hand too. */''}
-    <div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Quick date ranges" style="flex-basis:100%">
+    ${/* V399 (owner, photo 4: the shortcut strip ringed with "Quick button here", the arrow
+         landing beside Apply/Clear). It was on a row of its own because of flex-basis:100%, which
+         put a full row's gap between the dates and the shortcuts that set them. It now sits on
+         the same line as From/To/Apply/Clear and wraps only when the bar runs out of width. */''}
+    <div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Quick date ranges">
       ${growUsageQuickRangesV388().map(range=>`<button type="button" data-grow-usage-quick-v388="${esc(range.key)}" aria-pressed="${growUsageFromV386===range.from&&growUsageToV386===range.to?'true':'false'}">${esc(range.label)}</button>`).join('')}
     </div>
-    ${growUsageWindowedV386?`<div class="v150-segment grow-usage-quick-v388" role="group" aria-label="Compare against" style="flex-basis:100%">
-      <span class="muted small grow-usage-compare-label-v392">Compare with</span>
-      ${GROW_USAGE_COMPARE_OPTIONS_V392.map(option=>`<button type="button" data-grow-usage-compare-v392="${esc(option.key)}" aria-pressed="${growUsageCompareV392===option.key?'true':'false'}">${esc(option.label)}</button>`).join('')}
-    </div>`:''}
+    ${/* V399 (owner, photo 4: the whole "Compare with" segment struck through — "don't need
+         compare" — and the PERIOD BEFORE column crossed out). Both are gone, and with them the
+         only readers of growUsageCompareV392. The chart below keeps working: passing no previous
+         series makes growUsageComparisonChartV386 render its single-series "Customers used, by
+         category" form, which is the shape it already had before comparison was added. */''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
       ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
@@ -13871,10 +13907,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growUsageFilterBarV386}
       ${growUsageWindowFailedV386
         ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
-        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th>${growUsageWindowedV386?`<th>${esc(growUsageCompareLabelV392(growUsagePreviousRangeV386))}</th>`:''}</tr></thead><tbody>
-        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td>${growUsageWindowedV386?`<td data-label="${esc(growUsageCompareLabelV392(growUsagePreviousRangeV386))}">${growCountCellV271(growAnalyticsPreviousRowsV386?.get(row.category)??null)}</td>`:''}</tr>`).join('')}
+        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
+        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
       </tbody></table></div>
-      ${growUsageComparisonChartV386(growAnalyticsRowsV375,growAnalyticsPreviousRowsV386,growUsagePreviousRangeV386)}`
+      ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
     </div>
   </section>`;
@@ -14513,7 +14549,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="grow-tier-ladder-line-v343"></div>
     ${growTiersPublishedV331.map(tier=>{
       const pct=Math.max(0,Math.min(100,(Number(tier.threshold||0)/growTiersMaxThresholdV331)*100));
-      return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i></i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+      /* V399 (owner, photo 8: "logo" written against the rail markers with lines drawn to the
+         icons in the Live tiers list below). The stop was a bare dot, so the rail and the list
+         named the same three tiers in two different visual languages. Same threshold-derived
+         glyph as the row (see the tier card above), so a tier cannot show one badge on the rail
+         and another in the list. */
+      const ladderIconV399=CUI.icon(Number(tier.threshold||0)>=500?'memberships':Number(tier.threshold||0)>=100?'loyalty':'star',{size:16});
+      return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
     }).join('')}
   </div>`:'';
   const growTiersManageV331=!canRewards
@@ -14531,18 +14573,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?`<button type="button" class="btn sm" id="growTiersSetupV331"${growTiersBusyV331?' disabled':''}>Set up Tier membership</button>${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<div class="grow-tiers-page-v343">
-      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">${esc(growTiersBasisLabelV347)}</p></span>${canSetupGrow?`<label class="btn ghost sm" style="cursor:pointer;position:relative"><span>Change</span><select data-grow-tiers-basis-select-v347 aria-label="Tier level is earned by" style="position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer"${growTiersBusyV331?' disabled':''}>
+      ${/* V399 (owner, photo 8). Three marks on this card:
+           · "Change" struck through, "Edit" written above it — the control opens the setting for
+             editing, and every other row on this page already calls that button Edit.
+           · an OFF pill drawn in beside it, "turn on/off here, on become green".
+           · the Turn off button down in the Manage tiers header crossed out.
+           They are one instruction: the programme's on/off belongs on the card that states what
+           the programme IS, not buried in the header of the list of its rungs. The switch moved
+           rather than being duplicated — it is the SAME data-grow-switchtoggle-v322 control, so
+           the confirmation step below it, its pending state and its error surface are untouched
+           and there is still exactly one way to switch tiers on or off. */''}
+      <div class="grow-tier-basis-card-v343"><span><b>Tier level is earned by</b><p class="muted small">${esc(growTiersBasisLabelV347)}</p></span>${canSetupGrow?`<span class="grow-tier-basis-actions-v399">
+      <span class="pill ${growTiersOnV331?'on':'off'}" data-grow-tiers-state-v399="${growTiersOnV331?'on':'off'}">${statusOnOff(growTiersOnV331)}</span>
+      <button type="button" class="btn ghost sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>
+      <label class="btn ghost sm" style="cursor:pointer;position:relative"><span>Edit</span><select data-grow-tiers-basis-select-v347 aria-label="Tier level is earned by" style="position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer"${growTiersBusyV331?' disabled':''}>
         <option value="points_earned"${growTiersBasisV347==='points_earned'?' selected':''}>Points earned</option>
         <option value="visits"${growTiersBasisV347==='visits'?' selected':''}>Visits</option>
         <option value="spend"${growTiersBasisV347==='spend'?' selected':''}>Lifetime spend</option>
-      </select></label>`:''}</div>
+      </select></label></span>`:''}</div>
       ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
         <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} configured</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
-            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">+ Add tier</button>
-            <button type="button" class="btn sm" role="switch" aria-checked="${growTiersOnV331}" data-grow-switchtoggle-v322="tiers">${growTiersOnV331?'Turn off':'Turn on'}</button>`:''}
+            ${/* V399: the switch that used to sit here now lives on the basis card above — see
+                 the note there. Only + Add tier remains, which is what this header is for. */''}
+            ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-add-v331="1">+ Add tier</button>`:''}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="tiers" style="margin-top:8px"${growSwitchPendingV322==='tiers'?'':' hidden'}>
           <b>${growTiersOnV331?'Turn Tier membership off for customers?':'Turn Tier membership on for customers?'}</b>
@@ -15598,9 +15654,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   };
   /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
      same way — it is Apply with the typing done for you, not a second window state. */
-  document.querySelectorAll('[data-grow-usage-compare-v392]').forEach(button=>{
-    button.onclick=()=>{growUsageCompareV392=button.dataset.growUsageCompareV392||'previous';growRerenderV322({quiet:true})};
-  });
   document.querySelectorAll('[data-grow-usage-quick-v388]').forEach(button=>{
     button.onclick=()=>{
       const range=growUsageQuickRangesV388().find(item=>item.key===button.dataset.growUsageQuickV388);
@@ -25740,43 +25793,6 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
   </section>`;
 }
 
-/* V297: parts of a whole read as a proportion, and a column of exact figures does not. This is a
-   plain CSS bar built from the very numbers in the table beside it — no charting dependency and
-   no network fetch, both of which the app's CSP forbids anyway. Negative or zero parts are left
-   out of the bar (a reversal is not a share of anything) while the table above keeps them. */
-/* V299: the palette moved onto :root tokens (--chart-1..6) so every DOM proportion bar in the
-   product reads from one place instead of six literals only this file knew about. */
-/* V386 (owner, photo 7: "down here can put analytics by graph / chart comparison" drawn under
-   the usage table). A plain DOM bar chart built from the very numbers in the table above it —
-   no charting library, which the app's CSP forbids loading anyway, and no second fetch.
-
-   What it compares depends on what the owner asked for. With a window set there are two series
-   per category, this period against the previous equal one, and that contrast IS the question
-   "are the programmes bringing customers back". With no window there is no previous period to
-   compare against, so the chart compares the categories with each other instead.
-
-   Bars are scaled against the largest value ACROSS BOTH series, so the two periods are drawn on
-   one axis and a shorter bar always means a smaller number. A category the schema cannot measure
-   is left out entirely rather than drawn as a zero-length bar, which would read as "measured,
-   and nobody used it" — the same rule the table's "Not tracked" cell keeps. */
-/* V388: the four windows an owner actually asks for, in Singapore calendar terms. Built from
-   today's SGT date with the existing shiftSgDateInput helper rather than the browser's clock, so
-   a device west of Singapore does not offer yesterday's "this week". Weeks run Monday-Sunday. */
-/* V392: what "the period before" means, when the owner gets to choose.
-   'previous'   the equal-length window immediately before this one — V386's original, and still
-                the default, because it answers "is this fortnight better than the last one".
-   'last_month' / 'last_year'  the SAME calendar dates shifted back, which is the comparison a
-                seasonal business actually wants: this August against last August, not against
-                July. Shifting the dates rather than subtracting 30/365 days keeps the window
-                aligned to the calendar; a 31st that does not exist in the target month clamps to
-                that month's last day rather than rolling into the next one. */
-function growUsageShiftMonthsV392(date,months){
-  const [year,month,day]=String(date).split('-').map(Number);
-  const target=new Date(Date.UTC(year,month-1-months,1));
-  const lastDay=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate();
-  const safeDay=Math.min(day,lastDay);
-  return `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
-}
 const GROW_USAGE_COMPARE_OPTIONS_V392=Object.freeze([
   {key:'previous',label:'Period before'},
   {key:'last_month',label:'Last month'},
