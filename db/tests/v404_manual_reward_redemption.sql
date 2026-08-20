@@ -24,20 +24,24 @@ update _c set biz=(select id from i);
 with i as (insert into public.branches(business_id,name) select biz,'Main' from _c returning id)
 update _c set br=(select id from i);
 
+/* Each of the three carries its ROLE in the address. Selecting them back by created_at was
+   ambiguous — all three are inserted in one statement and tie on the timestamp. */
 do $users$
-declare v_c record; v_id uuid;
+declare v_c record; v_who text; v_id uuid; v_tag text;
 begin
   select * into v_c from _c limit 1;
-  foreach v_id in array array[gen_random_uuid(),gen_random_uuid(),gen_random_uuid()] loop
+  v_tag := substr(md5(random()::text),1,8);
+  foreach v_who in array array['owner','mgr','staff'] loop
+    v_id := gen_random_uuid();
     insert into auth.users(id,instance_id,aud,role,email,encrypted_password,
       email_confirmed_at,created_at,updated_at)
     values (v_id,'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
-      'zz-v404-'||substr(v_id::text,1,8)||'@example.test','x',now(),now(),now());
+      'zz-v404-'||v_who||'-'||v_tag||'@example.test','x',now(),now(),now());
+    if v_who='owner' then update _c set owner_u=v_id;
+    elsif v_who='mgr' then update _c set mgr_u=v_id;
+    else update _c set staff_u=v_id; end if;
   end loop;
 end $users$;
-update _c set owner_u=(select id from auth.users where email like 'zz-v404-%' order by created_at limit 1);
-update _c set mgr_u  =(select id from auth.users where email like 'zz-v404-%' order by created_at offset 1 limit 1);
-update _c set staff_u=(select id from auth.users where email like 'zz-v404-%' order by created_at offset 2 limit 1);
 
 with i as (insert into public.staff(business_id,user_id,role,active,access_state,full_name)
   select biz,owner_u,'owner',true,'approved','ZZ V404 Owner' from _c returning id)
@@ -50,7 +54,9 @@ update _c set staff_s=(select id from i);
 
 insert into public.business_workspace_controls_v94(business_id,approval_status,decided_by,decided_at,decision_reason)
 select biz,'approved',owner_u,now(),'v404 fixture' from _c
-on conflict (business_id) do update set approval_status='approved';
+on conflict (business_id) do update set approval_status='approved',
+  decided_by=excluded.decided_by, decided_at=excluded.decided_at,
+  decision_reason=excluded.decision_reason;
 insert into public.business_subscription_lifecycle_v94(business_id,workspace_paused)
 select biz,false from _c on conflict (business_id) do update set workspace_paused=false;
 insert into public.staff_branches(business_id,staff_id,branch_id) select biz,staff_s,br from _c
@@ -67,19 +73,21 @@ begin
 end $$;
 
 -- 01/02/03 — the matrix the owner specified, before any grant exists.
+/* app.can_manual_redeem_v404 is INTERNAL: the browser must not be able to call it, and check 03b
+   below proves that. It is evaluated here from the privileged session with the caller's JWT claim
+   set, because auth.uid() reads the claim rather than the database role — so this still asks the
+   question "what would this person get?" without granting the browser a probe. The observable
+   behaviour through the public RPC is covered by checks 04 onwards, which DO run as authenticated. */
 do $matrix$
 declare v_c record; v_owner boolean; v_mgr boolean; v_staff boolean;
 begin
   select * into v_c from _c limit 1;
-  perform pg_temp.as_v404(v_c.owner_u); set local role authenticated;
+  perform pg_temp.as_v404(v_c.owner_u);
   v_owner := app.can_manual_redeem_v404(v_c.biz, v_c.br);
-  reset role;
-  perform pg_temp.as_v404(v_c.mgr_u);   set local role authenticated;
+  perform pg_temp.as_v404(v_c.mgr_u);
   v_mgr := app.can_manual_redeem_v404(v_c.biz, v_c.br);
-  reset role;
-  perform pg_temp.as_v404(v_c.staff_u); set local role authenticated;
+  perform pg_temp.as_v404(v_c.staff_u);
   v_staff := app.can_manual_redeem_v404(v_c.biz, v_c.br);
-  reset role;
   insert into _r values ('01 owner may redeem manually by role',
     case when v_owner then 'PASS' else 'FAIL owner was refused' end);
   insert into _r values ('02 manager may redeem manually by role',
@@ -87,6 +95,21 @@ begin
   insert into _r values ('03 other staff may NOT without a grant',
     case when v_staff then 'FAIL staff was allowed without a grant' else 'PASS' end);
 end $matrix$;
+
+-- 03b — and the browser cannot call that internal permission probe at all.
+do $internal$
+declare v_c record;
+begin
+  select * into v_c from _c limit 1;
+  perform pg_temp.as_v404(v_c.staff_u); set local role authenticated;
+  begin
+    perform app.can_manual_redeem_v404(v_c.biz, v_c.br);
+    insert into _r values ('03b the internal permission probe is not browser-callable','FAIL it was callable');
+  exception when insufficient_privilege then
+    insert into _r values ('03b the internal permission probe is not browser-callable','PASS');
+  end;
+  reset role;
+end $internal$;
 
 -- 04 — a plain staff member cannot grant the capability to themselves.
 do $selfgrant$
@@ -111,9 +134,8 @@ begin
   perform pg_temp.as_v404(v_c.mgr_u); set local role authenticated;
   perform public.set_staff_capability_v404(v_c.biz, v_c.staff_s, 'manual_reward_redemption', true);
   reset role;
-  perform pg_temp.as_v404(v_c.staff_u); set local role authenticated;
+  perform pg_temp.as_v404(v_c.staff_u);
   v_after := app.can_manual_redeem_v404(v_c.biz, v_c.br);
-  reset role;
   insert into _r values ('05 a manager may grant the capability','PASS');
   insert into _r values ('06 the granted staff member may now redeem',
     case when v_after then 'PASS' else 'FAIL still refused after the grant' end);
@@ -192,11 +214,37 @@ alter table _c add column reward uuid;
 alter table _c add column prog uuid;
 update _c set prog=(select id from public.business_programmes
   where business_id=(select biz from _c) and kind='points' order by sort,id limit 1);
+/* The core refuses a reward whose programme is switched off ('catalog redemption is inactive'),
+   which is v371's rule and not something this suite should work around — the points programme is
+   simply turned ON, the way a firm running a gift catalogue has it. */
+update public.business_programmes set active=true where id=(select prog from _c);
 
+/* business_create_reward_v326 refuses until the firm has a PUBLISHED loyalty configuration, so
+   the fixture walks the same draft -> publish path the workspace does before it can offer a gift. */
 do $mkreward$
-declare v_c record; v_out jsonb;
+declare v_c record; v_ver uuid; v_out jsonb;
 begin
   select * into v_c from _c limit 1;
+  perform pg_temp.as_v404(v_c.owner_u); set local role authenticated;
+  reset role;
+  /* The workspace reaches a published config through the draft/publish RPCs, which need a base
+     configuration this bare fixture business has never had. What business_create_reward_v326 and
+     redeem_reward_core actually require is one PUBLISHED firm_config_versions row that
+     businesses.active_config_version_id points at, so the fixture seeds exactly that and nothing
+     more — it is not exercising the publish flow, which has its own coverage. */
+  /* One insert does both jobs: redeem_reward_core refuses with 'catalog redemption is inactive'
+     until the firm has a loyalty_programs row, and inserting that row fires
+     seed_loyalty_config_version(), which writes the published firm_config_versions row that
+     business_create_reward_v326 requires. Seeding the version by hand collided with that trigger. */
+  insert into public.loyalty_programs(business_id,kind,active,loyalty_model,configuration_status)
+  values (v_c.biz,'points',true,'classic','published');
+  select id into v_ver from public.firm_config_versions
+   where business_id=v_c.biz and status='published' order by version_no desc limit 1;
+  if v_ver is null then
+    raise exception 'v404 fixture: no published config version was seeded';
+  end if;
+  update public.businesses set active_config_version_id=v_ver
+   where id=v_c.biz and active_config_version_id is null;
   perform pg_temp.as_v404(v_c.owner_u); set local role authenticated;
   v_out := public.business_create_reward_v326(v_c.biz, v_c.prog, 'ZZ V404 Reward', 10, 0, 'v404 fixture', null);
   reset role;
@@ -219,12 +267,16 @@ begin
   values (v_c.biz,v_c.cli,v_c.prog,40,40,now());
 end $seedpts$;
 
-create or replace function pg_temp.ops_v404() returns integer language sql as $$
+/* Definer + granted, so the measurements can be taken from inside the authenticated stretches
+   without RLS narrowing the very rows being counted. Same shape v381 uses for its pot reader. */
+create or replace function pg_temp.ops_v404() returns integer language sql security definer as $$
   select count(*)::integer from public.loyalty_operations
    where business_id=(select biz from _c) and operation_type='redeem_reward' $$;
-create or replace function pg_temp.bal_v404() returns integer language sql as $$
+create or replace function pg_temp.bal_v404() returns integer language sql security definer as $$
   select coalesce(sum(points),0)::integer from public.points_ledger
    where business_id=(select biz from _c) and client_id=(select cli from _c) $$;
+grant execute on function pg_temp.ops_v404() to authenticated;
+grant execute on function pg_temp.bal_v404() to authenticated;
 
 do $quantity$
 declare
