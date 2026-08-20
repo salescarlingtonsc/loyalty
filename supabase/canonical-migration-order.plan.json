@@ -2170,6 +2170,12 @@
       "version": "20260821000001",
       "name": "nestly_v403_stamp_conversion_ledger_token",
       "sourcePath": "db/migrations/20260821_nestly_v403_stamp_conversion_ledger_token.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000002",
+      "name": "nestly_v404_manual_reward_redemption",
+      "sourcePath": "db/migrations/20260821_nestly_v404_manual_reward_redemption.sql"
     }
   ]
 }

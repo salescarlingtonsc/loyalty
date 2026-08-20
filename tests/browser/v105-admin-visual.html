@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="2592c33e37ab4ee31f7c462c588b6bfcf72a7d3a7d415b69f6c7047bdbdf2ffa">
+<meta name="v105-production-component-sha256" content="22c755dc30d73ccea4f22ef38016e56c215b58f7ed4d0eb9954dcc4ba4ac5b06">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -345,6 +345,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    stretched across half the row. A status pill is sized by its word. */
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span.pill{flex:0 0 auto;display:inline-flex;
   align-items:center;justify-content:center}
+/* V404: the manual-redemption control on a reward row — the Record Sale stepper plus the
+   Redeem button, kept together on the right of the row and allowed to wrap onto their own line
+   on a narrow counter tablet rather than squeezing the reward's name. */
+.till-manual-redeem-v404{display:flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:wrap;
+  justify-content:flex-end}
+.till-manual-redeem-v404 .till-cart-qty .btn{min-width:38px;min-height:38px;font-size:18px}
+@media(max-width:520px){
+  .till-tier-benefits-v369 .till-tier-benefit-row-v369>.till-manual-redeem-v404{flex-basis:100%;justify-content:space-between}
+}
 
 /* V399 (owner, photo 3: the full-width "Scan customer QR" button crossed out, a small square
    icon drawn in its place, "smaller button"). Icon-only, square, and sized to stay a comfortable
@@ -4319,7 +4328,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 2592c33e37ab</span>
+<span class="v105-provenance">v105 production-component harness · 22c755dc30d7</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -4444,7 +4453,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'2592c33e37ab4ee31f7c462c588b6bfcf72a7d3a7d415b69f6c7047bdbdf2ffa',
+  sourceHash:'22c755dc30d73ccea4f22ef38016e56c215b58f7ed4d0eb9954dcc4ba4ac5b06',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b5e291f8fa47989bde32b5137bf3441b2a4d96da28520b062bfc8c757d8c9742"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="87bd984bfe61ff4e1069851d05b07c316c29ab337ac513232f40c73298daa0b2"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -340,6 +340,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    stretched across half the row. A status pill is sized by its word. */
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span.pill{flex:0 0 auto;display:inline-flex;
   align-items:center;justify-content:center}
+/* V404: the manual-redemption control on a reward row — the Record Sale stepper plus the
+   Redeem button, kept together on the right of the row and allowed to wrap onto their own line
+   on a narrow counter tablet rather than squeezing the reward's name. */
+.till-manual-redeem-v404{display:flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:wrap;
+  justify-content:flex-end}
+.till-manual-redeem-v404 .till-cart-qty .btn{min-width:38px;min-height:38px;font-size:18px}
+@media(max-width:520px){
+  .till-tier-benefits-v369 .till-tier-benefit-row-v369>.till-manual-redeem-v404{flex-basis:100%;justify-content:space-between}
+}
 
 /* V399 (owner, photo 3: the full-width "Scan customer QR" button crossed out, a small square
    icon drawn in its place, "smaller button"). Icon-only, square, and sized to stay a comfortable
@@ -4629,6 +4638,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'b5e291f8fa47989bde32b5137bf3441b2a4d96da28520b062bfc8c757d8c9742',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'87bd984bfe61ff4e1069851d05b07c316c29ab337ac513232f40c73298daa0b2',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

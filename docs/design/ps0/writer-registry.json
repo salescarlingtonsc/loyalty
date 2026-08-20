@@ -2295,6 +2295,25 @@
       "resolves_to": "public.business_switch_to_stamps_v384/4 (owner-only; V384). One call that flips the spine to stamps and, if the owner chose \"Convert and switch\", moves the existing points pot into stamps at the chosen rate.",
       "call_site_finding": "none — ONE call site: writeProgrammeSwitchesWithStampConversionV384 (app/app.js), reached from the two Grow surfaces that turn stamps on live (the programme switch confirm and the points-setup CTA). It fires only when the requested set has stamps===true and paused!==true; every other switch shape falls through to writeProgrammeSwitchesV314 unchanged. Before calling it opens the V384 conversion dialog (preview via business_preview_stamp_conversion_v384), and Cancel issues no RPC at all. The browser mints one idempotency key per attempt and passes it to BOTH the switch and the conversion, so a retry cannot double-convert; on success it feeds the returned programmes into rememberProgrammeSpineV314 so the cached spine cannot go stale.",
       "kernel_migratability": "follows db.fn:public.business_switch_to_stamps_v384/4 — INDEPENDENT, run-once administrative conversion."
+    },
+    {
+      "id": "db.fn:public.staff_manual_redeem_reward_v404/8",
+      "surface": "db_function",
+      "latest_file": "20260821000002_nestly_v404_manual_reward_redemption.sql",
+      "rows_written": "loyalty_manual_redemptions_v404:INSERT (one row per manual action, carrying customer, reward, quantity, staff, branch, timestamp, reason and method='manual_no_qr'); everything else is written by app.redeem_reward_core, once per unit: points_ledger, loyalty_redemptions, loyalty_operations, loyalty_redemption_provenance and (where the reward pays credit) credit_ledger.",
+      "detected_signals": "idem-signal, advisory-lock, FOR UPDATE row-lock",
+      "entry_point": "staff_manual_redeem_reward_v404(p_business, p_client, p_reward, p_quantity, p_branch, p_reason_code, p_reason_note, p_idempotency_key) — the owner-approved redemption path that does NOT require the customer's QR (ruling 2026-08-21, photo 1). It re-derives the permission with app.can_manual_redeem_v404 (owner/manager by role; every other staff member only with the 'manual_reward_redemption' grant on staff.capabilities), bounds quantity at 1..20, requires a reason code and a note when that code is 'other', then calls app.redeem_reward_core once per unit. It reimplements NO eligibility: balance, reward state, availability window, branch/service/product eligibility, usage limits and tier requirements all remain the core's.",
+      "idempotency": "pg_advisory_xact_lock per (business, client), then a replay of the same (business_id, idempotency_key) returns the stored receipt from loyalty_manual_redemptions_v404 and redeems nothing further. Each unit derives its own core key as '<key>:<n>', so a partially-observed call replays into the SAME core operations rather than spending the balance twice. Verified: quantity 3 produces exactly 3 loyalty_operations rows and a replay adds none.",
+      "kernel_migratability": "INDEPENDENT — delegates every value write to app.redeem_reward_core and adds only its own evidence row.",
+      "notes": "This is the compensating control for the missing proof of customer presence: a QR showed the customer was there, and nothing here can, so every manual redemption is evidence-bearing and separable from a scanned one in reports. v94's revokes on redeem_reward_at_context / redeem_reward / redeem_points are NOT reopened — the migration restates them."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_manual_redeem_reward_v404",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_manual_redeem_reward_v404",
+      "resolves_to": "public.staff_manual_redeem_reward_v404/8 (owner/manager, or a staff member holding the 'manual_reward_redemption' capability). One call redeems N units of one catalogue reward for the customer already identified at Record sale, without their QR.",
+      "call_site_finding": "none — ONE call site: openManualRedeemConfirmV404 (app/app.js), reached only from the Redeem control on an affordable reward row in the Record sale Rewards tab. The control is DRAWN behind canManualRedeemV404(), which is a rendering hint only — the server re-derives the same permission, so a stale client can at worst draw a button that is refused. One crypto.randomUUID() key is minted per confirmation and held across retries, so a network failure that actually landed replays into the same redemption. The dialog will not confirm without a reason, and requires a note when the reason is 'other'.",
+      "kernel_migratability": "follows db.fn:public.staff_manual_redeem_reward_v404/8 — INDEPENDENT."
     }
   ],
   "allowlist": [

@@ -370,6 +370,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    stretched across half the row. A status pill is sized by its word. */
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span.pill{flex:0 0 auto;display:inline-flex;
   align-items:center;justify-content:center}
+/* V404: the manual-redemption control on a reward row — the Record Sale stepper plus the
+   Redeem button, kept together on the right of the row and allowed to wrap onto their own line
+   on a narrow counter tablet rather than squeezing the reward's name. */
+.till-manual-redeem-v404{display:flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:wrap;
+  justify-content:flex-end}
+.till-manual-redeem-v404 .till-cart-qty .btn{min-width:38px;min-height:38px;font-size:18px}
+@media(max-width:520px){
+  .till-tier-benefits-v369 .till-tier-benefit-row-v369>.till-manual-redeem-v404{flex-basis:100%;justify-content:space-between}
+}
 
 /* V399 (owner, photo 3: the full-width "Scan customer QR" button crossed out, a small square
    icon drawn in its place, "smaller button"). Icon-only, square, and sized to stay a comfortable
@@ -3580,7 +3589,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=4aa954844768","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=8aac0f3b8642","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -3604,6 +3613,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=bd3d221d68c5" defer></script>
+<script src="/app-core.js?b=62c32768e7ce" defer></script>
 </body>
 </html>

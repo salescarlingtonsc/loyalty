@@ -349,7 +349,11 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'manual balance adjustment must remain owner-only');
 
   const tillPage = appSection(app, 'async function tillPage(){', 'async function salesPage(){');
-  assert.doesNotMatch(tillPage, /redeem_points|redeem_reward(?:_at_context)?/i,
+  /* The DIRECT writers v94 revoked stay unreachable from the till, named exactly. v404 adds a
+     second, sanctioned redemption path — public.staff_manual_redeem_reward_v404, the owner's
+     manual no-QR redemption — whose name contains "redeem_reward"; matching on the substring
+     would have banned it by accident. What must never appear is a call to the legacy trio. */
+  assert.doesNotMatch(tillPage, /sb\.rpc\('(?:redeem_points|redeem_reward|redeem_reward_at_context)'/i,
     'Quick earn must never expose direct classic or catalog reward redemption');
   assert.match(tillPage, /openMerchantRedemptionScanner/i,
     'Quick earn must open the merchant scanner for a customer-created pending redemption QR');

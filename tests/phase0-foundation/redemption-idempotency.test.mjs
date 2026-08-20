@@ -38,9 +38,24 @@ test('normal merchant redemption is scanner-only in the shipped browser', async 
   const tillStart = app.indexOf('async function tillPage(){');
   const tillEnd = app.indexOf('async function salesPage(){',tillStart);
   const till=app.slice(tillStart,tillEnd);
-  assert.doesNotMatch(till,/redeem_points|redeem_reward(?:_at_context)?|redemptionIdem/);
+  /* The legacy keyless/unguarded writers stay out of the till, named exactly so the check cannot
+     be satisfied or broken by a substring. v404 deliberately introduces a SECOND redemption path
+     (owner ruling 2026-08-21: manual redemption without the customer's QR), and its RPC name
+     contains "redeem_reward" — the point of this assertion was never the substring, it was that
+     the browser cannot reach public.redeem_points / redeem_reward / redeem_reward_at_context,
+     which v94 revoked and v404 restates as revoked. */
+  assert.doesNotMatch(till,/sb\.rpc\('(?:redeem_points|redeem_reward|redeem_reward_at_context)'/);
+  assert.doesNotMatch(till,/redemptionIdem/);
   assert.match(till,/openMerchantRedemptionScanner/,
     'Quick earn may open only the merchant scanner for an already-pending customer QR redemption');
+  /* v404: exactly one non-scanner redemption writer, and it is permission-gated before it draws.
+     If a third path ever appears in the till, this count moves and the change has to argue for
+     itself here. */
+  const manualCalls=[...till.matchAll(/sb\.rpc\('staff_manual_redeem_reward_v404'/g)];
+  assert.equal(manualCalls.length,1,
+    'manual redemption must have exactly one call site in the till');
+  assert.match(till,/canManualRedeemV404\(\)/,
+    'the manual redemption control must be gated on the capability before it is drawn');
   assert.match(app,/merchant_scan_redemption_qr_v117/);
 });
 

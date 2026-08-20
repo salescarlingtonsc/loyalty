@@ -1396,7 +1396,7 @@ async function route(){
         root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Workspace unavailable</h1><p class="muted small" style="margin-top:8px">This workspace is not available to this account.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;$('main').focus();wireAccountDeletionButton();return;
       }
       if(S.biz?.id!==workspace.id){
-        S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
+        S.biz=workspace;S.myModules=null;S.myModulePerms=null;S.myCapabilities=null;S.myRole=null;S.isSA=false;S.saChecked=false;S.hasCustomerPersona=null;
       }
       workspacePage=requestedModule;
     }
@@ -1440,6 +1440,9 @@ async function route(){
            routes recompute the same v14 precedence from the caller's RLS-scoped
            staff row and never broaden to every firm module by default. */
         const enabled=S.biz.enabled_modules||[];S.isSA=false;
+        /* V404: a failed resolver grants no CAPABILITY either. Owner and manager still reach
+           manual redemption through their role below, which is what the server also does. */
+        S.myCapabilities=[];
         if(workspaceStaffPersona){
           S.myRole=workspaceStaffPersona.role||null;
           S.myModules=filterResolvedModulesForRole(workspaceStaffPersona.modules,S.myRole);
@@ -1458,6 +1461,7 @@ async function route(){
         }
       }else{
         S.myRole=mm.role||null;S.isSA=mm.is_super_admin===true;
+        S.myCapabilities=Array.isArray(mm.capabilities)?mm.capabilities:[]; // V404
         S.myModules=filterResolvedModulesForRole(mm.modules,S.myRole);
         S.myModulePerms=mm.module_perms&&typeof mm.module_perms==='object'
           ?Object.fromEntries(S.myModules.map(m=>[m,mm.module_perms[m]])):Object.fromEntries(S.myModules.map(m=>[m,'rw']));

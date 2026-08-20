@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="60702d10c2d8a3a830c05ae56a14f5f00fb7f5f9fb69ea24a40cda13a91d6739"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b5d6f2ad8d5fadd65cf863a66bcdeb6b7547d3ff265d5e1402911eec33150b36"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -338,6 +338,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    stretched across half the row. A status pill is sized by its word. */
 .till-tier-benefits-v369 .till-tier-benefit-row-v369>span.pill{flex:0 0 auto;display:inline-flex;
   align-items:center;justify-content:center}
+/* V404: the manual-redemption control on a reward row — the Record Sale stepper plus the
+   Redeem button, kept together on the right of the row and allowed to wrap onto their own line
+   on a narrow counter tablet rather than squeezing the reward's name. */
+.till-manual-redeem-v404{display:flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:wrap;
+  justify-content:flex-end}
+.till-manual-redeem-v404 .till-cart-qty .btn{min-width:38px;min-height:38px;font-size:18px}
+@media(max-width:520px){
+  .till-tier-benefits-v369 .till-tier-benefit-row-v369>.till-manual-redeem-v404{flex-basis:100%;justify-content:space-between}
+}
 
 /* V399 (owner, photo 3: the full-width "Scan customer QR" button crossed out, a small square
    icon drawn in its place, "smaller button"). Icon-only, square, and sized to stay a comfortable

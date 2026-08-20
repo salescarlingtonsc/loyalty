@@ -654,6 +654,14 @@ async function applyPublishedProgrammeSwitchesV314({active=null,loyaltyModel=nul
 const canWriteModule=module=>S.myModules?.includes(module)===true
   &&roleCanUseModule(S.myRole,module)
   &&(S.myRole==='owner'||S.myModulePerms?.[module]==='rw');
+/* V404 (owner ruling 2026-08-21): manual, no-QR reward redemption. Owner and manager hold it by
+   role; every other staff member needs the 'manual_reward_redemption' grant an owner or manager
+   hands out. This mirrors app.can_manual_redeem_v404 and is a RENDERING HINT ONLY — the server
+   re-derives the same answer on every redemption, so a stale client can at worst draw a button
+   that is then refused. */
+const canManualRedeemV404=()=>canWriteModule('loyalty')
+  &&(S.myRole==='owner'||S.myRole==='manager'
+     ||(S.myCapabilities||[]).includes('manual_reward_redemption'));
 function invalidateBusinessRecordCacheV370(){businessRecordCacheV370={key:'',at:0,result:null}}
 function invalidateBranchScopeCacheV370(){branchScopeCacheV370={key:'',at:0,result:null}}
 async function loadBranchModuleProjection(branchId,{force=false}={}){
@@ -5907,6 +5915,10 @@ async function tillPage(){
      on one page, causing endless scrolling"). V373 removed the three transaction MODES but left
      their three sections stacked. They are now three tabs, and only the selected one renders. */
   let tillItemsTabV374='items';   // 'items' | 'packages' | 'benefits'
+  /* V404: manual-redemption quantity, per reward, for THIS customer's till session. Reset
+     wherever the cart's own per-customer state is reset, so one customer's 3 can never be
+     carried into the next customer's screen. */
+  let tillManualQtyV404={};
   /* V373 retires V257's "Sell package" <details> drawer. That drawer existed to keep package
      SALES off the main screen, and it had to remember its own open state because adding a line
      redrew the panel underneath it and collapsed it. The Add item sheet keeps both promises
@@ -5988,7 +6000,7 @@ async function tillPage(){
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
     catalog=null;catalogError=null;tillItemSearchV392='';
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
-    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';draw();
+    cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   /* Leave the cart step and go back to the phone keypad. Same discard-the-cart behaviour the
      "Different number" button always had; it additionally clears the walk-in flag and, when the
@@ -6002,7 +6014,7 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
-    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';draw();
+    step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   function draw(){
     /* V373: the Add item sheet and the review stage belong to the cart step alone. Anything that
@@ -6024,7 +6036,7 @@ async function tillPage(){
     cust=null;notFoundPhone=null;invalidMsg=null;quickAddIdem=null;saleIdem=null;tender=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;
     catalog=null;catalogError=null;tillItemSearchV392=''; // V392: a leftover query would hide the next customer's items
-    walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';
+    walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};
     CUI.announce('Walk-in sale started. No customer is linked.');
     draw();
   }
@@ -6954,12 +6966,35 @@ async function tillPage(){
              squashed side by side and running to the card's edge. till-tier-benefits-v369 is the
              existing class that turns exactly this container into a column; the sibling tier
              banner directly above has carried it since V372. Same fix, same class, no new CSS. */''}
-        <p class="muted small" style="margin:5px 0">Scan the customer's QR to confirm a redemption.</p>
-        ${affordableV392.map(gift=>`<div class="till-tier-benefit-row-v369">
+        <p class="muted small" style="margin:5px 0">${canManualRedeemV404()
+          ?"Scan the customer's QR, or redeem here and say why."
+          :"Scan the customer's QR to confirm a redemption."}</p>
+        ${/* V404 (owner, photo 1: "'ready' change to redeem > and able to click to redeem", with
+             a quantity control "like record sale"). The Ready pill stated a fact nobody could act
+             on; it is a control now for staff who hold the manual-redemption permission, and stays
+             a pill for everyone else — the server refuses either way, so this only decides what is
+             DRAWN. The stepper is the same .till-cart-qty markup the cart lines use, so the
+             gesture is the one staff already know. */''}
+        ${affordableV392.map(gift=>{
+          const costV404=Number.isFinite(Number(gift.cost_units))?`${esc(String(Number(gift.cost_units)))} ${esc(giftUnitV392)}`:'';
+          const idV404=esc(String(gift.reward_id||''));
+          const qtyV404=tillManualQtyV404[gift.reward_id]||1;
+          const actionV404=(canManualRedeemV404()&&gift.reward_id)
+            ?`<span class="till-manual-redeem-v404">
+                <span class="till-cart-qty">
+                  <button type="button" class="btn ghost" data-manual-qty-v404="-1" data-reward-v404="${idV404}" aria-label="Reduce quantity">−</button>
+                  <output aria-label="Quantity" data-manual-qty-out-v404="${idV404}">${qtyV404}</output>
+                  <button type="button" class="btn ghost" data-manual-qty-v404="1" data-reward-v404="${idV404}" aria-label="Increase quantity">+</button>
+                </span>
+                <button type="button" class="btn primary sm" data-manual-redeem-v404="${idV404}" data-name-v404="${esc(gift.name||'Reward')}" data-cost-v404="${esc(String(Number(gift.cost_units)||0))}">Redeem</button>
+              </span>`
+            :'<span class="pill ok">Ready</span>';
+          return `<div class="till-tier-benefit-row-v369">
             <span><b class="small" data-merchant-content>${esc(gift.name||'Reward')}</b>
-            <span class="muted small">${Number.isFinite(Number(gift.cost_units))?`${esc(String(Number(gift.cost_units)))} ${esc(giftUnitV392)}`:''}</span></span>
-            <span class="pill ok">Ready</span>
-          </div>`).join('')}
+            <span class="muted small">${costV404}</span></span>
+            ${actionV404}
+          </div>`;
+        }).join('')}
         ${nextUpV392?`<div class="till-tier-benefit-row-v369">
             <span><b class="small" data-merchant-content>${esc(nextUpV392.name||'Reward')}</b>
             <span class="muted small">${esc(String(Math.max(0,Number(nextUpV392.remaining_units)||0)))} more ${esc(giftUnitV392)}</span></span>
@@ -7008,6 +7043,96 @@ async function tillPage(){
     const close=()=>{if(deactivate)deactivate();else node.remove()};
     deactivate=CUI.activateDialog(node,{onClose:close,initialFocus:'#tillAllBenefitsCloseV373'});
     $('tillAllBenefitsCloseV373').onclick=close;
+  }
+
+  /* V404 — manual, no-QR redemption. The owner accepted the trade-off explicitly: a QR proved the
+     customer was standing there, and nothing here can. What replaces it is evidence, so this
+     dialog is deliberately heavier than the scan it substitutes for — it names everything the
+     audit row will carry, and it will not confirm without a reason.
+     It decides NOTHING: eligibility, balance, limits and the ledger all belong to
+     app.redeem_reward_core, reached through staff_manual_redeem_reward_v404, which re-derives the
+     permission server-side. The figures below are the ones already on screen, restated. */
+  const TILL_MANUAL_REDEEM_MAX_V404=20;
+  function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity}){
+    const unit=catalog?.customerGiftsV392?.program?.unit==='stamps'?'stamps':'points';
+    const qty=Math.max(1,Math.min(TILL_MANUAL_REDEEM_MAX_V404,Number(quantity)||1));
+    const total=(Number(costUnits)||0)*qty;
+    const balanceNow=Number(cust?.points);
+    const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'';
+    const staffName=(tillRoster.find(person=>person.id===tillSaleStaffId)||{}).full_name||'';
+    const row=(label,value)=>`<div class="till-tier-benefit-row-v369"><span><b class="small">${esc(label)}</b></span><span class="muted small" data-merchant-content>${esc(value)}</span></div>`;
+    document.getElementById('manualRedeemModalV404')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="manualRedeemModalV404" role="dialog" aria-modal="true" aria-labelledby="manualRedeemTitleV404" tabindex="-1"><div class="modal-card" style="max-width:var(--dialog-w-md)">
+      <div class="row"><div><h2 id="manualRedeemTitleV404" style="font-size:16px">Redeem without the customer's QR</h2>
+        <p class="muted small" style="margin-top:4px">This is recorded as a manual redemption, with your name against it.</p></div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm" id="manualRedeemCloseV404">Close</button></div>
+      <div class="till-tier-benefits-v369" style="display:block;margin-top:10px">
+        ${row('Customer',cust?.full_name||'')}
+        ${row('Reward',rewardName)}
+        ${row('Quantity',String(qty))}
+        ${row(`Cost`,`${total} ${unit}${qty>1?` (${Number(costUnits)||0} × ${qty})`:''}`)}
+        ${Number.isFinite(balanceNow)?row(`${unit==='stamps'?'Stamps':'Points'} after`,`${balanceNow-total} (now ${balanceNow})`):''}
+        ${branchName?row('Branch',branchName):''}
+        ${staffName?row('Staff',staffName):''}
+      </div>
+      <div style="margin-top:14px">
+        <label for="manualRedeemReasonV404">Why is this being redeemed without the QR?</label>
+        <select id="manualRedeemReasonV404">
+          <option value="customer_unable_to_show_qr">Customer unable to show QR</option>
+          <option value="other">Other</option>
+        </select>
+        <div id="manualRedeemNoteWrapV404" hidden style="margin-top:10px">
+          <label for="manualRedeemNoteV404">Say what happened</label>
+          <input id="manualRedeemNoteV404" type="text" autocomplete="off" maxlength="200" placeholder="Required when you choose Other">
+        </div>
+      </div>
+      <p class="muted small" id="manualRedeemStatusV404" role="status" aria-live="polite" style="margin-top:10px"></p>
+      <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn ghost sm" id="manualRedeemCancelV404">Cancel</button>
+        <button type="button" class="btn sm" id="manualRedeemConfirmV404">Redeem ${qty>1?`${qty} × `:''}${esc(rewardName)}</button>
+      </div>
+    </div></div>`);
+    const node=document.getElementById('manualRedeemModalV404');
+    let deactivate;
+    const close=()=>{if(deactivate)deactivate();else node.remove()};
+    deactivate=CUI.activateDialog(node,{onClose:close,initialFocus:'#manualRedeemReasonV404'});
+    document.getElementById('manualRedeemCloseV404').onclick=close;
+    document.getElementById('manualRedeemCancelV404').onclick=close;
+    const reason=document.getElementById('manualRedeemReasonV404');
+    const noteWrap=document.getElementById('manualRedeemNoteWrapV404');
+    reason.onchange=()=>{noteWrap.hidden=reason.value!=='other'};
+    const status=document.getElementById('manualRedeemStatusV404');
+    const confirm=document.getElementById('manualRedeemConfirmV404');
+    /* One key per confirmation, held across retries: a network failure that actually landed must
+       replay into the SAME redemption rather than spending the customer's points twice. */
+    const idemKey=crypto.randomUUID();
+    confirm.onclick=async()=>{
+      const note=String(document.getElementById('manualRedeemNoteV404')?.value||'').trim();
+      if(reason.value==='other'&&!note){status.textContent='Say what happened before confirming.';return}
+      confirm.disabled=true;status.textContent='Redeeming…';
+      const {data,error}=await sb.rpc('staff_manual_redeem_reward_v404',{
+        p_business:S.biz.id,p_client:cust.client_id,p_reward:rewardId,p_quantity:qty,
+        p_branch:tillBranchId||null,p_reason_code:reason.value,
+        p_reason_note:note||null,p_idempotency_key:idemKey});
+      if(!isTillCurrent())return;
+      if(error){
+        confirm.disabled=false;
+        const message=String(error?.message||'');
+        if(message.includes('is not permitted'))return void(status.textContent='You do not have permission to redeem without the customer\u2019s QR. Ask an owner or manager.');
+        /* No interpolation here on purpose: the stepper already clamps to the same constant the
+           server enforces, so this branch can only be reached by a hand-built call, and a bare
+           sentence keeps this off the v97 unreviewed-runtime-copy surface. */
+        if(message.includes('manual_redeem_quantity_out_of_range'))return void(status.textContent='That quantity is out of range.');
+        if(message.includes('manual_redeem_reason'))return void(status.textContent='A reason is required.');
+        if(error?.code==='PGRST202'||error?.code==='42883')return void(status.textContent='Manual redemption needs the latest Peekaa service update.');
+        status.textContent=humanErrorV295(error,'That redemption could not be completed. Nothing was changed.');
+        return;
+      }
+      close();
+      toast(data?.status==='duplicate_ignored'?'Already redeemed':`${rewardName} redeemed`);
+      tillManualQtyV404={};
+      catalog=null;draw();
+    };
   }
 
   /* ------------------------------------------------------------------------ stage 1: items */
@@ -7519,6 +7644,26 @@ async function tillPage(){
     if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
+    });
+    /* V404: the stepper writes the number straight into the <output> rather than re-rendering the
+       screen. A full redraw here would move the row under the finger mid-tap, which is exactly the
+       jumping the owner complained about elsewhere in this batch. */
+    document.querySelectorAll('[data-manual-qty-v404]').forEach(button=>button.onclick=()=>{
+      const rewardId=button.dataset.rewardV404;
+      const step=Number(button.dataset.manualQtyV404)||0;
+      const next=Math.max(1,Math.min(TILL_MANUAL_REDEEM_MAX_V404,(tillManualQtyV404[rewardId]||1)+step));
+      tillManualQtyV404[rewardId]=next;
+      const out=document.querySelector(`[data-manual-qty-out-v404="${CSS.escape(rewardId)}"]`);
+      if(out)out.textContent=String(next);
+    });
+    document.querySelectorAll('[data-manual-redeem-v404]').forEach(button=>button.onclick=()=>{
+      if(busy||!cust?.client_id)return;
+      openManualRedeemConfirmV404({
+        rewardId:button.dataset.manualRedeemV404,
+        rewardName:button.dataset.nameV404||'Reward',
+        costUnits:Number(button.dataset.costV404)||0,
+        quantity:tillManualQtyV404[button.dataset.manualRedeemV404]||1
+      });
     });
     /* The custom-price dialog replaces the sheet rather than stacking on it: two focus traps on
        screen at once is how a keyboard user gets stuck. */

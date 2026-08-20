@@ -34,10 +34,14 @@ test('V373 the sale has two stages, and a cart in recovery can only be on the re
   // Leaving the cart step drops the stage AND the sheet, so neither can float over the keypad
   // or a receipt.
   assert.match(till, /if\(step!==2\)\{if\(tillAddSheetV373\)closeTillAddSheetV373\(\);tillStageV373='items';tillItemsTabV374='items';\}/);
+  /* V404 added tillManualQtyV404 to the per-CUSTOMER state these three sites clear, so one
+     customer's chosen redemption quantity can never be carried onto the next customer's screen.
+     The markers below allow it explicitly rather than loosening into a wildcard, so a future
+     edit that drops one of these resets still fails here. */
   for (const marker of [
-    /step=1;phone='';cust=null;walkin=false;[\s\S]{0,240}?tillStageV373='items';tillItemsTabV374='items';draw\(\);/,
-    /step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=\[\];tillStageV373='items';tillItemsTabV374='items';draw\(\);/,
-    /walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';/,
+    /step=1;phone='';cust=null;walkin=false;[\s\S]{0,260}?tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404=\{\};draw\(\);/,
+    /step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=\[\];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404=\{\};draw\(\);/,
+    /walkin=true;step=2;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404=\{\};/,
   ]) assert.match(till, marker);
 });
 

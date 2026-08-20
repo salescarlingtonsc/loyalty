@@ -2175,6 +2175,12 @@
       "path": "db/migrations/20260821_nestly_v403_stamp_conversion_ledger_token.sql",
       "semanticVersion": "v403",
       "proposedDeployVersion": "20260821000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v404_manual_reward_redemption.sql",
+      "semanticVersion": "v404",
+      "proposedDeployVersion": "20260821000002"
     }
   ]
 }
