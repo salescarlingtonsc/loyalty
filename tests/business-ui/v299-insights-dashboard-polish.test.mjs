@@ -107,6 +107,12 @@ test('V406 the Inactive drill-down asks for a page size the server accepts',()=>
   assert.doesNotMatch(drill,/p_limit:\d+/,
     'the inactive drill-down must not hardcode a page size the server may reject');
   // V287's rule: the number and the list must describe the same people, or the gap must be stated.
+  /* V407: and it must read the key the RPC actually returns. staff_list_customers_v155 answers
+     {customers,total} — there is no `rows` key — so the previous read was silently empty: a
+     dialog showing nothing beneath a tile that said 1. Masked until V406, because the invalid
+     page size failed first. */
+  assert.match(drill,/const rows=Array\.isArray\(data\?\.customers\)\?data\.customers:\[\];/);
+  assert.doesNotMatch(drill,/data\?\.rows/,'staff_list_customers_v155 has no rows key');
   assert.match(app,/const cappedV406=rows\.length>=DASHBOARD_INACTIVE_PAGE_V406;/);
   assert.match(app,/if\(cappedV406\)body\.insertAdjacentHTML\('beforeend',/);
 });

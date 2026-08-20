@@ -15607,7 +15607,11 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
         p_inactive_bucket:'all_inactive',p_limit:DASHBOARD_INACTIVE_PAGE_V406,p_offset:0,...scopePayload});
       if(!stillOpen())return;
       if(error)return failed(ownerErrorText(error));
-      const rows=Array.isArray(data?.rows)?data.rows:(Array.isArray(data)?data:[]);
+      /* V407: staff_list_customers_v155 returns {customers,total} — there is no `rows` key, so
+         this read produced an empty array on every call and the dialog showed nothing under a
+         tile that said 1. It was masked until V406 by the invalid page size failing first.
+         `.customers` is what every other reader of this RPC in this file already uses. */
+      const rows=Array.isArray(data?.customers)?data.customers:[];
       /* V287's rule is that the number and the list describe the same people. A firm with more
          than one page of quiet customers cannot have all of them in one dialog, so rather than
          let a short list quietly contradict the tile, the shortfall is stated and the footer link
