@@ -18,9 +18,13 @@ test('dashboard uses Singapore dates and labels every mixed metric scope', () =>
   const dashboard = section('async function dashboard()', '/* ---------- customers ---------- */');
   assert.match(dashboard, /const today=sgDateInputValue\(\),d30=shiftSgDateInput\(today,-29\)/);
   assert.doesNotMatch(dashboard, /toISOString\(\)\.slice\(0,10\)/);
-  assert.match(dashboard, /Valid visits/);
-  assert.match(dashboard, /New customer members/);
-  assert.match(dashboard, /Inactive customers/);
+  /* V405: these three labels live in the metric definitions map, which moved to module scope so
+     the top-level drill-down could see it (every tile click was throwing before). Same labels,
+     same contract — read from where they now are. */
+  const metricDefs = section('const DASHBOARD_METRIC_DEFINITIONS_V405={', 'async function openDashboardMetricRowsV388(');
+  assert.match(metricDefs, /Valid visits/);
+  assert.match(metricDefs, /New customer members/);
+  assert.match(metricDefs, /Inactive customers/);
   assert.match(dashboard, /availability\?\.sales===false/);
   assert.match(dashboard, /availability\?\.clients!==false/);
   assert.doesNotMatch(dashboard, /key:'points'/,

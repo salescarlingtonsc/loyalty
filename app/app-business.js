@@ -3192,8 +3192,33 @@ function helpDotMarkupV385(title,body){
 
    A read that fails says so. It never falls back to a shorter list, because a shorter list under
    a bigger number is worse than an error. */
+/* V405 (owner, photo 6: the KPI tiles "must be able to pop up the data").
+   This map used to be declared INSIDE dashboard(). openDashboardMetricRowsV388 is a TOP-LEVEL
+   function and read it from there, so every tile click since v388 threw a ReferenceError before
+   the dialog was built — as an unhandled promise rejection, which prints nothing a user or
+   window.onerror can see, so the tile simply did nothing at all. Reproduced in production before
+   this change: the wiring was never the problem, the scope was.
+   It is pure data — labels, definitions, routes, button copy, scope — with no closure dependency,
+   so it belongs at module scope where BOTH readers can actually see it. */
+const DASHBOARD_METRIC_DEFINITIONS_V405={
+  visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',buttonLabel:'View visits',scope:'branch'},
+  revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
+  new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
+  /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
+     only, so the number an owner tapped and the list they landed on could never agree. The
+     server's staff_list_customers_v155 accepted exactly four buckets ('30_59','60_89',
+     '90_plus','never') and raised unsupported_inactivity_bucket for anything else, so an
+     "all inactive" destination was not expressible without a migration, and the number was
+     narrowed to match the destination.
+     V290 wrote that migration: 'all_inactive' is now an accepted bucket, so the tile counts
+     every customer quiet for 30 days or more and lands on exactly that group. The narrowing
+     is undone; the rule it enforced — the number and the destination must be the same set of
+     people — is what still holds. */
+  inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
+};
+
 async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
-  const def=dashboardMetricDefinitionsV141[key]||{};
+  const def=DASHBOARD_METRIC_DEFINITIONS_V405[key]||{};
   document.getElementById('metricRowsModalV388')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="metricRowsModalV388" role="dialog" aria-modal="true" aria-labelledby="metricRowsTitleV388" tabindex="-1"><div class="modal-card" style="max-width:640px">
     <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:16px">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${key==='inactive'?'':` · ${esc(promotionDateShortV324(from))} – ${esc(promotionDateShortV324(to))}`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
@@ -3501,22 +3526,6 @@ async function dashboard(){
     return numbers.map(value=>value>0&&value===busiest?'#C24135':value>=medium?'#F0A35B':quiet);
   };
   const dashboardChartCardV141=({title,subtitle,canvas,route,unavailable='',retryId=''})=>`<section class="card dashboard-chart-card"><header class="dashboard-chart-head">${CUI.icon('reports',{size:20})}<div><b>${esc(title)}</b><p class="muted small">${esc(subtitle)}</p></div>${route?`<a class="dashboard-chart-link" href="${route}">View details →</a>`:''}</header>${unavailable?`<div class="dashboard-chart-empty" role="status"><div><b>Not enough data yet</b><p>${esc(unavailable)}</p>${retryId?`<button type="button" class="btn ghost sm" id="${retryId}" style="margin-top:12px">Retry</button>`:''}</div></div>`:`<div class="chart-frame"><canvas id="${canvas}"></canvas></div>`}</section>`;
-  const dashboardMetricDefinitionsV141={
-    visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',buttonLabel:'View visits',scope:'branch'},
-    revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
-    new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
-    /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
-       only, so the number an owner tapped and the list they landed on could never agree. The
-       server's staff_list_customers_v155 accepted exactly four buckets ('30_59','60_89',
-       '90_plus','never') and raised unsupported_inactivity_bucket for anything else, so an
-       "all inactive" destination was not expressible without a migration, and the number was
-       narrowed to match the destination.
-       V290 wrote that migration: 'all_inactive' is now an accepted bucket, so the tile counts
-       every customer quiet for 30 days or more and lands on exactly that group. The narrowing
-       is undone; the rule it enforced — the number and the destination must be the same set of
-       people — is what still holds. */
-    inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
-  };
   /* V288: seeded from the branch the top bar is ALREADY showing. It used to start at null, and
      the Today-schedule glance below is fetched at first paint from this value — so a workspace
      scoped to one branch opened on a business-wide schedule count, then quietly shrank the first
@@ -3718,7 +3727,7 @@ async function dashboard(){
     /* V399: the grid is sized from the tiles that actually rendered — see --kpi-count in the
        stylesheet. Set before innerHTML so the first paint is already the right shape. */
     kpis.style.setProperty('--kpi-count',String(Math.max(1,metrics.length)));
-    kpis.innerHTML=metrics.map(metric=>{const def=dashboardMetricDefinitionsV141[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
+    kpis.innerHTML=metrics.map(metric=>{const def=DASHBOARD_METRIC_DEFINITIONS_V405[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the

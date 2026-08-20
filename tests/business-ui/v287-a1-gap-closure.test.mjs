@@ -23,6 +23,11 @@ function section(start, end) {
 }
 
 const dashboard = section('async function dashboard(){', '/* ---------- customers ---------- */');
+/* V405: the metric definitions map moved OUT of dashboard() to module scope, because
+   openDashboardMetricRowsV388 is a top-level function and could not see it there — every KPI
+   tile click since v388 threw a silent ReferenceError. Assertions about the map's CONTENT read
+   the module-scope block; assertions about the dashboard's own markup still read dashboard(). */
+const metricDefs = section('const DASHBOARD_METRIC_DEFINITIONS_V405={', 'async function openDashboardMetricRowsV388(');
 const customers = section('async function clientsPage(){', 'async function clientDetail(id){');
 const profile = section('async function clientDetail(id){', '/* ---------- quick earn (');
 const till = section('async function tillPage', 'async function salesPage(){');
@@ -193,7 +198,7 @@ test('V287 the unreachable dashboard metric modal and the duplicate cart binding
   assert.doesNotMatch(app, /openDashboardMetricDetailV141\(key,/);
   assert.doesNotMatch(app, /id="dashboardMetricModal"/);
   for (const key of ['visits', 'revenue', 'new', 'inactive']) {
-    assert.match(dashboard, new RegExp(`${key}:\\{label:[^}]*route:'#/`),
+    assert.match(metricDefs, new RegExp(`${key}:\\{label:[^}]*route:'#/`),
       `${key} must still carry the route the tile navigates to`);
   }
   // The second, byte-identical [data-use-package] binding is removed; one remains.

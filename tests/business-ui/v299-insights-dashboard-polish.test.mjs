@@ -64,6 +64,31 @@ test('dashboard KPI grid follows the tile count, never a fixed 4-column row',()=
   assert.match(app,/kpis\.style\.setProperty\('--kpi-count',String\(Math\.max\(1,metrics\.length\)\)\);/);
 });
 
+test('V405 the KPI drill-down can actually see its own definitions map',()=>{
+  /* Reproduced in production 2026-08-21: every KPI tile click since v388 threw
+     `ReferenceError: dashboardMetricDefinitionsV141 is not defined` and did nothing visible.
+     openDashboardMetricRowsV388 is a TOP-LEVEL function; the map it reads was declared with
+     `const` INSIDE dashboard(). Both the undeclared-identifier scan and `node --check` pass on
+     that shape, because the name IS declared — just somewhere the reader cannot reach — and the
+     throw surfaces as an unhandled promise rejection, which is silent.
+     So the assertion has to be about SCOPE, not existence: the map is declared at column 0, and
+     the two readers name it. */
+  assert.match(app,/^const DASHBOARD_METRIC_DEFINITIONS_V405=\{/m,
+    'the metric definitions map must live at module scope, not inside dashboard()');
+  assert.doesNotMatch(app,/^\s+const DASHBOARD_METRIC_DEFINITIONS_V405=/m,
+    'an indented declaration means it has been pushed back inside a function');
+  assert.match(app,/^async function openDashboardMetricRowsV388\(/m,
+    'the drill-down is top-level, which is why the map must be too');
+  assert.match(app,/const def=DASHBOARD_METRIC_DEFINITIONS_V405\[key\]\|\|\{\};/,
+    'the dialog reads the module-scope map');
+  assert.match(app,/const def=DASHBOARD_METRIC_DEFINITIONS_V405\[metric\.key\];/,
+    'the tile painter reads the same module-scope map');
+  // Nothing may reference the old function-scoped name outside a comment.
+  const live=app.split('\n').filter(line=>line.includes('dashboardMetricDefinitionsV141')
+    && !/^\s*(\*|\/\*|\/\/)/.test(line));
+  assert.deepEqual(live,[],'the function-scoped name must be gone from live code');
+});
+
 test('Business Insights carries quick-range presets that press the existing Run',()=>{
   assert.match(app,/\[\[7,'7 days'\],\[30,'30 days'\],\[90,'90 days'\],\[182,'6 months'\],\[365,'12 months'\]\]/);
   assert.match(app,/data-report-preset-days="\$\{presetDays\}"/);

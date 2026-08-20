@@ -17,6 +17,11 @@ function section(start,end){
 }
 
 const dashboard=section('async function dashboard(){','/* ---------- customers ---------- */');
+/* V405: the metric definitions map moved OUT of dashboard() to module scope, because
+   openDashboardMetricRowsV388 is a top-level function and could not see it there — every KPI
+   tile click since v388 threw a silent ReferenceError. Assertions about the map's CONTENT read
+   the module-scope block; assertions about the dashboard's own markup still read dashboard(). */
+const metricDefs=section('const DASHBOARD_METRIC_DEFINITIONS_V405={','async function openDashboardMetricRowsV388(');
 const customers=section('async function clientsPage(){','async function clientDetail(id){');
 const profile=section('async function clientDetail(id){','/* ---------- quick earn (');
 
@@ -36,21 +41,21 @@ test('V141 dashboard removes duplicate launchers and keeps branch-scoped perform
 
 test('V141/V150 every visible KPI is a semantic drilldown with plain definitions',()=>{
   for(const key of ['visits','revenue','new','inactive']){
-    assert.match(dashboard,new RegExp(`${key}:\\{label:`));
+    assert.match(metricDefs,new RegExp(`${key}:\\{label:`));
     assert.match(dashboard,new RegExp(`key:'${key}'`));
   }
   for(const removedKey of ['unique','points','credit']){
     assert.doesNotMatch(dashboard,new RegExp(`key:'${removedKey}'`));
   }
   assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
-  assert.match(dashboard,/Customer membership or customer records created during the selected period/);
+  assert.match(metricDefs,/Customer membership or customer records created during the selected period/);
   /* V287 retarget: the definition used to claim "at least 30 days" while the tile drilled
      through to the 30-59 bucket only. The number and the destination must describe the same
      group, and the definition must say so.
      V290 retarget: that rule is unchanged, but the group is no longer narrowed. V290 added the
      'all_inactive' bucket to staff_list_customers_v155, so the destination V287 could not express
      exists and the tile counts every customer quiet for 30 days or more again. */
-  assert.match(dashboard,/Customers whose last valid visit was 30 or more complete Singapore days ago/);
+  assert.match(metricDefs,/Customers whose last valid visit was 30 or more complete Singapore days ago/);
   assert.match(dashboard,/p_inactive_bucket:'all_inactive'/);
   /* V287 retarget: openDashboardMetricDetailV141 was unreachable after V225 made every tile a
      direct link (all four definitions carry a route, so the `else` could never run). The
@@ -66,7 +71,7 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
   assert.match(app,/if\(go\)go\.onclick=event=>\{event\.preventDefault\(\);close\(\);nav\(def\.route\)\};/);
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
-  assert.match(dashboard,/business-current/);
+  assert.match(metricDefs,/business-current/); // V405: scope tag lives in the module-scope map
 });
 
 test('V141 charts communicate reconciled intensity, SGD and demographics while unsafe gross sale mix stays hidden',()=>{
