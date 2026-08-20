@@ -7916,7 +7916,14 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
    opens, so the customer still confirms it themselves and the write still happens on their tap.
    The summary line is the existing copy shortened, not new claims about how earning works. */
 function customerPointsExplainerMarkupV167(business={}){
-  const key=`peekaa.customer.points-explainer.v1.${String(business.id||business.slug||'programme')}`;
+  /* nestly_v399 (owner batch item 3). This key was scoped by BUSINESS but not by customer — the
+     same unscoped-storage bug v398 fixed for the New offer flag, one surface over. localStorage is
+     per-origin and never per-account, and nothing clears it on sign-out, so once one person
+     dismissed this explainer every customer who signed in on that device afterwards was treated as
+     having dismissed it too and never saw how rewards work at that business. Scope is now
+     user + business, the established pattern; the old business-only key is deliberately NOT read
+     as a fallback, because its contents are exactly the cross-account state being fixed. */
+  const key=`peekaa.customer.points-explainer.v1.${String(S.user?.id||'anonymous')}.${String(business.id||business.slug||'programme')}`;
   try{if(localStorage.getItem(key)==='dismissed')return ''}catch{}
   return `<button class="card customer-points-explainer customer-points-explainer-v339" type="button" data-points-explainer data-points-explainer-key="${esc(key)}" data-points-explainer-open-v339 aria-label="How rewards work at ${esc(business.name||'this business')}">
     <span class="customer-points-explainer-icon-v339" aria-hidden="true">${CUI.icon('info',{size:20})}</span>
@@ -8972,7 +8979,16 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
         <section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
           <div class="customer-business-summary-top-v347">
             <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
-            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span${rewardReady?' data-reward-ready-count-v397':''}>${esc(subline)}</span></span>
+            ${/* nestly_v399 (owner: "ready-count must be accurate in Points, Stamps and Tier modes,
+                 not only Points"). The count hook used to be attached ONLY when the server's
+                 next_eligible_reward was itself claimable. next_eligible_reward is a single points
+                 candidate, so in stamps and tiers mode it is routinely absent or not-ready — the
+                 hook was never emitted, customerRewardReadyCountApplyV397 found no node, and the
+                 pill kept its painted text however many rewards the catalogue could actually
+                 redeem. The hook is now unconditional and carries the painted text as its
+                 fallback, so loadRewards corrects the pill in every mode, and a firm with nothing
+                 ready falls back to exactly the sentence it renders today. */''}
+            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>
           </div>
           ${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
@@ -9001,6 +9017,24 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
    never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
    actually honour — not the number the customer could afford. */
 const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
+/* nestly_v399. The final swipe page's "View all rewards" control. It does NOT navigate on its
+   own: it clicks the reward shortcut tile the modules row already renders, so the customer lands
+   on the very same Points & gifts / Stamp card catalogue page that tile opens, wired by
+   wireCustomerBusinessShortcutsV347. One reward catalogue, one route into it.
+   Like wireCustomerClaimRewardV395, it refuses to absorb a tap it cannot honour: with no tile on
+   the page it says so instead of looking broken. */
+function wireCustomerHeroViewAllV399(root=document){
+  const buttons=[...(root||document).querySelectorAll('[data-hero-view-all-v399]')];
+  if(!buttons.length)return 0;
+  buttons.forEach(button=>{button.onclick=()=>{
+    const action=String(button.dataset.heroViewAllV399||'').trim();
+    const tile=(action?document.querySelector(`[data-business-shortcut-v347="${action}"]`):null)
+      ||document.querySelector('[data-business-shortcut-v347="points"],[data-business-shortcut-v347="rewards"]');
+    if(!tile)return toast('Your rewards are still loading. Try again in a moment.');
+    tile.click();
+  }});
+  return buttons.length;
+}
 function customerRewardReadyCountApplyV397(count,root=document){
   const ready=Math.max(0,Number(count)||0);
   const nodes=[...root.querySelectorAll('[data-reward-ready-count-v397]')];
@@ -9012,24 +9046,72 @@ function customerRewardReadyCountApplyV397(count,root=document){
   });
   return nodes.length;
 }
-function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',redemptionEnabled=false,bookAction=''}={},root=document){
+/* nestly_v399. The customer-facing words for the server's `availability` value, so the hero swipe
+   page and the reward list under it describe the same reward the same way. These are the strings
+   the list already used; they live in one place now because two surfaces read them. The default is
+   deliberately vague rather than reassuring: an availability we do not recognise must never render
+   as "ready". */
+const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
+  available_at_counter:'Available at counter',
+  disabled:'Unavailable for redemption',
+  insufficient_balance:'More points needed',
+  not_started:'Available soon',
+  ended:'Offer ended',
+  limit_reached:'Claim limit reached',
+  tier_locked:'Unlocks at a higher tier'
+};
+function customerRewardAvailabilityLineV399(reward){
+  const key=String(reward?.availability||'').trim();
+  return CUSTOMER_REWARD_AVAILABILITY_COPY_V399[key]||'Not available right now';
+}
+/* nestly_v399 (owner batch: "customer can keep swiping through all rewards available from that
+   business"). Three defects kept legitimate rewards off this swipe, all of them client-side
+   inventions the server contract does not support:
+   (1) ZERO-COST REWARDS WERE DROPPED. The filter was `cost<=0 → skip`. But the server decides
+       redeemability with `balance < cost_points → insufficient_balance, else available_at_counter`
+       (customer_get_business_actions_v89), so a reward costing 0 is not "not a reward" — it is a
+       reward that is ALWAYS redeemable, i.e. exactly a free welcome gift. The gate is now
+       `cost < 0 || not finite`, which rejects only a cost we genuinely cannot read.
+   (2) DISTINCT REWARDS THAT SHARE A NAME WERE COLLAPSED. Identity was `name.toLowerCase()`, and
+       this firm really does run two different rewards both called "Free Lotion" (5 and 10 points,
+       different reward ids). Identity is the server's own key now — action_key, i.e. the reward
+       id — with name+cost only as a fallback for a payload that carries no key.
+   (3) PAGE 1's REWARD WAS DEDUPED BY NAME ALONE, so the OTHER "Free Lotion" vanished with it.
+       next_eligible_reward carries no id (app.c45_base_actionable_wallet_card sends name,
+       cost_units, remaining_units, available_now and nothing else), so page 1 is matched on name
+       AND cost — the same name+cost pairing loadRewards already uses to join actions to catalogue.
+   Nothing here caps the catalogue: every reward the server returns gets a page. What it gains is
+   a final "View all rewards" page once there are two or more of them, so the swipe always ends
+   somewhere deliberate instead of running on. Readiness is untouched and still the server's
+   answer via customerRewardCanRedeem — never arithmetic. */
+function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
   const dots=swipe?.querySelector('[data-hero-dots-v395]');
   if(!swipe||!track||!dots)return 0;
   track.querySelectorAll('[data-hero-extra-v395]').forEach(node=>node.remove());
   const held=Math.max(0,Number(balance)||0);
-  const seen=new Set([String(currentRewardName||'').trim().toLowerCase()].filter(Boolean));
+  const heroName=String(currentRewardName||'').trim().toLowerCase();
+  const heroCost=Number(currentRewardCost);
+  const seen=new Set();
   const unitWord=ct(unit==='stamps'?'stamps':unit||'points');
   const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{
     const name=String(reward?.customer_name||reward?.name||'').trim();
     const cost=Number(reward?.cost_points??reward?.cost_units);
-    if(!name||!Number.isFinite(cost)||cost<=0)return '';
-    const key=name.toLowerCase();
+    /* A cost of 0 is a real, immediately-claimable reward. Only an unreadable or negative cost
+       is skipped, because that is a row we cannot draw an honest number from. */
+    if(!name||!Number.isFinite(cost)||cost<0)return '';
+    /* The reward id is the server's identity for a reward; two rewards may legitimately share a
+       customer-facing name. name|cost is the fallback for a payload with no action_key. */
+    const key=String(reward?.action_key||`${name.toLowerCase()}|${cost}`);
     if(seen.has(key))return '';
     seen.add(key);
+    /* Page 1 already shows this reward. Matched on name AND cost so the firm's OTHER reward of
+       the same name is not swept away with it. When the hero named a reward but sent no cost,
+       fall back to the name alone rather than risk printing page 1's reward twice. */
+    if(heroName&&name.toLowerCase()===heroName&&(!Number.isFinite(heroCost)||heroCost===cost))return '';
     const remaining=Math.max(0,cost-held);
-    const progress=Math.max(0,Math.min(100,Math.round(held/cost*100)));
+    const progress=cost>0?Math.max(0,Math.min(100,Math.round(held/cost*100))):100;
     /* nestly_v397 (owner photo D). READINESS IS THE SERVER'S ANSWER, NOT ARITHMETIC. v395 drew
        this page's state from balance-minus-cost, which is exactly the browser-side readiness v145
        forbids — it would offer a Redeem button for a reward the counter will refuse (ended,
@@ -9049,7 +9131,15 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
         </div>
         <b class="customer-business-reward-name-v395">${esc(name)}</b>
         ${readyV397?'':`<div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
-        <p class="customer-business-summary-line-v362">${esc(`${customerPointTotalV103(remaining)} ${unitWord} to go`)}</p>`}
+        ${/* nestly_v399. "N to go" is only true when the customer is genuinely SHORT of the cost.
+             A reward that is not ready for any other reason the server gave — ended, claim limit
+             reached, redemption switched off, not started — used to print "0 points to go" under a
+             full meter, which reads as "ready" and is the opposite of what the counter will do.
+             Those states now say what the server said, using the same words the reward list below
+             this hero uses for the same availability value. */''}
+        <p class="customer-business-summary-line-v362">${esc(remaining>0
+          ?`${customerPointTotalV103(remaining)} ${unitWord} to go`
+          :customerRewardAvailabilityLineV399(reward))}</p>`}
         ${readyV397?`<div class="customer-business-summary-actions-v349">
           ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show QR
                to redeem"). It carries the SAME data-customer-redeem action_key contract the
@@ -9062,6 +9152,30 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
       </section>
     </div>`;
   }).filter(Boolean);
+  /* nestly_v399. The catalogue is NOT capped — every reward above got its page. This is the exit
+     at the end of them: one lightweight page that hands the customer to the reward catalogue this
+     profile already renders (the Points & gifts / Stamp card shortcut), so the swipe ends
+     somewhere deliberate. It reuses the existing [data-business-shortcut-v347] destination and
+     mints no second reward surface. With a single reward there is nothing to "view all" of, so it
+     is not drawn and the region stays the one card plus that reward. */
+  if(pages.length>1&&(viewAllHref||viewAllAction)){
+    /* The figure is REWARDS, not pages: page 1's own reward was deduped out of `pages`, so the
+       page count alone would under-report the catalogue by exactly one whenever the hero named a
+       reward. Counting it back in is what makes this agree with the reward list the button opens. */
+    const totalRewardsV399=pages.length+(heroName?1:0);
+    pages.push(`<div class="customer-business-hero-page-v395" data-hero-extra-v395>
+      <section class="card customer-business-summary-v346 customer-hero-viewall-v399" data-hero-mode-v386="viewall" aria-label="View all rewards">
+        <div class="customer-business-summary-top-v347">
+          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>REWARDS</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(`${customerPointTotalV103(totalRewardsV399)} reward${totalRewardsV399===1?'':'s'}`)}</span></span>
+        </div>
+        <b class="customer-business-reward-name-v395">See every reward</b>
+        <div class="customer-business-summary-actions-v349">
+          <button type="button" class="customer-business-claim-v347" data-hero-view-all-v399="${esc(viewAllAction||'')}"><span>View all rewards</span><span aria-hidden="true">›</span></button>
+        </div>
+      </section>
+    </div>`);
+  }
   if(pages.length)track.insertAdjacentHTML('beforeend',pages.join(''));
   const total=track.querySelectorAll('.customer-business-hero-page-v395').length;
   dots.hidden=total<2;
@@ -9122,8 +9236,10 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasReferral=visibleEntry('referral');
   const hasActivity=capabilities.appointments===true||capabilities.activity===true;
   const modules=[];
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:reward?.available_now===true,fallback:'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:reward?.available_now===true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  /* nestly_v399: readyCount is now unconditional on both reward tiles — the count is corrected
+     from the catalogue in stamps mode too, not only when a points reward happened to be ready. */
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:true,fallback:'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
@@ -10855,20 +10971,25 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       balance:actionableCard?.loyalty?.balance,
       unit:actionableCard?.loyalty?.unit,
       currentRewardName:actionableCard?.next_eligible_reward?.name,
+      /* nestly_v399: page 1's reward is deduped on name AND cost. next_eligible_reward carries no
+         id, and this firm runs two different rewards both called "Free Lotion", so the name alone
+         would have hidden the second one. */
+      currentRewardCost:actionableCard?.next_eligible_reward?.cost_units,
       redemptionEnabled,
       /* The same Book control page 1 carries, so a swiped reward offers the same next step. */
-      bookAction:heroRootV397.querySelector('[data-repeat-booking]')?.outerHTML||''
+      bookAction:heroRootV397.querySelector('[data-repeat-booking]')?.outerHTML||'',
+      /* nestly_v399: the last page hands off to the reward catalogue this profile already
+         renders, through the SAME shortcut tile the modules row uses — no second reward surface.
+         Whichever of the two reward shortcuts this firm actually has is the destination. */
+      viewAllAction:(document.querySelector('[data-business-shortcut-v347="points"]')
+        ?'points':document.querySelector('[data-business-shortcut-v347="rewards"]')?'rewards':'')
     },heroRootV397);
+    wireCustomerHeroViewAllV399(heroRootV397);
     if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards',ct('No rewards are available right now.'),businessSlug,'rewards',loadRewards,isWalletCurrent);
-    const availability={
-      available_at_counter:'Available at counter',
-      disabled:'Unavailable for redemption',
-      insufficient_balance:'More points needed',
-      not_started:'Available soon',
-      ended:'Offer ended',
-      limit_reached:'Claim limit reached',
-      tier_locked:'Unlocks at a higher tier'
-    };
+    /* nestly_v399: one copy map, shared with the hero swipe page (see
+       CUSTOMER_REWARD_AVAILABILITY_COPY_V399). Copied into a local object because the
+       redemption-unchecked branch below rewrites one of its entries for this render only. */
+    const availability={...CUSTOMER_REWARD_AVAILABILITY_COPY_V399};
     /* A tier-gated reward stays VISIBLE and locked rather than hidden: naming the tier is the
        whole reason a member climbs. Uses the tier name the server resolved, so this line can
        never disagree with what the counter will actually allow. */

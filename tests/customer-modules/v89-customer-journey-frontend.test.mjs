@@ -294,13 +294,21 @@ test('Quick Earn scanner follows front-desk and manager loyalty-write assignment
 test('classic and catalog rewards share the v89 availability enum and produce truthful intent arguments',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wallet=section(app,'async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.match(wallet,/available_at_counter:'Available at counter'/);
-  assert.match(wallet,/disabled:'Unavailable for redemption'/);
+  /* nestly_v399: the enum's customer copy is one module-level constant now, read by BOTH the
+     wallet's reward list and the hero swipe page, so the two can never describe the same
+     availability differently. The enum itself is still pinned value-for-value — only its home
+     moved out of the renderCustomerWallet section. */
+  const enumCopy=app.match(/const CUSTOMER_REWARD_AVAILABILITY_COPY_V399=\{[\s\S]*?\n\};/)?.[0]||'';
+  assert.ok(enumCopy,'the shared v89 availability copy map must exist');
+  assert.match(enumCopy,/available_at_counter:'Available at counter'/);
+  assert.match(enumCopy,/disabled:'Unavailable for redemption'/);
+  assert.match(enumCopy,/not_started:'Available soon'/);
+  assert.match(enumCopy,/ended:'Offer ended'/);
+  assert.match(enumCopy,/limit_reached:'Claim limit reached'/);
+  assert.match(enumCopy,/insufficient_balance:'More points needed'/);
+  assert.match(wallet,/const availability=\{\.\.\.CUSTOMER_REWARD_AVAILABILITY_COPY_V399\}/,
+    'the wallet reward list still reads that one map');
   assert.doesNotMatch(wallet,/Ask the business to enable QR redemption|QR redemption is not enabled by this business/);
-  assert.match(wallet,/not_started:'Available soon'/);
-  assert.match(wallet,/ended:'Offer ended'/);
-  assert.match(wallet,/limit_reached:'Claim limit reached'/);
-  assert.match(wallet,/insufficient_balance:'More points needed'/);
   assert.match(wallet,/actionsResult\.data\?\.redemption\?\.classic/);
   assert.match(wallet,/customerRewardCanRedeem\(r,redemptionEnabled\)/);
   assert.match(wallet,/customerRedemptionIntentArgsV89/);

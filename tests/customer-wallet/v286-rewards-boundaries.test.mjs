@@ -42,11 +42,21 @@ test('no card claims counter availability the page could not verify', () => {
   assert.match(rewards,
     /if\(redemptionUncheckedV286\)availability\.available_at_counter='Redemption can’t be checked right now';/,
     '"Available at counter" must not survive a redemption check that never happened');
+  /* nestly_v399: the copy map moved to a module-level constant shared with the hero swipe page,
+     so the two surfaces cannot describe the same reward differently. The ORDER INVARIANT this
+     test exists for is unchanged and still checked — loadRewards takes its own local copy, the
+     unchecked-redemption override rewrites that copy, and only then does a card read it. The
+     anchor is the local copy rather than the literal map. The shared constant itself must still
+     carry the honest default, asserted separately below. */
   const guard = rewards.indexOf('if(redemptionUncheckedV286)availability.available_at_counter');
-  const map = rewards.indexOf("available_at_counter:'Available at counter'");
+  const map = rewards.indexOf('const availability={...CUSTOMER_REWARD_AVAILABILITY_COPY_V399}');
   const card = rewards.indexOf('esc(rewardLockLineV176(r)||availability[r.availability]');
   assert.ok(map > 0 && guard > map && card > guard,
-    'the override sits between the map it corrects and the card that reads it');
+    'the override sits between the local copy it corrects and the card that reads it');
+  /* The override must mutate the LOCAL copy, never the shared constant — doing the latter would
+     leak one render's "could not check" wording into every later render and into the hero page. */
+  assert.doesNotMatch(appJs,/CUSTOMER_REWARD_AVAILABILITY_COPY_V399\.available_at_counter\s*=/);
+  assert.match(appJs,/CUSTOMER_REWARD_AVAILABILITY_COPY_V399=\{[^}]*available_at_counter:'Available at counter'/s);
 });
 
 /* ---------------------------- 2 · the wallet read that was fetched and thrown away */

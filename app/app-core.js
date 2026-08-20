@@ -3200,7 +3200,14 @@ function customerFeatureCardMarkupV156(item={}){
    opens, so the customer still confirms it themselves and the write still happens on their tap.
    The summary line is the existing copy shortened, not new claims about how earning works. */
 function customerPointsExplainerMarkupV167(business={}){
-  const key=`peekaa.customer.points-explainer.v1.${String(business.id||business.slug||'programme')}`;
+  /* nestly_v399 (owner batch item 3). This key was scoped by BUSINESS but not by customer — the
+     same unscoped-storage bug v398 fixed for the New offer flag, one surface over. localStorage is
+     per-origin and never per-account, and nothing clears it on sign-out, so once one person
+     dismissed this explainer every customer who signed in on that device afterwards was treated as
+     having dismissed it too and never saw how rewards work at that business. Scope is now
+     user + business, the established pattern; the old business-only key is deliberately NOT read
+     as a fallback, because its contents are exactly the cross-account state being fixed. */
+  const key=`peekaa.customer.points-explainer.v1.${String(S.user?.id||'anonymous')}.${String(business.id||business.slug||'programme')}`;
   try{if(localStorage.getItem(key)==='dismissed')return ''}catch{}
   return `<button class="card customer-points-explainer customer-points-explainer-v339" type="button" data-points-explainer data-points-explainer-key="${esc(key)}" data-points-explainer-open-v339 aria-label="How rewards work at ${esc(business.name||'this business')}">
     <span class="customer-points-explainer-icon-v339" aria-hidden="true">${CUI.icon('info',{size:20})}</span>
@@ -4062,7 +4069,16 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
         <section class="card customer-business-summary-v346${rewardReady?' is-reward-ready-v2b':''}" data-hero-mode-v386="${esc(modeV386)}" aria-label="Membership summary">
           <div class="customer-business-summary-top-v347">
             <span class="customer-business-tier-pill-v347">${CUI.icon(tierLabel?'diamond':rewardReady?'giftcard':'loyalty',{size:16})}<span>${esc(heroLabel)}</span></span>
-            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span${rewardReady?' data-reward-ready-count-v397':''}>${esc(subline)}</span></span>
+            ${/* nestly_v399 (owner: "ready-count must be accurate in Points, Stamps and Tier modes,
+                 not only Points"). The count hook used to be attached ONLY when the server's
+                 next_eligible_reward was itself claimable. next_eligible_reward is a single points
+                 candidate, so in stamps and tiers mode it is routinely absent or not-ready — the
+                 hook was never emitted, customerRewardReadyCountApplyV397 found no node, and the
+                 pill kept its painted text however many rewards the catalogue could actually
+                 redeem. The hook is now unconditional and carries the painted text as its
+                 fallback, so loadRewards corrects the pill in every mode, and a firm with nothing
+                 ready falls back to exactly the sentence it renders today. */''}
+            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>
           </div>
           ${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
@@ -4115,8 +4131,10 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasReferral=visibleEntry('referral');
   const hasActivity=capabilities.appointments===true||capabilities.activity===true;
   const modules=[];
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:reward?.available_now===true,fallback:'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:reward?.available_now===true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  /* nestly_v399: readyCount is now unconditional on both reward tiles — the count is corrected
+     from the catalogue in stamps mode too, not only when a points reward happened to be ready. */
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:true,fallback:'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
