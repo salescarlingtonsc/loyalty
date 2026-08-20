@@ -194,9 +194,28 @@ test('the pictogram is inside the rung marker and stays legible on the coral fil
   assert.match(indexHtml, /\.customer-tier-milestone\.is-achieved i\{[^}]*color:#fff/);
 });
 
-test('both tabs carry a pictogram beside their name', () => {
-  assert.match(appJs, /data-programme-tab="tier"[^>]*>\$\{CUI\.icon\('star',\{size:16\}\)\}<span>Tier<\/span>/);
-  assert.match(appJs, /data-programme-tab="points"[^>]*>\$\{CUI\.icon\('redeem',\{size:16\}\)\}<span>Reward points<\/span>/);
+test('both tabs carry a pictogram beside their name, and the two are not the same one', () => {
+  /* nestly_v396 (owner rule, 2026-08-20): a dollar sign may only mean literal currency, so the
+     points tab's `redeem` glyph — the same dollar path as `expenses` — became `star`. The tier tab
+     was ALSO on `star`, and these two always render side by side in mode==='both', so it moved to
+     `diamond`: the mark the hero pill, the Tier benefits tile and the top tier rung already use.
+     Tier was the outlier, not the other way round. */
+  assert.match(appJs, /data-programme-tab="tier"[^>]*>\$\{CUI\.icon\('diamond',\{size:16\}\)\}<span>Tier<\/span>/);
+  assert.match(appJs, /data-programme-tab="points"[^>]*>\$\{CUI\.icon\('star',\{size:16\}\)\}<span>Reward points<\/span>/);
+});
+
+test('no customer-facing surface uses the dollar glyph for a reward', () => {
+  /* `redeem` and `expenses` are the SAME dollar-sign path in customer-ui.js. A reward the customer
+     EARNED must never read as a price. The three sites left are business surfaces that really do
+     move money: the activity ledger's redemption row and the playbook's two entitlement runs. */
+  const customerSurface = appJs.slice(0, appJs.indexOf('function renderHistPage'));
+  assert.doesNotMatch(customerSurface, /CUI\.icon\('redeem'/,
+    'a customer screen must not label a reward with a dollar sign');
+  assert.doesNotMatch(customerSurface, /icon:'redeem'/);
+  assert.equal([...appJs.matchAll(/CUI\.icon\('redeem'/g)].length, 2,
+    'only the two business playbook buttons keep it');
+  assert.equal([...appJs.matchAll(/icon:'redeem'/g)].length, 1,
+    'plus the business activity ledger row');
 });
 
 test('the programme header no longer repeats the programme name', () => {

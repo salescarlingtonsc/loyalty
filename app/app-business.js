@@ -29350,7 +29350,7 @@ function customerInterfaceLivePreviewMarkupV326(){
     <div id="walletBody">${merchantExperience}
       ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
       <section class="card customer-programme-card-v310" aria-label="Sample rewards">
-        <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:16})}<span>Rewards</span></h2>
+        <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>Rewards</span></h2>
         ${customerInterfaceSampleRewardRowsV326('points')}
       </section>
     </div>

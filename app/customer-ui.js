@@ -46,6 +46,12 @@
     back:'m15 18-6-6 6-6',
     forward:'m9 18 6-6-6-6',
     search:'m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+    /* `redeem` and `expenses` are the SAME dollar-sign path. Owner rule (2026-08-20, nestly_v396):
+       a dollar sign may only mean literal currency. A reward, a points balance, "Points & gifts"
+       or "reward ready" takes `star` — a reward the customer EARNED must never read as a price.
+       `redeem` is left in the set for the business surfaces that do move money (the activity
+       ledger's redemption row, the playbook's entitlement runs); every customer-facing use was
+       moved to `star`. Do not reach for it on a customer screen. */
     redeem:'M12 2v20M17 6.5A4.5 4.5 0 0 0 12.5 3h-1A4.5 4.5 0 0 0 7 7.5c0 6 10 3 10 9A4.5 4.5 0 0 1 12.5 21h-1A4.5 4.5 0 0 1 7 17.5',
     check:'m5 12 4 4L19 6',
     info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 11v6M12 7h.01',

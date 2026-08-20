@@ -8214,13 +8214,13 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
   const mode=customerProgrammeModeV230(capabilities);
   if(mode==='tiers'){
     return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Your tier">
-      <h2 class="customer-programme-single-head">${CUI.icon('star',{size:16})}<span>Tier</span></h2>
+      <h2 class="customer-programme-single-head">${CUI.icon('diamond',{size:16})}<span>Tier</span></h2>
       ${customerProgrammeTierPanelV230({tier,loyalty,presentation})}
     </section>`;
   }
   if(mode==='redeem'){
     return `<section class="card customer-programme-tabs customer-programme-single" aria-label="Reward points">
-      <h2 class="customer-programme-single-head">${CUI.icon('redeem',{size:16})}<span>Reward points</span></h2>
+      <h2 class="customer-programme-single-head">${CUI.icon('star',{size:16})}<span>Reward points</span></h2>
       ${customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost})}
     </section>`;
   }
@@ -8232,8 +8232,8 @@ function customerProgrammeSummaryTabsV194({tier={},loyalty={},presentation={},re
     :`<span class="customer-programme-tab-balance" aria-label="${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))} ${esc(ct(presentation.unit))} to spend">${esc(customerPointTotalV103(loyalty.balance??presentation.balance??0))}<small>${esc(ct(presentation.unit))}</small></span>`;
   return `<section class="card customer-programme-tabs" aria-label="Tier and reward points">
     <div class="customer-programme-tablist${tabBalanceV299?' customer-programme-tablist--with-balance':''}" role="tablist" aria-label="Tier and reward points">
-      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('star',{size:16})}<span>Tier</span></button>
-      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('redeem',{size:16})}<span>Reward points</span></button>
+      <button type="button" role="tab" id="customerProgrammeTab-tier" class="customer-programme-tab" data-programme-tab="tier" aria-selected="true" aria-controls="customerProgrammePanel" tabindex="0">${CUI.icon('diamond',{size:16})}<span>Tier</span></button>
+      <button type="button" role="tab" id="customerProgrammeTab-points" class="customer-programme-tab" data-programme-tab="points" aria-selected="false" aria-controls="customerProgrammePanel" tabindex="-1">${CUI.icon('star',{size:16})}<span>Reward points</span></button>
       ${tabBalanceV299}
     </div>
     <div id="customerProgrammePanel" role="tabpanel" tabindex="0" aria-labelledby="customerProgrammeTab-tier">
@@ -8403,7 +8403,7 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
   const figure=paused?''
     :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
   return `<section class="card customer-programme-card-v310" data-programme-card="stamps" aria-label="${esc(ct('stampsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('giftcard',{size:16})}<span>${esc(ct('stampsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry):`${figure}
     <p class="muted small customer-programme-card-line-v310">${esc(sentence)}</p>`}
     ${rewardsHost?'<div id="walletRewards" class="customer-programme-rewards" data-section-title="Rewards" aria-busy="true"><p class="muted small">Loading rewards…</p></div>':''}
@@ -8504,7 +8504,7 @@ function customerStampQuestBodyV323(quest){
 function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false,expiry=null}){
   const paused=entry?.active===false||loyalty.enabled===false;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
       :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,expiry,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
@@ -8586,7 +8586,7 @@ function customerClaimableFactsV310({reward=null,birthday=null}={}){
 function customerClaimableStripMarkupV310(facts){
   if(!facts.length)return '';
   return `<div class="customer-claimable-strip" id="customerClaimableStripV310" role="status">
-    <span class="customer-claimable-strip-label">${CUI.icon('redeem',{size:16})}<b>${esc(ct('claimableNow'))}</b></span>
+    <span class="customer-claimable-strip-label">${CUI.icon('star',{size:16})}<b>${esc(ct('claimableNow'))}</b></span>
     <span class="customer-claimable-strip-count">${esc(ct('claimableCount',{count:facts.length}))}</span>
     <span class="customer-claimable-strip-items">${facts.map(fact=>`<span>${esc(fact)}</span>`).join('')}</span>
   </div>`;
@@ -9056,7 +9056,7 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const hasActivity=capabilities.appointments===true||capabilities.activity===true;
   const modules=[];
   if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?'1 reward ready':'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'redeem',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',body:reward?.available_now===true?'1 reward ready':reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
@@ -41884,7 +41884,7 @@ function customerInterfaceLivePreviewMarkupV326(){
     <div id="walletBody">${merchantExperience}
       ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
       <section class="card customer-programme-card-v310" aria-label="Sample rewards">
-        <h2 class="customer-programme-card-head-v310">${CUI.icon('redeem',{size:16})}<span>Rewards</span></h2>
+        <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>Rewards</span></h2>
         ${customerInterfaceSampleRewardRowsV326('points')}
       </section>
     </div>
