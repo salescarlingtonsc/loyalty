@@ -59,6 +59,13 @@
     export:'M12 3v12M7 10l5 5 5-5M4 21h16',
     import:'M12 21V9M7 14l5-5 5 5M4 3h16',
     add:'M12 5v14M5 12h14',
+    /* v402: the staff mobile dock's "More" button asked for 'menu', which was never in this map,
+       so it rendered the info circle — a circled "i" sitting between Record sale and Appointments.
+       Nothing here was a hamburger or an ellipsis, and the nearest candidate ('settings', a cog)
+       names a destination this drawer is not: it holds the workspace summary, the language picker
+       and a link to settings, so it is "more", not "settings". Three rules, same 24-box and same
+       1.9 stroke as its neighbours in the dock. */
+    menu:'M4 7h16M4 12h16M4 17h16',
     back:'m15 18-6-6 6-6',
     forward:'m9 18 6-6-6-6',
     search:'m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',

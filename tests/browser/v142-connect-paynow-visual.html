@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="c3e97a0b5cfe44601e8bcafcceac9425b7b1430db65674eca49654ad40b3f69d"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="3baf110d17e1d78b6892368095d095e13ab560aec8f0b4e0ca2ca3e13ac38795"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3505,7 +3505,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · c3e97a0b5cfe44601e8bcafcceac9425b7b1430db65674eca49654ad40b3f69d</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3baf110d17e1d78b6892368095d095e13ab560aec8f0b4e0ca2ca3e13ac38795</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -3567,6 +3567,13 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     export:'M12 3v12M7 10l5 5 5-5M4 21h16',
     import:'M12 21V9M7 14l5-5 5 5M4 3h16',
     add:'M12 5v14M5 12h14',
+    /* v402: the staff mobile dock's "More" button asked for 'menu', which was never in this map,
+       so it rendered the info circle — a circled "i" sitting between Record sale and Appointments.
+       Nothing here was a hamburger or an ellipsis, and the nearest candidate ('settings', a cog)
+       names a destination this drawer is not: it holds the workspace summary, the language picker
+       and a link to settings, so it is "more", not "settings". Three rules, same 24-box and same
+       1.9 stroke as its neighbours in the dock. */
+    menu:'M4 7h16M4 12h16M4 17h16',
     back:'m15 18-6-6 6-6',
     forward:'m9 18 6-6-6-6',
     search:'m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
@@ -6431,7 +6438,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'c3e97a0b5cfe44601e8bcafcceac9425b7b1430db65674eca49654ad40b3f69d',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'3baf110d17e1d78b6892368095d095e13ab560aec8f0b4e0ca2ca3e13ac38795',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

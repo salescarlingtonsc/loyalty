@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e7336365150ae8f8b42b829961163ea052cf27f1ee27260bfaf9572da09e61a8"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="e2a3803fd2bed4ffd93cc4d7f5c1514366fd62648f85e8db459ba61104b15431"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3568,6 +3568,13 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     export:'M12 3v12M7 10l5 5 5-5M4 21h16',
     import:'M12 21V9M7 14l5-5 5 5M4 3h16',
     add:'M12 5v14M5 12h14',
+    /* v402: the staff mobile dock's "More" button asked for 'menu', which was never in this map,
+       so it rendered the info circle — a circled "i" sitting between Record sale and Appointments.
+       Nothing here was a hamburger or an ellipsis, and the nearest candidate ('settings', a cog)
+       names a destination this drawer is not: it holds the workspace summary, the language picker
+       and a link to settings, so it is "more", not "settings". Three rules, same 24-box and same
+       1.9 stroke as its neighbours in the dock. */
+    menu:'M4 7h16M4 12h16M4 17h16',
     back:'m15 18-6-6 6-6',
     forward:'m9 18 6-6-6-6',
     search:'m21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
@@ -4631,6 +4638,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'e7336365150ae8f8b42b829961163ea052cf27f1ee27260bfaf9572da09e61a8',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'e2a3803fd2bed4ffd93cc4d7f5c1514366fd62648f85e8db459ba61104b15431',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
