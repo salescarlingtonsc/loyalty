@@ -5,7 +5,7 @@ Scope: the business workspace's Rewards Programme → Overview surface, plus the
 whole workspace shares. Owner-approved "balanced" direction; no behaviour, data or copy changed.
 
 Extracted production component hash for the reward-overview browser fixture:
-`d70e95ed352edb0f5c98bc7d83900d7325252940ede1fe7b1b900c8beff6a4a2`
+`989d9a7832d51411abcac2c0b61c784ac8dbdcc3e42ddae78a9cdd116b125862`
 
 ## What was wrong, measured
 

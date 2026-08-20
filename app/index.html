@@ -1288,6 +1288,55 @@ input[type=range]:focus{box-shadow:none}
    deleted — on a tablet the gift rows lost their indent AND ran into the parent note. */
 .grow-overview-child-v324{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:start}
 .grow-overview-arrow-v385{color:var(--muted);font-size:13px;line-height:1.45}
+
+/* ---- v401b: parent/child hierarchy in the Rewards & Loyalty table ------------------------
+   Measured before this block: the parent name sat at x=189 and the child name at x=183, so a
+   child reward was OUTDENTED by 6px — the arrow took the slot the parent's kind mark occupies and
+   the name then started earlier than its parent's. With both names at weight 750 and zero row gap,
+   three rows read as three peers, which is what the owner saw.
+   Every rule below is scoped to the rewards column so History and the usage table are untouched.
+   The row-shape selectors use :has(), already used elsewhere in this stylesheet, because
+   growTableV271 is shared by several tables and emits a bare <tr> with no per-row hook. */
+.grow-overview-column-v319[data-grow-overview-category-v319="rewards"] .grow-overview-child-v324{
+  padding-left:28px}
+/* Readable, not shouted: one weight step down and the secondary ink, never a smaller size — these
+   are reward names an owner has to be able to read at a glance. */
+.grow-overview-column-v319[data-grow-overview-category-v319="rewards"] .grow-overview-child-v324 b,
+.grow-overview-column-v319[data-grow-overview-category-v319="rewards"] .grow-overview-child-v324 .grow-overview-open-v388{
+  font-weight:600;color:var(--ink2)}
+.grow-overview-column-v319[data-grow-overview-category-v319="rewards"] .grow-overview-arrow-v385{
+  color:var(--coral);opacity:.55}
+
+/* Vertical grouping. A child gets a little more room than a plain row; the FIRST child gets a
+   touch more still, and a parent that follows a child group gets the largest step, so the eye
+   reads "new programme starts here" without a rule or a background.
+   Scoped to >=768px because below the stack point a row is FOUR stacked cells, not one line —
+   padding on every cell multiplied by four, which grew each child row from 155px to 231px. */
+@media(min-width:768px){
+  .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] tbody tr:has(.grow-overview-child-v324)>td{
+    padding-top:16px;padding-bottom:16px}
+  .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] tbody tr:not(:has(.grow-overview-child-v324))+tr:has(.grow-overview-child-v324)>td{
+    padding-top:19px}
+  .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] tbody tr:has(.grow-overview-child-v324)+tr:not(:has(.grow-overview-child-v324))>td{
+    padding-top:22px}
+}
+/* Two consecutive children belong together, so the hairline between THEM is softened while the
+   hairline that closes the group is left alone. Softened, not removed — the row boundary still
+   has to exist for a reader scanning the Setting column. */
+.grow-overview-column-v319[data-grow-overview-category-v319="rewards"] tbody tr:has(.grow-overview-child-v324):has(+tr:has(.grow-overview-child-v324))>td{
+  border-bottom-color:var(--hair)}
+
+/* Below the stack point each row becomes four labelled blocks. The indent still works — the value
+   sits in a grid column that starts at a fixed left edge, not against the right rail — so it is
+   kept, slightly tighter for the narrower measure. The group break is put on the Programme cell
+   ALONE, which is where the eye enters the block, instead of on all four. */
+@media(max-width:767px){
+  .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] .grow-overview-child-v324{
+    padding-left:26px}
+  .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] tbody tr:not(:has(.grow-overview-child-v324))+tr:has(.grow-overview-child-v324)>td:first-child,
+  .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] tbody tr:has(.grow-overview-child-v324)+tr:not(:has(.grow-overview-child-v324))>td:first-child{
+    padding-top:14px}
+}
 /* V386: the usage window filter and the comparison chart under the usage table. The chart is
    plain DOM — the app's CSP forbids loading a charting library, and these bars are drawn from
    the numbers already in the table above them. */
