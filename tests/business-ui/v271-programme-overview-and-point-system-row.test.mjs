@@ -137,7 +137,7 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
      linkable hash. V294 made them children of the Programmes nav group, so the in-page strip was
      the same three destinations printed a second time one line below. The strip is gone; the
      three hashes and their resolution are asserted here directly, and the rail entries below. */
-  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]/);
   assert.match(app, /const navViewActiveV296=href=>\{/);
   /* V319: a fourth child ('offers') joined, so the "everything else belongs to the list" branch
      had to exclude it too, or the Limited Offer hash would light two rail rows at once. */

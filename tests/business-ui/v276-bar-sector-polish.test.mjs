@@ -116,7 +116,7 @@ test('V276 the guided setup asks a bar to park its first bottle, and asks nobody
     app.indexOf('/* ---------- staff performance ---------- */'));
   assert.match(setup,
     /const showBottleStepV276=isBarSectorV275\(\)&&\(S\.myRole==='owner'\|\|canReadModule\('bottles'\)\);/);
-  assert.match(setup, /\.\.\.\(showBottleStepV276\?\[\{id:'bottles',icon:'products',title:'Park your first bottle',/);
+  assert.match(setup, /\.\.\.\(showBottleStepV276\?\[\{id:'bottles',icon:'bottle',title:'Park your first bottle',/);
   assert.match(setup, /link:'#\/bottles',cta:'Park a bottle →'\}\]:\[\]\),/);
   // The probe is the Bottles page's own RPC, is only issued for a bar, and its failure must not
   // take the other six checks down with it.

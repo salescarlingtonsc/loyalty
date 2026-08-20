@@ -22,7 +22,7 @@ test('V250 the Programmes nav is one flat link, with no sub-rows left', () => {
   /* V294: Programmes became a group whose children are the page's own three views — still no
      per-module sub-rows (the thing V250 removed stays removed). */
   assert.match(app, /\{key:'grow',icon:'star',label:'Rewards & Offer'/);
-  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/);
+  assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]/);
   assert.doesNotMatch(app, /'Programmes list'/);
   assert.doesNotMatch(app, /\['#\/grow\/ongoing'/);
   assert.doesNotMatch(app, /\['#\/grow\/available'/);

@@ -213,8 +213,8 @@ const NAVGROUPS=[
      view rather than a filter of the list, so it is linkable and back-button-safe like its
      siblings. Overview and History are untouched and still cover BOTH categories. */
   {key:'grow',icon:'star',label:'Rewards & Offer',items:['loyalty','retention','referrals','memberships'],
-    views:[['Overview','#/grow/overview','reports'],['Rewards Programme','#/grow','menu'],
-      ['Limited Offer','#/grow/offers','loyalty'],['History','#/grow/history','waitlist']]},
+    views:[['Overview','#/grow/overview','reports'],['Rewards Programme','#/grow','star'],
+      ['Limited Offer','#/grow/offers','tag'],['History','#/grow/history','waitlist']]},
   /* V243 (owner, arrow from the Settings tabs to the LEFT NAV): "shift these into a new module
      (Customer Interface) - where everything that is required to edit in customer app must be
      inside this module." Customer-facing configuration was three tabs deep inside Settings, an
@@ -11208,15 +11208,21 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
     const away=Number(lapsedResult.data?.total??lapsedResult.data?.count??0)||0;
     const returned=returnedResult.data||{};
     const rows=Array.isArray(returned.rows)?returned.rows:[];
-    host.innerHTML=`<div class="card">
+    /* v401: the card takes a tonal step back (grow-comeback-card-v401) so the two KPI tiles inside
+       it stop being white-on-white-on-white — this card sat at nesting level 3 of 4 with every
+       level painted #FFFFFF, which is why the whole lower half read flat. The tiles themselves stay
+       white, so the numbers now sit on the brightest surface on the page. No illustration here: it
+       lives on the section heading above, where there is room for it and where it cannot crowd
+       these figures. */
+    host.innerHTML=`<div class="card grow-comeback-card-v401">
       <div class="row" style="align-items:flex-start;gap:12px;flex-wrap:wrap"><div>
         <h2>Gone quiet, and who came back</h2>
         <p class="muted small" style="margin-top:4px">Members with no valid visit for the chosen stretch, and those who ended a stretch that long within the last 30 days. Observed visits only — this card claims no cause.</p>
       </div><span class="spacer"></span>
       <div class="v150-segment" role="group" aria-label="Away threshold">${[30,60,90].map(days=>`<button type="button" data-comeback-days="${days}" aria-pressed="${days===awayDays}">${days}+ days</button>`).join('')}</div></div>
       <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
-        <div class="card kpi"><div class="l">Away ${awayDays}+ days now</div><div class="v">${away}</div></div>
-        <div class="card kpi"><div class="l">Came back in the last 30 days</div><div class="v" style="color:var(--green)">${Number(returned.total_returned||0)}</div></div>
+        <div class="card kpi grow-comeback-kpi-v401"><div class="l">${CUI.icon('retention',{size:16})}<span>Away ${awayDays}+ days now</span></div><div class="v">${away}</div></div>
+        <div class="card kpi grow-comeback-kpi-v401 is-returned-v401"><div class="l">${CUI.icon('check',{size:16})}<span>Came back in the last 30 days</span></div><div class="v" style="color:var(--green)">${Number(returned.total_returned||0)}</div></div>
       </div>
       ${rows.length?`<div style="margin-top:14px"><b class="small">Returned recently</b>
         ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">Away ${Number(row.away_days||0)} days · back ${esc(sgt(row.returned_at)||'')}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
@@ -13136,14 +13142,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       summary:!liveLoyaltyModelKeysV240.includes('redeem')?''
         :rewardCount?`${rewardCount} redeemable reward${rewardCount===1?'':'s'}`
         :'Set the earning rate and rewards'},
-    {key:'tiers',icon:'memberships',title:'Tier membership',blurb:'Reward loyal customers as they climb tiers.',
+    {key:'tiers',icon:'diamond',title:'Tier membership',blurb:'Reward loyal customers as they climb tiers.',
       status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('tiers')),
       summary:!liveLoyaltyModelKeysV240.includes('tiers')?''
         :loyaltyTiersV229===null?'Tier details could not be loaded'
         :(growTiersPublishedV331.length&&!loyaltyLive)?'Set the programme Active in the editor, then publish'
         :growTiersPublishedV331.length?`${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'}: ${growTiersPublishedV331.slice(0,3).map(tier=>tier.name).join(', ')}`
         :'Create the ladder customers climb'},
-    {key:'stamps',icon:'loyalty',title:'Stamp card',blurb:'Give rewards after a set number of visits or purchases.',
+    {key:'stamps',icon:'stamp',title:'Stamp card',blurb:'Give rewards after a set number of visits or purchases.',
       status:growTileStatusV371('loyalty',loyaltyModelTileStatusV235('stamps')),
       summary:!liveLoyaltyModelKeysV240.includes('stamps')?''
         :rewardCount?`${rewardCount} milestone${rewardCount===1?'':'s'}`
@@ -13157,7 +13163,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
-    {key:'birthday',icon:'loyalty',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
+    {key:'birthday',icon:'cake',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
       status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?[STATUS_WORDS.on,'on']:rewardJourney.birthday?['Paused','warn']:['Not set up','warn']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
         ?`${rewardJourney.birthday.value}`:'Set the birthday treat and its window'},
@@ -13177,7 +13183,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        with the rest of the gift-card surface — owner: "remove gift cards from the business UI
        entirely"). The status stays
        honest: a tenant with live plans still reads Live, not "pending". */
-    {key:'recurring',icon:'memberships',title:'Memberships',blurb:'Let customers subscribe and save',
+    {key:'recurring',icon:'wallet',title:'Memberships',blurb:'Let customers subscribe and save',
       status:activeMembershipCount?[STATUS_WORDS.on,'on']:membershipConfigured?['Paused','warn']:['Not set up','warn'],
       summary:activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:membershipConfigured?'Membership plans exist but are currently paused':'Let customers subscribe and save'},
   ];
@@ -13694,6 +13700,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     for(let index=at-1;index>=0;index--){if(!growOverviewChildRowV324(rows[index]))return rows[index];}
     return null;
   };
+  /* v401 — THE TYPE COLUMN, GIVEN BACK AS A GLYPH. V324 deleted the "Type" column and let the child
+     indent carry the hierarchy, which left every row saying what a programme is CALLED and never
+     what KIND it is. A 16px mark before the name restores that without restoring a column.
+     Two deliberate limits. It is inline at 16px, not a 40px tile: a tile column would fight the
+     parent/child indent this table is built around and turn a scannable table into a list of
+     badges. And CHILD rows get none — the indent arrow already says whose they are, so a second
+     mark on the same row would be the same information twice.
+     Keyed off row.type, which every entry the builder produces carries. The mark sits OUTSIDE the
+     data-merchant-content element on purpose: that subtree is rewritten by the workspace localiser,
+     and an icon inside it would be replaced by translated text. */
+  const growOverviewRowMarkV401=type=>({
+    'Point system':'star','Reward':'giftcard','Bring-back':'retention','Birthday benefit':'cake',
+    'Welcome offer':'giftcard','Promotion':'tag','Referrals':'referrals','Membership':'wallet'
+  }[String(type||'')]||'star');
   const growOverviewNameColumnV324=(rows,label)=>[label,row=>{
     const at=rows.indexOf(row);
     const above=growOverviewParentAboveV385(rows,at);
@@ -13706,10 +13726,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        which editor it belongs to (openV388, set where the row was built), so nothing is inferred
        from the label. A row with no editor stays plain text rather than becoming a button that
        goes nowhere. */
-    const nameV388=row.openV388
+    /* v401: the kind mark is folded into nameV388 rather than added to the return expression, so
+       the whole statement still ends on `${nameV388}${parentNote}` — tests/business-ui/
+       v319-rewards-and-offer.test.mjs lifts this builder out of the file by that exact anchor and
+       runs it, so moving the ending would have silently unhooked a live harness rather than
+       failing loudly. A child row resolves the mark to '' for the same reason it always has: the
+       indent arrow beside it already says whose row it is. */
+    const isChildV401=growOverviewChildRowV324(row)&&parentAbove;
+    const markV401=isChildV401?'':`<span class="grow-overview-row-mark-v401" aria-hidden="true">${CUI.icon(growOverviewRowMarkV401(row.type),{size:16})}</span>`;
+    /* Mark and name are ONE inline unit, not two siblings. Below 768px the responsive table turns
+       each cell into a display:grid block with the column name as a ::before — so two sibling
+       nodes become two grid ROWS, and the mark detached from the name it belongs to and sat on a
+       line of its own. Wrapping makes the grid see a single item at every width. */
+    const nameV388=`<span class="grow-overview-name-v401">${markV401}${row.openV388
       ?`<button type="button" class="grow-overview-open-v388" data-grow-open-v388="${esc(row.openV388.topic)}" data-grow-open-id-v388="${esc(row.openV388.id||'')}" data-grow-open-kind-v388="${esc(row.openV388.kind||'')}" data-merchant-content>${esc(row.name)}</button>`
-      :`<b data-merchant-content>${esc(row.name)}</b>`;
-    return growOverviewChildRowV324(row)&&parentAbove
+      :`<b data-merchant-content>${esc(row.name)}</b>`}</span>`;
+    return isChildV401
       ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span>${nameV388}${parentNote}</span>`
       :`${nameV388}${parentNote}`;
   }];
@@ -13725,8 +13757,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      column an owner actually wants, which is when the offer stops. 'Ends' is read from the same
      ends_at promotionLifecycleV186 judges the row's state by, and an offer with no end date says
      so rather than borrowing "Not tracked" from a count. */
+  /* v401: the empty state is the one place on this page an illustration costs nothing. At >=1201px
+     the two-column split leaves this panel roughly 190px shorter than the table beside it, so the
+     column ends in dead white; below 1201px the split collapses and that void does not exist, which
+     is exactly the breakpoint the CSS gates the image on. It is also transient by construction —
+     the moment the firm publishes an offer this whole branch stops rendering. */
   const growOverviewOffersTableV319=growTableV271({label:'Limited offers running now',rows:growOverviewOfferRowsV319,
-    empty:'<b>No offer is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/offers">Limited Offer</a> to create one customers can see.</p>',
+    empty:'<img class="grow-illus-v401 grow-illus-offer-v401" data-peekaa-illus="offer" src="/brand/illustrations/limited-offer.svg" alt="" aria-hidden="true" width="132" height="132" loading="lazy" decoding="async"><b>No offer is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow/offers">Limited Offer</a> to create one customers can see.</p>',
     columns:[['Offer',row=>row.openV388
         ?`<button type="button" class="grow-overview-open-v388" data-grow-open-v388="${esc(row.openV388.topic)}" data-grow-open-id-v388="${esc(row.openV388.id||'')}" data-merchant-content>${esc(row.name)}</button>`
         :`<b data-merchant-content>${esc(row.name)}</b>`],
@@ -13747,11 +13784,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      "+": nothing is added to a list of things that already ended. */
   const growOverviewFrameV324=({scope,rewards,offers,addable=true})=>`<div class="grow-overview-split-v319" data-grow-overview-split-v319>
     <section class="grow-overview-column-v319" data-grow-overview-category-v319="rewards" aria-labelledby="growOverviewRewardsHead${scope}">
-      <div class="grow-overview-column-head-v324"><h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHead${scope}">Rewards &amp; Loyalty</h3>
+      <div class="grow-overview-column-head-v324"><span class="grow-overview-column-mark-v401" aria-hidden="true">${CUI.icon('star',{size:18})}</span><h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHead${scope}">Rewards &amp; Loyalty</h3>
         ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow" aria-label="Add another reward programme"><span aria-hidden="true">+</span></a>':''}</div>
       ${rewards}</section>
     <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHead${scope}">
-      <div class="grow-overview-column-head-v324"><h3 class="grow-overview-column-title-v319" id="growOverviewOffersHead${scope}">Limited Offer</h3>
+      <div class="grow-overview-column-head-v324"><span class="grow-overview-column-mark-v401" aria-hidden="true">${CUI.icon('tag',{size:18})}</span><h3 class="grow-overview-column-title-v319" id="growOverviewOffersHead${scope}">Limited Offer</h3>
         ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow/offers" aria-label="Add another limited offer"><span aria-hidden="true">+</span></a>':''}</div>
       ${offers}</section>
   </div>`;
@@ -13899,9 +13936,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* The windowed read failing is not the same as nobody having used anything. Saying so beats
      printing an all-time table under a date range, or a page of zeroes. */
   const growUsageWindowFailedV386=growUsageWindowedV386&&!growUsageWindowV386;
-  const growAnalyticsCardV375=`<section class="card" style="margin-top:16px" aria-labelledby="growAnalyticsHeadV375">
-    <h2 id="growAnalyticsHeadV375">Are the programmes bringing customers back?</h2>
-    <p class="muted small" style="margin-top:4px">Observed visits and redemptions only. These figures describe what happened; they do not claim a programme caused it.</p>
+  /* v401 — THE ANALYTIC HALF OF THE PAGE GETS A MARK, and the illustration goes HERE rather than on
+     the Gone quiet card the owner first drew it on. Measured reason: that card's header row is full
+     at every viewport — its caveat sentence runs the full 954px and the 30/60/90 control has already
+     wrapped to a second line, leaving 88px of slack at 1440 and 13px at 1024, which will not take a
+     96px object. This header has 365-392px free and no text or control in it. It is also the better
+     home on the merits: it anchors the whole retention-analytics SECTION rather than one card inside
+     it, and it sits 207px above the comeback numbers instead of 100px, which is what keeps those
+     numbers the loudest thing in their own card.
+     The illustration is decoration and says nothing the text does not: aria-hidden, and gated to
+     >=1024px in CSS so it never competes for width on tablet or phone. */
+  const growAnalyticsCardV375=`<section class="card grow-analytics-card-v401" style="margin-top:16px" aria-labelledby="growAnalyticsHeadV375">
+    <div class="grow-analytics-head-v401">
+      <div class="grow-analytics-head-copy-v401">
+        <h2 id="growAnalyticsHeadV375">${CUI.icon('insight',{size:24})}Are the programmes bringing customers back?</h2>
+        <p class="muted small" style="margin-top:4px">Observed visits and redemptions only. These figures describe what happened; they do not claim a programme caused it.</p>
+      </div>
+      <img class="grow-illus-v401 grow-illus-retention-v401" data-peekaa-illus="retention" src="/brand/illustrations/retention.svg" alt="" aria-hidden="true" width="96" height="96" loading="lazy" decoding="async">
+    </div>
     <div id="comebackHost" style="margin-top:14px"></div>
     <div style="margin-top:16px"><b class="small">Customers who used each programme</b>
       ${growUsageFilterBarV386}
@@ -14805,7 +14857,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
         if(growActiveTopicV229)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button>`;
         return dedicatedBackV362?`<a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a>`:'';
-      })()}<div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
+      })()}${/* v401: the module mark. Every one of the 37 CUI.pageHeader() calls renders a 24px glyph
+           in this slot, and four of the five hand-rolled .cui-page-title headers carry one
+           (home, customers, sales, services) — this was the fifth, and the only top-level page in
+           the workspace whose header had none. 'star' is the glyph the rail already assigns to this
+           group, so the page now matches the row that opened it. It is decoration, so it is
+           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
       ${/* V364: the "More reward settings" header action went with the block it opened. */''}
       <div class="v150-title-actions"></div>
     </header>
@@ -25317,7 +25374,7 @@ async function branchesPage(){
     if(!isCurrent())return;
     if(error) return fail(error);
     branchList=br||[];staffList=st||[];
-    if(!branchList.length){$('brList').innerHTML=`<div class="card">${CUI.emptyState({iconName:'branches',title:'No branches yet',body:'Add your first branch so sales, bookings, staff access and reports can be scoped correctly.'})}</div>`;return}
+    if(!branchList.length){$('brList').innerHTML=`<div class="card">${CUI.emptyState({iconName:'branch',title:'No branches yet',body:'Add your first branch so sales, bookings, staff access and reports can be scoped correctly.'})}</div>`;return}
     const {data:sbRows,error:sbErr}=await sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id);
     if(!isCurrent())return;
     if(sbErr) return fail(sbErr);
@@ -26449,7 +26506,7 @@ async function setupPage(){
     {id:'services',icon:'services',title:'Add your services or products',
       why:'This is what customers see and book — nothing else works until there\'s at least one.',
       done:(sv||[]).length>0||(pr||[]).length>0,link:'#/services',cta:'Add a service or product →'},
-    ...(showBottleStepV276?[{id:'bottles',icon:'products',title:'Park your first bottle',
+    ...(showBottleStepV276?[{id:'bottles',icon:'bottle',title:'Park your first bottle',
       why:'Bottle keep is the reason a regular comes back for the rest of it — park one and the customer sees it in their own app.',
       done:(Array.isArray(bottleProbe?.items)?bottleProbe.items:[]).length>0,
       link:'#/bottles',cta:'Park a bottle →'}]:[]),
@@ -27473,7 +27530,7 @@ function workspaceLogoPublishArgsV96({
 async function loadWorkspaceLogoEditorV96(){
   const host=$('workspaceLogoEditorV96');
   if(!host||S.myRole!=='owner')return;
-  host.innerHTML=CUI.loadingState({title:'Loading business logo',iconName:'business'});
+  host.innerHTML=CUI.loadingState({title:'Loading business logo',iconName:'branch'});
   const {data,error}=await sb.rpc('business_get_presentation_editor_v95',{
     p_business:S.biz.id
   });
@@ -28909,7 +28966,7 @@ async function loadCommissionConfig(){
    that is a worse trade than an owner finding "for receipts" on a customer-facing screen. */
 function workspaceBrandPanelHtmlV259(){
   return `<div class="card" style="margin-top:16px"><b>Business</b>
-      ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'business'})}</div>`:''}
+      ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'branch'})}</div>`:''}
       <label for="bn">Name</label><input id="bn" value="${esc(S.biz.name)}">
       ${/* V385 (owner markup, photo 11: the Industry select ringed with "make editable", and an
             arrow from it to the customer preview's "Location …" line reading "show here" —
@@ -29026,7 +29083,7 @@ function customerInterfaceDoneCardHtmlV325(){
 function businessProfileBranchCardHtmlV325(){
   return `<div class="card" style="margin-top:16px"><b>Branch contact details</b>
     <p class="muted small" style="margin:6px 0 10px">Address and phone shown to customers, per branch. Add or remove branches entirely in <a href="#/branches">Branches</a>.</p>
-    <div id="ciBranchContactV325">${CUI.loadingState({title:'Loading branches',iconName:'branches'})}</div>
+    <div id="ciBranchContactV325">${CUI.loadingState({title:'Loading branches',iconName:'branch'})}</div>
   </div>`;
 }
 async function loadBranchContactCardV325(){

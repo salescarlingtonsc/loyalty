@@ -37,7 +37,7 @@ test('V250 (a) Programmes is one flat nav group and both sub-rows are gone', () 
   /* V294 (owner markup 2026-08-12): the flat link became a GROUP whose children are the page's
      own Overview / List / History views. What V250 removed stays removed: no per-module peer
      rows, no resurrected sub-nav helper. giftcards moved to Serve & sell with its card. */
-  assert.match(app, /\{key:'grow',icon:'star',label:'Rewards & Offer',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
+  assert.match(app, /\{key:'grow',icon:'star',label:'Rewards & Offer',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
   assert.doesNotMatch(app, /flat:'Programmes'/);
   // The sub-nav helper rendered the three rows; it is gone, not left as an empty container.
   assert.doesNotMatch(app, /growNavItemHtml/);

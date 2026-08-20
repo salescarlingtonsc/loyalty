@@ -155,7 +155,10 @@ test('V319 promotions leave the programmes card for a box of their own', () => {
 
 /* ------------------------------------------------------------------ 2. programmes module ----- */
 
-const growHarness=()=>new Function('esc','assertOk',`
+/* v401: the row builder now asks CUI for a 16px kind mark, so the harness has to supply one. The
+   stub prints the glyph NAME rather than a path, which is what lets the assertions below check that
+   a parent row is marked with the right kind and a child row is not marked at all. */
+const growHarness=()=>new Function('esc','assertOk','CUI',`
   ${STATUS_PRELUDE_SRC}
   ${statement('function promotionDateTextV104(value){','\n}')}
   ${statement('function promotionDateShortV324(value){','\n}')}
@@ -172,7 +175,7 @@ const growHarness=()=>new Function('esc','assertOk',`
     ${statement('const growOverviewFrameV324=','</div>\`;')}
     ${statement('const growOverviewTableV271=growOverviewFrameV324(','});')}
     return {html:growOverviewTableV271,rewards:growOverviewRewardRowsV319,offers:growOverviewOfferRowsV319};
-  };`)(esc);
+  };`)(esc,null,{icon:name=>`<svg data-icon-v401="${name}"></svg>`});
 
 const REWARD_ROW={name:'Point system',type:'Point system',started:'2026-07-21T00:00:00+08:00',
   ended:null,endsAt:null,state:'live',customers:3,detail:'SGD 1 spent → 1 point'};
@@ -262,7 +265,17 @@ test('V324 a reward reads as belonging to the programme above it, not as its sib
      narrow-screen media query deleted — on a tablet the gifts were not indented at all. */
   /* V388 (owner, photo 4): the name is the control that opens this reward's own editor, so it is
      a button rather than a <b>. The indent and the arrow are unchanged. */
-  assert.match(cells[1],/<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3<\/span><button type="button" class="grow-overview-open-v388"[^>]*>Free Facial cream<\/button><\/span>/);
+  /* v401: the name control is wrapped in .grow-overview-name-v401 so that the kind mark and the
+     name stay one inline unit. Below 768px the responsive table makes each cell a display:grid
+     block with the column name as a ::before, and two sibling nodes there become two grid ROWS —
+     the mark detached from its name and sat on a line of its own. */
+  assert.match(cells[1],/<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3<\/span><span class="grow-overview-name-v401"><button type="button" class="grow-overview-open-v388"[^>]*>Free Facial cream<\/button><\/span><\/span>/);
+  /* v401: and a child carries NO kind mark. The indent arrow beside it already says whose row it
+     is, so a mark here would be the same information twice — this is the rule that keeps the
+     column from turning into a badge list. */
+  assert.doesNotMatch(cells[1],/grow-overview-row-mark-v401/,'a child reward row takes no kind mark');
+  assert.match(cells[0],/grow-overview-row-mark-v401/,'a parent programme row carries its kind mark');
+  assert.match(cells[0],/data-icon-v401="star"/,'the Point system row is marked with the points glyph');
   /* The button carries WHICH editor and WHICH row, so the handler never infers either from the
      label — a firm that renames a gift still opens that gift. */
   assert.match(cells[1],/data-grow-open-v388="gift"/);
@@ -313,9 +326,9 @@ test('V319 the rail says Rewards & Offer, and Limited Offer is a real routable c
   const group=statement("{key:'grow',icon:'star'","['History','#/grow/history','waitlist']]},");
   assert.match(group,/label:'Rewards & Offer'/);
   assert.doesNotMatch(group,/label:'Programmes'/);
-  assert.match(group,/\['Rewards Programme','#\/grow','menu'\]/);
-  assert.match(group,/\['Limited Offer','#\/grow\/offers','loyalty'\]/);
-  assert.doesNotMatch(group,/\['List','#\/grow','menu'\]/);
+  assert.match(group,/\['Rewards Programme','#\/grow','star'\]/);
+  assert.match(group,/\['Limited Offer','#\/grow\/offers','tag'\]/);
+  assert.doesNotMatch(group,/\['List','#\/grow','star'\]/);
   /* The module gate is untouched — renaming a rail group must not change who can see it. */
   assert.match(group,/items:\['loyalty','retention','referrals','memberships'\]/);
 });
@@ -419,7 +432,7 @@ test('V319 every attribute this wave emits is read back with the casing the DOM 
 test('V319 the shipped business bundle carries all three changes', () => {
   const bundle=readFileSync(new URL('../../app/app-business.js',import.meta.url),'utf8');
   assert.match(bundle,/label:'Rewards & Offer'/);
-  assert.match(bundle,/\['Limited Offer','#\/grow\/offers','loyalty'\]/);
+  assert.match(bundle,/\['Limited Offer','#\/grow\/offers','tag'\]/);
   assert.match(bundle,/data-grow-overview-category-v319="offers"/);
   assert.match(bundle,/dashboard-range dashboard-range-v319/);
   assert.match(bundle,/id="c360-offers-v319"/);

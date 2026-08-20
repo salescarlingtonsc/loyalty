@@ -10,6 +10,22 @@
     referrals:'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 8h6M20 5v6',
     memberships:'M12 3 4 7l8 14 8-14zM4 7h16M8 7l4 14 4-14',
     giftcard:'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5A2.5 2.5 0 1 1 10 4.5C10 6 12 7 12 7Zm0 0h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z',
+    /* v401 — THREE MARKS THAT DID NOT EXIST, and the collision that made them necessary.
+       'loyalty' and 'giftcard' are the same gift-with-a-bow drawing (the paths differ by one pixel
+       of box height; only 21% of the inked pixels differ at 18px), and the programme grid pointed
+       Stamp card, Welcome gift AND Birthday benefit at one or the other — three tiles, one symbol.
+       Limited Offer borrowed the same box in the rail. So the fix is not a reshuffle of the 51
+       existing glyphs; three meanings genuinely had no mark of their own.
+       Each was rasterised against all 51 before landing: the nearest neighbour to 'stamp' is
+       'bottle' at 73% different, 'tag' is 79% from 'copy', 'cake' is 73% from 'export'. For scale,
+       the loyalty/giftcard pair that caused the bug differs by 21%. Same 24-box, same 1.9 stroke,
+       and each was checked at 16px — the inline size the Overview programme rows use — because a
+       glyph that only reads at 24 is a glyph this page cannot use. */
+    tag:'M2.8 4a1 1 0 0 1 1-1h8a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.8l-7.2 7.2a2 2 0 0 1-2.8 0L3.4 13.4A2 2 0 0 1 2.8 12ZM7.5 7.5h.01',
+    /* A rubber stamp, not a punched card: the dot-grid candidates turned to mush at 16px, and a
+       card-with-a-tick was indistinguishable from the existing 'setup'. */
+    stamp:'M9 3h6v3.2a4 4 0 0 1 1.8 3.3V13H7.2V9.5A4 4 0 0 1 9 6.2ZM4.5 16h15v5h-15z',
+    cake:'M3.5 21h17M5.5 21v-7a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v7M3.5 16.6c1.4 0 1.4 1.1 2.8 1.1s1.4-1.1 2.9-1.1 1.4 1.1 2.8 1.1 1.5-1.1 2.9-1.1 1.4 1.1 2.8 1.1M12 12V9M12 6.6c.7 0 1.2-.6 1.2-1.3S12 2.7 12 2.7s-1.2 1.9-1.2 2.6.5 1.3 1.2 1.3Z',
     /* V275: bottle keep is a bar-only module; a bottle needs a bottle, not a borrowed box. */
     bottle:'M10 2h4v3.6l2.4 3.6c.4.6.6 1.3.6 2V21a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V11.2c0-.7.2-1.4.6-2L10 5.6zM7 15h10',
     star:'m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.77 6.4 20.91l1.07-6.24-4.53-4.42 6.26-.91L12 3Z',

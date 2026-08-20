@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="85bacf6f4dca44a02b8cc687d5b950653c3a54625f0c42c371a4ef80db57ae34"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="caaa540f4e9b1e3a147e920ab6c75d6ccc2e1f2e8b3028884f67f143fa84f088"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1172,6 +1172,79 @@ input[type=range]:focus{box-shadow:none}
 .grow-overview-add-v324{margin-left:auto;min-width:30px;padding:2px 9px;font-size:16px;line-height:1.35;font-weight:800;border-radius:999px}
 @media(min-width:1201px){.grow-overview-split-v319{gap:28px}
   .grow-overview-column-v319[data-grow-overview-category-v319="offers"]{border-left:1px solid var(--hair);padding-left:28px}}
+/* ============ v401 — REWARDS OVERVIEW VISUAL PASS ==========================================
+   The page carried zero icons and four nested .card levels all painted #FFFFFF, while the list
+   view one click away carried seven marks and the Dashboard already led its section headings with
+   a coral glyph. Nothing here invents a new language; it applies the one that already exists at
+   its three established sizes (56px thumb / 40px tile / 18-24px inline glyph).
+   Colour stays inside coral, blush, neutral and the two semantics already in use. */
+
+/* The module mark on the page's own H1 — the slot every other top-level page already fills. */
+.grow-title-mark-v401{display:inline-flex;align-items:center;color:var(--coral);flex:0 0 auto}
+
+/* Both column heads become one tinted bar, with the ringed "+" pulled inside it so the control
+   sits with the thing it adds to rather than floating at the far end of a bare flex row. */
+.grow-overview-column-head-v324{gap:9px;padding:9px 12px;border-radius:12px;background:var(--tint)}
+.grow-overview-column-mark-v401{display:inline-flex;align-items:center;color:var(--coral);flex:0 0 auto}
+.grow-overview-add-v324{background:transparent;border-color:transparent}
+.grow-overview-add-v324:hover{background:#fff;border-color:var(--hair)}
+
+/* The type mark on a parent programme row. Muted so a column of them reads as texture rather
+   than as eight competing accents; child rows never get one (see growOverviewNameColumnV324). */
+.grow-overview-name-v401{display:inline-flex;align-items:baseline;gap:7px;min-width:0;text-align:left}
+.grow-overview-row-mark-v401{color:var(--coral);opacity:.72;flex:0 0 auto;align-self:center}
+
+/* The analytic half of the page. The heading takes the same icon+copy composition the Dashboard's
+   .performance-heading uses, and the illustration sits opposite it. */
+/* align-items:center, not flex-start, and the illustration stays IN FLOW. Both were arrived at by
+   measurement. Top-aligned and in flow, a 96px image beside 43px of copy made the row 96px tall and
+   left a 67px hole above the comeback card. Pulled out of flow with position:absolute the hole
+   closed, but the image then hung 29px down over that card's top-right corner. A 96px ornament next
+   to a 43px heading can only add height or overlap something, so it becomes a deliberate header
+   band instead: the copy centres against the image, and the band reads as the divider between the
+   configuration half of the page and the measurement half. */
+.grow-analytics-head-v401{display:flex;align-items:center;gap:20px}
+.grow-analytics-head-copy-v401{min-width:0;flex:1 1 auto}
+.grow-analytics-head-v401 h2{display:flex;align-items:center;gap:9px}
+.grow-analytics-head-v401 h2>.cui-icon{color:var(--coral);flex:0 0 auto}
+
+/* Nesting level 3 steps back to the page ground so the KPI tiles at level 4 — which stay white —
+   become the brightest surface on the page. This is the inversion that keeps the two comeback
+   numbers dominant, and it is why no illustration goes inside this card. */
+.grow-comeback-card-v401{background:var(--bg);box-shadow:none;border:1px solid var(--hair)}
+.grow-comeback-kpi-v401{background:#fff}
+.grow-comeback-kpi-v401 .l{display:flex;align-items:center;gap:6px}
+.grow-comeback-kpi-v401 .l>.cui-icon{color:var(--coral);flex:0 0 auto}
+.grow-comeback-kpi-v401.is-returned-v401 .l>.cui-icon{color:var(--green)}
+.grow-comeback-kpi-v401 .v{font-size:2.125rem}
+
+/* --- the two illustrations ---------------------------------------------------------------
+   Both are decoration: aria-hidden, and each is gated so it can only appear where it has room.
+   Hidden by default, shown by the media queries below — so a viewport that matches neither rule
+   renders no illustration at all rather than an unsized one. */
+.grow-illus-v401{display:none;flex:0 0 auto;height:auto;max-width:100%;user-select:none;pointer-events:none}
+
+/* Retention: 96px, right-aligned in the heading's margin, ornamental and subordinate by design.
+   Below 1024 the heading's free width falls to 62px, which will not take it, so it goes. */
+/* Below 1024 the heading's free width falls to 62px, which will not take it, so it goes entirely —
+   and because it is display:none the browser never fetches the file at all. */
+@media(min-width:1024px){.grow-illus-retention-v401{display:block;width:96px;opacity:.92}}
+
+/* Limited Offer: 132px, centred, the focal object of an otherwise empty panel. Gated on the SAME
+   1201px breakpoint the two-column split uses — the void it fills is created by that split, so
+   when the columns stack the illustration has no reason to exist. That gate also means it never
+   reaches tablet or phone. The size gap (132 vs 96) plus centred-vs-margin placement is what keeps
+   the two from reading as competing objects when both are on screen. */
+.grow-overview-column-v319 .empty .grow-illus-offer-v401{margin:0 auto 14px}
+@media(min-width:1201px){.grow-illus-offer-v401{display:block;width:132px}}
+
+@media(prefers-reduced-motion:no-preference){.grow-illus-v401{transition:opacity .2s ease}}
+
+@media(max-width:640px){
+  .grow-overview-column-head-v324{padding:8px 10px}
+  .grow-analytics-head-v401{gap:0}
+  .grow-comeback-kpi-v401 .v{font-size:1.9rem}
+}
 /* A date is one token to a reader and must never break across lines — dd/mm/yyyy in a narrow
    column wraps after the "20" and prints the year as "20 26", which is worse than the long form
    it replaced. Only above the 767px stack point: below it the responsive table gives each cell
@@ -3383,7 +3456,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 85bacf6f4dca44a02b8cc687d5b950653c3a54625f0c42c371a4ef80db57ae34</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · caaa540f4e9b1e3a147e920ab6c75d6ccc2e1f2e8b3028884f67f143fa84f088</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6869,7 +6942,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'85bacf6f4dca44a02b8cc687d5b950653c3a54625f0c42c371a4ef80db57ae34',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'caaa540f4e9b1e3a147e920ab6c75d6ccc2e1f2e8b3028884f67f143fa84f088',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

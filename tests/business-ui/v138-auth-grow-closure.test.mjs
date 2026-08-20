@@ -70,7 +70,7 @@ test('sidebar exposes consolidated Grow programme navigation instead of peer rew
   /* V294 (owner markup 2026-08-12): Programmes became a GROUP whose children are the page's
      own Overview / List / History views — still ONE consolidated destination family, still no
      peer reward-module rows. giftcards moved to Serve & sell with its card (item 7b). */
-  assert.match(app,/\{key:'grow',icon:'star',label:'Rewards & Offer',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
+  assert.match(app,/\{key:'grow',icon:'star',label:'Rewards & Offer',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
   for(const label of ['Programmes list','Ongoing programmes','Pending setup','Available programmes','More settings'])
     assert.doesNotMatch(nav,new RegExp(`'${label}'`),`${label} was struck out of the nav`);
   assert.match(nav,/const href=g\.href\|\|`#\/\$\{target\}`/);
@@ -91,7 +91,7 @@ test('the stable return to the one overview is the rail, not a per-page back but
   for(const title of ['Retention programs','Promotions','Referrals','Memberships','Gift cards'])
     assert.doesNotMatch(app,new RegExp(`pageHeader\\(\\{title:'${title}',[^\\n]{0,400}?actions:`),
       `${title} still builds a header back action`);
-  assert.match(app,/views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','menu'\],\s*\['Limited Offer','#\/grow\/offers','loyalty'\],\['History','#\/grow\/history','waitlist'\]\]/,
+  assert.match(app,/views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]/,
     'the rail still carries the three #/grow destinations that replace the button');
 });
 
