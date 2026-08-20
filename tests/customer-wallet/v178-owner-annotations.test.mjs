@@ -92,7 +92,9 @@ test('Bookings is a three-tab client-side filter of already-fetched records',()=
   assert.match(app,/id="customerBookingPanel" role="tabpanel"/);
   assert.match(app,/event\.key==='ArrowRight'\?1:event\.key==='ArrowLeft'\?-1:0/,'tabs must be keyboard reachable');
   assert.match(app,/\.customer-booking-tab\{[^}]*min-height:44px/,'tab targets must be at least 44px');
-  assert.match(app,/\.customer-booking-tab\[aria-selected="true"\]\{background:var\(--tint\);color:var\(--coral\)\}/);
+  /* 2026-08-20 contrast correction: --coral on --tint measured 3.94:1. The selected tab keeps
+     its pink ground and moves to the --brand-red-on-soft step (5.43:1). Lock moved, not weakened. */
+  assert.match(app,/\.customer-booking-tab\[aria-selected="true"\]\{background:var\(--tint\);color:var\(--brand-red-on-soft\)\}/);
   assert.match(app,/\.customer-inbox-bell,\.customer-programme-card,\.customer-booking-business,\.customer-booking-tabs,/,
     'the tab strip must join the customer dark token remap');
   // Classification, grouping and Book again all survive the restructure.

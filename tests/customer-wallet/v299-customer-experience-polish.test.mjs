@@ -122,7 +122,16 @@ test('customer surface uses the warm premium accent palette without changing the
   assert.match(indexHtml,/--glow-brand:0 8px 22px rgba\(194,65,53,\.28\);/,
     'the brand glow keeps its exact recipe, now at its single source');
   assert.match(indexHtml,/\.customer-nav-scan-fab\{background:var\(--peekaa-red\)!important;box-shadow:var\(--glow-brand\)!important\}/);
-  assert.match(indexHtml,/\.customer-primary-nav a\[aria-current="page"\],[^{]+\.is-active\{background:var\(--peekaa-red-soft\)!important;border-color:var\(--peekaa-red\)!important;color:var\(--peekaa-red\)!important\}/);
+  /* 2026-08-20 contrast correction: the GROUND is unchanged — still --peekaa-red-soft — but the
+     type on it moved from --peekaa-red (#C24135, 3.94:1 on that pink, under AA) to the
+     --peekaa-red-on-soft step (#9D352C, 5.43:1). The lock moves with it and keeps the same
+     strength: the exact rule, the exact token names, both halves of the pair. */
+  assert.match(indexHtml,/\.customer-primary-nav a\[aria-current="page"\],[^{]+\.is-active\{background:var\(--peekaa-red-soft\)!important;border-color:var\(--peekaa-red\)!important;color:var\(--peekaa-red-on-soft\)!important\}/);
+  assert.match(indexHtml,/--brand-red-on-soft:var\(--brand-red-dark\);/,
+    'the on-soft step must stay derived from the brand ramp, not be a new invented red');
+  assert.match(indexHtml,/--peekaa-red-on-soft:var\(--brand-red-on-soft\);/);
+  assert.match(indexHtml,/--brand-red-on-soft:var\(--brand-red-on-dark\);/,
+    'dark inverts the soft ground, so the colour that sits on it must invert with it');
   assert.match(indexHtml,/\.customer-claimable-banner-v337,\.customer-claimable-strip\{border-color:var\(--peekaa-gold\)!important;background:var\(--peekaa-gold-bg\)!important/);
   assert.match(indexHtml,/\.customer-surface \.pill\.ok\{background:var\(--peekaa-success-bg\)!important;color:var\(--peekaa-success\)!important\}/);
 });

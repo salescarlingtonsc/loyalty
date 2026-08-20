@@ -16,14 +16,57 @@
  *      the first opaque paint, compositing every translucent layer on the way, and treating a
  *      gradient as its darkest AND lightest stop so the reported ratio is the worst case.
  *      Threshold: WCAG AA — 4.5:1 body text, 3:1 large text (>=24px, or >=18.66px at weight >=700).
- *   2. NON-TEXT COMPONENTS. Pills, chips, dots, tracks, switch knobs and progress fills are judged
- *      at 3:1 against their own surroundings (WCAG 1.4.11), because a stamp dot carries meaning
- *      through colour alone.
+ *   2. NON-TEXT COMPONENTS. Judged at 3:1 against their surroundings (WCAG 1.4.11) — but only the
+ *      parts that carry state by FILL ALONE: stamp dots, the progress fill, the switch track. See
+ *      "THE 1.4.11 RULE" below for why the pills and chips are deliberately not in that set.
  *   3. LIGHT-THEME LEAKAGE. Any element whose OWN background computes to a near-white value
  *      (relative luminance > 0.8) while the surface behind it is dark (luminance < 0.25). This is
  *      the specific failure mode of an un-darkened token: --gold-bg #FFF3D6 or --success-bg
  *      #E7F6EE painted onto a dark card. A near-white plate is not automatically wrong (a QR must
  *      be scannable, a merchant logo needs its own ground) so a short, reasoned allowlist exists.
+ *
+ * HOW A PIXEL IS COMPUTED (corrected 2026-08-20 — the previous model was wrong)
+ *   `opacity` does not fade a colour, it fades a GROUP. The element and its whole subtree are
+ *   rendered, flattened, and only then composited at that alpha over what is behind the group. So a
+ *   disabled `.btn` at opacity:.48 fades its white label AND the red fill painted under the label,
+ *   together — the contrast between the two barely moves. This file used to dim only the text and
+ *   then compare it against the UNDIMMED fill, which invents failures that are not on screen: it
+ *   reported #FFFFFF on #C24135 at 2.28:1 when that pair is 5.12:1, purely because
+ *   `.btn[disabled]{opacity:.48}` was in the chain. Worse, it printed the DECLARED colour as `fg`
+ *   while computing with a dimmed one, so no reader could reproduce the number and check it.
+ *   Now: one walk to the root caches every ancestor's own background layer and opacity, and
+ *   `flatten()` replays the real compositing twice per element — once seeded with the text colour,
+ *   once seeded with nothing — so the reported `fg` and `bg` are the two PAINTED pixels, both
+ *   opaque, and `ratio` is reproducible from them by anyone with the WCAG formula. `fgSrc`/`bgBy`
+ *   keep the declared colour and the element that painted the ground, for debugging.
+ *
+ * WHAT IS EXEMPT
+ *   WCAG 1.4.3 and 1.4.11 both exempt INACTIVE user-interface components ("incidental ... text
+ *   that is part of an inactive user interface component ... has no contrast requirement"). A
+ *   disabled control is low-contrast on purpose — that dimming is how the user is told it cannot
+ *   be used — so anything inside [disabled] / :disabled / [aria-disabled=true] / [inert] is
+ *   skipped rather than reported as debt nobody can act on.
+ *
+ * THE 1.4.11 RULE (tightened 2026-08-20)
+ *   1.4.11 asks for 3:1 on "visual information required to identify user-interface components and
+ *   states" — not on every coloured rectangle. A chip whose fill is pale but whose LABEL is legible
+ *   is not a 1.4.11 failure: the state is in the words. The old selector list swept in .pill,
+ *   .chip, the "New" badge, the countdown chip, the filter chips, the tier pill and the claimable
+ *   banner — every one of them text-bearing — and demanded 3:1 from decorative fills. Sixteen
+ *   findings, thirteen of them noise, three of them the same element measured against itself.
+ *   The set is now the parts whose state genuinely has no other carrier, and each is still waived
+ *   when something else supplies the required information:
+ *     · text inside it        → the label identifies the state; the fill is decoration.
+ *     · fill === ground       → the two resolve to the identical painted value, so the number is a
+ *                               fixed 1.00 that says nothing about a boundary (this is what the
+ *                               three `fg === bg` records were).
+ *     · a border >= 3:1       → the border IS the required visual boundary; 1.4.11 is satisfied.
+ *     · a legible state pair  → for stamp dots the information required is "which are filled", so
+ *                               the adjacency that matters is ON-dot vs OFF-dot. If those two are
+ *                               >= 3:1 apart the row can be read, and the OFF dot's edge against
+ *                               the card is decoration.
+ *   The progress FILL is still measured against its own track (its parent), which is the adjacency
+ *   that carries the value; the track itself is not a state.
  *
  * WHAT GATES
  *   Every run measures BOTH themes, because the two are not independent: the customer app carries
@@ -210,50 +253,69 @@ const AUDIT = function auditContrast(opts) {
   const hex = (c) => '#' + [c.r, c.g, c.b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('')
     + (c.a < 0.999 ? `@${c.a.toFixed(2)}` : '');
 
-  /* The paint stack above an element: element-first, stopping at the first fully opaque layer.
-     A layer that is a gradient contributes two candidates (its darkest and its lightest stop), so
-     the caller can compute the worst-case ratio rather than an average that hides a failure. */
-  const paintStack = (start, includeSelf) => {
-    const layers = [];
-    for (let n = includeSelf ? start : start.parentElement; n && n.nodeType === 1; n = n.parentElement) {
-      const cs = getComputedStyle(n);
-      const stops = gradientStops(cs.backgroundImage);
-      if (stops.length) {
-        let dark = stops[0], light = stops[0];
-        for (const s of stops) { if (lum(s) < lum(dark)) dark = s; if (lum(s) > lum(light)) light = s; }
-        layers.push({ dark, light });
-        if (stops.every((s) => s.a >= 0.99)) return layers;
-      }
-      const bg = parseColor(cs.backgroundColor);
-      if (bg.a > 0) {
-        layers.push({ dark: bg, light: bg });
-        if (bg.a >= 0.999) return layers;
-      }
-    }
-    return layers;
-  };
-  /* Composite bottom-up. `pick` chooses which side of every gradient to take, so 'dark' and
-     'light' bracket the real painted range. */
-  const composite = (layers, pick) => {
-    const base = { r: 255, g: 255, b: 255, a: 1 };
-    let out = base;
-    for (let i = layers.length - 1; i >= 0; i--) out = over(layers[i][pick], out);
-    return out;
-  };
-  const effectiveBg = (el, includeSelf) => {
-    const layers = paintStack(el, includeSelf);
-    if (!layers.length) return { dark: { r: 255, g: 255, b: 255, a: 1 }, light: { r: 255, g: 255, b: 255, a: 1 }, layers: 0 };
-    return { dark: composite(layers, 'dark'), light: composite(layers, 'light'), layers: layers.length };
+  const WHITE = { r: 255, g: 255, b: 255, a: 1 };
+  const TRANSPARENT = { r: 0, g: 0, b: 0, a: 0 };
+
+  /* The single background layer an element paints itself. A gradient contributes two candidates —
+     its darkest and its lightest stop — so the caller can bracket the real painted range instead
+     of averaging a failure away. A translucent gradient still sits ON the element's own
+     background-color, so the two are composited rather than treated as alternatives. */
+  const ownLayer = (cs, pick) => {
+    const bg = parseColor(cs.backgroundColor);
+    const stops = gradientStops(cs.backgroundImage);
+    if (!stops.length) return bg;
+    let d = stops[0], l = stops[0];
+    for (const s of stops) { if (lum(s) < lum(d)) d = s; if (lum(s) > lum(l)) l = s; }
+    const g = pick === 'dark' ? d : l;
+    return g.a >= 0.999 ? g : over(g, bg);
   };
 
-  const cumulativeOpacity = (el) => {
-    let o = 1;
+  /* One walk to the root, caching everything a composite needs: each ancestor's own paint and its
+     opacity. Element-first. */
+  const chainOf = (el) => {
+    const chain = [];
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-      const v = parseFloat(getComputedStyle(n).opacity);
-      if (!Number.isNaN(v)) o *= v;
-      if (o < 0.02) break;
+      const cs = getComputedStyle(n);
+      const o = parseFloat(cs.opacity);
+      chain.push({ node: n, dark: ownLayer(cs, 'dark'), light: ownLayer(cs, 'light'), op: Number.isNaN(o) ? 1 : o });
     }
-    return o;
+    return chain;
+  };
+
+  /* Replay what the compositor actually does. Seed the accumulator with whatever is on top (the
+     text colour, or nothing at all for the bare background), then walk outwards: at each ancestor
+     drop that ancestor's own background UNDER what we have, then multiply the WHOLE accumulated
+     group by that ancestor's opacity — because opacity applies to the group, not to a colour.
+     Both the text pixel and the background pixel come out of this same walk, so whatever a group
+     opacity does, it does to both. The page canvas is white underneath everything. */
+  const flatten = (chain, seed, pick) => {
+    let acc = seed;
+    for (const step of chain) {
+      const layer = step[pick];
+      if (layer.a > 0) acc = over(acc, layer);
+      if (step.op < 1) acc = { r: acc.r, g: acc.g, b: acc.b, a: acc.a * step.op };
+    }
+    /* Quantise to 8-bit at the end. The compositor writes integer channels, and — just as
+       importantly — it makes every reported number REPRODUCIBLE: `ratio` is then exactly what the
+       WCAG formula gives for the `fg` and `bg` hexes printed beside it, so a reader can check this
+       tool instead of trusting it. Rounding after the fact left ratios ~0.02 off their own hexes. */
+    const out = over(acc, WHITE);
+    const q = (v) => Math.round(Math.max(0, Math.min(255, v)));
+    return { r: q(out.r), g: q(out.g), b: q(out.b), a: 1 };
+  };
+  /* Which element actually painted the ground behind this one — reported so a finding names a
+     fixable selector rather than an anonymous colour. */
+  const groundNode = (chain) => {
+    for (const step of chain) if (step.light.a > 0.02 || step.dark.a > 0.02) return step.node;
+    return null;
+  };
+
+  /* WCAG 1.4.3 and 1.4.11 both exempt INACTIVE user-interface components. A disabled control is
+     deliberately dimmed — that dimming is the affordance — so its contrast is not a defect and
+     "fixing" it would make a dead control look live. */
+  const inactive = (el) => {
+    try { return !!el.closest('[disabled],:disabled,[aria-disabled="true"],[inert]'); }
+    catch { return false; }
   };
 
   const isVisible = (el) => {
@@ -301,63 +363,101 @@ const AUDIT = function auditContrast(opts) {
   };
 
   /* ---- 1 + 2: contrast -------------------------------------------------------------------- */
-  const NONTEXT = '.cui-stamp-dots-v2b i,.cui-progress-track-v2b,.cui-progress-track-v2b i,.cui-switch i,.cui-switch i::before,.pill,.chip,.customer-offer-new,.customer-home-offer-countdown,.customer-business-tier-pill-v347,.customer-reward-progress-pill-v340,.customer-home-ready-gift-v343,.customer-rewards-filter-chips-v344 span,.setup-step-token-v2c,.fb-chip,.customer-claimable-banner-v337,.customer-claimable-strip';
-  const nonTextSet = new Set(root.querySelectorAll(NONTEXT));
+  /* Parts whose state has no carrier but their fill. Everything the old list also held — .pill,
+     .chip, the "New" badge, the countdown chip, the filter chips, the tier pill, the claimable
+     banner, the setup token — carries its own text, and 1.4.11 does not ask for a boundary around
+     a component whose state is spelled out in words. See "THE 1.4.11 RULE" at the top. */
+  const STATE_BY_FILL = '.cui-stamp-dots-v2b i,.cui-progress-track-v2b i,.cui-switch i';
+  const stateByFill = new Set(root.querySelectorAll(STATE_BY_FILL));
+
+  const paintedFill = (chain, pick) => flatten(chain, TRANSPARENT, pick);
+  /* The four reasons a state-bearing part still does not need 3:1 of its own. */
+  const componentWaiver = (el, chain, parentChain, fill, ground) => {
+    if ((el.textContent || '').trim()) return 'state is carried by the label, not the fill';
+    if (hex(fill) === hex(ground)) return 'fill and ground resolve to the identical painted value — a fixed 1.00 that measures nothing';
+    const cs = getComputedStyle(el);
+    const bw = parseFloat(cs.borderTopWidth) || 0;
+    const bc = parseColor(cs.borderTopColor);
+    if (bw > 0 && bc.a > 0.05) {
+      let best = 0;
+      for (const pick of ['dark', 'light']) {
+        const g = flatten(parentChain, TRANSPARENT, pick);
+        best = Math.max(best, ratio(over(bc, g), g));
+      }
+      if (best >= AA_NONTEXT - 0.005) return `the border is the visual boundary (${Math.round(best * 100) / 100}:1)`;
+    }
+    if (el.matches('.cui-stamp-dots-v2b i') && el.parentElement) {
+      const dots = [...el.parentElement.children];
+      const on = dots.find((d) => d.classList.contains('on'));
+      const off = dots.find((d) => !d.classList.contains('on'));
+      if (on && off) {
+        let best = 0;
+        for (const pick of ['dark', 'light']) {
+          best = Math.max(best, ratio(paintedFill(chainOf(on), pick), paintedFill(chainOf(off), pick)));
+        }
+        if (best >= AA_NONTEXT - 0.005) return `filled and unfilled dots are ${Math.round(best * 100) / 100}:1 apart — the row reads`;
+      }
+    }
+    return null;
+  };
+  const waived = [];
 
   for (const el of scope) {
     if (!isVisible(el)) continue;
     const cs = getComputedStyle(el);
-    const bg = effectiveBg(el, false);
     const ownBgColor = parseColor(cs.backgroundColor);
     const ownStops = gradientStops(cs.backgroundImage);
+    const chain = chainOf(el);
+    const skipInactive = inactive(el);
 
     /* --- text --- */
     const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
-    if (ownText) {
-      const selfBg = effectiveBg(el, true);
-      const fgRaw = parseColor(cs.color);
-      const op = cumulativeOpacity(el);
-      const fg = { ...fgRaw, a: fgRaw.a * op };
+    if (ownText && !skipInactive) {
+      const fgDecl = parseColor(cs.color);
       const size = parseFloat(cs.fontSize) || 14;
       const weight = parseInt(cs.fontWeight, 10) || 400;
       const large = size >= 24 || (size >= 18.66 && weight >= 700);
       const need = large ? AA_LARGE : AA_BODY;
-      let worst = Infinity, worstBg = null;
+      let worst = Infinity, worstFg = null, worstBg = null;
       for (const pick of ['dark', 'light']) {
-        const b = selfBg[pick];
-        const r = ratio(over(fg, b), b);
-        if (r < worst) { worst = r; worstBg = b; }
+        const t = flatten(chain, fgDecl, pick);
+        const b = flatten(chain, TRANSPARENT, pick);
+        const r = ratio(t, b);
+        if (r < worst) { worst = r; worstFg = t; worstBg = b; }
       }
       if (worst < need - 0.005) {
+        const gn = groundNode(chain);
         push({
           kind: 'text', route: opts.route, sel: describe(el), path: pathOf(el),
           text: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 48),
-          fg: hex(fgRaw), bg: hex(worstBg), ratio: Math.round(worst * 100) / 100, need,
-          size: Math.round(size * 10) / 10, weight,
+          fg: hex(worstFg), bg: hex(worstBg), fgSrc: hex(fgDecl),
+          bgBy: gn ? describe(gn) : 'canvas',
+          ratio: Math.round(worst * 100) / 100, need,
+          size: Math.round(size * 10) / 10, weight, large,
         });
       }
     }
 
-    /* --- non-text component: its own fill against what surrounds it --- */
-    if (nonTextSet.has(el)) {
-      let fill = null;
-      if (ownStops.length) { let d = ownStops[0]; for (const s of ownStops) if (lum(s) > lum(d)) d = s; fill = d; }
-      else if (ownBgColor.a > 0.05) fill = ownBgColor;
-      /* A borders-only component (an unfilled stamp dot) carries its meaning in the border. */
-      const bw = parseFloat(cs.borderTopWidth) || 0;
-      const bc = parseColor(cs.borderTopColor);
-      if (!fill && bw > 0 && bc.a > 0.05) fill = bc;
-      if (fill) {
-        let worst = Infinity, worstBg = null;
-        for (const pick of ['dark', 'light']) {
-          const b = bg[pick];
-          const r = ratio(over(fill, b), b);
-          if (r < worst) { worst = r; worstBg = b; }
-        }
-        if (worst < AA_NONTEXT - 0.005) {
+    /* --- non-text component: its own fill against what surrounds it (WCAG 1.4.11) --- */
+    if (stateByFill.has(el) && !skipInactive) {
+      const parentChain = chain.slice(1);
+      let worst = Infinity, worstFill = null, worstGround = null;
+      for (const pick of ['dark', 'light']) {
+        const f = paintedFill(chain, pick);
+        const g = flatten(parentChain, TRANSPARENT, pick);
+        const r = ratio(f, g);
+        if (r < worst) { worst = r; worstFill = f; worstGround = g; }
+      }
+      if (worst < AA_NONTEXT - 0.005) {
+        const why = componentWaiver(el, chain, parentChain, worstFill, worstGround);
+        if (why) {
+          waived.push({ route: opts.route, sel: describe(el), ratio: Math.round(worst * 100) / 100, why });
+        } else {
+          const gn = groundNode(parentChain);
           push({
             kind: 'component', route: opts.route, sel: describe(el), path: pathOf(el),
-            text: '', fg: hex(fill), bg: hex(worstBg),
+            text: '', fg: hex(worstFill), bg: hex(worstGround),
+            bgBy: gn ? describe(gn) : 'canvas',
             ratio: Math.round(worst * 100) / 100, need: AA_NONTEXT,
           });
         }
@@ -365,14 +465,17 @@ const AUDIT = function auditContrast(opts) {
     }
 
     /* ---- 3: a light-theme plate on a dark ground ----------------------------------------- */
-    if (opts.theme === 'dark') {
+    if (opts.theme === 'dark' && !skipInactive) {
       let plate = null;
       if (ownBgColor.a > 0.5) plate = ownBgColor;
       else if (ownStops.length && ownStops.every((s) => s.a > 0.5)) {
         let d = ownStops[0]; for (const s of ownStops) if (lum(s) < lum(d)) d = s; plate = d;   /* darkest stop: a leak only if even the darkest end is near-white */
       }
+      /* The plate as PAINTED (group opacity included) — a white sheet dimmed to 20% is not a
+         light-theme leak, it is a dim grey, and the old model could not tell the two apart. */
+      if (plate) plate = flatten(chain, TRANSPARENT, 'dark');
       if (plate && lum(plate) > NEAR_WHITE) {
-        const behind = bg.dark;
+        const behind = flatten(chain.slice(1), TRANSPARENT, 'dark');
         /* "Dark surface" means a dark NEUTRAL — the theme's own ground. A deeply saturated brand
            plate (the red hero) is also low-luminance, but a cream chip on it is a deliberate
            accent that reads identically in both themes, so it is not a dark-mode defect. */
@@ -400,7 +503,7 @@ const AUDIT = function auditContrast(opts) {
   const tokens = {};
   for (const t of TOKENS) tokens[t] = cs.getPropertyValue(t).trim();
 
-  return { findings, tokens, elements: scope.length, themeAttr: document.documentElement.getAttribute('data-customer-theme') };
+  return { findings, waived, tokens, elements: scope.length, themeAttr: document.documentElement.getAttribute('data-customer-theme') };
 };
 
 /* --------------------------------------------------------------------------------- driver --- */
@@ -409,13 +512,13 @@ const TOKEN_NAMES = [
   '--coral', '--coral-hover', '--red', '--tint', '--grad',
   '--success', '--success-bg', '--danger', '--danger-bg', '--warn', '--warn-bg', '--neutral-bg',
   '--gold', '--gold-bg', '--amber', '--green',
-  '--brand-red', '--brand-red-dark', '--brand-red-soft', '--brand-red-faint',
+  '--brand-red', '--brand-red-dark', '--brand-red-soft', '--brand-red-faint', '--brand-red-on-soft',
   '--brand-red-on-dark', '--brand-red-on-dark-2',
   '--bg-cust', '--shell', '--appbar-bg', '--head-tint',
   '--peekaa-bg', '--peekaa-card', '--peekaa-white', '--peekaa-text', '--peekaa-text-secondary',
   '--peekaa-text-muted', '--peekaa-border', '--peekaa-divider', '--peekaa-success',
   '--peekaa-success-bg', '--peekaa-gold', '--peekaa-gold-bg', '--peekaa-red', '--peekaa-red-dark',
-  '--peekaa-red-soft', '--peekaa-red-faint',
+  '--peekaa-red-soft', '--peekaa-red-faint', '--peekaa-red-on-soft',
   '--shadow', '--shadow-lg', '--shadow-warm', '--shadow-warm-lg', '--glow-brand',
 ];
 
@@ -462,6 +565,7 @@ async function sweepTheme(theme, tag) {
   await page.route('**/fonts.gstatic.com/**', (r) => r.abort());
 
   const findings = [];
+  const waived = [];
   let tokens = null, themeAttr = null;
   console.log(`\n[${theme}]`);
   for (const route of ROUTES) {
@@ -480,13 +584,14 @@ async function sweepTheme(theme, tag) {
     const res = await page.evaluate(AUDIT, { route, theme, tokens: TOKEN_NAMES });
     if (!tokens) { tokens = res.tokens; themeAttr = res.themeAttr; }
     findings.push(...res.findings);
+    waived.push(...(res.waived || []));
     process.stdout.write(`  ${route.padEnd(24)} ${String(res.elements).padStart(5)} elements  ${String(res.findings.length).padStart(4)} findings\n`);
   }
   await ctx.close();
-  return { theme, findings, tokens, themeAttr };
+  return { theme, findings, waived, tokens, themeAttr };
 }
 
-const SHOT_ROUTES = new Set(['#/wallet', '#/wallet/qa-cafe']);
+const SHOT_ROUTES = new Set(['#/wallet', '#/wallet/qa-cafe', '#/customer/programmes']);
 let light = null, dark = null;
 try {
   if (ONLY !== 'dark') light = await sweepTheme('light', TAG);
@@ -538,6 +643,9 @@ await writeFile(JSON_OUT, JSON.stringify({
     leak: count(darkFindings, 'light-leak'),
   },
   darkTokens: dark?.tokens ?? {}, lightTokens: light?.tokens ?? {},
+  /* Every 1.4.11 candidate the tightened rule let go, WITH its reason — the tightening has to be
+     auditable or it is just a lower number. */
+  waivedComponents: { light: light?.waived ?? [], dark: dark?.waived ?? [] },
   themeAttr: dark?.themeAttr ?? null,
   pageErrors,
   darkOnly: [...darkOnly].sort((a, b) => a.ratio - b.ratio),
