@@ -15536,6 +15536,9 @@ function helpDotMarkupV385(title,body){
 
    A read that fails says so. It never falls back to a shorter list, because a shorter list under
    a bigger number is worse than an error. */
+/* V406: staff_list_customers_v155 refuses a p_limit outside 1..100. This is that ceiling, named
+   once so the request and the "showing the first N" line can never disagree. */
+const DASHBOARD_INACTIVE_PAGE_V406=100;
 /* V405 (owner, photo 6: the KPI tiles "must be able to pop up the data").
    This map used to be declared INSIDE dashboard(). openDashboardMetricRowsV388 is a TOP-LEVEL
    function and read it from there, so every tile click since v388 threw a ReferenceError before
@@ -15596,12 +15599,22 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
       return;
     }
     if(key==='inactive'){
+      /* V406: this used to ask for a page of two hundred. staff_list_customers_v155 refuses any
+         page size outside 1..100 with 'limit must be between 1 and 100', so the Inactive dialog
+         could only ever render that error — invisible until V405 let the dialog open at all.
+         The constant below is the SERVER's ceiling, not a number chosen here. */
       const {data,error}=await sb.rpc('staff_list_customers_v155',{p_business:S.biz.id,p_search:null,
-        p_inactive_bucket:'all_inactive',p_limit:200,p_offset:0,...scopePayload});
+        p_inactive_bucket:'all_inactive',p_limit:DASHBOARD_INACTIVE_PAGE_V406,p_offset:0,...scopePayload});
       if(!stillOpen())return;
       if(error)return failed(ownerErrorText(error));
       const rows=Array.isArray(data?.rows)?data.rows:(Array.isArray(data)?data:[]);
+      /* V287's rule is that the number and the list describe the same people. A firm with more
+         than one page of quiet customers cannot have all of them in one dialog, so rather than
+         let a short list quietly contradict the tile, the shortfall is stated and the footer link
+         — which carries the same all_inactive bucket — is the way to the rest. */
+      const cappedV406=rows.length>=DASHBOARD_INACTIVE_PAGE_V406;
       body.innerHTML=table(['Customer','Last visit'],rows.map(row=>`<tr><td data-label="Customer"><b>${esc(row.full_name||'—')}</b>${row.phone?`<br><span class="muted small">${esc(row.phone)}</span>`:''}</td><td data-label="Last visit">${row.last_visit_at?esc(sgLedgerDateV154(row.last_visit_at).date):'<span class="muted">Never</span>'}</td></tr>`));
+      if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${DASHBOARD_INACTIVE_PAGE_V406}. Open ${esc(def.buttonLabel||'the full list')} below for the rest.</p>`);
       return;
     }
     const {data,error}=await fetchAllRowsResult(()=>sb.from('sales')

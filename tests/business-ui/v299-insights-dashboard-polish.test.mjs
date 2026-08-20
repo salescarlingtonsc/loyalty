@@ -89,6 +89,28 @@ test('V405 the KPI drill-down can actually see its own definitions map',()=>{
   assert.deepEqual(live,[],'the function-scoped name must be gone from live code');
 });
 
+test('V406 the Inactive drill-down asks for a page size the server accepts',()=>{
+  /* Reproduced in production once V405 let the dialog open: the Inactive tile's dialog rendered
+     only "limit must be between 1 and 100". It asked staff_list_customers_v155 for p_limit:200,
+     which that function refuses outright — so this branch had never returned a row. The other
+     three tiles read `sales` directly and were never subject to that bound, which is why only
+     this one was broken.
+     100 is the SERVER's ceiling, named once so the request and the "showing the first N" line
+     cannot drift apart. */
+  assert.match(app,/^const DASHBOARD_INACTIVE_PAGE_V406=100;$/m);
+  /* Scoped to the DRILL-DOWN. The tile's own count query calls the same RPC with p_limit:1 —
+     it wants the total, not the rows — and that is correct, so a file-wide ban would be wrong. */
+  const drill=app.slice(app.indexOf('async function openDashboardMetricRowsV388('),
+                        app.indexOf('function dashboardMetricWasLineV387('));
+  assert.ok(drill.length>500,'the drill-down slice must be found');
+  assert.match(drill,/p_inactive_bucket:'all_inactive',p_limit:DASHBOARD_INACTIVE_PAGE_V406,/);
+  assert.doesNotMatch(drill,/p_limit:\d+/,
+    'the inactive drill-down must not hardcode a page size the server may reject');
+  // V287's rule: the number and the list must describe the same people, or the gap must be stated.
+  assert.match(app,/const cappedV406=rows\.length>=DASHBOARD_INACTIVE_PAGE_V406;/);
+  assert.match(app,/if\(cappedV406\)body\.insertAdjacentHTML\('beforeend',/);
+});
+
 test('Business Insights carries quick-range presets that press the existing Run',()=>{
   assert.match(app,/\[\[7,'7 days'\],\[30,'30 days'\],\[90,'90 days'\],\[182,'6 months'\],\[365,'12 months'\]\]/);
   assert.match(app,/data-report-preset-days="\$\{presetDays\}"/);
