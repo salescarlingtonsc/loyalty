@@ -836,7 +836,18 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
   assert.match(grow, /data-grow-switchconfirm-yes-v322="\$\{esc\(kind\)\}"/);
   const confirmHandler = grow.slice(grow.indexOf("outerMain.querySelectorAll('[data-grow-switchconfirm-yes-v322]')"));
   assert.match(confirmHandler, /const want=programmeSpineOnV314\(kind\)!==true;/);
-  assert.match(confirmHandler, /const \{ok,error\}=await writeProgrammeSwitchesV314\(S\.biz\.id,set,\{paused:false,key:crypto\.randomUUID\(\)\}\);/);
+  /* V384 re-pointed this line at writeProgrammeSwitchesWithStampConversionV384, which asks the owner
+     whether to convert the existing points pot before STAMPS go live. Referral is not that shape, so
+     what has to stay true here is the FALL-THROUGH: the wrapper diverts only when stamps are being
+     turned on and left running, and every other switch — referral OFF included — is still the single
+     V314 spine write this test was written to pin. Both halves are asserted, because re-pointing the
+     name alone would let a later edit route the referral switch through the stamp-conversion dialog
+     without anything going red. */
+  assert.match(confirmHandler, /const \{ok,error,cancelled\}=await writeProgrammeSwitchesWithStampConversionV384\(set,\{paused:false,key:crypto\.randomUUID\(\)\}\);/);
+  assert.match(code, /async function writeProgrammeSwitchesWithStampConversionV384\(set,\{paused=false,key=null\}=\{\}\)\{\s*if\(set\?\.stamps===true&&paused!==true\)\{/,
+    'the stamp-conversion dialog is reached only when stamps are being turned ON and left running');
+  assert.match(code, /\n  return writeProgrammeSwitchesV314\(S\.biz\.id,set,\{paused,key\}\);\n\}/,
+    'every other switch falls through to the ordinary one-call spine write, unchanged');
   assert.match(confirmHandler, /if\(kind==='referral'\)\{\s*\r?\n?\s*const \{error:referralError\}=await sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,\s*\r?\n?\s*p_enabled:want,/);
 });
 
