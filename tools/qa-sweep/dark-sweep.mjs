@@ -386,6 +386,27 @@ const AUDIT = function auditContrast(opts) {
       }
       if (best >= AA_NONTEXT - 0.005) return `the border is the visual boundary (${Math.round(best * 100) / 100}:1)`;
     }
+    /* An INSET ring drawn with box-shadow is the same visual boundary as a border, and is what a
+       control uses when a real border would move its geometry (the switch track's knob is
+       positioned against the padding box). Judge it exactly as a border: the ring colour against
+       the ground behind the control, needing the same 3:1. Only inset shadows count — an outer
+       glow sits beside the control, not around its edge. */
+    const shadow = cs.boxShadow || '';
+    if (shadow.includes('inset')) {
+      const ringColor = shadow.match(/(rgba?\([^)]+\)|#[0-9a-f]{3,8})(?=[^,]*inset)|inset[^,]*?(rgba?\([^)]+\)|#[0-9a-f]{3,8})/i);
+      const raw = ringColor && (ringColor[1] || ringColor[2]);
+      if (raw) {
+        const rc = parseColor(raw);
+        if (rc.a > 0.05) {
+          let best = 0;
+          for (const pick of ['dark', 'light']) {
+            const g = flatten(parentChain, TRANSPARENT, pick);
+            best = Math.max(best, ratio(over(rc, g), g));
+          }
+          if (best >= AA_NONTEXT - 0.005) return `an inset ring is the visual boundary (${Math.round(best * 100) / 100}:1)`;
+        }
+      }
+    }
     if (el.matches('.cui-stamp-dots-v2b i') && el.parentElement) {
       const dots = [...el.parentElement.children];
       const on = dots.find((d) => d.classList.contains('on'));

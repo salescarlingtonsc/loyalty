@@ -10,10 +10,10 @@
   ],
   "shots": "/private/tmp/claude-501/-Users-cs-Downloads-loyalty-main/63a2ed25-8ad3-4c1d-b98d-6c674fd3d6de/scratchpad/wt-ship/tools/qa-sweep/shots/dark",
   "totals": {
-    "light": 11,
-    "dark": 7,
+    "light": 4,
+    "dark": 1,
     "darkOnly": 0,
-    "sharedWithLight": 7,
+    "sharedWithLight": 1,
     "leak": 0
   },
   "darkTokens": {
@@ -93,7 +93,7 @@
     "--success-bg": "#E7F6EE",
     "--danger": "#9D352C",
     "--danger-bg": "#FBEAE7",
-    "--warn": "#8A6D1A",
+    "--warn": "#7D6217",
     "--warn-bg": "#FFF3D6",
     "--neutral-bg": "#F1EEE9",
     "--gold": "#D8B15A",
@@ -147,6 +147,18 @@
         "sel": "i",
         "ratio": 1,
         "why": "fill and ground resolve to the identical painted value — a fixed 1.00 that measures nothing"
+      },
+      {
+        "route": "#/customer/profile",
+        "sel": "i",
+        "ratio": 1.16,
+        "why": "an inset ring is the visual boundary (4.1:1)"
+      },
+      {
+        "route": "#/customer/profile",
+        "sel": "i",
+        "ratio": 1.16,
+        "why": "an inset ring is the visual boundary (4.1:1)"
       }
     ],
     "dark": [
@@ -161,6 +173,18 @@
         "sel": "i",
         "ratio": 1.25,
         "why": "the border is the visual boundary (5.81:1)"
+      },
+      {
+        "route": "#/customer/profile",
+        "sel": "i",
+        "ratio": 1.22,
+        "why": "an inset ring is the visual boundary (4.16:1)"
+      },
+      {
+        "route": "#/customer/profile",
+        "sel": "i",
+        "ratio": 1.22,
+        "why": "an inset ring is the visual boundary (4.16:1)"
       }
     ]
   },
@@ -170,30 +194,6 @@
   "sharedWithLight": [
     {
       "kind": "component",
-      "route": "#/customer/profile",
-      "sel": "i",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:6/div:1/label:3/span:2/i:2",
-      "text": "",
-      "fg": "#292c33",
-      "bg": "#191c22",
-      "bgBy": "section#customerExperiencePreferences.card",
-      "ratio": 1.22,
-      "need": 3
-    },
-    {
-      "kind": "component",
-      "route": "#/customer/profile",
-      "sel": "i",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:9/label:3/span:1/i:2",
-      "text": "",
-      "fg": "#292c33",
-      "bg": "#191c22",
-      "bgBy": "section#customerMarketingPreference.card",
-      "ratio": 1.22,
-      "need": 3
-    },
-    {
-      "kind": "component",
       "route": "#/wallet/qa-cafe",
       "sel": "i",
       "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:3/span:1/i:1",
@@ -203,99 +203,11 @@
       "bgBy": "span.cui-progress-track-v2b",
       "ratio": 1.68,
       "need": 3
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "p.customer-business-progress-line-v362",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/p:5",
-      "text": "80 points to next reward",
-      "fg": "#f4dddb",
-      "bg": "#c24135",
-      "fgSrc": "#ffffff@0.82",
-      "bgBy": "section.card.customer-business-summary-v346",
-      "ratio": 3.95,
-      "need": 4.5,
-      "size": 12,
-      "weight": 400,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "span",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:6/a:1/span:2",
-      "text": "Book now",
-      "fg": "#ffffff",
-      "bg": "#cb5c51",
-      "fgSrc": "#ffffff",
-      "bgBy": "a.customer-business-book-inline-v349",
-      "ratio": 4.05,
-      "need": 4.5,
-      "size": 13,
-      "weight": 760,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "span",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:1/span:2/span:2",
-      "text": "80 points to reward",
-      "fg": "#ffffff",
-      "bg": "#c9584d",
-      "fgSrc": "#ffffff",
-      "bgBy": "span.customer-business-ready-v347",
-      "ratio": 4.21,
-      "need": 4.5,
-      "size": 10.5,
-      "weight": 800,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "span",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:1/span:1/span:2",
-      "text": "DIAMOND",
-      "fg": "#8a6d1a",
-      "bg": "#fff3d6",
-      "fgSrc": "#8a6d1a",
-      "bgBy": "span.customer-business-tier-pill-v347",
-      "ratio": 4.45,
-      "need": 4.5,
-      "size": 10.5,
-      "weight": 800,
-      "large": false
     }
   ],
   "lightFindings": [
     {
       "kind": "component",
-      "route": "#/customer/profile",
-      "sel": "i",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:6/div:1/label:3/span:2/i:2",
-      "text": "",
-      "fg": "#f1eee9",
-      "bg": "#ffffff",
-      "bgBy": "section#customerExperiencePreferences.card",
-      "ratio": 1.16,
-      "need": 3
-    },
-    {
-      "kind": "component",
-      "route": "#/customer/profile",
-      "sel": "i",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:9/label:3/span:1/i:2",
-      "text": "",
-      "fg": "#f1eee9",
-      "bg": "#ffffff",
-      "bgBy": "section#customerMarketingPreference.card",
-      "ratio": 1.16,
-      "need": 3
-    },
-    {
-      "kind": "component",
       "route": "#/wallet/qa-cafe",
       "sel": "i",
       "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:3/span:1/i:1",
@@ -305,70 +217,6 @@
       "bgBy": "span.cui-progress-track-v2b",
       "ratio": 1.68,
       "need": 3
-    },
-    {
-      "kind": "text",
-      "route": "#/customer/bookings",
-      "sel": "span.muted.small",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:2/div:3/a:1/span:1/span:2",
-      "text": "No online booking yet",
-      "fg": "#86828c",
-      "bg": "#ffffff",
-      "fgSrc": "#6b6673",
-      "bgBy": "a.customer-booking-chip.customer-booking-chip--quiet",
-      "ratio": 3.76,
-      "need": 4.5,
-      "size": 12.5,
-      "weight": 400,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "p.customer-business-progress-line-v362",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/p:5",
-      "text": "80 points to next reward",
-      "fg": "#f4dddb",
-      "bg": "#c24135",
-      "fgSrc": "#ffffff@0.82",
-      "bgBy": "section.card.customer-business-summary-v346",
-      "ratio": 3.95,
-      "need": 4.5,
-      "size": 12,
-      "weight": 400,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "span",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:6/a:1/span:2",
-      "text": "Book now",
-      "fg": "#ffffff",
-      "bg": "#cb5c51",
-      "fgSrc": "#ffffff",
-      "bgBy": "a.customer-business-book-inline-v349",
-      "ratio": 4.05,
-      "need": 4.5,
-      "size": 13,
-      "weight": 760,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "span",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:1/span:2/span:2",
-      "text": "80 points to reward",
-      "fg": "#ffffff",
-      "bg": "#c9584d",
-      "fgSrc": "#ffffff",
-      "bgBy": "span.customer-business-ready-v347",
-      "ratio": 4.21,
-      "need": 4.5,
-      "size": 10.5,
-      "weight": 800,
-      "large": false
     },
     {
       "kind": "text",
@@ -416,22 +264,6 @@
       "need": 4.5,
       "size": 12.5,
       "weight": 500,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet/qa-cafe",
-      "sel": "span",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:1/span:1/span:2",
-      "text": "DIAMOND",
-      "fg": "#8a6d1a",
-      "bg": "#fff3d6",
-      "fgSrc": "#8a6d1a",
-      "bgBy": "span.customer-business-tier-pill-v347",
-      "ratio": 4.45,
-      "need": 4.5,
-      "size": 10.5,
-      "weight": 800,
       "large": false
     }
   ]

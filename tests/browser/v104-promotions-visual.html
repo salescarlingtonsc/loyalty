@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="76c2667b7e76f58d16e6770d89aee5be6e10041995857d485f9ef2d30896a313">
+<meta name="v104-production-source-sha256" content="7fd23052976639a5947dad51151c6c79ea7c3cbbbe4e802ba8ad5fc7dcc73897">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -65,7 +65,7 @@
      cream cluster, the three customer shadow inks) all resolve to these now. */
   --success:#1F6B48; --success-bg:#E7F6EE;
   --danger:#9D352C;  --danger-bg:#FBEAE7;
-  --warn:#8A6D1A;    --warn-bg:#FFF3D6;
+  --warn:#7D6217;    --warn-bg:#FFF3D6;
   --neutral-bg:#F1EEE9;
   --gold:#D8B15A;    --gold-bg:var(--warn-bg);
   --bg-cust:#F8F4F1;
@@ -131,13 +131,19 @@ select:not([multiple]){appearance:none;-webkit-appearance:none;background-image:
 input[type="file"]{padding:8px 10px}
 input[type="file"]::file-selector-button{margin-right:10px;border:1px solid var(--control-border);border-radius:999px;background:#fff;padding:8px 14px;font-weight:650;font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer}
 /* The switch component (adopted on customer Profile in wave 2D). */
-.cui-switch{position:relative;display:inline-block;width:44px;height:26px;flex:0 0 auto}
+/* B7: the customer surface remaps --control-border to a hairline (--peekaa-border), so an
+   edge drawn from that token renders at 1.24:1 and is invisible. The switch carries its own
+   edge value — the app's :root control-border — so the ring holds in every surface. */
+.cui-switch{position:relative;display:inline-block;width:44px;height:26px;flex:0 0 auto;--switch-edge:#817B88}
 .cui-switch input{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;opacity:0;cursor:pointer}
 .cui-switch i{position:absolute;inset:0;border-radius:999px;background:var(--neutral-bg);transition:background var(--motion-fast) var(--ease);pointer-events:none}
 .cui-switch i::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(23,22,26,.25);transition:transform var(--motion-fast) var(--ease)}
+/* B7 wave: an off track is #F1EEE9 on a white card = 1.16, so the control disappears.
+   An inset ring gives it an edge without changing the box geometry. */
+.cui-switch input:not(:checked)+i{box-shadow:inset 0 0 0 1px var(--switch-edge)}
 .cui-switch input:checked+i{background:var(--success)}
 .cui-switch input:checked+i::before{transform:translateX(18px)}
-.cui-switch input:focus-visible+i{box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+.cui-switch input:focus-visible+i{box-shadow:inset 0 0 0 1px var(--switch-edge),0 0 0 3px rgba(194,65,53,.14)}
 /* Setup step tokens + the demoted dismissal. */
 .setup-step-token-v2c{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--coral);flex:0 0 auto}
 .setup-step-token-v2c.is-done{background:var(--success-bg);color:var(--success)}
@@ -2307,7 +2313,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-booking-chip:hover{border-color:var(--coral)}
 .customer-booking-chip-copy{display:flex;flex-direction:column;min-width:0}
 .customer-booking-chip-copy b{font-size:13.5px;overflow-wrap:anywhere}
-.customer-booking-chip--quiet{opacity:.82}
+/* B6 wave: 82% rendered #86828C on white = 3.76, under the 4.5 text bar. 94% reads as
+   quiet without being unreadable. */
+.customer-booking-chip--quiet{opacity:.94}
 .customer-booking-chip--quiet:hover{opacity:1}
 .customer-booking-logo{flex:none;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--tint)}
 .customer-booking-logo--fallback{display:flex;align-items:center;justify-content:center;color:var(--coral);font-weight:700}
@@ -3085,7 +3093,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-shell .card.customer-business-summary-v346::after{opacity:.05!important;right:-24px;bottom:-34px;width:138px;height:138px}
 .customer-business-summary-top-v347{margin-bottom:10px!important}
 .customer-business-tier-pill-v347,.customer-business-ready-v347{min-height:22px!important;padding:0 9px!important;font-size:10.5px!important;background:rgba(117,37,24,.24)!important;color:#fff!important}
-.customer-business-ready-v347{background:rgba(255,255,255,.12)!important}
+.customer-business-ready-v347{background:transparent!important}
 /* W3-4: the standing is the one thing on this page that is EARNED, so it is the one thing that
    gets the gold. Every other chip on the hero stays translucent white on red. */
 .customer-shell .card.customer-business-summary-v346 .customer-business-tier-pill-v347{background:var(--gold-bg)!important;color:var(--warn)!important;border:1px solid color-mix(in srgb,var(--gold) 60%,#fff)!important;font-weight:800!important;letter-spacing:.06em!important}
@@ -3100,12 +3108,12 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.5)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i.on{background:var(--gold)!important;border-color:var(--gold)!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-summary-line-v362{margin-top:11px!important;color:#fff!important;font-size:13.5px!important;line-height:1.2!important;font-weight:650!important}
-.customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.82)!important;font-size:12px!important;line-height:1.2!important}
+.customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.92)!important;font-size:12px!important;line-height:1.2!important}
 .customer-business-summary-actions-v349{margin-top:13px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
 .customer-business-summary-actions-v349:has(>:only-child){grid-template-columns:1fr!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:var(--control-h)!important;border-radius:10px!important;font-size:13px!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{background:#fff!important;color:var(--brand-red-dark)!important;box-shadow:0 8px 18px rgba(83,26,21,.14)!important}
-.customer-business-book-inline-v349{background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
+.customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
 .customer-referral-card-v300{padding:16px!important}.customer-referral-card-v300 .wallet-section-head h2{font-size:17px!important;line-height:1.08!important}.customer-referral-card-v300 .wallet-section-head p{max-width:100%;font-size:12.5px!important;line-height:1.28!important}
 .customer-referral-code-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;align-items:stretch!important;width:100%!important}.customer-referral-code{grid-column:1/-1;justify-content:center;max-width:100%;min-width:0!important;font-size:18px!important;letter-spacing:.16em!important}.customer-referral-code-row .btn{width:100%;min-width:0!important;justify-content:center}
 @media(max-width:380px){.customer-business-balance-v347{font-size:48px!important}.customer-business-summary-actions-v349{grid-template-columns:1fr!important}.customer-referral-code{font-size:16px!important}}
@@ -3263,7 +3271,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-claimable-strip-lab
    ground here would invent a second design for a card that never went dark. */
 html[data-customer-theme="dark"] .customer-surface .card.customer-business-summary-v346,
 html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
-    --gold:#D8B15A;--gold-bg:#FFF3D6;--warn:#8A6D1A;--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;
+    --gold:#D8B15A;--gold-bg:#FFF3D6;--warn:#7D6217;--peekaa-gold:#D8B15A;--peekaa-gold-bg:#FFF3D6;
     --coral:#fff;--ink:#fff;--muted:rgba(255,255,255,.82)}
 .strike{text-decoration:line-through;opacity:.55}
 /* v53 visit feedback & service recovery (shared by the customer wallet and the staff queue) */
@@ -3302,7 +3310,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 76c2667b7e76f58d16e6770d89aee5be6e10041995857d485f9ef2d30896a313</p>
+  <p class="v104-provenance">Local production-render harness · source 7fd23052976639a5947dad51151c6c79ea7c3cbbbe4e802ba8ad5fc7dcc73897</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3314,7 +3322,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="76c2667b7e76f58d16e6770d89aee5be6e10041995857d485f9ef2d30896a313";
+const PRODUCTION_SOURCE_SHA256="7fd23052976639a5947dad51151c6c79ea7c3cbbbe4e802ba8ad5fc7dcc73897";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
