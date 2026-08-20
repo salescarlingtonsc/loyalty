@@ -141,8 +141,15 @@ async function readDialogFacts(page, viewportWidth) {
     const hasClose = candidates.some(el => {
       const aria = (el.getAttribute('aria-label') || '').toLowerCase();
       const text = (el.textContent || '').trim().toLowerCase();
-      return aria.includes('close') || aria.includes('cancel')
-        || text === '×' || text === 'x' || text === 'close' || text === 'cancel';
+      /* W6: 'Done' is a dismissal, not a missing affordance. The till add-sheet closes with a
+         'Done' button and this check flagged it; the honest fix is to widen the vocabulary
+         rather than bolt aria-label="Close" onto a button that says Done, which would make a
+         screen reader announce something the button does not say. Sheets conventionally
+         confirm-and-dismiss with Done/Finished; keep the list to words that unambiguously
+         END the dialog — 'Save' is deliberately NOT here, since a save may leave it open. */
+      const DISMISS = ['×', 'x', 'close', 'cancel', 'done', 'finished', 'dismiss', 'back'];
+      return aria.includes('close') || aria.includes('cancel') || aria.includes('dismiss')
+        || DISMISS.includes(text);
     });
     const active = document.activeElement;
     const focusInside = !!active && (active === dlg || dlg.contains(active));
@@ -287,6 +294,101 @@ async function checkOfferCountdownChip(browser) {
   }
 }
 
+/* ------------------------------------------------------- till-add-sheet-v373 + appointment-detail-modal
+ * Wave-gap fix (tools/qa-sweep/sb-double.js now fixtures get_my_modules_at_v115 and
+ * business_get_checkout_catalogue_v94, which is what till/appointments needed to get past their
+ * own "no staff identity / no accessible branch" guard — see that file for the shape citations).
+ * Both dialogs need a DEDICATED check rather than the generic discovery walk above:
+ *
+ *   - till-add-sheet-v373 is TWO clicks deep (start a walk-in sale, THEN "More items"). The
+ *     first click redraws the whole #/till screen in place (no URL change), and the walk-in
+ *     button is the LAST control on the phone-entry screen — so by the time "More items" exists
+ *     in the DOM, the flat control-index range the walk computed BEFORE any click has already
+ *     run out. The generic walk finds 0 dialogs on #/till for exactly this reason.
+ *
+ *   - appointment-detail-modal's trigger is responsive, not just repositioned: the desktop day-
+ *     timeline event button (`.day-timeline-event`) is CSS `display:none` under ~900px, replaced
+ *     by a SEPARATE `.calendar-agenda-item` button for the same appointment (V291's mobile
+ *     agenda fallback) — a different DOM position, not just a different pixel position. Pass 2
+ *     re-triggers by the control INDEX recorded in pass 1, so at 390px it clicks whatever now
+ *     sits at that index (usually invisible or unrelated) instead of the agenda item, and
+ *     el.isVisible() is false, so the walk silently `continue`s — confirmed live: the generic
+ *     walk opens this dialog once on desktop (pass 1) and produces ZERO assertions for it at
+ *     390px in pass 2.
+ *
+ * Both dialogs are asserted at BOTH viewports here, independently per viewport (find whichever
+ * trigger is actually visible, rather than reusing a pass-1 index), through the same
+ * readDialogFacts()/assertDialog()/closesOnEscape() the rest of this file uses. This runs
+ * ALONGSIDE the generic walk above, not instead of it — the generic walk still gets first crack
+ * at #/appointments on desktop (and did, successfully, before this was added), so a future
+ * regression in that path is still caught there too. */
+async function checkTillAddSheetDialog(browser) {
+  console.log('\n[till-add-sheet-v373] #/till — walk-in sale → More items, both viewports');
+  for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
+    const ctx = await browser.newContext({ viewport });
+    const page = await ctx.newPage();
+    await prep(page);
+    const label = `#/till :: till-add-sheet-v373 @${viewport.width}`;
+    await page.goto(`http://127.0.0.1:${PORT}/#/till`, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await page.waitForTimeout(1300);
+    try {
+      await page.locator('#tWalkin').click({ timeout: 3000 });
+      await page.waitForTimeout(500);
+      await page.locator('#tAddItemV373').click({ timeout: 3000 });
+      await page.waitForTimeout(400);
+    } catch (e) {
+      record('till', 'till-add-sheet-v373', `${label} — reached the dialog trigger`, false, String(e?.message || e));
+      await ctx.close();
+      continue;
+    }
+    const facts = await readDialogFacts(page, viewport.width).catch(() => ({ present: false }));
+    if (!facts.present) {
+      record('till', 'till-add-sheet-v373', `${label} — dialog opened`, false,
+        'no .modal[role="dialog"] in the DOM after Walk-in sale → More items');
+    } else {
+      console.log(`  dialog opened by walk-in → More items @${viewport.width} → ${facts.id}`);
+      assertDialog('till', facts);
+      await closesOnEscape(page, 'till', facts.id, viewport.width);
+    }
+    await ctx.close();
+  }
+}
+
+async function checkAppointmentDetailDialog(browser) {
+  console.log('\n[appointment-detail-modal] #/appointments — viewport-appropriate trigger, both viewports');
+  for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
+    const ctx = await browser.newContext({ viewport });
+    const page = await ctx.newPage();
+    await prep(page);
+    const label = `#/appointments :: appointment-detail-modal @${viewport.width}`;
+    await page.goto(`http://127.0.0.1:${PORT}/#/appointments`, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await page.waitForTimeout(1300);
+    // Both `.day-timeline-event` (desktop grid) and `.calendar-agenda-item` (mobile agenda
+    // fallback) carry `data-appointment` for the same appointment; CSS shows exactly one per
+    // viewport, so picking the first VISIBLE one is the viewport-appropriate trigger.
+    const trigger = page.locator('button[data-appointment]:visible').first();
+    try {
+      await trigger.waitFor({ state: 'visible', timeout: 3000 });
+      await trigger.click({ timeout: 3000 });
+      await page.waitForTimeout(400);
+    } catch (e) {
+      record('appointments', 'appointment-detail-modal', `${label} — reached the dialog trigger`, false, String(e?.message || e));
+      await ctx.close();
+      continue;
+    }
+    const facts = await readDialogFacts(page, viewport.width).catch(() => ({ present: false }));
+    if (!facts.present) {
+      record('appointments', 'appointment-detail-modal', `${label} — dialog opened`, false,
+        'no .modal[role="dialog"] in the DOM after clicking the appointment');
+    } else {
+      console.log(`  dialog opened by appointment trigger @${viewport.width} → ${facts.id}`);
+      assertDialog('appointments', facts);
+      await closesOnEscape(page, 'appointments', facts.id, viewport.width);
+    }
+    await ctx.close();
+  }
+}
+
 /* ---------------------------------------------------------------------------- known-issue note
  * DISCOVERED, NOT FIXED HERE (out of the W5-2 chip fix's prescribed scope — flagging, not
  * re-diagnosing or silently patching):
@@ -313,6 +415,8 @@ try {
   await walk(browser, { viewport: { width: 390, height: 844 }, isSecondPass: true, triggers });
 
   await checkOfferCountdownChip(browser);
+  await checkTillAddSheetDialog(browser);
+  await checkAppointmentDetailDialog(browser);
 
   await writeFile(join(ROOT, 'tools/qa-sweep/dialog-results.json'),
     JSON.stringify({ triggerCount: triggers.length, results, failures }, null, 2));

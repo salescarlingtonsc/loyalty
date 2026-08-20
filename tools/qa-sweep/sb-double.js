@@ -59,10 +59,13 @@
       { business_id: BIZ, kind: 'stamps', active: false, programme_id: 'p-stamps' },
       { business_id: BIZ, kind: 'referral', active: true, programme_id: 'p-ref' },
     ],
-    staff: [{ id: 's1', business_id: BIZ, user_id: USER, role: 'owner', active: true, modules: null, module_perms: null, name: 'QA Owner' }],
+    /* full_name is the REAL column (every business-route select() asks for full_name, never
+       name — see e.g. the till/appointments staff & clients reads below); `name` was the
+       double's original field and stays for anything relying on it, full_name is additive. */
+    staff: [{ id: 's1', business_id: BIZ, user_id: USER, role: 'owner', active: true, modules: null, module_perms: null, name: 'QA Owner', full_name: 'QA Owner' }],
     clients: [
-      { id: 'c1', business_id: BIZ, name: 'Tan Wei Ming', phone: '81863833', phone_norm: '81863833', created_at: '2026-03-12T02:00:00Z', marketing_consent: true },
-      { id: 'c2', business_id: BIZ, name: 'Nurul Aisyah', phone: '90214417', phone_norm: '90214417', created_at: '2026-04-03T02:00:00Z', marketing_consent: false },
+      { id: 'c1', business_id: BIZ, name: 'Tan Wei Ming', full_name: 'Tan Wei Ming', phone: '81863833', phone_norm: '81863833', created_at: '2026-03-12T02:00:00Z', marketing_consent: true },
+      { id: 'c2', business_id: BIZ, name: 'Nurul Aisyah', full_name: 'Nurul Aisyah', phone: '90214417', phone_norm: '90214417', created_at: '2026-04-03T02:00:00Z', marketing_consent: false },
     ],
     services: [
       { id: 'sv1', business_id: BIZ, name: 'Signature Facial 60', price_cents: 12000, duration_min: 60, active: true },
@@ -73,8 +76,21 @@
       { id: 'sa1', business_id: BIZ, client_id: 'c1', amount_cents: 124000, kind: 'service', created_at: '2026-08-18T01:14:00Z' },
       { id: 'sa2', business_id: BIZ, client_id: 'c2', amount_cents: 8800, kind: 'retail', created_at: '2026-08-18T03:02:00Z' },
     ],
-    appointments: [{ id: 'ap1', business_id: BIZ, client_id: 'c1', service_id: 'sv1', starts_at: '2026-08-19T02:00:00Z', status: 'booked' }],
+    /* staff_id/branch_id added (v383 wave gap fix): appointmentsPage's Day view groups items by
+       staff column (falling back to an "Unassigned" column only when a row carries neither), so
+       an appointment naming its staff/branch renders in the real per-teammate column instead of
+       the fallback state. total_cents is what appointment-detail-modal prices the visit from
+       (resolveBookedPriceCents falls back to the service price when this is absent, so it was
+       never REQUIRED — added for a realistic "Booked price" reading, not to satisfy a gate). */
+    appointments: [{ id: 'ap1', business_id: BIZ, client_id: 'c1', service_id: 'sv1', staff_id: 's1', branch_id: 'br1', starts_at: '2026-08-19T02:00:00Z', ends_at: '2026-08-19T03:00:00Z', status: 'booked', total_cents: 12000, note: '' }],
     branches: [{ id: 'br1', business_id: BIZ, name: 'Main', is_default: true, active: true }],
+    /* staff_branches was entirely absent — every branch-scoped roster read (till's teammate
+       picker, appointments' per-staff calendar columns) got zero rows back, which for anyone
+       who ISN'T owner/manager (canSeeAllTillBranches / canSeeAll false) collapses their
+       assigned-branch set to empty. QA Owner bypasses that via role, but this row is what makes
+       the assignment real rather than incidental to a role bypass, and is what a non-owner
+       fixture would need. */
+    staff_branches: [{ business_id: BIZ, staff_id: 's1', branch_id: 'br1' }],
     membership_plans: [{ id: 'mp1', business_id: BIZ, name: 'Gold', price_cents: 8800, credit_cents: 10000, cadence: 'monthly', active: true }],
     packages: [{ id: 'pk1', business_id: BIZ, name: '10 Facials', price_cents: 100000, sessions: 10, active: true }],
     expenses: [{ id: 'ex1', business_id: BIZ, occurred_on: '2026-08-17', category: 'Supplies', amount_cents: 4500, supplier: 'ACME', description: 'Towels' }],
@@ -108,6 +124,55 @@
     customer_get_actionable_wallet: () => ({ cards: [] }),
     get_sale_policy: () => ({ policies: [] }),
     get_programs_overview: () => ({ programmes: [] }),
+
+    /* ---- till & appointments branch-effective access -------------------------------------
+       Shape from db/migrations/20260730_nestly_v115_effective_module_projection.sql: returns
+       jsonb {business_id,branch_id,modules:[...],module_perms:{module:'r'|'rw',...},role,
+       is_super_admin}. Both tillPage() and appointmentsPage() call this once per accessible
+       branch (loadBranchModuleProjection) and GATE their entire render on the result: tillPage
+       treats a missing/malformed module_perms as {} (every branchCanRead/branchCanWrite false),
+       which empties accessibleTillBranches and lands on "A staff identity and branch with
+       Record sale access are required" — the exact gap this fixture closes. QA Owner has role
+       'owner' in the staff fixture, so every enabled module resolves 'rw' here (an owner is
+       never permission-limited at a branch), matching app.staff_module_mode_v94's real rule. */
+    get_my_modules_at_v115: (params) => {
+      const modules = ROWS.businesses[0].enabled_modules.slice().sort();
+      return {
+        business_id: params?.p_business || BIZ,
+        branch_id: params?.p_branch || null,
+        modules,
+        module_perms: Object.fromEntries(modules.map((m) => [m, 'rw'])),
+        role: 'owner',
+        is_super_admin: false,
+      };
+    },
+    /* ---- till checkout catalogue ----------------------------------------------------------
+       Shape from db/migrations/20260804_nestly_v158_catalogue_media.sql: jsonb
+       {platform_allowed,enabled,settings_version,selected_branch_id,branches,items:[{item_type,
+       item_id,name,unit_cents,checkout_active,branch_available,version,image_url}]}. loadCatalog()
+       in the till GATES on this: `!checkout.data` or `enabled!==true` both short-circuit to the
+       catalogue-off state before `catalog` is ever built, so tAddItemV373 (which opens
+       till-add-sheet-v373) never renders. Items mirror the ROWS.services/products fixtures
+       above (only the active ones — sv2 is inactive and excluded, matching what the real RPC
+       filters server-side). */
+    business_get_checkout_catalogue_v94: (params) => ({
+      platform_allowed: true, enabled: true, settings_version: 1,
+      selected_branch_id: params?.p_branch || 'br1',
+      branches: [{ id: 'br1', name: 'Main', is_default: true }],
+      items: [
+        { item_type: 'service', item_id: 'sv1', name: 'Signature Facial 60', unit_cents: 12000,
+          checkout_active: true, branch_available: true, version: 0, image_url: '' },
+        { item_type: 'product', item_id: 'pr1', name: 'Cleanser 200ml', unit_cents: 3800,
+          checkout_active: true, branch_available: true, version: 0, image_url: '' },
+      ],
+    }),
+    /* Shape from db/migrations/20260729_nestly_v102_package_checkout_entitlements.sql:
+       {status:'available',gift_card_sales_enabled,package_earns_points}. Not gating (loadCatalog
+       degrades preferencesAvailable=false without it) but fixtured for a real, non-degraded
+       checkout preferences panel rather than leaving it unfixtured. */
+    business_get_checkout_preferences_v102: () => ({
+      status: 'available', gift_card_sales_enabled: true, package_earns_points: true,
+    }),
 
     /* ---- customer app -------------------------------------------------------------------
        Shapes taken from the migrations that define them, not guessed: c44_actionable_wallet_card

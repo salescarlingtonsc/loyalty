@@ -23166,7 +23166,12 @@ async function appointmentsPage(){
      left null so openAppointmentDetails resolves it from the row itself; an id that is not this
      tenant's simply reports that it could not be opened, exactly as a stale calendar tap does. */
   const routedAppointmentV375=routeParamV288('appointment');
-  if(routedAppointmentV375)openAppointmentDetails({id:routedAppointmentV375,branch_id:branchId});
+  /* W6: open AFTER the router's own post-render focus step. Opening inline let the router move
+     focus to the page heading a moment later, which left the dialog on screen with focus outside
+     it — so its Escape handler, which listens from within the dialog, never fired and a
+     deep-linked appointment could not be dismissed by keyboard. Measured: activeElement was
+     #route-title, Escape was inert, and refocusing the close button made Escape work again. */
+  if(routedAppointmentV375)requestAnimationFrame(()=>openAppointmentDetails({id:routedAppointmentV375,branch_id:branchId}));
 }
 
 /* ---------- waitlist (conversion queue) ----------
