@@ -7090,17 +7090,31 @@ function customerPointTotalV103(value){
     .format(Math.max(0,Number(value)||0));
 }
 const CUSTOMER_SEEN_OFFERS_KEY_V167='peekaa.customer.offers.seen.v1';
+/* nestly_v398 (owner, twice: "i still dont see the new"). The New flag was placed correctly by
+   v397 but was invisible on the owner's device, and the cause was not the badge — it was the
+   store that decides whether an offer counts as new.
+   `peekaa.customer.offers.seen.v1` was ONE localStorage key for the whole origin, with no
+   identity in its name and nothing clearing it on sign-out. localStorage is per-origin, never
+   per-account, so every offer version any customer had ever tapped on this browser stayed
+   "already seen" for every customer who signed in afterwards. Reviewing the app as a second
+   person on the same phone — which is exactly what the owner does — meant that person could
+   never see a New flag on any offer, however new the offer genuinely was to them.
+   Scoping the key by the signed-in user is the same shape the customer surface already uses for
+   its other per-person store (see the latestEarn key below). The old global key is deliberately
+   NOT migrated into the new one: its contents are precisely the cross-account contamination
+   being fixed, so importing them would carry the bug forward under a new name. */
+const customerSeenOffersKeyV398=()=>`${CUSTOMER_SEEN_OFFERS_KEY_V167}.${S.user?.id||'anonymous'}`;
 let customerOfferFocusV167=null;
 function customerSeenOfferVersionsV167(){
   try{
-    const parsed=JSON.parse(localStorage.getItem(CUSTOMER_SEEN_OFFERS_KEY_V167)||'[]');
+    const parsed=JSON.parse(localStorage.getItem(customerSeenOffersKeyV398())||'[]');
     return new Set(Array.isArray(parsed)?parsed.filter(value=>typeof value==='string').slice(-200):[]);
   }catch{return new Set()}
 }
 function rememberCustomerOfferV167(versionId){
   if(!versionId)return;
   const seen=customerSeenOfferVersionsV167();seen.add(String(versionId));
-  try{localStorage.setItem(CUSTOMER_SEEN_OFFERS_KEY_V167,JSON.stringify([...seen].slice(-200)))}catch{}
+  try{localStorage.setItem(customerSeenOffersKeyV398(),JSON.stringify([...seen].slice(-200)))}catch{}
 }
 function customerOfferUrgencyV167(item,now=Date.now()){
   const ends=Date.parse(item?.ends_at||'');

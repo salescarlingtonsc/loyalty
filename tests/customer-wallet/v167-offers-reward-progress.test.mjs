@@ -44,12 +44,26 @@ test('customer Home always renders populated, empty, and retryable offer states'
   assert.match(walletRender,/if\(businessSlug\)\{\s*const \[\{data,error\},walletResult\]=await Promise\.all\(\[\s*(?:sb\.rpc|customerRpc)\('customer_get_actionable_business'/);
 });
 
-test('new-offer state is versioned, device-local, bounded, and malformed-storage safe',()=>{
+test('new-offer state is versioned, per-identity, bounded, and malformed-storage safe',()=>{
   assert.match(app,/CUSTOMER_SEEN_OFFERS_KEY_V167='peekaa\.customer\.offers\.seen\.v1'/);
-  assert.match(app,/JSON\.parse\(localStorage\.getItem\(CUSTOMER_SEEN_OFFERS_KEY_V167\)\|\|'\[\]'\)/);
+  /* nestly_v398. This store used to be ONE key for the whole origin. localStorage is per-origin
+     and never per-account, and nothing clears it on sign-out, so every offer version any customer
+     tapped on a device stayed "already seen" for every customer who signed in after them — a
+     second person on the same phone could never see a New flag on any offer. The key carries the
+     signed-in user now, which is the same scoping the customer surface already uses for its
+     latestEarn store. */
+  assert.match(app,/const customerSeenOffersKeyV398=\(\)=>`\$\{CUSTOMER_SEEN_OFFERS_KEY_V167\}\.\$\{S\.user\?\.id\|\|'anonymous'\}`/);
+  assert.match(app,/JSON\.parse\(localStorage\.getItem\(customerSeenOffersKeyV398\(\)\)\|\|'\[\]'\)/);
+  assert.match(app,/localStorage\.setItem\(customerSeenOffersKeyV398\(\),JSON\.stringify/);
+  /* Both sides must go through the helper: a read scoped to the signed-in user and a write that
+     still landed on the bare global key would resurrect the bug in one direction. */
+  assert.doesNotMatch(app,/localStorage\.(getItem|setItem)\(CUSTOMER_SEEN_OFFERS_KEY_V167[,)]/);
   assert.match(app,/catch\{return new Set\(\)\}/);
   assert.match(app,/\.slice\(-200\)/);
   assert.match(sql,/'version_id',bounded\.id::text\|\|':'\|\|bounded\.version::text/);
+  /* The scope is the opaque auth id and nothing else. An email or a customer_id in a storage key
+     would put a real-world identifier on the device; the auth uuid adds no exposure the Supabase
+     session sitting in the same localStorage does not already carry. */
   assert.doesNotMatch(app,/CUSTOMER_SEEN_OFFERS_KEY_V167[\s\S]{0,500}customer_id|CUSTOMER_SEEN_OFFERS_KEY_V167[\s\S]{0,500}email/);
 });
 
