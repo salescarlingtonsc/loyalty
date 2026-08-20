@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="54231e46fb1bd6c5d485bd105cbd2f09fc368c2554693b754f92ec429cc5d284"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="25c3d94675c13d869444e2caa74dfcfe8857e16168d4312c2c84cf4094c42887"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -90,6 +90,11 @@
   --motion-ui:220ms;
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px;
   --control-h:44px;
+  /* B1 (owner ruling): --muted #6B6673 on --brand-red-soft is 4.29. #625E6A is the smallest
+     darkening that clears 4.5 with margin (4.86) and still reads as secondary — the ruling was
+     to preserve the hierarchy, not to maximise the ratio. Dark maps it back to --muted, whose
+     grounds differ, so dark renders exactly as before. */
+  --muted-on-soft:#625E6A;
   --sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif;
   /* ===== DIALOG WIDTH LADDER (W5-2, owner spec 2026-08-19) ================================
      Every modal-card width in the app collapses onto these four steps. Each existing width was
@@ -2926,6 +2931,8 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .cui-stamp-dots-v2b.is-demo-v2b{justify-content:center;display:flex;margin:14px auto 0}
 .cui-progress-track-v2b{display:block;height:4px;border-radius:999px;background:var(--brand-red-soft);margin-top:7px;overflow:hidden;max-width:180px}
 .cui-progress-track-v2b i{display:block;height:100%;border-radius:999px;background:var(--brand-red)}
+.is-near-goal-v2b .customer-home-business-copy-v345 small,.is-near-goal-v2b .customer-programme-card-status-v346,
+.customer-theme-option .muted{color:var(--muted-on-soft)}
 .is-near-goal-v2b{background:linear-gradient(135deg,var(--card),var(--tint))!important;box-shadow:var(--shadow-warm),inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,#fff)!important}
 /* The near-goal card fades white -> --tint, so its red stat line lands on the pink end of the
    gradient (3.94:1). Scoped to this state only: on a plain white card the same red is 5.12:1. */
@@ -3095,8 +3102,11 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* W3-4: the same dots/track the wallet cards draw, recoloured for the red ground — the filled part
    in gold so the progression cue and the tier pill read as one accent, not two. */
 .customer-shell .card.customer-business-summary-v346 .customer-business-hero-progress-v3{position:relative;z-index:1;margin-top:11px!important}
-.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.24)!important}
-.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold)!important}
+/* B8 (owner ruling, option 2): --gold on the 24% track was 1.68. The fill becomes the same
+   gold-light the DIAMOND pill uses, and the track dials back to 16% so the fill carries the
+   value — 3.57 at the gradient's lightest end, where a light fill is worst off. */
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.16)!important}
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold-bg)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b{margin-top:0!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.5)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i.on{background:var(--gold)!important;border-color:var(--gold)!important}
@@ -3150,7 +3160,7 @@ html[data-customer-theme="dark"] .customer-surface,
 html[data-customer-theme="dark"] .customer-offer-detail-modal .modal-card,
 html[data-customer-theme="dark"] .customer-business-detail-modal .modal-card{
     color-scheme:dark;
-    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
+    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;--muted-on-soft:var(--muted);
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
     --coral:var(--brand-red-on-dark);--coral-hover:var(--brand-red-on-dark-2);--amber:#F2C078;--green:#78D5A7;--red:#FF9E95;
     /* A FILLED brand surface keeps the deeper gradient. --brand-red-on-dark exists to carry brand
@@ -3299,7 +3309,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 54231e46fb1bd6c5d485bd105cbd2f09fc368c2554693b754f92ec429cc5d284</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 25c3d94675c13d869444e2caa74dfcfe8857e16168d4312c2c84cf4094c42887</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -24014,6 +24024,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'54231e46fb1bd6c5d485bd105cbd2f09fc368c2554693b754f92ec429cc5d284',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'25c3d94675c13d869444e2caa74dfcfe8857e16168d4312c2c84cf4094c42887',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

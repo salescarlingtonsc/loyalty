@@ -10,10 +10,10 @@
   ],
   "shots": "/private/tmp/claude-501/-Users-cs-Downloads-loyalty-main/63a2ed25-8ad3-4c1d-b98d-6c674fd3d6de/scratchpad/wt-ship/tools/qa-sweep/shots/dark",
   "totals": {
-    "light": 4,
-    "dark": 1,
+    "light": 0,
+    "dark": 0,
     "darkOnly": 0,
-    "sharedWithLight": 1,
+    "sharedWithLight": 0,
     "leak": 0
   },
   "darkTokens": {
@@ -191,80 +191,6 @@
   "themeAttr": "dark",
   "pageErrors": [],
   "darkOnly": [],
-  "sharedWithLight": [
-    {
-      "kind": "component",
-      "route": "#/wallet/qa-cafe",
-      "sel": "i",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:3/span:1/i:1",
-      "text": "",
-      "fg": "#d8b15a",
-      "bg": "#d16f65",
-      "bgBy": "span.cui-progress-track-v2b",
-      "ratio": 1.68,
-      "need": 3
-    }
-  ],
-  "lightFindings": [
-    {
-      "kind": "component",
-      "route": "#/wallet/qa-cafe",
-      "sel": "i",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:1/div:1/section:3/div:3/span:1/i:1",
-      "text": "",
-      "fg": "#d8b15a",
-      "bg": "#d16f65",
-      "bgBy": "span.cui-progress-track-v2b",
-      "ratio": 1.68,
-      "need": 3
-    },
-    {
-      "kind": "text",
-      "route": "#/wallet",
-      "sel": "small",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:5/div:2/a:2/span:2/small:4",
-      "text": "1 stamp to go",
-      "fg": "#6b6673",
-      "bg": "#f7dcd7",
-      "fgSrc": "#6b6673",
-      "bgBy": "a.customer-home-business-card-v345.is-near-goal-v2b",
-      "ratio": 4.29,
-      "need": 4.5,
-      "size": 10,
-      "weight": 400,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/customer/programmes",
-      "sel": "p.customer-programme-card-status-v346",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/div:4/section:1/div:2/a:1/div:2/div:2/p:2",
-      "text": "1 stamps to reward",
-      "fg": "#6b6673",
-      "bg": "#f7dcd7",
-      "fgSrc": "#6b6673",
-      "bgBy": "a.card.customer-programme-card.customer-programme-card-v95.is-near-goal-v2b",
-      "ratio": 4.29,
-      "need": 4.5,
-      "size": 11,
-      "weight": 400,
-      "large": false
-    },
-    {
-      "kind": "text",
-      "route": "#/customer/profile",
-      "sel": "span.muted.small",
-      "path": "body:2/div:2/div:1/div:1/main:3/div:1/section:5/div:2/label:1/span:2/span:2",
-      "text": "Beige, like the business app",
-      "fg": "#6b6673",
-      "bg": "#f7dcd7",
-      "fgSrc": "#6b6673",
-      "bgBy": "label.customer-theme-option",
-      "ratio": 4.29,
-      "need": 4.5,
-      "size": 12.5,
-      "weight": 500,
-      "large": false
-    }
-  ]
+  "sharedWithLight": [],
+  "lightFindings": []
 }

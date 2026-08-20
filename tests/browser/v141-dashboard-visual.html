@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7a3e0540e2047b0127bedb042c64d90fa646fce125092f8ae8bb8c800d2336e3"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="7859532a2838ac9c7a66c594fbd9cffdd72118a2521e634fc48147aa0f3d2779"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -91,6 +91,11 @@
   --motion-ui:220ms;
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px;
   --control-h:44px;
+  /* B1 (owner ruling): --muted #6B6673 on --brand-red-soft is 4.29. #625E6A is the smallest
+     darkening that clears 4.5 with margin (4.86) and still reads as secondary — the ruling was
+     to preserve the hierarchy, not to maximise the ratio. Dark maps it back to --muted, whose
+     grounds differ, so dark renders exactly as before. */
+  --muted-on-soft:#625E6A;
   --sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif;
   /* ===== DIALOG WIDTH LADDER (W5-2, owner spec 2026-08-19) ================================
      Every modal-card width in the app collapses onto these four steps. Each existing width was
@@ -2927,6 +2932,8 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .cui-stamp-dots-v2b.is-demo-v2b{justify-content:center;display:flex;margin:14px auto 0}
 .cui-progress-track-v2b{display:block;height:4px;border-radius:999px;background:var(--brand-red-soft);margin-top:7px;overflow:hidden;max-width:180px}
 .cui-progress-track-v2b i{display:block;height:100%;border-radius:999px;background:var(--brand-red)}
+.is-near-goal-v2b .customer-home-business-copy-v345 small,.is-near-goal-v2b .customer-programme-card-status-v346,
+.customer-theme-option .muted{color:var(--muted-on-soft)}
 .is-near-goal-v2b{background:linear-gradient(135deg,var(--card),var(--tint))!important;box-shadow:var(--shadow-warm),inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,#fff)!important}
 /* The near-goal card fades white -> --tint, so its red stat line lands on the pink end of the
    gradient (3.94:1). Scoped to this state only: on a plain white card the same red is 5.12:1. */
@@ -3096,8 +3103,11 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* W3-4: the same dots/track the wallet cards draw, recoloured for the red ground — the filled part
    in gold so the progression cue and the tier pill read as one accent, not two. */
 .customer-shell .card.customer-business-summary-v346 .customer-business-hero-progress-v3{position:relative;z-index:1;margin-top:11px!important}
-.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.24)!important}
-.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold)!important}
+/* B8 (owner ruling, option 2): --gold on the 24% track was 1.68. The fill becomes the same
+   gold-light the DIAMOND pill uses, and the track dials back to 16% so the fill carries the
+   value — 3.57 at the gradient's lightest end, where a light fill is worst off. */
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.16)!important}
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold-bg)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b{margin-top:0!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.5)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i.on{background:var(--gold)!important;border-color:var(--gold)!important}
@@ -3151,7 +3161,7 @@ html[data-customer-theme="dark"] .customer-surface,
 html[data-customer-theme="dark"] .customer-offer-detail-modal .modal-card,
 html[data-customer-theme="dark"] .customer-business-detail-modal .modal-card{
     color-scheme:dark;
-    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
+    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;--muted-on-soft:var(--muted);
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
     --coral:var(--brand-red-on-dark);--coral-hover:var(--brand-red-on-dark-2);--amber:#F2C078;--green:#78D5A7;--red:#FF9E95;
     /* A FILLED brand surface keeps the deeper gradient. --brand-red-on-dark exists to carry brand
@@ -4400,6 +4410,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'7a3e0540e2047b0127bedb042c64d90fa646fce125092f8ae8bb8c800d2336e3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'7859532a2838ac9c7a66c594fbd9cffdd72118a2521e634fc48147aa0f3d2779',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

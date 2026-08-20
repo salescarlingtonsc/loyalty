@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="7fd23052976639a5947dad51151c6c79ea7c3cbbbe4e802ba8ad5fc7dcc73897">
+<meta name="v104-production-source-sha256" content="4989d0f0798eea546571f84d3bb126c2c08364094d6b398cebbadb6311c44beb">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -97,6 +97,11 @@
   --motion-ui:220ms;
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px;
   --control-h:44px;
+  /* B1 (owner ruling): --muted #6B6673 on --brand-red-soft is 4.29. #625E6A is the smallest
+     darkening that clears 4.5 with margin (4.86) and still reads as secondary — the ruling was
+     to preserve the hierarchy, not to maximise the ratio. Dark maps it back to --muted, whose
+     grounds differ, so dark renders exactly as before. */
+  --muted-on-soft:#625E6A;
   --sf:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif;
   /* ===== DIALOG WIDTH LADDER (W5-2, owner spec 2026-08-19) ================================
      Every modal-card width in the app collapses onto these four steps. Each existing width was
@@ -2933,6 +2938,8 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .cui-stamp-dots-v2b.is-demo-v2b{justify-content:center;display:flex;margin:14px auto 0}
 .cui-progress-track-v2b{display:block;height:4px;border-radius:999px;background:var(--brand-red-soft);margin-top:7px;overflow:hidden;max-width:180px}
 .cui-progress-track-v2b i{display:block;height:100%;border-radius:999px;background:var(--brand-red)}
+.is-near-goal-v2b .customer-home-business-copy-v345 small,.is-near-goal-v2b .customer-programme-card-status-v346,
+.customer-theme-option .muted{color:var(--muted-on-soft)}
 .is-near-goal-v2b{background:linear-gradient(135deg,var(--card),var(--tint))!important;box-shadow:var(--shadow-warm),inset 0 0 0 1.5px color-mix(in srgb,var(--gold) 55%,#fff)!important}
 /* The near-goal card fades white -> --tint, so its red stat line lands on the pink end of the
    gradient (3.94:1). Scoped to this state only: on a plain white card the same red is 5.12:1. */
@@ -3102,8 +3109,11 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* W3-4: the same dots/track the wallet cards draw, recoloured for the red ground — the filled part
    in gold so the progression cue and the tier pill read as one accent, not two. */
 .customer-shell .card.customer-business-summary-v346 .customer-business-hero-progress-v3{position:relative;z-index:1;margin-top:11px!important}
-.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.24)!important}
-.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold)!important}
+/* B8 (owner ruling, option 2): --gold on the 24% track was 1.68. The fill becomes the same
+   gold-light the DIAMOND pill uses, and the track dials back to 16% so the fill carries the
+   value — 3.57 at the gradient's lightest end, where a light fill is worst off. */
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b{max-width:none!important;height:5px!important;margin-top:0!important;background:rgba(255,255,255,.16)!important}
+.customer-shell .card.customer-business-summary-v346 .cui-progress-track-v2b i{background:var(--gold-bg)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b{margin-top:0!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.5)!important}
 .customer-shell .card.customer-business-summary-v346 .cui-stamp-dots-v2b i.on{background:var(--gold)!important;border-color:var(--gold)!important}
@@ -3157,7 +3167,7 @@ html[data-customer-theme="dark"] .customer-surface,
 html[data-customer-theme="dark"] .customer-offer-detail-modal .modal-card,
 html[data-customer-theme="dark"] .customer-business-detail-modal .modal-card{
     color-scheme:dark;
-    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;
+    --bg:#0F1115;--card:#191C22;--ink:#F7F4EF;--ink2:#D8D2CA;--muted:#AAA3AD;--muted-on-soft:var(--muted);
     --line:#343841;--control-border:#737A86;--hair:rgba(255,255,255,.11);
     --coral:var(--brand-red-on-dark);--coral-hover:var(--brand-red-on-dark-2);--amber:#F2C078;--green:#78D5A7;--red:#FF9E95;
     /* A FILLED brand surface keeps the deeper gradient. --brand-red-on-dark exists to carry brand
@@ -3310,7 +3320,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 7fd23052976639a5947dad51151c6c79ea7c3cbbbe4e802ba8ad5fc7dcc73897</p>
+  <p class="v104-provenance">Local production-render harness · source 4989d0f0798eea546571f84d3bb126c2c08364094d6b398cebbadb6311c44beb</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3322,7 +3332,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="7fd23052976639a5947dad51151c6c79ea7c3cbbbe4e802ba8ad5fc7dcc73897";
+const PRODUCTION_SOURCE_SHA256="4989d0f0798eea546571f84d3bb126c2c08364094d6b398cebbadb6311c44beb";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
