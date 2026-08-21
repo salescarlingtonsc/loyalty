@@ -5076,11 +5076,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            a screen reader; the wide (non-compact) header still prints the address itself. */
         /* nestly_v422 (owner photo 8: a map pin drawn over this chip, "remove this wording").
            In the COMPACT header the chip is one of two controls in a fixed 166–184px column, and
-           that column is what starved the identity beside it — measured at 390px the name/bio
-           column was left ~95px, which is why "Cubbly SPA" rendered as "Cubbly …" and the company
-           bio broke across two lines mid-phrase (the owner's second mark on the same photo,
+           that column is what starved the identity beside it. MEASURED at 390px on the build in
+           the owner's photos: actions 184px, identity button 130px, and the text column inside it
+           89px — so "Cubbly SPA" wrapped to two lines AND ellipsised, and the bio, needing 120px,
+           broke across two line boxes mid-phrase (the owner's second mark on the same photo,
            "company bio has its own line"). Dropping the word makes it a pin, matching the Call
-           button that has been icon-only since v366, and hands ~110px back to the name and bio.
+           button that has been icon-only since v366. Re-measured after: actions 106px, text
+           column 122px, name one line un-truncated, bio one line. Same at 375 and 412.
            The full address is unchanged as title/aria — a screen reader and a hover still get it,
            and the chip still opens the same company-details sheet. The WIDE header keeps printing
            the address itself: it has the room, and there the address is the useful label. */

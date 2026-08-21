@@ -222,10 +222,12 @@ test('photo 8: the compact header chip is a pin, and the wide header still print
 });
 
 test('photo 8: the freed width is what gives the name and the bio their own line', () => {
-  /* MEASURED at 390px before the fix: header track 28px | 1fr | minmax(166px,184px) left the
-     identity column ~148px — a 44px logo and ~95px for the name, the sector and the bio — so
-     "Cubbly SPA" truncated to "Cubbly …" and the bio broke mid-phrase. Two icon buttons ask for
-     what they need instead, which is the owner's second mark on the same photo. */
+  /* MEASURED in Chrome at 390px on the build in the owner's photos: header track
+     28px | 1fr | minmax(166px,184px) gave the actions 184px and left the identity button 130px,
+     of which 89px was text column — so "Cubbly SPA" wrapped to two line boxes and ellipsised, and
+     the bio needed 120px in that 89px box and broke mid-phrase, which is the owner's second mark
+     on the same photo. Re-measured after, at 375/390/412: actions 101-106px, text column
+     114-122px, name ONE un-truncated line, bio ONE line box. */
   assert.match(indexHtml, /\.customer-business-header-v346\{grid-template-columns:28px minmax\(0,1fr\) auto!important/);
   assert.match(indexHtml, /\.customer-business-actions-v346\{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:auto 34px!important/);
   assert.match(indexHtml, /@media\(max-width:380px\)\{\.customer-business-header-v346\{grid-template-columns:24px minmax\(0,1fr\) auto!important/,

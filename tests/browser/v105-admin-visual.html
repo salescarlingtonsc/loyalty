@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="4ebccfd327ae686885a391090763cde528879c72c7b523f20a21ab20fe0db251">
+<meta name="v105-production-component-sha256" content="53c6cba851703bc505b59a731077fdd9f5fd4091474eda4d5087ed5dbf10912c">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3590,10 +3590,11 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* V365: business quick actions sit beside the merchant name to remove the extra row. */
 /* nestly_v422 (owner photo 8: "remove this wording" over the Locations chip, and "company bio has
    its own line"). Both marks were this track. With a worded Locations chip the actions column was
-   reserved 166–184px, so at 390px the identity column measured ~148px — a 44px logo and ~95px for
-   the name, the sector and the bio, which truncated "Cubbly SPA" and broke the bio mid-phrase.
-   Both controls are icons now, so the column asks for what two 34px buttons actually need and the
-   name and bio get the rest of the row. */
+   reserved 166–184px. MEASURED at 390px before: actions 184px, identity 130px, and 89px of text
+   column inside it — so "Cubbly SPA" wrapped to two line boxes and ellipsised, and the bio needed
+   120px in that 89px box and broke mid-phrase. Both controls are icons now, so the column asks for
+   what two 34px buttons need. Re-measured after at 375/390/412: actions 101-106px, text column
+   114-122px, name one un-truncated line, bio one line box. */
 .customer-business-header-v346{grid-template-columns:28px minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important;min-height:56px!important}
 .customer-business-back-v346{grid-column:1!important;grid-row:1!important}
 .customer-business-identity-v346{grid-column:2!important;grid-row:1!important;min-width:0!important}
@@ -4619,7 +4620,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 4ebccfd327ae</span>
+<span class="v105-provenance">v105 production-component harness · 53c6cba85170</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -4744,7 +4745,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'4ebccfd327ae686885a391090763cde528879c72c7b523f20a21ab20fe0db251',
+  sourceHash:'53c6cba851703bc505b59a731077fdd9f5fd4091474eda4d5087ed5dbf10912c',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

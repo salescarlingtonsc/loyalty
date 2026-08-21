@@ -165,9 +165,9 @@ test('business detail address and call actions share the merchant header row',()
   assert.match(indexHtml,/\/\* V365: business quick actions sit beside the merchant name to remove the extra row\. \*\//);
   /* nestly_v422 (owner photo 8: a map pin drawn over the Locations chip, "remove this wording", and
      "company bio has its own line"). Both marks were this track. A worded chip reserved 166–184px
-     for the actions column, which left the identity beside it ~148px at 390px — a 44px logo and
-     ~95px for the name, the sector and the bio, so "Cubbly SPA" truncated to "Cubbly …" and the
-     bio broke across two lines mid-phrase. Two icon buttons ask for what they need instead. */
+     for the actions column; MEASURED at 390px that left the identity button 130px with an 89px
+     text column, so "Cubbly SPA" wrapped and ellipsised and the bio needed 120px in 89px and broke
+     mid-phrase. Two icon buttons ask for what they need instead. */
   assert.match(indexHtml,/\.customer-business-header-v346\{grid-template-columns:28px minmax\(0,1fr\) auto!important;gap:8px!important;align-items:center!important;min-height:56px!important\}/);
   assert.match(indexHtml,/\.customer-business-actions-v346\{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:auto 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important\}/);
   assert.match(indexHtml,/\.customer-business-actions-v346 \.customer-business-address-icon-v422\{width:34px!important;padding:0!important;justify-content:center!important\}/,
