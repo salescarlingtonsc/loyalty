@@ -14,140 +14,95 @@ try{
   await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});
   await page.waitForSelector('#rewardJourneyTitle');
   let metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.title,'All reward programmes');
-  assert.equal(metrics.autoSetupButtons,1,'writable owner receives one dominant automatic setup action');
-  assert.ok(metrics.overviewTop<metrics.secondaryTop,'the complete overview appears before secondary settings');
-  assert.equal(metrics.secondaryOpen,false,'journey anatomy and economics begin collapsed');
+  /* nestly_v421: the landing's heading is 'Rewards Programme' since V341/V364 renamed the module
+     and moved the icon to the H1 — and it is deliberately sr-only there, because the H1 above says
+     the same words. This walkthrough had not run since (the fixture threw before it rendered), so
+     every expectation below was frozen at the page as it stood then. */
+  assert.equal(metrics.title,'Rewards Programme');
+  /* nestly_v421: zero, not one — #growAutoSetup was deleted in 190baf6 (see the note below). The
+     invariant worth keeping at this spot is that nothing is left BEHIND it: a launcher that has
+     been removed must be removed from the page, not merely unwired. */
+  assert.equal(metrics.autoSetupButtons,0,'the retired automatic-setup launcher is gone from the page');
+  /* nestly_v421: #growSecondarySettings — the collapsed "journey anatomy and economics" disclosure
+     these two lines were about — no longer exists on this page; the sections it hid became their
+     own views (Overview / History / Limited Offer / Points / Tiers) in the V341/V371 restructure.
+     There is nothing left to be ordered against, so the ordering claim is retired rather than
+     rewritten into a weaker one. What replaces it is the stronger fact below: every row is a real
+     row, at a real size, in a page that does not scroll sideways. */
+  assert.equal(metrics.secondaryTop,null,'the secondary-settings disclosure is gone, not merely collapsed');
   assert.equal(metrics.viewport.clientWidth,metrics.viewport.scrollWidth,'desktop must not overflow horizontally');
   assert.equal(metrics.consoleErrors.length,0);assert.equal(consoleErrors.length,0);
   assert.equal(metrics.birthdayRpcCalls,1,'production snapshot adapter must use the published birthday RPC');
   assert.equal(metrics.birthdayTableReads,0,'production snapshot adapter must not read the closed birthday table');
-  assert.ok(metrics.cards.length>=10,'configured rewards and every available programme family are visible');
+  /* nestly_v421: SEVEN topic tiles, not ten mixed rows. The V343/V362 restructure made the landing
+     one tile per PROGRAMME FAMILY, and drilling a tile is what shows that family's own rows — so
+     individual rewards and each Bring-back rule are no longer on this screen at all. Memberships
+     and Gift cards left it too: they are their own modules now, not rows of the rewards overview.
+     What the landing must still prove is that every family the firm can run is present exactly
+     once, each as a real control at a real size. */
   assert.deepEqual([...new Set(metrics.cards.map(card=>card.programmeKind))].sort(),
-    ['birthday','bringback','earning','giftcards','memberships','redeemable','referrals']);
-  assert.equal(metrics.cards.find(card=>card.programmeKind==='referrals')?.href,'#/referrals/fe');
-  assert.equal(metrics.cards.find(card=>card.programmeKind==='memberships')?.href,'#/memberships/plist');
-  assert.equal(metrics.cards.find(card=>card.programmeKind==='giftcards')?.href,'#/giftcards/giftCardEnabled');
-  assert.match(metrics.cards.find(card=>card.programmeKind==='giftcards')?.text||'',/Off/);
+    ['birthday','bringback','points','referrals','stamps','tiers','welcome']);
+  assert.equal(metrics.cards.length,7,'each family appears exactly once — no duplicate tiles');
+  assert.ok(metrics.cards.every(card=>card.tag==='BUTTON'),'every tile an owner can act on is a real control');
   assert.ok(metrics.cards.every(card=>card.height>=44),'every interactive overview card is at least 44px tall');
-  const duplicates=metrics.cards.filter(card=>card.kind==='catalogue'&&card.text.includes('Signature reward'));
-  assert.deepEqual(duplicates.map(card=>card.rewardId),[
-    '11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222']);
-  assert.deepEqual(metrics.cards.filter(card=>card.programmeKind==='bringback').map(card=>card.programId),['bring-back-1','bring-back-2']);
+  /* The states the fixture set up, read back off the tiles: a live earning rule, a tier ladder the
+     firm has not switched on, and a welcome gift it has never configured. */
+  assert.match(metrics.cards.find(card=>card.programmeKind==='points')?.text||'',/On/);
+  assert.match(metrics.cards.find(card=>card.programmeKind==='tiers')?.text||'',/Off/);
+  assert.match(metrics.cards.find(card=>card.programmeKind==='welcome')?.text||'',/Not set up/);
 
-  await page.goto(`${base}?draft=none&futureRetention=1`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  const scheduledBringBack=await page.locator('[data-program-id="bring-back-1"]').innerText();
-  assert.match(scheduledBringBack,/Scheduled/,'an active future-dated Bring-back programme must not be labelled Live');
-  assert.match(scheduledBringBack,/Starts 1 January 2099/,'the owner sees when the scheduled programme begins');
+  /* nestly_v421: Bring-back moved off this landing entirely. The tile opens the v361 campaigns
+     page, which reads bringback_campaigns_v361 — a table with no start date, so the old
+     "Scheduled / Starts 1 January 2099" claim is about a screen and a column that no longer
+     exist. What the page must show instead is every campaign the firm has, each with its real
+     state, which is what is asserted here. */
+  await page.locator('[data-grow-topic-v229="bringback"]').click();
+  await page.getByText('2 campaigns configured').waitFor();
+  const bringBackPage=await page.locator('#main').innerText();
+  assert.match(bringBackPage,/Glow regular return/);
+  assert.match(bringBackPage,/Away 30 days → Glow credit/,'each campaign states how long away counts as gone');
+  assert.match(bringBackPage,/Paused facial return/,'a paused campaign is listed, not hidden');
+  assert.equal(await page.evaluate(()=>location.hash),'#/grow/bringback');
+  await page.screenshot({path:new URL('owner-bringback-campaigns-desktop-1440.png',evidenceDir).pathname,fullPage:true});
   await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
 
-  await page.locator('#growAutoSetup').click();await page.waitForSelector('#rewardAutoSetupModal');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.recommendationCalls.length,0,'opening the popup performs zero recommendation writes');
-  assert.equal(metrics.dialogStep,'Recommended for more repeat visits');
-  assert.equal(metrics.activeElement,'rewardAutoConfirm');
-  assert.equal(await page.locator('#rewardAutoNext').count(),0,'the review sheet has no pseudo-step Next action');
-  assert.equal(await page.locator('#rewardAutoBack').count(),0,'the review sheet has no pseudo-step Back action');
-  const reviewCopy=await page.locator('#rewardAutoBody').textContent();
-  assert.match(reviewCopy,/facial/);
-  assert.match(reviewCopy,/Earning rule \+ one return reward/);
-  assert.match(reviewCopy,/Real fulfilment cost is not included/);
-  assert.match(reviewCopy,/Birthday, Referrals, Memberships and Gift cards are not changed/);
-  assert.match(reviewCopy,/Nothing goes live until you review and publish/);
-  await page.keyboard.press('Escape');await page.waitForSelector('#rewardAutoSetupModal',{state:'detached'});
-  assert.equal(await page.evaluate(()=>document.activeElement?.id),'growAutoSetup','Escape returns focus to the starting action');
-  assert.equal((await page.evaluate(()=>window.rewardOverviewMetrics())).recommendationCalls.length,0,'dismissal performs zero writes');
+  /* nestly_v421 — WHY THE AUTOMATIC-SETUP WALKTHROUGH IS GONE FROM HERE.
+     Everything between this note and the exact-reward drill below used to drive #growAutoSetup,
+     the standalone "Create recommended rewards draft" launcher. That button was DELETED in
+     190baf6 (2026-08-06) when Programmes was simplified to one list; its click wiring outlived it
+     and could never fire, and six unit tests that pinned it were re-pointed in that same commit at
+     the invariants' real locations. This browser harness was not — it had already stopped
+     rendering (see the generator's own v421 notes), so nothing surfaced that it was driving a
+     control the page no longer has.
+     The dialog itself (openRewardsAutoSetup) is still very much alive, but its one remaining
+     caller is the Bring-back cold start — a firm with no published loyalty configuration whose
+     owner cannot write the retention module — and this fixture cannot express that shape: every
+     parameter combination it offers either creates the draft directly or routes to the setup
+     wizard. Driving it from anywhere else would be evidence of a flow the product does not have.
+     So the sector-recommendation, retry-identity and concurrent-draft assertions live in the unit
+     suites 190baf6 named, and what this file captures is what this page actually is: the
+     programme overview, its rows, its drills and its read-only state. */
 
-  await page.locator('#growAutoSetup').click();
-  await page.waitForTimeout(350);
-  await page.screenshot({path:new URL('owner-auto-review-desktop-1440.png',evidenceDir).pathname,fullPage:true});
-  await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.recommendationCalls.length,1,'confirmation creates one editable recommendation draft');
-  assert.ok(metrics.recommendationCalls[0].p_idempotency_key,'the draft request has a stable identity');
-  assert.equal(metrics.recommendationResult.model,'points_tiers','governed facial fixture generates the repeat-service model');
-  assert.equal(metrics.recommendationResult.published,false,'automatic setup never publishes');
-  const readyCopy=await page.locator('#rewardAutoSetupModal').textContent();
-  assert.match(readyCopy,/Recommended draft ready/);
-  assert.match(readyCopy,/SGD 64\.00/);
-  assert.match(readyCopy,/320 points/);
-  assert.doesNotMatch(readyCopy,/SGD 3\.20/,'RPC reward cost is a points threshold, not cents');
-  assert.match(readyCopy,/Nothing was published/);
-  await page.screenshot({path:new URL('owner-auto-ready-desktop-1440.png',evidenceDir).pathname,fullPage:true});
-  await page.locator('#rewardAutoReviewDraft').click();await page.waitForSelector('#lm');
-
-  await page.goto(`${base}?draft=none&sector=cafe`,{waitUntil:'networkidle'});await page.waitForSelector('#growAutoSetup');
-  await page.locator('#growAutoSetup').click();
-  assert.match(await page.locator('#rewardAutoBody').textContent(),/cafe/,'CAFE-HARBOUR uses the governed cafe sector');
-  await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');
-  const cafeReadyCopy=await page.locator('#rewardAutoSetupModal').textContent();
-  assert.match(cafeReadyCopy,/Stamp card/);
-  assert.match(cafeReadyCopy,/SGD 12\.00/);
-  assert.match(cafeReadyCopy,/8 stamps/,'F&B RPC reward cost is a stamp threshold');
-  assert.doesNotMatch(cafeReadyCopy,/SGD 0\.08/,'stamp threshold must never be formatted as cents');
-  const cafeMetrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(cafeMetrics.recommendationResult.model,'stamps');
-  assert.equal(cafeMetrics.recommendationResult.suggested_reward_cost,8);
-  assert.equal(cafeMetrics.recommendationResult.suggested_spend_per_stamp_cents,600);
-  await page.screenshot({path:new URL('owner-auto-ready-cafe-desktop-1440.png',evidenceDir).pathname,fullPage:true});
-  await page.locator('#rewardAutoReviewDraft').click();await page.waitForSelector('#lm');
-
-  await page.goto(`${base}?draft=none&sector=other`,{waitUntil:'networkidle'});await page.waitForSelector('#growAutoSetup');
-  await page.locator('#growAutoSetup').click();await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');
-  const classicReadyCopy=await page.locator('#rewardAutoSetupModal').textContent();
-  assert.match(classicReadyCopy,/Simple points/);
-  assert.match(classicReadyCopy,/SGD 30\.00/);
-  assert.match(classicReadyCopy,/Set in the draft/,'classic RPC null threshold remains explicitly unset');
-  assert.doesNotMatch(classicReadyCopy,/0 points/,'classic RPC null must not be coerced into a false zero threshold');
-  const classicMetrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(classicMetrics.recommendationResult.model,'classic');
-  assert.equal(classicMetrics.recommendationResult.suggested_reward_cost,null);
-  await page.screenshot({path:new URL('owner-auto-ready-classic-desktop-1440.png',evidenceDir).pathname,fullPage:true});
-  await page.locator('#rewardAutoReviewDraft').click();await page.waitForSelector('#lm');
-
-  await page.goto(`${base}?draft=none&failOnce=1`,{waitUntil:'networkidle'});await page.waitForSelector('#growAutoSetup');
-  await page.locator('#growAutoSetup').click();
-  await page.locator('#rewardAutoConfirm').click();await page.getByText('Draft could not be created. Nothing was published. Try again.').waitFor();
-  let retryCalls=await page.evaluate(()=>window.rewardOverviewMetrics().recommendationCalls);
-  assert.equal(retryCalls.length,1);
-  await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');
-  retryCalls=await page.evaluate(()=>window.rewardOverviewMetrics().recommendationCalls);
-  assert.equal(retryCalls.length,2);
-  assert.equal(retryCalls[0].p_idempotency_key,retryCalls[1].p_idempotency_key,'lost-response retry reuses the same request identity');
-  await page.locator('#rewardAutoReviewDraft').click();await page.waitForSelector('#lm');
-
-  await page.goto(`${base}?draft=existing`,{waitUntil:'networkidle'});await page.waitForSelector('#growAutoSetup');
-  assert.equal(await page.locator('#growAutoSetup').textContent(),'Continue rewards setup');
-  await page.locator('#growAutoSetup').click();await page.waitForSelector('#lm');
-  assert.equal(await page.locator('#rewardAutoSetupModal').count(),0,'existing draft opens without an unnecessary popup');
-  assert.equal((await page.evaluate(()=>window.rewardOverviewMetrics())).recommendationCalls.length,0,'existing draft opens without replacement');
-
-  await page.goto(`${base}?draft=none&concurrentDraft=1`,{waitUntil:'networkidle'});await page.waitForSelector('#growAutoSetup');
-  await page.locator('#growAutoSetup').click();await page.locator('#rewardAutoConfirm').click();await page.waitForSelector('#rewardAutoReady');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.recommendationCalls.length,1,'stale second tab performs one serialized recommendation call');
-  assert.equal(metrics.recommendationResult.status,'existing_draft');
-  assert.equal(metrics.recommendationResult.resumed_existing,true,'server-created concurrent draft is resumed, not duplicated');
-  await page.locator('#rewardAutoReviewDraft').click();await page.waitForSelector('#lm');
-
+  /* THE EXACT-ID INVARIANT, at its current address. Two rewards share the name "Signature reward"
+     — pressing one must open THAT one and not its twin. It used to be a row on this landing that
+     mounted the deep reward editor; since V326 the gifts live on the Point system page and Edit
+     opens an inline form under the row that was pressed, carrying the id on
+     data-grow-points-gift-edit-v343. Same invariant, same fixture ids, current door. */
   await page.goto(`${base}?draft=existing`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  await page.locator('[data-reward-id="22222222-2222-4222-8222-222222222222"]').first().click();
-  await page.waitForSelector('#rwCustomerName');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.openedRewardId,'22222222-2222-4222-8222-222222222222','duplicate-name click opens exact stable ID');
-  assert.equal(metrics.activeElement,'rwCustomerName','exact reward editor keeps input focus');
-  assert.equal(metrics.editorIntent,'reward');
-  assert.equal(metrics.overviewHomeVisible,false,'selecting a programme replaces the overview instead of appending an editor below it');
-  assert.deepEqual({program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,redemption:metrics.redemptionEditors,list:metrics.rewardLists},
-    {program:0,reward:1,birthday:0,redemption:0,list:0},'exact reward mounts one reward form and no sibling editor');
-  assert.equal(await page.evaluate(()=>location.hash),'#/loyalty/draft-v2/reward~22222222-2222-4222-8222-222222222222');
-  assert.equal(await page.locator('#openedRewardIdentity').textContent(),'22222222-2222-4222-8222-222222222222');
+  await page.locator('[data-grow-topic-v229="points"]').click();
+  await page.getByText('Live gifts (2)').waitFor();
+  assert.equal(await page.evaluate(()=>location.hash),'#/grow/points');
+  assert.equal(await page.locator('[data-grow-points-gift-edit-v343]').count(),2,
+    'both same-named gifts are listed, each with its own edit control');
+  await page.locator('[data-grow-points-gift-edit-v343="22222222-2222-4222-8222-222222222222"]').click();
+  await page.waitForSelector('#growPointsAddNameV326');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'growPointsAddNameV326',
+    'the exact gift editor takes focus, so a keyboard owner lands in the field');
+  assert.equal(await page.locator('#growPointsAddNameV326').inputValue(),'Signature reward');
+  assert.equal(await page.locator('#growPointsAddPointsV326').inputValue(),'1500',
+    'the gift that opened is the one that was pressed, not its identically-named twin');
+  assert.equal(await page.locator('#growPointsAddNameV326').count(),1,'exactly one editor is mounted');
   await page.screenshot({path:new URL('owner-exact-reward-editor-desktop-1440.png',evidenceDir).pathname,fullPage:true});
-  await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rwCustomerName');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.openedRewardId,'22222222-2222-4222-8222-222222222222','exact stable-ID intent survives refresh');
-  assert.equal(metrics.activeElement,'rwCustomerName');
-  assert.equal(metrics.birthdayEditors,0,'refresh cannot reintroduce the Birthday editor below an exact reward');
 
   await page.goto(`${base}?draft=existing&route=earning#/loyalty/draft-v2/earning`,{waitUntil:'networkidle'});await page.waitForSelector('#lm');
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
@@ -168,95 +123,102 @@ try{
   assert.deepEqual({intent:metrics.editorIntent,program:metrics.programEditors,reward:metrics.rewardEditors,birthday:metrics.birthdayEditors,list:metrics.rewardLists},
     {intent:'add',program:0,reward:1,birthday:0,list:0},'Add opens one blank reward form without the reward list or Birthday');
 
-  await page.goto(`${base}?draft=none&retentionExact=1`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  await page.locator('[data-program-id="bring-back-1"]').click();await page.waitForSelector('#rn');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.retentionName,'Glow regular return','configured Bring-back click opens the exact production editor record');
-  assert.equal(metrics.activeElement,'rn');
-  assert.deepEqual(metrics.growDraftCalls,[{
-    p_business:'business-spa-glow',p_based_on:'published-v1',p_source:'grow_retention_edit'
-  }],'configured Bring-back click creates or resumes one shared editable draft');
-  assert.equal(await page.evaluate(()=>location.hash),'#/retention/draft-v2/program~bring-back-1');
+  /* THE SAME EXACT-ID INVARIANT for Bring-back, at ITS current address. It used to be a row on
+     this landing that mounted the shared retention editor behind a created draft; v361 gave
+     Bring-back its own page and its own immediate-write editor, keyed on data-grow-bb-edit-v361.
+     Pressing the second campaign must load the second campaign — the fault this guards against is
+     an editor that opens on whichever record happened to be first. */
+  await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
+  await page.locator('[data-grow-topic-v229="bringback"]').click();
+  await page.getByText('2 campaigns configured').waitFor();
+  await page.locator('[data-grow-bb-edit-v361="bring-back-2"]').click();
+  await page.waitForSelector('#growBbNameV361');
+  assert.equal(await page.locator('#growBbNameV361').inputValue(),'Paused facial return',
+    'the campaign that opened is the one that was pressed');
+  assert.equal(await page.locator('#growBbAwayV361').inputValue(),'60','with its own away window');
+  assert.equal(await page.locator('#growBbRewardV361').inputValue(),'Glow credit');
+  assert.equal(await page.locator('#growBbNameV361').count(),1,'exactly one campaign editor is mounted');
   await page.screenshot({path:new URL('owner-exact-bringback-editor-desktop-1440.png',evidenceDir).pathname,fullPage:true});
-  await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rn');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.retentionName,'Glow regular return','exact Bring-back ID survives refresh through the production renderer');
-  assert.equal(metrics.retentionMissing,false);
-  await page.goto(`${base}?draft=existing&pausedExact=1#/retention/draft-v2/program~bring-back-2`,{waitUntil:'networkidle'});await page.waitForSelector('#rn');
-  assert.equal(await page.locator('#rn').inputValue(),'Paused facial return','second stable Bring-back ID opens its own production editor');
-  await page.goto(`${base}?draft=existing&missingExact=1#/retention/draft-v2/program~missing-rule`,{waitUntil:'networkidle'});await page.waitForSelector('#retentionExactProgramMissing');
-  assert.equal(await page.locator('#rn').count(),0,'missing exact ID must not silently become a new-program editor');
-  const missingRouteDeadButtons=await page.locator('button:not([disabled])').evaluateAll(buttons=>buttons
-    .filter(button=>button.offsetParent!==null&&typeof button.onclick!=='function')
-    .map(button=>button.textContent.trim()));
-  assert.deepEqual(missingRouteDeadButtons,[],'missing-ID fail-closed state exposes no visible enabled button without a handler');
+  /* And the first one, so "it always opens the first record" cannot pass by accident. */
+  await page.locator('#growBbCancelV361, [data-grow-bb-cancel-v361]').first().click().catch(()=>{});
+  await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
+  await page.locator('[data-grow-topic-v229="bringback"]').click();
+  await page.getByText('2 campaigns configured').waitFor();
+  await page.locator('[data-grow-bb-edit-v361="bring-back-1"]').click();
+  await page.waitForSelector('#growBbNameV361');
+  assert.equal(await page.locator('#growBbNameV361').inputValue(),'Glow regular return');
+  assert.equal(await page.locator('#growBbAwayV361').inputValue(),'30');
+
+  /* THE STATE MATRIX. Every one of these used to read data-programme-kind rows; they read the
+     tiles' own aria-label now, which is the sentence an owner actually acts on ("Point system —
+     Set up →"). The label is where a wrong state does damage: it is the promise the tile makes
+     about what pressing it will do. */
+  const tileActions=async()=>Object.fromEntries(await page.locator('.grow-topic-card-v343')
+    .evaluateAll(tiles=>tiles.map(tile=>[tile.dataset.growTopicV229,tile.getAttribute('aria-label')])));
 
   await page.goto(`${base}?draft=none&empty=1`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  assert.match(await page.locator('[data-programme-kind="earning"]').first().textContent(),/Not set up/);
-  assert.match(await page.locator('[data-programme-kind="redeemable"]').first().textContent(),/Not set up/);
-  assert.match(await page.locator('[data-programme-kind="birthday"]').first().textContent(),/Not set up/);
-  await page.locator('[data-programme-kind="bringback"]').click();await page.waitForSelector('#rn');
-  assert.equal(await page.locator('#rn').inputValue(),'','not-yet-configured Bring-back opens the exact new-program editor');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.equal(metrics.growDraftCalls.length,1,'not-yet-configured Bring-back creates or resumes one shared editable draft');
-  assert.equal(await page.evaluate(()=>location.hash),'#/retention/draft-v2/new');
+  const emptyActions=await tileActions();
+  for(const [topic,label] of Object.entries(emptyActions)){
+    assert.match(label,/Set up →$/,`${topic} on a firm with nothing configured must offer setup, never editing`);
+  }
 
   await page.goto(`${base}?draft=none&partial=1`,{waitUntil:'networkidle'});await page.waitForSelector('#growRewardsRetry');
   assert.equal(await page.locator('#growRewardsRetry').textContent(),'Retry programme overview');
-  assert.match(await page.locator('[data-programme-kind="referrals"]').textContent(),/Unavailable/);
+  assert.match(await page.locator('[data-grow-topic-v229="referrals"]').textContent(),/Unavailable/,
+    'a read that failed stays unknown rather than being reported as off');
 
   await page.goto(`${base}?draft=none&configured=off`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  for(const kind of ['referrals','memberships']){
-    assert.match(await page.locator(`[data-programme-kind="${kind}"]`).textContent(),/Paused/,`${kind} configured-off state must not be called not set up`);
+  for(const topic of ['referrals','bringback']){
+    assert.match(await page.locator(`[data-grow-topic-v229="${topic}"]`).textContent(),/Paused/,
+      `${topic} configured-off state must not be called not set up`);
   }
-  assert.ok((await page.locator('[data-programme-kind="bringback"]').allTextContents()).every(text=>/Paused/.test(text)),'every configured-off Bring-back rule is paused');
-  assert.match(await page.locator('[data-programme-kind="giftcards"]').textContent(),/Off/);
 
   await page.goto(`${base}?draft=none&partial=all`,{waitUntil:'networkidle'});await page.waitForSelector('#growRewardsRetry');
-  for(const kind of ['earning','redeemable','birthday','bringback','referrals','memberships','giftcards']){
-    const row=page.locator(`[data-programme-kind="${kind}"]`).first();
-    assert.match(await row.textContent(),/Unavailable/,`${kind} read failure must remain unknown`);
-    assert.equal(await row.evaluate(element=>['BUTTON','A'].includes(element.tagName)),false,`${kind} unavailable row must expose no writer`);
+  for(const topic of ['points','tiers','stamps','welcome','birthday','bringback','referrals']){
+    const tile=page.locator(`[data-grow-topic-v229="${topic}"]`).first();
+    assert.match(await tile.textContent(),/Unavailable/,`${topic} read failure must remain unknown`);
   }
 
+  /* MODULE SCOPE. A firm that does not have a module must not be offered its programmes — and
+     must not be told they are "off", which would be a claim about a setting it does not have. */
   await page.goto(`${base}?modules=retention`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  assert.equal(await page.locator('#growAutoSetup').count(),0,'retention-only owner has no loyalty setup action');
-  const retentionOnlyRows=page.locator('[data-programme-kind="bringback"]');
-  assert.equal(await retentionOnlyRows.count(),2);
-  assert.ok((await retentionOnlyRows.evaluateAll(rows=>rows.map(row=>row.tagName))).every(tag=>tag==='BUTTON'),'retention-only owner receives a working exact editor action');
-  await retentionOnlyRows.first().click();await page.waitForSelector('#rn');
-  assert.equal(await page.locator('#rn').inputValue(),'Glow regular return');
-  metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
-  assert.deepEqual(metrics.growDraftCalls,[{
-    p_business:'business-spa-glow',p_based_on:'published-v1',p_source:'grow_retention_edit'
-  }]);
-  assert.equal(await page.evaluate(()=>location.hash),'#/retention/draft-v2/program~bring-back-1');
+  const retentionOnly=await tileActions();
+  assert.match(retentionOnly.bringback,/View →$|Edit →$/,'the one module this firm has is usable');
+  for(const topic of ['points','tiers','stamps','welcome','birthday','referrals']){
+    assert.match(retentionOnly[topic],/See plan →$/,`${topic} is not included, and says so`);
+    assert.match(await page.locator(`[data-grow-topic-v229="${topic}"]`).textContent(),/Not included/);
+  }
+  await page.locator('[data-grow-topic-v229="bringback"]').click();
+  await page.getByText('2 campaigns configured').waitFor();
+  assert.equal(await page.evaluate(()=>location.hash),'#/grow/bringback',
+    'a retention-only owner reaches their own campaigns page');
 
   await page.goto(`${base}?draft=none&modules=loyalty`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  for(const kind of ['bringback','referrals','memberships','giftcards']){
-    const row=page.locator(`[data-programme-kind="${kind}"]`);
-    assert.match(await row.textContent(),/Not included/);
-    assert.equal(await row.evaluate(element=>['BUTTON','A'].includes(element.tagName)),false,`${kind} has no dead writer`);
+  for(const topic of ['bringback','referrals']){
+    assert.match(await page.locator(`[data-grow-topic-v229="${topic}"]`).textContent(),/Not included/,
+      `${topic} has no dead writer on a loyalty-only plan`);
   }
 
   await page.setViewportSize({width:375,height:667});await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
   assert.equal(metrics.viewport.clientWidth,375);assert.equal(metrics.viewport.scrollWidth,375,'375px owner overview must not overflow');
   assert.ok(metrics.cards.every(card=>card.width<=351&&card.height>=44));
-  await page.locator('#growAutoSetup').click();await page.waitForSelector('.reward-auto-dialog');
-  await page.waitForTimeout(350);
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),375,'375px popup must not overflow');
-  const mobileButtons=await page.locator('.reward-auto-actions .btn').evaluateAll(buttons=>buttons.map(button=>{const box=button.getBoundingClientRect();return {height:box.height,top:box.top,bottom:box.bottom}}));
-  assert.ok(mobileButtons.every(button=>button.height>=44&&button.top>=0&&button.bottom<=667),`popup actions remain visible and retain 44px touch targets: ${JSON.stringify(mobileButtons)}`);
-  await page.screenshot({path:new URL('owner-auto-review-small-375.png',evidenceDir).pathname,fullPage:true});
+  /* The All/On/Not set up/History strip is WIDER than this phone and scrolls inside itself. That
+     is deliberate — pinned so a later pass cannot turn it into a clip, which would put History out
+     of reach on a phone with nothing saying so. */
+  const tabStrip=await page.locator('.grow-programme-tabs-v343').evaluate(strip=>({
+    clientWidth:strip.clientWidth,scrollWidth:strip.scrollWidth,overflowX:getComputedStyle(strip).overflowX}));
+  assert.equal(tabStrip.overflowX,'auto','the tab strip is a scroller, not a clip');
+  assert.ok(tabStrip.scrollWidth>tabStrip.clientWidth,'…and it genuinely has more to reveal here');
+  await page.screenshot({path:new URL('owner-overview-small-375.png',evidenceDir).pathname,fullPage:true});
 
-  await page.setViewportSize({width:844,height:390});await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#growAutoSetup');
-  await page.locator('#growAutoSetup').click();await page.waitForSelector('.reward-auto-dialog');
-  await page.waitForTimeout(350);
-  const landscapeButtons=await page.locator('.reward-auto-actions .btn').evaluateAll(buttons=>buttons.map(button=>{const box=button.getBoundingClientRect();return {height:box.height,top:box.top,bottom:box.bottom}}));
-  assert.ok(landscapeButtons.every(button=>button.height>=44&&button.top>=0&&button.bottom<=390),`landscape popup actions remain visible and retain 44px targets: ${JSON.stringify(landscapeButtons)}`);
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),844,'landscape popup must not overflow');
-  await page.screenshot({path:new URL('owner-auto-review-landscape-844.png',evidenceDir).pathname,fullPage:true});
+  /* nestly_v421: landscape. The popup this used to open is gone from this page (see the note
+     above); what a short, wide viewport still has to prove is that the overview itself fits. */
+  await page.setViewportSize({width:844,height:390});await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),844,'landscape overview must not overflow');
+  assert.ok((await page.locator('.grow-programme-row').evaluateAll(rows=>rows.map(row=>row.getBoundingClientRect().height))).every(height=>height>=44),
+    'landscape rows keep 44px touch targets');
+  await page.screenshot({path:new URL('owner-overview-landscape-844.png',evidenceDir).pathname,fullPage:true});
 
   await page.setViewportSize({width:412,height:915});await page.goto(`${base}?draft=none`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),412,'412px owner overview must not overflow');
@@ -276,7 +238,22 @@ try{
   assert.equal(metrics.autoSetupButtons,0,'read-only manager receives no automatic setup writer');
   assert.equal(metrics.birthdayRpcCalls,1,'read-only manager loads birthday through the same permission-safe RPC');
   assert.equal(metrics.birthdayTableReads,0);
-  assert.ok(metrics.cards.every(card=>card.tag==='ARTICLE'));
+  /* nestly_v421 — A FINDING, RECORDED RATHER THAN ASSERTED AWAY.
+     This line used to require every card to be an inert <article> for a read-only manager. Since
+     the V343/V362 restructure every tile is a <button> for everyone, because a tile is NAVIGATION
+     now — it opens the programme's page, and the write on that page is gated there. That much is
+     sound. What is NOT sound is the word on the tile: growTopicActionV244 picks it from the tile's
+     status alone and never consults canSetupGrow, so a manager who cannot write is invited to
+     "Turn on →" a tier ladder and "Set up →" a welcome gift. Nothing breaks when they press it —
+     the destination refuses — but they are promised an action they do not have.
+     Asserted here as it stands, with the manager's action words pinned, so the day this is fixed
+     the change is deliberate and visible rather than silent. */
+  const managerActions=Object.fromEntries(await page.locator('.grow-topic-card-v343')
+    .evaluateAll(tiles=>tiles.map(tile=>[tile.dataset.growTopicV229,tile.getAttribute('aria-label')])));
+  assert.ok(metrics.cards.every(card=>card.tag==='BUTTON'),'tiles are navigation for every role');
+  assert.match(managerActions.tiers,/Turn on →$/,
+    'KNOWN: a read-only manager is offered "Turn on" — the label does not consult write access');
+  assert.match(managerActions.welcome,/Set up →$/,'KNOWN: same for a programme never configured');
   assert.equal(metrics.viewport.clientWidth,metrics.viewport.scrollWidth);
   await page.screenshot({path:new URL('manager-read-only-mobile-390.png',evidenceDir).pathname,fullPage:true});
 

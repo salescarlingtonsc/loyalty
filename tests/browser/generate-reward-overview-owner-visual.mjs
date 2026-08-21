@@ -7,7 +7,14 @@ const APP_URL=new URL('../../app/index.html',import.meta.url);
    pass both files joined; this CLI path must read the same pair or it regenerates a
    fixture from a file that no longer contains the components. */
 const APP_SCRIPT_URL=new URL('../../app/app.js',import.meta.url);
+/* nestly_v421: the REAL shared component library. The harness used to hand-stub CUI, and its
+   icon() mapped eight names to bullet characters — on a page whose whole v401 pass was about
+   icons, that made the evidence say nothing about the thing it was evidence of. It is inlined
+   (not <script src>) so the fixture stays a single self-contained file, and it is part of the
+   source hash, so an icon change restales this evidence exactly as a render change does. */
+const CUI_URL=new URL('../../app/customer-ui.js',import.meta.url);
 const readAppSource=async()=>(await Promise.all([readFile(APP_URL,'utf8'),readFile(APP_SCRIPT_URL,'utf8')])).join('\n');
+const readComponentLibrary=async()=>readFile(CUI_URL,'utf8');
 const FIXTURE_URL=new URL('./reward-overview-owner-visual.html',import.meta.url);
 
 function sourceBetween(source,start,end){
@@ -16,7 +23,7 @@ function sourceBetween(source,start,end){
   return source.slice(from,to).trim();
 }
 
-export function buildRewardOverviewVisualFixture(app){
+export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
   const style=app.match(/<style>([\s\S]*?)<\/style>/)?.[1];
   if(!style)throw new Error('production inline stylesheet missing');
   /* V296: growBackActionHtmlV138 was deleted with the owner's "remove" on the grow submodule
@@ -30,31 +37,63 @@ export function buildRewardOverviewVisualFixture(app){
   const journey=sourceBetween(app,'function ownerRewardJourneyV122','function growStatus');
   const status=sourceBetween(app,'function growStatus','/* v104 starts');
   const retention=sourceBetween(app,'async function retentionPage(','/* ---------- Grow: one customer journey');
-  const grow=sourceBetween(app,'async function growPage(','/* ---------- Bring-back playbooks');
+  /* nestly_v421: anchored one declaration earlier. GROW_PROGRAMME_VIEWS_V371 is the list growPage
+     matches its own hash against and it sits immediately above the function, so slicing from
+     'async function growPage(' left the page reading an undefined constant. */
+  const grow=sourceBetween(app,'const GROW_PROGRAMME_VIEWS_V371=','/* ---------- Bring-back playbooks');
   /* V299: growPage now normalizes each promotion row through promotionEditorItemV104 (the V295
      "can straightaway go inside see which promotions available" drilling). The fixture ran the
      real growPage without that helper, so it threw before #rewardJourneyTitle ever rendered. */
+  /* nestly_v421: growPage reads the PROGRAMME SPINE (which programmes this firm is running, and
+     whether it counts points or stamps) throughout — the row names, the exclusivity warning, the
+     Live/Paused pill. None of it was in the fixture, so the page threw a ReferenceError before
+     #rewardJourneyTitle ever rendered and the harness sat on its loading state. Extracted from
+     production rather than stubbed: these are pure readers over S.programmes, so running the real
+     ones is both easier and more honest than inventing lookalikes. */
+  /* The status vocabulary is a single source of truth in production (STATUS_WORDS) and every pill
+     reads it through statusOnOff. Extracted, not restated, so a change to the words shows up in
+     this evidence rather than being contradicted by it. */
+  const statusWords=sourceBetween(app,'const STATUS_WORDS=Object.freeze({','const ROLE_LABELS=');
+  /* nestly_v421: the Grow module's own state — the open tab, the date windows, which group is
+     expanded, the half-typed draft a re-render must not eat. growPage reads a dozen of these and
+     the harness declared two of them, so the page threw on the first one it reached. Extracted
+     whole rather than restated one at a time: a fixture that declares its own copies drifts the
+     moment production adds another, which is exactly how this one ended up stuck. */
+  const growState=sourceBetween(app,"let growTopicV229='';","let settingsActiveTab='modules';");
+  /* nestly_v421: the two date formatters the tables print through. The harness restated the long
+     one by hand and did not have the short one at all — and a hand-restated formatter is the one
+     thing this evidence must not carry, since "all dates use dd/mm/yyyy" (V324) is a rule an
+     owner asked for and the screenshots are how it is checked. */
+  const dateFormatters=sourceBetween(app,'function promotionDateTextV104(','function promotionBoundaryV104(');
+  /* nestly_v421: the usage card's date windows — the quick ranges (This week / Last month / …) and
+     the comparison arithmetic behind them, plus the day-shift helper they are built on. Real
+     production functions, because they compute the dates the screenshots are evidence OF. */
+  const dateShift=sourceBetween(app,'const shiftSgDateInput=(date,days)=>{','/* Calendar helpers must not inherit');
+  const usageRanges=sourceBetween(app,'function growUsageShiftMonthsV392(','const REPORT_SHARE_COLOURS_V297=');
+  /* nestly_v421: the gift rows show the photo a merchant uploaded, and this is the one helper that
+     turns a stored object path into a url. Extracted rather than stubbed because its whitelist of
+     image KINDS is a rule (v418: it must agree with app.v95_storage_path_owned), and a stub would
+     quietly render kinds production refuses. */
+  const mediaUrl=sourceBetween(app,'function customerMediaUrlV95(','let customerNavCountsV194=');
+  const programmeSpine=sourceBetween(app,'const normaliseLoyaltyModelV375=','function rememberProgrammeSpineV314(');
   const promotionItem=sourceBetween(app,'function promotionEditorItemV104(','function promotionScopeMediaV104(');
   /* V299: growPage also reads the V291 pending-changes helpers when it summarizes a draft. */
   const pendingChanges=sourceBetween(app,'function growRewardDiffFieldsV291(','function growPublishFieldRowsV170(');
-  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${grow}\n${promotionItem}\n${pendingChanges}`).digest('hex');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${componentLibrary}\n${grow}\n${growState}\n${dateFormatters}\n${dateShift}\n${usageRanges}\n${mediaUrl}\n${statusWords}\n${programmeSpine}\n${promotionItem}\n${pendingChanges}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
     @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ${sourceHash}</p><main id="main"></main></div>
+    <script>${componentLibrary}</script>
     <script>
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);
-    const CUI={icon:(name)=>'<span aria-hidden="true">'+({till:'◎',loyalty:'★',customers:'●',retention:'↺',inventory:'□',referrals:'↗',memberships:'◇',giftcard:'▣'}[name]||'•')+'</span>',
-      loadingState:({title})=>'<section class="card">Loading '+esc(title)+'…</section>',
-      emptyState:({title,body})=>'<div class="empty"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>',announce:()=>{},
-      pageHeader:({title,subtitle})=>'<header class="cui-page-head"><div class="cui-page-title"><div><h1>'+esc(title)+'</h1><p>'+esc(subtitle||'')+'</p></div></div></header>',
-      action:({id,label,variant='primary'})=>'<button class="btn '+esc(variant)+'" id="'+esc(id)+'">'+esc(label)+'</button>',
-      activateDialog:(modal,{onClose,initialFocus}={})=>{const prior=document.activeElement;
-        const keydown=event=>{if(event.key==='Escape'){event.preventDefault();onClose?.()}};
-        document.addEventListener('keydown',keydown);queueMicrotask(()=>modal.querySelector(initialFocus)?.focus());
-        return ({restoreFocus=true}={})=>{document.removeEventListener('keydown',keydown);modal.remove();if(restoreFocus)prior?.focus?.()};}};
+    /* nestly_v421: the REAL shared component library (app/customer-ui.js), inlined above as
+       FrenlyCustomerUI — the same object production binds CUI to. It used to be hand-stubbed
+       here, with icon() mapping eight names to bullet characters, which made this fixture useless
+       as evidence about icons: exactly what the v401 pass on this page was about. */
+    const CUI=window.FrenlyCustomerUI;
     const workspaceLocale='en';
     const workspaceTemplateHtmlV97=(key,{count}={})=>key==='growDraftReady'?'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.':count+' published '+(count===1?'reward':'rewards');
     const recordProductInteractionV100=()=>{};
@@ -66,12 +105,15 @@ export function buildRewardOverviewVisualFixture(app){
         .formatToParts(date).forEach(part=>{if(part.type!=='literal')values[part.type]=part.value});
       return values.year+'-'+values.month+'-'+values.day;
     };
-    const promotionDateTextV104=value=>new Intl.DateTimeFormat('en-SG',{
-      timeZone:'Asia/Singapore',day:'numeric',month:'long',year:'numeric'
-    }).format(new Date(value+'T12:00:00+08:00'));
+    ${dateFormatters}
+    ${dateShift}
+    ${usageRanges}
+    const SB_URL='https://fixture.supabase.co';
+    ${mediaUrl}
     const fail=error=>{throw error};
     const toast=message=>{window.__lastToast=message};
-    const nav=()=>{};
+    /* Real navigation — see renderFromHashV421 at the foot of this harness. */
+    const nav=hash=>{if(typeof hash==='string'&&hash.startsWith('#')){location.hash=hash;window.__renderFromHashV421?.()}};
     const openProtectedGrowPublishReview=()=>{};
     const refreshRetentionPanel=()=>{};
     const renderPlaybooks=()=>{};
@@ -107,13 +149,20 @@ export function buildRewardOverviewVisualFixture(app){
         {id:'bring-back-1',program_id:'bring-back-1',name:'Glow regular return',active:!configuredOff,goal_visits:2,period_days:30,reward_taxonomy_id:'taxonomy-1',reward_label:'Glow credit',fulfillment_kind:'credit',credit_cents:1000,starts_on:futureRetention?'2099-01-01':'2026-08-01'},
         {id:'bring-back-2',program_id:'bring-back-2',name:'Paused facial return',active:false,goal_visits:1,period_days:60,reward_taxonomy_id:'taxonomy-1',reward_label:'Glow credit',fulfillment_kind:'credit',credit_cents:500,starts_on:'2026-08-01'}],
       taxonomy:[{id:'taxonomy-1',label:'Glow credit',fulfillment_kind:'credit',active:true,sort:1}],
+      /* nestly_v421: the Bring-back page reads bringback_campaigns_v361, the table v361 gave it —
+         NOT retention_programs, which is what this fixture carried and what the overview rows used
+         to read. Without it the page the Bring-back tile opens is permanently empty, which is what
+         it rendered when this harness was first made to run again. One live campaign and one the
+         firm has paused, so both states are on screen. */
+      bbCampaigns:emptyPrograms?[]:[
+        {id:'bring-back-1',name:'Glow regular return',reward_label:'Glow credit',away_days:30,expiry_days:30,active:!configuredOff,created_at:'2026-08-01T00:00:00.000Z'},
+        {id:'bring-back-2',name:'Paused facial return',reward_label:'Glow credit',away_days:60,expiry_days:30,active:false,created_at:'2026-08-02T00:00:00.000Z'}],
       referral:emptyPrograms?null:{id:'referral-1',enabled:!configuredOff,reward_cents:1000,min_spend_cents:5000},
       memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
       giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
     window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
-    /* v229 moved the grow list's topic filter into a top-level app global; the extracted
-       sections read it, so the harness declares it exactly as app.js line ~583 does. */
-    let growTopicV229='';
+    /* v229's topic filter, the v386 usage window and the rest of the Grow module state used to be
+       restated here one variable at a time; they come from production now (growState above). */
     function fixtureQuery(table){
       const state={single:false,equals:{}};
       const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},not(){return query},gte(){return query},lte(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
@@ -122,6 +171,7 @@ export function buildRewardOverviewVisualFixture(app){
           else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
           else if(table==='loyalty_rewards')data=fixture.rewards;
           else if(table==='retention_programs')data=fixture.retention;
+          else if(table==='bringback_campaigns_v361')data=fixture.bbCampaigns;
           else if(table==='referral_programs')data=fixture.referral?[fixture.referral]:[];
           else if(table==='membership_plans')data=fixture.memberships;
           else if(table==='firm_config_versions')data=state.equals.status==='draft'?(fixture.draft?[fixture.draft]:[]):[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
@@ -174,12 +224,19 @@ export function buildRewardOverviewVisualFixture(app){
     ${snapshotAdapter}
     ${journey}
     ${status}
+    ${growState}
+    ${statusWords}
+    ${programmeSpine}
     ${promotionItem}
     ${pendingChanges}
     ${grow}
     window.rewardOverviewMetrics=()=>({sourceHash:'${sourceHash}',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
-      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
+      /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
+         data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
+         tile grid. Both selectors are read, so this measurement survives the next one: the old
+         rows are still what a DRILLED view renders. */
+      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-topic-card-v343,.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.growTopicV229||card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
       editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
       autoSetupButtons:document.querySelectorAll('#growAutoSetup').length,secondaryOpen:$('growSecondarySettings')?.open||false,
       overviewTop:$('rewardJourneyTitle')?.getBoundingClientRect().top||null,secondaryTop:$('growSecondarySettings')?.getBoundingClientRect().top||null,
@@ -197,13 +254,23 @@ export function buildRewardOverviewVisualFixture(app){
       overviewHomeVisible:Boolean(document.querySelector('.grow-hero')?.offsetParent),
       activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
     window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-    const routed=(location.hash.startsWith('#/')?location.hash.slice(2):location.hash).split('/');
-    const routedSurface=routed[0]==='loyalty'?'rewards':routed[0]==='retention'?'winback':'overview';
-    growPage(routedSurface,routed[1]||null,routed[2]||null).catch(error=>{window.__consoleErrors.push(String(error?.stack||error));document.body.dataset.renderError='true'});
+    /* nestly_v421: nav() was a no-op, so every tile that DRILLS (#/grow/points, #/grow/tiers,
+       #/grow/bringback — which is how this landing works since V326/V331/V358) did nothing at all
+       when clicked and the walkthrough could only ever see the landing. It routes for real now:
+       set the hash, re-render from it, exactly as the app's own router does. */
+    function renderFromHashV421(){
+      const routed=(location.hash.startsWith('#/')?location.hash.slice(2):location.hash).split('/');
+      const routedSurface=routed[0]==='loyalty'?'rewards':routed[0]==='retention'?'winback':'overview';
+      const hashParam=routed[0]==='grow'?(routed[1]||null):(routed[1]||null);
+      return growPage(routedSurface,hashParam,routed[2]||null,{fromRouteV288:true})
+        .catch(error=>{window.__consoleErrors.push(String(error?.stack||error));document.body.dataset.renderError='true'});
+    }
+    window.__renderFromHashV421=renderFromHashV421;
+    renderFromHashV421();
     </script></body></html>`;
 }
 
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
-  await writeFile(FIXTURE_URL,buildRewardOverviewVisualFixture(await readAppSource()));
+  await writeFile(FIXTURE_URL,buildRewardOverviewVisualFixture(await readAppSource(),await readComponentLibrary()));
   process.stdout.write(`${fileURLToPath(FIXTURE_URL)}\n`);
 }
