@@ -315,6 +315,13 @@ function growPointsPhotoPreviewUrlForV349(file){
    and flipped by the radios, so switching does not touch the server until Save. */
 let growReferralKindV420='points';
 let growReferralGiftV420='';
+/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's side of
+   the referral, held here so a re-render does not throw a half-filled form away — the same reason
+   the referrer's two fields are. Blank means "the same as the referrer", which is what the saver
+   and app.on_sale_recorded both read a NULL as. */
+let growReferralFriendOnV421=true;
+let growReferralFriendPointsV421='';
+let growReferralFriendGiftV421='';
 /* ============ V363 — A TIER HAS MANY BENEFITS, NOT ONE SENTENCE ==============================
    Owner (2026-08-16, photo 2): "allow me to add multiple benefits (like essential = no benefits,
    gold = 10% discount / free xx every month / birthday rewards) — i need all these templates
@@ -4643,7 +4650,7 @@ async function clientDetail(id){
       .then(r=>r.error?null:((r.data?.programs||[])[0]||null)).catch(()=>null):Promise.resolve(null),
     /* V322: reward_points is the live amount; reward_cents is the frozen pre-v322 money column and
        is no longer read by any surface. */
-    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents')
+    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label')
       .eq('business_id',S.biz.id).limit(1).then(r=>r.error?null:((r.data||[])[0]||null)).catch(()=>null)
       :Promise.resolve(null),
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent" line struck
@@ -11640,7 +11647,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     /* V322: the wizard, the Programmes history row and the customer-360 card all read the referral
        payout from this snapshot, and it is POINTS now. reward_kind rides along so a later voucher
        payout has a place to be read from rather than a place to be invented. */
-    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label,created_at').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const membershipsRequest=modules.includes('memberships')
     ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
@@ -13999,9 +14006,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
       /* nestly_v420: a referral may pay a gift now, so the row names whichever it is. */
-      detail:snapshot.referral.reward_kind==='voucher'
-        ?(snapshot.referral.reward_label?`${snapshot.referral.reward_label} to the referrer`:'A gift to the referrer')
-        :(snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:'')});
+      /* nestly_v421: and to the friend, unless the firm has switched that side off. */
+      detail:(()=>{
+        const side=(points,label)=>snapshot.referral.reward_kind==='voucher'
+          ?(String(label||'').trim()||'A gift')
+          :(Number(points)>0?growPointsWordV322(points):'');
+        const referrer=side(snapshot.referral.reward_points,snapshot.referral.reward_label);
+        if(!referrer)return '';
+        if(snapshot.referral.friend_enabled===false)return `${referrer} to the referrer`;
+        const friend=side(snapshot.referral.friend_reward_points??snapshot.referral.reward_points,
+          snapshot.referral.friend_reward_label||snapshot.referral.reward_label);
+        return friend?`${referrer} to the referrer, ${friend} to the friend`:`${referrer} to the referrer`;
+      })()});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
@@ -15268,6 +15284,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      rest of the module — no draft, no publish. `enabled` is deliberately NOT touched here: the
      programme's on/off already has its own confirmed control (R6's "seperate button"), and a save
      that silently switched a paused programme on would be the defect R6 exists to prevent. */
+  /* nestly_v421: one sentence for "what this side gets", so the summary, the overview row and the
+     editor can never describe the same setting three different ways. A blank friend figure or a
+     blank friend gift means the same as the referrer, which is exactly what the saver stores as
+     NULL and what app.on_sale_recorded resolves at payout time. */
+  const growReferralRewardWordV421=(kind,points,label)=>kind==='voucher'
+    ?(String(label||'').trim()||'A free gift')
+    :(Number(points)>0?growPointsWordV322(points):'Not set yet');
   const growReferralRewardV364=Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0));
   const growReferralMinCentsV364=Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0));
   /* V375 (owner, photo 10: "once set, can put referral info here" circled in the empty space
@@ -15279,10 +15302,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
       <b>Referral settings</b>
       <dl class="appointment-detail-list" style="margin-top:8px">
-        <div><dt>Reward for the referrer</dt><dd>${Number(snapshot.referral?.reward_points)>0?esc(growPointsWordV322(snapshot.referral.reward_points)):'Not set yet'}</dd></div>
+        ${/* nestly_v420: the summary read the points column whatever the programme paid, so a firm
+             on a gift was told "Not set yet" while its referrals paid out a Free Coffee. */''}
+        <div><dt>Reward for the referrer</dt><dd>${esc(growReferralRewardWordV421(snapshot.referral?.reward_kind,snapshot.referral?.reward_points,snapshot.referral?.reward_label))}</dd></div>
+        ${/* nestly_v421: and the friend's side, which is paid on the same visit. */''}
+        <div><dt>Reward for the friend</dt><dd>${snapshot.referral?.friend_enabled===false?'Nothing — the referrer only'
+          :esc(growReferralRewardWordV421(snapshot.referral?.reward_kind,
+            snapshot.referral?.friend_reward_points??snapshot.referral?.reward_points,
+            snapshot.referral?.friend_reward_label||snapshot.referral?.reward_label))}</dd></div>
         <div><dt>Friend must spend at least</dt><dd>${Number(snapshot.referral?.min_spend_cents)>0?esc(money(Number(snapshot.referral.min_spend_cents))):'No minimum'}</dd></div>
         <div><dt>Paid</dt><dd>After the friend's first qualifying visit — never at sign-up</dd></div>
-        <div><dt>Limit</dt><dd>One reward per referred customer, ever</dd></div>
+        <div><dt>Limit</dt><dd>One reward per side, per referred customer, ever</dd></div>
       </dl>
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
@@ -15302,6 +15332,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </div>
       <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">Points for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
       <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
+      ${/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's
+           side, on by default because that is the ruling — a firm that wants the old one-sided
+           referral back unticks it here. The amount is left blank on purpose: blank means the same
+           as the referrer, so a firm that simply wants both sides paid fills in nothing. */''}
+      <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">Points for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least (${esc(S.biz?.currency||'SGD')})</label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-referral-save-v364="1"${growReferralBusyV364?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-referral-cancel-v364="1">Cancel</button></div>
@@ -16731,8 +16768,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   outerMain.querySelectorAll('input[name="growReferralKindV420"]').forEach(radio=>radio.onchange=()=>{
     growReferralKindV420=radio.value==='voucher'?'voucher':'points';
     growReferralGiftV420=String($('growReferralGiftV420')?.value||growReferralGiftV420||'');
+    /* nestly_v421: the friend's half of the form is captured on the same tap, for the same reason
+       — a re-render must not eat what has already been typed into it. */
+    growReferralFriendOnV421=$('growReferralFriendOnV421')?$('growReferralFriendOnV421').checked:growReferralFriendOnV421;
+    growReferralFriendPointsV421=String($('growReferralFriendPointsV421')?.value??growReferralFriendPointsV421??'');
+    growReferralFriendGiftV421=String($('growReferralFriendGiftV421')?.value??growReferralFriendGiftV421??'');
     growRerenderV322({quiet:true});
   });
+  const growReferralFriendToggleV421=outerMain.querySelector('#growReferralFriendOnV421');
+  if(growReferralFriendToggleV421)growReferralFriendToggleV421.onchange=()=>{
+    growReferralFriendOnV421=growReferralFriendToggleV421.checked;
+    growReferralFriendPointsV421=String($('growReferralFriendPointsV421')?.value??growReferralFriendPointsV421??'');
+    growReferralFriendGiftV421=String($('growReferralFriendGiftV421')?.value??growReferralFriendGiftV421??'');
+    growRerenderV322({quiet:true});
+  };
   const growReferralSaveV364=outerMain.querySelector('[data-grow-referral-save-v364]');
   if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{
     if(growReferralBusyV364)return;
@@ -16743,16 +16792,33 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(kind==='points'&&(!Number.isFinite(points)||points<1)){growReferralErrorV364='A points referral must award at least one point.';return growRerenderV322({quiet:true});}
     if(kind==='voucher'&&gift.length<2){growReferralErrorV364='Name the gift the referrer receives.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(amount)||amount<0){growReferralErrorV364='The minimum spend must be zero or more.';return growRerenderV322({quiet:true});}
+    /* nestly_v421: the friend's side. An EMPTY figure and an empty gift name are sent as null,
+       which the saver stores as "the same as the referrer" — so the common case is filling in
+       nothing at all. Only a figure that was actually typed is validated. */
+    const friendOn=$('growReferralFriendOnV421')?$('growReferralFriendOnV421').checked:growReferralFriendOnV421;
+    const friendPointsRaw=String($('growReferralFriendPointsV421')?.value??'').trim();
+    const friendGift=String($('growReferralFriendGiftV421')?.value||'').trim();
+    const friendPoints=friendPointsRaw===''?null:Math.round(Number(friendPointsRaw));
+    if(friendOn&&kind==='points'&&friendPoints!==null&&(!Number.isFinite(friendPoints)||friendPoints<0)){
+      growReferralErrorV364="The friend's points must be zero or more, or blank for the same as the referrer.";
+      return growRerenderV322({quiet:true});
+    }
     growReferralGiftV420=gift;
+    growReferralFriendOnV421=friendOn;
+    growReferralFriendPointsV421=friendPointsRaw;
+    growReferralFriendGiftV421=friendGift;
     growReferralBusyV364=true;growReferralErrorV364='';growRerenderV322({quiet:true});
     /* `enabled` is handed straight back rather than decided here — see the panel's own comment.
        v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
-    const {error}=await sb.rpc('save_referral_program_v420',{p_business:S.biz.id,
+    const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
       p_enabled:snapshot.referral?.enabled===true,p_reward_kind:kind,
       p_reward_points:kind==='points'?points:null,
       p_reward_label:kind==='voucher'?gift:null,
-      p_min_spend_cents:Math.round(amount*100)});
+      p_min_spend_cents:Math.round(amount*100),
+      p_friend_enabled:friendOn,
+      p_friend_reward_points:kind==='points'?friendPoints:null,
+      p_friend_reward_label:kind==='voucher'?(friendGift||null):null});
     if(!isGrowCurrent())return;
     growReferralBusyV364=false;
     if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
@@ -17003,6 +17069,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(!growReferralEditOpenV364){
         growReferralKindV420=snapshot.referral?.reward_kind==='voucher'?'voucher':'points';
         growReferralGiftV420=String(snapshot.referral?.reward_label||'');
+        /* nestly_v421: the friend's side seeds from the saved row too. A NULL amount stays BLANK
+           rather than being filled in with the referrer's figure — blank is the setting, and
+           writing the number in would turn "the same as the referrer" into a fixed figure that
+           stops following it. */
+        growReferralFriendOnV421=snapshot.referral?.friend_enabled!==false;
+        growReferralFriendPointsV421=snapshot.referral?.friend_reward_points==null?'':String(snapshot.referral.friend_reward_points);
+        growReferralFriendGiftV421=String(snapshot.referral?.friend_reward_label||'');
       }
       growReferralEditOpenV364=!growReferralEditOpenV364;growReferralErrorV364='';
       return growRerenderV322({quiet:true});
@@ -29640,6 +29713,21 @@ async function loadCommissionConfig(){
    exist for receipts. They stay in the form anyway. Splitting one save into two so that a legal
    name could live elsewhere would buy tidiness with a second write path over the same row, and
    that is a worse trade than an owner finding "for receipts" on a customer-facing screen. */
+/* nestly_v421: whether the customer-facing wording field belongs on screen. 'Other' is the only
+   sector with no customer-readable name of its own, so it is the only one that needs the field —
+   plus any firm that already has wording saved, whose text would otherwise be live with nothing
+   to edit it by. */
+function workspaceIndustryLabelNeededV421(industry,label){
+  return String(industry||'').trim().toLowerCase()==='other'||!!String(label||'').trim();
+}
+/* Keeps that row in step with the select without a re-render, so a half-typed name in the field
+   above is not thrown away when the sector is picked. */
+function syncWorkspaceIndustryLabelRowV421(){
+  const row=$('biLabelRowV421');
+  if(!row)return;
+  const needed=workspaceIndustryLabelNeededV421($('bi')?.value||S.biz.industry,$('bilabel')?.value);
+  row.hidden=!needed;
+}
 function workspaceBrandPanelHtmlV259(){
   return `<div class="card" style="margin-top:16px"><b>Business</b>
       ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'branch'})}</div>`:''}
@@ -29656,9 +29744,23 @@ function workspaceBrandPanelHtmlV259(){
             never touches it still shows something true. */''}
       <label for="bi">Industry</label><select id="bi" aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
       <p class="muted small" id="biSectorHint" style="margin-top:4px">Peekaa uses this to shape your defaults.</p>
-      <label for="bilabel">What customers see under your name</label>
-      <input id="bilabel" maxlength="60" placeholder="e.g. Facial studio" value="${esc(S.biz.industry_label||'')}">
-      <p class="muted small" style="margin-top:4px">Shown under your business name in the customer app. Leave blank to use your industry above.</p>
+      ${/* nestly_v421 (owner, photo 3: the Industry select ringed on "Other" — "if i choose other
+            in Industry it should then pop up 'What customers see under your name', not a fixed
+            'Other'. you may hide it first, until clicked others").
+            Every other sector in the list is already a word a customer understands, so the line
+            under the business name writes itself and the field is one more thing to read past.
+            'Other' is the one choice that says nothing — Peekaa's word for "not on this list" —
+            and printing it to customers was the fault the mark is pointing at. So the field
+            appears exactly when it is needed, and 'Other' with nothing typed under it now draws
+            NO line at all rather than the word Other (see customerBusinessTaglineV385).
+            It also stays visible for a firm that already has wording saved against another
+            sector: that text is live on their customers' screens, and hiding the only control
+            that edits it would strand it. */''}
+      <div id="biLabelRowV421"${workspaceIndustryLabelNeededV421(S.biz.industry,S.biz.industry_label)?'':' hidden'}>
+        <label for="bilabel">What customers see under your name</label>
+        <input id="bilabel" maxlength="60" placeholder="e.g. Facial studio" value="${esc(S.biz.industry_label||'')}">
+        <p class="muted small" style="margin-top:4px">Shown under your business name in the customer app. Leave it blank and no line is shown.</p>
+      </div>
       ${/* V375 (owner, photo 17: the swatch struck through, "remove"). Every business's customer
             surface now uses Peekaa's own accent, so there is no colour to pick and none to save.
             businesses.brand_color is left in place and simply stops being read. */''}
@@ -30253,7 +30355,19 @@ function customerInterfaceLivePreviewMarkupV326(){
   const merchantExperience=customerMerchantExperienceMarkupV95({
     /* V385: the preview reads the LIVE industry controls the same way it reads the live name,
        so the owner sees their wording as they type it rather than after a save and a reload. */
+    /* nestly_v421 (owner, photo 4: the preview ringed — "should reflect the actual customer app,
+       because it still has missing fields like Company bio"). The preview built its own business
+       object and passed four fields; the customer app's own header reads more than that, so
+       anything the owner typed into the rest of the form was simply absent from the picture of
+       what customers would see. Every field the shared header and gallery read is passed now, and
+       each is read LIVE off its own control the same way the name is, so the preview moves as the
+       form is filled in rather than after a save and a reload. The V327 note that the bio "does
+       not appear in the wallet at all" was true when it was written and stopped being true in
+       v417, which put the bio under the business name. */
     presentation,business:{name,slug:S.biz?.slug||'',currency:'SGD',
+      bio:($('bbio')?.value??S.biz.bio??'').trim(),
+      gallery:Array.isArray(businessProfileExtrasV418?.gallery)?businessProfileExtrasV418.gallery:[],
+      social_links:Array.isArray(businessProfileExtrasV418?.social_links)?businessProfileExtrasV418.social_links:[],
       industry_label:($('bilabel')?.value||'').trim(),
       industry:INDUSTRIES[$('bi')?.value||S.biz.industry]?.label||S.biz.industry||''},
     actionableCard,programmeCards:[],
@@ -30324,7 +30438,7 @@ function customerInterfacePreviewCardHtmlV243(){
   const previewUrl=customerInterfacePreviewUrlV243();
   return `<div class="card customer-preview-v243" id="customerAppPreviewV243" style="margin-top:16px">
       <b>Preview the customer app</b><span class="muted small" style="display:block;margin-top:2px">What a customer sees after they join and open your firm</span>
-      <p class="muted small" style="margin:10px 0 12px">This is the wallet a customer reaches by clicking into your firm — their tier, points and rewards. Your bio and booking policy show on your public page instead, before a customer joins.</p>
+      <p class="muted small" style="margin:10px 0 12px">This is the wallet a customer reaches by clicking into your firm — their name for you, your bio, your photos and links, and their tier, points and rewards.</p>
       <p class="small"><a class="btn ghost sm" id="customerAppPreviewOpenV243" href="${esc(previewUrl)}" target="_blank" rel="noopener noreferrer">Open your public page (real page, new tab)</a></p>
       <div class="customer-preview-phone-v243"><div class="customer-preview-screen-v243 ci-live-preview-body-v326">${customerInterfaceLivePreviewMarkupV326()}</div></div>
     </div>`;
@@ -30334,10 +30448,13 @@ function wireCustomerInterfacePreviewV243(){
   /* V385: the industry select and its customer-facing wording feed the identity line under the
      business name, so both refresh the preview. 'change' as well as 'input' — a <select> on
      WebKit does not always fire input on a pick. */
+  /* nestly_v421: and the sector decides whether the customer-facing wording field is on screen. */
+  syncWorkspaceIndustryLabelRowV421();
   ['bn','bc','bp','bbio','bilabel','bi'].forEach(id=>{
     const el=$(id);
     if(!el)return;
     el.addEventListener('input',refreshCustomerInterfaceLivePreviewV326);
+    if(id==='bi')el.addEventListener('change',syncWorkspaceIndustryLabelRowV421);
     if(el.tagName==='SELECT')el.addEventListener('change',refreshCustomerInterfaceLivePreviewV326);
   });
 }

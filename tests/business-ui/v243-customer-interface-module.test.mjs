@@ -180,11 +180,13 @@ test('V326 the live preview reflects the CURRENT form values, not last-saved sta
 });
 
 /* V327 (owner, screenshot of the real wallet — tier, points, rewards, bottom nav — "must tally
-   100%"). Bio is still listened for (harmless — it just re-triggers an identical render) but not
-   READ here: the wallet a customer reaches after joining never shows it (confirmed against
-   renderCustomerWallet/customerMerchantExperienceMarkupV95 — bio is not referenced anywhere in
-   that render path). Only the pre-join public portal shows it, which this preview no longer
-   represents.
+   100%"). V327 asserted the OPPOSITE of the line below: at the time, bio was not referenced
+   anywhere in the wallet render path, so reading it here would have previewed a field production
+   never displayed. nestly_v417 changed the fact — customerBusinessTaglineV385 puts the bio under
+   the business name in the wallet — and the owner's 2026-08-21 photo 4 marks its ABSENCE from
+   this preview as the defect ("should reflect the actual customer app, because it still has
+   missing fields like Company bio"). So the rule is inverted, deliberately: every field the
+   shared wallet render reads must be passed in, and the test now guards that instead.
    V334 (owner markup, photo 10: "why this not reflected?"): booking policy is the one exception —
    it IS shown to real customers elsewhere (booking confirmation, appointment detail rows), so the
    owner's ask to see it preview here is honoured by reading it directly, as its own note beneath
@@ -193,7 +195,9 @@ test('V327 the preview calls the REAL wallet render function, not a hand-rolled 
   const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function customerInterfacePreviewSideCardHtmlV325(');
   assert.match(markup, /customerMerchantExperienceMarkupV95\(\{/);
   assert.match(markup, /customerPrimaryNavigation\('programmes',\{\}\)/);
-  assert.doesNotMatch(markup, /\$\('bbio'\)/, 'bio never renders in the wallet — reading it here would show a field production never displays');
+  assert.match(markup, /bio:\(\$\('bbio'\)/, 'the wallet shows the bio since v417, so the preview must carry it');
+  assert.match(markup, /gallery:Array\.isArray\(businessProfileExtrasV418/, 'and the v418 gallery');
+  assert.match(markup, /social_links:Array\.isArray\(businessProfileExtrasV418/, 'and its links');
   assert.match(markup, /\$\('bp'\)\?\.value\|\|S\.biz\.booking_policy/, 'booking policy IS previewed now, read live like name/brandColor above');
   // The sample numbers are clearly labelled, not presented as if they were a real customer's.
   /* nestly_v417 (owner, photo 11: the preview ringed — "sync to live reward programmes"). Which
@@ -218,7 +222,9 @@ test('V243 the preview points at the PUBLIC slug page, same-origin and relative'
    card no longer renders. */
 test('V327 the preview is honestly labelled for the screen it actually shows, and openable full size', () => {
   assert.match(preview, /<b>Preview the customer app<\/b>/);
-  assert.match(preview, /This is the wallet a customer reaches by clicking into your firm — their tier, points and rewards\. Your bio and booking policy show on your public page instead, before a customer joins\./);
+  /* nestly_v421: the second half of that sentence became untrue in v417 and the owner marked it
+     in photo 4. The card now describes what the preview actually renders. */
+  assert.match(preview, /This is the wallet a customer reaches by clicking into your firm — their name for you, your bio, your photos and links, and their tier, points and rewards\./);
   // The link still opens the REAL public page (a normal top-level navigation, unaffected by
   // frame-ancestors) — distinguishing it from the inline preview above, which is a re-render of
   // sample wallet data, not a live page at all.

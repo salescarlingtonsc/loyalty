@@ -135,13 +135,14 @@ test('writer registry and both migration plans bind v121',()=>{
   // versions snapshot is immutable. Either restate is why it is now the defining migration.
   // The v121 boundary itself is unchanged and still asserted — every restate has kept the
   // predicate verbatim, and each migration re-runs v121's own postcondition battery.
-  // nestly_v420 is the newest restate: it gives referral_kind='voucher' a payout branch, which
-  // has NO branch before it and therefore paid the referrer nothing at all. As with every restate
-  // named above, the v121 boundary itself is untouched — the predicate is verbatim and the
-  // postcondition battery below re-runs against this body.
+  // nestly_v421 is the newest restate: the referral pays BOTH sides now (owner ruling
+  // 2026-08-21, "yes make the friend get the reward too"), so the friend is granted their own
+  // gift or their own points inside the same once-only guard that already protected the
+  // referrer's. As with every restate named above, the v121 boundary itself is untouched — the
+  // predicate is verbatim and the postcondition battery below re-runs against this body.
   assert.equal(
     saleWriter.latest_file,
-    '20260821000011_nestly_v420_referral_free_gift.sql'
+    '20260822000001_nestly_v421_two_sided_referral.sql'
   );
   assert.match(saleWriter.loyalty_boundary,/resolves exactly rw/);
   assert.match(saleWriter.programme_scope,/ON CONFLICT arbiter NAMES/);

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="43bd2fc6cf4e5a09d6c2e7887d5f05dc3c25507b773e79a072649400ec84381a"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="5d4b68a446a08a4593ffb0d7499fee4dd8ff988678bc1ddd1a2653970b8fdb70"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3700,9 +3700,44 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   body.pos-receipt-print .pos-receipt{display:block !important;border:0;box-shadow:none;max-width:80mm;margin:0 auto;padding:8mm}
 }
 
+/* nestly_v421 (owner, photo 1: "picture not max out … want uploaded photo full to picture" and
+   "why here have big empty space", with the follow-up "your previous fix only fix the empty space
+   for 1 photo — it needs to be for all photos moving forward").
+   The offer card's frame was fixed in two places and the artwork had to fit whatever was left:
+   a 16:9 media box (bars beside a portrait poster) and a copy block with a fixed height (a blank
+   strip under short copy). Which of the two an owner saw depended on the shape of the photo they
+   uploaded — so a fix aimed at one card never held for the next.
+   Here the copy hugs its own content and the media takes every remaining pixel of the card, whose
+   min-height still sets the row's shared size. The picture is still CONTAINed — never cropped,
+   V173/V371, reaffirmed by the owner 2026-08-19 — and what fills the margin around it is the same
+   picture, scaled up and blurred behind it (--offer-art, set by customerHomeOfferMarkupV167), so
+   the frame reads as full-bleed artwork rather than as empty space. */
+.customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
+.customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+.customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
+
+/* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
+   edge cuts through them — "default should align the words, not being cut").
+   Two faults, both in the swipe track on a business's own page.
+   (1) The track bleeds to the screen edge (margin-inline:-16px) and puts the page back with
+   padding — but it never told the scroll snapping about that padding, so scroll-snap-align:start
+   parked each card against the SCROLLPORT edge, 16px into the bleed and off the side of the
+   screen, with the first characters of every line cut off. scroll-padding-inline restates the
+   padding for the snap, which is exactly what the home shelf's own track already does.
+   (2) The card's artwork inherited aspect-ratio:16/9 from the base media rule, while v392 sizes
+   the picture itself by a 46vh cap — so a portrait poster was laid out 388px tall inside a 177px
+   frame and spilled 105px past both ends of it (measured at 390 and at 1280), painting over the
+   card's top edge and over the copy underneath. The frame follows the picture here, which is what
+   v392 described in the first place. */
+.customer-business-profile-v346 .customer-reward-offer-track-v339{scroll-padding-inline:16px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{aspect-ratio:1/1;height:auto;max-height:46vh;min-height:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
+.customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
+
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 43bd2fc6cf4e5a09d6c2e7887d5f05dc3c25507b773e79a072649400ec84381a</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5d4b68a446a08a4593ffb0d7499fee4dd8ff988678bc1ddd1a2653970b8fdb70</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -4972,7 +5007,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       .then(r=>r.error?null:((r.data?.programs||[])[0]||null)).catch(()=>null):Promise.resolve(null),
     /* V322: reward_points is the live amount; reward_cents is the frozen pre-v322 money column and
        is no longer read by any surface. */
-    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents')
+    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label')
       .eq('business_id',S.biz.id).limit(1).then(r=>r.error?null:((r.data||[])[0]||null)).catch(()=>null)
       :Promise.resolve(null),
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent" line struck
@@ -7160,7 +7195,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'43bd2fc6cf4e5a09d6c2e7887d5f05dc3c25507b773e79a072649400ec84381a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'5d4b68a446a08a4593ffb0d7499fee4dd8ff988678bc1ddd1a2653970b8fdb70',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

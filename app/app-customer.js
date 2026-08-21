@@ -2804,8 +2804,23 @@ function customerHomeOfferMarkupV167(item,seen){
          eye hit and why it sat on top of the very picture the owner says is too small. It is a
          line of the copy again, after the title, so the card reads picture → who → what → when.
          Same node, same class, same red-on-soft colours; only its place in the document moved. */''}
+    ${/* nestly_v421 (owner, photo 1: two arrows drawn across the top of the artwork, "picture not
+         max out ... want uploaded photo full to picture", and a squiggle over the blank strip
+         under the countdown, "why here have big empty space" — with the follow-up that the
+         earlier fix "only fix the empty space for 1 photo, it needs to be for all photos".
+         Both marks are the same frame. A 16:9 media box with the picture letterboxed inside it
+         leaves bars beside a portrait poster, and a copy block with a fixed height leaves a blank
+         strip under short copy — and which of the two you see depends on the shape of the photo
+         the merchant uploaded, which is why fixing one card never fixed the next.
+         So the frame stops being fixed: the copy hugs its own content, the media takes every
+         pixel the copy does not, and the artwork is scaled to fill that space. It is still never
+         cropped (V173/V371, reaffirmed 2026-08-19) — what fills the leftover margin is the SAME
+         picture, blown up and blurred behind it, so a portrait poster reads as full-bleed
+         artwork instead of a stamp on a white sheet, and every card in the row is the same size
+         whatever shape its photo is. --offer-art carries the url; see .customer-home-offer-media
+         in the stylesheet. */''}
     ${image
-      ?`<div class="customer-home-offer-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`
+      ?`<div class="customer-home-offer-media has-art-v421" style="--offer-art:url(&quot;${esc(cssUrlValueV421(image))}&quot;)"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}" loading="lazy"></div>`
       :`<div class="customer-home-offer-media customer-home-offer-media--fallback"><span aria-hidden="true">${esc(businessInitial)}</span></div>`}
     ${/* nestly_v397 (owner photo B: "New" ringed where it sat, redrawn at the card's top-left
          corner with "put here"). It was a line of the copy, which pushed the title down and put a
@@ -3319,12 +3334,28 @@ function customerReferralCardMarkupV300(card,business){
      four-hour CDN window in which the previous bundle is still being served, and this bundle
      deliberately ignores it — a card that fell back to the money number would advertise a payout
      that no longer exists. */
-  const reward=customerReferralPointsV322(card?.reward_points);
+  /* nestly_v421: what this card promises must be what app.on_sale_recorded actually pays.
+     Two ways it did not, until now:
+     (1) v420 made a free gift selectable and this line still read the POINTS column, so a customer
+         of a firm paying a Free Coffee was told they would get "0 points";
+     (2) the referral pays BOTH sides from v421, and a card that mentions only the referrer
+         under-sells the very thing it is asking the customer to forward.
+     The friend's share is resolved by the server (customer_get_referral_card_v300) rather than
+     worked out here, so the sentence cannot disagree with the payout. */
+  const isGiftV421=String(card?.reward_kind||'points')==='voucher';
+  const reward=isGiftV421
+    ?(String(card?.reward_label||'').trim()||ct('referralGiftFallback'))
+    :customerReferralPointsV322(card?.reward_points);
+  const friendReward=card?.friend_enabled===false?''
+    :isGiftV421
+      ?(String(card?.friend_reward_label||'').trim()||'')
+      :(Number(card?.friend_reward_points)>0?customerReferralPointsV322(card.friend_reward_points):'');
   const floor=Number(card?.min_spend_cents||0)>0?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
   return `<section class="card wallet-section customer-referral-card-v300" id="walletReferral" aria-labelledby="customerReferralTitle">
     <div class="wallet-section-head"><div>
       <h2 id="customerReferralTitle">${esc(ct('referralHeading',{business:business?.name||ct('localBusiness')}))}</h2>
-      <p class="muted small">${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
+      <p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
+      ${friendReward?`<p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(ct('referralFriendAlso',{reward:friendReward}))}</p>`:''}
     </div></div>
     ${code?`<div class="customer-referral-code-row">
       <span class="customer-referral-code" aria-label="${esc(ct('yourReferralCode'))}">${esc(code)}</span>

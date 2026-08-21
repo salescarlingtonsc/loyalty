@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="84b1d3c4c38dc3b60e7f5b5ec92257e15e479c678096420996613f796fd31cc3"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="5bacf7293558660661a27535000ea3e4a6642b4b21362318e66d10b976bee118"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3700,9 +3700,44 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   body.pos-receipt-print .pos-receipt{display:block !important;border:0;box-shadow:none;max-width:80mm;margin:0 auto;padding:8mm}
 }
 
+/* nestly_v421 (owner, photo 1: "picture not max out … want uploaded photo full to picture" and
+   "why here have big empty space", with the follow-up "your previous fix only fix the empty space
+   for 1 photo — it needs to be for all photos moving forward").
+   The offer card's frame was fixed in two places and the artwork had to fit whatever was left:
+   a 16:9 media box (bars beside a portrait poster) and a copy block with a fixed height (a blank
+   strip under short copy). Which of the two an owner saw depended on the shape of the photo they
+   uploaded — so a fix aimed at one card never held for the next.
+   Here the copy hugs its own content and the media takes every remaining pixel of the card, whose
+   min-height still sets the row's shared size. The picture is still CONTAINed — never cropped,
+   V173/V371, reaffirmed by the owner 2026-08-19 — and what fills the margin around it is the same
+   picture, scaled up and blurred behind it (--offer-art, set by customerHomeOfferMarkupV167), so
+   the frame reads as full-bleed artwork rather than as empty space. */
+.customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
+.customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+.customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
+
+/* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
+   edge cuts through them — "default should align the words, not being cut").
+   Two faults, both in the swipe track on a business's own page.
+   (1) The track bleeds to the screen edge (margin-inline:-16px) and puts the page back with
+   padding — but it never told the scroll snapping about that padding, so scroll-snap-align:start
+   parked each card against the SCROLLPORT edge, 16px into the bleed and off the side of the
+   screen, with the first characters of every line cut off. scroll-padding-inline restates the
+   padding for the snap, which is exactly what the home shelf's own track already does.
+   (2) The card's artwork inherited aspect-ratio:16/9 from the base media rule, while v392 sizes
+   the picture itself by a 46vh cap — so a portrait poster was laid out 388px tall inside a 177px
+   frame and spilled 105px past both ends of it (measured at 390 and at 1280), painting over the
+   card's top edge and over the copy underneath. The frame follows the picture here, which is what
+   v392 described in the first place. */
+.customer-business-profile-v346 .customer-reward-offer-track-v339{scroll-padding-inline:16px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{aspect-ratio:1/1;height:auto;max-height:46vh;min-height:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
+.customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
+
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 84b1d3c4c38dc3b60e7f5b5ec92257e15e479c678096420996613f796fd31cc3</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 5bacf7293558660661a27535000ea3e4a6642b4b21362318e66d10b976bee118</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -4967,7 +5002,7 @@ async function clientsPage(){
       .then(r=>r.error?null:((r.data?.programs||[])[0]||null)).catch(()=>null):Promise.resolve(null),
     /* V322: reward_points is the live amount; reward_cents is the frozen pre-v322 money column and
        is no longer read by any surface. */
-    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents')
+    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label')
       .eq('business_id',S.biz.id).limit(1).then(r=>r.error?null:((r.data||[])[0]||null)).catch(()=>null)
       :Promise.resolve(null),
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent" line struck
@@ -11988,7 +12023,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     /* V322: the wizard, the Programmes history row and the customer-360 card all read the referral
        payout from this snapshot, and it is POINTS now. reward_kind rides along so a later voucher
        payout has a place to be read from rather than a place to be invented. */
-    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label,created_at').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const membershipsRequest=modules.includes('memberships')
     ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
@@ -14356,9 +14391,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
       /* nestly_v420: a referral may pay a gift now, so the row names whichever it is. */
-      detail:snapshot.referral.reward_kind==='voucher'
-        ?(snapshot.referral.reward_label?`${snapshot.referral.reward_label} to the referrer`:'A gift to the referrer')
-        :(snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:'')});
+      /* nestly_v421: and to the friend, unless the firm has switched that side off. */
+      detail:(()=>{
+        const side=(points,label)=>snapshot.referral.reward_kind==='voucher'
+          ?(String(label||'').trim()||'A gift')
+          :(Number(points)>0?growPointsWordV322(points):'');
+        const referrer=side(snapshot.referral.reward_points,snapshot.referral.reward_label);
+        if(!referrer)return '';
+        if(snapshot.referral.friend_enabled===false)return `${referrer} to the referrer`;
+        const friend=side(snapshot.referral.friend_reward_points??snapshot.referral.reward_points,
+          snapshot.referral.friend_reward_label||snapshot.referral.reward_label);
+        return friend?`${referrer} to the referrer, ${friend} to the friend`:`${referrer} to the referrer`;
+      })()});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
@@ -15625,6 +15669,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      rest of the module — no draft, no publish. `enabled` is deliberately NOT touched here: the
      programme's on/off already has its own confirmed control (R6's "seperate button"), and a save
      that silently switched a paused programme on would be the defect R6 exists to prevent. */
+  /* nestly_v421: one sentence for "what this side gets", so the summary, the overview row and the
+     editor can never describe the same setting three different ways. A blank friend figure or a
+     blank friend gift means the same as the referrer, which is exactly what the saver stores as
+     NULL and what app.on_sale_recorded resolves at payout time. */
+  const growReferralRewardWordV421=(kind,points,label)=>kind==='voucher'
+    ?(String(label||'').trim()||'A free gift')
+    :(Number(points)>0?growPointsWordV322(points):'Not set yet');
   const growReferralRewardV364=Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0));
   const growReferralMinCentsV364=Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0));
   /* V375 (owner, photo 10: "once set, can put referral info here" circled in the empty space
@@ -15636,10 +15687,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
       <b>Referral settings</b>
       <dl class="appointment-detail-list" style="margin-top:8px">
-        <div><dt>Reward for the referrer</dt><dd>${Number(snapshot.referral?.reward_points)>0?esc(growPointsWordV322(snapshot.referral.reward_points)):'Not set yet'}</dd></div>
+        ${/* nestly_v420: the summary read the points column whatever the programme paid, so a firm
+             on a gift was told "Not set yet" while its referrals paid out a Free Coffee. */''}
+        <div><dt>Reward for the referrer</dt><dd>${esc(growReferralRewardWordV421(snapshot.referral?.reward_kind,snapshot.referral?.reward_points,snapshot.referral?.reward_label))}</dd></div>
+        ${/* nestly_v421: and the friend's side, which is paid on the same visit. */''}
+        <div><dt>Reward for the friend</dt><dd>${snapshot.referral?.friend_enabled===false?'Nothing — the referrer only'
+          :esc(growReferralRewardWordV421(snapshot.referral?.reward_kind,
+            snapshot.referral?.friend_reward_points??snapshot.referral?.reward_points,
+            snapshot.referral?.friend_reward_label||snapshot.referral?.reward_label))}</dd></div>
         <div><dt>Friend must spend at least</dt><dd>${Number(snapshot.referral?.min_spend_cents)>0?esc(money(Number(snapshot.referral.min_spend_cents))):'No minimum'}</dd></div>
         <div><dt>Paid</dt><dd>After the friend's first qualifying visit — never at sign-up</dd></div>
-        <div><dt>Limit</dt><dd>One reward per referred customer, ever</dd></div>
+        <div><dt>Limit</dt><dd>One reward per side, per referred customer, ever</dd></div>
       </dl>
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
@@ -15659,6 +15717,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </div>
       <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">Points for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
       <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
+      ${/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's
+           side, on by default because that is the ruling — a firm that wants the old one-sided
+           referral back unticks it here. The amount is left blank on purpose: blank means the same
+           as the referrer, so a firm that simply wants both sides paid fills in nothing. */''}
+      <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">Points for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least (${esc(S.biz?.currency||'SGD')})</label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-referral-save-v364="1"${growReferralBusyV364?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-referral-cancel-v364="1">Cancel</button></div>
@@ -17088,8 +17153,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   outerMain.querySelectorAll('input[name="growReferralKindV420"]').forEach(radio=>radio.onchange=()=>{
     growReferralKindV420=radio.value==='voucher'?'voucher':'points';
     growReferralGiftV420=String($('growReferralGiftV420')?.value||growReferralGiftV420||'');
+    /* nestly_v421: the friend's half of the form is captured on the same tap, for the same reason
+       — a re-render must not eat what has already been typed into it. */
+    growReferralFriendOnV421=$('growReferralFriendOnV421')?$('growReferralFriendOnV421').checked:growReferralFriendOnV421;
+    growReferralFriendPointsV421=String($('growReferralFriendPointsV421')?.value??growReferralFriendPointsV421??'');
+    growReferralFriendGiftV421=String($('growReferralFriendGiftV421')?.value??growReferralFriendGiftV421??'');
     growRerenderV322({quiet:true});
   });
+  const growReferralFriendToggleV421=outerMain.querySelector('#growReferralFriendOnV421');
+  if(growReferralFriendToggleV421)growReferralFriendToggleV421.onchange=()=>{
+    growReferralFriendOnV421=growReferralFriendToggleV421.checked;
+    growReferralFriendPointsV421=String($('growReferralFriendPointsV421')?.value??growReferralFriendPointsV421??'');
+    growReferralFriendGiftV421=String($('growReferralFriendGiftV421')?.value??growReferralFriendGiftV421??'');
+    growRerenderV322({quiet:true});
+  };
   const growReferralSaveV364=outerMain.querySelector('[data-grow-referral-save-v364]');
   if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{
     if(growReferralBusyV364)return;
@@ -17100,16 +17177,33 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(kind==='points'&&(!Number.isFinite(points)||points<1)){growReferralErrorV364='A points referral must award at least one point.';return growRerenderV322({quiet:true});}
     if(kind==='voucher'&&gift.length<2){growReferralErrorV364='Name the gift the referrer receives.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(amount)||amount<0){growReferralErrorV364='The minimum spend must be zero or more.';return growRerenderV322({quiet:true});}
+    /* nestly_v421: the friend's side. An EMPTY figure and an empty gift name are sent as null,
+       which the saver stores as "the same as the referrer" — so the common case is filling in
+       nothing at all. Only a figure that was actually typed is validated. */
+    const friendOn=$('growReferralFriendOnV421')?$('growReferralFriendOnV421').checked:growReferralFriendOnV421;
+    const friendPointsRaw=String($('growReferralFriendPointsV421')?.value??'').trim();
+    const friendGift=String($('growReferralFriendGiftV421')?.value||'').trim();
+    const friendPoints=friendPointsRaw===''?null:Math.round(Number(friendPointsRaw));
+    if(friendOn&&kind==='points'&&friendPoints!==null&&(!Number.isFinite(friendPoints)||friendPoints<0)){
+      growReferralErrorV364="The friend's points must be zero or more, or blank for the same as the referrer.";
+      return growRerenderV322({quiet:true});
+    }
     growReferralGiftV420=gift;
+    growReferralFriendOnV421=friendOn;
+    growReferralFriendPointsV421=friendPointsRaw;
+    growReferralFriendGiftV421=friendGift;
     growReferralBusyV364=true;growReferralErrorV364='';growRerenderV322({quiet:true});
     /* `enabled` is handed straight back rather than decided here — see the panel's own comment.
        v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
-    const {error}=await sb.rpc('save_referral_program_v420',{p_business:S.biz.id,
+    const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
       p_enabled:snapshot.referral?.enabled===true,p_reward_kind:kind,
       p_reward_points:kind==='points'?points:null,
       p_reward_label:kind==='voucher'?gift:null,
-      p_min_spend_cents:Math.round(amount*100)});
+      p_min_spend_cents:Math.round(amount*100),
+      p_friend_enabled:friendOn,
+      p_friend_reward_points:kind==='points'?friendPoints:null,
+      p_friend_reward_label:kind==='voucher'?(friendGift||null):null});
     if(!isGrowCurrent())return;
     growReferralBusyV364=false;
     if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
@@ -17360,6 +17454,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(!growReferralEditOpenV364){
         growReferralKindV420=snapshot.referral?.reward_kind==='voucher'?'voucher':'points';
         growReferralGiftV420=String(snapshot.referral?.reward_label||'');
+        /* nestly_v421: the friend's side seeds from the saved row too. A NULL amount stays BLANK
+           rather than being filled in with the referrer's figure — blank is the setting, and
+           writing the number in would turn "the same as the referrer" into a fixed figure that
+           stops following it. */
+        growReferralFriendOnV421=snapshot.referral?.friend_enabled!==false;
+        growReferralFriendPointsV421=snapshot.referral?.friend_reward_points==null?'':String(snapshot.referral.friend_reward_points);
+        growReferralFriendGiftV421=String(snapshot.referral?.friend_reward_label||'');
       }
       growReferralEditOpenV364=!growReferralEditOpenV364;growReferralErrorV364='';
       return growRerenderV322({quiet:true});
@@ -25394,6 +25495,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'84b1d3c4c38dc3b60e7f5b5ec92257e15e479c678096420996613f796fd31cc3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'5bacf7293558660661a27535000ea3e4a6642b4b21362318e66d10b976bee118',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

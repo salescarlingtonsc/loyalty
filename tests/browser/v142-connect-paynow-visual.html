@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="5fb78c189f5f8a45e39406dc18cb50f8dddc6eebeb4dd7011b2a433dc1ef90a1"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="3c6e0f1a4fe326204ec4b672105bfb3b05430df35cef130953f1b353a66e9117"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3700,9 +3700,44 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   body.pos-receipt-print .pos-receipt{display:block !important;border:0;box-shadow:none;max-width:80mm;margin:0 auto;padding:8mm}
 }
 
+/* nestly_v421 (owner, photo 1: "picture not max out … want uploaded photo full to picture" and
+   "why here have big empty space", with the follow-up "your previous fix only fix the empty space
+   for 1 photo — it needs to be for all photos moving forward").
+   The offer card's frame was fixed in two places and the artwork had to fit whatever was left:
+   a 16:9 media box (bars beside a portrait poster) and a copy block with a fixed height (a blank
+   strip under short copy). Which of the two an owner saw depended on the shape of the photo they
+   uploaded — so a fix aimed at one card never held for the next.
+   Here the copy hugs its own content and the media takes every remaining pixel of the card, whose
+   min-height still sets the row's shared size. The picture is still CONTAINed — never cropped,
+   V173/V371, reaffirmed by the owner 2026-08-19 — and what fills the margin around it is the same
+   picture, scaled up and blurred behind it (--offer-art, set by customerHomeOfferMarkupV167), so
+   the frame reads as full-bleed artwork rather than as empty space. */
+.customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
+.customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+.customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
+
+/* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
+   edge cuts through them — "default should align the words, not being cut").
+   Two faults, both in the swipe track on a business's own page.
+   (1) The track bleeds to the screen edge (margin-inline:-16px) and puts the page back with
+   padding — but it never told the scroll snapping about that padding, so scroll-snap-align:start
+   parked each card against the SCROLLPORT edge, 16px into the bleed and off the side of the
+   screen, with the first characters of every line cut off. scroll-padding-inline restates the
+   padding for the snap, which is exactly what the home shelf's own track already does.
+   (2) The card's artwork inherited aspect-ratio:16/9 from the base media rule, while v392 sizes
+   the picture itself by a 46vh cap — so a portrait poster was laid out 388px tall inside a 177px
+   frame and spilled 105px past both ends of it (measured at 390 and at 1280), painting over the
+   card's top edge and over the copy underneath. The frame follows the picture here, which is what
+   v392 described in the first place. */
+.customer-business-profile-v346 .customer-reward-offer-track-v339{scroll-padding-inline:16px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{aspect-ratio:1/1;height:auto;max-height:46vh;min-height:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
+.customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
+
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 5fb78c189f5f8a45e39406dc18cb50f8dddc6eebeb4dd7011b2a433dc1ef90a1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3c6e0f1a4fe326204ec4b672105bfb3b05430df35cef130953f1b353a66e9117</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6843,7 +6878,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'5fb78c189f5f8a45e39406dc18cb50f8dddc6eebeb4dd7011b2a433dc1ef90a1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'3c6e0f1a4fe326204ec4b672105bfb3b05430df35cef130953f1b353a66e9117',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

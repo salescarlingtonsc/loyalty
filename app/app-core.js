@@ -1742,6 +1742,8 @@ const CUSTOMER_COPY=Object.freeze({
        a points phrase from customerReferralPointsV322, not a money amount; {floor} is still money,
        because the friend still has to spend. */
     referralTermsWithFloor:'They quote your code when they join. Once they spend {floor}, you get {reward}.',
+    referralFriendAlso:'Your friend gets {reward} too.',
+    referralGiftFallback:'a free gift',
     referralTerms:'They quote your code when they join. After their first spend, you get {reward}.',
     referralPoints:'{count} points',
     referralOnePoint:'1 point',
@@ -1913,6 +1915,8 @@ const CUSTOMER_COPY=Object.freeze({
     addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
     referralHeading:'介绍朋友到{business}',
     referralTermsWithFloor:'朋友加入时报上您的代码。他们消费满{floor}后，您可获得{reward}。',
+    referralFriendAlso:'您的朋友也可获得{reward}。',
+    referralGiftFallback:'一份免费礼物',
     referralTerms:'朋友加入时报上您的代码。他们首次消费后，您可获得{reward}。',
     referralPoints:'{count}积分',
     referralOnePoint:'1积分',
@@ -2112,6 +2116,8 @@ const CUSTOMER_COPY=Object.freeze({
     addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
     referralHeading:'Perkenalkan rakan kepada {business}',
     referralTermsWithFloor:'Rakan anda sebut kod anda semasa mendaftar. Selepas mereka berbelanja {floor}, anda dapat {reward}.',
+    referralFriendAlso:'Rakan anda juga dapat {reward}.',
+    referralGiftFallback:'hadiah percuma',
     referralTerms:'Rakan anda sebut kod anda semasa mendaftar. Selepas belanja pertama mereka, anda dapat {reward}.',
     referralPoints:'{count} mata',
     referralOnePoint:'1 mata',
@@ -2311,6 +2317,8 @@ const CUSTOMER_COPY=Object.freeze({
     addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
     referralHeading:'{business}-க்கு நண்பரை அறிமுகப்படுத்துங்கள்',
     referralTermsWithFloor:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிடைக்கும்.',
+    referralFriendAlso:'உங்கள் நண்பருக்கும் {reward} கிடைக்கும்.',
+    referralGiftFallback:'ஒரு இலவசப் பரிசு',
     referralTerms:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிடைக்கும்.',
     referralPoints:'{count} புள்ளிகள்',
     referralOnePoint:'1 புள்ளி',
@@ -3069,6 +3077,17 @@ function customerPointTotalV103(value){
   return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
     .format(Math.max(0,Number(value)||0));
 }
+/* nestly_v421: a url safe to drop inside a CSS url("…") in a style attribute. esc() handles the
+   HTML layer; this one closes the CSS layer, where a quote, a bracket or a backslash would end
+   the function early. Percent-encoding them is lossless for a real image url — the server that
+   serves it decodes them back — and anything that is not a url simply fails to load a picture,
+   which is the fallback the card already draws. */
+function cssUrlValueV421(url){
+  /* Only the characters that would end the url() early are touched. encodeURI() is deliberately
+     NOT used: it percent-encodes '%' itself, which double-encodes an already-encoded url (a data:
+     URI, or any path with an escaped space) into one the browser cannot fetch. */
+  return String(url||'').replace(/["\\\r\n]/g,ch=>`%${ch.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')}`);
+}
 /* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
    for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
    read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
@@ -3160,7 +3179,10 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
   /* V299: business monogram coin, not the offer name's first letter (see home shelf). */
   const initial=(String(business?.name||item?.name||'P').trim()[0]||'P').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
-    ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    ${/* nestly_v421: same frame the home shelf card was given — one shape for every card in the
+         row, the picture contained inside it so it is never cropped, and the leftover margin
+         filled by the same picture blurred behind it. --offer-art carries the url. */''}
+    ${image?`<div class="customer-promotion-card-media has-art-v421" style="--offer-art:url(&quot;${esc(cssUrlValueV421(image))}&quot;)"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <div class="customer-promotion-card-copy">
       <p class="customer-quest-kicker">Limited-time offer</p>
       <h3>${esc(item?.name||'Latest offer')}</h3>
@@ -4376,7 +4398,14 @@ function customerBusinessGalleryMarkupV418(business={}){
 }
 function customerBusinessTaglineV385(business={}){
   const own=String(business.industry_label||'').trim();
-  const sector=String(business.industry||'').trim();
+  /* nestly_v421 (owner, photo 3: "not a fixed 'Other'"). Every other sector reads as a description
+     of the business; 'Other' is Peekaa's filing word for one that is not on the list, and printing
+     it under a firm's name told their customers nothing. A firm on that sector says what it is in
+     industry_label instead, and if it has not, the line is simply not drawn. Both the stored key
+     and the resolved label are matched, because the customer read carries one and the workspace's
+     own live preview carries the other. */
+  const rawSector=String(business.industry||'').trim();
+  const sector=/^other$/i.test(rawSector)?'':rawSector;
   const text=own||sector;
   const emoji=own?'':customerSectorEmojiV417(sector);
   /* nestly_v417 (owner, photo 7: an arrow from the workspace's Company bio field to this exact

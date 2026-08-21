@@ -97,9 +97,13 @@ test('v420 the owner can choose, and the counter can hand it over', () => {
   /* The two inputs swap rather than both showing. */
   assert.match(form, /id="growReferralPointsWrapV420"[^>]*\$\{growReferralKindV420==='voucher'\?' hidden':''\}/);
   assert.match(form, /id="growReferralGiftWrapV420"[^>]*\$\{growReferralKindV420==='voucher'\?'':' hidden'\}/);
-  /* The save calls v420's RPC, not v322's. */
+  /* The save calls the CURRENT saver, never v322's. nestly_v421 superseded v420's with a
+     nine-argument v421 that carries the friend's side as well; v420's reward_kind/reward_label
+     pair travels through it unchanged, which is what this line is really guarding. */
   const save = statement("if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{", '\n  };');
-  assert.match(save, /save_referral_program_v420/);
+  assert.match(save, /save_referral_program_v42[01]/);
+  assert.match(save, /p_reward_kind:kind/);
+  assert.match(save, /p_reward_label:kind==='voucher'\?gift:null/);
   assert.doesNotMatch(save, /save_referral_program_v322/);
   /* And the till has a banner and a redeem for it — without this the gift is unclaimable. */
   assert.match(appJs, /id="tReferralRedeemV420"/);
@@ -109,7 +113,8 @@ test('v420 the owner can choose, and the counter can hand it over', () => {
 
 test('v420 the till payload and the reads carry the new fields', () => {
   assert.match(v420, /'referral_offer',v_referral/);
-  assert.match(appJs, /select\('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,created_at'\)/);
+  /* nestly_v421 added the friend's three columns to the same select. */
+  assert.match(appJs, /select\('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label,created_at'\)/);
   /* The programme row names whichever payout it actually is. */
   assert.match(appJs, /snapshot\.referral\.reward_kind==='voucher'/);
 });

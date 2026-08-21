@@ -233,7 +233,10 @@ test('V271 (b) every Overview number names its source', () => {
      referral number, it names the live column it came from — only the column's name moved.
      reward_kind rides along on the same select so a later non-points payout has somewhere to be
      read from rather than somewhere to be invented. */
-  assert.match(app, /sb\.from\('referral_programs'\)\.select\('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,created_at'\)/);
+  /* nestly_v421: the friend's side of the referral is paid from the same row, so it is read from
+     the same select. Same rule, three more columns — the Overview still names where its number
+     came from and still invents nothing. */
+  assert.match(app, /sb\.from\('referral_programs'\)\.select\('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label,created_at'\)/);
   assert.match(app, /sb\.rpc\('business_programme_usage_v271',\{p_business:S\.biz\.id\}\)/);
   assert.match(app, /sb\.from\('firm_config_versions'\)\.select\('published_at'\)[\s\S]{0,180}?order\('published_at',\{ascending:true\}\)/);
 });

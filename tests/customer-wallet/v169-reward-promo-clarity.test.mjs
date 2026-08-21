@@ -95,14 +95,21 @@ test('promotion cards surface the offer facts hook and never render a broken med
 
 test('the Home offer shelf is image-forward, snap-scrolling, and keeps its tracking attributes',()=>{
   assert.match(homeOffer,/customer-home-offer-media--fallback/);
-  assert.match(homeOffer,/<div class="customer-home-offer-media"><img src="\$\{esc\(image\)\}"/);
+  /* nestly_v421 (owner, photo 1: "picture not max out" / "why here have big empty space"). The
+     media block carries the artwork as --offer-art as well as in the <img>, so the frame around a
+     picture that does not fill it is the same picture blurred rather than empty space. */
+  assert.match(homeOffer,/<div class="customer-home-offer-media has-art-v421" style="--offer-art:url\(&quot;\$\{esc\(cssUrlValueV421\(image\)\)\}&quot;\)"><img src="\$\{esc\(image\)\}"/);
   assert.match(homeOffer,/data-home-offer data-offer-id="\$\{esc\(item\?\.id\|\|''\)\}" data-offer-version="\$\{esc\(versionId\)\}"/);
   assert.match(homeOffer,/customer-offer-new/);
   assert.match(homeOffer,/customer-offer-urgent/);
   assert.match(app,/\.customer-home-offers-track\{[^}]*scroll-snap-type:x mandatory/s);
   assert.match(app,/\.customer-home-offer\{[^}]*flex:0 0 min\(78vw,320px\)/s);
   assert.match(app,/\.customer-home-offer\{[^}]*scroll-snap-align:start/s);
-  assert.match(app,/\.customer-home-offer-media\{[^}]*aspect-ratio:16\/9/s);
+  /* nestly_v421: the fixed 16:9 frame is what LEFT the empty space the owner marked — it is now
+     the space the copy does not use, so the picture is as large as the card allows at every
+     breakpoint rather than at one. The artwork inside is still contained, never cropped. */
+  assert.match(app,/\.customer-home-offer-media\{aspect-ratio:auto;flex:1 1 0%;min-height:88px\}/);
+  assert.match(app,/\.customer-home-offer-media>img\{position:relative;z-index:1;object-fit:contain\}/);
 });
 
 test('new promotion and reward surfaces stay on theme tokens instead of hardcoded light colours',()=>{

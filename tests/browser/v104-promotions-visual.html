@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="0061b874ecdda663803406164300671dea123f55092be764a0383456a4774585">
+<meta name="v104-production-source-sha256" content="bc64db4ed843a76b0d633641494cdf82f98afb325a13631872e63749c1d86e56">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -3707,13 +3707,48 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   body.pos-receipt-print .pos-receipt{display:block !important;border:0;box-shadow:none;max-width:80mm;margin:0 auto;padding:8mm}
 }
 
+/* nestly_v421 (owner, photo 1: "picture not max out … want uploaded photo full to picture" and
+   "why here have big empty space", with the follow-up "your previous fix only fix the empty space
+   for 1 photo — it needs to be for all photos moving forward").
+   The offer card's frame was fixed in two places and the artwork had to fit whatever was left:
+   a 16:9 media box (bars beside a portrait poster) and a copy block with a fixed height (a blank
+   strip under short copy). Which of the two an owner saw depended on the shape of the photo they
+   uploaded — so a fix aimed at one card never held for the next.
+   Here the copy hugs its own content and the media takes every remaining pixel of the card, whose
+   min-height still sets the row's shared size. The picture is still CONTAINed — never cropped,
+   V173/V371, reaffirmed by the owner 2026-08-19 — and what fills the margin around it is the same
+   picture, scaled up and blurred behind it (--offer-art, set by customerHomeOfferMarkupV167), so
+   the frame reads as full-bleed artwork rather than as empty space. */
+.customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
+.customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+.customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
+
+/* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
+   edge cuts through them — "default should align the words, not being cut").
+   Two faults, both in the swipe track on a business's own page.
+   (1) The track bleeds to the screen edge (margin-inline:-16px) and puts the page back with
+   padding — but it never told the scroll snapping about that padding, so scroll-snap-align:start
+   parked each card against the SCROLLPORT edge, 16px into the bleed and off the side of the
+   screen, with the first characters of every line cut off. scroll-padding-inline restates the
+   padding for the snap, which is exactly what the home shelf's own track already does.
+   (2) The card's artwork inherited aspect-ratio:16/9 from the base media rule, while v392 sizes
+   the picture itself by a 46vh cap — so a portrait poster was laid out 388px tall inside a 177px
+   frame and spilled 105px past both ends of it (measured at 390 and at 1280), painting over the
+   card's top edge and over the copy underneath. The frame follows the picture here, which is what
+   v392 described in the first place. */
+.customer-business-profile-v346 .customer-reward-offer-track-v339{scroll-padding-inline:16px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{aspect-ratio:1/1;height:auto;max-height:46vh;min-height:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
+.customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
+
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 0061b874ecdda663803406164300671dea123f55092be764a0383456a4774585</p>
+  <p class="v104-provenance">Local production-render harness · source bc64db4ed843a76b0d633641494cdf82f98afb325a13631872e63749c1d86e56</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3725,7 +3760,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="0061b874ecdda663803406164300671dea123f55092be764a0383456a4774585";
+const PRODUCTION_SOURCE_SHA256="bc64db4ed843a76b0d633641494cdf82f98afb325a13631872e63749c1d86e56";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -3995,12 +4030,28 @@ function customerReferralCardMarkupV300(card,business){
      four-hour CDN window in which the previous bundle is still being served, and this bundle
      deliberately ignores it — a card that fell back to the money number would advertise a payout
      that no longer exists. */
-  const reward=customerReferralPointsV322(card?.reward_points);
+  /* nestly_v421: what this card promises must be what app.on_sale_recorded actually pays.
+     Two ways it did not, until now:
+     (1) v420 made a free gift selectable and this line still read the POINTS column, so a customer
+         of a firm paying a Free Coffee was told they would get "0 points";
+     (2) the referral pays BOTH sides from v421, and a card that mentions only the referrer
+         under-sells the very thing it is asking the customer to forward.
+     The friend's share is resolved by the server (customer_get_referral_card_v300) rather than
+     worked out here, so the sentence cannot disagree with the payout. */
+  const isGiftV421=String(card?.reward_kind||'points')==='voucher';
+  const reward=isGiftV421
+    ?(String(card?.reward_label||'').trim()||ct('referralGiftFallback'))
+    :customerReferralPointsV322(card?.reward_points);
+  const friendReward=card?.friend_enabled===false?''
+    :isGiftV421
+      ?(String(card?.friend_reward_label||'').trim()||'')
+      :(Number(card?.friend_reward_points)>0?customerReferralPointsV322(card.friend_reward_points):'');
   const floor=Number(card?.min_spend_cents||0)>0?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
   return `<section class="card wallet-section customer-referral-card-v300" id="walletReferral" aria-labelledby="customerReferralTitle">
     <div class="wallet-section-head"><div>
       <h2 id="customerReferralTitle">${esc(ct('referralHeading',{business:business?.name||ct('localBusiness')}))}</h2>
-      <p class="muted small">${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
+      <p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
+      ${friendReward?`<p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(ct('referralFriendAlso',{reward:friendReward}))}</p>`:''}
     </div></div>
     ${code?`<div class="customer-referral-code-row">
       <span class="customer-referral-code" aria-label="${esc(ct('yourReferralCode'))}">${esc(code)}</span>
@@ -4027,6 +4078,12 @@ async function shareCustomerReferralV300(card,business){
   }
   showCustomerShareSheetV264({text,url,business,onChannel:record,title:ct('shareYourCode')});
 }
+function cssUrlValueV421(url){
+  /* Only the characters that would end the url() early are touched. encodeURI() is deliberately
+     NOT used: it percent-encodes '%' itself, which double-encodes an already-encoded url (a data:
+     URI, or any path with an escaped space) into one the browser cannot fetch. */
+  return String(url||'').replace(/["\\\r\n]/g,ch=>`%${ch.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')}`);
+}
 function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=''){
   const image=previewImageUrl||customerMediaUrlV95(item?.image_url),
     validity=customerPromotionValidityV104(item),
@@ -4036,7 +4093,10 @@ function customerPromotionCardV104(item,business,bookingEnabled,previewImageUrl=
   /* V299: business monogram coin, not the offer name's first letter (see home shelf). */
   const initial=(String(business?.name||item?.name||'P').trim()[0]||'P').toUpperCase();
   return `<article class="customer-promotion-card" data-promotion-id="${esc(item?.id||'')}">
-    ${image?`<div class="customer-promotion-card-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
+    ${/* nestly_v421: same frame the home shelf card was given — one shape for every card in the
+         row, the picture contained inside it so it is never cropped, and the leftover margin
+         filled by the same picture blurred behind it. --offer-art carries the url. */''}
+    ${image?`<div class="customer-promotion-card-media has-art-v421" style="--offer-art:url(&quot;${esc(cssUrlValueV421(image))}&quot;)"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.imageAlt||item?.name||'Promotion')}" loading="eager"></div>`:`<div class="customer-promotion-card-media customer-promotion-card-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <div class="customer-promotion-card-copy">
       <p class="customer-quest-kicker">Limited-time offer</p>
       <h3>${esc(item?.name||'Latest offer')}</h3>

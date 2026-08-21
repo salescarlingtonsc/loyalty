@@ -31,6 +31,10 @@ function productionSources(app){
     sourceBetween(app,'function customerShareButtonMarkupV264','function customerShareSheetMarkupV264'),
     sourceBetween(app,'function customerPromotionCtaV104','function customerPromotionValidityV104'),
     sourceBetween(app,'function customerPromotionValidityV104','function customerPromotionCardV104'),
+    /* nestly_v421: the card now paints its own artwork, blurred, behind a picture that does not
+       fill the frame, and passes the url through this CSS-escaping helper to do it. Without it
+       here the fixture renders a card production no longer produces — it throws. */
+    sourceBetween(app,'function cssUrlValueV421','function customerHomeOfferMarkupV167'),
     sourceBetween(app,'function customerPromotionCardV104','function openCustomerPromotionDetailsV104'),
     sourceBetween(app,'function openCustomerPromotionDetailsV104','function customerMerchantExperienceMarkupV95')
   ];

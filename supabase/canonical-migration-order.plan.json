@@ -2230,6 +2230,12 @@
       "version": "20260821000011",
       "name": "nestly_v420_referral_free_gift",
       "sourcePath": "db/migrations/20260821_nestly_v420_referral_free_gift.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000001",
+      "name": "nestly_v421_two_sided_referral",
+      "sourcePath": "db/migrations/20260822_nestly_v421_two_sided_referral.sql"
     }
   ]
 }

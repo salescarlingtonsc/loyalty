@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="8dfc8f1f803d76322375890077a515dd9b5f43c2b09d95a33dbbfc8a410028b9"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="73656790ea45379b86c99a4b9bd6a955f369d1aa20d944896301901daddf3e0c"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3701,6 +3701,41 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   body.pos-receipt-print .pos-receipt{display:block !important;border:0;box-shadow:none;max-width:80mm;margin:0 auto;padding:8mm}
 }
 
+/* nestly_v421 (owner, photo 1: "picture not max out … want uploaded photo full to picture" and
+   "why here have big empty space", with the follow-up "your previous fix only fix the empty space
+   for 1 photo — it needs to be for all photos moving forward").
+   The offer card's frame was fixed in two places and the artwork had to fit whatever was left:
+   a 16:9 media box (bars beside a portrait poster) and a copy block with a fixed height (a blank
+   strip under short copy). Which of the two an owner saw depended on the shape of the photo they
+   uploaded — so a fix aimed at one card never held for the next.
+   Here the copy hugs its own content and the media takes every remaining pixel of the card, whose
+   min-height still sets the row's shared size. The picture is still CONTAINed — never cropped,
+   V173/V371, reaffirmed by the owner 2026-08-19 — and what fills the margin around it is the same
+   picture, scaled up and blurred behind it (--offer-art, set by customerHomeOfferMarkupV167), so
+   the frame reads as full-bleed artwork rather than as empty space. */
+.customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
+.customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+.customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
+
+/* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
+   edge cuts through them — "default should align the words, not being cut").
+   Two faults, both in the swipe track on a business's own page.
+   (1) The track bleeds to the screen edge (margin-inline:-16px) and puts the page back with
+   padding — but it never told the scroll snapping about that padding, so scroll-snap-align:start
+   parked each card against the SCROLLPORT edge, 16px into the bleed and off the side of the
+   screen, with the first characters of every line cut off. scroll-padding-inline restates the
+   padding for the snap, which is exactly what the home shelf's own track already does.
+   (2) The card's artwork inherited aspect-ratio:16/9 from the base media rule, while v392 sizes
+   the picture itself by a 46vh cap — so a portrait poster was laid out 388px tall inside a 177px
+   frame and spilled 105px past both ends of it (measured at 390 and at 1280), painting over the
+   card's top edge and over the copy underneath. The frame follows the picture here, which is what
+   v392 described in the first place. */
+.customer-business-profile-v346 .customer-reward-offer-track-v339{scroll-padding-inline:16px}
+.customer-reward-offer-page-v339 .customer-promotion-card-media{aspect-ratio:1/1;height:auto;max-height:46vh;min-height:0}
+.customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
+.customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
+
   .v141-wordmark{font-size:1.35rem;font-weight:750;letter-spacing:-.04em;padding:4px 10px 22px}.v141-profile{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--hair)}
   </style></head><body><div class="shell"><aside class="side"><div class="v141-wordmark">◉◉<br>peekaa</div><nav class="nav"><a class="act" href="#/dashboard"> Dashboard</a><a href="#/clients">Customers</a><button class="navhead"><span>Serve &amp; sell</span><span class="chev">+</span></button><button class="navhead"><span>Grow</span><span class="chev">+</span></button><button class="navhead"><span>Money</span><span class="chev">+</span></button><button class="navhead"><span>Operations setup</span><span class="chev">+</span></button></nav><div class="foot">V141 source-bound candidate</div></aside>
   <div class="col"><header class="appbar"><div class="global-actions"><div class="global-search"><span class="global-search-ic">⌕</span><input aria-label="Find a customer" placeholder="Find a customer  ( / )"><button class="global-search-go" aria-label="Search customers">›</button></div><div class="global-quick"><button class="btn sm global-act">Record sale</button><button class="btn ghost sm global-act">New appointment</button></div></div><span class="dashboard-appbar-branch" id="dashboardBranchWrap"><span class="muted small">Loading branches…</span></span><select aria-label="Language" style="width:auto"><option>English</option></select><button class="v141-profile"><span class="avatar">G</span><b>Glow Atelier</b></button></header><main class="main" id="main"></main></div></div><div id="toast" class="toast"></div><script>
@@ -4810,6 +4845,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'8dfc8f1f803d76322375890077a515dd9b5f43c2b09d95a33dbbfc8a410028b9',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'73656790ea45379b86c99a4b9bd6a955f369d1aa20d944896301901daddf3e0c',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
