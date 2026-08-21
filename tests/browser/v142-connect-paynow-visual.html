@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="6564ef53e3862afa24b0a51389641a7e1cdd6537066bfa221b1a737f4aa43b8e"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="2cdbcf717f19686e784777d8015afb4b545b989e80e86d8ed1f2da6469384a89"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1285,6 +1285,18 @@ input[type=range]:focus{box-shadow:none}
 .grow-overview-column-v319[data-grow-overview-category-v319="rewards"] .grow-overview-arrow-v385{
   color:var(--coral);opacity:.55}
 
+/* nestly_v410 (owner photo 2: a hand-drawn arrow against each gift row in "Customers who used each
+   programme", with "put arrow under point system if it's under point system"). V401b gave the
+   Rewards & Loyalty table this hierarchy and scoped every rule to that column, saying so in its own
+   comment — so this table stayed flat and four gifts read as peers of the engine they hang off.
+   Same class names, same indent step, same one-weight-down treatment, scoped to this table. */
+[data-grow-usage-table-v410] .grow-overview-child-v324{display:inline-flex;align-items:baseline;gap:6px;padding-left:20px}
+[data-grow-usage-table-v410] .grow-overview-child-v324 b{font-weight:600;color:var(--ink2)}
+[data-grow-usage-table-v410] .grow-overview-arrow-v385{color:var(--coral);opacity:.55}
+/* Below the stack point a row is three stacked cells, so the indent would sit under a label rather
+   than under the parent's name. The arrow alone carries the relationship there. */
+@media(max-width:768px){[data-grow-usage-table-v410] .grow-overview-child-v324{padding-left:0}}
+
 /* Vertical grouping. A child gets a little more room than a plain row; the FIRST child gets a
    touch more still, and a parent that follows a child group gets the largest step, so the eye
    reads "new programme starts here" without a rule or a background.
@@ -1763,6 +1775,43 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-slots-v356{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;padding:14px;border-radius:14px;background:#fff}
 .grow-stamps-slot-v356{width:34px;height:34px;border-radius:999px;border:2px solid #F0C9AE;color:#E3B394;
   display:grid;place-items:center}
+/* nestly_v410 (owner photo 4: the V356 rail struck through and a numbered grid drawn in its place,
+   "i want sth like this"). Every stamp from 1 to the last milestone, in order, so the preview shows
+   the card the customer actually fills rather than only its two payout points. Same palette and
+   the same 34px circle the V356 slot row used — this is the slot row grown a number and, on the
+   stamps that pay out, a gift. */
+.grow-stamps-grid-v410{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.grow-stamps-cell-v410{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
+  color:#B08462;font-weight:700;font-size:13px;padding:0;font-family:inherit}
+.grow-stamps-cell-num-v410{line-height:1}
+/* A payout stamp is a button, so it gets the affordances of one. */
+.grow-stamps-cell-v410.is-gift-v410{border-color:var(--coral);color:var(--coral);cursor:pointer}
+.grow-stamps-cell-v410.is-gift-v410:hover{background:var(--tint)}
+.grow-stamps-cell-gift-v410{position:absolute;top:-14px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
+.grow-stamps-grid-v410{padding-top:14px}
+
+/* nestly_v410 (owner photo 3: "add/edit bring to pop-up"). The shared Add/Edit gift form keeps its
+   element and its place in the DOM — every handler binds by selector inside outerMain — and is
+   presented as a dialog purely in CSS. list-style is cleared because the node is still an <li>. */
+.grow-points-modal-back-v410{position:fixed;inset:0;z-index:70;background:rgba(23,22,26,.45)}
+.grow-points-form-card-v343.grow-points-form-modal-v410{position:fixed;z-index:71;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(calc(100vw - 32px),var(--dialog-w-md));max-height:min(86vh,760px);overflow:auto;
+  list-style:none;margin:0;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:20px;
+  /* The inline card is laid out for a WIDE row in the list — a five-column grid at desktop, and a
+     wrapping flex row in the responsive layer below it (measured: computed display is `flex`, which
+     is why an earlier attempt at grid-template-columns changed nothing). In a dialog that width
+     does not exist, so it becomes a plain column: one field per line, full width. Declared as flex
+     rather than grid so it wins whichever of the two the cascade has landed on. */
+  display:flex;flex-direction:column;align-items:stretch;gap:12px;border:0}
+.grow-points-form-card-v343.grow-points-form-modal-v410>*{grid-column:1/-1;min-width:0}
+/* In the inline card each control is sized by its own grid track; in a column they should all be
+   the width of the dialog, or the textarea reads as a different kind of field from the inputs. */
+.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;box-sizing:border-box}
+@media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
+@media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
+@keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
+@media(max-width:520px){.grow-stamps-grid-v410{gap:8px}.grow-stamps-cell-v410{width:31px;height:31px;font-size:12px}}
 .grow-stamps-summary-v356{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px;padding:16px 18px;
   border:1px solid var(--hair);border-radius:16px;background:#fff}
 .grow-stamps-summary-icon-v356{width:46px;height:46px;min-width:46px;border-radius:14px;background:var(--tint);
@@ -3521,7 +3570,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 6564ef53e3862afa24b0a51389641a7e1cdd6537066bfa221b1a737f4aa43b8e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 2cdbcf717f19686e784777d8015afb4b545b989e80e86d8ed1f2da6469384a89</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6611,7 +6660,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'6564ef53e3862afa24b0a51389641a7e1cdd6537066bfa221b1a737f4aa43b8e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'2cdbcf717f19686e784777d8015afb4b545b989e80e86d8ed1f2da6469384a89',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

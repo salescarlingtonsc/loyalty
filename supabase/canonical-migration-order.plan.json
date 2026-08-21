@@ -2182,6 +2182,12 @@
       "version": "20260821000003",
       "name": "nestly_v409_canonical_points_balance",
       "sourcePath": "db/migrations/20260821_nestly_v409_canonical_points_balance.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000004",
+      "name": "nestly_v410_promotion_finalize_overload_ambiguity",
+      "sourcePath": "db/migrations/20260821_nestly_v410_promotion_finalize_overload_ambiguity.sql"
     }
   ]
 }

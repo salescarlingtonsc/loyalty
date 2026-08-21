@@ -297,7 +297,7 @@ test('V326 the add-gift form preserves in-progress values, and the post-save pro
   assert.match(formRender.growPointsManageV326, /value="Lotion"/);
   assert.match(formRender.growPointsManageV326, /value="10"/);
   assert.match(formRender.growPointsManageV326, /data-grow-points-add-save-v326="1"/);
-  assert.match(formRender.growPointsManageV326, /class="grow-points-form-card-v343" data-grow-points-addform-v326/);
+  assert.match(formRender.growPointsManageV326, /class="grow-points-form-card-v343 grow-points-form-modal-v410" data-grow-points-addform-v326/);
 
   /* V351 (owner: "After successful creation, close the form again. Do not keep the form
      permanently expanded."): the 'prompt' state — a second screen offering "Add another / Done" —

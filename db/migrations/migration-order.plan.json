@@ -2187,6 +2187,12 @@
       "path": "db/migrations/20260821_nestly_v409_canonical_points_balance.sql",
       "semanticVersion": "v409",
       "proposedDeployVersion": "20260821000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v410_promotion_finalize_overload_ambiguity.sql",
+      "semanticVersion": "v410",
+      "proposedDeployVersion": "20260821000004"
     }
   ]
 }

@@ -26511,14 +26511,40 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const buckets=new Map();
     growProgrammeEntriesV271.forEach(entry=>{
       const category=growAnalyticsCategoryV385(entry);
-      const current=buckets.get(category)||{category,customers:null,programmes:0};
+      const current=buckets.get(category)||{category,customers:null,programmes:0,
+        /* nestly_v410 (owner photo 2: "put arrow under point system if it's under point system",
+           with a hand-drawn arrow against each gift row). A gift row already knows its parent —
+           growRewardParentNameV375 resolved it off the spine when the entry was built — the usage
+           table simply never carried it. V401b gave the Rewards & Loyalty table this treatment and
+           said in its own comment that it left this table alone; this is that same treatment,
+           reusing the same class names so the two tables cannot drift apart. */
+        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null};
       current.programmes+=1;
       const customers=growUsageForEntryV386(usage,entry);
       if(customers!=null)current.customers=(current.customers||0)+Number(customers);
       buckets.set(category,current);
     });
-    return [...buckets.values()].sort((a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
-      ||String(a.category).localeCompare(String(b.category)));
+    /* Parents keep the old ordering — most-used first. Each child then follows its OWN parent,
+       most-used first within the group, so the table reads as a tree rather than a flat list.
+       A gift whose parent is not in the table (its programme was never read, or it hangs off
+       nothing on the spine) stays a top-level row: it is never re-parented onto a guess. */
+    const rows=[...buckets.values()];
+    const byUsage=(a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
+      ||String(a.category).localeCompare(String(b.category));
+    const parentNames=new Set(rows.filter(row=>!row.childV410).map(row=>row.category));
+    const adoptable=row=>row.childV410&&row.parentV410&&parentNames.has(row.parentV410);
+    const orphans=rows.filter(row=>!adoptable(row));
+    const childrenOf=new Map();
+    rows.filter(adoptable).forEach(row=>{
+      if(!childrenOf.has(row.parentV410))childrenOf.set(row.parentV410,[]);
+      childrenOf.get(row.parentV410).push(row);
+    });
+    const out=[];
+    orphans.sort(byUsage).forEach(row=>{
+      out.push(row);
+      (childrenOf.get(row.category)||[]).sort(byUsage).forEach(child=>out.push(child));
+    });
+    return out;
   };
   const growAnalyticsRowsV375=growAnalyticsRowsFromUsageV386(growUsageForAnalyticsV386);
   /* V386 (owner, photo 7: "filter by date" across the usage table, and "down here can put
@@ -26579,8 +26605,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growUsageFilterBarV386}
       ${growUsageWindowFailedV386
         ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
-        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true"><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
-        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category"><b data-merchant-content>${esc(row.category)}</b></td><td data-label="Programmes">${row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
+        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true" data-grow-usage-table-v410><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
+        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category">${row.childV410
+          ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span><b data-merchant-content>${esc(row.category)}</b></span>`
+          :`<b data-merchant-content>${esc(row.category)}</b>`}</td><td data-label="Programmes">${row.childV410
+          /* Owner struck the "1" out of every gift row. A gift IS one programme by definition, so
+             the column repeated the row's own existence on every child; the count is a fact about
+             a parent's group, not about a leaf. Blanked, not zeroed — zero would be a measurement. */
+          ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Counted under '+esc(row.parentV410||'its programme')+'</span>'
+          :row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
@@ -26696,8 +26729,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      (uploadRewardPhotoV326 below — same storage path grammar, same three-state photo contract). */
   const growPointsEditingRewardV343=growPointsEditingV326?growPointsScopedRewardsV326.find(r=>String(r.id)===String(growPointsEditingV326)):null;
   const growPointsCurrentPhotoUrlV343=!growPointsRemovePhotoV343&&growPointsEditingRewardV343?customerMediaUrlV95(growPointsEditingRewardV343.image_ref):'';
-  const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<li class="grow-points-form-card-v343" data-grow-points-addform-v326>
-    <b>${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
+  /* nestly_v410 (owner photo 3: "Edit" ringed on both level rows and "+ Add another level" ringed
+     with an arrow between them — "add/edit bring to pop-up"). Add and Edit already shared ONE form
+     (Edit just pre-fills the draft and sets growPointsEditingV326), but it rendered inline at the
+     foot of the list: on the stamp card that pushed the levels, the summary and the preview down
+     the page, so the owner tapped Edit on Level 1 and the fields appeared somewhere below Level 2.
+     The form is now presented as a dialog. This is PRESENTATION ONLY — the <li> keeps its element,
+     its class and its data-grow-points-addform-v326 hook, and it stays exactly where it was in the
+     DOM, inside outerMain. Every existing binding (the field ids, save, cancel, the photo input)
+     is found by the same selector on the same node, so no handler moved. A backdrop is rendered
+     alongside it and wired below to the form's own Cancel, so dismissing it can never take a
+     different path from the button. */
+  const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<div class="grow-points-modal-back-v410" data-grow-points-modal-back-v410 aria-hidden="true"></div><li class="grow-points-form-card-v343 grow-points-form-modal-v410" data-grow-points-addform-v326 role="dialog" aria-modal="true" aria-labelledby="growPointsFormTitleV410">
+    <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">${growPointsIsStampsV326?'Stamps':'Points'}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
@@ -26997,27 +27041,38 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      The slot row and "collected" count show ZERO deliberately: there is no real customer in this
      editor, and inventing a part-filled progress ("4 of 12") would put a number on screen that
      belongs to nobody. The slots are capped so a 50-stamp card does not draw 50 circles. */
-  const growStampsSlotCountV356=Math.min(growStampsMaxV350,10);
+  /* nestly_v410 (owner photo 4). The V356 rail — an evenly-spaced row of milestone stops above a
+     row of ten identical stars — was struck through, and the owner drew a numbered grid: every
+     stamp from 1 to the last milestone, in order, with a gift sitting ON the stamps that unlock
+     one, and "click then pop-up to see what gift".
+     That is a truer picture of the card a customer actually fills: the old rail showed only the
+     milestones (so a 5-and-10 card drew two stops and ten anonymous stars that lined up with
+     nothing), while this draws the ten squares the customer will tick and marks which two of them
+     pay out. The count still reads 0 collected — there is no real customer in this editor, and a
+     part-filled preview would put somebody else's progress on screen.
+     Capped at GROW_STAMPS_PREVIEW_MAX_V410 so a 200-stamp card cannot paint 200 circles; past the
+     cap the grid says how many it is not drawing rather than silently truncating. */
+  const GROW_STAMPS_PREVIEW_MAX_V410=40;
+  const growStampsRewardAtV410=new Map(growStampsLevelsSortedV350
+    .map(reward=>[Math.max(0,Number(reward.cost_points||0)),reward])
+    .filter(([stamps])=>stamps>0));
+  const growStampsDrawnV410=Math.min(growStampsMaxV350,GROW_STAMPS_PREVIEW_MAX_V410);
   const growStampsPreviewV350=`<div class="grow-stamps-preview-card-v350">
-    <b>Customer preview</b>
-    <p class="muted small" style="margin-top:2px">Here's how your stamp card will look to customers.</p>
+    <b>Preview</b>
     <div class="grow-stamps-preview-hero-v350"><b data-merchant-content>${esc(S.biz?.name||'Stamp card')}</b><p class="small">Collect stamps and unlock rewards!</p></div>
     ${growStampsLevelsSortedV350.length?`
-    <div class="grow-stamps-milestones-v356" aria-label="Stamp milestones">
-      ${growStampsLevelsSortedV350.map((reward,index)=>{
-        const stamps=Math.max(0,Number(reward.cost_points||0));
-        return `<div class="grow-stamps-milestone-v356"${index?' data-linked="1"':''}>
-          <span class="grow-stamps-milestone-gift-v356" aria-hidden="true">${CUI.icon('giftcard',{size:20})}</span>
-          <span class="grow-stamps-milestone-circle-v356"><b data-merchant-content>${stamps}</b></span>
-          <small class="muted">stamp${stamps===1?'':'s'}</small>
-          <span class="grow-stamps-milestone-name-v356" data-merchant-content>${esc(reward.customer_name||reward.name||'Reward')}</span>
-        </div>`;
+    <div class="grow-stamps-grid-v410" role="list" aria-label="Stamp card preview">
+      ${Array.from({length:growStampsDrawnV410},(_,index)=>{
+        const stamp=index+1;
+        const reward=growStampsRewardAtV410.get(stamp);
+        const rewardName=reward?String(reward.customer_name||reward.name||'Reward'):'';
+        return reward
+          ? `<button type="button" role="listitem" class="grow-stamps-cell-v410 is-gift-v410" data-grow-stamp-gift-v410="${stamp}" data-merchant-content aria-label="Stamp ${stamp} unlocks ${esc(rewardName)}. Show details."><span class="grow-stamps-cell-gift-v410" aria-hidden="true">${CUI.icon('giftcard',{size:18})}</span><span class="grow-stamps-cell-num-v410">${stamp}</span></button>`
+          : `<span role="listitem" class="grow-stamps-cell-v410"><span class="grow-stamps-cell-num-v410">${stamp}</span></span>`;
       }).join('')}
     </div>
-    <div class="grow-stamps-slots-v356" aria-hidden="true">
-      ${Array.from({length:growStampsSlotCountV356},()=>`<span class="grow-stamps-slot-v356">${CUI.icon('star',{size:16})}</span>`).join('')}
-    </div>
-    <p class="muted small" style="margin-top:10px">0 of ${growStampsMaxV350} stamps collected</p>`
+    ${growStampsMaxV350>growStampsDrawnV410?`<p class="muted small" style="margin-top:8px">Showing the first ${growStampsDrawnV410} of ${growStampsMaxV350} stamps.</p>`:''}
+    <p class="muted small" style="margin-top:10px">0 of ${growStampsMaxV350} stamps collected · tap a gift to see what it unlocks</p>`
     :'<p class="muted small" style="margin-top:14px">Add a level below to see the preview.</p>'}
   </div>`;
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
@@ -27035,13 +27090,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsSummaryV356=growStampsLevelsSortedV350.length?`<div class="grow-stamps-summary-v356">
     <span class="grow-stamps-summary-icon-v356" aria-hidden="true">${CUI.icon('giftcard',{size:20})}</span>
     <span class="grow-stamps-summary-body-v356">
-      <b data-merchant-content>${esc(S.biz?.name||'Stamp card')} rewards</b>
+      ${/* nestly_v410 (owner photo 5: the business name struck through, "Summary" written over it).
+           The card already sits on this firm's own Stamp card page under its own heading, so
+           repeating the business name named nothing the owner did not already know; what the card
+           IS was the missing word. */''}
+      <b>Summary</b>
       <span class="muted small" data-merchant-content>${growStampsLevelsSortedV350.map(r=>`${Math.max(0,Number(r.cost_points||0))} stamps: ${esc(r.customer_name||r.name||'Reward')}`).join(' · ')}</span>
       ${growStampsDatesV356?`<span class="muted small">${growStampsDatesV356}</span>`:''}
     </span>
     <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
       <span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>
-      ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>`:''}
+      ${/* nestly_v410 (owner photo 5: this button scribbled out). "Edit settings" here opened the
+           SAME editor as the "Edit settings" button in the page header a few hundred pixels above
+           — two identical controls for one thing, on one screen. The header keeps it; a summary
+           summarises. */''}
     </span>
   </div>`:'';
   const growStampsPageV350=!canRewards
@@ -28382,6 +28444,52 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!['published','history'].includes(tab))return;
     growPointsManageTabV326=tab;
     growRerenderV322({quiet:true});
+  });
+  /* nestly_v410 (owner photo 4: arrows from the gift icons, "click then pop-up to see what gift").
+     The preview grid marks which stamps pay out; this is what they pay. Everything shown is a
+     field the level row above already holds — the reward name, its description and its photo — so
+     the popup cannot claim a gift the card does not actually carry. */
+  /* nestly_v410: the dialog's dismissal paths. Both delegate to the form's own Cancel rather than
+     resetting state themselves — cancel already clears the draft, the photo file and the error,
+     and a second copy of that would drift. Focus moves to the first field on open, which is what
+     makes it read as a dialog rather than a card that happens to float. */
+  const growPointsFormV410=outerMain.querySelector('[data-grow-points-addform-v326]');
+  if(growPointsFormV410){
+    const cancelV410=()=>outerMain.querySelector('[data-grow-points-add-cancel-v326]')?.click();
+    const backdropV410=outerMain.querySelector('[data-grow-points-modal-back-v410]');
+    if(backdropV410)backdropV410.onclick=cancelV410;
+    growPointsFormV410.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();cancelV410()}};
+    if(!growPointsFormV410.dataset.focusedV410){
+      growPointsFormV410.dataset.focusedV410='1';
+      const first=growPointsFormV410.querySelector('#growPointsAddNameV326');
+      if(first&&document.activeElement!==first)first.focus({preventScroll:true});
+    }
+  }
+  outerMain.querySelectorAll('[data-grow-stamp-gift-v410]').forEach(cell=>cell.onclick=()=>{
+    const stamp=Math.max(0,Number(cell.dataset.growStampGiftV410||0));
+    const reward=growStampsRewardAtV410.get(stamp);
+    if(!reward)return;
+    const name=String(reward.customer_name||reward.name||'Reward');
+    const note=String(reward.description||reward.customer_description||'').trim();
+    const photo=customerMediaUrlV95(reward.image_ref);
+    const overlay=document.createElement('div');
+    overlay.className='modal-back';
+    overlay.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="growStampGiftTitleV410">
+      <div class="row"><h2 id="growStampGiftTitleV410">Stamp ${stamp}</h2><span class="spacer"></span>
+        <button type="button" class="btn ghost sm" id="growStampGiftCloseV410" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
+      ${photo?`<img src="${esc(photo)}" alt="" style="width:100%;max-height:180px;object-fit:contain;margin-top:12px;border-radius:12px">`:''}
+      <p class="muted small" style="margin-top:12px">Unlocks at ${stamp} stamp${stamp===1?'':'s'}</p>
+      <b data-merchant-content style="display:block;font-size:20px;margin-top:4px">${esc(name)}</b>
+      ${note?`<p class="muted small" style="margin-top:8px" data-merchant-content>${esc(note)}</p>`:''}
+      <button type="button" class="btn" id="growStampGiftDoneV410" style="margin-top:18px">Close</button>
+    </div>`;
+    document.body.appendChild(overlay);
+    let deactivate;
+    const close=()=>{if(deactivate){const c=deactivate;deactivate=null;c({restoreFocus:true})}else overlay.remove()};
+    overlay.querySelector('#growStampGiftCloseV410').onclick=close;
+    overlay.querySelector('#growStampGiftDoneV410').onclick=close;
+    overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+    deactivate=CUI.activateDialog(overlay,{onClose:()=>overlay.remove(),initialFocus:'#growStampGiftDoneV410'});
   });
   /* V359: "Edit settings" opens the inline earning-rule form on this page instead of handing off
      to the wizard's Earning step. The wizard was the only reason this field needed a publish. */
