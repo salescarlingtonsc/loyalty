@@ -23,15 +23,28 @@ test('a promotion in the list no longer fills the screen', () => {
   assert.match(indexHtml, /\.customer-promotion-card\{[^}]*border-radius:18px/);
   assert.doesNotMatch(indexHtml, /\.customer-promotion-card\{[^}]*min-height:360px/,
     'the fixed 360px floor is what made a two-offer list three screens long');
-  assert.match(indexHtml, /\.customer-promotion-card-media img\{[^}]*max-height:clamp\(140px,34vw,220px\)/);
+  /* nestly_v417: the max-height that capped the card is now a fixed 16:9 frame — a stricter
+     bound, and the one that also makes two offers the same shape (owner, photo 4). */
+  assert.match(indexHtml, /\.customer-promotion-card-media\{[^}]*aspect-ratio:16\/9/);
   assert.match(indexHtml, /\.customer-promotion-card-copy\{[^}]*padding:15px 16px 16px\}/);
 });
 
 test('shrinking it did not start cropping the business’s artwork', () => {
   // the owner's earlier ruling: an uploaded EDM has its words baked in
-  assert.match(indexHtml, /\.customer-promotion-card-media img\{[^}]*object-fit:contain/);
+  /* nestly_v417 — THE NEVER-CROP RULE WAS REVERSED BY THE OWNER, deliberately.
+     Photos 1, 3 and 4, 2026-08-21: "picture not max out ... i want uploaded photo full to
+     picture", "why here have big empty space", and "even when two offers photo are different
+     size, pls simplify to one fixed size/format so it appears uniform in customer app".
+     Contain in a fixed frame letterboxes a 4:5 poster and makes two offers two different shapes;
+     that is what the owner photographed. Cards crop now.
+     WHAT SURVIVES, and is asserted below: opening an offer still shows the photo WHOLE. The
+     detail dialog and the full-page offer view keep object-fit:contain, so nothing a firm
+     designed is lost — it is only framed consistently in the list. */
+  assert.match(indexHtml, /\.customer-promotion-card-media img\{[^}]*object-fit:cover/);
   assert.doesNotMatch(indexHtml, /customer-promotion-card-media::after/);
-  assert.doesNotMatch(indexHtml, /\.customer-promotion-card-media img\{[^}]*object-fit:cover/);
+  /* v192's real point — the card must not grow to swallow the screen — is now enforced by a
+     fixed 16:9 frame rather than by a max-height, which is stricter, not looser. */
+  assert.match(indexHtml, /\.customer-promotion-card-media\{[^}]*aspect-ratio:16\/9/);
   // full size is still one tap away in the sheet
   assert.match(indexHtml, /\.customer-offer-detail-media--fallback\{[^}]*aspect-ratio:16\/9/);
 });

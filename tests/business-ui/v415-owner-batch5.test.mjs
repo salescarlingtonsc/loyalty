@@ -143,11 +143,18 @@ test('v415 the programme stack gives its cards a zero floor, so the carousel can
   assert.match(html, /\.wallet-rewards\.customer-rewards-carousel-v337\{[^}]*min-width:0/);
 });
 
-test('v415 the carousel keeps its own scrolling, and keeps it to itself', () => {
+test('v415/v417 the rewards region never scrolls sideways at all any more', () => {
+  /* nestly_v417 (owner, photo 8: "i don't want this page to scrollable to left like this, i want
+     list format"). v415 stopped this track dragging the WHOLE PAGE sideways; the owner's answer is
+     that it should not be a horizontal track in the first place. So the assertions that pinned the
+     swipe are replaced by the ones that pin its absence — and v415's own floor stays, because a
+     grid item still needs it. */
   const rule = html.slice(html.indexOf('.wallet-rewards.customer-rewards-carousel-v337{'));
   const decl = rule.slice(0, rule.indexOf('}'));
-  assert.match(decl, /overflow-x:auto/, 'the swipe still happens inside the track');
-  assert.match(decl, /overscroll-behavior-inline:contain/,
-    'reaching the end of the track must not hand the swipe to the page behind it');
-  assert.match(decl, /scroll-snap-type:x mandatory/, 'cards still snap');
+  assert.match(decl, /display:grid/, 'rewards stack; every one is visible without swiping');
+  assert.match(decl, /min-width:0/, 'v415: it is a grid item and must still be allowed to shrink');
+  assert.doesNotMatch(decl, /overflow-x:auto/);
+  assert.doesNotMatch(decl, /scroll-snap-type/);
+  /* Each row carries its own claim button — "show QR code to redeem", drawn on every row. */
+  assert.match(html, /\.customer-rewards-carousel-v337 \.wallet-reward-actions \.btn\{[^}]*min-height:44px/);
 });

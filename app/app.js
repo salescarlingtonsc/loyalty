@@ -7445,7 +7445,12 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   overlay.className='modal customer-surface customer-offer-detail-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerOfferDetailTitle');
   overlay.innerHTML=`<section class="modal-card customer-offer-detail">
-    <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
+    ${/* nestly_v417 (owner, photo 2: "LIMITED-TIME OFFER · CUBBLY SPA" struck through, "remove
+         this"). The line said nothing the dialog did not already say twice — the offer's own name
+         is the heading directly beneath it, the business is named again in the description and a
+         third time on the business row at the foot of the same card. The close button keeps the
+         row, and the dialog keeps its accessible name from the heading. */''}
+    <div class="row"><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
     ${factsV195?`<p class="customer-offer-detail-facts">${esc(factsV195)}</p>`:''}
@@ -7955,7 +7960,12 @@ function showCustomerPromotionPopupV122({business,businessSlug,items=[],prompt=n
    — out of the resting row (which photo 1 shows with no button on it) and into the sheet the row
    opens, so the customer still confirms it themselves and the write still happens on their tap.
    The summary line is the existing copy shortened, not new claims about how earning works. */
-function customerPointsExplainerMarkupV167(business={}){
+/* nestly_v417 (owner, photo 8: the whole "How rewards work" row struck through). It is not
+   rendered any more. The function, its sheet and the localStorage key are LEFT IN PLACE rather
+   than deleted: the row is the only caller, the dismissal state it wrote is per-customer and
+   still on people's devices, and a later screen may want the same explainer. Nothing is drawn,
+   nothing is written, and no key is orphaned. */
+function customerPointsExplainerMarkupV417Removed(business={}){
   /* nestly_v399 (owner batch item 3). This key was scoped by BUSINESS but not by customer — the
      same unscoped-storage bug v398 fixed for the New offer flag, one surface over. localStorage is
      per-origin and never per-account, and nothing clears it on sign-out, so once one person
@@ -9501,7 +9511,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
            this layout only; the pre-v347 path below still passes the hero-derived flag. */
         ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard?.expiry||null})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
-      ${customerPointsExplainerMarkupV167(business)}
+      ${/* nestly_v417 (photo 8): the explainer row is struck out. */''}
     </section>
   </div>`;
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
@@ -9530,7 +9540,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
           tail. The collapsed customer app renders its referral slot in customerBusinessReferralDetailV362
           so Points & gifts remains only points, rewards and earn guidance. */''}
     ${collapsedHeaderV339||!programmeStackV310(programmeCapabilities)?'<div id="walletReferralSlot" hidden></div>':''}
-    ${customerPointsExplainerMarkupV167(business)}
+    ${/* nestly_v417 (photo 8): the explainer row is struck out. */''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -9692,10 +9702,38 @@ function customerProgrammeHoldingsMarkupV183(card){
    industry_label is the firm's OWN wording for what it does and wins when set; the sector
    value is the fallback; and when there is neither, the line is not drawn at all rather than
    promising a detail that does not exist. */
+/* nestly_v417 (owner, photo 6: the Industry field's "✨ Facial / Spa" ringed, an arrow to this
+   line in the customer preview, "why emoji not shown here").
+   Because the emoji was never part of the value — it lives only in the INDUSTRIES map, which the
+   workspace's own <select> renders beside each option, while the customer line printed the bare
+   stored value. Resolved here instead, so the emoji follows the sector wherever it is shown.
+   It accepts EITHER form the value takes: the stored key ('facial'), which is what
+   S.biz.industry holds and what SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276 compares against, or
+   the resolved label ('Facial / Spa'), which is what the customer read and the live preview
+   fixture carry. A firm that typed its OWN wording into industry_label gets no emoji: that text
+   is theirs, and decorating it would be putting a sector on a business that opted out of one. */
+function customerSectorEmojiV417(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  const key=raw.toLowerCase();
+  const entry=INDUSTRIES[key]
+    ||Object.values(INDUSTRIES).find(item=>String(item.label||'').toLowerCase()===key);
+  return entry?.em||'';
+}
 function customerBusinessTaglineV385(business={}){
-  const text=String(business.industry_label||'').trim()||String(business.industry||'').trim();
-  if(!text)return '';
-  return `<small>${esc(text)}</small>`;
+  const own=String(business.industry_label||'').trim();
+  const sector=String(business.industry||'').trim();
+  const text=own||sector;
+  const emoji=own?'':customerSectorEmojiV417(sector);
+  /* nestly_v417 (owner, photo 7: an arrow from the workspace's Company bio field to this exact
+     spot, "show here as bio"). The bio is the firm's own sentence about itself, so it reads under
+     the sector line rather than replacing it — a customer wants to know both what the business is
+     and what it says about itself. It only appears once the firm has written one; an empty bio
+     draws nothing, and a firm with neither a sector nor a bio still gets no line at all. */
+  const bio=String(business.bio||'').trim();
+  if(!text&&!bio)return '';
+  return `${text?`<small>${emoji?`<span aria-hidden="true">${esc(emoji)}</span> `:''}${esc(text)}</small>`:''}${
+    bio?`<small class="customer-business-bio-v417" data-merchant-content>${esc(bio)}</small>`:''}`;
 }
 function customerProgrammeDirectoryTypeV346(business={}){
   const raw=String(business.industry||'').trim();
@@ -11418,15 +11456,10 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   const loyaltyUnit=actionableCard?.loyalty?.unit;
   const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
   let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
-  /* nestly_v395 (owner photo 3: All and Unread both ringed on the Messages screen). The filter
-     itself was never broken — it re-requested the list and the rows did change. What was broken is
-     that render() rebuilds host.innerHTML from a template with the settings panel `hidden`, so the
-     panel COLLAPSED on the very tap that used it: the customer opened the gear, pressed Unread,
-     and the row of controls disappeared with no visible confirmation of anything. On an empty
-     inbox — which is the screen the owner photographed — literally nothing on the page changed,
-     so the two controls read as dead. The panel's open state lives out here now and the template
-     reads it, so a filter tap leaves the panel open with its pressed state showing. */
-  let settingsOpenV395=false;
+  /* nestly_v417 (owner, photo 9: "remove this button"). V395's open-state fix is retired WITH the
+     gear it existed for: the panel is no longer collapsible, so there is no open state to keep and
+     no way for a filter tap to collapse it. The defect V395 described cannot recur — the panel is
+     always rendered, below the list it governs. */
   const topicLabels={
     value_expiry:expiryReminderLabel,reward_ready:'Reward ready reminders',
     visit_progress:'Visit progress reminders',birthday_benefit:'Birthday benefit reminders',
@@ -11500,20 +11533,22 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
         </div>
-        <span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="${settingsOpenV395}" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386"${settingsOpenV395?'':' hidden'}>
-        <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
-        <div id="customerInboxDeviceSlotV386"></div>
-      </div>
+        </div>
+      ${/* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). It is gone, and
+           what it hid is NOT: the panel it toggled holds this business's inbox-reminder
+           preferences, and the gear was their only door. Deleting the button and the settings
+           together would have taken a real choice away from customers under the heading of a
+           cosmetic tidy, so the panel is simply always shown, below the messages it governs,
+           where the list it changes can be seen. The device-notification card inside it already
+           has a second home on Profile; it keeps that too. */''}
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
-      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
-    const settingsPanelV386=host.querySelector('#customerInboxSettingsV386'),settingsToggleV386=host.querySelector('#customerInboxSettingsToggleV386');
-    if(settingsToggleV386&&settingsPanelV386)settingsToggleV386.onclick=()=>{
-      settingsOpenV395=!!settingsPanelV386.hidden;
-      settingsPanelV386.hidden=!settingsOpenV395;
-      settingsToggleV386.setAttribute('aria-expanded',String(settingsOpenV395));
-    };
+      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
+      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386">
+        <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
+        <div id="customerInboxDeviceSlotV386"></div>
+      </div>`;
+    /* nestly_v417: no toggle to wire — the panel is always open now (photo 9). */
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */
     const deviceSectionV386=$('customerMessagesNotifications'),deviceSlotV386=host.querySelector('#customerInboxDeviceSlotV386');
@@ -24829,7 +24864,10 @@ async function promotionsPage(selectedPromotionId=null){
         <option value="counter" ${initial.ctaKind==='counter'?'selected':''}>Show at counter</option></select></div>
         <div><label for="promotionCtaLabel">Button wording</label><input id="promotionCtaLabel" maxlength="40" value="${esc(initial.ctaLabel)}"></div></div>
       <label for="promotionImage">Promotion photo</label><input id="promotionImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
-      <p class="muted small" style="margin-top:6px">Your photo is always shown whole — never cropped or covered. Landscape 16:9 fills the card best; tall poster designs (4:5) also work.</p>
+      ${/* nestly_v417 (owner, photos 1/3/4): the promise this line made is no longer the one the
+           app keeps, so the line changed with it. Cards crop to one shape; opening the offer still
+           shows the photo whole. */''}
+      <p class="muted small" style="margin-top:6px">Cards show your photo in one fixed shape, so every offer looks the same size to customers — landscape 16:9 fits without cropping. Tall designs still work: the card centres and crops them, and tapping the offer shows your photo whole.</p>
       <label for="promotionImageAlt">Photo description</label><input id="promotionImageAlt" maxlength="240" value="${esc(initial.imageAlt)}" placeholder="Describe the image for customers who cannot see it">
       <p class="muted small" id="promotionImageStatus" role="status" style="margin-top:7px">${initial.imageUrl?(initial.active&&initial.imageCustomerVisible?'Current photo is published. Choose another only to replace it.':'Draft photo saved. It is not shown in your customer programme until you publish.'):'Choose the customer-facing photo now. A saved draft is not shown in your customer programme until you publish.'}</p>
       <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}
@@ -42407,7 +42445,10 @@ function workspaceBrandPanelHtmlV259(){
       <!-- V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief):
            businesses.bio, nullable, shown to customers on the public booking portal alongside
            the booking policy above. -->
-      <label for="bbio">Company bio (shown on your portal)</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
+      ${/* nestly_v417 (owner, photo 7: "(shown on your portal)" struck through, "remove"). The
+           parenthetical was also wrong by then — the bio shows in the customer app under the
+           business name, which is where the same photo's arrow points it. */''}
+      <label for="bbio">Company bio</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
       <label for="blegal">Registered company name (for receipts)</label>
       <input id="blegal" maxlength="200" placeholder="Company Name Pte. Ltd." value="${esc(S.biz.legal_name||'')}">
       <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
@@ -42476,8 +42517,18 @@ function customerInterfaceStepperHtmlV325(activeKey){
   if(!onActionPage)return '';
   const views=CUSTOMER_INTERFACE_TABS_V368.map(key=>CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===key)).filter(Boolean);
   if(views.length<2)return '';
+  /* nestly_v417 (owner, photo 5: "Customer Action" ringed — "why this cannot click").
+     Because it went nowhere. V392 pointed the RAIL row at the appointment tab so that opening
+     Customer Action lands on the booking rules ("when click this is the default page"), and it did
+     that by rewriting the href in CUSTOMER_INTERFACE_VIEWS_V296 — the same tuple this strip reads.
+     So both tabs ended up carrying #/customer-interface/appointment, and pressing the second one
+     navigated to the page you were already on: no error, no movement, nothing.
+     A TAB's destination is its own view, so the strip builds the hash from the view KEY rather
+     than from the rail's landing href. The rail row keeps v392's behaviour untouched, and
+     #/customer-interface/actions already resolved — customerInterfaceViewV296 accepts any key in
+     CUSTOMER_INTERFACE_VIEWS_V296, so nothing new had to be routed. */
   return `<div class="v150-segment ci-tabs-v368" role="group" aria-label="Customer settings">
-    ${views.map(([key,label,href])=>`<a href="${esc(href)}" role="button" aria-pressed="${key===activeKey}">${esc(label)}</a>`).join('')}
+    ${views.map(([key,label])=>`<a href="#/customer-interface/${esc(key)}" role="button" aria-pressed="${key===activeKey}">${esc(label)}</a>`).join('')}
   </div>`;
 }
 /* V325: a plain, static terminal step. No new state field and no new logic — the owner asked
@@ -42806,7 +42857,10 @@ function customerInterfaceLivePreviewMarkupV326(){
   };
   /* v393: the preview's loyalty object carries the server's nested tier snapshot, so what the
      owner sees on this screen is rendered by the same code path a real customer's wallet uses. */
-  const loyalty={balance:77877,unit:'points',enabled:true,
+  /* nestly_v417: the unit follows the firm's live model, so a stamp-card firm's preview counts
+     stamps rather than telling them their customers collect points. */
+  const previewUnitV417=liveBalanceUnitV378()==='stamps'?'stamps':'points';
+  const loyalty={balance:previewUnitV417==='stamps'?4:77877,unit:previewUnitV417,enabled:true,
     tier:{name:'Diamond',threshold:50000,perk_note:null,points_multiplier:1.5,
       basis:'points_earned',metric:77877,next:{name:'Obsidian',threshold:100000,remaining:22123}}};
   const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
@@ -42821,7 +42875,18 @@ function customerInterfaceLivePreviewMarkupV326(){
     bookingEnabled:true,offersStatus:'ready',rewardsHost:false,
     collapsedHeaderV339:true,
     programmeCapabilities:{
-      programmes:[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
+      /* nestly_v417 (owner, photo 11: the whole preview ringed — "sync to live reward
+         programmes"). This pair was hardcoded, so the preview showed a points programme and a
+         tier ladder to every firm — including one running a stamp card and no tiers, which is
+         the opposite of what its customers see. It is read off the SPINE now
+         (programmeSpineRowsV314), the same source the customer's own capabilities are derived
+         from, so a programme the owner has switched off stops appearing here too.
+         The hardcoded pair survives only as the fallback for a session whose spine read has not
+         landed: a preview that renders nothing at all would be worse than one that is generic. */
+      programmes:programmeSpineRowsV314()
+        ?programmeSpineRowsV314().filter(row=>row&&row.active===true)
+          .map(row=>({kind:row.kind,customer_visible:true,active:true}))
+        :[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
       programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true
     }
   });
@@ -42833,12 +42898,16 @@ function customerInterfaceLivePreviewMarkupV326(){
      rather than widening that shared function's signature for one caller. */
   const bookingPolicy=($('bp')?.value||S.biz.booking_policy||'').trim();
   return `<div class="wallet-shell customer-shell customer-surface ci-live-preview-inner-v326"><div class="wallet-inner">
-    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Sample customer — points, tier and rewards are for scale, not live data.</p>
+    ${/* nestly_v417: the badge said the whole preview was made up. Half of it is real now — which
+         programmes are running, and whether they count points or stamps, come off the spine. What
+         stays invented is the CUSTOMER: a preview has nobody in it, so the balance and tier are
+         still there for scale. Saying which half is which is the point of the line. */''}
+    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Your live programme setup, shown with a sample customer — the balance, tier and reward names are for scale.</p>
     <div id="walletBody">${merchantExperience}
       ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
       <section class="card customer-programme-card-v310" aria-label="Sample rewards">
         <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>Rewards</span></h2>
-        ${customerInterfaceSampleRewardRowsV326('points')}
+        ${customerInterfaceSampleRewardRowsV326(previewUnitV417)}
       </section>
     </div>
     ${customerPrimaryNavigation('programmes',{})}

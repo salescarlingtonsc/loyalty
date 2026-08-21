@@ -156,7 +156,14 @@ test('photo 8: one message is one row, and the settings live behind the gear',()
   assert.match(inbox,/customer-inbox-row-when-v386/);
   assert.doesNotMatch(inbox,/Mark \$\{state==='unread'\?'read':'unread'\}/,'the third competing button is gone');
   assert.doesNotMatch(inbox,/customer-inbox-group/,'every row names its own business, so the group heading repeats it');
-  assert.match(inbox,/customerInboxSettingsToggleV386/);
+  /* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). The toggle is gone.
+     What it hid is NOT: the panel it opened held this business's inbox-reminder preferences and
+     the device switch, and the gear was their only door, so the panel is simply always rendered —
+     below the messages it governs. That is what is asserted instead. */
+  assert.doesNotMatch(inbox,/customerInboxSettingsToggleV386/);
+  assert.match(inbox,/id="customerInboxSettingsV386" class="customer-inbox-settings-v386">/,
+    'always open — no hidden attribute and no toggle');
+  assert.match(inbox,/customerInAppInboxPreferences/,'the reminder preferences survive the gear');
   assert.match(inbox,/customerInboxDeviceSlotV386/);
   assert.match(inbox,/deviceSlotV386\.appendChild\(deviceSectionV386\)/,
     'the device switch is MOVED, keeping the id its already-bound control was wired by');
@@ -212,8 +219,10 @@ test('v392: the offer artwork is shown large and whole, never cropped',()=>{
   assert.doesNotMatch(rail.slice(0,700),/flex:0 0 84px/);
   assert.match(rail.slice(0,700),/max-height:46vh;object-fit:contain/,
     'bounded so the card stays about half a screen, and contained so nothing is cut off');
-  assert.doesNotMatch(indexHtml,/\.customer-promotion-card-media img\{[^}]*object-fit:cover/,
-    'cover would crop the poster, which the owner ruled out');
+  /* nestly_v417: the owner reversed that ruling (photos 1/3/4) — cards crop to one shape so two
+     offers look the same size. The full-page offer view above still contains, which is the line
+     directly before this one and is what keeps the poster intact where it matters. */
+  assert.match(indexHtml,/\.customer-promotion-card-media img\{[^}]*object-fit:cover/);
   const detail=indexHtml.match(/\.customer-offer-detail-media\{[^}]*\}/)[0];
   assert.match(detail,/background:transparent/,
     'a transparent frame is what removes the bars — a fit-content frame collapses against the image');

@@ -1,6 +1,6 @@
 {
   "desktop1440": {
-    "sourceHash": "6ba8dbcce0498199d75f4bc934e4809eee36ca144531ea1e135febdfe2c8a5ba",
+    "sourceHash": "84fa2ce32535c109ead1d5ce9975bbdc1036987e044a7d1ef22461f9a34f1b03",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -11,10 +11,10 @@
           "x": 541,
           "y": 252,
           "width": 172,
-          "height": 1157.515625,
+          "height": 1139.609375,
           "top": 252,
           "right": 713,
-          "bottom": 1409.515625,
+          "bottom": 1391.609375,
           "left": 541
         },
         "validity": "Valid 1 August 2026 – 30 August 2026",
@@ -87,10 +87,10 @@
           "x": 727,
           "y": 252,
           "width": 172,
-          "height": 1157.515625,
+          "height": 1139.609375,
           "top": 252,
           "right": 899,
-          "bottom": 1409.515625,
+          "bottom": 1391.609375,
           "left": 727
         },
         "validity": "Valid 15 August 2026 – 15 September 2026",
@@ -212,7 +212,7 @@
     }
   },
   "mobile390": {
-    "sourceHash": "6ba8dbcce0498199d75f4bc934e4809eee36ca144531ea1e135febdfe2c8a5ba",
+    "sourceHash": "84fa2ce32535c109ead1d5ce9975bbdc1036987e044a7d1ef22461f9a34f1b03",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -223,10 +223,10 @@
           "x": 30,
           "y": 223,
           "width": 270.59375,
-          "height": 707,
+          "height": 719.203125,
           "top": 223,
           "right": 300.59375,
-          "bottom": 930,
+          "bottom": 942.203125,
           "left": 30
         },
         "validity": "Valid 1 August 2026 – 30 August 2026",
@@ -299,10 +299,10 @@
           "x": 314.59375,
           "y": 223,
           "width": 270.59375,
-          "height": 707,
+          "height": 719.203125,
           "top": 223,
           "right": 585.1875,
-          "bottom": 930,
+          "bottom": 942.203125,
           "left": 314.59375
         },
         "validity": "Valid 15 August 2026 – 15 September 2026",
@@ -382,7 +382,7 @@
     "modal": null
   },
   "mobile412": {
-    "sourceHash": "6ba8dbcce0498199d75f4bc934e4809eee36ca144531ea1e135febdfe2c8a5ba",
+    "sourceHash": "84fa2ce32535c109ead1d5ce9975bbdc1036987e044a7d1ef22461f9a34f1b03",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412
@@ -393,10 +393,10 @@
           "x": 30,
           "y": 223,
           "width": 288.625,
-          "height": 818.171875,
+          "height": 840.4375,
           "top": 223,
           "right": 318.625,
-          "bottom": 1041.171875,
+          "bottom": 1063.4375,
           "left": 30
         },
         "validity": "Valid 1 August 2026 – 30 August 2026",
@@ -469,10 +469,10 @@
           "x": 332.625,
           "y": 223,
           "width": 288.625,
-          "height": 818.171875,
+          "height": 840.4375,
           "top": 223,
           "right": 621.25,
-          "bottom": 1041.171875,
+          "bottom": 1063.4375,
           "left": 332.625
         },
         "validity": "Valid 15 August 2026 – 15 September 2026",

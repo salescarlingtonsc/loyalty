@@ -196,7 +196,12 @@ test('V327 the preview calls the REAL wallet render function, not a hand-rolled 
   assert.doesNotMatch(markup, /\$\('bbio'\)/, 'bio never renders in the wallet — reading it here would show a field production never displays');
   assert.match(markup, /\$\('bp'\)\?\.value\|\|S\.biz\.booking_policy/, 'booking policy IS previewed now, read live like name/brandColor above');
   // The sample numbers are clearly labelled, not presented as if they were a real customer's.
-  assert.match(markup, /Sample customer — points, tier and rewards are for scale, not live data\./);
+  /* nestly_v417 (owner, photo 11: the preview ringed — "sync to live reward programmes"). Which
+     programmes appear, and whether they count points or stamps, come off the spine now; only the
+     CUSTOMER is still invented, because a preview has nobody in it. The badge says which half is
+     which rather than disclaiming the whole thing. */
+  assert.match(markup, /Your live programme setup, shown with a sample customer/);
+  assert.match(app, /programmes:programmeSpineRowsV314\(\)/);
 });
 
 test('V243 the preview points at the PUBLIC slug page, same-origin and relative', () => {

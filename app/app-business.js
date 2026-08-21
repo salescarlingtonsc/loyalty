@@ -51,21 +51,6 @@ function configureChartDefaults(){
   Chart.defaults.scales.category.grid={display:false};
 }
 
-const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
-const INDUSTRIES={
-  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
-  /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
-     module list is the F&B list plus bottle keep, packages and memberships — a bar seats guests
-     and takes bookings like a cafe, but it also keeps customers' property. 'bottles' is
-     deliberately NOT in ALLMODS: it must never arrive by default in another sector's bundle. */
-  bar:{em:'🍸',label:'Bar / Pub',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','bottles','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
-  salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
-  facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
-  massage:{em:'💆',label:'Massage',mods:ALLMODS},
-  fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
-  retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
-  other:{em:'🏪',label:'Other',mods:ALLMODS}
-};
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 /* ===== STATUS VOCABULARY (owner ruling 2026-08-18) ==========================================
@@ -12436,7 +12421,10 @@ async function promotionsPage(selectedPromotionId=null){
         <option value="counter" ${initial.ctaKind==='counter'?'selected':''}>Show at counter</option></select></div>
         <div><label for="promotionCtaLabel">Button wording</label><input id="promotionCtaLabel" maxlength="40" value="${esc(initial.ctaLabel)}"></div></div>
       <label for="promotionImage">Promotion photo</label><input id="promotionImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
-      <p class="muted small" style="margin-top:6px">Your photo is always shown whole — never cropped or covered. Landscape 16:9 fills the card best; tall poster designs (4:5) also work.</p>
+      ${/* nestly_v417 (owner, photos 1/3/4): the promise this line made is no longer the one the
+           app keeps, so the line changed with it. Cards crop to one shape; opening the offer still
+           shows the photo whole. */''}
+      <p class="muted small" style="margin-top:6px">Cards show your photo in one fixed shape, so every offer looks the same size to customers — landscape 16:9 fits without cropping. Tall designs still work: the card centres and crops them, and tapping the offer shows your photo whole.</p>
       <label for="promotionImageAlt">Photo description</label><input id="promotionImageAlt" maxlength="240" value="${esc(initial.imageAlt)}" placeholder="Describe the image for customers who cannot see it">
       <p class="muted small" id="promotionImageStatus" role="status" style="margin-top:7px">${initial.imageUrl?(initial.active&&initial.imageCustomerVisible?'Current photo is published. Choose another only to replace it.':'Draft photo saved. It is not shown in your customer programme until you publish.'):'Choose the customer-facing photo now. A saved draft is not shown in your customer programme until you publish.'}</p>
       <div class="row" style="margin-top:18px">${initial.active?'':`<button type="button" class="btn ghost" id="promotionSave">Save draft</button>`}
@@ -29606,7 +29594,10 @@ function workspaceBrandPanelHtmlV259(){
       <!-- V325 (owner-authorized exception #1, 2026-08-14 Customer Interface cosmetics brief):
            businesses.bio, nullable, shown to customers on the public booking portal alongside
            the booking policy above. -->
-      <label for="bbio">Company bio (shown on your portal)</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
+      ${/* nestly_v417 (owner, photo 7: "(shown on your portal)" struck through, "remove"). The
+           parenthetical was also wrong by then — the bio shows in the customer app under the
+           business name, which is where the same photo's arrow points it. */''}
+      <label for="bbio">Company bio</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
       <label for="blegal">Registered company name (for receipts)</label>
       <input id="blegal" maxlength="200" placeholder="Company Name Pte. Ltd." value="${esc(S.biz.legal_name||'')}">
       <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
@@ -29675,8 +29666,18 @@ function customerInterfaceStepperHtmlV325(activeKey){
   if(!onActionPage)return '';
   const views=CUSTOMER_INTERFACE_TABS_V368.map(key=>CUSTOMER_INTERFACE_VIEWS_V296.find(view=>view[0]===key)).filter(Boolean);
   if(views.length<2)return '';
+  /* nestly_v417 (owner, photo 5: "Customer Action" ringed — "why this cannot click").
+     Because it went nowhere. V392 pointed the RAIL row at the appointment tab so that opening
+     Customer Action lands on the booking rules ("when click this is the default page"), and it did
+     that by rewriting the href in CUSTOMER_INTERFACE_VIEWS_V296 — the same tuple this strip reads.
+     So both tabs ended up carrying #/customer-interface/appointment, and pressing the second one
+     navigated to the page you were already on: no error, no movement, nothing.
+     A TAB's destination is its own view, so the strip builds the hash from the view KEY rather
+     than from the rail's landing href. The rail row keeps v392's behaviour untouched, and
+     #/customer-interface/actions already resolved — customerInterfaceViewV296 accepts any key in
+     CUSTOMER_INTERFACE_VIEWS_V296, so nothing new had to be routed. */
   return `<div class="v150-segment ci-tabs-v368" role="group" aria-label="Customer settings">
-    ${views.map(([key,label,href])=>`<a href="${esc(href)}" role="button" aria-pressed="${key===activeKey}">${esc(label)}</a>`).join('')}
+    ${views.map(([key,label])=>`<a href="#/customer-interface/${esc(key)}" role="button" aria-pressed="${key===activeKey}">${esc(label)}</a>`).join('')}
   </div>`;
 }
 /* V325: a plain, static terminal step. No new state field and no new logic — the owner asked
@@ -30005,7 +30006,10 @@ function customerInterfaceLivePreviewMarkupV326(){
   };
   /* v393: the preview's loyalty object carries the server's nested tier snapshot, so what the
      owner sees on this screen is rendered by the same code path a real customer's wallet uses. */
-  const loyalty={balance:77877,unit:'points',enabled:true,
+  /* nestly_v417: the unit follows the firm's live model, so a stamp-card firm's preview counts
+     stamps rather than telling them their customers collect points. */
+  const previewUnitV417=liveBalanceUnitV378()==='stamps'?'stamps':'points';
+  const loyalty={balance:previewUnitV417==='stamps'?4:77877,unit:previewUnitV417,enabled:true,
     tier:{name:'Diamond',threshold:50000,perk_note:null,points_multiplier:1.5,
       basis:'points_earned',metric:77877,next:{name:'Obsidian',threshold:100000,remaining:22123}}};
   const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
@@ -30020,7 +30024,18 @@ function customerInterfaceLivePreviewMarkupV326(){
     bookingEnabled:true,offersStatus:'ready',rewardsHost:false,
     collapsedHeaderV339:true,
     programmeCapabilities:{
-      programmes:[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
+      /* nestly_v417 (owner, photo 11: the whole preview ringed — "sync to live reward
+         programmes"). This pair was hardcoded, so the preview showed a points programme and a
+         tier ladder to every firm — including one running a stamp card and no tiers, which is
+         the opposite of what its customers see. It is read off the SPINE now
+         (programmeSpineRowsV314), the same source the customer's own capabilities are derived
+         from, so a programme the owner has switched off stops appearing here too.
+         The hardcoded pair survives only as the fallback for a session whose spine read has not
+         landed: a preview that renders nothing at all would be worse than one that is generic. */
+      programmes:programmeSpineRowsV314()
+        ?programmeSpineRowsV314().filter(row=>row&&row.active===true)
+          .map(row=>({kind:row.kind,customer_visible:true,active:true}))
+        :[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
       programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true
     }
   });
@@ -30032,12 +30047,16 @@ function customerInterfaceLivePreviewMarkupV326(){
      rather than widening that shared function's signature for one caller. */
   const bookingPolicy=($('bp')?.value||S.biz.booking_policy||'').trim();
   return `<div class="wallet-shell customer-shell customer-surface ci-live-preview-inner-v326"><div class="wallet-inner">
-    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Sample customer — points, tier and rewards are for scale, not live data.</p>
+    ${/* nestly_v417: the badge said the whole preview was made up. Half of it is real now — which
+         programmes are running, and whether they count points or stamps, come off the spine. What
+         stays invented is the CUSTOMER: a preview has nobody in it, so the balance and tier are
+         still there for scale. Saying which half is which is the point of the line. */''}
+    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Your live programme setup, shown with a sample customer — the balance, tier and reward names are for scale.</p>
     <div id="walletBody">${merchantExperience}
       ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
       <section class="card customer-programme-card-v310" aria-label="Sample rewards">
         <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>Rewards</span></h2>
-        ${customerInterfaceSampleRewardRowsV326('points')}
+        ${customerInterfaceSampleRewardRowsV326(previewUnitV417)}
       </section>
     </div>
     ${customerPrimaryNavigation('programmes',{})}

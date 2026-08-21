@@ -3023,7 +3023,12 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
   overlay.className='modal customer-surface customer-offer-detail-modal';overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','customerOfferDetailTitle');
   overlay.innerHTML=`<section class="modal-card customer-offer-detail">
-    <div class="row"><p class="customer-quest-kicker">Limited-time offer · ${esc(business.name||'Your business')}</p><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
+    ${/* nestly_v417 (owner, photo 2: "LIMITED-TIME OFFER · CUBBLY SPA" struck through, "remove
+         this"). The line said nothing the dialog did not already say twice — the offer's own name
+         is the heading directly beneath it, the business is named again in the description and a
+         third time on the business row at the foot of the same card. The close button keeps the
+         row, and the dialog keeps its accessible name from the heading. */''}
+    <div class="row"><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
     ${factsV195?`<p class="customer-offer-detail-facts">${esc(factsV195)}</p>`:''}
@@ -5728,15 +5733,10 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   const loyaltyUnit=actionableCard?.loyalty?.unit;
   const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
   let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
-  /* nestly_v395 (owner photo 3: All and Unread both ringed on the Messages screen). The filter
-     itself was never broken — it re-requested the list and the rows did change. What was broken is
-     that render() rebuilds host.innerHTML from a template with the settings panel `hidden`, so the
-     panel COLLAPSED on the very tap that used it: the customer opened the gear, pressed Unread,
-     and the row of controls disappeared with no visible confirmation of anything. On an empty
-     inbox — which is the screen the owner photographed — literally nothing on the page changed,
-     so the two controls read as dead. The panel's open state lives out here now and the template
-     reads it, so a filter tap leaves the panel open with its pressed state showing. */
-  let settingsOpenV395=false;
+  /* nestly_v417 (owner, photo 9: "remove this button"). V395's open-state fix is retired WITH the
+     gear it existed for: the panel is no longer collapsible, so there is no open state to keep and
+     no way for a filter tap to collapse it. The defect V395 described cannot recur — the panel is
+     always rendered, below the list it governs. */
   const topicLabels={
     value_expiry:expiryReminderLabel,reward_ready:'Reward ready reminders',
     visit_progress:'Visit progress reminders',birthday_benefit:'Birthday benefit reminders',
@@ -5810,20 +5810,22 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
         </div>
-        <span class="spacer"></span><button type="button" class="btn ghost sm customer-inbox-settings-toggle-v386" id="customerInboxSettingsToggleV386" aria-expanded="${settingsOpenV395}" aria-controls="customerInboxSettingsV386" aria-label="Message settings" title="Message settings">${CUI.icon('settings',{size:20})}</button></div>
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386"${settingsOpenV395?'':' hidden'}>
-        <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
-        <div id="customerInboxDeviceSlotV386"></div>
-      </div>
+        </div>
+      ${/* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). It is gone, and
+           what it hid is NOT: the panel it toggled holds this business's inbox-reminder
+           preferences, and the gear was their only door. Deleting the button and the settings
+           together would have taken a real choice away from customers under the heading of a
+           cosmetic tidy, so the panel is simply always shown, below the messages it governs,
+           where the list it changes can be seen. The device-notification card inside it already
+           has a second home on Profile; it keeps that too. */''}
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
-      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
-    const settingsPanelV386=host.querySelector('#customerInboxSettingsV386'),settingsToggleV386=host.querySelector('#customerInboxSettingsToggleV386');
-    if(settingsToggleV386&&settingsPanelV386)settingsToggleV386.onclick=()=>{
-      settingsOpenV395=!!settingsPanelV386.hidden;
-      settingsPanelV386.hidden=!settingsOpenV395;
-      settingsToggleV386.setAttribute('aria-expanded',String(settingsOpenV395));
-    };
+      ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
+      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386">
+        <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
+        <div id="customerInboxDeviceSlotV386"></div>
+      </div>`;
+    /* nestly_v417: no toggle to wire — the panel is always open now (photo 9). */
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */
     const deviceSectionV386=$('customerMessagesNotifications'),deviceSlotV386=host.querySelector('#customerInboxDeviceSlotV386');

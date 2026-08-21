@@ -2206,6 +2206,12 @@
       "version": "20260821000007",
       "name": "nestly_v416_stamp_cycle_config_pin",
       "sourcePath": "db/migrations/20260821_nestly_v416_stamp_cycle_config_pin.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000008",
+      "name": "nestly_v417_customer_bio",
+      "sourcePath": "db/migrations/20260821_nestly_v417_customer_bio.sql"
     }
   ]
 }

@@ -251,8 +251,13 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and lau
      page title already names the screen, and the list names each business. What replaced them is
      a settings control holding the filter, the reminder preferences and the device switch. */
   assert.doesNotMatch(inbox, /\$\{esc\(BRAND\.customerLabel\)\} inbox/i);
-  assert.match(inbox, /customerInboxSettingsToggleV386/);
-  assert.match(inbox, /aria-controls="customerInboxSettingsV386"/);
+  /* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). The toggle is gone.
+     What it hid is NOT: the panel it opened held this business's inbox-reminder preferences and
+     the device switch, and the gear was their only door, so the panel is simply always rendered —
+     below the messages it governs. That is what is asserted instead. */
+  assert.doesNotMatch(inbox, /customerInboxSettingsToggleV386/);
+  assert.match(inbox, /id="customerInboxSettingsV386"/);
+  assert.match(inbox, /customerInAppInboxPreferences/);
   assert.match(inbox, /data-inbox-filter="unread"/);
   assert.match(inbox, /customerInboxSyncRetry/i);
   assert.match(inbox, /A list is never loaded after a failed C46 sync/i);

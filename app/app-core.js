@@ -233,6 +233,21 @@ const authSecurityCopy=(locale,key)=>{
 const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
+const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
+const INDUSTRIES={
+  fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
+  /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
+     module list is the F&B list plus bottle keep, packages and memberships — a bar seats guests
+     and takes bookings like a cafe, but it also keeps customers' property. 'bottles' is
+     deliberately NOT in ALLMODS: it must never arrive by default in another sector's bundle. */
+  bar:{em:'🍸',label:'Bar / Pub',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','bottles','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
+  salon:{em:'💇',label:'Hair Salon',mods:ALLMODS},
+  facial:{em:'✨',label:'Facial / Spa',mods:ALLMODS},
+  massage:{em:'💆',label:'Massage',mods:ALLMODS},
+  fitness:{em:'🏋️',label:'Fitness',mods:ALLMODS},
+  retail:{em:'🛍️',label:'Retail',mods:['dashboard','till','clients','sales','inventory','packages','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
+  other:{em:'🏪',label:'Other',mods:ALLMODS}
+};
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
   inventory:['inventory','Products'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
@@ -3206,7 +3221,12 @@ function customerFeatureCardMarkupV156(item={}){
    — out of the resting row (which photo 1 shows with no button on it) and into the sheet the row
    opens, so the customer still confirms it themselves and the write still happens on their tap.
    The summary line is the existing copy shortened, not new claims about how earning works. */
-function customerPointsExplainerMarkupV167(business={}){
+/* nestly_v417 (owner, photo 8: the whole "How rewards work" row struck through). It is not
+   rendered any more. The function, its sheet and the localStorage key are LEFT IN PLACE rather
+   than deleted: the row is the only caller, the dismissal state it wrote is per-customer and
+   still on people's devices, and a later screen may want the same explainer. Nothing is drawn,
+   nothing is written, and no key is orphaned. */
+function customerPointsExplainerMarkupV417Removed(business={}){
   /* nestly_v399 (owner batch item 3). This key was scoped by BUSINESS but not by customer — the
      same unscoped-storage bug v398 fixed for the New offer flag, one surface over. localStorage is
      per-origin and never per-account, and nothing clears it on sign-out, so once one person
@@ -4260,7 +4280,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
            this layout only; the pre-v347 path below still passes the hero-derived flag. */
         ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard?.expiry||null})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
-      ${customerPointsExplainerMarkupV167(business)}
+      ${/* nestly_v417 (photo 8): the explainer row is struck out. */''}
     </section>
   </div>`;
   return `${customerProgrammeSwitcherMarkup(programmeCards,business.slug)}
@@ -4289,7 +4309,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
           tail. The collapsed customer app renders its referral slot in customerBusinessReferralDetailV362
           so Points & gifts remains only points, rewards and earn guidance. */''}
     ${collapsedHeaderV339||!programmeStackV310(programmeCapabilities)?'<div id="walletReferralSlot" hidden></div>':''}
-    ${customerPointsExplainerMarkupV167(business)}
+    ${/* nestly_v417 (photo 8): the explainer row is struck out. */''}
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
@@ -4299,10 +4319,38 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
    industry_label is the firm's OWN wording for what it does and wins when set; the sector
    value is the fallback; and when there is neither, the line is not drawn at all rather than
    promising a detail that does not exist. */
+/* nestly_v417 (owner, photo 6: the Industry field's "✨ Facial / Spa" ringed, an arrow to this
+   line in the customer preview, "why emoji not shown here").
+   Because the emoji was never part of the value — it lives only in the INDUSTRIES map, which the
+   workspace's own <select> renders beside each option, while the customer line printed the bare
+   stored value. Resolved here instead, so the emoji follows the sector wherever it is shown.
+   It accepts EITHER form the value takes: the stored key ('facial'), which is what
+   S.biz.industry holds and what SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276 compares against, or
+   the resolved label ('Facial / Spa'), which is what the customer read and the live preview
+   fixture carry. A firm that typed its OWN wording into industry_label gets no emoji: that text
+   is theirs, and decorating it would be putting a sector on a business that opted out of one. */
+function customerSectorEmojiV417(value){
+  const raw=String(value||'').trim();
+  if(!raw)return '';
+  const key=raw.toLowerCase();
+  const entry=INDUSTRIES[key]
+    ||Object.values(INDUSTRIES).find(item=>String(item.label||'').toLowerCase()===key);
+  return entry?.em||'';
+}
 function customerBusinessTaglineV385(business={}){
-  const text=String(business.industry_label||'').trim()||String(business.industry||'').trim();
-  if(!text)return '';
-  return `<small>${esc(text)}</small>`;
+  const own=String(business.industry_label||'').trim();
+  const sector=String(business.industry||'').trim();
+  const text=own||sector;
+  const emoji=own?'':customerSectorEmojiV417(sector);
+  /* nestly_v417 (owner, photo 7: an arrow from the workspace's Company bio field to this exact
+     spot, "show here as bio"). The bio is the firm's own sentence about itself, so it reads under
+     the sector line rather than replacing it — a customer wants to know both what the business is
+     and what it says about itself. It only appears once the firm has written one; an empty bio
+     draws nothing, and a firm with neither a sector nor a bio still gets no line at all. */
+  const bio=String(business.bio||'').trim();
+  if(!text&&!bio)return '';
+  return `${text?`<small>${emoji?`<span aria-hidden="true">${esc(emoji)}</span> `:''}${esc(text)}</small>`:''}${
+    bio?`<small class="customer-business-bio-v417" data-merchant-content>${esc(bio)}</small>`:''}`;
 }
 function customerProgrammeDirectoryTypeV346(business={}){
   const raw=String(business.industry||'').trim();
