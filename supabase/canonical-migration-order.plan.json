@@ -2194,6 +2194,12 @@
       "version": "20260821000005",
       "name": "nestly_v412_promotion_delete_module_key",
       "sourcePath": "db/migrations/20260821_nestly_v412_promotion_delete_module_key.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000006",
+      "name": "nestly_v414_stamp_card_length",
+      "sourcePath": "db/migrations/20260821_nestly_v414_stamp_card_length.sql"
     }
   ]
 }

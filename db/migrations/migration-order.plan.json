@@ -2199,6 +2199,12 @@
       "path": "db/migrations/20260821_nestly_v412_promotion_delete_module_key.sql",
       "semanticVersion": "v412",
       "proposedDeployVersion": "20260821000005"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v414_stamp_card_length.sql",
+      "semanticVersion": "v414",
+      "proposedDeployVersion": "20260821000006"
     }
   ]
 }

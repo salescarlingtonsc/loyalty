@@ -294,6 +294,14 @@ let growHistoryToV375='';
    sharing one would move a table the owner did not touch. */
 let growUsageFromV386='';
 let growUsageToV386='';
+/* nestly_v413 (owner, photo 1: a brace drawn down the ten gift rows under Point system with
+   "if under point system, then minimise under Point System", and a second brace on the lone
+   Birthday benefit gift reading "minimise").
+   Which groups the owner has opened, module-scoped for the same reason the window above is: the
+   date filter re-renders this whole card, and a group snapping shut because a shortcut button was
+   pressed would undo the only thing the owner did to the table. Collapsed is the default state and
+   the empty Set says so — nothing is remembered across a page change, only across a re-render. */
+let growUsageOpenGroupsV413=new Set();
 /* V349: lazily-created/revoked preview blob URL for a newly-picked (not-yet-uploaded) gift photo
    — reused across rerenders as long as the File reference is unchanged, so choosing a photo
    doesn't leak a fresh object URL on every keystroke-triggered rerender. */
@@ -13809,11 +13817,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const growEarningSpineKindV388=rewardJourney.earning?.model==='stamps'?'stamps':'points';
     const growEarningLiveV388=programmeSpineOnV314(growEarningSpineKindV388)===false
       ?false:rewardJourney.earning?.availableToCustomers;
-    if(rewardJourney.earning)entries.push({name:'Point system',type:'Point system',usageScopeV386:'point_system',
+    /* nestly_v413 (owner, photo 3: "Stamp Card ?" written across this row's name, and
+       "Point system off, why still here?" beside it). Two faults under one mark, and neither was
+       the row being live — the firm IS accruing, so a row belongs here.
+       (1) THE NAME WAS A CONSTANT. v388 already resolved which engine this row describes
+       (growEarningSpineKindV388) in order to decide whether it was paused, then printed
+       'Point system' regardless. A stamps firm read its own stamp card called by the other
+       model's name, directly above a Setting column that said "SGD 5.00 spent -> 1 stamp".
+       The label now comes from GROW_PROGRAMME_PARENT_NAMES_V375 — the SAME map that names a
+       gift's parent two lines above — so the row and its own children cannot disagree.
+       (2) IT REPORTED THE OTHER ENGINE'S FIGURE. business_programme_usage_v271 has carried a
+       separate `stamp_card` scope since v310, deliberately null for a firm not running stamps;
+       this row asked for `point_system` unconditionally, so a stamps firm's "Customers used" was
+       a count of whoever had touched points, and the usage table below inherited the same number
+       under the same wrong heading. The scope now follows the engine, and the honesty rule is
+       unchanged: a scope the server did not answer stays null and prints "Not tracked", never 0. */
+    const growEarningScopeV413=growEarningSpineKindV388==='stamps'?'stamp_card':'point_system';
+    if(rewardJourney.earning)entries.push({
+      name:GROW_PROGRAMME_PARENT_NAMES_V375[growEarningSpineKindV388]||'Point system',
+      type:GROW_PROGRAMME_PARENT_NAMES_V375[growEarningSpineKindV388]||'Point system',
+      usageScopeV386:growEarningScopeV413,
       spineKindV388:growEarningSpineKindV388,openV388:{topic:growEarningSpineKindV388},
       started:growFirstPublishedV271,ended:null,
       state:growEarningLiveV388?'live':'paused',
-      customers:growUsageV271?(growUsageV271.point_system?.customers??null):null,
+      customers:growUsageV271?(growUsageV271[growEarningScopeV413]?.customers??null):null,
       detail:growEarnRateTextV271(rewardJourney.earning)});
     (snapshot.rewards||[]).forEach(reward=>{
       const milestone=milestoneById.get(String(reward.id));
@@ -13968,7 +13995,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      data-merchant-content element on purpose: that subtree is rewritten by the workspace localiser,
      and an icon inside it would be replaced by translated text. */
   const growOverviewRowMarkV401=type=>({
-    'Point system':'star','Reward':'giftcard','Bring-back':'retention','Birthday benefit':'cake',
+    /* nestly_v413: 'Stamp card' and 'Tier membership' join the map because the earning row is now
+       named for the engine it describes; both were already resolving to the 'star' fallback, so
+       this pins the mark rather than changing it. */
+    'Point system':'star','Stamp card':'star','Tier membership':'star',
+    'Reward':'giftcard','Bring-back':'retention','Birthday benefit':'cake',
     'Welcome offer':'giftcard','Promotion':'tag','Referrals':'referrals','Membership':'wallet'
   }[String(type||'')]||'star');
   const growOverviewNameColumnV324=(rows,label)=>[label,row=>{
@@ -14138,12 +14169,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       case 'retention':return listed(usage.retention,'program_id');
       case 'membership':return listed(usage.memberships,'plan_id');
       case 'point_system':return usage.point_system?.customers??null;
+      /* nestly_v413: the stamps engine's own scope. The server returns null here for a firm that
+         is not running stamps, which is exactly the "Not tracked" the honesty rule wants. */
+      case 'stamp_card':return usage.stamp_card?.customers??null;
       case 'birthday':return usage.birthday?.customers??null;
       case 'welcome':return usage.welcome?.customers??null;
       case 'referrals':return usage.referrals?.customers??null;
       default:return null;
     }
   };
+  /* nestly_v413: a group is addressed by its programme NAME, folded to an attribute-safe token.
+     The name is the only stable identity a group has here — a synthesised header has no id, and
+     the buckets are already keyed by name — so the open/closed Set and the DOM agree by
+     construction. Two programmes cannot share a name: they are the same bucket if they do. */
+  const growUsageGroupKeyV413=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'group';
   const growAnalyticsRowsFromUsageV386=usage=>{
     const buckets=new Map();
     growProgrammeEntriesV271.forEach(entry=>{
@@ -14168,18 +14207,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const rows=[...buckets.values()];
     const byUsage=(a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
       ||String(a.category).localeCompare(String(b.category));
-    const parentNames=new Set(rows.filter(row=>!row.childV410).map(row=>row.category));
-    const adoptable=row=>row.childV410&&row.parentV410&&parentNames.has(row.parentV410);
-    const orphans=rows.filter(row=>!adoptable(row));
+    /* nestly_v413. A gift names its own programme (parentV410, resolved off the spine when the
+       entry was built), but only ONE engine row is ever pushed into this table — the model the
+       firm is running today. So every gift belonging to the other model had no parent row to sit
+       under and fell through to the top level as a flat, arrow-prefixed orphan. v413 renaming the
+       earning row to the engine it describes made that visible from the other side: a stamps firm
+       kept eleven points gifts that suddenly had nowhere to go.
+       A group therefore gets a header whether or not an engine row exists for it. A SYNTHESISED
+       header states only what it can prove: the programme's name, and how many gifts are filed
+       under it (the disclosure says that). Its Programmes cell is blank and its Customers cell
+       says "Not tracked" — the group as a whole was never measured, and summing its children
+       would count one customer once per gift they took. */
+    const parentRows=new Map(rows.filter(row=>!row.childV410).map(row=>[row.category,row]));
+    const grouped=row=>row.childV410&&row.parentV410;
     const childrenOf=new Map();
-    rows.filter(adoptable).forEach(row=>{
+    rows.filter(grouped).forEach(row=>{
       if(!childrenOf.has(row.parentV410))childrenOf.set(row.parentV410,[]);
       childrenOf.get(row.parentV410).push(row);
     });
+    const headers=rows.filter(row=>!grouped(row));
+    childrenOf.forEach((_kids,parent)=>{
+      if(parentRows.has(parent))return;
+      const header={category:parent,customers:null,programmes:null,
+        childV410:false,parentV410:null,synthV413:true};
+      parentRows.set(parent,header);
+      headers.push(header);
+    });
     const out=[];
-    orphans.sort(byUsage).forEach(row=>{
-      out.push(row);
-      (childrenOf.get(row.category)||[]).sort(byUsage).forEach(child=>out.push(child));
+    headers.sort(byUsage).forEach(row=>{
+      const kids=(childrenOf.get(row.category)||[]).slice().sort(byUsage);
+      out.push(Object.assign(row,{childCountV413:kids.length,
+        groupV413:kids.length?growUsageGroupKeyV413(row.category):null}));
+      kids.forEach(child=>out.push(Object.assign(child,
+        {groupV413:growUsageGroupKeyV413(row.category)})));
     });
     return out;
   };
@@ -14243,14 +14303,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growUsageWindowFailedV386
         ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
         :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true" data-grow-usage-table-v410><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
-        ${growAnalyticsRowsV375.map(row=>`<tr><td data-label="Category">${row.childV410
-          ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span><b data-merchant-content>${esc(row.category)}</b></span>`
-          :`<b data-merchant-content>${esc(row.category)}</b>`}</td><td data-label="Programmes">${row.childV410
+        ${growAnalyticsRowsV375.map(row=>{
+          /* nestly_v413. A parent that has gifts becomes a disclosure: the gifts are HIDDEN until
+             the owner opens it, which is the "minimise" both braces in photo 1 asked for. The
+             control is the row's own name — there is no separate chevron column to align — and it
+             carries aria-expanded plus the count, so the row still says how much it is hiding when
+             it is shut. A parent with no gifts stays plain text: a disclosure that opens onto
+             nothing is a button that lies. */
+          const open=row.groupV413?growUsageOpenGroupsV413.has(row.groupV413):false;
+          const hidden=row.childV410&&row.groupV413&&!open?' hidden':'';
+          const nameCell=row.childV410
+            ?`<span class="grow-overview-child-v324"><span class="grow-overview-arrow-v385" aria-hidden="true">\u21b3</span><b data-merchant-content>${esc(row.category)}</b></span>`
+            :row.childCountV413
+              ?`<button type="button" class="grow-usage-disclosure-v413" data-grow-usage-toggle-v413="${esc(row.groupV413)}" aria-expanded="${open?'true':'false'}"><span class="grow-usage-caret-v413" aria-hidden="true">${open?'\u25be':'\u25b8'}</span><b data-merchant-content>${esc(row.category)}</b><span class="muted small grow-usage-count-v413">${row.childCountV413} ${row.childCountV413===1?'gift':'gifts'}</span></button>`
+              :`<b data-merchant-content>${esc(row.category)}</b>`;
           /* Owner struck the "1" out of every gift row. A gift IS one programme by definition, so
              the column repeated the row's own existence on every child; the count is a fact about
-             a parent's group, not about a leaf. Blanked, not zeroed — zero would be a measurement. */
-          ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Counted under '+esc(row.parentV410||'its programme')+'</span>'
-          :row.programmes}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`).join('')}
+             a parent's group, not about a leaf. Blanked, not zeroed — zero would be a measurement.
+             v413 blanks a SYNTHESISED header's cell for the same reason: no engine row was counted
+             into it, so any number there would be one this table invented. */
+          const programmesCell=row.childV410
+            ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Counted under '+esc(row.parentV410||'its programme')+'</span>'
+            :row.synthV413
+              ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
+              :row.programmes;
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`;
+        }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
@@ -16028,6 +16106,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growUsageClearV386)growUsageClearV386.onclick=()=>{
     growUsageFromV386='';growUsageToV386='';growRerenderV322({quiet:true});
   };
+  /* nestly_v413: open/close a gift group. Toggled in the DOM rather than through
+     growRerenderV322 — this changes nothing the server knows and nothing any other card reads, so
+     re-rendering the whole page would throw away the owner's scroll position to redraw rows that
+     are already correct. The Set is still written, so the state survives a re-render the DATE
+     filter causes. */
+  outerMain.querySelectorAll('[data-grow-usage-toggle-v413]').forEach(button=>button.onclick=()=>{
+    const key=button.dataset.growUsageToggleV413;
+    if(!key)return;
+    const open=!growUsageOpenGroupsV413.has(key);
+    if(open)growUsageOpenGroupsV413.add(key);else growUsageOpenGroupsV413.delete(key);
+    button.setAttribute('aria-expanded',open?'true':'false');
+    const caret=button.querySelector('.grow-usage-caret-v413');
+    if(caret)caret.textContent=open?'\u25be':'\u25b8';
+    outerMain.querySelectorAll(`tr[data-grow-usage-group-v413="${CSS.escape(key)}"][data-grow-usage-child-v413]`)
+      .forEach(row=>{row.hidden=!open;});
+  });
   /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
      same way — it is Apply with the typing done for you, not a second window state. */
   document.querySelectorAll('[data-grow-usage-quick-v388]').forEach(button=>{

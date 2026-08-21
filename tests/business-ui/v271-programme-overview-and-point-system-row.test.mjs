@@ -207,9 +207,15 @@ test('V271 (b) an unsourceable cell says so — it is never a zero', () => {
 
 test('V271 (b) every Overview number names its source', () => {
   const entries = section('const growProgrammeEntriesV271=', 'const growOverviewRowsV271=');
-  // Point system: first published config version + the server's distinct earner count.
+  // The earning row: first published config version + the server's distinct earner count.
   assert.match(entries, /started:growFirstPublishedV271/);
-  assert.match(entries, /customers:growUsageV271\?\(growUsageV271\.point_system\?\.customers\?\?null\):null/);
+  /* nestly_v413: the scope is chosen by the engine this firm is running rather than hardcoded to
+     point_system, so the assertion follows the same indirection. What V271 is guarding here is
+     unchanged and still guarded: the number comes from growUsageV271 — the server's own count —
+     and falls to null rather than to 0 when the server did not answer. The behaviour behind this
+     source match is EXECUTED in tests/business-ui/v413-owner-batch4.test.mjs. */
+  assert.match(entries, /const growEarningScopeV413=growEarningSpineKindV388==='stamps'\?'stamp_card':'point_system';/);
+  assert.match(entries, /customers:growUsageV271\?\(growUsageV271\[growEarningScopeV413\]\?\.customers\?\?null\):null/);
   // Rewards: the reward's own created_at + its distinct redeemer count.
   assert.match(entries, /started:reward\.created_at\|\|null/);
   assert.match(entries, /customers:growRewardUsageV271\.get\(String\(reward\.id\)\)\?\?null/);

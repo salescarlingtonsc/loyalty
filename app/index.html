@@ -1298,6 +1298,21 @@ input[type=range]:focus{box-shadow:none}
 .grow-overview-child-v324{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:start}
 .grow-overview-arrow-v385{color:var(--muted);font-size:13px;line-height:1.45}
 
+/* ---- nestly_v413: the usage table's gift groups collapse -----------------------------------
+   Owner, photo 1: a brace down the ten gifts under Point system ("if under point system, then
+   minimise under Point System") and a second on the lone Birthday benefit gift ("minimise").
+   The disclosure IS the category name, so it must not look like a button dropped into a table
+   cell: no border, no background, no padding that would shift the name off the column edge the
+   other parent rows align to. It reads as the same bold name it was, with a caret in front and
+   the gift count behind. Only the caret and the hover underline say it is pressable. */
+.grow-usage-disclosure-v413{display:inline-flex;align-items:baseline;gap:6px;flex-wrap:wrap;
+  background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.grow-usage-disclosure-v413 b{font:inherit;font-weight:700}
+.grow-usage-disclosure-v413:hover b{text-decoration:underline}
+.grow-usage-disclosure-v413:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+.grow-usage-caret-v413{color:var(--muted);font-size:11px;line-height:1.6}
+.grow-usage-count-v413{font-weight:400}
+
 /* ---- v401b: parent/child hierarchy in the Rewards & Loyalty table ------------------------
    Measured before this block: the parent name sat at x=189 and the child name at x=183, so a
    child reward was OUTDENTED by 6px — the arrow took the slot the parent's kind mark occupies and
@@ -3645,7 +3660,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=b0f85fded2ab","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=4a3dc3ce39c8","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
