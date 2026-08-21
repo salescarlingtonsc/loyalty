@@ -327,7 +327,9 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      reason — interpolated runtime copy, and therefore reviewable copy. The {reason} value is the
      server's own message via ownerErrorText and is deliberately not translated; the sentence
      around it is, in all three locales. */
-  assert.equal(keys.length,137,'mixed-interface interpolation inventory changed without review');
+  /* 137 -> 138: nestly_v416 adds stampCardLength, the confirmation after the stamp card's length
+     is changed from the new grid editor. */
+  assert.equal(keys.length,138,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

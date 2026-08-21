@@ -170,6 +170,9 @@ function harness() {
       S = { biz: { id: 'biz-1' }, programmesBusinessId: 'biz-1', programmes: [{ kind: 'points', active: true, id: 'spine-points' }] },
       growSwitchPendingV322 = '', growSwitchErrorV322 = '', growPointsManageTabV326 = 'published',
       growPointsDeletePendingV326 = '', growPointsAddOpenV326 = '', growPointsAddDraftV326 = { name: '', points: '', description: '' },
+      /* nestly_v416: which stamp the form was opened for. The stamp-card grid sets it; the Points
+         page never does, so it is null here and the form renders exactly as it always has. */
+      growStampsPickedV416 = null,
       growPointsErrorV326 = '', growPointsBusyV326 = false,
       // V343: the form now serves edit too, and a gift can carry a photo.
       growPointsEditingV326 = null, growPointsPhotoFileV343 = null, growPointsRemovePhotoV343 = false,
@@ -193,6 +196,7 @@ function harness() {
       'esc', 'CUI', 'S', 'canRewards', 'canSetupGrow', 'snapshot', 'liveLoyaltyModelKeysV240', 'liveLoyaltyModelV235',
       'earningOverviewCopy', 'growProgrammeSwitchKindsV322', 'growSwitchPendingV322', 'growSwitchErrorV322',
       'growPointsManageTabV326', 'growPointsDeletePendingV326', 'growPointsAddOpenV326', 'growPointsAddDraftV326',
+      'growStampsPickedV416',
       'growPointsErrorV326', 'growPointsBusyV326', 'growPointsEditingV326', 'growPointsPhotoFileV343',
       'growPointsRemovePhotoV343', 'customerMediaUrlV95', 'growPointsViewKindV350',
       'growEarnEditOpenV359', 'growEarnErrorV359', 'growEarnBusyV359', src
@@ -201,6 +205,7 @@ function harness() {
     return fn(esc, CUI, S, canRewards, canSetupGrow, { rewards: snapshotRewards }, liveLoyaltyModelKeysV240, liveLoyaltyModelV235,
       earningOverviewCopy, growProgrammeSwitchKindsV322, growSwitchPendingV322, growSwitchErrorV322,
       growPointsManageTabV326, growPointsDeletePendingV326, growPointsAddOpenV326, growPointsAddDraftV326,
+      growStampsPickedV416,
       growPointsErrorV326, growPointsBusyV326, growPointsEditingV326, growPointsPhotoFileV343,
       growPointsRemovePhotoV343, customerMediaUrlV95, growPointsViewKindV350,
       growEarnEditOpenV359, growEarnErrorV359, growEarnBusyV359);

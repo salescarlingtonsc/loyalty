@@ -1827,6 +1827,44 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    the same 34px circle the V356 slot row used — this is the slot row grown a number and, on the
    stamps that pay out, a gift. */
 .grow-stamps-grid-v410{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+/* ---- nestly_v416: the stamp card, as the EDITOR ---------------------------------------------
+   The owner struck out the Level/Stamps/Reward/Description/Photo table and drew the card: rows of
+   numbered circles with a gift on the ones that pay out, and a "+" to carry on. This is that,
+   deliberately built on the SAME visual vocabulary as the read-only preview above
+   (.grow-stamps-cell-v410) so the owner is looking at the thing their customer will see. It is
+   bigger — 44px, the app's minimum tap target — because here every circle is pressable, and the
+   customer preview is not.
+   Gift cells are given the brand colour and a raised gift glyph; a cell sitting PAST the card's
+   enforced length is drawn as a warning rather than hidden, because that gift is unclaimable and
+   the owner has to be able to find it. */
+.grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
+  padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
+.grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
+.grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
+.grow-stamps-lenstep-v416{display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;flex:0 0 auto;border-radius:999px;border:1px solid var(--control-border);
+  background:#fff;color:var(--ink);font-size:19px;line-height:1;font-family:inherit;cursor:pointer}
+.grow-stamps-lenstep-v416:hover:not(:disabled){background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.grow-stamps-lenstep-v416:disabled{opacity:.4;cursor:default}
+.grow-stamps-editgrid-v416{display:flex;flex-wrap:wrap;gap:12px 10px;margin-top:20px}
+.grow-stamps-editcell-v416{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
+  color:#B08462;font-weight:700;font-size:14px;padding:0;font-family:inherit;cursor:pointer;
+  transition:background var(--motion-fast) var(--ease),border-color var(--motion-fast) var(--ease)}
+.grow-stamps-editcell-v416:hover{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+.grow-stamps-editcell-v416:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.grow-stamps-editcell-num-v416{line-height:1}
+.grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
+.grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+.grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
+.grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
+.grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
+.grow-stamps-gridlegend-v416{margin-top:14px}
+@media(max-width:768px){
+  .grow-stamps-editgrid-v416{gap:12px 8px}
+  .grow-stamps-editcell-v416{width:40px;height:40px}
+}
 .grow-stamps-cell-v410{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:34px;height:34px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
   color:#B08462;font-weight:700;font-size:13px;padding:0;font-family:inherit}
@@ -3676,7 +3714,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=ac20d2eaddaf","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=859285b2e509","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -3700,6 +3738,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=3adc7e26b97e" defer></script>
+<script src="/app-core.js?b=564c338bf6af" defer></script>
 </body>
 </html>
