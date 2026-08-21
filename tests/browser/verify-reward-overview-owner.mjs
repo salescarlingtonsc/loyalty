@@ -238,22 +238,20 @@ try{
   assert.equal(metrics.autoSetupButtons,0,'read-only manager receives no automatic setup writer');
   assert.equal(metrics.birthdayRpcCalls,1,'read-only manager loads birthday through the same permission-safe RPC');
   assert.equal(metrics.birthdayTableReads,0);
-  /* nestly_v421 — A FINDING, RECORDED RATHER THAN ASSERTED AWAY.
-     This line used to require every card to be an inert <article> for a read-only manager. Since
-     the V343/V362 restructure every tile is a <button> for everyone, because a tile is NAVIGATION
-     now — it opens the programme's page, and the write on that page is gated there. That much is
-     sound. What is NOT sound is the word on the tile: growTopicActionV244 picks it from the tile's
-     status alone and never consults canSetupGrow, so a manager who cannot write is invited to
-     "Turn on →" a tier ladder and "Set up →" a welcome gift. Nothing breaks when they press it —
-     the destination refuses — but they are promised an action they do not have.
-     Asserted here as it stands, with the manager's action words pinned, so the day this is fixed
-     the change is deliberate and visible rather than silent. */
+  /* nestly_v421. This line used to require every card to be an inert <article> for a read-only
+     manager. Since the V343/V362 restructure every tile is a <button> for everyone, because a tile
+     is NAVIGATION — it opens the programme's page, and the write on that page is gated there.
+     What was NOT sound, and is fixed in this same wave, is the WORD on the tile:
+     growTopicActionV244 picked it from the tile's status alone, so a manager who cannot write was
+     invited to "Turn on →" a tier ladder and "Set up →" a welcome gift. Nothing broke when they
+     pressed it — the destination refused — but they were promised an action they do not have.
+     Every tile now reads "View →" for someone who cannot write it. */
   const managerActions=Object.fromEntries(await page.locator('.grow-topic-card-v343')
     .evaluateAll(tiles=>tiles.map(tile=>[tile.dataset.growTopicV229,tile.getAttribute('aria-label')])));
   assert.ok(metrics.cards.every(card=>card.tag==='BUTTON'),'tiles are navigation for every role');
-  assert.match(managerActions.tiers,/Turn on →$/,
-    'KNOWN: a read-only manager is offered "Turn on" — the label does not consult write access');
-  assert.match(managerActions.welcome,/Set up →$/,'KNOWN: same for a programme never configured');
+  for(const [topic,label] of Object.entries(managerActions)){
+    assert.match(label,/View →$/,`${topic} must not promise a read-only manager a write`);
+  }
   assert.equal(metrics.viewport.clientWidth,metrics.viewport.scrollWidth);
   await page.screenshot({path:new URL('manager-read-only-mobile-390.png',evidenceDir).pathname,fullPage:true});
 

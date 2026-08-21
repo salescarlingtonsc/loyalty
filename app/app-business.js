@@ -13623,7 +13623,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      shape: the card names a programme to turn ON, and every other switch keeps whatever the spine
      says. So the tile hands over its own kind and nothing else. */
   const growSetupKindForTileW6I2=key=>key==='stamps'?'stamps':key==='tiers'?'tiers':'points';
+  /* nestly_v421 (found while repairing the reward-overview browser harness, which had not run
+     since early August). Every word below except "See plan →" promises a WRITE — Set up, Turn on,
+     Resume, Finish setup, Edit — and the word was picked from the tile's status alone, with no
+     reference to whether this person may write at all. A read-only manager was therefore invited
+     to "Turn on →" a tier ladder and "Set up →" a welcome gift. Nothing broke when they pressed
+     it, because the destination page gates the write; they were simply promised an action they do
+     not have, and then refused.
+     Bring-back is judged on the retention module and everything else on loyalty, which is the
+     same split canSetupGrow/canSetupWinback already make. "Not included" keeps its own word: a
+     plan a firm has not bought is a different sentence from a permission a person lacks. */
+  const growTopicWritableV421=topic=>String(topic?.key||'')==='bringback'?canSetupWinback:canSetupGrow;
   const growTopicActionV244=topic=>{
+    if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View →';
     /* V303: "Set up →" while this model is not reaching customers, "Edit →" once it is — the
        wizard is the same door either way, and the word has to match what pressing it does. The
        card's OWN status decides, not the programme's, so on a firm running points the Tiered

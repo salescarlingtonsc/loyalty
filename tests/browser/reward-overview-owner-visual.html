@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="92d3cc958c040859c778db5c67a13686b30e7f6c2cb1bb58c2d8f7a0de102047"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="2bdb60ad30aee9c902a4e45738464c9ac2e8804a3e41c238a74b01800403a5f0"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3736,7 +3736,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 92d3cc958c040859c778db5c67a13686b30e7f6c2cb1bb58c2d8f7a0de102047</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 2bdb60ad30aee9c902a4e45738464c9ac2e8804a3e41c238a74b01800403a5f0</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -8891,7 +8891,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      shape: the card names a programme to turn ON, and every other switch keeps whatever the spine
      says. So the tile hands over its own kind and nothing else. */
   const growSetupKindForTileW6I2=key=>key==='stamps'?'stamps':key==='tiers'?'tiers':'points';
+  /* nestly_v421 (found while repairing the reward-overview browser harness, which had not run
+     since early August). Every word below except "See plan →" promises a WRITE — Set up, Turn on,
+     Resume, Finish setup, Edit — and the word was picked from the tile's status alone, with no
+     reference to whether this person may write at all. A read-only manager was therefore invited
+     to "Turn on →" a tier ladder and "Set up →" a welcome gift. Nothing broke when they pressed
+     it, because the destination page gates the write; they were simply promised an action they do
+     not have, and then refused.
+     Bring-back is judged on the retention module and everything else on loyalty, which is the
+     same split canSetupGrow/canSetupWinback already make. "Not included" keeps its own word: a
+     plan a firm has not bought is a different sentence from a permission a person lacks. */
+  const growTopicWritableV421=topic=>String(topic?.key||'')==='bringback'?canSetupWinback:canSetupGrow;
   const growTopicActionV244=topic=>{
+    if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View →';
     /* V303: "Set up →" while this model is not reaching customers, "Edit →" once it is — the
        wizard is the same door either way, and the word has to match what pressing it does. The
        card's OWN status decides, not the programme's, so on a firm running points the Tiered
@@ -12486,7 +12498,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'92d3cc958c040859c778db5c67a13686b30e7f6c2cb1bb58c2d8f7a0de102047',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'2bdb60ad30aee9c902a4e45738464c9ac2e8804a3e41c238a74b01800403a5f0',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

@@ -31,7 +31,13 @@ function loadHelpersV244() {
   // eslint-disable-next-line no-eval
   const action = eval(`(${body.replace('const growTopicActionV244=', '').replace(/;$/, '')})`
     .replaceAll('growTopicOngoingV244(topic)', 'topic.status[1]===\'on\'')
-    .replaceAll('growSetupEntryV301(topic.key)', 'false'));
+    .replaceAll('growSetupEntryV301(topic.key)', 'false')
+    /* nestly_v421: the helper now returns 'View →' outright for someone who may not write the
+       topic's module, so a read-only manager is never invited to "Turn on" or "Set up" something
+       they will then be refused. Stubbed TRUE here — a writer — because that is the world these
+       six assertions describe; the read-only case is covered in the browser walkthrough
+       (tests/browser/verify-reward-overview-owner.mjs), which drives the real page as a manager. */
+    .replaceAll('growTopicWritableV421(topic)', 'true'));
   return { ongoing, action };
 }
 
@@ -49,6 +55,7 @@ test('V244 only a live tone counts as ongoing; everything else is pending', () =
 
 test('V244 a pending tile says which job it is, not a generic View', () => {
   const { action } = loadHelpersV244();
+  /* nestly_v421: …for an owner who can act on it. See the writable stub above. */
   assert.equal(action({ status: ['Live', 'on'] }), 'View →');
   assert.equal(action({ status: ['Not set up', 'off'] }), 'Set up →');
   assert.equal(action({ status: ['Draft', 'new'] }), 'Finish setup →');

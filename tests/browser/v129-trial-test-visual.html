@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5bacf7293558660661a27535000ea3e4a6642b4b21362318e66d10b976bee118"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="cb3a0f06391c6f00fe621551fa2af4e547f859e35520fc7b424e659adbe6f6ea"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3737,7 +3737,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 5bacf7293558660661a27535000ea3e4a6642b4b21362318e66d10b976bee118</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · cb3a0f06391c6f00fe621551fa2af4e547f859e35520fc7b424e659adbe6f6ea</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -14008,7 +14008,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      shape: the card names a programme to turn ON, and every other switch keeps whatever the spine
      says. So the tile hands over its own kind and nothing else. */
   const growSetupKindForTileW6I2=key=>key==='stamps'?'stamps':key==='tiers'?'tiers':'points';
+  /* nestly_v421 (found while repairing the reward-overview browser harness, which had not run
+     since early August). Every word below except "See plan →" promises a WRITE — Set up, Turn on,
+     Resume, Finish setup, Edit — and the word was picked from the tile's status alone, with no
+     reference to whether this person may write at all. A read-only manager was therefore invited
+     to "Turn on →" a tier ladder and "Set up →" a welcome gift. Nothing broke when they pressed
+     it, because the destination page gates the write; they were simply promised an action they do
+     not have, and then refused.
+     Bring-back is judged on the retention module and everything else on loyalty, which is the
+     same split canSetupGrow/canSetupWinback already make. "Not included" keeps its own word: a
+     plan a firm has not bought is a different sentence from a permission a person lacks. */
+  const growTopicWritableV421=topic=>String(topic?.key||'')==='bringback'?canSetupWinback:canSetupGrow;
   const growTopicActionV244=topic=>{
+    if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View →';
     /* V303: "Set up →" while this model is not reaching customers, "Edit →" once it is — the
        wizard is the same door either way, and the word has to match what pressing it does. The
        card's OWN status decides, not the programme's, so on a firm running points the Tiered
@@ -25495,6 +25507,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'5bacf7293558660661a27535000ea3e4a6642b4b21362318e66d10b976bee118',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'cb3a0f06391c6f00fe621551fa2af4e547f859e35520fc7b424e659adbe6f6ea',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

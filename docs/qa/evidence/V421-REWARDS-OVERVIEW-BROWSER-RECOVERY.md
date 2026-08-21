@@ -6,7 +6,7 @@ Scope: `tests/browser/reward-overview-owner-visual.html` (its generator) and
 behaviour, data or copy changed — every edit is in the harness.
 
 Extracted production component hash for the reward-overview browser fixture:
-`92d3cc958c040859c778db5c67a13686b30e7f6c2cb1bb58c2d8f7a0de102047`
+`2bdb60ad30aee9c902a4e45738464c9ac2e8804a3e41c238a74b01800403a5f0`
 
 ## What was wrong
 
@@ -74,14 +74,22 @@ It had been frozen at the page as it stood in early August:
   `data-grow-points-gift-edit-v343` and `data-grow-bb-edit-v361`. Both verified to open the record
   that was pressed and not its twin.
 
-## One finding, recorded rather than asserted away
+## One defect found, and fixed
 
-`growTopicActionV244` picks a tile's action word from the tile's **status alone** and never
-consults `canSetupGrow`. A read-only manager is therefore offered **"Turn on →"** on a tier ladder
-and **"Set up →"** on a welcome gift. Nothing breaks if they press it — the destination page gates
-the write — but they are promised an action they do not have. The walkthrough now pins the
-manager's action words so that fixing this is a deliberate, visible change rather than a silent
-one. Not fixed here: this pass changed no production code.
+`growTopicActionV244` picked a tile's action word from the tile's **status alone** and never
+consulted `canSetupGrow`. A read-only manager was therefore offered **"Turn on →"** on a tier
+ladder and **"Set up →"** on a welcome gift. Nothing broke if they pressed it — the destination
+page gates the write — but they were promised an action they do not have, and then refused.
+
+Every word on that tile except "See plan →" promises a write (Set up, Turn on, Resume, Finish
+setup, Edit), so the fix is to ask first: Bring-back against the retention module, everything else
+against loyalty — the same split `canSetupGrow` / `canSetupWinback` already make. Someone who
+cannot write the module now reads **"View →"**. "Not included" keeps its own word, because a plan a
+firm has not bought is a different sentence from a permission a person lacks. An owner's labels are
+byte-identical.
+
+This is the one production change in the wave, and it was found only because the harness started
+running again.
 
 ## Result
 
