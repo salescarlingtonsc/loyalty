@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b5d6f2ad8d5fadd65cf863a66bcdeb6b7547d3ff265d5e1402911eec33150b36"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="49279c5bcc3f9f0dce50d45d2ad508b489770410a3f63f3c7af940c48712c34c"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1618,6 +1618,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:900px){.performance-heading>.dashboard-range-v319{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}}
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
+/* V408: a KPI drill-down row that has a customer behind it opens that customer. It reads as the
+   name it replaces — not a button — so the table still scans as a table; only the affordance and
+   the focus ring say it is operable. */
+.metric-row-customer-v408{display:block;width:100%;text-align:left;padding:0;border:0;
+  background:none;color:inherit;font:inherit;cursor:pointer}
+.metric-row-customer-v408 b{color:var(--brand-red);text-decoration:underline;text-underline-offset:2px}
+.metric-row-customer-v408:hover b{color:var(--brand-red-dark)}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
 /* V180 (owner instruction): the four dashboard counters were four identical white cards, so
    nothing told money apart from people at a glance. Each now carries a tinted wash and a

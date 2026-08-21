@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ce550d7504628b6b0ea6b900affe2e6277b08204c71203da237f1aa4ad79e884"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="68778479dcde53ff8b8a59d3bc998f706220391a3aafab9c8083c430d2d7309c"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1619,6 +1619,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:900px){.performance-heading>.dashboard-range-v319{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}}
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
+/* V408: a KPI drill-down row that has a customer behind it opens that customer. It reads as the
+   name it replaces — not a button — so the table still scans as a table; only the affordance and
+   the focus ring say it is operable. */
+.metric-row-customer-v408{display:block;width:100%;text-align:left;padding:0;border:0;
+  background:none;color:inherit;font:inherit;cursor:pointer}
+.metric-row-customer-v408 b{color:var(--brand-red);text-decoration:underline;text-underline-offset:2px}
+.metric-row-customer-v408:hover b{color:var(--brand-red-dark)}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
 /* V180 (owner instruction): the four dashboard counters were four identical white cards, so
    nothing told money apart from people at a glance. Each now carries a tinted wash and a
@@ -3514,7 +3521,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ce550d7504628b6b0ea6b900affe2e6277b08204c71203da237f1aa4ad79e884</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 68778479dcde53ff8b8a59d3bc998f706220391a3aafab9c8083c430d2d7309c</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7241,6 +7248,22 @@ async function tillPage(){
      app.redeem_reward_core, reached through staff_manual_redeem_reward_v404, which re-derives the
      permission server-side. The figures below are the ones already on screen, restated. */
   const TILL_MANUAL_REDEEM_MAX_V404=20;
+  /* V408 (owner, photo 1: "when press redeem it must reduce the points immediately"). The header's
+     "Diamond · 75,937 pts" comes from `cust`, which is the lookup_client_by_phone answer captured
+     when the customer was found — redeeming never touched it, so the figure stayed at what it was
+     before the spend. Only the catalogue was being refetched.
+     The new balance is ASKED FOR, never worked out here: this re-runs the same lookup and takes
+     the server's number. Subtracting the cost client-side would be inventing a balance, which is
+     exactly what v145 forbids, and it would be wrong the moment anything else moved the ledger.
+     The client_id guard means a stale or re-typed number can never swap the customer under the
+     cashier while a sale is open. */
+  async function refreshTillCustomerStandingV408(){
+    const lookupPhone=String(cust?.phone||phone||'').trim();
+    if(!lookupPhone||!cust?.client_id)return;
+    const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:lookupPhone});
+    if(error||!isTillCurrent())return;
+    if(data?.status==='found'&&String(data.client_id)===String(cust.client_id))cust=data;
+  }
   function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity}){
     const unit=catalog?.customerGiftsV392?.program?.unit==='stamps'?'stamps':'points';
     const qty=Math.max(1,Math.min(TILL_MANUAL_REDEEM_MAX_V404,Number(quantity)||1));
@@ -7319,7 +7342,9 @@ async function tillPage(){
       close();
       toast(data?.status==='duplicate_ignored'?'Already redeemed':`${rewardName} redeemed`);
       tillManualQtyV404={};
-      catalog=null;draw();
+      catalog=null;
+      await refreshTillCustomerStandingV408();
+      draw();
     };
   }
 
@@ -7829,9 +7854,11 @@ async function tillPage(){
     });
     /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
        server confirmation, and the customer is present for it. */
+    /* V408: the scan path spent the same points and left the same figure stale. Fixed together —
+       one screen, one number, and a cashier cannot be expected to know which door they used. */
     if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
-      isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
+      isCurrent:isTillCurrent,onComplete:async()=>{catalog=null;await refreshTillCustomerStandingV408();draw()}
     });
     /* V404: the stepper writes the number straight into the <output> rather than re-rendering the
        screen. A full redraw here would move the row under the finger mid-tap, which is exactly the
@@ -11555,18 +11582,38 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
   if(!host)return;
   const paint=async awayDays=>{
     if(!isCurrent()||!host.isConnected)return;
-    host.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…</p></div>`;
+    /* V408 (owner, photo 2: "pressing on the buttons have a very weird move up and down motion").
+       This is that motion, and it is this function. Every press replaced the whole card with a
+       one-line "Checking who has come back…" placeholder, awaited two RPCs, then expanded the card
+       again. The card sits ABOVE the programme-usage table, so the entire lower half of the page
+       flew up by the card's height and dropped back a second later.
+       On a REPAINT the rendered card now stays exactly where it is, marked busy, with its height
+       pinned across the swap so the page cannot move under the finger. The placeholder survives
+       only for the very first paint, when there is nothing to preserve and nothing below it has
+       been positioned yet. The pin is released after the new card is on screen, so a genuinely
+       shorter card still settles — once, downward — instead of bouncing. */
+    const repaintV408=host.querySelector('.grow-comeback-card-v401');
+    if(repaintV408){
+      host.style.minHeight=`${Math.round(host.getBoundingClientRect().height)}px`;
+      host.setAttribute('aria-busy','true');
+    }else{
+      host.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…</p></div>`;
+    }
+    const releaseV408=()=>{
+      host.removeAttribute('aria-busy');
+      requestAnimationFrame(()=>{host.style.minHeight=''});
+    };
     const [lapsedResult,returnedResult]=await Promise.all([
       sb.rpc('retention_lapsed_candidates_v244',{p_business:S.biz.id,p_lapsed_days:awayDays,p_min_visits:1}),
       sb.rpc('staff_list_returned_customers_v300',{p_business:S.biz.id,p_away_days:awayDays,p_window_days:30})
     ]);
-    if(!isCurrent()||!host.isConnected)return;
+    if(!isCurrent()||!host.isConnected){releaseV408();return}
     const unavailable=result=>['42883','PGRST202'].includes(String(result?.error?.code||''))||String(result?.error?.code||'')==='42501';
-    if(unavailable(lapsedResult)||unavailable(returnedResult)){host.remove();return}
+    if(unavailable(lapsedResult)||unavailable(returnedResult)){releaseV408();host.remove();return}
     if(lapsedResult.error||returnedResult.error){
       host.innerHTML=`<div class="card"><p class="muted small">The come-back answer could not be loaded.</p><button class="btn ghost sm" id="comebackRetry" style="margin-top:10px">Try again</button></div>`;
       const retry=$('comebackRetry');if(retry)retry.onclick=()=>paint(awayDays);
-      return;
+      releaseV408();return;
     }
     const away=Number(lapsedResult.data?.total??lapsedResult.data?.count??0)||0;
     const returned=returnedResult.data||{};
@@ -11592,6 +11639,7 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
         ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">Showing the ${Math.min(8,rows.length)} most recent returns of ${Number(returned.total_returned||0)}.</p>`:''}</div>`
       :`<p class="muted small" style="margin-top:12px">Nobody has ended a ${awayDays}+ day break in the last 30 days.</p>`}
     </div>`;
+    releaseV408();
     host.querySelectorAll('[data-comeback-days]').forEach(button=>button.onclick=()=>paint(Number(button.dataset.comebackDays)||60));
   };
   paint(60);
@@ -23324,6 +23372,22 @@ async function svRunTopupFlow({branches,state,testOnly}){
      app.redeem_reward_core, reached through staff_manual_redeem_reward_v404, which re-derives the
      permission server-side. The figures below are the ones already on screen, restated. */
   const TILL_MANUAL_REDEEM_MAX_V404=20;
+  /* V408 (owner, photo 1: "when press redeem it must reduce the points immediately"). The header's
+     "Diamond · 75,937 pts" comes from `cust`, which is the lookup_client_by_phone answer captured
+     when the customer was found — redeeming never touched it, so the figure stayed at what it was
+     before the spend. Only the catalogue was being refetched.
+     The new balance is ASKED FOR, never worked out here: this re-runs the same lookup and takes
+     the server's number. Subtracting the cost client-side would be inventing a balance, which is
+     exactly what v145 forbids, and it would be wrong the moment anything else moved the ledger.
+     The client_id guard means a stale or re-typed number can never swap the customer under the
+     cashier while a sale is open. */
+  async function refreshTillCustomerStandingV408(){
+    const lookupPhone=String(cust?.phone||phone||'').trim();
+    if(!lookupPhone||!cust?.client_id)return;
+    const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:lookupPhone});
+    if(error||!isTillCurrent())return;
+    if(data?.status==='found'&&String(data.client_id)===String(cust.client_id))cust=data;
+  }
   function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity}){
     const unit=catalog?.customerGiftsV392?.program?.unit==='stamps'?'stamps':'points';
     const qty=Math.max(1,Math.min(TILL_MANUAL_REDEEM_MAX_V404,Number(quantity)||1));
@@ -23402,7 +23466,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
       close();
       toast(data?.status==='duplicate_ignored'?'Already redeemed':`${rewardName} redeemed`);
       tillManualQtyV404={};
-      catalog=null;draw();
+      catalog=null;
+      await refreshTillCustomerStandingV408();
+      draw();
     };
   }
 
@@ -23912,9 +23978,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
     });
     /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
        server confirmation, and the customer is present for it. */
+    /* V408: the scan path spent the same points and left the same figure stale. Fixed together —
+       one screen, one number, and a cashier cannot be expected to know which door they used. */
     if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
-      isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
+      isCurrent:isTillCurrent,onComplete:async()=>{catalog=null;await refreshTillCustomerStandingV408();draw()}
     });
     /* V404: the stepper writes the number straight into the <output> rather than re-rendering the
        screen. A full redraw here would move the row under the finger mid-tap, which is exactly the
@@ -24662,6 +24730,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ce550d7504628b6b0ea6b900affe2e6277b08204c71203da237f1aa4ad79e884',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'68778479dcde53ff8b8a59d3bc998f706220391a3aafab9c8083c430d2d7309c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

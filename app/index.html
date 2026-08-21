@@ -1650,6 +1650,13 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 @media(max-width:900px){.performance-heading>.dashboard-range-v319{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}}
 .performance-body{padding:20px}
 .dashboard-kpis{margin-top:16px}
+/* V408: a KPI drill-down row that has a customer behind it opens that customer. It reads as the
+   name it replaces — not a button — so the table still scans as a table; only the affordance and
+   the focus ring say it is operable. */
+.metric-row-customer-v408{display:block;width:100%;text-align:left;padding:0;border:0;
+  background:none;color:inherit;font:inherit;cursor:pointer}
+.metric-row-customer-v408 b{color:var(--brand-red);text-decoration:underline;text-underline-offset:2px}
+.metric-row-customer-v408:hover b{color:var(--brand-red-dark)}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
 /* V180 (owner instruction): the four dashboard counters were four identical white cards, so
    nothing told money apart from people at a glance. Each now carries a tinted wash and a
@@ -3589,7 +3596,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=eb83c942b88e","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=5ea41630be92","business":"/app-business.js?b=2d5de4a31f77","i18n":"/app-i18n.js?b=4b5a4dc6220c"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

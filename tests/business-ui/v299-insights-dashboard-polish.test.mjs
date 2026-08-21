@@ -117,6 +117,53 @@ test('V406 the Inactive drill-down asks for a page size the server accepts',()=>
   assert.match(app,/if\(cappedV406\)body\.insertAdjacentHTML\('beforeend',/);
 });
 
+test('V408 the come-back card does not collapse when its window changes',()=>{
+  /* Owner, photo 2: "pressing on the buttons have a very weird move up and down motion".
+     renderComebackCardV300 replaced the whole card with a one-line placeholder on EVERY press,
+     awaited two RPCs, then rebuilt it — and the card sits above the programme-usage table, so
+     the page below flew up and dropped back. A repaint must keep the card and pin its height. */
+  assert.match(app,/const repaintV408=host\.querySelector\('\.grow-comeback-card-v401'\);/);
+  assert.match(app,/host\.style\.minHeight=`\$\{Math\.round\(host\.getBoundingClientRect\(\)\.height\)\}px`;/);
+  assert.match(app,/host\.setAttribute\('aria-busy','true'\);/);
+  // The placeholder survives only for the FIRST paint.
+  assert.match(app,/\}else\{\s*\n\s*host\.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…<\/p><\/div>`;/);
+  // Every exit path releases the pin, or the card would be stuck tall forever.
+  const paint=app.slice(app.indexOf('async function renderComebackCardV300('),
+                        app.indexOf('async function ',app.indexOf('async function renderComebackCardV300(')+40));
+  const releases=[...paint.matchAll(/releaseV408\(\)/g)].length;
+  assert.ok(releases>=4,`every exit path must release the height pin, found ${releases}`);
+});
+
+test('V408 a KPI drill-down row opens the customer behind it',()=>{
+  /* Owner, photo 3: "now that the boxes are clickable — I need to be able to click into the
+     individual customer selection". A row with no customer (a walk-in sale) stays inert rather
+     than becoming a control that goes nowhere. */
+  assert.match(app,/const customerCellV408=\(clientId,label,sub\)=>\{/);
+  assert.match(app,/data-metric-client-v408="\$\{esc\(String\(clientId\)\)\}"/);
+  assert.match(app,/return clientId\s*\n\s*\? `<button/,'no customer means no control');
+  // Delegated once, so every branch's own innerHTML write keeps working.
+  assert.match(app,/body\.addEventListener\('click',event=>\{/);
+  assert.match(app,/nav\(`#\/client\/\$\{hit\.dataset\.metricClientV408\}`\);/);
+  /* THREE call sites, not four: visits and revenue share one row builder, so the four tiles are
+     served by new / inactive / sales. */
+  const drill=app.slice(app.indexOf('async function openDashboardMetricRowsV388('),
+                        app.indexOf('function dashboardMetricWasLineV387('));
+  assert.equal([...drill.matchAll(/customerCellV408\(/g)].length,3);
+});
+
+test('V408 redeeming refreshes the customer standing from the server',()=>{
+  /* Owner, photo 1: "when press redeem it must reduce the points immediately". The header figure
+     comes from `cust`, captured at lookup; redeeming refetched only the catalogue. The new balance
+     is ASKED FOR — subtracting the cost here would be inventing a balance (v145). */
+  assert.match(app,/async function refreshTillCustomerStandingV408\(\)\{/);
+  assert.match(app,/sb\.rpc\('lookup_client_by_phone',\{p_business:S\.biz\.id,p_phone:lookupPhone\}\)/);
+  assert.match(app,/if\(data\?\.status==='found'&&String\(data\.client_id\)===String\(cust\.client_id\)\)cust=data;/,
+    'the refreshed row must be the SAME customer, or a re-typed number could swap them mid-sale');
+  // Both redemption doors refresh it: the manual one and the QR scan.
+  assert.match(app,/await refreshTillCustomerStandingV408\(\);\s*\n\s*draw\(\);/);
+  assert.match(app,/onComplete:async\(\)=>\{catalog=null;await refreshTillCustomerStandingV408\(\);draw\(\)\}/);
+});
+
 test('Business Insights carries quick-range presets that press the existing Run',()=>{
   assert.match(app,/\[\[7,'7 days'\],\[30,'30 days'\],\[90,'90 days'\],\[182,'6 months'\],\[365,'12 months'\]\]/);
   assert.match(app,/data-report-preset-days="\$\{presetDays\}"/);

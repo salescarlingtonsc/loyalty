@@ -3239,10 +3239,29 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
   if(go)go.onclick=event=>{event.preventDefault();close();nav(def.route)};
   const body=document.getElementById('metricRowsBodyV388');
   const stillOpen=()=>body.isConnected;
+  /* V408 (owner, photo 3: "now that the boxes are clickable — I need to be able to click into the
+     individual customer selection"). Each row that HAS a customer opens that customer's profile.
+     A row without one — a walk-in sale — is deliberately left inert rather than given a dead
+     control: there is no profile to open, and a button that does nothing is worse than plain text.
+     The dialog closes before navigating, the same hand-off its footer link already performs, so
+     the profile is never rendered underneath an open modal. */
+  const customerCellV408=(clientId,label,sub)=>{
+    const body=`<b>${esc(label)}</b>${sub?`<br><span class="muted small">${esc(sub)}</span>`:''}`;
+    return clientId
+      ? `<button type="button" class="metric-row-customer-v408" data-metric-client-v408="${esc(String(clientId))}">${body}</button>`
+      : body;
+  };
   const table=(head,rows)=>rows.length
     ?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`
     :`<p class="muted small">Nothing in this period.</p>`;
   const failed=message=>{if(stillOpen())body.innerHTML=`<div class="err" role="alert">${esc(message)}</div>`};
+  /* Delegated, so it survives every branch's own innerHTML write without five bindings. */
+  body.addEventListener('click',event=>{
+    const hit=event.target.closest('[data-metric-client-v408]');
+    if(!hit)return;
+    close();
+    nav(`#/client/${hit.dataset.metricClientV408}`);
+  });
   try{
     if(key==='new'){
       const {data,error}=await sb.from('clients').select('id,full_name,phone,created_at')
@@ -3251,7 +3270,7 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
         .order('created_at',{ascending:false}).limit(500);
       if(!stillOpen())return;
       if(error)return failed(ownerErrorText(error));
-      body.innerHTML=table(['Customer','Joined'],(data||[]).map(row=>`<tr><td data-label="Customer"><b>${esc(row.full_name||'—')}</b>${row.phone?`<br><span class="muted small">${esc(row.phone)}</span>`:''}</td><td data-label="Joined">${esc(sgLedgerDateV154(row.created_at).date)}</td></tr>`));
+      body.innerHTML=table(['Customer','Joined'],(data||[]).map(row=>`<tr><td data-label="Customer">${customerCellV408(row.id,row.full_name||'—',row.phone)}</td><td data-label="Joined">${esc(sgLedgerDateV154(row.created_at).date)}</td></tr>`));
       return;
     }
     if(key==='inactive'){
@@ -3273,7 +3292,7 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
          let a short list quietly contradict the tile, the shortfall is stated and the footer link
          — which carries the same all_inactive bucket — is the way to the rest. */
       const cappedV406=rows.length>=DASHBOARD_INACTIVE_PAGE_V406;
-      body.innerHTML=table(['Customer','Last visit'],rows.map(row=>`<tr><td data-label="Customer"><b>${esc(row.full_name||'—')}</b>${row.phone?`<br><span class="muted small">${esc(row.phone)}</span>`:''}</td><td data-label="Last visit">${row.last_visit_at?esc(sgLedgerDateV154(row.last_visit_at).date):'<span class="muted">Never</span>'}</td></tr>`));
+      body.innerHTML=table(['Customer','Last visit'],rows.map(row=>`<tr><td data-label="Customer">${customerCellV408(row.id,row.full_name||'—',row.phone)}</td><td data-label="Last visit">${row.last_visit_at?esc(sgLedgerDateV154(row.last_visit_at).date):'<span class="muted">Never</span>'}</td></tr>`));
       if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${DASHBOARD_INACTIVE_PAGE_V406}. Open ${esc(def.buttonLabel||'the full list')} below for the rest.</p>`);
       return;
     }
@@ -3285,7 +3304,7 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
     if(!stillOpen())return;
     if(error)return failed(ownerErrorText(error));
     const scoped=key==='visits'?validVisitSales(data||[]):(data||[]).filter(row=>row?.counts_as_revenue);
-    body.innerHTML=table(['When','Customer',key==='visits'?'Kind':'Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${esc(row.clients?.full_name||'Walk-in')}</td><td data-label="${key==='visits'?'Kind':'Amount'}">${key==='visits'?esc(String(row.kind||'')):esc(money(row.amount_cents||0))}</td></tr>`));
+    body.innerHTML=table(['When','Customer',key==='visits'?'Kind':'Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${customerCellV408(row.client_id,row.clients?.full_name||'Walk-in','')}</td><td data-label="${key==='visits'?'Kind':'Amount'}">${key==='visits'?esc(String(row.kind||'')):esc(money(row.amount_cents||0))}</td></tr>`));
   }catch(error){failed(ownerErrorText(error))}
 }
 function dashboardMetricWasLineV387(metric,previousRange){
@@ -7079,6 +7098,22 @@ async function tillPage(){
      app.redeem_reward_core, reached through staff_manual_redeem_reward_v404, which re-derives the
      permission server-side. The figures below are the ones already on screen, restated. */
   const TILL_MANUAL_REDEEM_MAX_V404=20;
+  /* V408 (owner, photo 1: "when press redeem it must reduce the points immediately"). The header's
+     "Diamond · 75,937 pts" comes from `cust`, which is the lookup_client_by_phone answer captured
+     when the customer was found — redeeming never touched it, so the figure stayed at what it was
+     before the spend. Only the catalogue was being refetched.
+     The new balance is ASKED FOR, never worked out here: this re-runs the same lookup and takes
+     the server's number. Subtracting the cost client-side would be inventing a balance, which is
+     exactly what v145 forbids, and it would be wrong the moment anything else moved the ledger.
+     The client_id guard means a stale or re-typed number can never swap the customer under the
+     cashier while a sale is open. */
+  async function refreshTillCustomerStandingV408(){
+    const lookupPhone=String(cust?.phone||phone||'').trim();
+    if(!lookupPhone||!cust?.client_id)return;
+    const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:lookupPhone});
+    if(error||!isTillCurrent())return;
+    if(data?.status==='found'&&String(data.client_id)===String(cust.client_id))cust=data;
+  }
   function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity}){
     const unit=catalog?.customerGiftsV392?.program?.unit==='stamps'?'stamps':'points';
     const qty=Math.max(1,Math.min(TILL_MANUAL_REDEEM_MAX_V404,Number(quantity)||1));
@@ -7157,7 +7192,9 @@ async function tillPage(){
       close();
       toast(data?.status==='duplicate_ignored'?'Already redeemed':`${rewardName} redeemed`);
       tillManualQtyV404={};
-      catalog=null;draw();
+      catalog=null;
+      await refreshTillCustomerStandingV408();
+      draw();
     };
   }
 
@@ -7667,9 +7704,11 @@ async function tillPage(){
     });
     /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
        server confirmation, and the customer is present for it. */
+    /* V408: the scan path spent the same points and left the same figure stale. Fixed together —
+       one screen, one number, and a cashier cannot be expected to know which door they used. */
     if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
-      isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
+      isCurrent:isTillCurrent,onComplete:async()=>{catalog=null;await refreshTillCustomerStandingV408();draw()}
     });
     /* V404: the stepper writes the number straight into the <output> rather than re-rendering the
        screen. A full redraw here would move the row under the finger mid-tap, which is exactly the
@@ -11369,18 +11408,38 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
   if(!host)return;
   const paint=async awayDays=>{
     if(!isCurrent()||!host.isConnected)return;
-    host.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…</p></div>`;
+    /* V408 (owner, photo 2: "pressing on the buttons have a very weird move up and down motion").
+       This is that motion, and it is this function. Every press replaced the whole card with a
+       one-line "Checking who has come back…" placeholder, awaited two RPCs, then expanded the card
+       again. The card sits ABOVE the programme-usage table, so the entire lower half of the page
+       flew up by the card's height and dropped back a second later.
+       On a REPAINT the rendered card now stays exactly where it is, marked busy, with its height
+       pinned across the swap so the page cannot move under the finger. The placeholder survives
+       only for the very first paint, when there is nothing to preserve and nothing below it has
+       been positioned yet. The pin is released after the new card is on screen, so a genuinely
+       shorter card still settles — once, downward — instead of bouncing. */
+    const repaintV408=host.querySelector('.grow-comeback-card-v401');
+    if(repaintV408){
+      host.style.minHeight=`${Math.round(host.getBoundingClientRect().height)}px`;
+      host.setAttribute('aria-busy','true');
+    }else{
+      host.innerHTML=`<div class="card"><p class="muted small">Checking who has come back…</p></div>`;
+    }
+    const releaseV408=()=>{
+      host.removeAttribute('aria-busy');
+      requestAnimationFrame(()=>{host.style.minHeight=''});
+    };
     const [lapsedResult,returnedResult]=await Promise.all([
       sb.rpc('retention_lapsed_candidates_v244',{p_business:S.biz.id,p_lapsed_days:awayDays,p_min_visits:1}),
       sb.rpc('staff_list_returned_customers_v300',{p_business:S.biz.id,p_away_days:awayDays,p_window_days:30})
     ]);
-    if(!isCurrent()||!host.isConnected)return;
+    if(!isCurrent()||!host.isConnected){releaseV408();return}
     const unavailable=result=>['42883','PGRST202'].includes(String(result?.error?.code||''))||String(result?.error?.code||'')==='42501';
-    if(unavailable(lapsedResult)||unavailable(returnedResult)){host.remove();return}
+    if(unavailable(lapsedResult)||unavailable(returnedResult)){releaseV408();host.remove();return}
     if(lapsedResult.error||returnedResult.error){
       host.innerHTML=`<div class="card"><p class="muted small">The come-back answer could not be loaded.</p><button class="btn ghost sm" id="comebackRetry" style="margin-top:10px">Try again</button></div>`;
       const retry=$('comebackRetry');if(retry)retry.onclick=()=>paint(awayDays);
-      return;
+      releaseV408();return;
     }
     const away=Number(lapsedResult.data?.total??lapsedResult.data?.count??0)||0;
     const returned=returnedResult.data||{};
@@ -11406,6 +11465,7 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
         ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">Showing the ${Math.min(8,rows.length)} most recent returns of ${Number(returned.total_returned||0)}.</p>`:''}</div>`
       :`<p class="muted small" style="margin-top:12px">Nobody has ended a ${awayDays}+ day break in the last 30 days.</p>`}
     </div>`;
+    releaseV408();
     host.querySelectorAll('[data-comeback-days]').forEach(button=>button.onclick=()=>paint(Number(button.dataset.comebackDays)||60));
   };
   paint(60);
