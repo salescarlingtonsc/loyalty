@@ -2181,6 +2181,12 @@
       "path": "db/migrations/20260821_nestly_v404_manual_reward_redemption.sql",
       "semanticVersion": "v404",
       "proposedDeployVersion": "20260821000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v409_canonical_points_balance.sql",
+      "semanticVersion": "v409",
+      "proposedDeployVersion": "20260821000003"
     }
   ]
 }

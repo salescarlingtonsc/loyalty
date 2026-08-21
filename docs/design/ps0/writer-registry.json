@@ -989,7 +989,7 @@
     {
       "id": "db.fn:public.record_sale_by_phone/9",
       "surface": "db_delegating_entrypoint",
-      "latest_file": "20260722132000_frenly_v47b_record_sale_dispatch_fix.sql",
+      "latest_file": "20260821000003_nestly_v409_canonical_points_balance.sql",
       "rows_written": "(delegates to public.record_quick_sale)",
       "detected_signals": "idem-signal",
       "delegates_to": [
@@ -1274,7 +1274,7 @@
     {
       "id": "db.fn:public.sell_package_v102/5",
       "surface": "db_function",
-      "latest_file": "20260729150000_nestly_v102_package_checkout_entitlements.sql",
+      "latest_file": "20260821000003_nestly_v409_canonical_points_balance.sql",
       "rows_written": "client_packages:INSERT, sales:INSERT, sale_intent_operations:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "sell_package_v102(p_business,p_client,p_plan,p_branch,p_idempotency_key)",
@@ -1344,7 +1344,7 @@
     {
       "id": "db.fn:public.use_package_session_v102/4",
       "surface": "db_function",
-      "latest_file": "20260729150000_nestly_v102_package_checkout_entitlements.sql",
+      "latest_file": "20260821000003_nestly_v409_canonical_points_balance.sql",
       "rows_written": "client_packages:UPDATE, package_session_consumptions:INSERT, sales:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "use_package_session_v102(p_business,p_client_package,p_branch,p_idempotency_key)",

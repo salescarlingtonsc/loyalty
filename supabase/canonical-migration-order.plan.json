@@ -2176,6 +2176,12 @@
       "version": "20260821000002",
       "name": "nestly_v404_manual_reward_redemption",
       "sourcePath": "db/migrations/20260821_nestly_v404_manual_reward_redemption.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000003",
+      "name": "nestly_v409_canonical_points_balance",
+      "sourcePath": "db/migrations/20260821_nestly_v409_canonical_points_balance.sql"
     }
   ]
 }
