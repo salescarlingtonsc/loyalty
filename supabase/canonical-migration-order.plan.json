@@ -2218,6 +2218,18 @@
       "version": "20260821000009",
       "name": "nestly_v418_business_gallery_and_links",
       "sourcePath": "db/migrations/20260821_nestly_v418_business_gallery_and_links.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000010",
+      "name": "nestly_v419_recommendation_keeps_spend_per_stamp",
+      "sourcePath": "db/migrations/20260821_nestly_v419_recommendation_keeps_spend_per_stamp.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000011",
+      "name": "nestly_v420_referral_free_gift",
+      "sourcePath": "db/migrations/20260821_nestly_v420_referral_free_gift.sql"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="df822bb0e59684a382737a3a5405999c6d8396b45e10a14c150399bf5c650105"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="5fb78c189f5f8a45e39406dc18cb50f8dddc6eebeb4dd7011b2a433dc1ef90a1"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3702,7 +3702,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · df822bb0e59684a382737a3a5405999c6d8396b45e10a14c150399bf5c650105</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 5fb78c189f5f8a45e39406dc18cb50f8dddc6eebeb4dd7011b2a433dc1ef90a1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4961,6 +4961,8 @@ async function tillPage(){
          for the same reason — this is the one read the till already makes for a looked-up
          customer, so a second round-trip would be a second thing to keep in sync. */
       customerBringbackOffer:entitlements.error?null:(entitlements.data?.bringback_offer||null),
+      /* nestly_v420: the referral gift the REFERRER is owed, from the same payload. */
+      customerReferralOffer:entitlements.error?null:(entitlements.data?.referral_offer||null),
       /* V365: the customer's claimable tier benefits, each with what is left this period. */
       customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
@@ -5518,6 +5520,17 @@ async function tillPage(){
         <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
         <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
       :'';
+    /* nestly_v420 (owner, photo 4: "referral why only points option? can also be free gift").
+       A gift referral is owed to the REFERRER, and is redeemable on sight for the same reason the
+       bring-back voucher is: its condition — the friend's first qualifying visit — was met before
+       the grant was written. staff_redeem_referral_v420 re-checks ownership, expiry and branch. */
+    const referralOffer=catalog.customerReferralOffer||null;
+    const referralBanner=referralOffer
+      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Referral gift</b>
+        <p class="small" style="margin:5px 0">${esc(referralOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="muted small" style="margin:5px 0">Earned for introducing a friend who has now visited. Nothing is charged.</p>
+        <button type="button" class="btn primary sm" id="tReferralRedeemV420" data-grant="${esc(referralOffer.grant_id)}">Give ${esc(referralOffer.reward_label||'the free item')}</button></div>`
+      :'';
     const pendingVouchers=(catalog.customerVouchers||[]).length
       ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
         ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
@@ -5613,7 +5626,7 @@ async function tillPage(){
            control must not shrink what a screen reader is told about it. */''}
         ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm till-gift-scan-v399" id="tGiftScanV392" aria-label="Scan customer QR" title="Scan customer QR">${CUI.icon('scan',{size:18})}</button>`:''}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
+    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
@@ -6233,6 +6246,24 @@ async function tillPage(){
       catalog=null;
       draw();
     };
+    /* nestly_v420: hand over the referral gift. Same shape as the bring-back button above — the
+       server owns every decision, this only reports what it decided. */
+    const referralButton=$('tReferralRedeemV420');
+    if(referralButton)referralButton.onclick=async()=>{
+      const offer=catalog?.customerReferralOffer;
+      if(!offer||busy)return;
+      const label=offer.reward_label||'the free item';
+      busy=true;
+      const {data,error}=await sb.rpc('staff_redeem_referral_v420',{
+        p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,p_grant:offer.grant_id});
+      if(!isTillCurrent())return;
+      busy=false;
+      if(error)return fail(error);
+      if(data?.status!=='completed')return fail(new Error('The referral gift receipt was incomplete. Check the customer before retrying.'));
+      toast(workspaceTemplateTextV97('referralGiftGiven',{item:label}));
+      catalog=null;
+      draw();
+    };
     /* V365: give one tier benefit. The idempotency key is per press, so a double-tap on a slow
        connection replays into the SAME issue rather than burning two of the customer's monthly
        allowance; the server answers duplicate_ignored and the count does not move. */
@@ -6812,7 +6843,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'df822bb0e59684a382737a3a5405999c6d8396b45e10a14c150399bf5c650105',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'5fb78c189f5f8a45e39406dc18cb50f8dddc6eebeb4dd7011b2a433dc1ef90a1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

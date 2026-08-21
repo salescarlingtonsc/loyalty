@@ -853,6 +853,10 @@ let growPointsRemovePhotoV343=false;
 /* V364 — the Referrals settings panel state (owner markup, photo 3: "settings put here, when
    click edit setting page prompt here"). Page-level and not persisted, exactly like the tier and
    gift form state above. */
+/* nestly_v420: which payout the referral form is showing. Read from the saved programme on open
+   and flipped by the radios, so switching does not touch the server until Save. */
+let growReferralKindV420='points';
+let growReferralGiftV420='';
 let growReferralEditOpenV364=false;
 let growReferralErrorV364='';
 let growReferralBusyV364=false;
@@ -14612,6 +14616,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v416: the stamp card's length, confirmed after business_set_stamp_card_length_v414. */
   stampCardLength:Object.freeze({en:'Card is now {stamps} stamps','zh-CN':'集章卡现在是 {stamps} 个印章',ms:'Kad kini {stamps} setem'}),
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
+  /* nestly_v420: the referral gift handed over at the counter. */
+  referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
   linkNeedsHttps:Object.freeze({en:'The {platform} link must start with https://','zh-CN':'{platform} 链接必须以 https:// 开头',ms:'Pautan {platform} mesti bermula dengan https://'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -14771,7 +14777,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength','linkNeedsHttps',
+  'savedNotLive','stampCardLength','linkNeedsHttps','referralGiftGiven',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -17115,7 +17121,7 @@ async function clientDetail(id){
       .then(r=>r.error?null:((r.data?.programs||[])[0]||null)).catch(()=>null):Promise.resolve(null),
     /* V322: reward_points is the live amount; reward_cents is the frozen pre-v322 money column and
        is no longer read by any surface. */
-    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,min_spend_cents')
+    canReadReferrals?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents')
       .eq('business_id',S.biz.id).limit(1).then(r=>r.error?null:((r.data||[])[0]||null)).catch(()=>null)
       :Promise.resolve(null),
     /* V296 (owner markup 2026-08-12: the generic "Earn 1 points for every SGD 1 spent" line struck
@@ -18888,6 +18894,8 @@ async function tillPage(){
          for the same reason — this is the one read the till already makes for a looked-up
          customer, so a second round-trip would be a second thing to keep in sync. */
       customerBringbackOffer:entitlements.error?null:(entitlements.data?.bringback_offer||null),
+      /* nestly_v420: the referral gift the REFERRER is owed, from the same payload. */
+      customerReferralOffer:entitlements.error?null:(entitlements.data?.referral_offer||null),
       /* V365: the customer's claimable tier benefits, each with what is left this period. */
       customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
@@ -19445,6 +19453,17 @@ async function tillPage(){
         <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
         <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
       :'';
+    /* nestly_v420 (owner, photo 4: "referral why only points option? can also be free gift").
+       A gift referral is owed to the REFERRER, and is redeemable on sight for the same reason the
+       bring-back voucher is: its condition — the friend's first qualifying visit — was met before
+       the grant was written. staff_redeem_referral_v420 re-checks ownership, expiry and branch. */
+    const referralOffer=catalog.customerReferralOffer||null;
+    const referralBanner=referralOffer
+      ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Referral gift</b>
+        <p class="small" style="margin:5px 0">${esc(referralOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="muted small" style="margin:5px 0">Earned for introducing a friend who has now visited. Nothing is charged.</p>
+        <button type="button" class="btn primary sm" id="tReferralRedeemV420" data-grant="${esc(referralOffer.grant_id)}">Give ${esc(referralOffer.reward_label||'the free item')}</button></div>`
+      :'';
     const pendingVouchers=(catalog.customerVouchers||[]).length
       ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
         ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
@@ -19540,7 +19559,7 @@ async function tillPage(){
            control must not shrink what a screen reader is told about it. */''}
         ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm till-gift-scan-v399" id="tGiftScanV392" aria-label="Scan customer QR" title="Scan customer QR">${CUI.icon('scan',{size:18})}</button>`:''}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
+    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
@@ -20157,6 +20176,24 @@ async function tillPage(){
       if(error)return fail(error);
       if(data?.status!=='completed')return fail(new Error('The bring-back voucher receipt was incomplete. Check the customer before retrying.'));
       toast(workspaceTemplateTextV97('bringbackVoucherGiven',{item:label}));
+      catalog=null;
+      draw();
+    };
+    /* nestly_v420: hand over the referral gift. Same shape as the bring-back button above — the
+       server owns every decision, this only reports what it decided. */
+    const referralButton=$('tReferralRedeemV420');
+    if(referralButton)referralButton.onclick=async()=>{
+      const offer=catalog?.customerReferralOffer;
+      if(!offer||busy)return;
+      const label=offer.reward_label||'the free item';
+      busy=true;
+      const {data,error}=await sb.rpc('staff_redeem_referral_v420',{
+        p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId,p_grant:offer.grant_id});
+      if(!isTillCurrent())return;
+      busy=false;
+      if(error)return fail(error);
+      if(data?.status!=='completed')return fail(new Error('The referral gift receipt was incomplete. Check the customer before retrying.'));
+      toast(workspaceTemplateTextV97('referralGiftGiven',{item:label}));
       catalog=null;
       draw();
     };
@@ -24105,7 +24142,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     /* V322: the wizard, the Programmes history row and the customer-360 card all read the referral
        payout from this snapshot, and it is POINTS now. reward_kind rides along so a later voucher
        payout has a place to be read from rather than a place to be invented. */
-    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('referral_programs').select('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,created_at').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   const membershipsRequest=modules.includes('memberships')
     ?sb.from('membership_plans').select('id,name,active,created_at').eq('business_id',S.biz.id).order('created_at',{ascending:false})
@@ -26472,7 +26509,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       started:snapshot.referral.created_at||null,ended:null,
       state:snapshot.referral.enabled===true?'live':'paused',
       customers:growUsageV271?(growUsageV271.referrals?.customers??null):null,
-      detail:snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:''});
+      /* nestly_v420: a referral may pay a gift now, so the row names whichever it is. */
+      detail:snapshot.referral.reward_kind==='voucher'
+        ?(snapshot.referral.reward_label?`${snapshot.referral.reward_label} to the referrer`:'A gift to the referrer')
+        :(snapshot.referral.reward_points?`${growPointsWordV322(snapshot.referral.reward_points)} to the referrer`:'')});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
@@ -27761,7 +27801,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
       <b>Referral settings</b>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
-      <p class="grow-setup-sentence-v301" style="margin-top:10px"><label class="muted small" for="growReferralRewardV364">Points for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      ${/* nestly_v420 (owner, photo 4: "referral why only points option? can also be free gift").
+           referral_programs.reward_kind has allowed 'voucher' since the column existed and
+           app.on_sale_recorded had no branch for it, so the value paid out NOTHING and the
+           workspace never offered it. v420 gives it a payout path; this gives it a control.
+           The two inputs swap rather than both showing: a firm pays points OR a gift, and asking
+           for a points figure it will never award is asking for a number that means nothing. */''}
+      <p class="grow-setup-sentence-v301" style="margin-top:10px"><span class="muted small">What the referrer gets</span></p>
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px" role="radiogroup" aria-label="What the referrer gets">
+        ${[['points','Points'],['voucher','A free gift']].map(([kind,label])=>`<label class="welcome-offer-optioncard-v350${growReferralKindV420===kind?' selected':''}" style="flex:1;min-width:min(100%,180px)"><input type="radio" name="growReferralKindV420" value="${kind}" ${growReferralKindV420===kind?'checked':''}><span><b>${esc(label)}</b></span></label>`).join('')}
+      </div>
+      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">Points for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least (${esc(S.biz?.currency||'SGD')})</label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-referral-save-v364="1"${growReferralBusyV364?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-referral-cancel-v364="1">Cancel</button></div>
@@ -29185,18 +29236,34 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growReferralEditOpenV364=false;growReferralErrorV364='';
     growRerenderV322({quiet:true});
   };
+  /* nestly_v420: the radios swap the two inputs without a server round trip; nothing is written
+     until Save, so a mis-tap costs a tap. The kind is captured into state so a re-render (an
+     error, a toast) does not throw the choice away. */
+  outerMain.querySelectorAll('input[name="growReferralKindV420"]').forEach(radio=>radio.onchange=()=>{
+    growReferralKindV420=radio.value==='voucher'?'voucher':'points';
+    growReferralGiftV420=String($('growReferralGiftV420')?.value||growReferralGiftV420||'');
+    growRerenderV322({quiet:true});
+  });
   const growReferralSaveV364=outerMain.querySelector('[data-grow-referral-save-v364]');
   if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{
     if(growReferralBusyV364)return;
+    const kind=growReferralKindV420==='voucher'?'voucher':'points';
     const points=Math.round(Number($('growReferralRewardV364')?.value||''));
+    const gift=String($('growReferralGiftV420')?.value||'').trim();
     const amount=Number($('growReferralMinV364')?.value||'');
-    if(!Number.isFinite(points)||points<0){growReferralErrorV364='Points must be zero or a positive number.';return growRerenderV322({quiet:true});}
+    if(kind==='points'&&(!Number.isFinite(points)||points<1)){growReferralErrorV364='A points referral must award at least one point.';return growRerenderV322({quiet:true});}
+    if(kind==='voucher'&&gift.length<2){growReferralErrorV364='Name the gift the referrer receives.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(amount)||amount<0){growReferralErrorV364='The minimum spend must be zero or more.';return growRerenderV322({quiet:true});}
+    growReferralGiftV420=gift;
     growReferralBusyV364=true;growReferralErrorV364='';growRerenderV322({quiet:true});
-    /* `enabled` is handed straight back rather than decided here — see the panel's own comment. */
-    const {error}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
-      p_enabled:snapshot.referral?.enabled===true,
-      p_reward_points:points,p_min_spend_cents:Math.round(amount*100)});
+    /* `enabled` is handed straight back rather than decided here — see the panel's own comment.
+       v420's saver, NOT v322's: adding parameters to the old one would have created an overload
+       twin rather than replacing it (see nestly_v410). */
+    const {error}=await sb.rpc('save_referral_program_v420',{p_business:S.biz.id,
+      p_enabled:snapshot.referral?.enabled===true,p_reward_kind:kind,
+      p_reward_points:kind==='points'?points:null,
+      p_reward_label:kind==='voucher'?gift:null,
+      p_min_spend_cents:Math.round(amount*100)});
     if(!isGrowCurrent())return;
     growReferralBusyV364=false;
     if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
@@ -29442,6 +29509,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        inline, directly under the row that was pressed — the row stays the door, the destination
        is this page. */
     if(kind==='referralSettingsV364'){
+      /* nestly_v420: opening the editor seeds the payout choice from what is SAVED, so the form
+         opens on the firm's own setting rather than on whatever was last previewed. */
+      if(!growReferralEditOpenV364){
+        growReferralKindV420=snapshot.referral?.reward_kind==='voucher'?'voucher':'points';
+        growReferralGiftV420=String(snapshot.referral?.reward_label||'');
+      }
       growReferralEditOpenV364=!growReferralEditOpenV364;growReferralErrorV364='';
       return growRerenderV322({quiet:true});
     }

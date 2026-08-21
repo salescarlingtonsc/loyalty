@@ -331,7 +331,9 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      is changed from the new grid editor. */
   /* 138 -> 139: nestly_v418 adds linkNeedsHttps — a social link that is not https, named so the
      owner knows which of the eight fields to fix. */
-  assert.equal(keys.length,139,'mixed-interface interpolation inventory changed without review');
+  /* 139 -> 140: nestly_v420 adds referralGiftGiven, the counter's confirmation when a referral
+     gift is handed over — the same shape as bringbackVoucherGiven beside it. */
+  assert.equal(keys.length,140,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

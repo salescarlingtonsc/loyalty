@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 368,
-  "executableCount": 354,
+  "itemCount": 370,
+  "executableCount": 356,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -539,7 +539,7 @@
     },
     {
       "sourceDeployVersion": "20260821",
-      "count": 9,
+      "count": 11,
       "paths": [
         "db/migrations/20260821_nestly_v403_stamp_conversion_ledger_token.sql",
         "db/migrations/20260821_nestly_v404_manual_reward_redemption.sql",
@@ -549,7 +549,9 @@
         "db/migrations/20260821_nestly_v414_stamp_card_length.sql",
         "db/migrations/20260821_nestly_v416_stamp_cycle_config_pin.sql",
         "db/migrations/20260821_nestly_v417_customer_bio.sql",
-        "db/migrations/20260821_nestly_v418_business_gallery_and_links.sql"
+        "db/migrations/20260821_nestly_v418_business_gallery_and_links.sql",
+        "db/migrations/20260821_nestly_v419_recommendation_keeps_spend_per_stamp.sql",
+        "db/migrations/20260821_nestly_v420_referral_free_gift.sql"
       ]
     }
   ],
@@ -3496,7 +3498,23 @@
       "path": "db/migrations/20260821_nestly_v418_business_gallery_and_links.sql",
       "semanticVersion": "v418",
       "proposedDeployVersion": "20260821000009",
-      "sha256": "be85bf042f41a35e1b43b75a57221ab39b3a3dba0ceb4ace01756f8011ab7a7c"
+      "sha256": "05cceeb2e8e0789388b51e042a8d5d83000891a9e08808a654e471e2ba4bdcc9"
+    },
+    {
+      "order": 369,
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v419_recommendation_keeps_spend_per_stamp.sql",
+      "semanticVersion": "v419",
+      "proposedDeployVersion": "20260821000010",
+      "sha256": "f8eb8cbb8b529b28afb30be98e2d9954143d1241467b2783891b751cecfdb711"
+    },
+    {
+      "order": 370,
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v420_referral_free_gift.sql",
+      "semanticVersion": "v420",
+      "proposedDeployVersion": "20260821000011",
+      "sha256": "da30862f509b1f13e6f168db50fe2059a54e5804c34cfc4de104387ca819efe0"
     }
   ]
 }

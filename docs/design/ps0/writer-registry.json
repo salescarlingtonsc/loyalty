@@ -535,7 +535,7 @@
     {
       "id": "db.fn:app.on_sale_recorded/0",
       "surface": "db_trigger_function",
-      "latest_file": "20260815090300_nestly_v332_retention_program_lifecycle.sql",
+      "latest_file": "20260821000011_nestly_v420_referral_free_gift.sql",
       "rows_written": "credit_ledger:INSERT, points_batches:INSERT, points_ledger:INSERT, reward_grants:INSERT",
       "detected_signals": "idem-signal, config-version, sale-policy, effective-branch-module",
       "loyalty_boundary": "V121 permits a new points/stamps earn only when app.effective_platform_module_mode_v94(sale.business_id,sale.branch_id,'loyalty') resolves exactly rw. Disabled or read-only Loyalty preserves the sale, visit/retention processing and existing balances but creates no new points_ledger or points_batches earn.",
@@ -2287,6 +2287,19 @@
       "kernel_migratability": "INDEPENDENT \u2014 it writes one zero-value sale and its own grant row, sharing no row with credit_ledger or points_ledger, so it moves under a unified checkout kernel unchanged."
     },
     {
+      "id": "db.fn:public.staff_redeem_referral_v420/4",
+      "surface": "db_function",
+      "latest_file": "20260821000011_nestly_v420_referral_free_gift.sql",
+      "rows_written": "referral_grants_v420:UPDATE (status/redeemed_at/redeemed_sale_id/redeemed_by), sales:INSERT (amount_cents=0), audit_log:INSERT",
+      "detected_signals": "sales_insert",
+      "entry_point": "staff_redeem_referral_v420(business, client, branch, grant) \u2014 called from the till's own referral-gift banner after a staff member hands the item over. Shaped on staff_redeem_bringback_v361 because it is the same act.",
+      "idempotency": "The grant row is the key: SELECT ... FOR UPDATE'd and refused unless status='granted', so a double-tap raises referral_already_redeemed rather than writing a second $0 sale. Issuing is separately unique on referral_id, so one introduction owes exactly one gift however many times app.on_sale_recorded re-processes the qualifying sale.",
+      "value": "NO LEDGER WRITE. The free item is recorded as ONE public.sales row at amount_cents=0 \u2014 a real visit worth nothing \u2014 exactly as staff_redeem_bringback_v361 and staff_redeem_welcome_offer_v215 do. It never touches points_ledger or credit_ledger.",
+      "authority": "SECURITY DEFINER, canonical search_path, EXECUTE revoked from PUBLIC/anon and granted only to authenticated. Re-checks owner-or-till/referrals module write, grant ownership, status, expiry and branch visibility via app.can_see_branch, so the till's entitlements read is a hint and never the authority.",
+      "kernel": "NOT SETTLEMENT-BEARING. The $0 sale is the visit record the retention and loyalty engines already read; no money and no points change hands.",
+      "kernel_migratability": "INDEPENDENT \u2014 one zero-value sale and its own grant row, sharing no row with credit_ledger or points_ledger."
+    },
+    {
       "id": "browser.rpc:app/app.js:business_set_tier_benefits_v365",
       "surface": "browser_rpc_binding",
       "rpc": "business_set_tier_benefits_v365",
@@ -2346,6 +2359,22 @@
       "resolves_to": "public.staff_manual_redeem_reward_v404/8 (owner/manager, or a staff member holding the 'manual_reward_redemption' capability). One call redeems N units of one catalogue reward for the customer already identified at Record sale, without their QR.",
       "call_site_finding": "none \u2014 ONE call site: openManualRedeemConfirmV404 (app/app.js), reached only from the Redeem control on an affordable reward row in the Record sale Rewards tab. The control is DRAWN behind canManualRedeemV404(), which is a rendering hint only \u2014 the server re-derives the same permission, so a stale client can at worst draw a button that is refused. One crypto.randomUUID() key is minted per confirmation and held across retries, so a network failure that actually landed replays into the same redemption. The dialog will not confirm without a reason, and requires a note when the reason is 'other'.",
       "kernel_migratability": "follows db.fn:public.staff_manual_redeem_reward_v404/8 \u2014 INDEPENDENT."
+    },
+    {
+      "id": "browser.rpc:app/app.js:save_referral_program_v420",
+      "surface": "browser_rpc_binding",
+      "rpc": "save_referral_program_v420",
+      "latest_file": "20260821000011_nestly_v420_referral_free_gift.sql",
+      "resolves_to": "save_referral_program_v420/6 (referrals-module write + active staff; nestly_v420). Replaces the v322 saver for the workspace: it carries reward_kind and reward_label so a firm can pay a free gift instead of points. A NEW name rather than extra parameters on v322 \u2014 adding a parameter creates an overload twin rather than replacing the function (see nestly_v410).",
+      "call_site_finding": "none - each kind validates only what it needs, and switching kinds preserves the other kind's stored value rather than zeroing it. audit_log'd."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_redeem_referral_v420",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_redeem_referral_v420",
+      "latest_file": "20260821000011_nestly_v420_referral_free_gift.sql",
+      "resolves_to": "staff_redeem_referral_v420/4 (owner, till-write or referrals-write; nestly_v420). Hands the referrer their free gift against a $0 sale - a real visit worth nothing, never phantom revenue - and marks the single grant redeemed. Shaped on staff_redeem_bringback_v361 because it is the same act.",
+      "call_site_finding": "none - the grant is keyed one-per-referral by unique constraint, expiry is checked before it is offered and again before it is handed over, and the branch must be one the caller may see."
     }
   ],
   "allowlist": [

@@ -350,10 +350,6 @@ let growPointsEditingV326=null;
    control already uses (see rewardImageRefDraftV340's own comment). */
 let growPointsPhotoFileV343=null;
 let growPointsRemovePhotoV343=false;
-/* V331 — the same shape as the V326 points-page state above, for the new #/grow/tiers page. */
-/* V364 — the Referrals settings panel state (owner markup, photo 3: "settings put here, when
-   click edit setting page prompt here"). Page-level and not persisted, exactly like the tier and
-   gift form state above. */
 let growReferralEditOpenV364=false;
 let growReferralErrorV364='';
 let growReferralBusyV364=false;
@@ -5418,6 +5414,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v416: the stamp card's length, confirmed after business_set_stamp_card_length_v414. */
   stampCardLength:Object.freeze({en:'Card is now {stamps} stamps','zh-CN':'集章卡现在是 {stamps} 个印章',ms:'Kad kini {stamps} setem'}),
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
+  /* nestly_v420: the referral gift handed over at the counter. */
+  referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
   linkNeedsHttps:Object.freeze({en:'The {platform} link must start with https://','zh-CN':'{platform} 链接必须以 https:// 开头',ms:'Pautan {platform} mesti bermula dengan https://'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -5577,7 +5575,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength','linkNeedsHttps',
+  'savedNotLive','stampCardLength','linkNeedsHttps','referralGiftGiven',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
