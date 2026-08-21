@@ -78,7 +78,12 @@ test('merchant home consumes the v95 presentation contract with truthful capabil
 test('business media accepts only the configured public bucket object shape and CSP origin',()=>{
   const media=section('function customerMediaUrlV95','const CUSTOMER_PRIMARY_NAV');
   assert.match(media,/\/storage\/v1\/object\/public\/business-public\//);
-  assert.match(media,/\(\?:logo\|hero\|programme\|reward\|product\|service\|benefit\|offer\)/);
+  /* nestly_v418: 'gallery' joins the kinds — a business profile may now carry menu and gallery
+     photos (owner, photo 10). This whitelist and app.v95_storage_path_owned's are the SAME list in
+     two places: the guard decides what may be UPLOADED, this decides what may be RENDERED. A kind
+     in one and not the other is either an upload nobody can see or an image nobody could have
+     written, so they move together and v418's own test asserts both. */
+  assert.match(media,/\(\?:logo\|hero\|programme\|reward\|product\|service\|benefit\|offer\|gallery\)/);
   assert.match(media,/\(\?:png\|jpe\?g\|webp\|gif\)/);
   assert.match(media,/const origin=SB_URL\.replace/);
   assert.match(media,/return '';/);

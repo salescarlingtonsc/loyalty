@@ -2217,6 +2217,12 @@
       "path": "db/migrations/20260821_nestly_v417_customer_bio.sql",
       "semanticVersion": "v417",
       "proposedDeployVersion": "20260821000008"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260821_nestly_v418_business_gallery_and_links.sql",
+      "semanticVersion": "v418",
+      "proposedDeployVersion": "20260821000009"
     }
   ]
 }

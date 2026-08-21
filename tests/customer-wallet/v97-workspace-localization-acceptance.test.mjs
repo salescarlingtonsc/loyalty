@@ -329,7 +329,9 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      around it is, in all three locales. */
   /* 137 -> 138: nestly_v416 adds stampCardLength, the confirmation after the stamp card's length
      is changed from the new grid editor. */
-  assert.equal(keys.length,138,'mixed-interface interpolation inventory changed without review');
+  /* 138 -> 139: nestly_v418 adds linkNeedsHttps — a social link that is not https, named so the
+     owner knows which of the eight fields to fix. */
+  assert.equal(keys.length,139,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

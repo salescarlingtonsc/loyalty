@@ -2513,11 +2513,15 @@ function ct(key,vars={}){
   for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
   return value;
 }
+/* nestly_v418: 'gallery' joins the kinds. This whitelist and app.v95_storage_path_owned's are the
+   SAME list in two places — the guard decides what may be uploaded, this decides what may be
+   rendered — so a kind added to one and not the other is either an upload nobody can see or an
+   image nobody could have written. They are changed together, and v418's test asserts both. */
 function customerMediaUrlV95(value){
   const raw=String(value||'').trim();
   if(!raw)return '';
   const publicPrefix='/storage/v1/object/public/business-public/';
-  const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
+  const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer|gallery)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
   const origin=SB_URL.replace(/\/+$/,'');
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return origin+raw;
@@ -4269,6 +4273,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
+    ${customerBusinessGalleryMarkupV418(business)}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
@@ -4336,6 +4341,42 @@ function customerSectorEmojiV417(value){
   const entry=INDUSTRIES[key]
     ||Object.values(INDUSTRIES).find(item=>String(item.label||'').toLowerCase()===key);
   return entry?.em||'';
+}
+/* nestly_v418 (owner, photo 10: "i want to add another segment in customer app ... upload menu or
+   other gallery photos" and "add biz social media links"). The segment those two marks asked for.
+   Both come off customer_get_business_summary — the read that already carries the name, logo,
+   industry and bio — so a business that has added neither renders nothing at all rather than an
+   empty heading promising a section it does not have.
+   Photos use the same 16:9 crop the offer cards were unified to in v417: one shape, so a menu
+   board and a room photo sit in a row instead of stepping up and down. Tapping one opens it whole,
+   which is the same bargain v417 struck — framed in the list, complete when you open it. */
+const CUSTOMER_SOCIAL_LABELS_V418=Object.freeze({
+  website:'Website',instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',
+  whatsapp:'WhatsApp',youtube:'YouTube',telegram:'Telegram',xiaohongshu:'Xiaohongshu'
+});
+function customerBusinessGalleryMarkupV418(business={}){
+  const photos=(Array.isArray(business.gallery)?business.gallery:[])
+    .map(item=>({url:customerMediaUrlV95(item?.image_ref),caption:String(item?.caption||'').trim()}))
+    .filter(item=>item.url);
+  const links=(Array.isArray(business.social_links)?business.social_links:[])
+    .map(item=>({platform:String(item?.platform||''),url:String(item?.url||'').trim()}))
+    /* https only, mirroring the table CHECK. A payload that somehow carried anything else is not
+       rendered as a tappable link on a customer's phone. */
+    .filter(item=>CUSTOMER_SOCIAL_LABELS_V418[item.platform]&&/^https:\/\/\S+$/i.test(item.url));
+  if(!photos.length&&!links.length)return '';
+  return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(business.name||'This business')}</h2>
+      <p class="muted small">Photos and where to find them.</p></div>
+    ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
+      ${photos.map((item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}" data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
+        <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
+        ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
+      </button>`).join('')}
+    </div>`:''}
+    ${links.length?`<div class="customer-business-links-v418">
+      ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${CUI.icon('forward',{size:16})}<span>${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span></a>`).join('')}
+    </div>`:''}
+  </section>`;
 }
 function customerBusinessTaglineV385(business={}){
   const own=String(business.industry_label||'').trim();
@@ -5376,6 +5417,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   savedNotLive:Object.freeze({en:'Saved, but not yet live — {reason}','zh-CN':'已保存，但尚未上线 — {reason}',ms:'Disimpan, tetapi belum disiarkan — {reason}'}),
   /* nestly_v416: the stamp card's length, confirmed after business_set_stamp_card_length_v414. */
   stampCardLength:Object.freeze({en:'Card is now {stamps} stamps','zh-CN':'集章卡现在是 {stamps} 个印章',ms:'Kad kini {stamps} setem'}),
+  /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
+  linkNeedsHttps:Object.freeze({en:'The {platform} link must start with https://','zh-CN':'{platform} 链接必须以 https:// 开头',ms:'Pautan {platform} mesti bermula dengan https://'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -5534,7 +5577,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength',
+  'savedNotLive','stampCardLength','linkNeedsHttps',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',

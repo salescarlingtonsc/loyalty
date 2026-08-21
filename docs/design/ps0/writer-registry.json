@@ -2201,6 +2201,30 @@
       "call_site_finding": "none - the nestly_v416 grid editor is the only caller (the length stepper, the grid's '+' cell and the stranded-gift fix). Bounded 1..100 server-side, and a length that would put a live gift past the end of the card is refused server-side WITH THE GIFT NAMED, which the UI shows verbatim rather than replacing."
     },
     {
+      "id": "browser.rpc:app/app.js:business_set_gallery_v418",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_set_gallery_v418",
+      "latest_file": "20260821000009_nestly_v418_business_gallery_and_links.sql",
+      "resolves_to": "business_set_gallery_v418/2 (owner-only via app.is_salon_owner; nestly_v418). Replace-set: the stored gallery becomes the list passed, capped at 12. Every image_ref must be a business-public storage URL under THIS business's own /gallery/ folder, checked server-side - without that an owner could point a row at another firm's object and the customer app would render it.",
+      "call_site_finding": "none - the Business Profile editor is the only caller. Captions are read from the DOM at save time, so a photo upload landing mid-edit cannot discard a typed caption. audit_log'd."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_set_social_links_v418",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_set_social_links_v418",
+      "latest_file": "20260821000009_nestly_v418_business_gallery_and_links.sql",
+      "resolves_to": "business_set_social_links_v418/2 (owner-only via app.is_salon_owner; nestly_v418). Replace-set over public.business_social_links_v418. Platform is restricted to the eight the customer app can draw and the url must be https, both by table CHECK rather than by a second hand-written copy of the rule in the function.",
+      "call_site_finding": "none - a blank url drops the row rather than refusing the save, so clearing one field does not block the others. audit_log'd."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_get_profile_extras_v418",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_get_profile_extras_v418",
+      "latest_file": "20260821000009_nestly_v418_business_gallery_and_links.sql",
+      "resolves_to": "business_get_profile_extras_v418/1 (read-only; owner or dashboard-read staff). Returns the gallery and links the Business Profile page edits, in one round trip.",
+      "call_site_finding": "none - read-only, no tenant data beyond the profile the caller may already read."
+    },
+    {
       "id": "browser.rpc:app/app.js:business_update_tier_v331",
       "surface": "browser_rpc_binding",
       "rpc": "business_update_tier_v331",

@@ -2212,6 +2212,12 @@
       "version": "20260821000008",
       "name": "nestly_v417_customer_bio",
       "sourcePath": "db/migrations/20260821_nestly_v417_customer_bio.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000009",
+      "name": "nestly_v418_business_gallery_and_links",
+      "sourcePath": "db/migrations/20260821_nestly_v418_business_gallery_and_links.sql"
     }
   ]
 }

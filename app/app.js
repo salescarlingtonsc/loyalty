@@ -5118,11 +5118,15 @@ function ct(key,vars={}){
   for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
   return value;
 }
+/* nestly_v418: 'gallery' joins the kinds. This whitelist and app.v95_storage_path_owned's are the
+   SAME list in two places — the guard decides what may be uploaded, this decides what may be
+   rendered — so a kind added to one and not the other is either an upload nobody can see or an
+   image nobody could have written. They are changed together, and v418's test asserts both. */
 function customerMediaUrlV95(value){
   const raw=String(value||'').trim();
   if(!raw)return '';
   const publicPrefix='/storage/v1/object/public/business-public/';
-  const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
+  const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer|gallery)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
   const origin=SB_URL.replace(/\/+$/,'');
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return origin+raw;
@@ -9500,6 +9504,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
+    ${customerBusinessGalleryMarkupV418(business)}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
       ${programmeStackV310(programmeCapabilities)
@@ -9719,6 +9724,66 @@ function customerSectorEmojiV417(value){
   const entry=INDUSTRIES[key]
     ||Object.values(INDUSTRIES).find(item=>String(item.label||'').toLowerCase()===key);
   return entry?.em||'';
+}
+/* nestly_v418 (owner, photo 10: "i want to add another segment in customer app ... upload menu or
+   other gallery photos" and "add biz social media links"). The segment those two marks asked for.
+   Both come off customer_get_business_summary — the read that already carries the name, logo,
+   industry and bio — so a business that has added neither renders nothing at all rather than an
+   empty heading promising a section it does not have.
+   Photos use the same 16:9 crop the offer cards were unified to in v417: one shape, so a menu
+   board and a room photo sit in a row instead of stepping up and down. Tapping one opens it whole,
+   which is the same bargain v417 struck — framed in the list, complete when you open it. */
+const CUSTOMER_SOCIAL_LABELS_V418=Object.freeze({
+  website:'Website',instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',
+  whatsapp:'WhatsApp',youtube:'YouTube',telegram:'Telegram',xiaohongshu:'Xiaohongshu'
+});
+/* Tapping a gallery photo shows it whole. Same bargain v417 struck for offer cards: framed in the
+   list so the row reads evenly, complete when you open it. A plain dialog rather than a new
+   viewer — one image, a close button, and the caption if there is one. */
+function openCustomerGalleryPhotoV418(url,caption){
+  if(!url)return;
+  document.getElementById('customerGalleryPhotoV418')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerGalleryPhotoV418" role="dialog" aria-modal="true" aria-label="${esc(caption||'Photo')}" tabindex="-1">
+    <div class="modal-card" style="max-width:min(92vw,560px)">
+      <div class="row"><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerGalleryPhotoCloseV418" aria-label="Close photo">${CUI.icon('close',{size:20})}</button></div>
+      <img src="${esc(url)}" alt="${esc(caption||'')}" style="display:block;width:100%;height:auto;max-height:74vh;object-fit:contain;border-radius:14px">
+      ${caption?`<p class="muted small" style="margin-top:10px" data-merchant-content>${esc(caption)}</p>`:''}
+    </div></div>`);
+  const dialog=document.getElementById('customerGalleryPhotoV418');
+  let deactivate;
+  const close=()=>deactivate?deactivate():dialog.remove();
+  deactivate=CUI.activateDialog(dialog,{onClose:()=>dialog.remove(),initialFocus:'#customerGalleryPhotoCloseV418'});
+  document.getElementById('customerGalleryPhotoCloseV418').onclick=close;
+}
+function wireCustomerGalleryV418(root){
+  (root||document).querySelectorAll('[data-customer-gallery-v418]').forEach(cell=>cell.onclick=()=>{
+    const image=cell.querySelector('img');
+    openCustomerGalleryPhotoV418(image?.getAttribute('src')||'',image?.getAttribute('alt')||'');
+  });
+}
+function customerBusinessGalleryMarkupV418(business={}){
+  const photos=(Array.isArray(business.gallery)?business.gallery:[])
+    .map(item=>({url:customerMediaUrlV95(item?.image_ref),caption:String(item?.caption||'').trim()}))
+    .filter(item=>item.url);
+  const links=(Array.isArray(business.social_links)?business.social_links:[])
+    .map(item=>({platform:String(item?.platform||''),url:String(item?.url||'').trim()}))
+    /* https only, mirroring the table CHECK. A payload that somehow carried anything else is not
+       rendered as a tappable link on a customer's phone. */
+    .filter(item=>CUSTOMER_SOCIAL_LABELS_V418[item.platform]&&/^https:\/\/\S+$/i.test(item.url));
+  if(!photos.length&&!links.length)return '';
+  return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(business.name||'This business')}</h2>
+      <p class="muted small">Photos and where to find them.</p></div>
+    ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
+      ${photos.map((item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}" data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
+        <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
+        ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
+      </button>`).join('')}
+    </div>`:''}
+    ${links.length?`<div class="customer-business-links-v418">
+      ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${CUI.icon('forward',{size:16})}<span>${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span></a>`).join('')}
+    </div>`:''}
+  </section>`;
 }
 function customerBusinessTaglineV385(business={}){
   const own=String(business.industry_label||'').trim();
@@ -10646,6 +10711,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   wireCustomerProgrammeTabsV194($('walletBody'));
   wireCustomerBusinessShortcutsV347($('walletBody'));
   wireCustomerBusinessShortcutPageV348($('walletBody'));
+  /* nestly_v418: the gallery's photos open full size. Wired with the page's other controls so a
+     re-render rebinds them together. */
+  wireCustomerGalleryV418($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
@@ -14543,6 +14611,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   savedNotLive:Object.freeze({en:'Saved, but not yet live — {reason}','zh-CN':'已保存，但尚未上线 — {reason}',ms:'Disimpan, tetapi belum disiarkan — {reason}'}),
   /* nestly_v416: the stamp card's length, confirmed after business_set_stamp_card_length_v414. */
   stampCardLength:Object.freeze({en:'Card is now {stamps} stamps','zh-CN':'集章卡现在是 {stamps} 个印章',ms:'Kad kini {stamps} setem'}),
+  /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
+  linkNeedsHttps:Object.freeze({en:'The {platform} link must start with https://','zh-CN':'{platform} 链接必须以 https:// 开头',ms:'Pautan {platform} mesti bermula dengan https://'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -14701,7 +14771,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength',
+  'savedNotLive','stampCardLength','linkNeedsHttps',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -42582,6 +42652,167 @@ async function loadBranchContactCardV325(){
 /* V325 (owner-authorized exception #3). Buffer times are per-service, so a whole services list
    does not belong on a business-profile-style settings screen — a pointer card, matching how
    this same page already points at Branches, is enough. */
+/* ===================== nestly_v418 — GALLERY AND LINKS ON THE BUSINESS PROFILE ================
+   Owner, photo 10, drawn beside Save Profile:
+     "1. i want to add another segment in customer app, which is editable here — i want to be able
+         to upload menu or other gallery photos to business profile
+      2. add biz social media links"
+   The one item in that batch that is a FEATURE rather than a correction. Built on what already
+   exists rather than beside it: the same storage bucket and path grammar as every other business
+   image, the same owner gate as the logo, and the customer sees it through the read that already
+   carries the name, logo, industry and bio.
+   Both editors are REPLACE-SET — the list on screen becomes the list in the database — so there is
+   no add/remove protocol to keep in step and pressing Save twice is harmless. */
+const GROW_GALLERY_MAX_V418=12;
+/* Only the platforms the customer app can actually draw an icon for. A free-text platform is a row
+   that renders as nothing, and the server refuses one anyway (business_social_links_v418_platform_check),
+   so offering it here would be inviting an error. */
+const BUSINESS_SOCIAL_PLATFORMS_V418=Object.freeze([
+  ['website','Website'],['instagram','Instagram'],['facebook','Facebook'],['tiktok','TikTok'],
+  ['whatsapp','WhatsApp'],['youtube','YouTube'],['telegram','Telegram'],['xiaohongshu','Xiaohongshu']
+]);
+let businessProfileExtrasV418=null;   /* {gallery:[...], social_links:[...]} once read */
+let businessProfileExtrasBusyV418=false;
+let businessProfileExtrasErrorV418='';
+async function uploadGalleryPhotoV418(file){
+  if(!S.biz?.id)throw new Error('Business context is required.');
+  if(!file)throw new Error('Choose a photo first.');
+  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
+  if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
+  if(file.size>10*1024*1024)throw new Error('Use an image under 10 MB.');
+  /* Same grammar app.v95_storage_path_owned enforces — the folder name is what makes the storage
+     policy allow the write, so it is not a naming preference. */
+  const objectPath=`${S.biz.id}/gallery/${crypto.randomUUID()}.${ext}`;
+  const {error}=await sb.storage.from('business-public')
+    .upload(objectPath,file,{contentType:file.type,upsert:false});
+  if(error)throw new Error(error.message||'The photo could not be uploaded.');
+  return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
+}
+function businessProfileExtrasCardHtmlV418(){
+  return `<div class="card" style="margin-top:16px" data-profile-extras-v418><b>Photos and links</b>
+    <p class="muted small" style="margin:6px 0 10px">Shown to customers on your profile. Add your menu, your room, your work — and the places customers can find you.</p>
+    <div id="ciProfileExtrasV418">${CUI.loadingState({title:'Loading photos and links',iconName:'settings'})}</div>
+  </div>`;
+}
+function businessProfileExtrasBodyHtmlV418(){
+  const gallery=Array.isArray(businessProfileExtrasV418?.gallery)?businessProfileExtrasV418.gallery:[];
+  const links=Array.isArray(businessProfileExtrasV418?.social_links)?businessProfileExtrasV418.social_links:[];
+  const linkFor=platform=>links.find(item=>String(item.platform)===platform)?.url||'';
+  const busy=businessProfileExtrasBusyV418?' disabled':'';
+  return `${businessProfileExtrasErrorV418?`<p class="notice warn small" style="margin-bottom:10px">${esc(businessProfileExtrasErrorV418)}</p>`:''}
+    <p class="muted small" style="margin:0 0 8px"><b>Gallery</b> — up to ${GROW_GALLERY_MAX_V418} photos${gallery.length?` · ${gallery.length} added`:''}</p>
+    ${gallery.length?`<div class="profile-gallery-grid-v418">
+      ${gallery.map((item,index)=>{
+        const url=customerMediaUrlV95(item.image_ref);
+        return `<div class="profile-gallery-item-v418">
+          ${url?`<img src="${esc(url)}" alt="${esc(item.caption||'')}" loading="lazy">`:'<span class="muted small">Photo unavailable</span>'}
+          <input class="profile-gallery-caption-v418" data-gallery-caption-v418="${index}" value="${esc(item.caption||'')}" maxlength="140" placeholder="Caption (optional)"${busy}>
+          <div class="profile-gallery-actions-v418">
+            <button type="button" class="btn ghost sm" data-gallery-move-v418="${index}" data-gallery-dir-v418="-1" data-workspace-i18n aria-label="Move photo ${index+1} earlier"${index===0?' disabled':''}${busy}>↑</button>
+            <button type="button" class="btn ghost sm" data-gallery-move-v418="${index}" data-gallery-dir-v418="1" data-workspace-i18n aria-label="Move photo ${index+1} later"${index===gallery.length-1?' disabled':''}${busy}>↓</button>
+            <span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-gallery-remove-v418="${index}" data-workspace-i18n aria-label="Remove photo ${index+1}"${busy}>Remove</button>
+          </div>
+        </div>`;}).join('')}
+    </div>`:'<p class="muted small" style="margin:0 0 10px">No photos yet.</p>'}
+    ${gallery.length<GROW_GALLERY_MAX_V418?`<label class="btn ghost sm service-photo-uploader-v158" style="margin-top:8px">Add photo<input type="file" accept="image/png,image/jpeg,image/webp" id="ciGalleryAddV418" aria-label="Add a gallery photo"${busy}></label>`
+      :`<p class="muted small" style="margin-top:8px">That is the maximum of ${GROW_GALLERY_MAX_V418} photos. Remove one to add another.</p>`}
+    <p class="muted small" style="margin:16px 0 8px"><b>Links</b> — leave a field blank to remove it</p>
+    <div class="profile-links-grid-v418">
+      ${BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform,label])=>`<div>
+        <label class="muted small" for="ciLink_${esc(platform)}_v418">${esc(label)}</label>
+        <input id="ciLink_${esc(platform)}_v418" data-social-link-v418="${esc(platform)}" inputmode="url" placeholder="https://" value="${esc(linkFor(platform))}"${busy}>
+      </div>`).join('')}
+    </div>
+    <div class="row" style="margin-top:14px"><button type="button" class="btn" id="ciExtrasSaveV418"${busy}>Save photos and links</button></div>`;
+}
+function renderBusinessProfileExtrasV418(){
+  const host=$('ciProfileExtrasV418');
+  if(!host)return;
+  host.innerHTML=businessProfileExtrasBodyHtmlV418();
+  wireBusinessProfileExtrasV418();
+}
+async function loadBusinessProfileExtrasV418(){
+  const host=$('ciProfileExtrasV418');
+  if(!host)return;
+  const {data,error}=await sb.rpc('business_get_profile_extras_v418',{p_business:S.biz.id});
+  if(!host.isConnected)return;
+  if(error){host.innerHTML=`<p class="err small">${esc(ownerErrorText(error))}</p>`;return}
+  businessProfileExtrasV418={gallery:data?.gallery||[],social_links:data?.social_links||[]};
+  renderBusinessProfileExtrasV418();
+}
+/* Captions and urls are read from the DOM at save time rather than mirrored into state on every
+   keystroke: the list is short, and a keystroke-driven re-render is what makes a typed value
+   disappear when a photo upload lands mid-edit. */
+function readBusinessProfileExtrasFormV418(){
+  const host=$('ciProfileExtrasV418');
+  if(!host)return null;
+  const gallery=(businessProfileExtrasV418?.gallery||[]).map((item,index)=>({
+    image_ref:item.image_ref,
+    caption:String(host.querySelector(`[data-gallery-caption-v418="${index}"]`)?.value||'').trim()
+  }));
+  const links=BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform])=>({
+    platform,url:String(host.querySelector(`[data-social-link-v418="${platform}"]`)?.value||'').trim()
+  })).filter(item=>item.url);
+  return {gallery,links};
+}
+function wireBusinessProfileExtrasV418(){
+  const host=$('ciProfileExtrasV418');
+  if(!host)return;
+  const capture=()=>{
+    const form=readBusinessProfileExtrasFormV418();
+    if(form&&businessProfileExtrasV418)businessProfileExtrasV418.gallery=
+      (businessProfileExtrasV418.gallery||[]).map((item,index)=>({...item,caption:form.gallery[index]?.caption||''}));
+  };
+  host.querySelectorAll('[data-gallery-move-v418]').forEach(button=>button.onclick=()=>{
+    capture();
+    const index=Number(button.dataset.galleryMoveV418),dir=Number(button.dataset.galleryDirV418);
+    const list=businessProfileExtrasV418?.gallery||[];
+    const next=index+dir;
+    if(next<0||next>=list.length)return;
+    [list[index],list[next]]=[list[next],list[index]];
+    renderBusinessProfileExtrasV418();
+  });
+  host.querySelectorAll('[data-gallery-remove-v418]').forEach(button=>button.onclick=()=>{
+    capture();
+    const index=Number(button.dataset.galleryRemoveV418);
+    (businessProfileExtrasV418?.gallery||[]).splice(index,1);
+    renderBusinessProfileExtrasV418();
+  });
+  const add=$('ciGalleryAddV418');
+  if(add)add.onchange=async()=>{
+    const file=add.files?.[0];
+    if(!file||businessProfileExtrasBusyV418)return;
+    capture();
+    businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();
+    try{
+      const imageRef=await uploadGalleryPhotoV418(file);
+      (businessProfileExtrasV418.gallery=businessProfileExtrasV418.gallery||[]).push({image_ref:imageRef,caption:''});
+    }catch(error){businessProfileExtrasErrorV418=error?.message||'The photo could not be uploaded.';}
+    businessProfileExtrasBusyV418=false;renderBusinessProfileExtrasV418();
+  };
+  const save=$('ciExtrasSaveV418');
+  if(save)save.onclick=async()=>{
+    if(businessProfileExtrasBusyV418)return;
+    const form=readBusinessProfileExtrasFormV418();
+    if(!form)return;
+    const bad=form.links.find(item=>!/^https:\/\/\S{3,}$/i.test(item.url));
+    if(bad)return toast(workspaceTemplateTextV97('linkNeedsHttps',{platform:bad.platform}));
+    businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();
+    /* Two writers, awaited together: they are independent tables and neither depends on the
+       other's result, so one round trip's latency instead of two. A failure in either is reported
+       and neither is retried silently. */
+    const [galleryResult,linkResult]=await Promise.all([
+      sb.rpc('business_set_gallery_v418',{p_business:S.biz.id,p_items:form.gallery}),
+      sb.rpc('business_set_social_links_v418',{p_business:S.biz.id,p_links:form.links})
+    ]);
+    businessProfileExtrasBusyV418=false;
+    const failure=galleryResult.error||linkResult.error;
+    if(failure){businessProfileExtrasErrorV418=ownerErrorText(failure);return renderBusinessProfileExtrasV418();}
+    toast('Photos and links saved');
+    loadBusinessProfileExtrasV418();
+  };
+}
 function serviceBufferPointerCardHtmlV325(){
   return `<div class="card" style="margin-top:16px"><b>Service buffer times</b>
     <p class="muted small" style="margin:6px 0 0">Buffer before/after each appointment is set per service. Open <a href="#/services">Services</a>, edit a service, and set its buffer times there.</p></div>`;
@@ -43111,6 +43342,10 @@ async function customerInterfacePageV243(hashParam){
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
     ${workspaceBrandPanelHtmlV259()}
+    ${/* nestly_v418 (owner, photo 10): the new segment sits with the rest of the profile, above
+         branch contact details — photos and links are what a customer reads about the business,
+         branch phone numbers are how they reach one. */''}
+    ${businessProfileExtrasCardHtmlV418()}
     ${businessProfileBranchCardHtmlV325()}`))}
     ${/* V368 (owner markup, photo 4: the whole Live preview column crossed out with "this one no
          need here"). The phone frame is gone from Appointment Setting; step 3 IS the preview and
@@ -43164,6 +43399,9 @@ async function customerInterfacePageV243(hashParam){
      the order the panels are rendered in above. */
   wireWorkspaceBrandV259();
   loadBranchContactCardV325();
+  /* nestly_v418: same shape as the branch card above — the section renders its loading state with
+     the page, then fills itself. */
+  loadBusinessProfileExtrasV418();
   wireBookingRulesV325(()=>customerInterfaceHostV288.isConnected&&M()===customerInterfaceHostV288);
   loadCustomerProgrammePresentationEditorV95();
   /* V296: a re-render triggered by adding or retiring a customer field must come back to the

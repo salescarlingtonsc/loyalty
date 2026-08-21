@@ -4059,6 +4059,30 @@ function customerProgrammeHoldingsMarkupV183(card){
   if(sessions>0)chips.push(`<span class="customer-programme-holding"><b>${sessions}</b> ${esc(sessions===1?'session left':'sessions left')}</span>`);
   return chips.length?`<div class="customer-programme-holdings">${chips.join('')}</div>`:'';
 }
+/* Tapping a gallery photo shows it whole. Same bargain v417 struck for offer cards: framed in the
+   list so the row reads evenly, complete when you open it. A plain dialog rather than a new
+   viewer — one image, a close button, and the caption if there is one. */
+function openCustomerGalleryPhotoV418(url,caption){
+  if(!url)return;
+  document.getElementById('customerGalleryPhotoV418')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerGalleryPhotoV418" role="dialog" aria-modal="true" aria-label="${esc(caption||'Photo')}" tabindex="-1">
+    <div class="modal-card" style="max-width:min(92vw,560px)">
+      <div class="row"><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerGalleryPhotoCloseV418" aria-label="Close photo">${CUI.icon('close',{size:20})}</button></div>
+      <img src="${esc(url)}" alt="${esc(caption||'')}" style="display:block;width:100%;height:auto;max-height:74vh;object-fit:contain;border-radius:14px">
+      ${caption?`<p class="muted small" style="margin-top:10px" data-merchant-content>${esc(caption)}</p>`:''}
+    </div></div>`);
+  const dialog=document.getElementById('customerGalleryPhotoV418');
+  let deactivate;
+  const close=()=>deactivate?deactivate():dialog.remove();
+  deactivate=CUI.activateDialog(dialog,{onClose:()=>dialog.remove(),initialFocus:'#customerGalleryPhotoCloseV418'});
+  document.getElementById('customerGalleryPhotoCloseV418').onclick=close;
+}
+function wireCustomerGalleryV418(root){
+  (root||document).querySelectorAll('[data-customer-gallery-v418]').forEach(cell=>cell.onclick=()=>{
+    const image=cell.querySelector('img');
+    openCustomerGalleryPhotoV418(image?.getAttribute('src')||'',image?.getAttribute('alt')||'');
+  });
+}
 function customerProgrammeDirectoryMetricV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
     packages=card?.packages||{},membership=card?.membership||{};
@@ -4923,6 +4947,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   wireCustomerProgrammeTabsV194($('walletBody'));
   wireCustomerBusinessShortcutsV347($('walletBody'));
   wireCustomerBusinessShortcutPageV348($('walletBody'));
+  /* nestly_v418: the gallery's photos open full size. Wired with the page's other controls so a
+     re-render rebinds them together. */
+  wireCustomerGalleryV418($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
