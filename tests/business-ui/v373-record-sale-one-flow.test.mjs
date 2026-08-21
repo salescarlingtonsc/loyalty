@@ -166,7 +166,10 @@ test('V374 each tab carries only its own contents, and the counts come from the 
   const packages = section('function tillPackagesPanelHtmlV374(){', 'function tillBenefitsPanelHtmlV374(rewards){');
   const benefits = section('function tillBenefitsPanelHtmlV374(rewards){', 'function tillStickyCartHtmlV373(){');
   // Items: services, products, and the door to the rest. No packages, no benefits.
-  assert.match(items, /tillQuickGroupsHtmlV373\(shownServices,shownProducts\)/);
+  /* nestly_v411: the Items tab's quick grid gained a third group — bundles, which were sellable
+     since v187 but only ever rendered inside the More items sheet. Still the SAME one call; the
+     tab boundary this test guards is unchanged. */
+  assert.match(items, /tillQuickGroupsHtmlV373\(shownServices,shownProducts,shownBundles\)/);
   assert.doesNotMatch(items, /tillOwnedPackagesBlockV373\(|tillRewardsBlockV373\(/);
   // Packages: the customer's own sessions plus ONE action that sells another, which opens the
   // sheet already on its tab rather than making the cashier find it.

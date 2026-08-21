@@ -14,20 +14,26 @@ const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 /* V373 moved the catalogue into a quick grid plus an Add item sheet. The rule V216 established
    survives unchanged and is still executed here: each group names itself, and a group with
    nothing in it prints no heading. Only the function that applies it moved. */
-const groups = app.slice(app.indexOf('function tillQuickGroupsHtmlV373(shownServices,shownProducts){'),
+const groups = app.slice(app.indexOf('function tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles=[]){'),
   app.indexOf('/* V211/V257: package plans on sale.'));
 
-/* Renders the real quick-grid branch for a given catalogue shape. */
-function render(services, products) {
+/* Renders the real quick-grid branch for a given catalogue shape.
+   nestly_v411 added a third group. The V216 rule it must obey is unchanged and is what this
+   suite exists to hold: each group names itself, and a group with nothing in it prints no
+   heading. */
+function render(services, products, bundles = []) {
   const build = new Function(
-    'tillGroupHeadingV216', 'tillCatalogueTilesV373', 'shownServices', 'shownProducts',
+    'tillGroupHeadingV216', 'tillCatalogueTilesV373', 'tillBundleTilesV373',
+    'shownServices', 'shownProducts', 'shownBundles',
     groups.slice(groups.indexOf('return `'), groups.lastIndexOf('`;') + 2),
   );
   const heading = (label, count) => (count ? `<b class="small">${label}</b>` : '');
   const tiles = entries => (entries.length ? (entries[0].type === 'service' ? '[SVC]' : '[PROD]') : '');
-  return build(heading, tiles,
+  const bundleTiles = list => (list.length ? '[BUNDLE]' : '');
+  return build(heading, tiles, bundleTiles,
     services.map(item => ({ type: 'service', item })),
-    products.map(item => ({ type: 'product', item })));
+    products.map(item => ({ type: 'product', item })),
+    bundles);
 }
 
 /* The empty-catalogue case is decided by the caller, not by the group builder: with nothing to
@@ -39,6 +45,23 @@ test('V216 a products-only business gets a Products heading and no empty Service
   assert.ok(!cafe.includes('>Services<'), 'must not print a Services heading with no services');
   assert.ok(cafe.includes('>Products<'), 'products must be labelled');
   assert.ok(cafe.includes('[PROD]'), 'the product buttons must still render');
+});
+
+/* nestly_v411 (owner photo 2: "record sale is still missing bundle item"). A bundle was sellable
+   since v187 but rendered ONLY inside the More items sheet, on the Services tab, below the whole
+   services list — invisible on the main Record sale screen and unreachable from the search beside
+   it. It is a third group on the grid now, and it obeys the same V216 rule as the other two. */
+test('v411 bundles get their own labelled group on the quick grid', () => {
+  const withBundles = render([{ id: 's1' }], [], [{ id: 'b1', name: 'Party Pack' }]);
+  assert.ok(withBundles.includes('>Bundles<'), 'bundles must be labelled');
+  assert.ok(withBundles.includes('[BUNDLE]'), 'the bundle buttons must render');
+  assert.ok(withBundles.includes('>Services<'), 'and services are still labelled beside them');
+});
+
+test('v411 a business with no bundles prints no empty Bundles heading', () => {
+  const noBundles = render([{ id: 's1' }], [{ id: 'p1' }]);
+  assert.ok(!noBundles.includes('>Bundles<'), 'the V216 rule holds for the new group too');
+  assert.ok(!noBundles.includes('[BUNDLE]'));
 });
 
 test('V216 a services-only business is unchanged', () => {

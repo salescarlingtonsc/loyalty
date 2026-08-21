@@ -6874,8 +6874,17 @@ async function tillPage(){
   function tillGroupHeadingV216(label,count){
     return count?`<b class="small" style="display:block;margin-top:12px">${label}</b>`:'';
   }
-  function tillQuickGroupsHtmlV373(shownServices,shownProducts){
-    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}`;
+  /* nestly_v411 (owner photo 2: "record sale is still missing bundle item"). A bundle was
+     authorable, priced and sellable — tillBundleTilesV373 and the data-add-bundle handler have
+     existed since v187 — but it rendered in exactly ONE place: inside the More items sheet, on the
+     Services tab, below the whole services list. On the main Record sale screen a bundle was
+     invisible, and the search box beside the grid could not find one either, because the entries
+     it searches were built from services and products only. It is a third group on the grid now,
+     with the same heading treatment services and products get, and it disappears the same way
+     when the firm has no bundles. Same tiles and the same data-add-bundle attribute, so the
+     existing add handler owns it — no second way to put a bundle in the cart. */
+  function tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles=[]){
+    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
   }
   /* V211/V257: package plans on sale. Each is an EXTRA line with its own idempotency key, so the
      badge counts lines, not quantity. */
@@ -7266,13 +7275,24 @@ async function tillPage(){
     const matchesV392=entry=>!queryV392||String(entry.item.name||'').toLowerCase().includes(queryV392);
     const allServicesV392=entries.filter(entry=>entry.type==='service');
     const allProductsV392=entries.filter(entry=>entry.type==='product');
+    /* nestly_v411: bundles join the grid and the search. They are NOT put through rankV392 —
+       that ranks by this customer's own sale_items history, and a bundle is expanded into its
+       member services on the way into the cart, so a bundle id never appears in that history and
+       every bundle would rank last for ever. They are ordered by name (the order the read asked
+       for) and capped by the same per-kind ceiling the other two groups use. */
+    const allBundlesV411=(catalog.bundles||[]);
     const pickV392=(list,ids)=>queryV392
       ?list.filter(matchesV392)
       :rankV392(list,ids).slice(0,TILL_RECENT_PER_KIND_V392);
     const shownServices=pickV392(allServicesV392,catalog.recentServiceIdsV392);
     const shownProducts=pickV392(allProductsV392,catalog.recentProductIdsV392);
+    const shownBundles=queryV392
+      ?allBundlesV411.filter(bundle=>String(bundle.name||'').toLowerCase().includes(queryV392))
+      :allBundlesV411.slice(0,TILL_RECENT_PER_KIND_V392);
     const shown=[...shownServices,...shownProducts];
-    const hiddenCount=entries.length-shown.length;
+    /* The hint counts what is genuinely still behind More items, bundles included — it under-read
+       by every bundle the firm had before they were on this grid at all. */
+    const hiddenCount=(entries.length+allBundlesV411.length)-(shown.length+shownBundles.length);
     const usingHistoryV392=!queryV392&&((catalog.recentServiceIdsV392||[]).length>0||(catalog.recentProductIdsV392||[]).length>0);
     /* The More items tile is rendered even when this branch has no checkout catalogue at all: a
        firm that only sells prepaid packages still has something to add, and hiding the only door
@@ -7286,11 +7306,11 @@ async function tillPage(){
         are self-evident and the caption was competing with the question above it. The
         "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
       <div class="till-item-search-v392">
-        <label class="sr-only" for="tillItemSearchV392">Search services and products</label>
-        <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services and products" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
+        <label class="sr-only" for="tillItemSearchV392">Search services, products and bundles</label>
+        <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services, products and bundles" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
       </div>
       ${(queryV392&&!shown.length)?`<p class="muted small" style="margin:10px 0">Nothing in this branch's checkout catalogue matches “${esc(tillItemSearchV392)}”. Try More items, or type an amount below.</p>`:''}
-      ${tillQuickGroupsHtmlV373(shownServices,shownProducts)}
+      ${tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles)}
       <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>
       ${tillManualAmountRowHtmlV375()}`;
   }
