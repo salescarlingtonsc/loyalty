@@ -92,9 +92,26 @@ test('home and rewards cards keep points/stamps labels honest and compact',()=>{
   assert.match(app,/if\(tierLabel\)return 'points'/);
   assert.match(app,/customerProgrammeDirectoryMetricV346\(card\)/);
   assert.match(app,/customerHomeBusinessBalanceV345\(card\)/);
-  assert.match(app,/\$\{customerPointTotalV103\(balance\)\} \/\ \$\{customerPointTotalV103\(target\)\} stamps/);
-  assert.match(app,/\$\{customerPointTotalV103\(balance\)\} pts/);
-  assert.doesNotMatch(app,/customerPointTotalV103\(balance\)\} of \$\{customerPointTotalV103\(target\)\} stamps/);
+  /* nestly_v422 (owner photo 4, "13 / 13 stamps" ringed: "for stamps dont need show this"; photo 5,
+     the same figure on the home card: "don't write this"). Both helpers now return '' for a stamps
+     firm. The denominator was the reason: it came from ONE reward's cost, not the card's length, so
+     it disagreed with the card the customer opened — and the status line beside it ("1 reward
+     ready" / "2 stamps to go") already carried the fact. Points are untouched. */
+  const metricFn=app.slice(app.indexOf('function customerProgrammeDirectoryMetricV346'),
+    app.indexOf('function customerProgrammeDirectoryStatusV346'));
+  const homeFn=app.slice(app.indexOf('function customerHomeBusinessBalanceV345'),
+    app.indexOf('function customerHomeBusinessCardV345'));
+  for(const [name,fn] of [['directory metric',metricFn],['home balance',homeFn]]){
+    assert.match(fn,/if\(unit==='stamps'\)return ''/,`${name} prints nothing for stamps`);
+    assert.match(fn,/customerPointTotalV103\(balance\)\} pts/,`${name} still prints points`);
+    assert.doesNotMatch(fn.replace(/\/\*[\s\S]*?\*\//g,' '),/stamps`/,
+      `${name} has no stamps figure left to print`);
+  }
+  /* An empty figure must not leave an empty slot behind it. */
+  assert.match(app,/\$\{metric\?`<div class="customer-programme-card-balance"><b>/,
+    'the tile drops the balance box when there is no metric');
+  assert.match(app,/\$\{customerHomeBusinessBalanceV345\(card\)\?`<strong>/,
+    'and the home card drops its balance line');
   assert.match(indexHtml,/\.customer-programme-card-balance b\{[^}]*white-space:nowrap!important/s);
   assert.match(indexHtml,/\.customer-home-business-track-v343 \.customer-programme-card-balance b\{[^}]*font-size:10\.5px!important/s);
 });
@@ -146,8 +163,15 @@ test('compact customer pills and programme card metrics are optically centered',
 
 test('business detail address and call actions share the merchant header row',()=>{
   assert.match(indexHtml,/\/\* V365: business quick actions sit beside the merchant name to remove the extra row\. \*\//);
-  assert.match(indexHtml,/\.customer-business-header-v346\{grid-template-columns:28px minmax\(0,1fr\) minmax\(166px,184px\)!important;gap:8px!important;align-items:center!important;min-height:56px!important\}/);
-  assert.match(indexHtml,/\.customer-business-actions-v346\{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax\(0,1fr\) 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important\}/);
+  /* nestly_v422 (owner photo 8: a map pin drawn over the Locations chip, "remove this wording", and
+     "company bio has its own line"). Both marks were this track. A worded chip reserved 166–184px
+     for the actions column, which left the identity beside it ~148px at 390px — a 44px logo and
+     ~95px for the name, the sector and the bio, so "Cubbly SPA" truncated to "Cubbly …" and the
+     bio broke across two lines mid-phrase. Two icon buttons ask for what they need instead. */
+  assert.match(indexHtml,/\.customer-business-header-v346\{grid-template-columns:28px minmax\(0,1fr\) auto!important;gap:8px!important;align-items:center!important;min-height:56px!important\}/);
+  assert.match(indexHtml,/\.customer-business-actions-v346\{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:auto 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important\}/);
+  assert.match(indexHtml,/\.customer-business-actions-v346 \.customer-business-address-icon-v422\{width:34px!important;padding:0!important;justify-content:center!important\}/,
+    'the wordless chip is the same 34px square the Call button already is');
   assert.match(indexHtml,/\.customer-business-actions-v346 \.customer-business-address-v366\{justify-content:flex-start!important\}/);
   assert.match(indexHtml,/\.customer-business-actions-v346 \.customer-business-call-icon-v366 span\{display:none!important\}/);
   assert.match(indexHtml,/\.customer-business-profile-v346 \.customer-business-summary-v346\{margin-top:2px!important\}/);
@@ -157,7 +181,15 @@ test('business detail address and call actions share the merchant header row',()
      since v386 the full address is printed on its own line directly below it. The chip opens the
      company-details sheet, which lists every branch, so it says what it opens. The wide header
      still prints the address itself, and the full address stays as the chip's title. */
-  assert.match(app,/compactHeaderContactV366\?'Locations':String\(branch\.address\)/);
+  /* nestly_v422 reversed the v397 half of this: in the COMPACT header the chip carries no label at
+     all now. The WIDE header still prints the address itself — it has the room, and there the
+     address is the useful label. */
+  assert.match(app,/compactHeaderContactV366\?''\s*\n?\s*:\(branch\.address\?String\(branch\.address\):'Locations'\)/,
+    'no wording in the compact header; the wide header still prints the address');
+  assert.match(app,/rawAddressLabelV366\?`<span>\$\{esc\(rawAddressLabelV366\)\}<\/span>`:''/,
+    'and the empty label emits no empty span');
+  assert.match(app,/aria-label="\$\{esc\(compactHeaderContactV366\?`Locations — \$\{addressTitleV366\}`:addressTitleV366\)\}"/,
+    'a screen reader still gets both the purpose and the address');
   assert.doesNotMatch(app,/shortAddressLabelV366/,'the truncating helper is gone with it');
   assert.match(app,/title="\$\{esc\(addressTitleV366\)\}"/,'the real address survives as the title');
   assert.match(app,/compactHeaderContactV366\?'':`<span>Call<\/span>`/);

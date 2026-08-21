@@ -306,11 +306,15 @@ test('classic and catalog rewards share the v89 availability enum and produce tr
   assert.match(enumCopy,/ended:'Offer ended'/);
   assert.match(enumCopy,/limit_reached:'Claim limit reached'/);
   assert.match(enumCopy,/insufficient_balance:'More points needed'/);
-  assert.match(wallet,/const availability=\{\.\.\.CUSTOMER_REWARD_AVAILABILITY_COPY_V399\}/,
-    'the wallet reward list still reads that one map');
+  /* nestly_v422: the wallet reward LIST stopped reading this map — it now shows only rewards the
+     counter will honour, so it has no non-available status left to word. The map is still the one
+     source of these sentences for the surface that does describe an unclaimable reward: the hero
+     swipe pages (v399). Asserted there rather than dropped. */
+  assert.match(app,/return CUSTOMER_REWARD_AVAILABILITY_COPY_V399\[key\]\|\|'Not available right now'/,
+    'the hero swipe page still reads that one map');
   assert.doesNotMatch(wallet,/Ask the business to enable QR redemption|QR redemption is not enabled by this business/);
   assert.match(wallet,/actionsResult\.data\?\.redemption\?\.classic/);
-  assert.match(wallet,/customerRewardCanRedeem\(r,redemptionEnabled\)/);
+  assert.match(wallet,/customerRewardCanRedeem\(item,redemptionEnabled\)/);
   assert.match(wallet,/customerRedemptionIntentArgsV89/);
 
   const canRedeemSource=app.match(/function customerRewardCanRedeem\(reward,redemptionEnabled\)\{[\s\S]*?\n\}/)?.[0];

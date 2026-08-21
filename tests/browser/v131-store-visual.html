@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="fa7671763c5004d8a3b8831eed03dd30c8749a76163e471607fc24f6391561e2"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="5c4925fe1e5d53fcffe94097009a02370e2327f428326eb2971af394a8f4c268"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1767,9 +1767,6 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-stamps-level-col-v350{display:flex;flex-direction:column;gap:4px;min-width:0}
 .grow-stamps-static-v350{border:1px solid var(--control-border);border-radius:10px;padding:8px 10px;font-weight:600;overflow-wrap:anywhere}
 .grow-stamps-addlevel-v350{width:100%;margin-top:10px;padding:14px;border:1px dashed var(--control-border);border-radius:14px;background:transparent;color:var(--coral);font-weight:700;cursor:pointer;text-align:center}
-.grow-stamps-preview-card-v350{background:linear-gradient(180deg,#FFF3EC,#FFF9F5);border:1px solid #F2D5C0;border-radius:16px;padding:18px}
-.grow-stamps-preview-hero-v350{margin-top:14px;padding:16px;border-radius:14px;background:#fff}
-.grow-stamps-preview-hero-v350 p{margin-top:2px;color:var(--muted)}
 /* V356 (owner mockup, photo 1) — the Stamp Card page's own table head, inline row inputs, the
    rebuilt milestone preview and the whole-card summary row. */
 .grow-stamps-head-v356{display:grid;grid-template-columns:auto 1fr 1fr 1.4fr 1.6fr auto auto;gap:14px;
@@ -1794,14 +1791,12 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    the card the customer actually fills rather than only its two payout points. Same palette and
    the same 34px circle the V356 slot row used — this is the slot row grown a number and, on the
    stamps that pay out, a gift. */
-.grow-stamps-grid-v410{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 /* ---- nestly_v416: the stamp card, as the EDITOR ---------------------------------------------
    The owner struck out the Level/Stamps/Reward/Description/Photo table and drew the card: rows of
    numbered circles with a gift on the ones that pay out, and a "+" to carry on. This is that,
-   deliberately built on the SAME visual vocabulary as the read-only preview above
-   (.grow-stamps-cell-v410) so the owner is looking at the thing their customer will see. It is
-   bigger — 44px, the app's minimum tap target — because here every circle is pressable, and the
-   customer preview is not.
+   built on the app's stamp-circle vocabulary at 44px — the minimum tap target — because here
+   every circle is pressable. nestly_v422 removed the read-only preview that used to sit under
+   this grid (owner: "no need this preview"); this IS the picture of the customer's card now.
    Gift cells are given the brand colour and a raised gift glyph; a cell sitting PAST the card's
    enforced length is drawn as a warning rather than hidden, because that gift is unclaimable and
    the owner has to be able to find it. */
@@ -1809,6 +1804,16 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
+/* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
+   stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar
+   keeps the steppers on the same line at every width. */
+.grow-stamps-lenfield-v422{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto}
+.grow-stamps-leninput-v422{width:74px;min-height:36px;padding:6px 8px;border:1px solid var(--control-border);
+  border-radius:11px;background:#fff;color:var(--ink);font-family:inherit;font-size:16px;font-weight:700;
+  text-align:center;-moz-appearance:textfield}
+.grow-stamps-leninput-v422::-webkit-outer-spin-button,.grow-stamps-leninput-v422::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.grow-stamps-leninput-v422:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.grow-stamps-leninput-v422:disabled{opacity:.5}
 .grow-stamps-lenstep-v416{display:inline-flex;align-items:center;justify-content:center;
   width:36px;height:36px;flex:0 0 auto;border-radius:999px;border:1px solid var(--control-border);
   background:#fff;color:var(--ink);font-size:19px;line-height:1;font-family:inherit;cursor:pointer}
@@ -1833,15 +1838,6 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
   .grow-stamps-editgrid-v416{gap:12px 8px}
   .grow-stamps-editcell-v416{width:40px;height:40px}
 }
-.grow-stamps-cell-v410{position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:34px;height:34px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
-  color:#B08462;font-weight:700;font-size:13px;padding:0;font-family:inherit}
-.grow-stamps-cell-num-v410{line-height:1}
-/* A payout stamp is a button, so it gets the affordances of one. */
-.grow-stamps-cell-v410.is-gift-v410{border-color:var(--coral);color:var(--coral);cursor:pointer}
-.grow-stamps-cell-v410.is-gift-v410:hover{background:var(--tint)}
-.grow-stamps-cell-gift-v410{position:absolute;top:-14px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-.grow-stamps-grid-v410{padding-top:14px}
 
 /* nestly_v410 (owner photo 3: "add/edit bring to pop-up"). The shared Add/Edit gift form keeps its
    element and its place in the DOM — every handler binds by selector inside outerMain — and is
@@ -1854,16 +1850,33 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
      wrapping flex row in the responsive layer below it (measured: computed display is `flex`, which
      is why an earlier attempt at grid-template-columns changed nothing). In a dialog that width
      does not exist, so it becomes a plain column: one field per line, full width. Declared as flex
-     rather than grid so it wins whichever of the two the cascade has landed on. */
-  display:flex;flex-direction:column;align-items:stretch;gap:12px;border:0}
+     rather than grid so it wins whichever of the two the cascade has landed on.
+     nestly_v422 (owner photo 3, the whole dialog ringed: "please fix this misalignment").
+     flex-wrap:wrap came in from `.grow-setup-rewardlist-v301>li` and was never overridden here, so
+     `flex-direction:column` + `flex-wrap:wrap` + `max-height:760px` made this a MULTI-COLUMN wrap
+     container. Measured at 1366x1024 before the fix: content 705px tall against a 760px cap, the
+     Save/Cancel row wrapped into a second column at top:30 left:305 (which is why the buttons
+     appeared beside the title instead of under the form), and each wrapped column shrank to its
+     own content — 273px inside a 480px dialog, so no two fields ended at the same place.
+     nowrap is the whole fix for that: one column, every child the width of the dialog. */
+  display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;border:0}
 .grow-points-form-card-v343.grow-points-form-modal-v410>*{grid-column:1/-1;min-width:0}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
-   the width of the dialog, or the textarea reads as a different kind of field from the inputs. */
-.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;box-sizing:border-box}
+   the width of the dialog, or the textarea reads as a different kind of field from the inputs.
+   nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
+   for the INLINE card, where they sit side by side in a row; in the dialog they gave three fields
+   three different right edges under three left-aligned labels. And text-align comes off centre:
+   .grow-setup-input-v301 is centred because it was built as a fill-in-the-blank box inside a
+   sentence ("earn ( 1 ) point per $1"), but here every box has its own label above it, and a
+   centred value under a left-aligned label is exactly the misalignment in the photo. */
+.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;max-width:none;
+  box-sizing:border-box;text-align:left}
+/* line-height:2 belongs to the sentence form of this row; in the dialog it opened a ~19px gap
+   between a label and the field it names, so the label read as floating between two fields. */
+.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
 @media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
 @keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
-@media(max-width:520px){.grow-stamps-grid-v410{gap:8px}.grow-stamps-cell-v410{width:31px;height:31px;font-size:12px}}
 .grow-stamps-summary-v356{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px;padding:16px 18px;
   border:1px solid var(--hair);border-radius:16px;background:#fff}
 .grow-stamps-summary-icon-v356{width:46px;height:46px;min-width:46px;border-radius:14px;background:var(--tint);
@@ -3046,19 +3059,27 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    The CARD markup is unchanged — same fields, same data-customer-redeem binding, same
    availability copy. Only the frame changed, so nothing about claiming moved. */
 .wallet-rewards.customer-rewards-carousel-v337{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0;margin-top:8px;overflow:visible}
+/* nestly_v422: the narrow template names TWO rows, and the action sat in row 2 — so the name, the
+   cost and the description, which are auto-placed, landed in implicit rows 3 and below and the
+   button rendered ABOVE the reward it claims (measured on origin/main at 390px: action top 130,
+   name top 180). It was invisible until now because a card only carries that button when the
+   reward is claimable, and until v422 this list was mostly cards that were not. Now every card on
+   the Available tab has one. The action row is dropped from the template so the button
+   auto-places after the copy, where it belongs; the wide layout below is untouched and still puts
+   it on the row's own line. */
 .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{max-width:none;
-  display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-areas:'photo copy' 'action action';
+  display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-areas:'photo copy';
   gap:6px 12px;align-items:start;padding:13px 14px}
 .customer-rewards-carousel-v337 .customer-reward-photo-v340{grid-area:photo;width:64px;height:64px;aspect-ratio:auto;margin:0;border-radius:14px}
 .customer-rewards-carousel-v337 .customer-reward-card-head-v339{grid-area:copy;margin:0}
 .customer-rewards-carousel-v337 .wallet-reward>:not(.customer-reward-photo-v340):not(.customer-reward-card-head-v339):not(.wallet-reward-actions){grid-column:2}
-.customer-rewards-carousel-v337 .wallet-reward-actions{grid-area:action;margin-top:8px}
+.customer-rewards-carousel-v337 .wallet-reward-actions{grid-column:1/-1;margin-top:8px}
 .customer-rewards-carousel-v337 .wallet-reward-actions .btn{width:100%;justify-content:center;min-height:44px}
 @media(min-width:641px){
   /* Wider screens can put the action back on the row's own line rather than under it. */
   .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{
     grid-template-columns:64px minmax(0,1fr) auto;grid-template-areas:'photo copy action';align-items:center}
-  .customer-rewards-carousel-v337 .wallet-reward-actions{margin-top:0}
+  .customer-rewards-carousel-v337 .wallet-reward-actions{grid-area:action;margin-top:0}
   .customer-rewards-carousel-v337 .wallet-reward-actions .btn{width:auto}
 }
 /* v339 (owner mockup "photo 1") — collapsed profile header, the reward/offers swipe region, the
@@ -3075,6 +3096,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-compact-head-v339 .customer-programme-back-v340{position:absolute;left:0;top:0;margin:-10px 0 0 -6px}
 .customer-programme-back-v340:hover,.customer-programme-back-v340:focus-visible{background:var(--tint)}
 .customer-reward-offer-swipe-v339{margin:0 0 10px}
+/* nestly_v422 — the Available / History tabs on the customer's Rewards screen (owner photo 6).
+   Reuses .v150-segment, the segmented control the workspace already uses, so this is a position
+   and a little breathing room rather than a second tab style. */
+.customer-rewards-tabs-v422{margin:10px 0 12px}
+.customer-rewards-empty-v422{margin:6px 0 2px}
+/* A claimed reward is a record, not an offer: no brand halo, and the picture is dimmed so a
+   history card can never be mistaken for something still claimable. */
+.customer-reward-card-claimed-v422{opacity:.92}
+.customer-reward-card-claimed-v422 .customer-reward-photo-v340{filter:saturate(.55)}
+.customer-reward-card-claimed-v422 .customer-reward-card-head-v339 .pill{background:var(--tint);color:var(--muted)}
 .customer-reward-offer-track-v339{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px}
 /* nestly_v395 (owner photo 1: "scrollable to see next reward"). The hero is a scroll-snap track —
    the same mechanism the offers region above uses, so there is one swipe idiom on this surface,
@@ -3435,6 +3466,35 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-stamp-figure-v386 .customer-programme-stamp-ring{width:26px;height:26px;border-color:rgba(255,255,255,.55);color:#fff}
 .customer-business-stamp-figure-v386 .customer-programme-stamp-ring.is-filled{background:#fff;border-color:#fff;color:var(--peekaa-red)}
 .customer-business-stamp-figure-v386 .customer-programme-stamp-ring.is-goal{box-shadow:0 0 0 3px rgba(255,255,255,.28)}
+/* ===== nestly_v422 — the whole stamp card, inside the hero (owner photo 8) =====================
+   The owner redrew the red hero as the card itself: numbered slots wrapping over rows, a star on
+   each collected slot, a gift on each slot that pays out, and one line naming the next reward.
+   Slots are auto-fitted rather than a fixed 5 per row (which is what the v386 rings were) so a
+   card of any length wraps by itself; past 30 slots the cells step down a size rather than the
+   card hiding any of them — the owner's ruling, 2026-08-22. Everything is drawn in the hero's own
+   white-on-red palette, so no new colour token is introduced. */
+.customer-hero-stampcard-v422{position:relative;z-index:1}
+/* The top margin is clearance for the raised gift glyph on a first-row milestone — without it a
+   gift on stamp 1..8 sits on top of the STAMPS pill above. */
+.customer-hero-stamp-grid-v422{display:grid;grid-template-columns:repeat(auto-fit,28px);gap:15px 8px;
+  justify-content:start;margin:15px 0 0}
+.customer-hero-stamp-cell-v422{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:999px;border:2px dashed rgba(255,255,255,.55);
+  color:#fff;font-size:11px;font-weight:750;line-height:1}
+.customer-hero-stamp-cell-v422.is-filled{border-style:solid;border-color:#fff;background:#fff;color:var(--peekaa-red)}
+.customer-hero-stamp-cell-v422.is-gift{border-style:solid;box-shadow:0 0 0 3px rgba(255,255,255,.26)}
+/* The gift sits ABOVE its slot, the way it does in the workspace editor grid, so it marks the
+   stamp without covering the number or the star inside it. */
+.customer-hero-stamp-gift-v422{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  color:#fff;line-height:0}
+.customer-hero-stamp-num-v422{opacity:.85}
+.customer-hero-stamp-next-v422{margin:16px 0 0;font-weight:750;font-size:14px;line-height:1.25;color:#fff}
+.customer-hero-stamp-carried-v422{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.78)}
+.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-grid-v422{grid-template-columns:repeat(auto-fit,22px);gap:12px 6px}
+.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-cell-v422{width:22px;height:22px;font-size:9px;border-width:1.5px}
+.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-gift-v422{top:-11px}
+@media(prefers-reduced-motion:no-preference){.customer-hero-stamp-cell-v422{transition:background-color .18s var(--ease),border-color .18s var(--ease)}}
+
 .customer-business-balance-stamps-v386{font-size:26px!important}
 .customer-business-balance-stamps-v386 span{font-size:13px;opacity:.9}
 .customer-business-balance-tier-v386{font-size:38px!important}
@@ -3521,10 +3581,18 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-programme-category-grid .customer-programme-card-v95 .customer-programme-card-body{align-items:center!important}
 .customer-home-business-track-v343 .customer-programme-card-balance{justify-content:flex-start!important;gap:4px!important}
 /* V365: business quick actions sit beside the merchant name to remove the extra row. */
-.customer-business-header-v346{grid-template-columns:28px minmax(0,1fr) minmax(166px,184px)!important;gap:8px!important;align-items:center!important;min-height:56px!important}
+/* nestly_v422 (owner photo 8: "remove this wording" over the Locations chip, and "company bio has
+   its own line"). Both marks were this track. With a worded Locations chip the actions column was
+   reserved 166–184px, so at 390px the identity column measured ~148px — a 44px logo and ~95px for
+   the name, the sector and the bio, which truncated "Cubbly SPA" and broke the bio mid-phrase.
+   Both controls are icons now, so the column asks for what two 34px buttons actually need and the
+   name and bio get the rest of the row. */
+.customer-business-header-v346{grid-template-columns:28px minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important;min-height:56px!important}
 .customer-business-back-v346{grid-column:1!important;grid-row:1!important}
 .customer-business-identity-v346{grid-column:2!important;grid-row:1!important;min-width:0!important}
-.customer-business-actions-v346{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:minmax(0,1fr) 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important}
+.customer-business-actions-v346{grid-column:3!important;grid-row:1!important;display:grid!important;grid-template-columns:auto 34px!important;gap:6px!important;align-self:center!important;margin:0!important;min-width:0!important;overflow:hidden!important}
+/* The wordless Locations chip: the same 34px square the Call button already is. */
+.customer-business-actions-v346 .customer-business-address-icon-v422{width:34px!important;padding:0!important;justify-content:center!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337{min-width:0!important;min-height:var(--control-h)!important;padding:0 8px!important;border-radius:13px!important;font-size:12px!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337 svg{width:15px!important;height:15px!important;flex:0 0 auto!important}
 .customer-business-actions-v346 .customer-programme-contact-item-v337 span{min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -3532,7 +3600,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-actions-v346 .customer-business-call-icon-v366{width:34px!important;padding:0!important;justify-content:center!important}
 .customer-business-actions-v346 .customer-business-call-icon-v366 span{display:none!important}
 .customer-business-profile-v346 .customer-business-summary-v346{margin-top:2px!important}
-@media(max-width:380px){.customer-business-header-v346{grid-template-columns:24px minmax(0,1fr) minmax(150px,164px)!important;gap:6px!important}.customer-business-identity-v346 .customer-programme-logo{width:40px!important;height:40px!important}.customer-business-identity-v346 b{font-size:17px!important}.customer-business-identity-v346 small{font-size:12px!important}.customer-business-actions-v346{grid-template-columns:minmax(0,1fr) 32px!important;gap:5px!important}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:32px!important;padding:0 7px!important;font-size:11px!important}.customer-business-actions-v346 .customer-business-call-icon-v366{width:32px!important}}
+@media(max-width:380px){.customer-business-header-v346{grid-template-columns:24px minmax(0,1fr) auto!important;gap:6px!important}.customer-business-identity-v346 .customer-programme-logo{width:40px!important;height:40px!important}.customer-business-identity-v346 b{font-size:17px!important}.customer-business-identity-v346 small{font-size:12px!important}.customer-business-actions-v346{grid-template-columns:auto 32px!important;gap:5px!important}.customer-business-actions-v346 .customer-business-address-icon-v422{width:32px!important}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:32px!important;padding:0 7px!important;font-size:11px!important}.customer-business-actions-v346 .customer-business-call-icon-v366{width:32px!important}}
 /* V167 Phase 4: customer-only system dark mode. Merchant/admin surfaces retain their
    established light palette. The redemption QR intentionally stays on a light scan surface. */
 .customer-surface{min-height:100dvh;background:var(--bg);color:var(--ink)}

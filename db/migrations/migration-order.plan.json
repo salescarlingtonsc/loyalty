@@ -2241,6 +2241,12 @@
       "path": "db/migrations/20260822_nestly_v421_two_sided_referral.sql",
       "semanticVersion": "v421",
       "proposedDeployVersion": "20260822000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v422_customer_reward_history.sql",
+      "semanticVersion": "v422",
+      "proposedDeployVersion": "20260822000002"
     }
   ]
 }

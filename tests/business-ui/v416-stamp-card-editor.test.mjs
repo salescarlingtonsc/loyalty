@@ -33,8 +33,9 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g,
 
 /* The v416 block, evaluated exactly as it ships. Its inputs — the saved card length, the gifts,
    and whether this user may edit — are injected, because those are the whole question. */
-const grid = ({ stampTarget = 0, gifts = [], canSetupGrow = true } = {}) => new Function(
-  'snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410', 'canSetupGrow', 'CUI', 'esc', `
+const grid = ({ stampTarget = 0, gifts = [], canSetupGrow = true, busy = false } = {}) => new Function(
+  'snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410', 'canSetupGrow',
+  'growPointsBusyV326', 'CUI', 'esc', `
   ${statement('  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';")}
   return {growStampsCardLenV416, growStampsTargetV416, growStampsHighestGiftV416,
     growStampsStrandedV416, growStampsCardLengthBarV416, growStampsGridV416,
@@ -43,6 +44,10 @@ const grid = ({ stampTarget = 0, gifts = [], canSetupGrow = true } = {}) => new 
   gifts,
   new Map(gifts.map(g => [Math.max(0, Number(g.cost_points) || 0), g]).filter(([n]) => n > 0)),
   canSetupGrow,
+  /* nestly_v422: the typed length field is disabled while a write is in flight, so the block now
+     reads growPointsBusyV326. It is injected rather than stubbed away — leaving it out made the
+     whole block throw ReferenceError, which is what these four tests caught. */
+  busy,
   { icon: name => `<svg data-icon="${name}"></svg>` },
   esc);
 
@@ -129,12 +134,81 @@ test('v416 tapping a stamp opens the ONE gift form, fixed to that stamp', () => 
 });
 
 test('v416 the card length is written through the server, and its refusal is shown verbatim', () => {
+  /* nestly_v422 split the write out of the stepper's onclick so the typed field could share it.
+     There is still exactly ONE writer; both entry points below call it. */
+  const writer = statement('const growStampsSetLengthV422=async next=>{',
+    "  outerMain.querySelectorAll('[data-grow-stamps-len-v416]')");
+  assert.match(writer, /sb\.rpc\('business_set_stamp_card_length_v414',/);
+  assert.match(writer, /p_stamps:next/);
+  assert.match(writer, /growPointsErrorV326=ownerErrorText\(error\)/,
+    'v414 names the gift that is in the way — replacing that message would lose the only detail');
   const handler = statement("outerMain.querySelectorAll('[data-grow-stamps-len-v416]')",
     "  const growPointsAddCancel=");
-  assert.match(handler, /sb\.rpc\('business_set_stamp_card_length_v414',/);
-  assert.match(handler, /p_stamps:next/);
-  assert.match(handler, /growPointsErrorV326=ownerErrorText\(error\)/,
-    'v414 names the gift that is in the way — replacing that message would lose the only detail');
+  assert.match(handler, /growStampsSetLengthV422\(Math\.round\(Number\(button\.dataset\.growStampsLenV416\)/,
+    'the steppers reach the server through that one writer');
+  assert.equal((appJs.match(/sb\.rpc\('business_set_stamp_card_length_v414'/g) || []).length, 1,
+    'exactly one call site — a second copy is a second place the refusal could be handled differently');
+});
+
+/* ------------------------------------------------- nestly_v422: the length is a FIELD ---------- */
+
+test('v422 the card length is a typed field, with the steppers kept beside it', () => {
+  const g = grid({ stampTarget: 12, gifts: [GIFT('Free Lotion', 10)] });
+  assert.match(g.growStampsCardLengthBarV416, /data-grow-stamps-lenfield-v422/,
+    'owner photo 2: "do as a field, so can edit number"');
+  assert.match(g.growStampsCardLengthBarV416, /type="number"[^>]*min="1"[^>]*max="100"/,
+    'the field declares the same 1..100 bound the server enforces');
+  assert.match(g.growStampsCardLengthBarV416, /value="12"/, 'pre-filled with the length in force');
+  assert.match(g.growStampsCardLengthBarV416, /data-grow-stamps-len-v416="11"/, 'the − stepper stays');
+  assert.match(g.growStampsCardLengthBarV416, /data-grow-stamps-len-v416="13"/, 'and the + stepper stays');
+  assert.doesNotMatch(g.growStampsCardLengthBarV416, /grow-stamps-lenvalue-v416/,
+    'the read-only value it replaced is gone for an editor');
+});
+
+test('v422 a user who may not edit gets the plain value, never an input', () => {
+  const g = grid({ stampTarget: 12, gifts: [GIFT('Free Lotion', 10)], canSetupGrow: false });
+  assert.doesNotMatch(g.growStampsCardLengthBarV416, /data-grow-stamps-lenfield-v422/);
+  assert.match(g.growStampsCardLengthBarV416, /grow-stamps-lenvalue-v416/);
+  assert.match(g.growStampsCardLengthBarV416, /12 stamps/);
+});
+
+test('v422 the field is disabled while a length write is in flight', () => {
+  assert.match(grid({ stampTarget: 12, busy: true }).growStampsCardLengthBarV416, / disabled/);
+  assert.doesNotMatch(grid({ stampTarget: 12, busy: false }).growStampsCardLengthBarV416,
+    /data-grow-stamps-lenfield-v422[^>]*disabled/);
+});
+
+test('v422 the typed field commits on Enter and blur, never per keystroke', () => {
+  const wiring = statement('const growStampsLenFieldV422=outerMain.querySelector',
+    '  const growPointsAddCancel=');
+  assert.match(wiring, /growStampsLenFieldV422\.onblur=commitV422/);
+  assert.match(wiring, /event\.key==='Enter'/);
+  assert.doesNotMatch(wiring, /oninput/,
+    'a write per digit would send "1" then "4" on the way to 14, and the server would refuse the first');
+  /* Out of range, blank, or unchanged: put the real length back rather than send a doomed write. */
+  assert.match(wiring, /typed<1\|\|typed>GROW_STAMPS_MAX_LEN_V416\|\|typed===growStampsCardLenV416/);
+  assert.match(wiring, /growStampsLenFieldV422\.value=String\(growStampsCardLenV416\)/);
+});
+
+test('v422 the customer preview under the editor is gone, and so is its renderer', () => {
+  /* Owner photo 2 struck the whole Preview block out corner to corner: "no need this preview".
+     The editor grid above it is the same picture and is tappable, so the preview was a read-only
+     duplicate. Its builder, its two constants and its gift popup go with it — a dead renderer is
+     drift, which is the rule v416 itself recorded one test up. */
+  /* Matched against the source with COMMENTS STRIPPED. Two of these names survive inside the v422
+     comments that explain their removal, so a plain assertion on the raw file would either fail on
+     prose or have to be weakened into something that passes whatever the code says. */
+  const code = appJs.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+  for (const dead of ['growStampsPreviewV350', 'GROW_STAMPS_PREVIEW_MAX_V410', 'growStampsDrawnV410',
+    'growStampsMaxV350', 'data-grow-stamp-gift-v410', 'growStampGiftDoneV410']) {
+    assert.ok(!code.includes(dead), `${dead} must not survive as live code`);
+  }
+  assert.doesNotMatch(appJs, /grow-stamps-preview-card-v350/);
+  assert.doesNotMatch(appJs, /Collect stamps and unlock rewards!/);
+  assert.doesNotMatch(html, /grow-stamps-preview-card-v350\{/, 'its CSS goes too');
+  assert.doesNotMatch(html, /\.grow-stamps-cell-v410\{/);
+  /* growStampsRewardAtV410 survives: the EDITOR grid reads it. */
+  assert.match(appJs, /const growStampsRewardAtV410=new Map/);
 });
 
 /* ------------------------------------------------- the ruling, in the database --------------- */

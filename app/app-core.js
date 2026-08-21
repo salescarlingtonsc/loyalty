@@ -1888,7 +1888,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
     stampsQuestAllClaimed:'Every gift on this card is collected.',
-    stampsQuestRetired:'This stamp card has been retired — ask us about your balance.',
     pointsRemaining:'{count} more for {gift}.',
     pointsReady:'{gift} is ready to claim.',
     tierDistance:'{count} more {unit} to {tier}.',
@@ -2092,7 +2091,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
     stampsQuestAllClaimed:'这张卡上的礼品都已领取。',
-    stampsQuestRetired:'这张集章卡已停用——请向我们查询你的余额。',
     pointsRemaining:'再要 {count} 即可换{gift}。',
     pointsReady:'{gift}已可领取。',
     tierDistance:'再要 {count} {unit}即可升到{tier}。',
@@ -2293,7 +2291,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
     stampsQuestAllClaimed:'Semua hadiah pada kad ini sudah dituntut.',
-    stampsQuestRetired:'Kad cop ini telah ditamatkan — tanya kami tentang baki anda.',
     pointsRemaining:'{count} lagi untuk {gift}.',
     pointsReady:'{gift} sedia untuk dituntut.',
     tierDistance:'{count} {unit} lagi ke {tier}.',
@@ -2494,7 +2491,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
     stampsQuestAllClaimed:'இந்த அட்டையின் அனைத்துப் பரிசுகளும் பெறப்பட்டன.',
-    stampsQuestRetired:'இந்த முத்திரை அட்டை நிறுத்தப்பட்டது — உங்கள் இருப்பு குறித்து எங்களிடம் கேளுங்கள்.',
     pointsRemaining:'{gift} பெற இன்னும் {count} தேவை.',
     pointsReady:'{gift} பெறத் தயாராக உள்ளது.',
     tierDistance:'{tier} அடைய இன்னும் {count} {unit} தேவை.',
@@ -4086,9 +4082,15 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      figure already IS its own progress (the rings) and the tiers figure has the meter, so a second
      cue there would say the same thing twice. */
   const heroProgressV3=customerCardProgressV2B({loyalty,next_eligible_reward:reward||{},programmeCapabilities});
-  const figureV386=modeV386==='stamps'&&stampRingsV386
-    ?`<div class="customer-business-stamp-figure-v386">${stampRingsV386}</div>
+  /* nestly_v422: the stamps figure is now a SLOT. It paints exactly as it did before — the rings
+     and the "N of M stamps" line, from the wallet payload — and loadStampCardV323 swaps in the
+     whole card (customerHeroStampCardV422) the moment the real slots and milestones arrive. When
+     that read never answers, this is what stays on screen, so nothing regresses. */
+  const figureV386=modeV386==='stamps'
+    ?`<div class="customer-business-stamp-figure-v386" data-hero-stamp-slot-host-v422>${stampRingsV386
+        ?`${stampRingsV386}
       <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
+        :`<b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(balance))}<span>stamps</span></b>`}</div>`
     :modeV386==='tiers'&&tierBlockV393
       ?`<b class="customer-business-balance-v347 customer-business-balance-tier-v386">${esc(tierLabel||heroLabel)}</b>
         <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tierProgressV386}" aria-label="${esc(tierLabel?`${tierLabel} progress`:'Tier progress')}" style="--reward-progress:${tierProgressV386}%"><span></span></div>
@@ -4098,7 +4100,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
       :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>${heroProgressV3?`<div class="customer-business-hero-progress-v3">${heroProgressV3}</div>`:''}`;
   /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
      running, so they are suppressed rather than printed against a tier meter. */
-  const showRewardLinesV386=modeV386!=='tiers'||!tierBlockV393||rewardReady;
+  /* nestly_v422: stamps joins tiers here. The card below now carries "Next available Reward: X",
+     so "Free Massage Oil ready to claim" above it and "2 stamps to next reward" under it were the
+     same sentence twice — three lines of prose over a picture that already says it. */
+  const showRewardLinesV386=(modeV386!=='tiers'||!tierBlockV393||rewardReady)&&modeV386!=='stamps';
   /* Wave 3: the brand glow stops being decoration and becomes a state. The card's own shadow drops
      to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
      moment it means something — a reward the customer can claim right now — reusing the existing
@@ -4127,7 +4132,13 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
                  redeem. The hook is now unconditional and carries the painted text as its
                  fallback, so loadRewards corrects the pill in every mode, and a firm with nothing
                  ready falls back to exactly the sentence it renders today. */''}
-            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>
+            ${/* nestly_v422 (owner photo 8, "1 reward ready" ringed with "all claimed, why 1 reward
+                 still ready?"). In STAMPS mode the count is replaced by the card itself, which
+                 names the next reward outright instead of counting anonymous ones — the owner's
+                 own redraw carries no such chip. Points and tiers keep it exactly as v397/v399
+                 left it: there the balance is a number and the count is the only readiness cue. */''}
+            ${modeV386==='stamps'?''
+              :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>`}
           </div>
           ${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}

@@ -43,20 +43,31 @@ test('saveReward sends BOTH the tier id and the threshold it stood at', () => {
     'minTierId must be resolved before the payload is built');
 });
 
-test('the customer card locks the reward instead of hiding it, and names the tier', () => {
-  assert.ok(app.includes('tier_locked:\'Unlocks at a higher tier\''),
-    'tier_locked missing from the customer availability map');
-  assert.ok(app.includes('const rewardLockLineV176='), 'no lock-line helper');
-  assert.ok(/return label\?`Reach \$\{label\} to unlock this reward`/.test(app),
-    'the locked line must name the tier — that is what makes climbing worth it');
-  /* v339 restyled the badge (photo 1 shows a tier-gated card badged with the tier's own name) and
-     moved it to the head of the card. It still renders on exactly the same tier_locked condition,
-     and it now NAMES the required tier when the server resolved one — the same
-     tier_requirement.tier_label the lock line below uses — falling back to "Locked". */
-  assert.ok(app.includes("r.availability==='tier_locked'?`<span class=\"pill customer-reward-locked-v339\">${esc(r.tier_requirement?.tier_label?`${r.tier_requirement.tier_label} only`:'Locked')}</span>`:''"),
-    'no locked pill on the customer card');
-  assert.ok(app.includes('esc(rewardLockLineV176(r)||availability[r.availability]'),
-    'the status line must prefer the tier-specific copy');
+test('nestly_v422 REVERSES v176 on the customer list: a tier-gated reward is not shown there', () => {
+  /* Owner ruling, 2026-08-22, on photo 6: "only show redeemable rewards after customer achieve the
+     reward". v176's position was the opposite — a tier-gated reward stayed VISIBLE and locked,
+     because naming the tier is what makes climbing worth it. The owner was shown that consequence
+     in the question that produced this ruling ("Rewards not yet earned, tier-locked or ended
+     disappear from this screen entirely") and chose it.
+     WHAT SURVIVES OF V176, and is asserted below and in the tests after this one:
+       · the SERVER-side gate is untouched — a tier-locked reward is still refused at the counter;
+       · customerRewardCanRedeem still excludes it, so it can never gain a redeem button;
+       · the OWNER's reward list still shows the gate at a glance;
+       · the tier ladder on the customer's own page still names what each rung unlocks.
+     Only the customer's Rewards LIST stopped rendering a card for it. */
+  const rewards = app.slice(app.indexOf('const loadRewards=async()=>'),
+    app.indexOf('const activityState={items:[],nextCursor:null}'));
+  const rewardsCode = rewards.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  assert.ok(!rewardsCode.includes('customer-reward-locked-v339'),
+    'no locked pill: the card is not rendered at all');
+  assert.ok(!rewardsCode.includes('rewardLockLineV176'),
+    'and no lock line, because there is nothing to label');
+  assert.match(rewardsCode, /customerRewardCanRedeem\(item,redemptionEnabled\)/,
+    'the list is the set the counter will honour, and nothing else');
+  /* The shared availability copy still carries the tier_locked wording: the hero swipe pages
+     (v399) read the same map and DO describe a reward the customer cannot take yet. */
+  assert.ok(app.includes("tier_locked:'Unlocks at a higher tier'"),
+    'tier_locked stays in the shared availability map the hero pages read');
 });
 
 test('a locked reward offers no redeem button', () => {

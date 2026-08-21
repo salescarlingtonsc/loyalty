@@ -4500,7 +4500,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
     stampsQuestAllClaimed:'Every gift on this card is collected.',
-    stampsQuestRetired:'This stamp card has been retired — ask us about your balance.',
     pointsRemaining:'{count} more for {gift}.',
     pointsReady:'{gift} is ready to claim.',
     tierDistance:'{count} more {unit} to {tier}.',
@@ -4704,7 +4703,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
     stampsQuestAllClaimed:'这张卡上的礼品都已领取。',
-    stampsQuestRetired:'这张集章卡已停用——请向我们查询你的余额。',
     pointsRemaining:'再要 {count} 即可换{gift}。',
     pointsReady:'{gift}已可领取。',
     tierDistance:'再要 {count} {unit}即可升到{tier}。',
@@ -4905,7 +4903,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
     stampsQuestAllClaimed:'Semua hadiah pada kad ini sudah dituntut.',
-    stampsQuestRetired:'Kad cop ini telah ditamatkan — tanya kami tentang baki anda.',
     pointsRemaining:'{count} lagi untuk {gift}.',
     pointsReady:'{gift} sedia untuk dituntut.',
     tierDistance:'{count} {unit} lagi ke {tier}.',
@@ -5106,7 +5103,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
     stampsQuestAllClaimed:'இந்த அட்டையின் அனைத்துப் பரிசுகளும் பெறப்பட்டன.',
-    stampsQuestRetired:'இந்த முத்திரை அட்டை நிறுத்தப்பட்டது — உங்கள் இருப்பு குறித்து எங்களிடம் கேளுங்கள்.',
     pointsRemaining:'{gift} பெற இன்னும் {count} தேவை.',
     pointsReady:'{gift} பெறத் தயாராக உள்ளது.',
     tierDistance:'{tier} அடைய இன்னும் {count} {unit} தேவை.',
@@ -8624,10 +8620,10 @@ function customerStampQuestRingsV323(quest){
   }</div>`;
 }
 function customerStampQuestBodyV323(quest){
-  /* A migrated pot is the one state where a figure would lie: the stamps moved to another
-     programme, so the card has no honest number left. One sentence, no rings, no promise. */
-  if(quest.potMigrated)
-    return `<p class="muted small customer-programme-card-line-v310" data-stamp-quest-line-v323="retired">${esc(ct('stampsQuestRetired'))}</p>`;
+  /* nestly_v422: a migrated pot used to render one sentence here ("This stamp card has been
+     retired — ask us about your balance."), which the owner struck out on photo 6. The whole card
+     is removed by loadStampCardV323 before this body is ever built, so there is no retired branch
+     left to render and the four locale strings that served it are gone with it. */
   const figure=customerStampQuestRingsV323(quest)
     ||`<p class="customer-programme-stamp-count" data-stamp-quest-count-v323="${quest.shown}"><b>${esc(customerPointTotalV103(quest.shown))}</b></p>`;
   const progress=quest.slots>0
@@ -8981,6 +8977,66 @@ function customerBusinessHeroModeV386(capabilities={},loyalty={}){
   if(live('tiers'))return 'tiers';
   return 'points';
 }
+/* ============ nestly_v422 — THE STAMP CARD IS THE HERO (owner photo 8) ======================
+   The owner drew a cross through the whole red hero and redrew it beside the photo: the word
+   STAMPS, then the WHOLE card as a grid of numbered slots wrapping over three rows, a star on
+   every slot already collected ("if got stamp put star"), a gift sitting on the slots that pay
+   out, one line reading "Next available Reward: xxxx", and the two buttons — Claim Reward and
+   Book now.
+
+   WHY THIS COULD NOT JUST BE THE EXISTING RINGS. customerProgrammeStampRingsV310 draws
+   next_eligible_reward.cost_units slots — ONE reward's price, not the card's length. At Cubbly
+   that is 5, while the card the owner set up in the workspace is longer, so the hero and the
+   editor were drawing two different cards. The card's real length and its real milestones only
+   exist in app.stamp_progress_v323, which loadStampCardV323 already reads on this page. So the
+   hero paints its best guess from the wallet payload (unchanged, and still correct the instant
+   the page opens) and is REPLACED IN PLACE the moment that read answers — the same two-stage
+   contract v323 already uses for the stamps card lower down, and the same safety: an old server
+   never answers, and the hero simply stays as it is today.
+
+   Owner ruling 2026-08-22 on length: draw every slot, wrapping into as many rows as it takes. A
+   long card gets smaller circles rather than a truncated card, because a card that hides half of
+   itself is the defect v414/v416 were spent on.
+
+   NO READY-COUNT PILL. The drawing has none, and the mark next to it — "all claimed, why 1 reward
+   still ready?" — is what it replaces: "Next available Reward: X" names the actual reward instead
+   of counting anonymous ones. Points and tier heroes keep the v397/v399 pill untouched. */
+const HERO_STAMP_COMPACT_FROM_V422=30;
+function customerHeroStampCardV422(quest){
+  const total=Math.max(0,Math.floor(Number(quest?.slots)||0));
+  if(!total)return '';
+  const filled=Math.max(0,Math.min(total,Math.floor(Number(quest.shown)||0)));
+  /* A slot can carry more than one gift — Cubbly has two rewards both sitting on stamp 5 — so the
+     map keeps the FIRST unclaimed one for that slot, falling back to the first of any. One slot,
+     one gift mark; the line below names what is actually next. */
+  const marks=new Map();
+  (Array.isArray(quest.milestones)?quest.milestones:[])
+    .filter(rung=>rung.slot>0&&rung.slot<=total)
+    .forEach(rung=>{
+      const held=marks.get(rung.slot);
+      if(!held||(held.claimed&&!rung.claimed))marks.set(rung.slot,rung);
+    });
+  const compact=total>HERO_STAMP_COMPACT_FROM_V422;
+  const star='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.6l-3.9 2.1.8-4.4L1.7 6.2l4.4-.6z" fill="currentColor"/></svg>';
+  const cells=Array.from({length:total},(unused,index)=>{
+    const slot=index+1,rung=marks.get(slot),collected=index<filled;
+    return `<span class="customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${
+      rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
+    }${collected?star:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
+  }).join('');
+  /* The one sentence the drawing puts under the grid. quest.next is the server's own first
+     unclaimed milestone, so this can never name a gift the counter would refuse. With every
+     milestone on the card already claimed there is nothing to promise, and it says so. */
+  const next=quest.next;
+  const nextLine=next
+    ? `Next available Reward: ${next.name||ct('rewardsTab')}`
+    : 'Next available Reward: all claimed on this card';
+  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}" data-hero-stampcard-v422="${filled}/${total}">
+    <div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>
+    <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
+    ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+  </div>`;
+}
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={}}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
@@ -9065,9 +9121,15 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      figure already IS its own progress (the rings) and the tiers figure has the meter, so a second
      cue there would say the same thing twice. */
   const heroProgressV3=customerCardProgressV2B({loyalty,next_eligible_reward:reward||{},programmeCapabilities});
-  const figureV386=modeV386==='stamps'&&stampRingsV386
-    ?`<div class="customer-business-stamp-figure-v386">${stampRingsV386}</div>
+  /* nestly_v422: the stamps figure is now a SLOT. It paints exactly as it did before — the rings
+     and the "N of M stamps" line, from the wallet payload — and loadStampCardV323 swaps in the
+     whole card (customerHeroStampCardV422) the moment the real slots and milestones arrive. When
+     that read never answers, this is what stays on screen, so nothing regresses. */
+  const figureV386=modeV386==='stamps'
+    ?`<div class="customer-business-stamp-figure-v386" data-hero-stamp-slot-host-v422>${stampRingsV386
+        ?`${stampRingsV386}
       <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
+        :`<b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(balance))}<span>stamps</span></b>`}</div>`
     :modeV386==='tiers'&&tierBlockV393
       ?`<b class="customer-business-balance-v347 customer-business-balance-tier-v386">${esc(tierLabel||heroLabel)}</b>
         <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tierProgressV386}" aria-label="${esc(tierLabel?`${tierLabel} progress`:'Tier progress')}" style="--reward-progress:${tierProgressV386}%"><span></span></div>
@@ -9077,7 +9139,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
       :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>${heroProgressV3?`<div class="customer-business-hero-progress-v3">${heroProgressV3}</div>`:''}`;
   /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
      running, so they are suppressed rather than printed against a tier meter. */
-  const showRewardLinesV386=modeV386!=='tiers'||!tierBlockV393||rewardReady;
+  /* nestly_v422: stamps joins tiers here. The card below now carries "Next available Reward: X",
+     so "Free Massage Oil ready to claim" above it and "2 stamps to next reward" under it were the
+     same sentence twice — three lines of prose over a picture that already says it. */
+  const showRewardLinesV386=(modeV386!=='tiers'||!tierBlockV393||rewardReady)&&modeV386!=='stamps';
   /* Wave 3: the brand glow stops being decoration and becomes a state. The card's own shadow drops
      to the neutral --shadow-warm every other card carries; the red halo is reserved for the one
      moment it means something — a reward the customer can claim right now — reusing the existing
@@ -9106,7 +9171,13 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
                  redeem. The hook is now unconditional and carries the painted text as its
                  fallback, so loadRewards corrects the pill in every mode, and a firm with nothing
                  ready falls back to exactly the sentence it renders today. */''}
-            <span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>
+            ${/* nestly_v422 (owner photo 8, "1 reward ready" ringed with "all claimed, why 1 reward
+                 still ready?"). In STAMPS mode the count is replaced by the card itself, which
+                 names the next reward outright instead of counting anonymous ones — the owner's
+                 own redraw carries no such chip. Points and tiers keep it exactly as v397/v399
+                 left it: there the balance is a number and the count is the only readiness cue. */''}
+            ${modeV386==='stamps'?''
+              :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>`}
           </div>
           ${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
@@ -9904,19 +9975,23 @@ function customerProgrammeCardMetricKindV360(card){
   const rawUnit=String(loyalty.unit||'points').toLowerCase();
   return rawModel==='stamps'||rawUnit==='stamps'?'stamps':'points';
 }
+/* nestly_v422 (owner photo 4, "13 / 13 stamps" ringed: "for stamps dont need show this"; and
+   photo 5, the same figure on the home card: "don't write this"). A points balance is a number the
+   customer spends and has to know. A stamp count is not: the card itself IS the figure, it is drawn
+   in full on the business page, and "13 / 13" printed against a status line already reading
+   "1 reward ready" was the same fact twice with a denominator that comes from ONE reward's cost
+   rather than the card's real length — so it disagreed with the card the customer then opened.
+   Stamps therefore contribute no metric here at all, and the caller drops the slot rather than
+   printing an empty one. Points, sessions and membership are untouched. */
 function customerProgrammeDirectoryMetricV346(card){
-  const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
+  const loyalty=card?.loyalty||{},
     packages=card?.packages||{},membership=card?.membership||{};
   const unit=customerProgrammeCardMetricKindV360(card);
   const balance=Math.max(0,Number(loyalty.balance)||0);
-  if(unit==='stamps'&&reward){
-    const target=Math.max(balance,Number(reward.cost_units||0),Number(reward.target_units||0));
-    if(target>0)return `${customerPointTotalV103(balance)} / ${customerPointTotalV103(target)} stamps`;
-    return `${customerPointTotalV103(balance)} stamps`;
-  }
+  if(unit==='stamps')return '';
   if(membership.active===true)return 'Member';
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} sessions`;
-  return unit==='stamps'?`${customerPointTotalV103(balance)} stamps`:`${customerPointTotalV103(balance)} pts`;
+  return `${customerPointTotalV103(balance)} pts`;
 }
 function customerProgrammeDirectoryStatusV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
@@ -9947,7 +10022,7 @@ function customerProgrammeTileMarkupV96(card){
       quietest thing on the card. It leads now, and only when something really is ready — the
       other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${/* nestly_v395 (owner photo 4: the coin ringed in red, "remove this, change to star"). CUI's
         'redeem' glyph is a dollar sign, so a reward the customer earned with points read as a
-        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${CUI.icon('star',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div><div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${CUI.icon('star',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div>${metric?`<div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>`:'<div class="customer-programme-card-balance"><span aria-hidden="true">›</span></div>'}${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -10072,11 +10147,15 @@ function customerHomeBusinessStatusV345(card){
   if(card?.membership?.active===true)return 'Member';
   return '';
 }
+/* nestly_v422 (owner photo 5, the stamps line struck through on the "Your Peekaa" card: "don't
+   write this"). Same ruling as customerProgrammeDirectoryMetricV346 above, on the home surface:
+   stamps print no balance line here. The status line under it still says what matters
+   ("1 reward ready" / "2 stamps to go"), and the card itself is one tap away. */
 function customerHomeBusinessBalanceV345(card){
   const loyalty=card?.loyalty||{},unit=customerProgrammeCardMetricKindV360(card),
-    balance=Math.max(0,Number(loyalty.balance)||0),remaining=Math.max(0,Number(card?.next_eligible_reward?.remaining_units)||0);
-  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(balance)} / ${customerPointTotalV103(balance+remaining)} stamps`;
-  return `${customerPointTotalV103(balance)} ${unit==='stamps'?'stamps':'pts'}`;
+    balance=Math.max(0,Number(loyalty.balance)||0);
+  if(unit==='stamps')return '';
+  return `${customerPointTotalV103(balance)} pts`;
 }
 function customerHomeBusinessCardV345(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},name=business.name||ct('localBusiness'),
@@ -10084,7 +10163,7 @@ function customerHomeBusinessCardV345(card){
     accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   return `<a class="customer-home-business-card-v345${customerCardMoodV2B(card)}" href="#/wallet/${encodeURIComponent(business.slug||'')}" style="--merchant-accent:${esc(accent)}" aria-label="${esc(ct('openProgramme',{business:name}))}">
     <span class="customer-home-business-logo-v345">${customerProgrammeTileLogoV96(business)}</span>
-    <span class="customer-home-business-copy-v345"><b>${esc(name)}</b>${tier?`<em>${esc(tier)}</em>`:''}<strong>${esc(customerHomeBusinessBalanceV345(card))}</strong>${customerCardProgressV2B(card)}${status?`<small>${esc(status)}</small>`:''}</span>
+    <span class="customer-home-business-copy-v345"><b>${esc(name)}</b>${tier?`<em>${esc(tier)}</em>`:''}${customerHomeBusinessBalanceV345(card)?`<strong>${esc(customerHomeBusinessBalanceV345(card))}</strong>`:''}${customerCardProgressV2B(card)}${status?`<small>${esc(status)}</small>`:''}</span>
     <span class="customer-home-business-arrow-v345" aria-hidden="true">›</span>
   </a>`;
 }
@@ -10810,13 +10889,22 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            The chip opens the company-details sheet, which lists every branch, so the button now
            says what it opens. The full address stays as its title/aria for anyone hovering or on
            a screen reader; the wide (non-compact) header still prints the address itself. */
-        const rawAddressLabelV366=branch.address
-          ?(compactHeaderContactV366?'Locations':String(branch.address))
-          :'Locations';
+        /* nestly_v422 (owner photo 8: a map pin drawn over this chip, "remove this wording").
+           In the COMPACT header the chip is one of two controls in a fixed 166–184px column, and
+           that column is what starved the identity beside it — measured at 390px the name/bio
+           column was left ~95px, which is why "Cubbly SPA" rendered as "Cubbly …" and the company
+           bio broke across two lines mid-phrase (the owner's second mark on the same photo,
+           "company bio has its own line"). Dropping the word makes it a pin, matching the Call
+           button that has been icon-only since v366, and hands ~110px back to the name and bio.
+           The full address is unchanged as title/aria — a screen reader and a hover still get it,
+           and the chip still opens the same company-details sheet. The WIDE header keeps printing
+           the address itself: it has the room, and there the address is the useful label. */
+        const rawAddressLabelV366=compactHeaderContactV366?''
+          :(branch.address?String(branch.address):'Locations');
         const addressTitleV366=branch.address?String(branch.address):'Locations';
         const callTitleV366=branch.phone?`Call ${branch.phone}`:'Call';
         const openSheet=()=>showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug});
-        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366" data-company-detail aria-label="${esc(compactHeaderContactV366?`Locations — ${addressTitleV366}`:addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:20})}<span>${esc(rawAddressLabelV366)}</span></button>${
+        contactHostV326.innerHTML=`<button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366${rawAddressLabelV366?'':' customer-business-address-icon-v422'}" data-company-detail aria-label="${esc(compactHeaderContactV366?`Locations — ${addressTitleV366}`:addressTitleV366)}" title="${esc(addressTitleV366)}">${CUI.icon('branch',{size:20})}${rawAddressLabelV366?`<span>${esc(rawAddressLabelV366)}</span>`:''}</button>${
           branch.phone
             ?`<a class="customer-programme-contact-item-v337 customer-business-call-icon-v366" href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}" aria-label="${esc(callTitleV366)}" title="${esc(callTitleV366)}">${CUI.icon('phone',{size:20})}${compactHeaderContactV366?'':`<span>Call</span>`}</a>`
             :`<button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:20})}${compactHeaderContactV366?'':`<span>Call</span>`}</button>`
@@ -11053,14 +11141,58 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      stamp card that briefly says a slightly cruder true thing is better than one that blanks. */
   const loadStampCardV323=async()=>{
     const card=document.querySelector('[data-programme-card="stamps"]');
-    if(!card)return;
+    /* nestly_v422: the hero's stamp slot is filled by this same read (owner photo 8), so the call
+       is made whenever EITHER surface is on the page — a business profile shows the hero while its
+       stamps card lives inside a shortcut sub-page, and requiring the card would have left the
+       hero on its wallet-derived guess forever. */
+    const heroSlotV422=document.querySelector('[data-hero-stamp-slot-host-v422]');
+    if(!card&&!heroSlotV422)return;
     const {data,error}=await customerRpc('customer_get_stamp_card_v323',{p_business_slug:businessSlug});
-    if(!isWalletCurrent()||!card.isConnected)return;
+    if(!isWalletCurrent())return;
     if(error)return;
     const quest=stampQuestNormaliseV323(data);
+    /* THE HERO. Drawn from the card's real slots and milestones, replacing the rings that were
+       sized by one reward's cost. A quest that is not running leaves the painted figure alone —
+       same rule the card below follows. pot_migrated is deliberately NOT a gate here: the owner
+       redrew this hero AS the stamp card on a firm whose pot is migrated, and the server returns
+       real slots/filled/milestones for it. What pot_migrated suppresses is the separate stamps
+       CARD lower down, per the owner's ruling on photo 6. */
+    if(heroSlotV422&&heroSlotV422.isConnected&&quest&&quest.running){
+      const heroCardV422=customerHeroStampCardV422(quest);
+      if(heroCardV422){
+        heroSlotV422.innerHTML=heroCardV422;
+        /* The card is authoritative about readiness, so a hero painted before it arrived can gain
+           the Claim reward button it should always have had. It is the SAME contract the banner
+           and the painted button use, wired by the same function — never a second claim path. */
+        const actionsV422=heroSlotV422.closest('.customer-business-summary-v346')
+          ?.querySelector('.customer-business-summary-actions-v349');
+        if(quest.ready&&actionsV422&&!actionsV422.querySelector('[data-claim-reward-scroll-v337]')){
+          actionsV422.insertAdjacentHTML('afterbegin',
+            '<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>');
+          wireCustomerClaimRewardV395(actionsV422);
+        }
+      }
+    }
+    if(!card||!card.isConnected)return;
     /* A paused programme keeps the v310 paused block and its retained figure — the standing W4b
        rule that a programme which pauses must never silently lose the customer's progress. */
     if(!quest||!quest.running)return;
+    /* nestly_v422 (owner photo 6, the sentence struck out: "remove this wording"). A migrated pot
+       is the one state where this card has no honest figure left, and v323 said so in a sentence.
+       The owner's ruling (2026-08-22) is that the box goes with the sentence — the same rule v326
+       and v386 already apply to a paused programme: a card the customer cannot act on does not get
+       a heading announcing that it cannot be acted on. Nothing about the DATA changes; the stamps
+       are still on the server and the card returns the moment the pot does.
+       #walletRewards can be mounted INSIDE this card (customerProgrammeStampsCardV310 hosts it
+       whenever stamps is the live accruing programme), so it is lifted out first — removing the
+       card with the rewards list still in it would take the customer's whole reward catalogue
+       off the screen with it. */
+    if(quest.potMigrated){
+      const rewardsHostV422=card.querySelector('#walletRewards');
+      if(rewardsHostV422)card.insertAdjacentElement('beforebegin',rewardsHostV422);
+      card.remove();
+      return;
+    }
     const figure=card.querySelector('.customer-programme-stamp-rings, .customer-programme-stamp-count');
     const line=card.querySelector('.customer-programme-card-line-v310');
     if(!line)return;
@@ -11202,86 +11334,154 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         ?'points':document.querySelector('[data-business-shortcut-v347="rewards"]')?'rewards':'')
     },heroRootV397);
     wireCustomerHeroViewAllV399(heroRootV397);
-    if(!rewards.length)return walletSectionEmpty('walletRewards','Rewards',ct('No rewards are available right now.'),businessSlug,'rewards',loadRewards,isWalletCurrent);
-    /* nestly_v399: one copy map, shared with the hero swipe page (see
-       CUSTOMER_REWARD_AVAILABILITY_COPY_V399). Copied into a local object because the
-       redemption-unchecked branch below rewrites one of its entries for this render only. */
-    const availability={...CUSTOMER_REWARD_AVAILABILITY_COPY_V399};
-    /* A tier-gated reward stays VISIBLE and locked rather than hidden: naming the tier is the
-       whole reason a member climbs. Uses the tier name the server resolved, so this line can
-       never disagree with what the counter will actually allow. */
-    const rewardLockLineV176=(r)=>{
-      if(r.availability!=='tier_locked')return '';
-      const label=r.tier_requirement?.tier_label;
-      return label?`Reach ${label} to unlock this reward`:'Unlocks at a higher tier';
-    };
-    /* v286: with redemption unchecked, "Available at counter" is a claim this page cannot stand
-       behind — the honest line is that we could not check. Every other status (tier-locked, short
-       of points, ended) comes from the catalog and the balance, so those stay true and unchanged. */
-    if(redemptionUncheckedV286)availability.available_at_counter='Redemption can’t be checked right now';
+    /* nestly_v422: an empty CATALOGUE no longer replaces this whole section. It used to, and that
+       was fine while the section was only a catalogue — but it now also holds the customer's own
+       claim History, and a firm that has retired every reward would otherwise take the record of
+       what its customers already received off the screen with them. The tabbed shell below renders
+       either way; the Available panel carries its own empty line. */
+    /* nestly_v422: the local availability copy, rewardLockLineV176 and the v286 "could not check"
+       override are all gone from here, because the only thing that read them was the availability
+       line on a NON-claimable card and there are no such cards on this list any more.
+       The two guarantees they carried are now structural rather than textual:
+         · v286 — a page that could not verify redemption can no longer print "Available at
+           counter", because customerRewardCanRedeem returns false for every reward when
+           redemptionEnabled is not true, so the Available panel holds no cards at all and says
+           outright that the check failed. Strictly stronger than relabelling a card.
+         · v176 — a tier-gated reward no longer appears here to be labelled. That is the owner's
+           2026-08-22 ruling on photo 6, and it is a deliberate reversal of v176's "stays VISIBLE
+           and locked": the tier ladder on this same page is where a member reads what climbing
+           earns them.
+       CUSTOMER_REWARD_AVAILABILITY_COPY_V399 itself stays — the hero swipe pages still use it. */
     host.setAttribute('aria-busy','false');
-    const rewardUnit=loyalty.unit||'points',rewardBalance=Math.max(0,Number(loyalty.balance)||0);
-    /* v339 (owner mockup "photo 1" leads the carousel with the claimable card): a reward the
-       customer can take RIGHT NOW is the only card with an action on it, so it goes first. This
-       is a stable sort of the existing list — no reward is added, removed or re-priced, and every
-       card keeps the action_key its redeem button is bound to. */
-    rewards.sort((a,bReward)=>Number(!!(bReward.action_key&&customerRewardCanRedeem(bReward,redemptionEnabled)))
-      -Number(!!(a.action_key&&customerRewardCanRedeem(a,redemptionEnabled))));
+    const rewardUnit=loyalty.unit||'points';
+    /* nestly_v422 (owner photo 6: "only show redeemable rewards after customer achieve the
+       reward", with the progress bar, the "5/5 stamps · 0 more to go" line and the "More points
+       needed" line all struck through on cards the customer could not claim).
+       v339 SORTED claimable rewards to the front; the owner's ruling (2026-08-22) is that the rest
+       do not belong on this list at all. So Available is exactly the set customerRewardCanRedeem
+       says the counter will honour — the SAME predicate the hero's ready-count uses, so the pill
+       above and the list below can never disagree about how many are ready.
+       Nothing is hidden from the customer that they could act on: a reward still being earned is
+       what the stamp card / points figure at the top of the page is for, and it reappears here the
+       moment it becomes claimable. `rewards` keeps every row for the wiring below (the hero swipe
+       pages and the ready-count are built from the FULL catalogue, above); only what this list
+       PAINTS is narrowed. */
+    const claimableRewardsV422=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled));
     /* v195: this now renders inside the Reward points tab, which already prints the balance in
        full. The repeated balance and the three-step "how rewards work" strip went with the card
        the owner crossed out; one line of instruction survives, on the control it describes. */
-    host.innerHTML=`${redemptionUncheckedV286
-      ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
-      :`<div class="customer-rewards-carousel-head-v337"><h2>Your rewards</h2></div><p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>`}
-      <div class="wallet-rewards customer-rewards-carousel-v337">${rewards.map(r=>{
-      const ready=!!(r.action_key&&customerRewardCanRedeem(r,redemptionEnabled)),
-        cost=Math.max(0,Number(r.cost_points)||0),gap=Math.max(0,cost-rewardBalance),
-        progress=cost>0?Math.min(100,Math.max(0,Math.round((rewardBalance/cost)*100))):100,
-        short=r.availability==='insufficient_balance';
-      /* v340 (gap 5): photo 1 draws THREE card types, and until now only two were distinct —
-         ready-to-claim and tier-locked. The third is "you are on your way to this one": not
-         claimable yet, not gated out by tier, and priced in points the customer is short of.
-         This is a RENDERING distinction over data the catalogue already returns per item
-         (cost_points) measured against the balance the wallet already holds (loyalty.balance) —
-         customer_get_reward_catalog needed no new field and no migration, and progress is
-         therefore computable for EVERY card in the list, not just next_eligible_reward.
-         `short` (availability==='insufficient_balance') stays the server's own verdict and still
-         drives the bar; inProgressV340 is what gives the card its own class and the
-         "{collected}/{cost}" reading photo 1 puts under the bar. Rewards held back for another
-         honest reason — not_started, ended, limit_reached — are deliberately NOT dressed as
-         progress: a bar filling toward a reward that has ended would be a lie. */
-      const inProgressV340=!ready&&cost>0&&rewardBalance<cost
-        &&!['tier_locked','ended','limit_reached','not_started','disabled'].includes(r.availability);
-      /* v340 (gap 4): the reward's own photo. image_ref has existed on
-         loyalty_reward_versions since v27 and customer_get_reward_catalog has always returned
-         it — what was missing was any way for an owner to SET it (added to the reward editor in
-         this same pass) and, here, a card that shows it as a picture. v339 rendered a stored
-         https ref as a text link ("View reward image"), which is not what the mockup shows and
-         is not what an owner uploading a product photo expects. It now resolves through the same
-         customerMediaUrlV95 guard every other customer image uses, so only a real
-         business-public storage object is ever loaded; anything else, or a load failure, falls
-         back to the gift glyph rather than a broken image. */
+    /* nestly_v422 (owner photo 6). ONE card shape, and it is the claimable one. Everything the
+       owner struck through on that photo described a card the customer could NOT act on — the
+       progress bar, the "5/5 stamps · 0 more to go" reading, the "More points needed" line, the
+       "In progress" and tier-locked pills. With the list narrowed to what the counter will
+       actually honour, none of those states can occur here, so they are gone rather than left as
+       branches that can never be true. What survives is what a customer standing at the counter
+       needs: the photo, the name, what it costs, the description, how long they have to use it,
+       where it is valid, and the QR button. */
+    const rewardCardV422=r=>{
+      const cost=Math.max(0,Number(r.cost_points)||0);
       const imageUrlV340=customerMediaUrlV95(r.image_ref);
-      /* v339: RESTING STATE ONLY. The status badge moves to the top of the card, the reward's own
-         name becomes the card's heading and the cost sits under it as its own line — photo 1's
-         shape. Every interactive part is untouched: the same "Show QR at counter" button with the
-         same data-customer-redeem action_key, wired by the same handler below, opening the same
-         customer_create_redemption_intent_v89 flow. */
-      return `<article class="wallet-reward customer-reward-card-v339${inProgressV340?' customer-reward-card-progress-v340':''}">
+      return `<article class="wallet-reward customer-reward-card-v339">
       <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
-        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339">${ready?'<span class="pill ok">Ready to claim</span>':''}${inProgressV340?'<span class="pill customer-reward-progress-pill-v340">In progress</span>':''}${r.availability==='tier_locked'?`<span class="pill customer-reward-locked-v339">${esc(r.tier_requirement?.tier_label?`${r.tier_requirement.tier_label} only`:'Locked')}</span>`:''}</div>
+        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span></div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
-      <p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>
-      ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}${short||inProgressV340?`<div class="wallet-reward-progress" aria-hidden="true" style="--reward-progress:${progress}%"><span></span></div><p class="small wallet-reward-gap customer-reward-progress-read-v340"><b>${esc(customerPointTotalV103(Math.min(rewardBalance,cost)))}/${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</b><span class="muted"> · ${esc(customerPointTotalV103(gap))} more to go</span></p><span class="sr-only">${esc(customerPointTotalV103(rewardBalance))} of ${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)} collected.</span>`:''}<p class="${short?'muted small':'small'}" style="margin-top:9px">${esc(rewardLockLineV176(r)||availability[r.availability]||'Ask at counter')}</p>
+      ${cost>0?`<p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>`:''}
+      ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
-      <div class="wallet-reward-actions">${ready
-        ?`<button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button>`
-        :''}</div></article>`}).join('')}</div>`;
+      <div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div></article>`;
+    };
+    /* nestly_v422 (owner photo 6, "Available" and "History" written as tabs over this heading, with
+       "once redeemed, rewards go history"). History is NOT fetched here: it is a second server read
+       and most customers open this screen to claim, not to reminisce, so it loads the first time
+       the tab is opened and is cached for the rest of the render. That is also why the tab carries
+       no count — a number we have not read yet would have to be guessed. */
+    host.innerHTML=`${redemptionUncheckedV286
+      ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
+      :`<div class="customer-rewards-carousel-head-v337"><h2>Your rewards</h2></div>`}
+      <div class="v150-segment customer-rewards-tabs-v422" role="tablist" aria-label="Your rewards">
+        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${claimableRewardsV422.length?` (${claimableRewardsV422.length})`:''}</button>
+        <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
+      </div>
+      <div data-rewards-panel-v422="available" role="tabpanel">
+        ${claimableRewardsV422.length
+          ?`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
+            <div class="wallet-rewards customer-rewards-carousel-v337">${claimableRewardsV422.map(rewardCardV422).join('')}</div>`
+          :`<p class="muted small customer-rewards-empty-v422">${esc(redemptionUncheckedV286
+              ?'We could not check this business’s redemption settings, so nothing can be claimed right now.'
+              :'Nothing to claim yet — keep collecting and your reward will appear here.')}</p>`}
+      </div>
+      <div data-rewards-panel-v422="history" role="tabpanel" hidden></div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
+    /* nestly_v422 — the Available / History tabs (owner photo 6). One panel is visible at a time;
+       History loads once, on first open, from customer_get_reward_history_v422.
+       Every failure leaves the tab usable and says what happened rather than showing an empty
+       list, because "no history" and "we could not read your history" are different facts and a
+       customer who has claimed rewards would read the second as the first. An old server that
+       does not have the function yet (the four-hour CDN window, or a rollback) answers 42883 /
+       PGRST202 and gets the honest "not available" line — the Available tab is untouched. */
+    let rewardHistoryLoadedV422=false;
+    const renderRewardHistoryV422=(state,items=[])=>{
+      const panel=host.querySelector('[data-rewards-panel-v422="history"]');
+      if(!panel)return;
+      if(state==='loading'){panel.innerHTML='<p class="muted small">Loading your claimed rewards…</p>';return}
+      if(state==='unavailable'){panel.innerHTML='<p class="muted small">Your claimed rewards are not available right now.</p>';return}
+      if(state==='error'){
+        panel.innerHTML=`<p class="muted small">We could not load your claimed rewards.</p><button class="btn ghost sm" type="button" data-rewards-history-retry-v422 style="margin-top:8px">Retry</button>`;
+        const retry=panel.querySelector('[data-rewards-history-retry-v422]');
+        if(retry)retry.onclick=()=>{rewardHistoryLoadedV422=false;loadRewardHistoryV422()};
+        return;
+      }
+      if(!items.length){panel.innerHTML='<p class="muted small customer-rewards-empty-v422">Nothing claimed yet. Rewards you redeem show up here.</p>';return}
+      panel.innerHTML=`<div class="wallet-rewards customer-rewards-carousel-v337">${items.map(item=>{
+        const name=String(item?.reward_name||'').trim()||'Reward';
+        const when=item?.redeemed_at?walletDate(item.redeemed_at):'';
+        /* A v323 stamp milestone is claimed without spending a balance, so points_spent is 0 on
+           those rows; printing "0 points" would invent a price the customer never paid. */
+        const spent=item?.consumes_balance===true?Math.max(0,Number(item.points_spent)||0):0;
+        const photo=customerMediaUrlV95(item?.image_ref);
+        return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422">
+          <div class="customer-reward-photo-v340${photo?'':' customer-reward-photo-empty-v340'}">${photo
+            ?`<img src="${esc(photo)}" alt="" loading="lazy" data-reward-photo-v340>`
+            :CUI.icon('loyalty',{size:24})}</div>
+          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span></div>
+          <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
+          ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
+          ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}
+        </article>`;
+      }).join('')}</div>`;
+      panel.querySelectorAll('[data-reward-photo-v340]').forEach(image=>{image.onerror=()=>{
+        const frame=image.closest('.customer-reward-photo-v340');if(!frame)return;
+        frame.classList.add('customer-reward-photo-empty-v340');
+        frame.innerHTML=CUI.icon('loyalty',{size:24});
+      }});
+    };
+    const loadRewardHistoryV422=async()=>{
+      if(rewardHistoryLoadedV422)return;
+      rewardHistoryLoadedV422=true;
+      renderRewardHistoryV422('loading');
+      const {data,error}=await customerRpc('customer_get_reward_history_v422',
+        {p_business_slug:businessSlug,p_limit:50});
+      if(!isWalletSectionCurrent(host))return;
+      if(error){
+        rewardHistoryLoadedV422=false;
+        const missing=['42883','PGRST202'].includes(String(error.code||''));
+        return renderRewardHistoryV422(missing?'unavailable':'error');
+      }
+      renderRewardHistoryV422('ready',Array.isArray(data?.items)?data.items:[]);
+    };
+    host.querySelectorAll('[data-rewards-tab-v422]').forEach(tab=>tab.onclick=()=>{
+      const wanted=String(tab.dataset.rewardsTabV422||'available');
+      host.querySelectorAll('[data-rewards-tab-v422]').forEach(other=>
+        other.setAttribute('aria-selected',String(other===tab)));
+      host.querySelectorAll('[data-rewards-panel-v422]').forEach(panel=>{
+        panel.hidden=panel.dataset.rewardsPanelV422!==wanted;
+      });
+      if(wanted==='history')loadRewardHistoryV422();
+    });
     /* v340 (gap 4): never a broken image. A stored object that has since been deleted, or a
        storage read that fails, swaps the <img> for the same gift glyph an image-less reward
        already shows — wired here rather than as an inline onerror because the app runs under a
@@ -27155,15 +27355,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      different path from the button. */
   const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<div class="grow-points-modal-back-v410" data-grow-points-modal-back-v410 aria-hidden="true"></div><li class="grow-points-form-card-v343 grow-points-form-modal-v410" data-grow-points-addform-v326 role="dialog" aria-modal="true" aria-labelledby="growPointsFormTitleV410">
     <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
-    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
+    ${/* nestly_v422 (owner photo 3: "please fix this misalignment"). The three fields carried
+         inline width:100%;max-width:280px / 140px / 420px — sizes for the pre-v410 INLINE card,
+         where they sat side by side in a list row. Since v410 this form is only ever a dialog, and
+         inside it those caps gave three fields three different right edges under three
+         left-aligned labels. The width now comes from the dialog's own stylesheet rule, so every
+         field shares one left edge and one right edge. */''}
+    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
     ${/* nestly_v416: opened by tapping a stamp, so the stamp IS chosen — the field states it and
          is read-only rather than inviting the owner to type a second, different number. It stays
          a real input because the save handler reads its value; nothing about that path changed.
          The points editor, which has no grid, keeps the field exactly as it was. */''}
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">${growStampsPickedV416
       ?`On stamp ${growStampsPickedV416}`
-      :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
+      :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -27403,35 +27609,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      growStampsGridV416 below). Both builders are deleted rather than left unreferenced: a dead
      50-line renderer for a surface that no longer exists is the drift this file keeps having to
      undo. History is unaffected; it renders through growPointsGiftRowV326, as it always did. */
-  /* Live "Customer preview" ladder — same stop/line/percent-position mechanics as the Tiers page's
-     own growTiersLadderV343, adapted to stamp milestones with a gift icon per stop and a demo
-     avatar row. There is no real customer in this editor, so progress is shown at 0 collected —
-     honestly a template preview, not a live reading of any actual customer's card. */
-  const growStampsMaxV350=Math.max(1,...growStampsLevelsSortedV350.map(reward=>Number(reward.cost_points||0)));
-  /* V356 (owner mockup, photo 1): the preview was a bare dot-and-line reusing the Tiers ladder,
-     which positioned each stop by ABSOLUTE PERCENTAGE of the highest milestone — so a card with a
-     single level rendered one dot pinned to the far right with an empty line trailing to nowhere.
-     Rebuilt as an evenly-spaced flex row of milestones (gift icon, numbered circle, unit, reward
-     name) plus a row of stamp slots, which reads correctly at one level or six.
-     The slot row and "collected" count show ZERO deliberately: there is no real customer in this
-     editor, and inventing a part-filled progress ("4 of 12") would put a number on screen that
-     belongs to nobody. The slots are capped so a 50-stamp card does not draw 50 circles. */
-  /* nestly_v410 (owner photo 4). The V356 rail — an evenly-spaced row of milestone stops above a
-     row of ten identical stars — was struck through, and the owner drew a numbered grid: every
-     stamp from 1 to the last milestone, in order, with a gift sitting ON the stamps that unlock
-     one, and "click then pop-up to see what gift".
-     That is a truer picture of the card a customer actually fills: the old rail showed only the
-     milestones (so a 5-and-10 card drew two stops and ten anonymous stars that lined up with
-     nothing), while this draws the ten squares the customer will tick and marks which two of them
-     pay out. The count still reads 0 collected — there is no real customer in this editor, and a
-     part-filled preview would put somebody else's progress on screen.
-     Capped at GROW_STAMPS_PREVIEW_MAX_V410 so a 200-stamp card cannot paint 200 circles; past the
-     cap the grid says how many it is not drawing rather than silently truncating. */
-  const GROW_STAMPS_PREVIEW_MAX_V410=40;
+  /* nestly_v422 (owner photo 2: the whole Preview block struck out corner to corner, "no need this
+     preview"). The v350 rail became the v410 numbered grid, and v416 then made the EDITOR itself
+     that same grid — so the preview had become a read-only second drawing of the thing directly
+     above it, on a page where the owner has to scroll past it to reach the summary. It is gone,
+     along with its own constants and its gift-detail popup: the editor grid is tappable and opens
+     the real gift form, which is strictly more than the preview's popup did.
+     growStampsRewardAtV410 survives because the EDITOR grid reads it. */
   const growStampsRewardAtV410=new Map(growStampsLevelsSortedV350
     .map(reward=>[Math.max(0,Number(reward.cost_points||0)),reward])
     .filter(([stamps])=>stamps>0));
-  const growStampsDrawnV410=Math.min(growStampsMaxV350,GROW_STAMPS_PREVIEW_MAX_V410);
   /* ===================== nestly_v416 — THE STAMP CARD EDITOR ==================================
      Owner rulings that shaped this, recorded so the next change does not re-litigate them:
        * the card RESETS when it is full and the same gifts come round again;
@@ -27454,12 +27641,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
     Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416,growStampsHighestGiftV416));
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
+  /* nestly_v422 (owner photo 2, the value ringed: "do as a field, so can edit number"). Getting
+     from 10 stamps to 40 was thirty taps on the "+", because the length was a READ-ONLY <b>
+     between two steppers. It is a real number input now — type 40, press Enter or tab away, done
+     — and the steppers stay beside it for the one-at-a-time case (owner ruling, 2026-08-22).
+     Both routes end in the SAME write: data-grow-stamps-len-v416 for the steppers, and the field's
+     own commit handler calling business_set_stamp_card_length_v414 with what was typed. The
+     server keeps its veto — it refuses a length that would strand a live gift and names it — so
+     the field never enforces a rule of its own beyond the 1..100 the input itself declares. */
   const growStampsCardLengthBarV416=`<div class="grow-stamps-lenbar-v416">
-    <span class="grow-stamps-lenbar-label-v416"><b>Card length</b>
+    <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
     <span class="spacer"></span>
     ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=Math.max(1,growStampsHighestGiftV416)?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
-    <b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>
+    ${canSetupGrow
+      ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
+      :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
     ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416?' disabled':''} aria-label="One stamp longer">+</button>`:''}
   </div>`;
   /* The grid. One cell per stamp, in order, with a gift marked on the stamps that pay out — the
@@ -27496,24 +27693,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ${canSetupGrow?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
-  const growStampsPreviewV350=`<div class="grow-stamps-preview-card-v350">
-    <b>Preview</b>
-    <div class="grow-stamps-preview-hero-v350"><b data-merchant-content>${esc(S.biz?.name||'Stamp card')}</b><p class="small">Collect stamps and unlock rewards!</p></div>
-    ${growStampsLevelsSortedV350.length?`
-    <div class="grow-stamps-grid-v410" role="list" aria-label="Stamp card preview">
-      ${Array.from({length:growStampsDrawnV410},(_,index)=>{
-        const stamp=index+1;
-        const reward=growStampsRewardAtV410.get(stamp);
-        const rewardName=reward?String(reward.customer_name||reward.name||'Reward'):'';
-        return reward
-          ? `<button type="button" role="listitem" class="grow-stamps-cell-v410 is-gift-v410" data-grow-stamp-gift-v410="${stamp}" data-merchant-content aria-label="Stamp ${stamp} unlocks ${esc(rewardName)}. Show details."><span class="grow-stamps-cell-gift-v410" aria-hidden="true">${CUI.icon('giftcard',{size:18})}</span><span class="grow-stamps-cell-num-v410">${stamp}</span></button>`
-          : `<span role="listitem" class="grow-stamps-cell-v410"><span class="grow-stamps-cell-num-v410">${stamp}</span></span>`;
-      }).join('')}
-    </div>
-    ${growStampsMaxV350>growStampsDrawnV410?`<p class="muted small" style="margin-top:8px">Showing the first ${growStampsDrawnV410} of ${growStampsMaxV350} stamps.</p>`:''}
-    <p class="muted small" style="margin-top:10px">0 of ${growStampsMaxV350} stamps collected · tap a gift to see what it unlocks</p>`
-    :'<p class="muted small" style="margin-top:14px">Add a level below to see the preview.</p>'}
-  </div>`;
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
      NOT carry the mockup's "Duplicate" button: a firm has exactly one stamps programme row on the
      spine, so there is nothing a duplicate could be created as, and inventing a second card would
@@ -27606,9 +27785,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </div>
       </div>
       ${growStampsSummaryV356}
-      <!-- V356 (owner: "preview can put below"): the customer preview was a right-hand column
-           squeezing the level table; it now sits full-width underneath it. -->
-      ${growStampsPreviewV350}
     </div>`;
   /* ============ V331 — TIERED MEMBERSHIP: A FULL PARALLEL IMMEDIATE-WRITE PAGE ================
      Owner ruling ("proceed all at once", 2026-08-15): NOT a read-only view over the existing
@@ -28966,32 +29142,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(first&&document.activeElement!==first)first.focus({preventScroll:true});
     }
   }
-  outerMain.querySelectorAll('[data-grow-stamp-gift-v410]').forEach(cell=>cell.onclick=()=>{
-    const stamp=Math.max(0,Number(cell.dataset.growStampGiftV410||0));
-    const reward=growStampsRewardAtV410.get(stamp);
-    if(!reward)return;
-    const name=String(reward.customer_name||reward.name||'Reward');
-    const note=String(reward.description||reward.customer_description||'').trim();
-    const photo=customerMediaUrlV95(reward.image_ref);
-    const overlay=document.createElement('div');
-    overlay.className='modal-back';
-    overlay.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="growStampGiftTitleV410">
-      <div class="row"><h2 id="growStampGiftTitleV410">Stamp ${stamp}</h2><span class="spacer"></span>
-        <button type="button" class="btn ghost sm" id="growStampGiftCloseV410" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
-      ${photo?`<img src="${esc(photo)}" alt="" style="width:100%;max-height:180px;object-fit:contain;margin-top:12px;border-radius:12px">`:''}
-      <p class="muted small" style="margin-top:12px">Unlocks at ${stamp} stamp${stamp===1?'':'s'}</p>
-      <b data-merchant-content style="display:block;font-size:20px;margin-top:4px">${esc(name)}</b>
-      ${note?`<p class="muted small" style="margin-top:8px" data-merchant-content>${esc(note)}</p>`:''}
-      <button type="button" class="btn" id="growStampGiftDoneV410" style="margin-top:18px">Close</button>
-    </div>`;
-    document.body.appendChild(overlay);
-    let deactivate;
-    const close=()=>{if(deactivate){const c=deactivate;deactivate=null;c({restoreFocus:true})}else overlay.remove()};
-    overlay.querySelector('#growStampGiftCloseV410').onclick=close;
-    overlay.querySelector('#growStampGiftDoneV410').onclick=close;
-    overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
-    deactivate=CUI.activateDialog(overlay,{onClose:()=>overlay.remove(),initialFocus:'#growStampGiftDoneV410'});
-  });
+  /* nestly_v422: the preview grid's gift-detail popup went with the preview (owner photo 2,
+     "no need this preview"). Nothing else ever carried data-grow-stamp-gift-v410, and the editor
+     grid one card up opens the real gift form on the same tap. */
   /* V359: "Edit settings" opens the inline earning-rule form on this page instead of handing off
      to the wizard's Earning step. The wizard was the only reason this field needed a publish. */
   outerMain.querySelectorAll('[data-grow-points-edit-v326]').forEach(el=>el.onclick=()=>{
@@ -29088,9 +29241,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the reason a level added here could be created and then refused at the counter. The server
      refuses a length that would strand a live gift and names the gift; that message is shown
      as-is rather than replaced, because it identifies which gift is in the way. */
-  outerMain.querySelectorAll('[data-grow-stamps-len-v416]').forEach(button=>button.onclick=async()=>{
+  /* nestly_v422: ONE write, two ways in — the steppers below and the typed field above both call
+     this. Keeping it a single function is the point: a second copy would be a second place for the
+     server's stranded-gift refusal to be handled differently. */
+  const growStampsSetLengthV422=async next=>{
     if(growPointsBusyV326)return;
-    const next=Math.round(Number(button.dataset.growStampsLenV416)||0);
     if(!(next>=1))return;
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     const {error}=await sb.rpc('business_set_stamp_card_length_v414',
@@ -29103,7 +29258,29 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(snapshot.loyalty)snapshot.loyalty.stamp_target=next;else snapshot.loyalty={stamp_target:next};
     toast(workspaceTemplateTextV97('stampCardLength',{stamps:next}));
     growRerenderV322({quiet:true});
-  });
+  };
+  outerMain.querySelectorAll('[data-grow-stamps-len-v416]').forEach(button=>button.onclick=()=>
+    growStampsSetLengthV422(Math.round(Number(button.dataset.growStampsLenV416)||0)));
+  /* nestly_v422: the typed field. It commits on Enter and on blur, never on every keystroke — a
+     write per digit would fire "1", "4" on the way to "14" and the server would refuse the first
+     of them against a live gift. A value that is unchanged, blank or outside 1..100 restores the
+     field to the length actually in force rather than sending a request that must fail. */
+  const growStampsLenFieldV422=outerMain.querySelector('[data-grow-stamps-lenfield-v422]');
+  if(growStampsLenFieldV422){
+    const commitV422=()=>{
+      const typed=Math.round(Number(growStampsLenFieldV422.value));
+      if(!Number.isFinite(typed)||typed<1||typed>GROW_STAMPS_MAX_LEN_V416||typed===growStampsCardLenV416){
+        growStampsLenFieldV422.value=String(growStampsCardLenV416);
+        return;
+      }
+      growStampsSetLengthV422(typed);
+    };
+    growStampsLenFieldV422.onblur=commitV422;
+    growStampsLenFieldV422.onkeydown=event=>{
+      if(event.key==='Enter'){event.preventDefault();commitV422()}
+      else if(event.key==='Escape'){growStampsLenFieldV422.value=String(growStampsCardLenV416)}
+    };
+  }
   const growPointsAddCancel=outerMain.querySelector('[data-grow-points-add-cancel-v326]');
   if(growPointsAddCancel)growPointsAddCancel.onclick=()=>{
     growPointsAddOpenV326='';growPointsErrorV326='';growPointsEditingV326=null;

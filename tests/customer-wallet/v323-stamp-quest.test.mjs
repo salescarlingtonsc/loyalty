@@ -182,11 +182,12 @@ test('V323 every rung the card can be in has an honest line', () => {
     quest.stampQuestNormaliseV323(payload({ filled: 8, claimed: [3, 5, 8] })));
   assert.equal(line(allCollected, 'next'), ct('stampsQuestAllClaimed'));
 
-  const retired = quest.customerStampQuestBodyV323(quest.stampQuestNormaliseV323(
-    { ...payload(), pot_migrated: true }));
-  assert.equal(line(retired, 'retired'), ct('stampsQuestRetired'));
-  assert.doesNotMatch(retired, /data-stamp-quest-rings-v323|data-stamp-quest-list-v323/,
-    'a migrated pot has no honest figure left, so it draws no card and offers no claim');
+  /* nestly_v422 (owner photo 6, the sentence struck out: "remove this wording"). A migrated pot
+     used to render ONE sentence here — "This stamp card has been retired — ask us about your
+     balance." The owner's ruling is that the box goes with the sentence, the same rule v326/v386
+     already apply to a paused programme, so loadStampCardV323 removes the whole card before this
+     body is ever built and there is no retired branch left. Asserted in the loader test below. */
+  assert.doesNotMatch(app, /stampsQuestRetired/, 'the sentence and its four locale strings are gone');
 
   /* An unconfigured card (stamp_target NULL) must never invent a length. The rule W4b wrote down:
      a default of 10 would be a number the business never chose, printed with the authority of a
@@ -217,33 +218,56 @@ test('V323 anything that is not a v323 card leaves the shipped v310 card standin
 test('V323 the loader replaces the v310 card only on a clean answer, and never blanks it', () => {
   const src = closure('const loadStampCardV323=async()=>', 'const loadGrowthOffers=async()=>');
   /* Read as a sequence of guards, each of which must return BEFORE anything is removed from the
-     DOM. The order is the property: every early return happens above the first mutation. */
-  const firstMutation = Math.min(
-    ...['insertAdjacentHTML', 'figure.remove()', 'line.remove()']
-      .map(token => { const at = src.indexOf(token); return at < 0 ? Infinity : at; }));
-  assert.ok(Number.isFinite(firstMutation), 'the loader must mutate the card at some point');
+     DOM. The order is the property: every early return happens above the first mutation.
+     nestly_v422: this loader serves TWO surfaces now — the stamps card, and the business-profile
+     hero (owner photo 8) — so the tokens below name the CARD's own mutations specifically. The
+     hero's insertion is a different node on a different screen and is guarded on its own line. */
+  const at = token => { const i = src.indexOf(token); return i < 0 ? Infinity : i; };
+  const anyCardMutation = Math.min(at('line.insertAdjacentHTML'), at('figure.remove()'),
+    at('line.remove()'), at('card.remove()'));
+  const replaceMutation = Math.min(at('line.insertAdjacentHTML'), at('figure.remove()'),
+    at('line.remove()'));
+  assert.ok(Number.isFinite(anyCardMutation), 'the loader must mutate the card at some point');
+
   for (const guard of [
-    'if(!card)return;',                 // the stamps card is not on this page at all
-    'if(error)return;',                 // an old server behind a new bundle: the RPC does not exist
-    'if(!quest||!quest.running)return;',// no card, a foreign contract, or a PAUSED programme
-    'if(!line)return;'                  // the v310 card is in a shape this cannot safely edit
+    'if(!card&&!heroSlotV422)return;',     // neither surface this read serves is on the page
+    'if(error)return;',                    // an old server behind a new bundle: no such RPC
+    'if(!card||!card.isConnected)return;', // the hero was served; there is no stamps CARD to edit
+    'if(!quest||!quest.running)return;'    // no card, a foreign contract, or a PAUSED programme
   ]) {
-    const at = src.indexOf(guard);
-    assert.ok(at >= 0, `missing guard: ${guard}`);
-    assert.ok(at < firstMutation, `guard "${guard}" runs after the card has already been edited`);
+    assert.ok(at(guard) >= 0, `missing guard: ${guard}`);
+    assert.ok(at(guard) < anyCardMutation,
+      `guard "${guard}" runs after the card has already been touched`);
   }
-  assert.ok(src.indexOf('if(!isWalletCurrent()||!card.isConnected)return;') < firstMutation,
+  /* The v310 card is in a shape this cannot safely edit — guards the REPLACE path. It sits below
+     the pot-migrated branch, which is a terminal `card.remove()` + `return` and needs no line. */
+  assert.ok(at('if(!line)return;') >= 0 && at('if(!line)return;') < replaceMutation,
+    'the replace path still refuses a card whose sentence it cannot find');
+
+  /* nestly_v422 (owner photo 6, "remove this wording"): a migrated pot takes the whole card, not
+     just its sentence — and #walletRewards is lifted out first, because the stamps card HOSTS the
+     reward list whenever stamps is the live accruing programme. */
+  const migrated = src.slice(src.indexOf('if(quest.potMigrated){'));
+  assert.ok(migrated.indexOf("card.querySelector('#walletRewards')") <
+    migrated.indexOf('card.remove()'),
+    'the reward list is moved out before the card it lives in is removed');
+  assert.match(migrated, /insertAdjacentElement\('beforebegin',rewardsHostV422\)/);
+
+  assert.ok(at('if(!isWalletCurrent())return;') < anyCardMutation,
     'a wallet the customer has already navigated away from must not be written to');
+  assert.match(src, /if\(heroSlotV422&&heroSlotV422\.isConnected&&quest&&quest\.running\)/,
+    'and the hero is only written while its own node is still on the page');
   /* It is fetched beside the other wallet loaders, not on a second render pass. */
   assert.match(app, /await Promise\.all\(\[loadMemberCodeW6I2\(\),loadReferralCardV300\(\),loadStampCardV323\(\),/);
 });
 
-test('V323 the five new customer sentences exist in all four locales', () => {
+test('V323 the four remaining customer sentences exist in all four locales', () => {
   /* tests/customer-wallet/v293-customer-wallet-localization.test.mjs turns red on a missing key;
      this asserts the same thing at the point the keys were added, and that none of the four
      translations was left as the English string. */
+  /* nestly_v422 removed stampsQuestRetired from all four locales with the sentence it served. */
   const keys = ['stampsQuestProgress', 'stampsQuestCarried', 'stampsQuestClaimed',
-    'stampsQuestAllClaimed', 'stampsQuestRetired'];
+    'stampsQuestAllClaimed'];
   for (const key of keys) {
     const values = [...app.matchAll(new RegExp(`^\\s{4}${key}:'([^']*)',$`, 'gm'))]
       .map(match => match[1]);

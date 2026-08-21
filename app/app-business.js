@@ -14584,15 +14584,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      different path from the button. */
   const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<div class="grow-points-modal-back-v410" data-grow-points-modal-back-v410 aria-hidden="true"></div><li class="grow-points-form-card-v343 grow-points-form-modal-v410" data-grow-points-addform-v326 role="dialog" aria-modal="true" aria-labelledby="growPointsFormTitleV410">
     <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
-    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
+    ${/* nestly_v422 (owner photo 3: "please fix this misalignment"). The three fields carried
+         inline width:100%;max-width:280px / 140px / 420px — sizes for the pre-v410 INLINE card,
+         where they sat side by side in a list row. Since v410 this form is only ever a dialog, and
+         inside it those caps gave three fields three different right edges under three
+         left-aligned labels. The width now comes from the dialog's own stylesheet rule, so every
+         field shares one left edge and one right edge. */''}
+    <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growPointsAddNameV326">Name</label><br><input id="growPointsAddNameV326" class="grow-setup-input-v301" value="${esc(growPointsAddDraftV326.name)}" placeholder="e.g. Lotion"></p>
     ${/* nestly_v416: opened by tapping a stamp, so the stamp IS chosen — the field states it and
          is read-only rather than inviting the owner to type a second, different number. It stays
          a real input because the save handler reads its value; nothing about that path changed.
          The points editor, which has no grid, keeps the field exactly as it was. */''}
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">${growStampsPickedV416
       ?`On stamp ${growStampsPickedV416}`
-      :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" style="width:100%;max-width:420px" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
+      :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -14832,35 +14838,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      growStampsGridV416 below). Both builders are deleted rather than left unreferenced: a dead
      50-line renderer for a surface that no longer exists is the drift this file keeps having to
      undo. History is unaffected; it renders through growPointsGiftRowV326, as it always did. */
-  /* Live "Customer preview" ladder — same stop/line/percent-position mechanics as the Tiers page's
-     own growTiersLadderV343, adapted to stamp milestones with a gift icon per stop and a demo
-     avatar row. There is no real customer in this editor, so progress is shown at 0 collected —
-     honestly a template preview, not a live reading of any actual customer's card. */
-  const growStampsMaxV350=Math.max(1,...growStampsLevelsSortedV350.map(reward=>Number(reward.cost_points||0)));
-  /* V356 (owner mockup, photo 1): the preview was a bare dot-and-line reusing the Tiers ladder,
-     which positioned each stop by ABSOLUTE PERCENTAGE of the highest milestone — so a card with a
-     single level rendered one dot pinned to the far right with an empty line trailing to nowhere.
-     Rebuilt as an evenly-spaced flex row of milestones (gift icon, numbered circle, unit, reward
-     name) plus a row of stamp slots, which reads correctly at one level or six.
-     The slot row and "collected" count show ZERO deliberately: there is no real customer in this
-     editor, and inventing a part-filled progress ("4 of 12") would put a number on screen that
-     belongs to nobody. The slots are capped so a 50-stamp card does not draw 50 circles. */
-  /* nestly_v410 (owner photo 4). The V356 rail — an evenly-spaced row of milestone stops above a
-     row of ten identical stars — was struck through, and the owner drew a numbered grid: every
-     stamp from 1 to the last milestone, in order, with a gift sitting ON the stamps that unlock
-     one, and "click then pop-up to see what gift".
-     That is a truer picture of the card a customer actually fills: the old rail showed only the
-     milestones (so a 5-and-10 card drew two stops and ten anonymous stars that lined up with
-     nothing), while this draws the ten squares the customer will tick and marks which two of them
-     pay out. The count still reads 0 collected — there is no real customer in this editor, and a
-     part-filled preview would put somebody else's progress on screen.
-     Capped at GROW_STAMPS_PREVIEW_MAX_V410 so a 200-stamp card cannot paint 200 circles; past the
-     cap the grid says how many it is not drawing rather than silently truncating. */
-  const GROW_STAMPS_PREVIEW_MAX_V410=40;
+  /* nestly_v422 (owner photo 2: the whole Preview block struck out corner to corner, "no need this
+     preview"). The v350 rail became the v410 numbered grid, and v416 then made the EDITOR itself
+     that same grid — so the preview had become a read-only second drawing of the thing directly
+     above it, on a page where the owner has to scroll past it to reach the summary. It is gone,
+     along with its own constants and its gift-detail popup: the editor grid is tappable and opens
+     the real gift form, which is strictly more than the preview's popup did.
+     growStampsRewardAtV410 survives because the EDITOR grid reads it. */
   const growStampsRewardAtV410=new Map(growStampsLevelsSortedV350
     .map(reward=>[Math.max(0,Number(reward.cost_points||0)),reward])
     .filter(([stamps])=>stamps>0));
-  const growStampsDrawnV410=Math.min(growStampsMaxV350,GROW_STAMPS_PREVIEW_MAX_V410);
   /* ===================== nestly_v416 — THE STAMP CARD EDITOR ==================================
      Owner rulings that shaped this, recorded so the next change does not re-litigate them:
        * the card RESETS when it is full and the same gifts come round again;
@@ -14883,12 +14870,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
     Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416,growStampsHighestGiftV416));
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
+  /* nestly_v422 (owner photo 2, the value ringed: "do as a field, so can edit number"). Getting
+     from 10 stamps to 40 was thirty taps on the "+", because the length was a READ-ONLY <b>
+     between two steppers. It is a real number input now — type 40, press Enter or tab away, done
+     — and the steppers stay beside it for the one-at-a-time case (owner ruling, 2026-08-22).
+     Both routes end in the SAME write: data-grow-stamps-len-v416 for the steppers, and the field's
+     own commit handler calling business_set_stamp_card_length_v414 with what was typed. The
+     server keeps its veto — it refuses a length that would strand a live gift and names it — so
+     the field never enforces a rule of its own beyond the 1..100 the input itself declares. */
   const growStampsCardLengthBarV416=`<div class="grow-stamps-lenbar-v416">
-    <span class="grow-stamps-lenbar-label-v416"><b>Card length</b>
+    <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
     <span class="spacer"></span>
     ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=Math.max(1,growStampsHighestGiftV416)?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
-    <b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>
+    ${canSetupGrow
+      ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
+      :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
     ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416?' disabled':''} aria-label="One stamp longer">+</button>`:''}
   </div>`;
   /* The grid. One cell per stamp, in order, with a gift marked on the stamps that pay out — the
@@ -14925,24 +14922,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ${canSetupGrow?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
-  const growStampsPreviewV350=`<div class="grow-stamps-preview-card-v350">
-    <b>Preview</b>
-    <div class="grow-stamps-preview-hero-v350"><b data-merchant-content>${esc(S.biz?.name||'Stamp card')}</b><p class="small">Collect stamps and unlock rewards!</p></div>
-    ${growStampsLevelsSortedV350.length?`
-    <div class="grow-stamps-grid-v410" role="list" aria-label="Stamp card preview">
-      ${Array.from({length:growStampsDrawnV410},(_,index)=>{
-        const stamp=index+1;
-        const reward=growStampsRewardAtV410.get(stamp);
-        const rewardName=reward?String(reward.customer_name||reward.name||'Reward'):'';
-        return reward
-          ? `<button type="button" role="listitem" class="grow-stamps-cell-v410 is-gift-v410" data-grow-stamp-gift-v410="${stamp}" data-merchant-content aria-label="Stamp ${stamp} unlocks ${esc(rewardName)}. Show details."><span class="grow-stamps-cell-gift-v410" aria-hidden="true">${CUI.icon('giftcard',{size:18})}</span><span class="grow-stamps-cell-num-v410">${stamp}</span></button>`
-          : `<span role="listitem" class="grow-stamps-cell-v410"><span class="grow-stamps-cell-num-v410">${stamp}</span></span>`;
-      }).join('')}
-    </div>
-    ${growStampsMaxV350>growStampsDrawnV410?`<p class="muted small" style="margin-top:8px">Showing the first ${growStampsDrawnV410} of ${growStampsMaxV350} stamps.</p>`:''}
-    <p class="muted small" style="margin-top:10px">0 of ${growStampsMaxV350} stamps collected · tap a gift to see what it unlocks</p>`
-    :'<p class="muted small" style="margin-top:14px">Add a level below to see the preview.</p>'}
-  </div>`;
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
      NOT carry the mockup's "Duplicate" button: a firm has exactly one stamps programme row on the
      spine, so there is nothing a duplicate could be created as, and inventing a second card would
@@ -15035,9 +15014,6 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </div>
       </div>
       ${growStampsSummaryV356}
-      <!-- V356 (owner: "preview can put below"): the customer preview was a right-hand column
-           squeezing the level table; it now sits full-width underneath it. -->
-      ${growStampsPreviewV350}
     </div>`;
   /* ============ V331 — TIERED MEMBERSHIP: A FULL PARALLEL IMMEDIATE-WRITE PAGE ================
      Owner ruling ("proceed all at once", 2026-08-15): NOT a read-only view over the existing
@@ -16395,32 +16371,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(first&&document.activeElement!==first)first.focus({preventScroll:true});
     }
   }
-  outerMain.querySelectorAll('[data-grow-stamp-gift-v410]').forEach(cell=>cell.onclick=()=>{
-    const stamp=Math.max(0,Number(cell.dataset.growStampGiftV410||0));
-    const reward=growStampsRewardAtV410.get(stamp);
-    if(!reward)return;
-    const name=String(reward.customer_name||reward.name||'Reward');
-    const note=String(reward.description||reward.customer_description||'').trim();
-    const photo=customerMediaUrlV95(reward.image_ref);
-    const overlay=document.createElement('div');
-    overlay.className='modal-back';
-    overlay.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="growStampGiftTitleV410">
-      <div class="row"><h2 id="growStampGiftTitleV410">Stamp ${stamp}</h2><span class="spacer"></span>
-        <button type="button" class="btn ghost sm" id="growStampGiftCloseV410" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
-      ${photo?`<img src="${esc(photo)}" alt="" style="width:100%;max-height:180px;object-fit:contain;margin-top:12px;border-radius:12px">`:''}
-      <p class="muted small" style="margin-top:12px">Unlocks at ${stamp} stamp${stamp===1?'':'s'}</p>
-      <b data-merchant-content style="display:block;font-size:20px;margin-top:4px">${esc(name)}</b>
-      ${note?`<p class="muted small" style="margin-top:8px" data-merchant-content>${esc(note)}</p>`:''}
-      <button type="button" class="btn" id="growStampGiftDoneV410" style="margin-top:18px">Close</button>
-    </div>`;
-    document.body.appendChild(overlay);
-    let deactivate;
-    const close=()=>{if(deactivate){const c=deactivate;deactivate=null;c({restoreFocus:true})}else overlay.remove()};
-    overlay.querySelector('#growStampGiftCloseV410').onclick=close;
-    overlay.querySelector('#growStampGiftDoneV410').onclick=close;
-    overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
-    deactivate=CUI.activateDialog(overlay,{onClose:()=>overlay.remove(),initialFocus:'#growStampGiftDoneV410'});
-  });
+  /* nestly_v422: the preview grid's gift-detail popup went with the preview (owner photo 2,
+     "no need this preview"). Nothing else ever carried data-grow-stamp-gift-v410, and the editor
+     grid one card up opens the real gift form on the same tap. */
   /* V359: "Edit settings" opens the inline earning-rule form on this page instead of handing off
      to the wizard's Earning step. The wizard was the only reason this field needed a publish. */
   outerMain.querySelectorAll('[data-grow-points-edit-v326]').forEach(el=>el.onclick=()=>{
@@ -16517,9 +16470,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the reason a level added here could be created and then refused at the counter. The server
      refuses a length that would strand a live gift and names the gift; that message is shown
      as-is rather than replaced, because it identifies which gift is in the way. */
-  outerMain.querySelectorAll('[data-grow-stamps-len-v416]').forEach(button=>button.onclick=async()=>{
+  /* nestly_v422: ONE write, two ways in — the steppers below and the typed field above both call
+     this. Keeping it a single function is the point: a second copy would be a second place for the
+     server's stranded-gift refusal to be handled differently. */
+  const growStampsSetLengthV422=async next=>{
     if(growPointsBusyV326)return;
-    const next=Math.round(Number(button.dataset.growStampsLenV416)||0);
     if(!(next>=1))return;
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     const {error}=await sb.rpc('business_set_stamp_card_length_v414',
@@ -16532,7 +16487,29 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(snapshot.loyalty)snapshot.loyalty.stamp_target=next;else snapshot.loyalty={stamp_target:next};
     toast(workspaceTemplateTextV97('stampCardLength',{stamps:next}));
     growRerenderV322({quiet:true});
-  });
+  };
+  outerMain.querySelectorAll('[data-grow-stamps-len-v416]').forEach(button=>button.onclick=()=>
+    growStampsSetLengthV422(Math.round(Number(button.dataset.growStampsLenV416)||0)));
+  /* nestly_v422: the typed field. It commits on Enter and on blur, never on every keystroke — a
+     write per digit would fire "1", "4" on the way to "14" and the server would refuse the first
+     of them against a live gift. A value that is unchanged, blank or outside 1..100 restores the
+     field to the length actually in force rather than sending a request that must fail. */
+  const growStampsLenFieldV422=outerMain.querySelector('[data-grow-stamps-lenfield-v422]');
+  if(growStampsLenFieldV422){
+    const commitV422=()=>{
+      const typed=Math.round(Number(growStampsLenFieldV422.value));
+      if(!Number.isFinite(typed)||typed<1||typed>GROW_STAMPS_MAX_LEN_V416||typed===growStampsCardLenV416){
+        growStampsLenFieldV422.value=String(growStampsCardLenV416);
+        return;
+      }
+      growStampsSetLengthV422(typed);
+    };
+    growStampsLenFieldV422.onblur=commitV422;
+    growStampsLenFieldV422.onkeydown=event=>{
+      if(event.key==='Enter'){event.preventDefault();commitV422()}
+      else if(event.key==='Escape'){growStampsLenFieldV422.value=String(growStampsCardLenV416)}
+    };
+  }
   const growPointsAddCancel=outerMain.querySelector('[data-grow-points-add-cancel-v326]');
   if(growPointsAddCancel)growPointsAddCancel.onclick=()=>{
     growPointsAddOpenV326='';growPointsErrorV326='';growPointsEditingV326=null;

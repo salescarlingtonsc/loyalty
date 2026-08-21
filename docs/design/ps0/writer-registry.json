@@ -313,6 +313,15 @@
       "call_site_finding": "none"
     },
     {
+      "id": "browser.rpc:app/app.js:customer_get_reward_history_v422",
+      "surface": "browser_rpc_binding",
+      "rpc": "customer_get_reward_history_v422",
+      "resolves_to": "customer_get_reward_history_v422/2 (stable, read-only)",
+      "rows_written": "none - the function is `stable` and contains no INSERT, UPDATE or DELETE.",
+      "call_site_finding": "OK - a READ, listed here because it is a new browser->RPC identity. The browser supplies a business slug and a row limit and nothing else; it cannot name a customer. Scope is resolved server-side through app.v32_customer_wallet_context(auth.uid()), which requires an active customer identity and a verified link to that business, so both the business_id and the client_id come from the context rather than from an argument - there is no call shape that can read another customer's redemptions. Proven as the `authenticated` role in db/tests/v422_customer_reward_history.sql (9/9, rolled back against production), including that the two redemptions belonging to a different client at the same firm do not appear.",
+      "kernel_migratability": "non-value - reads public.loyalty_redemptions (anti-joined against loyalty_redemption_reversals) so a customer can see what they have already claimed. It writes nothing and moves no points, credit or stored value, so it never reaches the value kernel."
+    },
+    {
       "id": "browser.rpc:app/app.js:customer_activate_birthday_benefit",
       "surface": "browser_rpc_binding",
       "rpc": "customer_activate_birthday_benefit",

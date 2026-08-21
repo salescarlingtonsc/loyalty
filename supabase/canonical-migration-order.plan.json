@@ -2236,6 +2236,12 @@
       "version": "20260822000001",
       "name": "nestly_v421_two_sided_referral",
       "sourcePath": "db/migrations/20260822_nestly_v421_two_sided_referral.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000002",
+      "name": "nestly_v422_customer_reward_history",
+      "sourcePath": "db/migrations/20260822_nestly_v422_customer_reward_history.sql"
     }
   ]
 }

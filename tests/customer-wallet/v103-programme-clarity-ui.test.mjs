@@ -69,7 +69,10 @@ test('each eligible reward says Show QR at counter and opens the existing pendin
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
   const merchant=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
   assert.doesNotMatch(merchant,/presentation\.rewards\.map|presentation\.rewards\.length/);
-  assert.match(wallet,/customerRewardCanRedeem\(r,redemptionEnabled\)[\s\S]*?<span>Show QR at counter<\/span>/);
+  /* nestly_v422: the predicate is applied ONCE, as a filter over the catalogue, instead of per
+     card — so every card the list paints is by construction one the counter will honour, and each
+     one carries the button. */
+  assert.match(wallet,/customerRewardCanRedeem\(item,redemptionEnabled\)[\s\S]*?<span>Show QR at counter<\/span>/);
   assert.match(wallet,/customer_create_redemption_intent_v89/);
   assert.match(wallet,/intent\?\.status!=='pending'\|\|!intent\?\.qr_token/);
   assert.match(wallet,/showPendingRedemptionQr\(\{intent,businessName:b\.name,rewardName:/);
@@ -96,7 +99,14 @@ test('successful empty Rewards and History states do not offer a misleading retr
   const emptyTransactions=/if\(!transactionState\.items\.length\)\{([\s\S]*?)\n\s*\}/.exec(wallet)?.[1]||'';
   assert.match(emptyTransactions,/No purchases or points activity has been recorded/);
   assert.doesNotMatch(emptyTransactions,/Retry|Refresh|walletTransactionsRetry/);
-  assert.match(wallet,/if\(!rewards\.length\)return walletSectionEmpty\('walletRewards'/);
+  /* nestly_v422: an empty CATALOGUE no longer replaces this section — it also holds the customer's
+     own claim History now, which must survive a firm retiring every reward. The empty state moved
+     inside the Available panel, and it still offers no retry. */
+  assert.match(wallet,/customer-rewards-empty-v422">\$\{esc\(redemptionUncheckedV286/);
+  assert.match(wallet,/Nothing to claim yet — keep collecting and your reward will appear here\./);
+  const availablePanel=/data-rewards-panel-v422="available"[\s\S]*?<\/div>/.exec(wallet)?.[0]||'';
+  assert.doesNotMatch(availablePanel,/Retry|Refresh/,
+    'a successful read that simply has nothing ready must not offer a retry');
   const empty=section('async function walletSectionEmpty','function renderWalletAppointments');
   assert.match(empty,/host\.remove\(\);ensureWalletEmptyState\(businessSlug\)/);
   assert.doesNotMatch(empty,/Retry|Refresh/);

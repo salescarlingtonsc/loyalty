@@ -39,22 +39,24 @@ test('the QR lede is suppressed when no QR can be issued', () => {
 });
 
 test('no card claims counter availability the page could not verify', () => {
-  assert.match(rewards,
-    /if\(redemptionUncheckedV286\)availability\.available_at_counter='Redemption can’t be checked right now';/,
-    '"Available at counter" must not survive a redemption check that never happened');
-  /* nestly_v399: the copy map moved to a module-level constant shared with the hero swipe page,
-     so the two surfaces cannot describe the same reward differently. The ORDER INVARIANT this
-     test exists for is unchanged and still checked — loadRewards takes its own local copy, the
-     unchecked-redemption override rewrites that copy, and only then does a card read it. The
-     anchor is the local copy rather than the literal map. The shared constant itself must still
-     carry the honest default, asserted separately below. */
-  const guard = rewards.indexOf('if(redemptionUncheckedV286)availability.available_at_counter');
-  const map = rewards.indexOf('const availability={...CUSTOMER_REWARD_AVAILABILITY_COPY_V399}');
-  const card = rewards.indexOf('esc(rewardLockLineV176(r)||availability[r.availability]');
-  assert.ok(map > 0 && guard > map && card > guard,
-    'the override sits between the local copy it corrects and the card that reads it');
-  /* The override must mutate the LOCAL copy, never the shared constant — doing the latter would
-     leak one render's "could not check" wording into every later render and into the hero page. */
+  /* nestly_v422 (owner photo 6): this guarantee stopped being TEXTUAL and became STRUCTURAL.
+     v286 kept every reward on the list and relabelled "Available at counter" to "Redemption can't
+     be checked right now". The list now holds ONLY what customerRewardCanRedeem approves, and that
+     predicate's first clause is `redemptionEnabled!==true` — so when the redemption check failed
+     there is no card to mislabel at all, and the panel says the check failed instead. That is a
+     stronger form of the same promise, so the local copy and the override it corrected are gone.
+     What must not regress: the shared constant still carries the honest default (the hero swipe
+     pages read it), and nothing anywhere mutates that shared constant. */
+  assert.match(rewards, /const claimableRewardsV422=rewards\.filter\(item=>item\.action_key&&customerRewardCanRedeem\(item,redemptionEnabled\)\)/,
+    'the list is exactly what the counter will honour');
+  assert.match(appJs, /function customerRewardCanRedeem\(reward,redemptionEnabled\)\{\s*if\(redemptionEnabled!==true/,
+    'an unverified redemption check makes every reward unclaimable, so no card renders');
+  assert.match(rewards, /redemptionUncheckedV286\s*\?'We could not check this business’s redemption settings/,
+    'and the panel says so rather than showing an empty list');
+  assert.doesNotMatch(rewards, /availability\.available_at_counter=/,
+    'no card is left to relabel');
+  /* The override must never have mutated the SHARED constant — doing that would leak one render's
+     "could not check" wording into every later render and into the hero page. */
   assert.doesNotMatch(appJs,/CUSTOMER_REWARD_AVAILABILITY_COPY_V399\.available_at_counter\s*=/);
   assert.match(appJs,/CUSTOMER_REWARD_AVAILABILITY_COPY_V399=\{[^}]*available_at_counter:'Available at counter'/s);
 });

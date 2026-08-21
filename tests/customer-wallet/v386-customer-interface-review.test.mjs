@@ -133,11 +133,19 @@ test('photo 7: the hero takes its shape from the business’s own programme spin
   assert.match(mode,/if\(live\('tiers'\)\)return 'tiers'/);
   const hero=app.slice(app.indexOf('function customerBusinessRelationshipSummaryV346'),app.indexOf('function customerBusinessSecondaryMarkupV346'));
   assert.match(hero,/customerProgrammeStampRingsV310\(balance,stampTargetV386\)/,'the rings are the existing renderer, not a new one');
+  /* nestly_v422: those rings are now the FIRST PAINT only. They are sized by one reward's
+     cost_units, which is not the card's length, so loadStampCardV323 swaps in the real card
+     (customerHeroStampCardV422) as soon as the server's slots and milestones arrive. The slot is
+     asserted here because it is the contract between the two. */
+  assert.match(hero,/data-hero-stamp-slot-host-v422/,'the stamps figure is a slot the v323 read fills');
   assert.match(hero,/customer-business-tier-meter-v386/);
   /* v393 adds one clause: with NO tier from either source there is no tier figure to sit above,
      so the hero falls back to its plain-number form and the reward lines come back with it. */
-  assert.match(hero,/const showRewardLinesV386=modeV386!=='tiers'\|\|!tierBlockV393\|\|rewardReady/,
-    'a tiers-only firm gets no sentences about a reward ladder it does not run');
+  /* nestly_v422 (owner photo 8) adds STAMPS to that rule for a different reason: the hero draws the
+     whole stamp card now, and that card carries its own "Next available Reward: X" line, so the two
+     prose lines above and below it were the same sentence a second and third time. */
+  assert.match(hero,/const showRewardLinesV386=\(modeV386!=='tiers'\|\|!tierBlockV393\|\|rewardReady\)&&modeV386!=='stamps'/,
+    'a tiers-only firm gets no sentences about a reward ladder it does not run, and stamps says it once');
   assert.match(hero,/const liveTierV393=\(loyalty&&typeof loyalty\.tier==='object'&&loyalty\.tier\)\?loyalty\.tier:null/,
     'v393: the server tier snapshot is the first source, not a derived one');
   assert.match(hero,/Math\.round\(tierMetricV393\/tierNextThresholdV393\*100\)/,
