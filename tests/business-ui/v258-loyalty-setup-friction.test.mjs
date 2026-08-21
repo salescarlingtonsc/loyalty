@@ -46,7 +46,10 @@ test('A: lifetime points earned is a normal option in every mode', () => {
 });
 
 test('A: the save path writes the chosen basis unchanged, and the dead 23514 branch is gone', () => {
-  const save = section("const loyaltySave=$('lsave')", "if(draftVersionId){\n      toast('Grow draft saved");
+  /* nestly_v415: the old landmark was the draft-only toast, deleted when the owner ruled that
+     Save publishes (photo 2). Same handler, closing landmark moved to the publish that replaced
+     it. */
+  const save = section("const loyaltySave=$('lsave')", "const publishFailedV415=await publishOnSaveV415(versionId);");
   assert.match(save, /row\.tier_basis=\$\('ltb'\)\.value;/);
   assert.doesNotMatch(save, /'visits':basisV240/);
   assert.doesNotMatch(save, /basisV240/);
@@ -168,10 +171,16 @@ test('C: versioning safety is intact — edits reach a draft, never the live pro
   assert.doesNotMatch(gate.slice(0, gate.indexOf('document.querySelectorAll')),
     /publish_loyalty_config|generate_retention_recommendation/);
   // Save still creates a draft before the first server write if one somehow does not exist.
-  const save = section("const loyaltySave=$('lsave')", "if(draftVersionId){\n      toast('Grow draft saved");
+  /* nestly_v415: the old landmark was the draft-only toast, deleted when the owner ruled that
+     Save publishes (photo 2). Same handler, closing landmark moved to the publish that replaced
+     it. */
+  const save = section("const loyaltySave=$('lsave')", "const publishFailedV415=await publishOnSaveV415(versionId);");
   assert.ok(save.indexOf("create_loyalty_config_draft") < save.indexOf("save_loyalty_config_draft"),
     'the draft must exist before any edit reaches the server');
-  // Customers keep the published programme until the owner publishes.
-  assert.match(app, /Grow draft saved — customers are still using the published programme/);
-  assert.match(app, /Staff and customers keep using the published programme\./);
+  /* nestly_v415 — REVERSED BY THE OWNER, deliberately. "pressing save would publish to live.
+     dont need hide in draft" (photo 2). Customers no longer wait for a separate publish on this
+     page. What survives, and is asserted above, is that a draft is still created before the first
+     server write — the edit is still versioned, it is simply published immediately after. */
+  assert.match(app, /Saved and live for customers/);
+  assert.match(app, /savedNotLive/, 'and a publish the server refuses still says so');
 });

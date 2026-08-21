@@ -38,6 +38,12 @@ test('owner UI opens and edits the generated draft before an explicit publish',a
   assert.match(html,/refreshLoyaltyPanel\(data\.model,data\.draft_config_version_id,data,'Recommended Grow draft ready\.',false,editorIntent\)/i);
   assert.match(html,/if\(!stableRefresh\)routeMain\.innerHTML=CUI\.loadingState/i);
   assert.match(html,/let versionId=draftVersionId/i);
-  assert.match(html,/Draft reward saved/i);
-  assert.match(html,/publish only when it fits your business/i);
+  /* nestly_v415: the reward writer publishes now (owner, photo 2), so its confirmation names
+     what actually happened. */
+  assert.match(html,/Reward saved and live for customers/i);
+  /* nestly_v415: the recommendation still gets its own line above the editor — a generated draft
+     IS worth reading before it reaches customers — but the sentence changed with the banner the
+     owner had removed (photo 2). It now says what Save will do rather than telling the owner to
+     publish separately, because there is no separate publish on this page any more. */
+  assert.match(html,/Review every number below — Save puts it live for customers/i);
 });

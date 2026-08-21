@@ -166,7 +166,10 @@ test('(d2) a successful reward save closes the dialog before any re-render can o
   const save = loyalty.slice(loyalty.indexOf('async function saveReward('), loyalty.indexOf("const ra=$('rwAdd');"));
   const closeAt = save.indexOf('closeRewardDialogV238(false)');
   assert.notEqual(closeAt, -1);
-  assert.ok(closeAt < save.indexOf('openProtectedGrowPublishReview(versionId)'), 'closes before the publish-review navigation');
+  /* nestly_v415: the publish-review navigation is gone (Save publishes now), so the landmark it
+     compared against moved to the publish round trip — which is precisely the await this rule
+     exists to keep the close in front of. */
+  assert.ok(closeAt < save.indexOf('await publishOnSaveV415('), 'closes before the publish round trip');
   /* V293: the save's exit is now spendRewardIntentV293() — same guarantee this test always
      held (dialog closed BEFORE any navigation can orphan the moved editor node). */
   assert.ok(closeAt < save.indexOf('spendRewardIntentV293()'), 'closes before leaving the editor');

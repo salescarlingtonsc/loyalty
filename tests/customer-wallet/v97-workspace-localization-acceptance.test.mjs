@@ -321,7 +321,13 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      Delete ends a record, Remove detaches a link. The blocked-time row now says Delete, so it
      needs a Delete template beside the existing Remove one. Its zh-CN and ms strings reuse the
      Delete translations already in the workspace tables rather than introducing new wording. */
-  assert.equal(keys.length,136,'mixed-interface interpolation inventory changed without review');
+  /* 136 -> 137: nestly_v415 adds savedNotLive. The owner ruled that Save on the Loyalty page
+     publishes to customers rather than parking a draft ("pressing save would publish to live.
+     dont need hide in draft"), so a publish that publish_loyalty_config REFUSES has to name the
+     reason — interpolated runtime copy, and therefore reviewable copy. The {reason} value is the
+     server's own message via ownerErrorText and is deliberately not translated; the sentence
+     around it is, in all three locales. */
+  assert.equal(keys.length,137,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

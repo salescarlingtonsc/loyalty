@@ -14495,6 +14495,11 @@ function humanErrorV295(error,fallback='That did not go through. Please try agai
   return machineCode?translate(fallback):translate(raw);
 }
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
+  /* nestly_v415: Save on the Loyalty page publishes now, so a REFUSED publish has to name its
+     reason to the owner — and a reason interpolated into a toast is exactly the runtime copy this
+     inventory exists to keep reviewable. The reason itself comes from ownerErrorText, i.e. the
+     server's own message, and is not translated here; the sentence around it is. */
+  savedNotLive:Object.freeze({en:'Saved, but not yet live — {reason}','zh-CN':'已保存，但尚未上线 — {reason}',ms:'Disimpan, tetapi belum disiarkan — {reason}'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -14651,6 +14656,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
+     can refuse for a real reason the owner has to be able to read and act on. */
+  'savedNotLive',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -22292,7 +22300,17 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const loyaltyStatusPillV235=`<span class="pill ${loyaltyStatusV235.tone}" id="loyaltyStatusPillV235"><span aria-hidden="true">●</span> ${esc(loyaltyStatusV235.label)}</span>`;
   const loyaltyStripV235=(()=>{
     if(p&&!loyaltyActiveV235)return `<div class="loyalty-strip-v235" id="loyaltyStripV235" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Paused</b> — customers are not earning right now.${draftVersionId?' Your unsaved and unpublished changes are safe.':''}</span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="loyaltyResumeV235" type="button">Resume programme</button>':''}</div></div>`;
-    if(draftVersionId)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Draft — not visible to customers.</b> ${recommendation?esc(recommendation.rationale)+' Review every number below, then publish only when it fits your business. ':''}Customers will see your latest published programme.</span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="growDraftBarPublishV170" type="button">Review &amp; publish</button>':''}</div></div>`;
+    /* nestly_v415 (owner, photo 2: the whole banner ringed — "remove the circled area, pressing
+       save would publish to live. dont need hide in draft").
+       The banner and its "Review & publish" are gone because Save now publishes: both writers on
+       this page (the configuration Save and Save birthday reward) call publish_loyalty_config the
+       moment their draft write succeeds, so there is no longer a held-back state for a banner to
+       announce. That is the SAME save-then-publish pair the v364 birthday editor already uses —
+       this page was the last one still asking the owner to publish by hand.
+       A recommendation still gets a line, because a generated draft IS worth reading before it
+       goes live; it just no longer claims the page is hiding anything. */
+    if(draftVersionId&&recommendation)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b>Suggested for you.</b> ${esc(recommendation.rationale)} Review every number below — Save puts it live for customers.</span></div></div>`;
+    if(draftVersionId)return '';
     return '';
   })();
   const loyaltyEarnFactV235=model==='stamps'
@@ -22390,12 +22408,18 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
   applyGrowLoyaltyEditorIsolationV139(routeMain,editorIntent);
-  const growDraftBarPublish=$('growDraftBarPublishV170');
-  /* V301: the persistent draft banner's "Review & publish" now opens the setup wizard on its
-     final step — the change list and the publish button on one page, no modal that could open
-     twice. openProtectedGrowPublishReview and #/studio/<draft> are untouched: the Studio rule
-     builder and the editor's own Review button still use them. */
-  if(growDraftBarPublish)growDraftBarPublish.onclick=()=>nav('#/grow/setup/review');
+  /* nestly_v415: the banner's "Review & publish" is gone with the banner — Save publishes now.
+     #/grow/setup/review itself is untouched; the setup wizard still ends there. */
+  /* nestly_v415: one publish, used by every writer on this page. Returns an owner-readable reason
+     on failure rather than a boolean, because publish_loyalty_config enforces real invariants (a
+     live stamp card needs a spend-per-stamp and a gift ON its last stamp) and "it didn't work" is
+     not something an owner can act on. The draft survives a failed publish — nothing is rolled
+     back — so the fix is to correct the field and press Save again. */
+  const publishOnSaveV415=async versionId=>{
+    if(!versionId)return null;
+    const {error}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
+    return error?ownerErrorText(error):null;
+  };
   const redemptionToggle=$('loyaltyCustomerRedemptionEnabled');
   const redemptionStatus=$('loyaltyCustomerRedemptionStatus');
   const redemptionSave=$('saveLoyaltyCustomerRedemption');
@@ -22634,9 +22658,19 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       const {data,error}=await sb.rpc('save_birthday_program_draft',{p_config_version:draftVersionId,p_program_id:birthdayProgramId,p_program:payload,p_expected_snapshot_hash:draftSnapshotHash});
       if(!isLoyaltyCurrent())return;
       if(error){birthdaySaveDraft.disabled=false;const status=$('birthdayDraftStatus');if(status)status.textContent='Birthday benefit draft could not be saved. Reload and review the fields.';return;}
-      const status=$('birthdayDraftStatus');if(status)status.textContent=data?.replayed?'Saved previously.':'Birthday benefit draft saved. Review then publish the configuration.';
-      if(editorIntent){toast('Birthday benefit draft saved');nav('#/grow');return}
-      refreshLoyaltyPanel(model,draftVersionId,recommendation,'Birthday benefit draft saved.',true,editorIntent);
+      /* nestly_v415 (owner, photo 2): this button is the one in the screenshot. It wrote a draft
+         and told the owner to go and publish it; it publishes now. */
+      const publishFailedV415=await publishOnSaveV415(draftVersionId);
+      if(!isLoyaltyCurrent())return;
+      const status=$('birthdayDraftStatus');
+      if(publishFailedV415){
+        birthdaySaveDraft.disabled=false;
+        if(status)status.textContent=workspaceTemplateTextV97('savedNotLive',{reason:publishFailedV415});
+        return;
+      }
+      if(status)status.textContent=data?.replayed?'Saved previously.':'Birthday reward saved and live for customers.';
+      if(editorIntent){toast('Birthday reward saved and live');nav('#/grow');return}
+      refreshLoyaltyPanel(model,null,recommendation,'Birthday reward saved and live for customers.',true,editorIntent);
     };
   }
   const recommend=$('loyaltyRecommend');
@@ -22840,14 +22874,21 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         :targetModeV230==='both'?'Points buy rewards, and tiers run alongside them'
         :'Points are now redeemed for rewards');
     }
-    if(draftVersionId){
-      toast('Grow draft saved — customers are still using the published programme');
-      if(editorIntent){nav('#/grow');return}
-      refreshLoyaltyPanel(model,draftVersionId,recommendation,'Grow draft saved. Nothing was published.',true,editorIntent);
+    /* nestly_v415 (owner, photo 2). Both arms used to stop at the draft: one toasted "customers
+       are still using the published programme", the other opened a review modal. Save now makes
+       the change live, and says which of those two things happened rather than claiming success
+       for a publish that was refused. */
+    const publishFailedV415=await publishOnSaveV415(versionId);
+    if(!isLoyaltyCurrent())return;
+    if(publishFailedV415){
+      $('lsave').disabled=false;
+      toast(workspaceTemplateTextV97('savedNotLive',{reason:publishFailedV415}));
+      refreshLoyaltyPanel(model,versionId,recommendation,workspaceTemplateTextV97('savedNotLive',{reason:publishFailedV415}),true,editorIntent);
       return;
     }
-    toast('Grow draft saved — review it before anything changes for customers');
-    openProtectedGrowPublishReview(versionId);
+    toast('Saved and live for customers');
+    if(editorIntent){nav('#/grow');return}
+    refreshLoyaltyPanel(model,null,recommendation,'Saved and live for customers.',true,editorIntent);
   };
   const loyaltyReviewPublish=$('loyaltyReviewPublish');
   if(loyaltyReviewPublish)loyaltyReviewPublish.onclick=()=>openProtectedGrowPublishReview(draftVersionId);
@@ -23169,12 +23210,24 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const {error:saveError}=await sb.rpc('save_loyalty_config_draft',saveArgs);
     if(!isLoyaltyCurrent())return;
     if(saveError){btn.disabled=false;btn.textContent=archive?'Archive':'Save changes';return fail(saveError)}
+    /* nestly_v415 (owner, photo 2: "pressing save would publish to live. dont need hide in
+       draft"). Converted with the configuration Save and Save birthday reward — leaving this one
+       on drafts while the banner was removed would have left a writer with no way to publish at
+       all, which is worse than either end state.
+       THE DIALOG CLOSES FIRST, BEFORE the publish await. V236 established that ordering and the
+       suite guards it: any await between a successful save and the close lets a re-render land
+       while the dialog is still mounted and orphan the node the owner is looking at. Publishing
+       is a second server round trip, so putting it before the close reintroduced exactly that
+       window — caught by 'a successful save closes the dialog before any re-render can orphan the
+       node' rather than in production. */
     closeRewardDialogV238(false);
-    if(!draftVersionId){
-      toast('Reward draft saved — review it before anything changes for customers');
-      openProtectedGrowPublishReview(versionId);return;
+    const publishFailedRewardV415=await publishOnSaveV415(versionId);
+    if(!isLoyaltyCurrent())return;
+    if(publishFailedRewardV415){
+      toast(workspaceTemplateTextV97('savedNotLive',{reason:publishFailedRewardV415}));
+      return spendRewardIntentV293();
     }
-    toast('Draft reward saved');
+    toast('Reward saved and live for customers');
     /* V293: one save = you see the thing you made — land on the full catalogue, never back
        inside a re-armed New-reward intent and never a hop away on the Grow overview. */
     spendRewardIntentV293();
@@ -23229,13 +23282,18 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!isLoyaltyCurrent())return;
     if(error)return fail(error);
     draftSnapshotHash=data?.snapshot_hash||draftSnapshotHash;
+    /* nestly_v415: publishes with its siblings — see saveReward above, including why the dialog
+       closes BEFORE the publish await rather than after it. */
     setTierDirtyStateV237(false);
     closeTierDialogV236(false);
-    if(!draftVersionId){
-      toast('Tier draft saved — continue editing before you review and publish');
-      nav(`#/loyalty/${versionId}`);return data;
+    const publishFailedTierV415=await publishOnSaveV415(versionId);
+    if(!isLoyaltyCurrent())return;
+    if(publishFailedTierV415){
+      toast(workspaceTemplateTextV97('savedNotLive',{reason:publishFailedTierV415}));
+      return data;
     }
-    refreshLoyaltyPanel(model,draftVersionId,recommendation,'Tier draft saved.',true,editorIntent);
+    toast('Tier saved and live for customers');
+    refreshLoyaltyPanel(model,null,recommendation,'Tier saved and live for customers.',true,editorIntent);
     return data;
   }
   /* V182 (owner: "can i make it easier to just check the box - then can attach the benefits
@@ -24277,8 +24335,17 @@ async function openWelcomeOfferEditorV215(current,onSaved){
         <legend class="small"><b>When can they claim it?</b></legend>
         <label class="welcome-offer-optioncard-v350${minValue?'':' selected'}" style="margin-top:10px"><input type="radio" name="welcomeMinV215" value="none" ${minValue?'':'checked'}><span><b>Straight away — no minimum spend</b><p class="muted small" style="margin-top:2px">They can claim the offer as soon as they join.</p></span></label>
         <label class="welcome-offer-optioncard-v350${minValue?' selected':''}"><input type="radio" name="welcomeMinV215" value="min" ${minValue?'checked':''}><span><b>After they spend a minimum amount</b><p class="muted small" style="margin-top:2px">They must spend at least the minimum amount first.</p></span></label>
-        <label for="welcomeMinAmountV215" style="margin-top:14px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
-        <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
+        ${/* nestly_v415 (owner, photo 1: "when clicked no minimum spend i need the minimum spend $50
+             to disappear, if not we will think that need a $50"). The field was only DISABLED when
+             "Straight away" was chosen, so a firm that had previously set 50.00 kept reading
+             "Minimum spend (SGD) 50.00" underneath the option that says there is no minimum — two
+             statements on one screen, one of them false. It is hidden now, not merely greyed.
+             The saved value is unaffected either way: the save handler already reads minCents as 0
+             whenever the "none" radio is selected and never looks at this input. */''}
+        <div id="welcomeMinWrapV415"${minValue?'':' hidden'}>
+          <label for="welcomeMinAmountV215" style="margin-top:14px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+          <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
+        </div>
       </fieldset>
       <label for="welcomeExpiryV215" style="margin-top:14px">Expires after (days, optional)</label>
       <input id="welcomeExpiryV215" inputmode="numeric" placeholder="Leave blank for no expiry" value="${current?.expiry_days?String(current.expiry_days):''}">
@@ -24293,6 +24360,10 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   $('welcomeCancelV215').onclick=close;
   const syncMin=()=>{
     const wantsMin=document.querySelector('input[name="welcomeMinV215"]:checked')?.value==='min';
+    /* v415: hidden AND disabled. Hidden is what the owner asked for; disabled stays because a
+       hidden-but-enabled field is still focusable by keyboard and still submitted by a form. */
+    const wrap=$('welcomeMinWrapV415');
+    if(wrap)wrap.hidden=!wantsMin;
     $('welcomeMinAmountV215').disabled=!wantsMin;
     document.querySelectorAll('.welcome-offer-optioncard-v350').forEach(card=>{
       card.classList.toggle('selected',card.querySelector('input').checked);

@@ -5321,6 +5321,11 @@ function humanErrorV295(error,fallback='That did not go through. Please try agai
   return machineCode?translate(fallback):translate(raw);
 }
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
+  /* nestly_v415: Save on the Loyalty page publishes now, so a REFUSED publish has to name its
+     reason to the owner — and a reason interpolated into a toast is exactly the runtime copy this
+     inventory exists to keep reviewable. The reason itself comes from ownerErrorText, i.e. the
+     server's own message, and is not translated here; the sentence around it is. */
+  savedNotLive:Object.freeze({en:'Saved, but not yet live — {reason}','zh-CN':'已保存，但尚未上线 — {reason}',ms:'Disimpan, tetapi belum disiarkan — {reason}'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -5477,6 +5482,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
+     can refuse for a real reason the owner has to be able to read and act on. */
+  'savedNotLive',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',

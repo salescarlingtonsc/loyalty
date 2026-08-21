@@ -94,25 +94,41 @@ test('one-sheet automatic popup is the guided start while detailed edits remain 
     'opening the review preview must not itself publish');
 });
 
-test('draft saves never publish and publication is a separate protected review',()=>{
+/* nestly_v415 — THE RULE THIS TEST GUARDED WAS REVERSED BY THE OWNER, DELIBERATELY.
+   Owner, 2026-08-21, photo 2 (the draft banner ringed): "remove the circled area, pressing save
+   would publish to live. dont need hide in draft."
+   What was given up, stated plainly so nobody restores it by accident: an edit on the Loyalty
+   page used to land in a draft that customers could not see until a separate, confirmed review.
+   Now every writer on that page publishes the moment its save succeeds. The Studio review flow
+   below is UNCHANGED and still requires its acknowledgement — it is simply no longer the only
+   road to publication.
+   What is still guarded, and is what the assertions below now check: a draft is still created
+   before the first server write; every writer goes through the SAME publish helper; and a publish
+   the server refuses is reported as refused rather than toasted as live. */
+test('nestly_v415 every writer on the Loyalty page publishes what it saves',()=>{
   const loyaltySave=html.slice(html.indexOf("const loyaltySave=$('lsave')"),html.indexOf("const loyaltyReviewPublish="));
-  const draftReturn=loyaltySave.slice(loyaltySave.indexOf('if(draftVersionId){'));
-  assert.match(draftReturn,/refreshLoyaltyPanel/);
-  assert.match(draftReturn,/Nothing was published/);
-  assert.match(draftReturn,/return;/);
-  assert.match(loyaltySave,/openProtectedGrowPublishReview\(versionId\)/);
-  assert.doesNotMatch(loyaltySave,/publish_loyalty_config/);
+  assert.match(loyaltySave,/await publishOnSaveV415\(versionId\)/);
+  assert.ok(loyaltySave.indexOf('create_loyalty_config_draft')<loyaltySave.indexOf('save_loyalty_config_draft'),
+    'the draft must still exist before any edit reaches the server');
+  assert.match(loyaltySave,/savedNotLive/,'a refused publish must say so');
+  assert.doesNotMatch(loyaltySave,/Nothing was published/,'the draft-only outcome is gone');
 
   const rewardSave=html.slice(html.indexOf('async function saveReward'),html.indexOf('const ra='));
   const tierSave=html.slice(html.indexOf('async function saveTier'),html.indexOf('const ta='));
   assert.match(rewardSave,/save_loyalty_config_draft/);
-  assert.match(rewardSave,/if\(!draftVersionId\)\{[\s\S]*openProtectedGrowPublishReview\(versionId\);return/);
   assert.match(tierSave,/save_loyalty_tier_draft_v143/);
-  assert.match(tierSave,/if\(!draftVersionId\)\{[\s\S]*nav\(`#\/loyalty\/\$\{versionId\}`\);return data/);
-  for(const editorSave of [rewardSave,tierSave])assert.doesNotMatch(editorSave,/publish_loyalty_config/);
+  /* Both were converted WITH their siblings. Leaving either on drafts once the banner was
+     removed would have left a writer with no way to publish at all. */
+  for(const editorSave of [rewardSave,tierSave]){
+    assert.match(editorSave,/await publishOnSaveV415\(versionId\)/);
+    assert.match(editorSave,/savedNotLive/);
+    assert.doesNotMatch(editorSave,/openProtectedGrowPublishReview/);
+  }
 
   const retentionDraftStart=html.indexOf('if(isOwner&&draftVersionId&&exactProgramMissing){');
   const retentionDraftActions=html.slice(retentionDraftStart,html.indexOf('if(isOwner){',retentionDraftStart));
+  /* Bring-back keeps its own explicit publish: the owner's instruction named the Loyalty page,
+     and this surface has its own button rather than relying on the removed banner. */
   assert.match(retentionDraftActions,/publishRetention'\)\.onclick=\(\)=>openProtectedGrowPublishReview\(draftVersionId\)/);
   assert.doesNotMatch(retentionDraftActions,/publish_loyalty_config/);
 

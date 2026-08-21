@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="f321ed5975ee1f7ae55418e7a89367d145a990d2c38210cd1bb03629f7f143b2"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="f9534d3c58165539795f7c68feaaf9945113af69b865395b60ccd6c8c88d90e1"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2716,6 +2716,22 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    three slots per card. The tab rules above are NOT retired: they are what the pre-v310 fallback
    path renders for the whole Cloudflare window and on rollback. */
 .customer-programme-stack{display:grid;gap:9px;margin-bottom:10px}
+/* nestly_v415 (owner, photo 5: "fix the alignment issues, not able to scroll fully and words and
+   buttons got cut off").
+   MEASURED, not guessed: at a 390px viewport the programme page's documentElement.scrollWidth was
+   803px, and section.customer-programme-card-v310 measured 803px wide inside it. The card is a
+   GRID ITEM of .customer-programme-stack, and a grid item's default min-width is `auto`, so it
+   refuses to shrink below its content's minimum — and its content is the rewards carousel, whose
+   four 280px cards want 1150px. The column grew to fit them, the card grew with it, and the whole
+   PAGE became horizontally scrollable. That is exactly what the owner photographed: the app bar
+   is fixed and stays put while everything under it slides left, so the heading loses its first
+   letter, the lede loses its last words, and the cards run off both edges.
+   min-width:0 lets the column be the width of the viewport again; the carousel then scrolls
+   INSIDE it, which is what the swipe was always meant to do. The same floor is put on the two
+   elements between the card and the track so no future child can re-open the same hole.
+   Re-measured after: scrollWidth 390 at 390, 412 at 412, and the track still scrolls to 1150. */
+.customer-programme-stack>*{min-width:0}
+.customer-programme-rewards{min-width:0}
 .customer-programme-card-v310{padding:13px 16px 15px;margin:0}
 .customer-programme-card-head-v310{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:16px}
 .customer-programme-card-head-v310 svg{flex:none;color:var(--coral)}
@@ -2966,7 +2982,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    unchanged), just laid out side by side with a section title above them. */
 .customer-rewards-carousel-head-v337{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
 .customer-rewards-carousel-head-v337 h2{font-size:18px;margin:0}
-.wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
+.wallet-rewards.customer-rewards-carousel-v337{display:flex;grid-template-columns:none;overflow-x:auto;overscroll-behavior-inline:contain;min-width:0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:6px;margin-top:8px}
 .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex:0 0 78%;max-width:280px;scroll-snap-align:start}
 @media(min-width:641px){.wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{flex-basis:260px}}
 /* v339 (owner mockup "photo 1") — collapsed profile header, the reward/offers swipe region, the
@@ -3585,7 +3601,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f321ed5975ee1f7ae55418e7a89367d145a990d2c38210cd1bb03629f7f143b2</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f9534d3c58165539795f7c68feaaf9945113af69b865395b60ccd6c8c88d90e1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6695,7 +6711,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'f321ed5975ee1f7ae55418e7a89367d145a990d2c38210cd1bb03629f7f143b2',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'f9534d3c58165539795f7c68feaaf9945113af69b865395b60ccd6c8c88d90e1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -46,7 +46,10 @@ test('the Point system editor carries the cost-per-point control', () => {
 });
 
 test('the control is wired to the Point system save path, with no new column', () => {
-  const save = section("const loyaltySave=$('lsave')", "if(draftVersionId){\n      toast('Grow draft saved");
+  /* nestly_v415: the old end marker was the draft-only toast, which no longer exists — Save
+     publishes now (owner, photo 2). The section is the same handler; only its closing landmark
+     moved to the publish step that replaced that toast. */
+  const save = section("const loyaltySave=$('lsave')", "const publishFailedV415=await publishOnSaveV415(versionId);");
   /* V375: no model is excluded any more — every points programme stores its cost per point. */
   assert.match(save, /if\(\$\('lpc'\)\)\{/);
   assert.match(save, /const pointCostV262=parseFloat\(\$\('lpc'\)\.value\);/);

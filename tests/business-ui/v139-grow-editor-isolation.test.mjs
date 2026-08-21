@@ -46,7 +46,10 @@ test('isolated draft saves and Done return to the single Grow overview',()=>{
   // editor when it is not. Same intent — Done never strands the owner inside an editor.
   assert.match(loyalty,/\$\('rwClose'\)\.onclick=\(\)=>document\.getElementById\('rewardDialogV238'\)\?closeRewardDialogV238\(true\):finishGrowEditorV139\(\)/);
   assert.match(loyalty,/finishGrowEditorV139\(\);/);
-  assert.match(loyalty,/Birthday benefit draft saved[\s\S]{0,240}?nav\('#\/grow'\)/);
+  /* nestly_v415: the birthday writer publishes now, so its exit toast says live rather than
+     draft. The isolation rule this line guards — an editor-intent save returns to #/grow — is
+     unchanged. */
+  assert.match(loyalty,/Birthday reward saved and live[\s\S]{0,240}?nav\('#\/grow'\)/);
 });
 
 test('ordinary combined renderer remains available only without an editor intent',()=>{

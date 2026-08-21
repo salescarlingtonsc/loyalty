@@ -147,8 +147,16 @@ test('V314 (3) every publish route applies the switches through the same helper'
      birthday rule written into it, then publish. It applies no programme switch and must not:
      the birthday benefit is not one of the four spine programmes, so there is nothing to switch,
      and the three helper counts below are deliberately unchanged. */
+  /* nestly_v415 adds a FIFTH call site, and only one: publishOnSaveV415. The owner ruled that
+     Save on the Loyalty page publishes rather than parking a draft (photo 2, the banner ringed),
+     and all four writers on that page — configuration, birthday, reward, tier — go through that
+     ONE helper rather than each calling the RPC. It applies no programme switch, for the same
+     reason the v364 birthday popup does not: these writers change what is IN a programme, never
+     which programme is running, so the three helper counts below stay as they were. */
   const publishes = [...code.matchAll(/sb\.rpc\('publish_loyalty_config'/g)].length;
-  assert.equal(publishes, 4, `expected the four known publish routes, found ${publishes}`);
+  assert.equal(publishes, 5, `expected the five known publish routes, found ${publishes}`);
+  assert.equal([...code.matchAll(/await publishOnSaveV415\(/g)].length, 4,
+    'four writers on the Loyalty page, one publish helper between them');
   assert.equal([...code.matchAll(/applyPublishedProgrammeSwitchesV314\(/g)].length, 3,
     'the helper is declared once and called by exactly the two non-wizard routes');
   assert.equal([...code.matchAll(/applyProgrammeSwitchesV314\(/g)].length, 3,

@@ -134,7 +134,12 @@ test('one status strip, one primary action pair, no version-speak', () => {
   // Exactly one strip renders: paused wins over draft, and each carries one action.
   assert.match(loyalty, /const loyaltyStripV235=\(\(\)=>\{/);
   assert.match(loyalty, /if\(p&&!loyaltyActiveV235\)return `<div class="loyalty-strip-v235" id="loyaltyStripV235"/);
-  assert.match(loyalty, /if\(draftVersionId\)return `<div class="loyalty-strip-v235" id="growDraftBarV170"/);
+  /* nestly_v415 (owner, photo 2: the banner ringed, "remove the circled area"). The draft strip
+     no longer renders for a plain draft — Save publishes, so there is nothing withheld to
+     announce. A GENERATED recommendation still gets a line, because a suggested draft is worth
+     reading before it reaches customers; it just says what Save will do. */
+  assert.match(loyalty, /if\(draftVersionId&&recommendation\)return `<div class="loyalty-strip-v235" id="growDraftBarV170"/);
+  assert.match(loyalty, /if\(draftVersionId\)return '';/);
   assert.equal((loyalty.match(/\$\{loyaltyStripV235\}/g) || []).length, 1);
   assert.doesNotMatch(loyalty, /You have unpublished changes — customers still see the old programme\./);
   // Paused is an intentional state with a resume that sets the control and does NOT auto-save.
@@ -150,7 +155,9 @@ test('one status strip, one primary action pair, no version-speak', () => {
   // Version-speak is gone from what the owner reads on this page.
   assert.doesNotMatch(loyalty, /configuration version/i);
   assert.doesNotMatch(loyalty, /versioned changes/i);
-  assert.match(loyalty, /Customers will see your latest published programme\./);
+  /* nestly_v415: that sentence belonged to the removed banner. What the strip says now, when it
+     says anything, is what Save is about to do. */
+  assert.match(loyalty, /Save puts it live for customers/);
   // Expiry and branch settings are collapsed advanced settings.
   assert.match(loyalty, /<details class="loyalty-advanced-v235" id="loyaltyAdvancedV235"[^>]*><summary>Advanced settings<\/summary>/);
 });

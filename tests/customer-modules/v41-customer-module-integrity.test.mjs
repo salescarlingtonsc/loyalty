@@ -392,10 +392,15 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     assert.ok(loyaltyPage.indexOf(`sb.rpc('${rpc}'`, readOnlyReturnAt) > readOnlyReturnAt,
       `${rpc} mutation wiring must remain behind the owner loyalty:rw return guard`);
   }
-  assert.doesNotMatch(loyaltyPage, /sb\.rpc\('publish_loyalty_config'/i,
-    'saving in the Loyalty editor must never publish directly');
-  assert.match(loyaltyPage, /openProtectedGrowPublishReview\(versionId\)/i,
-    'new drafts must move to the separate protected publication review');
+  /* nestly_v415 — REVERSED ON THE OWNER'S INSTRUCTION (2026-08-21, photo 2, the draft banner
+     ringed: "remove the circled area, pressing save would publish to live. dont need hide in
+     draft"). Saving in the Loyalty editor now publishes. The property worth guarding is no longer
+     "never publishes" but "publishes through the ONE helper, and never by calling the RPC from
+     four different places" — four writers, one publishOnSaveV415. */
+  assert.equal((loyaltyPage.match(/sb\.rpc\('publish_loyalty_config'/gi) || []).length, 1,
+    'the RPC is called from exactly ONE place on this page — publishOnSaveV415 itself');
+  assert.equal((loyaltyPage.match(/await publishOnSaveV415\(/g) || []).length, 4,
+    'configuration, birthday, reward and tier saves all publish what they saved');
   const studioPage = appSection(app, 'async function studioPage(', 'async function studioOverview(');
   assert.match(studioPage, /if\(S\.myRole!=='owner'\)[\s\S]*return;[\s\S]*if\(draftVersionId\)/i,
     'the protected publication route must reject non-owners before opening a draft review');

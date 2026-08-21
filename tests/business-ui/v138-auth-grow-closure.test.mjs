@@ -105,7 +105,7 @@ test('reward completion returns to the Grow overview instead of leaving the owne
      add/reward intent hash re-armed a blank New-reward dialog there. The same intent this test
      protects (never strand the owner in an editor) is now met by SPENDING the intent: the save
      lands on the intent-stripped loyalty catalogue where the saved reward is visible. */
-  assert.match(app,/toast\('Draft reward saved'\);[\s\S]{0,320}?spendRewardIntentV293\(\)/);
+  assert.match(app,/toast\('Reward saved and live for customers'\);[\s\S]{0,320}?spendRewardIntentV293\(\)/);
   assert.match(app,/const spendRewardIntentV293=\(\)=>nav\(draftVersionId\?`#\/loyalty\/\$\{draftVersionId\}`:'#\/loyalty'\)/);
 });
 

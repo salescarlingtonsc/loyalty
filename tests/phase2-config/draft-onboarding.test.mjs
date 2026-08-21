@@ -29,7 +29,11 @@ test('the owner sees draft state and explicitly publishes it', async () => {
      neutral strip, and the editor now carries a single primary action pair. The invariant is
      unchanged: the owner is told the draft is not live, and publishing is a separate step. */
   assert.match(app, /Draft — not visible to customers/);
-  assert.match(app, /Customers will see your latest published programme\./);
+  /* nestly_v415: the draft banner this line asserted was removed on the owner's instruction
+     (photo 2, the banner ringed: "remove the circled area"). A generated recommendation still
+     gets its own line above the editor — that is what is checked now — but it no longer tells
+     the owner the page is withholding their edit, because it is not. */
+  assert.match(app, /Suggested for you\.<\/b> \$\{esc\(recommendation\.rationale\)\}/);
   assert.match(app, /configuration_status:'published'/);
   assert.match(app, /<button class="btn" id="lsave">Save changes<\/button>/);
   assert.match(app, /Review &amp; publish/);
@@ -42,7 +46,11 @@ test('the owner sees draft state and explicitly publishes it', async () => {
      low-literacy-first rule made indefensible for a WPass/SPass workforce. The button stays
      disabled until the acknowledgement is ticked. */
   assert.match(app, /\$\('studioPubConfirm'\)\.disabled=e\.target\.checked!==true/);
-  assert.match(app, /Grow draft saved — customers are still using the published programme/);
+  /* nestly_v415: reversed on the owner's instruction (photo 2) — Save publishes, so this page no
+     longer has a "saved but withheld" outcome to announce. The replacement outcome is asserted
+     instead, together with the refusal path that keeps Save honest when the server says no. */
+  assert.match(app, /Saved and live for customers/);
+  assert.match(app, /savedNotLive/);
 });
 
 test('create_business retains authenticated-only execution', async () => {

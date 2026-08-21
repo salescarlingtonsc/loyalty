@@ -48,6 +48,9 @@ test('V236 a successful save closes the dialog before any re-render can orphan t
   const save = app.slice(app.indexOf('async function saveTier('), app.indexOf('const discountBenefitV235'));
   const closeAt = save.indexOf('closeTierDialogV236(false)');
   assert.notEqual(closeAt, -1);
-  assert.ok(closeAt < save.indexOf('nav(`#/loyalty/'), 'closes before navigating to the new draft');
-  assert.ok(closeAt < save.indexOf('refreshLoyaltyPanel(model,draftVersionId'), 'closes before the panel re-render');
+  /* nestly_v415: the publish-review navigation is gone (Save publishes now), so the landmark it
+     compared against moved to the publish round trip — which is precisely the await this rule
+     exists to keep the close in front of. */
+  assert.ok(closeAt < save.indexOf('await publishOnSaveV415('), 'closes before the publish round trip');
+  assert.ok(closeAt < save.indexOf('refreshLoyaltyPanel(model,'), 'closes before the panel re-render');
 });
