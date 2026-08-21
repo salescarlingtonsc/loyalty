@@ -146,7 +146,7 @@ begin
     json_build_object('sub',v_c.owner_u,'role','authenticated')::text, true);
   set local role authenticated;
   perform public.set_programmes_v314(v_c.biz,
-    jsonb_build_object('points',true,'stamps',false,'tiers',false), gen_random_uuid()::text);
+    jsonb_build_object('points',true,'stamps',false,'tiers',false), gen_random_uuid());
   select array_agg(value) into v_vals from pg_temp.readers_v409();
   reset role;
   insert into _r values ('04 after stamps->points: readers follow back to the points pot',
@@ -187,6 +187,80 @@ begin
     case when v_scope='business_pot' and v_bal=v_all then 'PASS'
          else 'FAIL scope='||v_scope||' balance='||v_bal::text||' legacy_total='||v_all::text end);
 end $step6$;
+
+-- 07 — EARNING DOES NOT CONTAMINATE ANOTHER POT. Restore points as the live programme, earn,
+--      and prove the increase lands in the points pot alone while the stamps pot is untouched.
+do $step7$
+declare v_c record; v_id uuid; v_pts_before int; v_stamps_before int; v_pts_after int; v_stamps_after int;
+begin
+  select * into v_c from _c limit 1;
+  -- the batch tampering in check 06 would force the legacy total; undo it first
+  update public.points_batches set remaining = remaining - 7
+   where business_id=v_c.biz and client_id=v_c.cli;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',v_c.owner_u,'role','authenticated')::text, true);
+  select coalesce(sum(points),0) into v_pts_before from public.points_ledger
+   where business_id=v_c.biz and client_id=v_c.cli and programme_id=v_c.prog_points;
+  select coalesce(sum(points),0) into v_stamps_before from public.points_ledger
+   where business_id=v_c.biz and client_id=v_c.cli and programme_id=v_c.prog_stamps;
+  v_id := gen_random_uuid();
+  perform set_config('app.points_ledger_insert_id',v_id::text,true);
+  perform set_config('app.points_ledger_write_scope','referral_reward_points',true);
+  insert into public.points_ledger(id,business_id,client_id,programme_id,entry_type,points)
+  values (v_id,v_c.biz,v_c.cli,v_c.prog_points,'earn',40);
+  perform set_config('app.points_ledger_insert_id','',true);
+  perform set_config('app.points_ledger_write_scope','',true);
+  select coalesce(sum(points),0) into v_pts_after from public.points_ledger
+   where business_id=v_c.biz and client_id=v_c.cli and programme_id=v_c.prog_points;
+  select coalesce(sum(points),0) into v_stamps_after from public.points_ledger
+   where business_id=v_c.biz and client_id=v_c.cli and programme_id=v_c.prog_stamps;
+  insert into _r values ('07 earning lands in ONE pot and never touches the other',
+    case when v_pts_after - v_pts_before = 40 and v_stamps_after = v_stamps_before
+         then 'PASS'
+         else 'FAIL points '||v_pts_before||'->'||v_pts_after
+              ||', stamps '||v_stamps_before||'->'||v_stamps_after end);
+end $step7$;
+
+-- 08 — REDEMPTION CANNOT REACH ANOTHER POT. A gift priced ABOVE the live pot but BELOW the two
+--      pots added together must be refused. If a reader ever leaked the combined total into the
+--      affordability gate, this is where it would show.
+do $step8$
+declare
+  v_c record; v_ver uuid; v_reward jsonb; v_reward_id uuid;
+  v_live int; v_combined int; v_cost int; v_refused boolean := false; v_ops_before int; v_ops_after int;
+begin
+  select * into v_c from _c limit 1;
+  select coalesce(sum(points),0) into v_live from public.points_ledger
+   where business_id=v_c.biz and client_id=v_c.cli and programme_id=v_c.prog_points;
+  select coalesce(sum(points),0) into v_combined from public.points_ledger
+   where business_id=v_c.biz and client_id=v_c.cli;
+  v_cost := v_live + 1;                      -- unaffordable from the live pot alone
+  if v_combined <= v_live then
+    insert into _r values ('08 redemption cannot reach another pot','SKIP only one pot has value');
+    return;
+  end if;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',v_c.owner_u,'role','authenticated')::text, true);
+  set local role authenticated;
+  v_reward := public.business_create_reward_v326(v_c.biz, v_c.prog_points,
+                'ZZ V409 Overpriced', v_cost, 0, 'v409 isolation probe', null);
+  reset role;
+  v_reward_id := coalesce((v_reward->>'reward_id')::uuid,(v_reward->>'id')::uuid);
+  select count(*) into v_ops_before from public.loyalty_operations
+   where business_id=v_c.biz and operation_type='redeem_reward';
+  begin
+    perform app.redeem_reward_core(v_c.biz, v_c.cli, v_reward_id,
+      'zzv409-iso-'||substr(md5(random()::text),1,10), v_c.br, null, null);
+  exception when others then
+    v_refused := true;
+  end;
+  select count(*) into v_ops_after from public.loyalty_operations
+   where business_id=v_c.biz and operation_type='redeem_reward';
+  insert into _r values ('08 a gift priced above the LIVE pot is refused, even though the pots sum higher',
+    case when v_refused and v_ops_after = v_ops_before then 'PASS'
+         when not v_refused then 'FAIL redeemed at cost '||v_cost||' from a live pot of '||v_live
+         else 'FAIL refused but left '||(v_ops_after-v_ops_before)||' operation(s)' end);
+end $step8$;
 
 select k as check, v as result from _r order by k;
 
