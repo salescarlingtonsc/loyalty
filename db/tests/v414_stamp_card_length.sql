@@ -21,7 +21,10 @@ create temp table _r(k text, v text) on commit drop;
 do $$
 declare v_biz uuid; v_msg text; v_client uuid; v_len integer;
 begin
-  if to_regproc('public.business_set_stamp_card_length_v414(uuid,integer)') is null then
+  /* to_regprocedure, NOT to_regproc: to_regproc does not accept an argument list and returns
+     NULL for any name written with one, so this check reported the function missing on a database
+     where it was deployed and working. */
+  if to_regprocedure('public.business_set_stamp_card_length_v414(uuid,integer)') is null then
     insert into _r values('00_deployed','FAIL business_set_stamp_card_length_v414 is not deployed');
     return;
   end if;
