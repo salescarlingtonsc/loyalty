@@ -2188,6 +2188,12 @@
       "version": "20260821000004",
       "name": "nestly_v410_promotion_finalize_overload_ambiguity",
       "sourcePath": "db/migrations/20260821_nestly_v410_promotion_finalize_overload_ambiguity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260821000005",
+      "name": "nestly_v412_promotion_delete_module_key",
+      "sourcePath": "db/migrations/20260821_nestly_v412_promotion_delete_module_key.sql"
     }
   ]
 }
