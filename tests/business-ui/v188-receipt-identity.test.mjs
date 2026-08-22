@@ -20,7 +20,9 @@ test('the trading name is kept when it differs from the registered name', () => 
 });
 
 test('the customer sees their points balance as its own line', () => {
-  assert.match(app, /Points balance after this visit/);
+  /* nestly_v430: the line is unit-aware now — 'Stamps balance after this visit' for a stamps
+     firm. The pin follows the ternary rather than the single-unit literal. */
+  assert.match(app, /\?'Stamps':'Points'\} balance after this visit/);
   assert.ok(!app.includes('· now ${d.pointsTotal} points total'),
     'the balance should not be buried in a tail clause');
 });

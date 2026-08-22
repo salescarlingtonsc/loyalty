@@ -3835,6 +3835,8 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
   not_started:'Available soon',
   ended:'Offer ended',
   limit_reached:'Claim limit reached',
+  claimed_this_cycle:'Already claimed on this card',
+  not_on_card:'Not on the current card',
   tier_locked:'Unlocks at a higher tier'
 };
 function customerRewardAvailabilityLineV399(reward){

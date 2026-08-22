@@ -60,7 +60,10 @@ test('referral copy exists in all four customer locales with the firm terms temp
   /* nestly_v421: still never the frozen money column — but a firm may pay a free GIFT now (v420),
      and reading reward_points for one of those told its customers they would get "0 points". The
      points branch is unchanged; the gift branch names the gift. */
-  assert.match(app,/:customerReferralPointsV322\(card\?\.reward_points\)/);
+  /* nestly_v430: the amount now travels with its KIND, so a stamps-paying firm's card says
+     "50 stamps", not "50 points". Caught red in v432's validate — v430 shipped the two-arg call
+     without updating this pin. */
+  assert.match(app,/:customerReferralPointsV322\(card\?\.reward_points,card\?\.reward_kind\)/);
   assert.match(app,/const isGiftV421=String\(card\?\.reward_kind\|\|'points'\)==='voucher'/);
 });
 

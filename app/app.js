@@ -9382,6 +9382,8 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
   not_started:'Available soon',
   ended:'Offer ended',
   limit_reached:'Claim limit reached',
+  claimed_this_cycle:'Already claimed on this card',
+  not_on_card:'Not on the current card',
   tier_locked:'Unlocks at a higher tier'
 };
 function customerRewardAvailabilityLineV399(reward){
@@ -18880,6 +18882,28 @@ function tillUnitNounV430(catalogRef,short){
   const stampsV430=catalogRef?.customerGiftsV392?.program?.unit==='stamps';
   return stampsV430?'stamps':(short?'pts':'points');
 }
+/* nestly_v432 — the redeem-now list is grouped by WHERE each reward's eligibility comes from
+   (owner ruling 2026-08-22: no hidden counter-only gifts; staff and Customer View read the same
+   canonical availability, which the server now resolves in app.reward_availability_v432). The
+   grouping is pure presentation: `source` arrives from the server per reward, this function only
+   buckets and labels. A source this build does not know still renders — under a plain "Rewards"
+   heading — because dropping a server-approved reward on the floor would be a second, client-side
+   eligibility rule, which is exactly what v145 forbids. */
+function groupRedeemableRewardsV432(rewards){
+  const labels={stamp_card:'Stamp card',points:'Points'};
+  const order=['stamp_card','points'];
+  const groups=new Map();
+  for(const reward of (Array.isArray(rewards)?rewards:[])){
+    if(!reward)continue;
+    const key=Object.prototype.hasOwnProperty.call(labels,reward.source)?reward.source:'other';
+    if(!groups.has(key))groups.set(key,{source:key,label:labels[key]||'Rewards',rewards:[]});
+    groups.get(key).rewards.push(reward);
+  }
+  return [...groups.values()].sort((a,b)=>{
+    const ai=order.indexOf(a.source),bi=order.indexOf(b.source);
+    return (ai<0?order.length:ai)-(bi<0?order.length:bi);
+  });
+}
 async function tillPage(){
   const routeMain=M();
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -20062,11 +20086,14 @@ async function tillPage(){
     const giftUnitV392=giftProjectionV392?.program?.unit==='stamps'?'stamps':'points';
     const giftsV392=Array.isArray(giftProjectionV392?.rewards)?giftProjectionV392.rewards:[];
     /* available_now and remaining_units are the SERVER's answers. Nothing here recomputes
-       readiness from a balance and a cost — see v145. */
+       readiness from a balance and a cost — see v145. V432: the server list now carries only
+       the two actionable states (redeemable now, or genuine progress), each tagged with the
+       source its eligibility came from; this screen buckets by that tag and nothing else. */
     const affordableV392=giftsV392.filter(gift=>gift.available_now===true);
-    const nextUpV392=giftsV392.filter(gift=>gift.available_now!==true)
+    const redeemableGroupsV432=groupRedeemableRewardsV432(affordableV392);
+    const nextUpV392=giftsV392.filter(gift=>gift.available_now!==true&&gift.availability==='insufficient_balance')
       .sort((a,b)=>(Number(a.remaining_units)||0)-(Number(b.remaining_units)||0))[0]||null;
-    const giftsBannerV392=(affordableV392.length||nextUpV392)
+    const giftsBannerV392=(redeemableGroupsV432.length||nextUpV392)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>Rewards this customer can claim</b>
         ${/* V399: this banner is the one V372 missed. .permission-banner is display:flex with the
              default row direction and no wrap, so the heading, the instruction, every reward row
@@ -20083,8 +20110,10 @@ async function tillPage(){
              a pill for everyone else — the server refuses either way, so this only decides what is
              DRAWN. The stepper is the same .till-cart-qty markup the cart lines use, so the
              gesture is the one staff already know. */''}
-        ${affordableV392.map(gift=>{
-          const costV404=Number.isFinite(Number(gift.cost_units))?`${esc(String(Number(gift.cost_units)))} ${esc(giftUnitV392)}`:'';
+        ${redeemableGroupsV432.map(group=>`<p class="small till-reward-group-v432" style="margin:8px 0 0"><b>${esc(group.label)}</b></p>
+        ${group.rewards.map(gift=>{
+          const unitV432=gift.unit==='stamps'?'stamps':gift.unit==='points'?'points':giftUnitV392;
+          const costV404=Number.isFinite(Number(gift.cost_units))?`${esc(String(Number(gift.cost_units)))} ${esc(unitV432)}`:'';
           const idV404=esc(String(gift.reward_id||''));
           const qtyV404=tillManualQtyV404[gift.reward_id]||1;
           const actionV404=(canManualRedeemV404()&&gift.reward_id)
@@ -20094,7 +20123,7 @@ async function tillPage(){
                   <output aria-label="Quantity" data-manual-qty-out-v404="${idV404}">${qtyV404}</output>
                   <button type="button" class="btn ghost" data-manual-qty-v404="1" data-reward-v404="${idV404}" aria-label="Increase quantity">+</button>
                 </span>
-                <button type="button" class="btn primary sm" data-manual-redeem-v404="${idV404}" data-name-v404="${esc(gift.name||'Reward')}" data-cost-v404="${esc(String(Number(gift.cost_units)||0))}">Redeem</button>
+                <button type="button" class="btn primary sm" data-manual-redeem-v404="${idV404}" data-name-v404="${esc(gift.name||'Reward')}" data-cost-v404="${esc(String(Number(gift.cost_units)||0))}" data-unit-v432="${esc(unitV432)}">Redeem</button>
               </span>`
             :'<span class="pill ok">Ready</span>';
           return `<div class="till-tier-benefit-row-v369">
@@ -20102,10 +20131,10 @@ async function tillPage(){
             <span class="muted small">${costV404}</span></span>
             ${actionV404}
           </div>`;
-        }).join('')}
+        }).join('')}`).join('')}
         ${nextUpV392?`<div class="till-tier-benefit-row-v369">
             <span><b class="small" data-merchant-content>${esc(nextUpV392.name||'Reward')}</b>
-            <span class="muted small">${esc(String(Math.max(0,Number(nextUpV392.remaining_units)||0)))} more ${esc(giftUnitV392)}</span></span>
+            <span class="muted small">${esc(String(Math.max(0,Number(nextUpV392.remaining_units)||0)))} more ${esc(nextUpV392.unit==='stamps'?'stamps':nextUpV392.unit==='points'?'points':giftUnitV392)}</span></span>
             <span class="pill off">Not yet</span>
           </div>`:''}
         ${/* V399 (owner, photo 3: the wide "Scan customer QR" button crossed out and a small square
@@ -20177,8 +20206,13 @@ async function tillPage(){
     if(error||!isTillCurrent())return;
     if(data?.status==='found'&&String(data.client_id)===String(cust.client_id))cust=data;
   }
-  function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity}){
-    const unit=catalog?.customerGiftsV392?.program?.unit==='stamps'?'stamps':'points';
+  function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity,rewardUnit}){
+    /* V432: the clicked reward's own unit when the server sent one — a points gift in a mixed
+       tenant must not be priced in stamps by the programme-wide noun. The programme unit stays
+       the fallback so this dialog keeps working against an older payload. */
+    const unit=rewardUnit==='stamps'||rewardUnit==='points'
+      ?rewardUnit
+      :(catalog?.customerGiftsV392?.program?.unit==='stamps'?'stamps':'points');
     const qty=Math.max(1,Math.min(TILL_MANUAL_REDEEM_MAX_V404,Number(quantity)||1));
     const total=(Number(costUnits)||0)*qty;
     const balanceNow=Number(cust?.points);
@@ -20826,6 +20860,7 @@ async function tillPage(){
         rewardId:button.dataset.manualRedeemV404,
         rewardName:button.dataset.nameV404||'Reward',
         costUnits:Number(button.dataset.costV404)||0,
+        rewardUnit:button.dataset.unitV432||'',
         quantity:tillManualQtyV404[button.dataset.manualRedeemV404]||1
       });
     });

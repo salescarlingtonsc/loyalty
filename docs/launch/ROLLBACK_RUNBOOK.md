@@ -98,3 +98,16 @@ header/regions and in the repo history) and dropping only what the wave created.
 
 Frontend for the wave (nestly_v428/v429) rolls back by reverting the release commit through
 the normal path — no storage or data coupling beyond the RPCs named above.
+
+## 2026-08-22 staff redeem-now parity (v432)
+
+Read-side only: one new internal core plus three re-issued list readers; no table, ledger or
+redemption change. Rolls back by re-issuing the three captured pre-image bodies —
+`staff_get_customer_actionable_loyalty_v145` (from `20260817_nestly_v381_balance_follows_live_programme.sql`),
+`customer_get_reward_catalog` (pre-image in prod history / pre-apply capsule),
+`customer_get_business_actions_v89` (pre-image in prod history / pre-apply capsule) — then
+`drop function app.reward_availability_v432(uuid, uuid, timestamptz)` last (PL/pgSQL resolves at
+run time: never drop the core while a reader still names it). Reverting re-opens the defect this
+closed: the till offering gifts `app.redeem_reward_core` refuses (wrong-programme, past-card-end,
+claimed-this-cycle). Frontend (grouping + per-reward units) rolls back by reverting the release
+commit through the normal path.

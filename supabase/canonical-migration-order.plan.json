@@ -2278,6 +2278,12 @@
       "version": "20260822000008",
       "name": "nestly_v431_publish_keeps_the_spine_model",
       "sourcePath": "db/migrations/20260822_nestly_v431_publish_keeps_the_spine_model.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000009",
+      "name": "nestly_v432_staff_redeem_list_matches_customer",
+      "sourcePath": "db/migrations/20260822_nestly_v432_staff_redeem_list_matches_customer.sql"
     }
   ]
 }

@@ -547,7 +547,9 @@ test('existing referral, legacy sale and package paths never promise points whil
   });
   assert.match(till,/id="tConfirm"[\s\S]{0,180}Record sale<\/button>/);
   assert.match(till,/Sale recorded\. The screen is ready for the next customer\./);
-  assert.match(till,/legacySaleReceiptV145\(doneInfo\)/);
+  /* nestly_v430: the receipt speaks the till's unit — the caller now passes the resolver.
+     Caught red in v432's validate; v430 shipped the two-arg call without updating this pin. */
+  assert.match(till,/legacySaleReceiptV145\(doneInfo,tillUnitNounV430\(catalog\)\)/);
   assert.doesNotMatch(till,/Save & add points|Points added\. The screen|pointsEarned\|\|0} points/);
 
   assert.match(customers,/referral linked — reward eligibility is checked at the first qualifying sale and requires an enabled referral programme/);
