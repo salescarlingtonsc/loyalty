@@ -339,5 +339,5 @@ test('both migration copies are byte-identical', () => {
     readFileSync(path.join(root, 'db', 'migrations',
       '20260823_nestly_v465_home_ready_count.sql'), 'utf8'),
     readFileSync(path.join(root, 'supabase', 'migrations',
-      '20260823000001_nestly_v465_home_ready_count.sql'), 'utf8'));
+      '20260823000002_nestly_v465_home_ready_count.sql'), 'utf8'));
 });

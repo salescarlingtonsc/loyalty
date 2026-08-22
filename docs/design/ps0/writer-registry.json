@@ -580,7 +580,7 @@
     {
       "id": "db.fn:app.redeem_reward_core/7",
       "surface": "db_function",
-      "latest_file": "20260823000001_nestly_v464_earned_reward_expiry.sql",
+      "latest_file": "20260823000003_nestly_v464_earned_reward_expiry.sql",
       "rows_written": "credit_ledger:INSERT, loyalty_operations:INSERT/UPDATE, loyalty_redemption_batch_drains:INSERT, loyalty_redemption_provenance:INSERT, loyalty_redemptions:INSERT, points_batches:UPDATE, points_ledger:INSERT",
       "detected_signals": "idem-signal, for-update, config-version",
       "entry_point": "app.redeem_reward_core (internal reward redemption engine)",
@@ -2412,7 +2412,7 @@
       "id": "browser.rpc:app/app.js:business_set_featured_offer_v462",
       "surface": "browser_rpc_binding",
       "rpc": "business_set_featured_offer_v462",
-      "latest_file": "20260823000001_nestly_v462_featured_offer_and_live_cap.sql",
+      "latest_file": "20260823000004_nestly_v462_featured_offer_and_live_cap.sql",
       "resolves_to": "business_set_featured_offer_v462/2 (owner-only; nestly_v462, owner ruling R2b). Records which ONE live offer a business puts on the customer Home feed, or clears that choice back to the default. The one-per-business rule is the PRIMARY KEY of public.business_featured_offer_v462, so a second featured offer is unrepresentable rather than merely refused.",
       "rows_written": "at most one row in public.business_featured_offer_v462 - an insert or an on-conflict update - or one delete of that row when p_promotion_id is null. Nothing else, in any branch.",
       "call_site_finding": "OK. The browser supplies its own business id and an offer id and nothing else. app.is_salon_owner(p_business) gates the write, so a manager is refused 42501 and a caller with no session 28000; the offer id is validated against app.v462_featured_offer_candidates(p_business), so a draft, an ended offer or another firm's offer is refused 23514 featured_offer_must_be_live and cannot cross a tenant boundary. The table carries no anon/authenticated privileges at all, so this RPC is the only door. All of it proven as the real roles in db/tests/v462_featured_offer_and_live_cap.sql, checks 06, 07 and 13. A super admin is deliberately NOT admitted: v14 scopes super admins to reading tenants and writing platform tables, and which offer a merchant shows is the merchant's decision.",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="0bd68f2aa44c0bbdea1ac9fa78dce70ef3508a007d33a6f6deec444134cd596c">
+<meta name="v104-production-source-sha256" content="0006ca181b5c6e002e6c11b37278a8f01703d7c3a8ec0185c01c3bef44f9efe8">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1953,10 +1953,18 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    row-gap is 24px, not the old 12: .grow-stamps-editcell-gift-v416 hangs 15px ABOVE its circle,
    which never showed while a card was one row and would sit on the row above the moment it was
    not. padding-top gives the FIRST row's glyphs the same clearance inside the scroll box.
-   The scroll box is the long-card guard: a 100-stamp card is twenty rows, and the length control
-   and the summary sit either side of this grid. Six rows are shown and the rest scrolls in place,
-   so a long card cannot push the rest of the page out of reach. A 15-stamp card is three rows and
-   never reaches the cap, so nothing scrolls in the ordinary case. */
+   The scroll box is the long-card guard: it caps the grid at six rows and scrolls the rest in
+   place, so a long card cannot push the length control above it and the summary below it a
+   page-length apart.
+   nestly_v463 KEPT this deliberately, rather than deleting it as dead. The owner's 15-stamp
+   maximum makes the longest card a firm may now SET three rows, which never reaches the cap — so
+   in the ordinary case nothing scrolls and this rule does nothing, exactly as it already did for
+   every card up to 30 stamps. It is not dead, though: existing stamp_target values are NOT
+   migrated by the v463 ruling, and business_set_stamp_card_length_v414 allowed up to 100 until
+   that same wave, so a card stored longer than 15 is still drawn at its real length (the editor
+   refuses to SET above 15 but never lies about what is stored — see GROW_STAMPS_RENDER_CAP_V463).
+   Removing the guard would be removing the only thing standing between such a card and a grid
+   twenty rows tall. Two declarations and no cost when it does not apply. */
 .grow-stamps-editgrid-v416{display:grid;grid-template-columns:repeat(5,44px);justify-content:start;
   gap:24px 10px;margin-top:6px;padding-top:18px;max-height:min(52vh,430px);overflow-x:hidden;overflow-y:auto}
 .grow-stamps-editcell-v416{position:relative;display:inline-flex;align-items:center;justify-content:center;
@@ -2972,8 +2980,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* The stamp ring row. Filled = solid fill AND a tick glyph; empty = dashed outline. Both signals
    are carried without colour, so the row reads in greyscale and to a colour-blind eye — the same
    rule the v186 tier ladder already follows. Wraps rather than scrolls: a row the thumb has to
-   drag sideways hides the goal, which is the one thing this figure exists to show. */
-.customer-programme-stamp-rings{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 2px}
+   drag sideways hides the goal, which is the one thing this figure exists to show.
+   nestly_v463 (owner ruling R3c, 2026-08-23): it wraps at exactly FIVE now, not at whatever the
+   card happens to be wide. This is the same row the workspace stamp editor draws (five fixed
+   tracks since v449) and the same row the red hero draws, so all three show one card the same
+   shape: 15 is three rows, 12 is 5/5/2, 6 is 5+1. The hero's own copy of this row already used
+   repeat(5,26px) — see .customer-business-stamp-figure-v386 below — so this brings the detail
+   page into line with a rule the surface was already half following.
+   5x30 + 4x7 = 178px, inside the 390px the customer shell caps .wallet-inner at at every viewport,
+   so five tracks can never make this row overflow its card. */
+.customer-programme-stamp-rings{display:grid;grid-template-columns:repeat(5,30px);justify-content:start;gap:7px;margin:2px 0 2px}
 .customer-programme-stamp-ring{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px dashed var(--line);color:transparent;background:transparent;transition:background-color .18s ease,border-color .18s ease}
 .customer-programme-stamp-ring.is-filled{border-style:solid;border-color:var(--coral);background:var(--coral);color:#fff}
 .customer-programme-stamp-ring.is-goal{border-width:2.5px;border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
@@ -3688,14 +3704,22 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* ===== nestly_v422 — the whole stamp card, inside the hero (owner photo 8) =====================
    The owner redrew the red hero as the card itself: numbered slots wrapping over rows, a star on
    each collected slot, a gift on each slot that pays out, and one line naming the next reward.
-   Slots are auto-fitted rather than a fixed 5 per row (which is what the v386 rings were) so a
-   card of any length wraps by itself; past 30 slots the cells step down a size rather than the
-   card hiding any of them — the owner's ruling, 2026-08-22. Everything is drawn in the hero's own
-   white-on-red palette, so no new colour token is introduced. */
+   Slots wrap over rows; past 30 slots the cells step down a size rather than the card hiding any
+   of them — the owner's ruling, 2026-08-22. Everything is drawn in the hero's own white-on-red
+   palette, so no new colour token is introduced.
+   nestly_v463 (owner ruling R3c, 2026-08-23): FIVE per row, not auto-fit. auto-fit sized the row
+   to whatever the hero happened to be wide, so a 15-stamp card was one long line on the phone the
+   owner was holding and the workspace editor beside it — which has been a fixed five-track grid
+   since v449 — drew the same card as three rows of five. The merchant and the customer are meant
+   to be looking at the same object, so the customer's copy now wraps where the editor's does: 15
+   is three rows, 12 is 5/5/2, 6 is 5+1. This is the same change v449 made on the business side and
+   it is made the same way — fixed tracks, left-aligned, identical at 390 and at 1440.
+   5x28 + 4x8 = 172px, and the compact variant is 5x22 + 4x6 = 134px; both sit well inside the
+   390px the customer shell caps .wallet-inner at, so no width can make this row overflow. */
 .customer-hero-stampcard-v422{position:relative;z-index:1}
 /* The top margin is clearance for the raised gift glyph on a first-row milestone — without it a
-   gift on stamp 1..8 sits on top of the STAMPS pill above. */
-.customer-hero-stamp-grid-v422{display:grid;grid-template-columns:repeat(auto-fit,28px);gap:15px 8px;
+   gift on stamp 1..5 sits on top of the STAMPS pill above. */
+.customer-hero-stamp-grid-v422{display:grid;grid-template-columns:repeat(5,28px);gap:15px 8px;
   justify-content:start;margin:15px 0 0}
 .customer-hero-stamp-cell-v422{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:28px;height:28px;border-radius:999px;border:2px dashed rgba(255,255,255,.55);
@@ -3709,7 +3733,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-hero-stamp-num-v422{opacity:.85}
 .customer-hero-stamp-next-v422{margin:16px 0 0;font-weight:750;font-size:14px;line-height:1.25;color:#fff}
 .customer-hero-stamp-carried-v422{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.78)}
-.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-grid-v422{grid-template-columns:repeat(auto-fit,22px);gap:12px 6px}
+.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-grid-v422{grid-template-columns:repeat(5,22px);gap:12px 6px}
 .customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-cell-v422{width:22px;height:22px;font-size:9px;border-width:1.5px}
 .customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-gift-v422{top:-11px}
 @media(prefers-reduced-motion:no-preference){.customer-hero-stamp-cell-v422{transition:background-color .18s var(--ease),border-color .18s var(--ease)}}
@@ -4118,7 +4142,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 0bd68f2aa44c0bbdea1ac9fa78dce70ef3508a007d33a6f6deec444134cd596c</p>
+  <p class="v104-provenance">Local production-render harness · source 0006ca181b5c6e002e6c11b37278a8f01703d7c3a8ec0185c01c3bef44f9efe8</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4130,7 +4154,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="0bd68f2aa44c0bbdea1ac9fa78dce70ef3508a007d33a6f6deec444134cd596c";
+const PRODUCTION_SOURCE_SHA256="0006ca181b5c6e002e6c11b37278a8f01703d7c3a8ec0185c01c3bef44f9efe8";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -5209,6 +5233,9 @@ function stampQuestNormaliseV323(card){
   const milestones=(Array.isArray(card.milestones)?card.milestones:[])
     .map(rung=>({slot:whole(rung?.slot),name:String(rung?.name||'').trim(),
       claimed:rung?.claimed_this_cycle===true,availability:String(rung?.availability||''),
+      /* nestly_v464: the server's date for an earned reward's own deadline. Null for every reward
+         whose card was started under a version that set none, which is every card today. */
+      expiresAt:rung?.expires_at||null,
       isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go)}))
     .filter(rung=>rung.slot>0)
     .sort((a,b)=>a.slot-b.slot);
@@ -5263,8 +5290,15 @@ function customerStampQuestBodyV323(quest){
     :ct('stampsRemaining',{count:customerPointTotalV103(next.toGo),gift});
   const ladder=quest.milestones.length
     ?`<ul class="customer-programme-stamp-quest-v323" data-stamp-quest-list-v323="${quest.milestones.length}">${
-      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
-        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`:''}</li>`).join('')
+      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
+        /* nestly_v464: the rung carries its own deadline so the ladder can say it in the same
+           place the customer reads the gift's name. Only the SERVER's verdict decides "expired";
+           the date is printed, never compared, because the browser's clock is not the authority. */''
+        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
+        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`
+        :rung.availability==='reward_expired'?`<span class="muted small" data-stamp-quest-rung-state-v464="expired"> · ${esc(ct('stampsRewardExpired'))}</span>`
+        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small" data-stamp-quest-rung-state-v464="useby"> · ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
+        :''}</li>`).join('')
     }</ul>`
     :'';
   /* nestly_v435: the card's clock (owner rules 4/15) and the paused-card promise (rule 7). The
@@ -6009,7 +6043,11 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
   limit_reached:'Claim limit reached',
   claimed_this_cycle:'Already claimed on this card',
   not_on_card:'Not on the current card',
-  tier_locked:'Unlocks at a higher tier'
+  tier_locked:'Unlocks at a higher tier',
+  /* nestly_v464: the owner gave this reward a shelf life and it ran out. Named here rather than
+     left to the vague default, because "Not available right now" would read as a temporary state
+     for something that is gone. */
+  reward_expired:'This reward has expired'
 };
 function customerRewardAvailabilityLineV399(reward){
   const key=String(reward?.availability||'').trim();

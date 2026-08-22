@@ -51,6 +51,19 @@ function configureChartDefaults(){
   Chart.defaults.scales.category.grid={display:false};
 }
 
+/* V466 (owner ruling 2026-08-23, R4: "hide memberships and gift cards until verified"). Single
+   source of truth for every merchant-facing DOOR to these two modules — the router refusal guard,
+   the grow-page tile/topic list, and the till "Add item" sheet all read this same array, so
+   un-gating a module once it is verified is the one-line removal of its key here. The module
+   keys themselves stay in ALLMODS/MODULES/sector bundles and in branch + per-staff scopes
+   untouched (server-side entitlement other tenants' rows and RLS policies are written against —
+   same reasoning V303 already established for gift cards; deleting an entitlement key is a data
+   change, not a UI one). Gift cards were already fully gated business-side on 2026-08-13 (V303);
+   memberships were not, until this ruling. Pre-gate data check found ONE non-QA tenant (AhXiang,
+   business 33773caa-6d51-4cf2-9ad6-b83f015759e6) holding live membership_plans/memberships/
+   gift_cards rows; the owner confirmed AhXiang is their own test tenant, not a real merchant
+   obligation, so there is no per-tenant carve-out here. */
+const UNVERIFIED_MODULES_V466=['memberships','giftcards'];
 /* Canonical role set (v14 bug fix) — receptionist/stylist no longer exist as roles;
    frontdesk replaces receptionist. Used everywhere a role needs a human-readable label. */
 /* ===== STATUS VOCABULARY (owner ruling 2026-08-18) ==========================================
@@ -8010,7 +8023,9 @@ async function tillPage(){
       products:(catalog.products||[]).length>0,
       usepackage:!walkin&&(catalog.customerPackages||[]).some(item=>Number(item.remaining)>0),
       sellpackage:canPkg&&(catalog.packages||[]).length>0,
-      membership:canMem&&(catalog.memberships||[]).length>0,
+      /* V466: staff cannot enrol a customer into a membership at checkout while the module is
+         gated — same UNVERIFIED_MODULES_V466 flag as the router refusal and the grow tile. */
+      membership:canMem&&(catalog.memberships||[]).length>0&&!UNVERIFIED_MODULES_V466.includes('memberships'),
       custom:canCustomLine
     };
     return TILL_SHEET_TABS_V373.filter(tab=>available[tab.key]);
@@ -12098,7 +12113,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
      could clobber a stored target. Both are read-only additions; nothing else in this snapshot
      changes shape. */
   const loyaltyRequest=canRewards
-    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,stamp_validity_days,tier_basis,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,stamp_validity_days,stamp_reward_expiry_days,tier_basis,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   /* V291: credit_cents, entitlement_expiry_days, usage_limit and the tier gate join the read.
      They were already stored and already editable; only the comparison could not see them, which
@@ -12236,6 +12251,14 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     referral:referralsError?null:(referrals||[])[0]||null,
     memberships:membershipsError?[]:memberships||[],
     promotions:promotionsError?[]:(Array.isArray(promotions?.items)?promotions.items:[]),
+    /* V462 (owner ruling R2b): which single offer this firm puts on the customer Home feed, and
+       whether that is the owner's own choice or still the default. Both come from the SAME
+       business_get_promotion_editor_v155 read the list already makes — no extra round trip — and
+       from the same server-side resolver customer_get_home_offers_v167 filters by, so the marker
+       on this screen cannot disagree with the card the customer receives. */
+    promotionsFeaturedV462:promotionsError?null:(promotions?.featured_offer_id||null),
+    promotionsFeaturedPinnedV462:promotionsError?false:promotions?.featured_offer_pinned===true,
+    promotionsEntitlementV462:promotionsError?null:(promotions?.entitlement||null),
     draft:draftHeaderV268,
     draftDetail:draftDetailV268,
     draftDetailError:Boolean(draftDetailErrorV268),
@@ -12839,6 +12862,18 @@ function promotionVersionConflictV280(error){
   const code=String(error.code||''),message=String(error.message||error.error||'');
   return code==='40001'||/promotion_version_conflict|promotion_copy_version_conflict|promotion_target_media_version_conflict/.test(message);
 }
+/* V462 (owner ruling R2c): the one refusal that is neither a bug nor a lost race — the business
+   is at its live-offer limit. business_finalize_promotion_v155 returns it as a structured 200
+   (v378), so it arrives with an explicit `reason` and never has to be recognised from prose.
+   Treating it as its own kind matters twice: the owner gets the demote dialog instead of a
+   generic "was not saved", and — like a version conflict, and unlike a real failure — the photo
+   already uploaded for this save is KEPT, because the very next thing that happens is the same
+   save being sent again with the same photo. */
+function promotionPublishLimitRefusalV462(error){
+  if(!error)return false;
+  return String(error.reason||'')==='promotion_publish_limit_reached'
+    ||/promotion_publish_limit_reached/.test(String(error.message||error.error||''));
+}
 /* V186 (owner: "i dont see the published marketing content - live sync"). The offer WAS
    published — and scheduled to start two days later — but every owner-facing label said only
    "Published", so an offer that no customer could yet see looked live. Customers were right;
@@ -12894,6 +12929,83 @@ async function uploadRewardPhotoV326(file){
   if(error)throw new Error(error.message||'The photo could not be uploaded.');
   return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
 }
+/* V462 (owner ruling R2b) — "Shown on customer Home", stated on the editor as well as on the
+   Limited Offer list, because an owner who publishes from here never sees that list. Both
+   surfaces render the SAME server answer (business_get_promotion_editor_v155.featured_offer_id,
+   which is app.v462_effective_featured_offer, which is what customer_get_home_offers_v167
+   filters by), so there is one fact on screen, not two guesses at it. Everything arrives as an
+   argument: this function sits in the gap between promotionsPage and growPage that
+   tests/grow/v104-promotion-retry-safety.test.mjs requires to be free of direct S.biz reads. */
+function promotionFeaturedCardV462({items=[],featuredOfferId='',pinned=false,canWrite=false}={}){
+  const live=(Array.isArray(items)?items:[]).filter(item=>promotionLifecycleV186(item).live);
+  if(!live.length)return '';
+  const featured=live.find(item=>String(item.id)===String(featuredOfferId))||null;
+  const name=String(featured?.name||featured?.offerFacts||'').trim();
+  const others=live.filter(item=>item!==featured);
+  return `<div class="imp-note promotion-featured-v462" data-promotion-featured-v462 style="margin-top:12px">
+    <b>Shown on customer Home: ${featured?esc(name||'this offer'):'nothing yet'}</b>
+    <p class="muted small" style="margin-top:6px">${featured
+      ?(pinned
+        ?'You chose this one. Customers see it on their Home screen alongside offers from other shops; every other live offer is still on your own business page.'
+        :'Chosen for you because it went live most recently. Pick a different one any time.')
+      :'None of your live offers is on the Home screen yet.'}</p>
+    ${canWrite&&others.length?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+      <label class="muted small" for="promotionFeaturedPickV462">Show this one instead</label>
+      <select id="promotionFeaturedPickV462" class="grow-setup-input-v301" style="max-width:280px">
+        <option value="">Choose an offer…</option>
+        ${others.map(item=>`<option value="${esc(item.id)}">${esc(String(item.name||item.offerFacts||'Untitled offer').slice(0,70))}</option>`).join('')}
+      </select>
+      <button type="button" class="btn ghost sm" id="promotionFeaturedApplyV462">Show on Home</button>
+    </div>`:''}
+  </div>`;
+}
+/* V462 (owner ruling R2c) — "publishing when 10 are live prompts the owner to move one to draft
+   first (honest dialog, no silent failure)". The dialog is honest in three specific ways: it
+   names the real limit, it LISTS the live offers rather than telling the owner to go and find
+   them, and pressing its button performs the demotion here and then continues the publish the
+   owner already asked for — it does not send them away to do it and come back. Cancelling leaves
+   everything exactly as it was, including the draft they were editing.
+   It never invents the refusal: it is only ever opened after the server has answered
+   promotion_publish_limit_reached. */
+function promotionDemoteDialogV462({live=[],max=0}={}){
+  const rows=(Array.isArray(live)?live:[]).slice();
+  return new Promise(resolve=>{
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','promotionDemoteTitleV462');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
+      <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">You already have ${rows.length} offer${rows.length===1?'':'s'} live</h2>
+      <p class="muted small" style="margin-top:10px">${max} live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
+      <div class="promotion-demote-list-v462" role="radiogroup" aria-label="Offer to move back to draft" style="margin-top:12px;display:grid;gap:8px">
+        ${rows.map((item,index)=>`<label class="welcome-offer-optioncard-v350" style="display:flex;gap:10px;align-items:flex-start">
+          <input type="radio" name="promotionDemotePickV462" value="${esc(item.id)}"${index===0?' checked':''}>
+          <span><b>${esc(String(item.name||item.offerFacts||'Untitled offer').slice(0,70))}</b><br>
+          <span class="muted small">${esc(promotionLifecycleV186(item).label)}</span></span></label>`).join('')}
+      </div>
+      <div class="row" style="margin-top:18px"><span class="spacer"></span>
+        <button type="button" class="btn ghost" id="promotionDemoteCancelV462">Keep them all — do not publish</button>
+        <button type="button" class="btn" id="promotionDemoteOkV462">Move to draft and publish</button></div>
+    </div>`;
+    document.body.append(dialog);
+    let settled=false,deactivate=null;
+    const finish=value=>{
+      if(settled)return;
+      settled=true;
+      const close=deactivate;deactivate=null;
+      if(close)close({restoreFocus:true});else dialog.remove();
+      resolve(value);
+    };
+    /* R5 (owner ruling, 2026-08-23): backdrop-click dismissal stays OFF. Escape and navigation
+       already close it, and this dialog is opened mid-publish — a stray click behind it must not
+       silently abandon the save. */
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(null),initialFocus:'#promotionDemoteCancelV462'});
+    dialog.querySelector('#promotionDemoteOkV462').onclick=()=>{
+      const picked=dialog.querySelector('input[name="promotionDemotePickV462"]:checked');
+      finish(picked?String(picked.value):null);
+    };
+    dialog.querySelector('#promotionDemoteCancelV462').onclick=()=>finish(null);
+  });
+}
 async function promotionsPage(selectedPromotionId=null){
   const host=M();
   const businessId=S.biz.id,businessName=S.biz.name,businessSlug=S.biz.slug,
@@ -12919,6 +13031,13 @@ async function promotionsPage(selectedPromotionId=null){
     published=Math.max(0,Number(entitlement.published_count||0)),
     quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
     canPublishNew=entitlement.can_publish_new!==false;
+  /* V462 (owner ruling R2b/R2c). featuredOfferId is the server's answer to "which one offer is on
+     customer Home" — the same app.v462_effective_featured_offer the customer Home reader filters
+     by — and featuredPinned says whether an owner chose it or it is the default standing in. */
+  const featuredOfferIdV462=String(data?.featured_offer_id||''),
+    featuredPinnedV462=data?.featured_offer_pinned===true,
+    liveOffersV462=items.filter(item=>promotionLifecycleV186(item).live),
+    atLiveCapV462=liveOffersV462.length>=max&&max>0;
   const customerVisibleCount=visiblePromotionResult.error?null:Math.max(0,Number(visiblePromotionResult.data?.visible_count||0));
   const selected=items.find(item=>item.id===selectedPromotionId)||null;
   const today=promotionDateInputV104(new Date());
@@ -12949,10 +13068,15 @@ async function promotionsPage(selectedPromotionId=null){
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
     ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',canWrite:true,moduleLabel:'Customer programme'})}
     ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>Customers currently see no offers.</b><p class="muted small" style="margin-top:5px">An offer only shows to customers while its dates are current and it has a photo. Publish one, or check the dates and photo on an existing promotion below.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
-    <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
-      <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
-      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
+    ${/* V462 (R2c): the slots figure is now the LIVE count — the number the publish gate actually
+         enforces and the number an owner can change by moving an offer to draft. The old copy
+         called it a "launch slot" (a lifetime allowance that drafting could never free) and then
+         promised "no more than two current offers at once", which was never true of anything. */''}
+    <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} offers live</b>
+      <p class="muted small" style="margin-top:4px">Customers see every live offer on your business page, and one of them on their Home screen. ${atLiveCapV462?'You are at the limit — move one back to draft before publishing another.':`You can publish ${Math.max(0,max-quotaUsed)} more.`} Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}.</p></div>
+      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} offers live" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
       ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
+      ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true})}
     </section>
     <ol class="promotion-studio-progress" aria-label="Promotion publishing steps">
       <li><strong>1. Offer</strong>Add exact facts and dates</li>
@@ -13250,6 +13374,44 @@ async function promotionsPage(selectedPromotionId=null){
     p_expected_target_media_version:exactTargetMediaVersion(promotion,draft.branch_id),
     p_attempt_key:attemptKey
   });
+  /* V462 (owner ruling R2c): "move one to draft" performed here, on the owner's behalf, through
+     the SAME writer the editor uses for its own Unpublish button — business_finalize_promotion_v155
+     with p_publish false. No new RPC, no second unpublish path, and deliberately NOT
+     business_delete_promotion_v183: that one RETIRES an offer (active false AND ends_at pulled to
+     now), which is a different, less reversible thing than the draft the dialog promises.
+     Every field is echoed back from the row the editor already read, so this changes exactly one
+     property of that offer. p_object_path is null, so its photo is left where it is. */
+  const demoteLiveOfferV462=async promotionId=>{
+    const target=items.find(item=>String(item.id)===String(promotionId));
+    if(!target)return {error:new Error('That offer could not be found. Reload and try again.')};
+    const scope=target.branchScope||{},
+      scopeIds=(scope.branch_ids||scope.branchIds||[]).filter(Boolean),
+      result=await safeRpc('business_finalize_promotion_v155',{
+        p_business:businessId,p_promotion_id:target.id,
+        p_scope_mode:scopeIds.length?'selected':'all',
+        p_branch_ids:scopeIds.length?scopeIds:null,
+        p_operational_branch:operationalPromotionBranch,
+        p_name:target.name,p_tagline:null,p_description:target.description,
+        p_terms:target.terms||null,
+        p_starts_at:target.starts_at,p_ends_at:target.ends_at,
+        p_display_order:Number(target.display_order??100),
+        p_cta_kind:target.ctaKind,p_cta_label:target.ctaLabel,
+        p_offer_facts:target.offerFacts,p_occasion:target.occasion||null,
+        p_publish:false,
+        p_object_path:null,p_mime_type:null,p_width_px:null,p_height_px:null,p_alt_en:null,
+        p_expected_content_version:Number(target.contentVersion||0),
+        p_expected_copy_version:Number(target.copyVersion||0),
+        p_expected_target_media_version:exactTargetMediaVersion(target,null),
+        p_attempt_key:crypto.randomUUID()
+      });
+    if(result.error)return {error:result.error};
+    /* A structured 200 refusal is a failure however friendly it looks (v378). */
+    if(result.data?.blocked===true){
+      return {error:{code:'promotion_finalize_rejected',reason:result.data.reason||'',
+        message:`That offer was not moved to draft (${result.data.reason||'refused'}).`}};
+    }
+    return {error:null,data:result.data};
+  };
   const clearFinalizedObjects=async(result,pending)=>{
     const oldPath=result?.previous_object_path||null;
     if(oldPath&&oldPath!==pending?.objectPath){
@@ -13294,7 +13456,9 @@ async function promotionsPage(selectedPromotionId=null){
        successful publish, so it is converted to the definitive failure it is — which takes the
        existing path: release the receipt and its orphaned photo, say so once, stop. */
     if(!result.error&&result.data?.blocked===true&&result.data?.code==='promotion_finalize_rejected'){
-      result={data:null,error:{code:'promotion_finalize_rejected',
+      /* V462: the server's own `reason` is carried through instead of being flattened into the
+         message. Reading a refusal back out of English prose is how the cap became invisible. */
+      result={data:null,error:{code:'promotion_finalize_rejected',reason:result.data.reason||'',
         message:`This promotion was not saved (${result.data.reason||'refused'}). Reopen it to see the latest version, then publish again.`}};
     }
     if(!result.error){
@@ -13305,8 +13469,13 @@ async function promotionsPage(selectedPromotionId=null){
     /* V280: a version conflict is RETRYABLE with re-read versions, and the photo it refers to is
        the same photo that retry will attach. Deleting it here is what turned a recoverable
        conflict into an offer that could never be published. */
+    /* V462: a live-cap refusal joins the retryable set for exactly the reason a version conflict
+       is in it — the owner is about to make the change that clears it and press again with the
+       same photo. Deleting the photo here is what would turn "move one to draft" into "and now
+       choose your picture again". */
     if(!promotionRpcErrorIsAmbiguousV104(result.error)
-       &&!promotionVersionConflictV280(result.error)){
+       &&!promotionVersionConflictV280(result.error)
+       &&!promotionPublishLimitRefusalV462(result.error)){
       await cleanFailedUpload(pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
     }
@@ -13462,6 +13631,39 @@ async function promotionsPage(selectedPromotionId=null){
           finalized=await runPendingFinalize(pendingFinalize);
         }
       }
+      /* V462 (owner ruling R2c): the honest dialog. The server has refused because this business
+         already has its maximum number of offers live; the owner is shown WHICH ones, picks one
+         to move back to draft, and the publish they asked for continues by itself. A new attempt
+         key is minted because the first attempt definitively rolled back — replaying the old key
+         would only raise promotion_attempt_key_reused. */
+      if(finalized.error&&publish&&!unpublish&&promotionPublishLimitRefusalV462(finalized.error)){
+        if(!isPromotionCurrent())return;
+        const demoteId=await promotionDemoteDialogV462({
+          live:liveOffersV462.filter(item=>String(item.id)!==String(workingPromotionId)),max});
+        if(!isPromotionCurrent())return;
+        if(!demoteId){
+          const abandoned=pendingFinalize;
+          pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+          await cleanFailedUpload(abandoned);
+          if(!isPromotionCurrent())return;
+          buttons.forEach(button=>button.disabled=false);
+          status.textContent=workspaceTemplateTextV97('offerLiveCapReached',{max});
+          field('promotionImageStatus').textContent='Choose the photo again when you publish.';
+          return;
+        }
+        status.textContent='Moving the other offer back to draft…';
+        const demoted=await demoteLiveOfferV462(demoteId);
+        if(!isPromotionCurrent())return;
+        if(demoted.error){
+          buttons.forEach(button=>button.disabled=false);
+          status.textContent='That offer could not be moved back to draft, so nothing was published.';
+          return fail(demoted.error);
+        }
+        pendingFinalize=buildPendingFinalizeV280(workingPromotion,crypto.randomUUID());
+        writeSessionValue(pendingStorageKey,pendingFinalize);
+        status.textContent='Publishing…';
+        finalized=await runPendingFinalize(pendingFinalize);
+      }
       if(finalized.error&&promotionVersionConflictV280(finalized.error)){
         /* Two conflicts in a row means this promotion is being changed somewhere else. Release the
            held receipt — keeping it would lock the editor into replaying a request that cannot
@@ -13534,6 +13736,22 @@ async function promotionsPage(selectedPromotionId=null){
         });
       }
     }
+  };
+  /* V462 (R2b): the same one-tap change the Limited Offer list offers, on the editor. It calls the
+     same RPC and then re-renders the page from the server rather than patching the card, so the
+     line the owner reads afterwards is the server's answer and not this handler's assumption. */
+  if(field('promotionFeaturedApplyV462'))field('promotionFeaturedApplyV462').onclick=async()=>{
+    const picker=field('promotionFeaturedPickV462'),chosen=String(picker?.value||'');
+    if(!chosen)return toast('Choose an offer first.');
+    const button=field('promotionFeaturedApplyV462');
+    CUI.setButtonBusy(button,{busy:true,label:'Moving…'});
+    const {error}=await sb.rpc('business_set_featured_offer_v462',{
+      p_business:businessId,p_promotion_id:chosen});
+    if(!isPromotionCurrent())return;
+    CUI.setButtonBusy(button,{busy:false});
+    if(error)return fail(error);
+    toast('Customer Home now shows that offer');
+    promotionsPage(selectedPromotionId);
   };
   if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
   field('promotionPublish').onclick=()=>save(true);
@@ -13782,7 +14000,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(earning.model==='stamps'){
       /* nestly_v435: the card validity is part of the earning rule the owner reads here. */
       const validityV435=Number(snapshot.loyalty?.stamp_validity_days)||0;
-      return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp${validityV435>0?` · cards valid ${validityV435} days from the first stamp`:''}`;
+      /* nestly_v464: the earned-reward deadline reads here too, in the same sentence and only when
+         the owner has set one — an optional rule that is silent when it is off. */
+      const rewardExpiryV464=Number(snapshot.loyalty?.stamp_reward_expiry_days)||0;
+      return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp${validityV435>0?` · cards valid ${validityV435} days from the first stamp`:''}${rewardExpiryV464>0?` · rewards expire ${rewardExpiryV464} days after they are earned`:''}`;
     }
     return `${growCurrencyV271} 1 spent → ${growEarnUnitV271(Math.max(0,Number(earning.rate)||0),earning.unit)}`;
   };
@@ -14087,7 +14308,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'recurring',icon:'wallet',title:'Memberships',blurb:'Let customers subscribe and save',
       status:activeMembershipCount?[STATUS_WORDS.on,'on']:membershipConfigured?['Paused','warn']:['Not set up','warn'],
       summary:activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:membershipConfigured?'Membership plans exist but are currently paused':'Let customers subscribe and save'},
-  ];
+  /* V466: filtered out here rather than never appended, so the array literal above stays the
+     readable, un-diffed record of every programme tile — un-gating is deleting 'memberships'
+     from UNVERIFIED_MODULES_V466, not reconstructing this entry. */
+  ].filter(topic=>topic.key!=='recurring'||!UNVERIFIED_MODULES_V466.includes('memberships'));
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
   /* V268 (owner drew the hierarchy: category name, then its items with their set-up status).
      Drilling in already showed the category name and its items — what was missing was WHERE the
@@ -15260,6 +15484,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <option value="fixed"${Number(snapshot.loyalty?.stamp_validity_days)>0?' selected':''}>Cards expire some days after the first stamp</option>
       </select></p>
     <p class="grow-setup-sentence-v301" data-grow-earn-validity-days-v435${Number(snapshot.loyalty?.stamp_validity_days)>0?'':' hidden'}><label class="muted small" for="growEarnValidityDaysV435">Days from the first stamp</label><br><input id="growEarnValidityDaysV435" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.stamp_validity_days||''))}" placeholder="e.g. 180"></p>
+    ${/* nestly_v464 (owner ruling R3(e)). A SECOND, separate clock, and it is optional. Card
+         validity above is about the card the customer is still filling; this is about a gift they
+         have already earned and not yet collected. Blank is the default and means what it has
+         always meant — the gift waits forever. */''}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnRewardExpiryModeV464">Reward expiry</label><br>
+      <select id="growEarnRewardExpiryModeV464" class="grow-setup-input-v301" style="width:100%;max-width:260px">
+        <option value="none"${!Number(snapshot.loyalty?.stamp_reward_expiry_days)?' selected':''}>Rewards never expire</option>
+        <option value="fixed"${Number(snapshot.loyalty?.stamp_reward_expiry_days)>0?' selected':''}>Rewards expire some days after they are earned</option>
+      </select></p>
+    <p class="grow-setup-sentence-v301" data-grow-earn-reward-expiry-days-v464${Number(snapshot.loyalty?.stamp_reward_expiry_days)>0?'':' hidden'}><label class="muted small" for="growEarnRewardExpiryDaysV464">Days from when the reward is earned</label><br><input id="growEarnRewardExpiryDaysV464" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.stamp_reward_expiry_days||''))}" placeholder="e.g. 30"></p>
+    <p class="muted small" style="margin-top:8px" data-grow-earn-reward-expiry-help-v464>Rewards expire this many days after they are earned. Leave it blank and they never expire. Rewards your customers have already earned keep the rule they were earned under.</p>
     <p class="muted small" style="margin-top:8px">Changes apply to new Stamp Cards. Customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.</p>`
       :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">Points per ${esc(S.biz?.currency||'SGD')} 1 spent</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnExpiryModeV359">When points expire</label><br>
@@ -15482,7 +15717,26 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      ------------------------------------------------------------------------------------------- */
   const GROW_STAMPS_DEFAULT_LEN_V416=15;
   const GROW_STAMPS_DEFAULT_EVERY_V416=5;
-  const GROW_STAMPS_MAX_LEN_V416=100;   /* the server's own bound in business_set_stamp_card_length_v414 */
+  /* nestly_v463 (owner ruling R3a, 2026-08-23): the longest card a firm may SET is 15 stamps.
+     The bound was 100, matching business_set_stamp_card_length_v414's own guard, which v463 lowers
+     to 15 for new writes in the same wave. Two numbers, not one, and they do different jobs:
+       * GROW_STAMPS_MAX_LEN_V463 is the WRITE bound — the input's max, both steppers, the grid's
+         trailing "+", the v445 one-tap stranded fix, and the typed field's commit guard. Nothing
+         on this screen may propose a length above it, because the server will refuse it.
+       * GROW_STAMPS_RENDER_CAP_V463 is a DRAWING rail only. Existing stamp_target values are NOT
+         migrated (owner ruling), so a card longer than 15 could in principle already be stored;
+         drawing it as 15 would be the REG-001 phantom-length defect with the sign flipped — the
+         owner would see 15, the server would hold 40, and one tap would silently shorten the card
+         and strand every gift past 15. The card is therefore drawn at its REAL length, and only
+         the controls are bounded. The rail stays at the OLD server bound because no stored value
+         can exceed it: v414 has refused anything above 100 since the day it shipped.
+     Production scan 2026-08-23 (read-only, gadpooereceldfpfxsod): NO business has a live
+     loyalty_programs.stamp_target above 15 — the maximum in force is 15 (qa-kaya-toast). Three
+     superseded loyalty_program_versions rows on kopi-tiam-tyeh hold 16/17, but that firm's active
+     version and spine both read 10, so the over-max branch below is unreachable on today's data
+     and exists to keep it that way. */
+  const GROW_STAMPS_MAX_LEN_V463=15;    /* the server's own bound in business_set_stamp_card_length_v414 */
+  const GROW_STAMPS_RENDER_CAP_V463=100;
   /* The length the ENGINE enforces: loyalty_programs.stamp_target, which app.stamp_progress_v323
      reports as the card's slots and app.redeem_reward_core refuses claims past. */
   const growStampsTargetV416=Math.max(0,Math.round(Number(snapshot.loyalty?.stamp_target)||0));
@@ -15502,8 +15756,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      gift is a VALIDATION fault, not a length, and it is reported as one — named individually in
      the warning band below (v363/v445) and still listed in the summary. Moving or removing it
      stays the owner's decision; nothing here mutates their data. */
-  const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
+  /* nestly_v463: the cap here is the RENDER rail, not the write bound. See the two constants at the
+     top of this block for why clamping the drawn card to 15 would be REG-001 in reverse. */
+  const growStampsCardLenV416=Math.min(GROW_STAMPS_RENDER_CAP_V463,
     Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416));
+  /* True only for a card stored longer than a firm may now set. Unreachable on production data
+     today (see the scan above); when it does hold, the card is drawn honestly and every control
+     that could make it LONGER is refused, while shortening is offered straight to the new maximum
+     because that is the only shorter length the server will accept. */
+  const growStampsOverMaxV463=growStampsCardLenV416>GROW_STAMPS_MAX_LEN_V463;
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
   /* nestly_v445: the gifts that sit past the end of the card, each one named. The old warning
      mentioned only the highest, which on a card with several stranded gifts under-reports. */
@@ -15530,7 +15791,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      on it, so "already one stamp long" is the true reason and naming a gift there would send the
      owner to move something that would not help. */
   const growStampsShorterOffV453=growStampsCardLenV416<=growStampsShortestLenV445;
-  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416;
+  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V463;
+  /* nestly_v463: what "one stamp shorter" writes. Ordinarily it is exactly one stamp shorter and
+     this expression is len-1, byte-for-byte what v416 shipped. On a card stored above the new
+     maximum, len-1 is still above it and the server would refuse the request, so the step goes to
+     the maximum instead — the nearest shorter length that can actually be saved. The label says so
+     rather than claiming a single step it is not taking. */
+  const growStampsShorterToV463=growStampsOverMaxV463
+    ?GROW_STAMPS_MAX_LEN_V463:growStampsCardLenV416-1;
+  const growStampsShorterLabelV463=growStampsOverMaxV463
+    ?`Shorten to ${GROW_STAMPS_MAX_LEN_V463} stamps`:'One stamp shorter';
   /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
      rather than looked up through a variable: the workspace audit
      (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
@@ -15551,9 +15821,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?workspaceTemplateTextV97('stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
       :'';
   const growStampsLongerTitleV453=growStampsLongerOffV453
-    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V463}):'';
   const growStampsLongerTextV453=growStampsLongerOffV453
-    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V463}):'';
   /* The sentence is rendered as TEXT in the bar, not only as a title. A disabled button is not
      focusable and several screen readers drop it from the tree entirely, so a tooltip on it is
      reachable by neither keyboard nor assistive tech; the visible line is the only version every
@@ -15576,7 +15846,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Both routes end in the SAME write: data-grow-stamps-len-v416 for the steppers, and the field's
      own commit handler calling business_set_stamp_card_length_v414 with what was typed. The
      server keeps its veto — it refuses a length that would strand a live gift and names it — so
-     the field never enforces a rule of its own beyond the 1..100 the input itself declares. */
+     the field never enforces a rule of its own beyond the 1..15 the input itself declares (v463). */
   const growStampsCardLengthBarV416=`<div class="grow-stamps-lenbar-v416">
     <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
@@ -15587,9 +15857,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          button beside the title rather than as the left half of a stepper. The three controls are
          one nowrap unit now: the LABEL may stack above them at 390, which is fine and is what the
          owner's own photo shows working elsewhere on this page, but the stepper cannot split. */''}
-    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} aria-label="One stamp shorter">−</button>`:''}
+    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsShorterToV463}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} data-workspace-i18n aria-label="${esc(growStampsShorterLabelV463)}">−</button>`:''}
     ${canSetupGrow
-      ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
+      ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V463}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
       :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
     ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsLongerOffV453?` disabled ${growStampsLongerTitleV453} aria-describedby="growStampsLenLongerWhyV453"`:''} aria-label="One stamp longer">+</button>`:''}</span>${growStampsWhyLinesV453}
   </div>`;
@@ -15613,7 +15883,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          gift the firm wrote, so the workspace localiser must not rewrite it. */
       return `<button type="button" role="listitem" class="${cls}" data-grow-stamps-cell-v416="${stamp}" data-merchant-content aria-label="${esc(label)}">${reward?`<span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span>`:''}<span class="grow-stamps-editcell-num-v416">${stamp}</span></button>`;
     }).join('')}
-    ${canSetupGrow&&growStampsCardLenV416<GROW_STAMPS_MAX_LEN_V416
+    ${/* nestly_v463: withheld once the card is at the 15-stamp maximum — a "+" that can only be
+         refused is the same defect as a stepper that gives no reason. The refusal is SAID by the
+         bar's own "+" (disabled, with the "15 stamps is the longest a card can be." line beside
+         it); repeating it as a second dead circle at the end of the grid would say nothing more.
+         Written as a comment INSIDE the expression, not as its own ${''} line: this card is byte-
+         pinned against the v445 commit, and an extra interpolation slot leaves a blank line the
+         pin would report as a change to markup nobody changed. */
+      canSetupGrow&&growStampsCardLenV416<GROW_STAMPS_MAX_LEN_V463
       ?`<button type="button" class="grow-stamps-editcell-v416 is-add-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}" aria-label="Make the card one stamp longer">+</button>`:''}
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
@@ -15641,7 +15918,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
     <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
     ${growStampsStrandedChipsV445}
-    ${canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V416?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+    ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
+         tap from being reachable; it no longer is, because no card may be 20 stamps long, so the
+         button is withheld and the paragraph's other way out — move the gift onto a stamp inside
+         the card — is the whole offer. Offering a button that can only fail is the defect this
+         guard was written for in the first place; only the number it guards has changed.
+         Comment inside the expression, not its own ${''} slot: see the grid's "+" above. */
+      canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
@@ -15696,8 +15979,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
         <span class="spacer"></span>
         <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+          ${/* nestly_v463 (owner ruling R3b, 2026-08-23): "+ Add level" is RETIRED. It opened the
+               gift form with NO stamp chosen (growStampsPickedV416 stays null), so the number field
+               was free text and the owner could type any stamp — including one past the end of the
+               card, which is how qa-kaya-toast ended up with gifts stranded at 80 and 1000 that the
+               counter refuses. The card itself is the placement surface: tap the stamp you mean.
+               The only two ways to a gift form on this page are now the grid's own cells and the
+               v445 stranded-gift chips, and both fix the stamp before the form opens. Nothing is
+               lost — every gift the button could create can be created by tapping its slot. */''}
           ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
-          <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add level</button>
           <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
           :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
         </span>
@@ -15949,7 +16239,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the drill already had — the owner asked for a place to edit these, not for a new editor. */
   const growLimitedOfferListHtmlV319=snapshot.overviewErrors?.promotions
     ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
-    :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. Customers see up to six current offers.`:'No promotion has been created yet.'}</p>
+    :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. ${/* V462: the old sentence here named a cap of six that existed only inside one reader's SQL. */''}Customers see every live offer on your business page.`:'No promotion has been created yet.'}</p>
       ${growPromotionItemsV296.map(item=>{const life=promotionLifecycleV186(item);
         const detailV296=[life.label,String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120)].filter(Boolean).join(' · ');
         return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),
@@ -16074,6 +16364,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growOffersBucketedV324={published:[],draft:[],history:[]};
   growPromotionItemsV296.forEach(item=>{growOffersBucketedV324[growOfferBucketV324(item)].push(item)});
   const growOffersCanWriteV324=isOwner&&canRewards;
+  /* V462 (owner ruling R2b): "exactly ONE live offer per business is FEATURED on the customer
+     Home feed... with a clear 'Shown on customer Home — change' affordance". The id comes from
+     the server resolver, never from anything this page works out for itself: the owner must be
+     told which card the customer is actually getting, and a client-side guess at "most recently
+     published" would be a second definition that can drift from the one Home filters by.
+     `pinned` false means nobody has chosen yet and the default is standing in, which the row
+     says out loud rather than presenting the default as a decision. */
+  const growFeaturedOfferIdV462=String(snapshot.promotionsFeaturedV462||'');
+  const growFeaturedPinnedV462=snapshot.promotionsFeaturedPinnedV462===true;
+  const growOfferLiveLimitV462=Math.max(0,Number(
+    snapshot.promotionsEntitlementV462?.live_limit
+    ??snapshot.promotionsEntitlementV462?.max_published_offers
+    ??10));
+  const growOfferLiveCountV462=Math.max(0,Number(
+    snapshot.promotionsEntitlementV462?.live_count
+    ??growPromotionItemsV296.filter(item=>item?.active===true).length));
   /* "Delete"/"Retire" match the deep editor's own wording exactly (promotionsPage, V183 —
      "the button says which of the two will happen"), not the owner's one word for both: a
      Published item's RECORD survives underneath (reports and alert history still reference it),
@@ -16097,11 +16403,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        Published-bucket button reads "End" now, styled red — Draft's "Delete" is unchanged. */
     const deleteLabel=bucket==='published'?'End':'Delete';
     const deleteBtnClass=bucket==='published'?'btn sm danger':'btn ghost sm';
-    return `<div class="promotion-item-row" data-merchant-content>
+    /* V462: only a LIVE offer can be on Home, so only a live row carries the affordance. The
+       featured row states it in plain words and offers no "feature" button (it is already there);
+       every other live row offers the one-tap change. */
+    const featuredV462=growFeaturedOfferIdV462&&String(item.id)===growFeaturedOfferIdV462;
+    const featurableV462=growOffersCanWriteV324&&life.live&&bucket==='published';
+    const featureNoteV462=featuredV462
+      ?`<p class="muted small grow-offer-featured-note-v462" data-grow-offer-featured-v462="${esc(item.id)}">${CUI.icon('loyalty',{size:14})} Shown on customer Home${growFeaturedPinnedV462?'':' — chosen for you because it went live most recently'}</p>`
+      :'';
+    return `<div class="promotion-item-row${featuredV462?' grow-offer-featured-row-v462':''}" data-merchant-content${featuredV462?' data-grow-offer-is-featured-v462="1"':''}>
       ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
       <div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b>
-      <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p></div>
+      <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p>${featureNoteV462}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
+        ${featurableV462&&!featuredV462?`<button type="button" class="btn ghost sm grow-offer-feature-v462" data-grow-offer-feature-v462="${esc(item.id)}" data-grow-offer-feature-name-v462="${esc(item.name||item.offerFacts||'this offer')}">Show on Home</button>`:''}
         ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
         ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
@@ -16245,7 +16560,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319:''}
       ${programmeView==='offers'?`<div class="grow-limited-offer-v319" data-grow-limited-offer-v319>
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap;padding:0 0 10px">
-          <p class="muted small" style="flex:1 1 260px;margin:0">These are the current offers customers see in their app. Edit one here and the change reaches the customer programme when you publish it.</p>
+          ${/* V462 (R2a/R2b): the page used to promise "up to six current offers", which was never
+               a number the system held anywhere. It now states the two rules an owner actually
+               lives under: every live offer is on their page, and one of them is on Home. */''}
+          <p class="muted small" style="flex:1 1 260px;margin:0">Customers see <b>every</b> live offer on your business page — ${growOfferLiveCountV462} of ${growOfferLiveLimitV462} live now. One of them also shows on their Home screen; pick which with <b>Show on Home</b>.<br>Edit one here and the change reaches customers when you publish it.</p>
           ${growOffersCanWriteV324?'<a class="btn sm grow-offers-add-v324" href="#/promotions" aria-label="Add another promotion"><span aria-hidden="true">+</span> Add</a>':''}
         </div>
         ${growOffersTabStripV324}
@@ -16257,10 +16575,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growReferralSummaryV375}${growReferralSettingsPanelV364}
       </div></div>
       `:''}
-      ${topicOnV229('recurring')?`
+      ${topicOnV229('recurring')&&!UNVERIFIED_MODULES_V466.includes('memberships')?`
       <!-- V294: the category follows the card — Memberships only. V303 removed gift-card
            management from the business workspace altogether (owner: "remove gift cards from the
-           business UI entirely"), so there is no destination left to point at here either. -->
+           business UI entirely"), so there is no destination left to point at here either.
+           V466: the whole block is ALSO gated on UNVERIFIED_MODULES_V466 directly, not only via
+           the topic tile being filtered out of growTopicDefsV229/growDisplayTopicsV343 above —
+           topicOnV229() returns true unconditionally for every category on the legacy
+           #/grow/ongoing, #/grow/available and #/grow/settings deep-link views (growCategoryViewV271
+           does not exclude those three), so a tile-list filter alone does not stop this block from
+           rendering on those routes. Explicit is the only safe guard here. -->
       <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
@@ -16739,6 +17063,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     toast(published?'Offer retired — customers no longer see it':'Draft deleted');
     growRerenderV322();
   });
+  /* V462 (owner ruling R2b): one tap moves the Home slot. There is no confirm and no dialog — the
+     action is reversible by tapping another row, it changes nothing a customer has already
+     received, and the row it moves FROM says where it went on the next render. The server is the
+     authority on which offer ends up featured (it refuses a draft, and it re-resolves the default
+     when the choice is cleared), so the answer is read back out of the RPC rather than assumed. */
+  outerMain.querySelectorAll('[data-grow-offer-feature-v462]').forEach(button=>button.onclick=async()=>{
+    const id=button.dataset.growOfferFeatureV462;
+    const name=button.dataset.growOfferFeatureNameV462||'this offer';
+    CUI.setButtonBusy(button,{busy:true,label:'Moving…'});
+    const {error}=await sb.rpc('business_set_featured_offer_v462',{
+      p_business:S.biz.id,p_promotion_id:id});
+    if(!isGrowCurrent())return;
+    if(error){
+      CUI.setButtonBusy(button,{busy:false});
+      /* The one refusal an owner can actually cause is choosing an offer that stopped being live
+         while this page was open. Say that, not the server's word for it. */
+      toast(/featured_offer_must_be_live/.test(String(error.message||''))
+        ?workspaceTemplateTextV97('offerNotLiveForHome',{name})
+        :ownerErrorText(error));
+      return;
+    }
+    toast(workspaceTemplateTextV97('offerOnCustomerHome',{name}));
+    growRerenderV322();
+  });
   /* V324: show/hide the inline confirm block in place — see the template comment above. Every
      row's confirm `<li>` is already in the DOM, so this is a `hidden` toggle, never a re-render.
      Only one row may be open at a time, matching what growSwitchPendingV322 always meant. */
@@ -17151,13 +17499,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const wrap=outerMain.querySelector('[data-grow-earn-validity-days-v435]');
     if(wrap)wrap.hidden=growEarnValiditySel.value==='none';
   };
+  /* nestly_v464: the earned-reward deadline's own days field. Same reveal contract as the card
+     validity above it, and deliberately a separate control — the two clocks answer different
+     questions and sharing one selector is the "phantom selector" mistake v435 already fixed. */
+  const growEarnRewardExpirySelV464=$('growEarnRewardExpiryModeV464');
+  if(growEarnRewardExpirySelV464)growEarnRewardExpirySelV464.onchange=()=>{
+    const wrap=outerMain.querySelector('[data-grow-earn-reward-expiry-days-v464]');
+    if(wrap)wrap.hidden=growEarnRewardExpirySelV464.value==='none';
+  };
   const growEarnSave=outerMain.querySelector('[data-grow-earn-save-v359]');
   if(growEarnSave)growEarnSave.onclick=async()=>{
     if(growEarnBusyV359)return;
     /* nestly_v435: stamps and points send DIFFERENT policies. Stamps: spend-per-stamp + card
        validity (p_stamp_validity_days, 0 = never; version-pinned server-side). Points: rate +
        batch expiry (p_expiry_mode/p_expiry_days). Neither touches the other's fields. */
-    let pointsRate=null,stampCents=null,mode=null,days=null,validityDays=null;
+    let pointsRate=null,stampCents=null,mode=null,days=null,validityDays=null,rewardExpiryDaysV464=null;
     if(growPointsIsStampsV326){
       const spend=Number(String($('growEarnStampV359')?.value||'').trim());
       if(!Number.isFinite(spend)||spend<=0){growEarnErrorV359='Spend per stamp must be more than zero.';return growRerenderV322({quiet:true});}
@@ -17167,6 +17523,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       else{
         validityDays=Math.round(Number(String($('growEarnValidityDaysV435')?.value||'').trim()));
         if(!Number.isFinite(validityDays)||validityDays<1||validityDays>3650){growEarnErrorV359='Enter a card validity between 1 and 3650 days.';return growRerenderV322({quiet:true});}
+      }
+      /* nestly_v464: 0 is the server's "never expires" and NULL is its "leave this alone", so the
+         stamps branch always sends a number — otherwise turning the deadline back off would be
+         indistinguishable from not mentioning it. */
+      const rewardExpiryModeV464=String($('growEarnRewardExpiryModeV464')?.value||'none');
+      if(rewardExpiryModeV464==='none')rewardExpiryDaysV464=0;
+      else{
+        rewardExpiryDaysV464=Math.round(Number(String($('growEarnRewardExpiryDaysV464')?.value||'').trim()));
+        if(!Number.isFinite(rewardExpiryDaysV464)||rewardExpiryDaysV464<1||rewardExpiryDaysV464>3650){growEarnErrorV359='Enter a reward expiry between 1 and 3650 days.';return growRerenderV322({quiet:true});}
       }
     }else{
       mode=String($('growEarnExpiryModeV359')?.value||'none');
@@ -17180,7 +17545,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growEarnBusyV359=true;growEarnErrorV359='';growRerenderV322({quiet:true});
     const earnSaveCallV435=await sb.rpc('business_set_earning_rule_v359',{p_business:S.biz.id,
       p_earn_points_per_dollar:pointsRate,p_stamp_per_cents:stampCents,
-      p_expiry_mode:mode,p_expiry_days:days,p_stamp_validity_days:validityDays});
+      p_expiry_mode:mode,p_expiry_days:days,p_stamp_validity_days:validityDays,
+      p_stamp_reward_expiry_days:rewardExpiryDaysV464});
     const earnSaveV435=earnSaveCallV435.data;
     const error=earnSaveCallV435.error;
     if(!isGrowCurrent())return;
@@ -17192,6 +17558,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(stampCents!=null)snapshot.loyalty.stamp_per_cents=stampCents;
     if(mode!=null){snapshot.loyalty.expiry_mode=mode;snapshot.loyalty.expiry_days=days}
     if(validityDays!=null)snapshot.loyalty.stamp_validity_days=validityDays||null;
+    if(rewardExpiryDaysV464!=null)snapshot.loyalty.stamp_reward_expiry_days=rewardExpiryDaysV464||null;
     growEarnEditOpenV359=false;
     /* nestly_v433: a stamp-shape edit can come back publish_status='pending' with owner-language
        blockers ("add a gift at stamp 6 to finish this change"). Saved-but-pending is a state the
@@ -17284,13 +17651,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growStampsSetLengthV422(Math.round(Number(button.dataset.growStampsLenV416)||0)));
   /* nestly_v422: the typed field. It commits on Enter and on blur, never on every keystroke — a
      write per digit would fire "1", "4" on the way to "14" and the server would refuse the first
-     of them against a live gift. A value that is unchanged, blank or outside 1..100 restores the
-     field to the length actually in force rather than sending a request that must fail. */
+     of them against a live gift. A value that is unchanged, blank or outside 1..15 restores the
+     field to the length actually in force rather than sending a request that must fail.
+     nestly_v463: that range is 1..15 now, matching the input's own max and the server's guard. */
   const growStampsLenFieldV422=outerMain.querySelector('[data-grow-stamps-lenfield-v422]');
   if(growStampsLenFieldV422){
     const commitV422=()=>{
       const typed=Math.round(Number(growStampsLenFieldV422.value));
-      if(!Number.isFinite(typed)||typed<1||typed>GROW_STAMPS_MAX_LEN_V416||typed===growStampsCardLenV416){
+      if(!Number.isFinite(typed)||typed<1||typed>GROW_STAMPS_MAX_LEN_V463||typed===growStampsCardLenV416){
         growStampsLenFieldV422.value=String(growStampsCardLenV416);
         return;
       }
@@ -17348,6 +17716,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddDraftV326={name,points:pointsField?.value||'',description};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
+    /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
+       the one remaining way into this form with a FREE stamp number — and their whole job is to
+       move a gift back onto the card. A number above the maximum card length can never be reached
+       by any customer on any card, so it is refused here in plain words rather than saved and then
+       reported as a warning the owner has to come back and fix.
+       Scoped to stamps only: on the POINTS page this same form sets a redemption COST, where 50,
+       100 and 500 are ordinary values and a 15 ceiling would be nonsense. A number that is inside
+       the maximum but past THIS card's current length is still allowed and still raises the v445
+       stranded warning — the owner may legitimately place a gift at 12 and then lengthen the card
+       to 12, which is exactly what the warning band's one-tap fix offers. */
+    if(growPointsIsStampsV326&&points>GROW_STAMPS_MAX_LEN_V463){
+      growPointsErrorV326=`A stamp card is at most ${GROW_STAMPS_MAX_LEN_V463} stamps long, so a gift cannot sit on stamp ${points}. Choose a stamp between 1 and ${GROW_STAMPS_MAX_LEN_V463}.`;
+      return growRerenderV322({quiet:true});
+    }
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     /* V343: upload a newly-chosen photo before the RPC call, same storage path grammar the deep
        editor's own reward-photo control already uses (uploadRewardPhotoV326 below). */

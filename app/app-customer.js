@@ -2919,6 +2919,52 @@ function interleaveCustomerOffersV173(items){
     for(const key of order){const bucket=byBusiness.get(key);if(round<bucket.length)out.push(bucket[round])}
   return out;
 }
+/* V462 (owner ruling R2d): "Home-feed fairness = CLIENT-SIDE shuffle of the featured offers'
+   ORDER on each app load/refresh — zero Supabase load; no server rotation logic."
+   Since v462 the Home feed carries exactly one offer per business, so the ORDER of that list is
+   the whole of a shop's visibility: whoever is first is the one seen without scrolling. Rotating
+   it server-side would mean either state to keep or a query that is different every call; doing
+   it here costs nothing and no two customers see the same running order.
+   The seed is drawn ONCE, when the bundle loads. That is deliberate and is the difference between
+   "shuffled per load" and "shuffled per render": Home re-renders on every wallet poll (v295/v370),
+   and a fresh permutation each time would make the rail jump under the customer's thumb while
+   they were reading it. One load, one order; reload, new order.
+   __peekaaOfferShuffleSeedV462 exists so a test can pin the permutation and prove that two
+   different seeds really do produce two different orders. */
+const CUSTOMER_HOME_OFFER_SHUFFLE_SEED_V462=(()=>{
+  const injected=Number(globalThis.__peekaaOfferShuffleSeedV462);
+  if(Number.isFinite(injected))return injected>>>0;
+  try{
+    const buffer=new Uint32Array(1);crypto.getRandomValues(buffer);return buffer[0]>>>0;
+  }catch(_error){
+    return ((Date.now()^Math.floor(Math.random()*0x100000000))>>>0);
+  }
+})();
+/* mulberry32 — a small, well-behaved 32-bit PRNG. Math.random() would also be fine statistically
+   but cannot be pinned, and pinning is what makes R2d testable rather than merely asserted. */
+function offerShuffleRandomV462(seed){
+  let state=(Number(seed)||0)>>>0;
+  return()=>{
+    state=(state+0x6D2B79F5)>>>0;
+    let t=state;
+    t=Math.imul(t^(t>>>15),t|1);
+    t^=t+Math.imul(t^(t>>>7),t|61);
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+/* Fisher-Yates, descending, drawing j from [0,i] inclusive — the unbiased form. The naive
+   "swap with any index" variant produces n^n equally likely swap sequences over n! orderings and
+   therefore favours some orders over others, which for a fairness rotation would be the one bug
+   that matters. Returns a copy; the caller's array is never reordered in place. */
+function shuffleCustomerHomeOffersV462(items,seed=CUSTOMER_HOME_OFFER_SHUFFLE_SEED_V462){
+  const out=Array.isArray(items)?items.slice():[];
+  const random=offerShuffleRandomV462(seed);
+  for(let i=out.length-1;i>0;i-=1){
+    const j=Math.floor(random()*(i+1));
+    const swap=out[i];out[i]=out[j];out[j]=swap;
+  }
+  return out;
+}
 let customerHomeOfferIndexV173=new Map();
 /* v195 (owner, arrow above Limited offers: "before limited offers i want to see a glance of my
    expiring rewards"): points that quietly expire are the one thing a loyalty app must never let
@@ -2961,7 +3007,10 @@ function customerExpiringRowsV286(cards=[]){
   }).filter(Boolean).sort((a,b)=>String(a.at).localeCompare(String(b.at)));
 }
 function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
-  const items=interleaveCustomerOffersV173(state.items);
+  /* V462 (R2d): shuffled on each app load. interleaveCustomerOffersV173 still runs first — it is
+     a no-op now that the server sends one offer per business, and keeping it means the rail
+     degrades gracefully rather than clumping if that ever changes. */
+  const items=shuffleCustomerHomeOffersV462(interleaveCustomerOffersV173(state.items));
   customerHomeOfferIndexV173=new Map(items.map(item=>[String(item?.id||''),item]));
   let body='<div class="card customer-home-offers-state"><p class="muted small">Loading offers…</p></div>';
   if(state.status==='ready'){
@@ -3590,6 +3639,9 @@ function stampQuestNormaliseV323(card){
   const milestones=(Array.isArray(card.milestones)?card.milestones:[])
     .map(rung=>({slot:whole(rung?.slot),name:String(rung?.name||'').trim(),
       claimed:rung?.claimed_this_cycle===true,availability:String(rung?.availability||''),
+      /* nestly_v464: the server's date for an earned reward's own deadline. Null for every reward
+         whose card was started under a version that set none, which is every card today. */
+      expiresAt:rung?.expires_at||null,
       isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go)}))
     .filter(rung=>rung.slot>0)
     .sort((a,b)=>a.slot-b.slot);
@@ -3644,8 +3696,15 @@ function customerStampQuestBodyV323(quest){
     :ct('stampsRemaining',{count:customerPointTotalV103(next.toGo),gift});
   const ladder=quest.milestones.length
     ?`<ul class="customer-programme-stamp-quest-v323" data-stamp-quest-list-v323="${quest.milestones.length}">${
-      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
-        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`:''}</li>`).join('')
+      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
+        /* nestly_v464: the rung carries its own deadline so the ladder can say it in the same
+           place the customer reads the gift's name. Only the SERVER's verdict decides "expired";
+           the date is printed, never compared, because the browser's clock is not the authority. */''
+        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
+        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`
+        :rung.availability==='reward_expired'?`<span class="muted small" data-stamp-quest-rung-state-v464="expired"> · ${esc(ct('stampsRewardExpired'))}</span>`
+        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small" data-stamp-quest-rung-state-v464="useby"> · ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
+        :''}</li>`).join('')
     }</ul>`
     :'';
   /* nestly_v435: the card's clock (owner rules 4/15) and the paused-card promise (rule 7). The
@@ -3781,20 +3840,19 @@ function customerHeroStampCardV422(quest){
     ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
   </div>`;
 }
-/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
-   catalogue row the server sent — name and cost only — and the distance is the customer's own
-   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
-   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
-   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
-/* nestly_v397 (owner photo C: "now available 2 / why show 1", written against BOTH the hero pill
-   and the Points & gifts tile). Every one of these labels printed the literal string
-   "1 reward ready", because at paint time the only reward the client holds is the server's
-   next_eligible_reward — ONE object. The real count lives in the reward catalogue, which
-   loadRewards fetches moments later, so the honest number can only be filled in then. This is the
-   same shape as the hero swipe pages: paint what is known, correct it from the catalogue, and
-   never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
-   actually honour — not the number the customer could afford. */
-const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
+/* The greeting is the SUM of the numbers printed on the cards below it — the owner's invariant.
+   `known` goes false the moment ONE card has no count, because a partial sum printed as a total
+   would just be a new way of being wrong. */
+function customerRewardReadyTotalV465(cards=[]){
+  const list=Array.isArray(cards)?cards:[];
+  let total=0,known=list.length>0;
+  for(const card of list){
+    const count=customerCardReadyCountV465(card);
+    if(count===null){known=false;continue}
+    total+=count;
+  }
+  return {total,known};
+}
 /* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
    (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
@@ -3844,6 +3902,13 @@ function customerRewardReadyCountApplyV397(count,root=document,{chooseOneV428=fa
     /* A firm can lose its last claimable reward between renders (redeemed, expired, limit hit).
        The node then goes back to whatever it said before a reward was ready, which the renderer
        stored on it, rather than printing "0 rewards ready". */
+    /* nestly_v465 (owner ruling R6, B-REG-023): that stored sentence used to be the pill's painted
+       text, which on a ready-looking card was "Reward ready" — so falling back to it RE-ASSERTED a
+       readiness the catalogue had just resolved to zero. Every renderer now stores a
+       readiness-FREE fallback (customerBusinessRelationshipSummaryV346's progressSublineV465, the
+       modules row's item.fallback), so following the catalogue down to zero says something true.
+       The rule this enforces is one-directional: the catalogue may take readiness away, and this
+       function may never put it back. */
     /* nestly_v428 (item 6): when the claimable set is several gifts on ONE stamp slot, the tile
        says how many the customer may take rather than how many exist. */
     node.textContent=ready>0
@@ -3866,7 +3931,11 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
   limit_reached:'Claim limit reached',
   claimed_this_cycle:'Already claimed on this card',
   not_on_card:'Not on the current card',
-  tier_locked:'Unlocks at a higher tier'
+  tier_locked:'Unlocks at a higher tier',
+  /* nestly_v464: the owner gave this reward a shelf life and it ran out. Named here rather than
+     left to the vague default, because "Not available right now" would read as a temporary state
+     for something that is gone. */
+  reward_expired:'This reward has expired'
 };
 function customerRewardAvailabilityLineV399(reward){
   const key=String(reward?.availability||'').trim();
@@ -4437,12 +4506,16 @@ function customerHomeGreetingV343(profile=null){
     <p class="muted">Nice to see you again.</p>
   </section>`;
 }
+/* nestly_v465: how many BUSINESSES have something claimable — still cards, not rewards, which is
+   what every caller here wants. What changed is the question asked of each card: the server's
+   ready_count when it sent one, the old next_eligible_reward flag only when it did not. */
 function customerRewardReadyCountV343(cards=[]){
-  return (Array.isArray(cards)?cards:[]).filter(card=>card?.next_eligible_reward?.available_now===true).length;
+  return (Array.isArray(cards)?cards:[]).filter(card=>customerCardRewardReadyV465(card)).length;
 }
 function customerCardMoodV2B(card){
   const reward=card?.next_eligible_reward||{};
-  if(reward.available_now===true)return ' is-reward-ready-v2b';
+  /* nestly_v465: the "ready" styling follows the same answer the words above it do. */
+  if(customerCardRewardReadyV465(card))return ' is-reward-ready-v2b';
   const unit=customerProgrammeCardMetricKindV360(card);
   const balance=Math.max(0,Number(card?.loyalty?.balance)||0);
   const remaining=Math.max(0,Number(reward.remaining_units)||0);
@@ -4454,7 +4527,8 @@ function customerNearestGoalV2B(cards=[]){
   let best=null;
   for(const card of (Array.isArray(cards)?cards:[])){
     const reward=card?.next_eligible_reward||{};
-    if(reward.available_now===true)continue;
+    /* nestly_v465: a business with something claimable is not "nearly" anything. */
+    if(customerCardRewardReadyV465(card))continue;
     const remaining=Math.max(0,Number(reward.remaining_units)||0);
     if(!remaining)continue;
     /* nestly_v429 (E): the reward's own unit (v426) decides the noun printed below. */
@@ -4471,8 +4545,19 @@ function customerHomeSummaryV343(cards=[]){
      businesses alone had two rewards ready. Home keeps the signal and drops the quantity, and
      because the greeting is derived from the same cards it can no longer disagree with them:
      the hero says "Rewards ready" exactly when at least one card does. */
+  /* nestly_v465 (owner ruling R1): the quantity comes back, and it is the SUM of the numbers the
+     cards below print — customerRewardReadyTotalV465 adds up the SAME `ready_count` each card
+     renders, so the greeting cannot disagree with the list under it. When even one card carries no
+     count (a pre-v465 server) the sum is not printed: v457's number-free sentence stands instead,
+     because a partial total is not a total. */
   const readyCardsV457=customerRewardReadyCountV343(cards);
   const rewardReadyV457=readyCardsV457>0;
+  const readyTotalV465=customerRewardReadyTotalV465(cards);
+  const readyLineV465=rewardReadyV457
+    ?(readyTotalV465.known&&readyTotalV465.total>0
+      ?customerRewardReadyLineV397(readyTotalV465.total)
+      :customerRewardReadySignalV457(true))
+    :'';
   const expiringCount=customerExpiringRowsV286(cards).length;
   /* v386 (owner photo 1, "across 0 businesses" struck out). The line counted the businesses that
      have a reward ready — the SAME filter as rewardCount above it, so it could only ever restate
@@ -4480,9 +4565,9 @@ function customerHomeSummaryV343(cards=[]){
      as a second, contradictory-looking figure. The count of businesses is not a fact this card
      needs: "Your Peekaa" directly below lists them by name. */
   const nearestV2B=rewardReadyV457?'':customerNearestGoalV2B(cards);
-  return `<a class="customer-home-ready-card-v343${rewardReadyV457?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardReadyV457?esc(customerRewardReadySignalV457(true)):esc(nearestV2B||'No rewards ready yet')}">
+  return `<a class="customer-home-ready-card-v343${rewardReadyV457?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardReadyV457?esc(readyLineV465):esc(nearestV2B||'No rewards ready yet')}">
     <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:32})}</span>
-    <span class="customer-home-ready-copy-v343">${rewardReadyV457?`<b>${esc(customerRewardReadySignalV457(true))}</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:16})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:16})}</em>`:''}</span>
+    <span class="customer-home-ready-copy-v343">${rewardReadyV457?`<b>${esc(readyLineV465)}</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:16})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:16})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
@@ -4492,8 +4577,17 @@ function customerHomeBusinessStatusV345(card){
   const reward=card?.next_eligible_reward||{},
     /* nestly_v429 (E): the reward's own unit (v426) with the v428 balance rules as the fallback. */
     unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card)),remaining=Math.max(0,Number(reward.remaining_units)||0);
-  /* nestly_v457 (B-REG-017): same literal 1, on Home. */
-  if(reward.available_now===true)return customerRewardReadySignalV457();
+  /* nestly_v465 (owner ruling R1): the real per-business number, straight off the card the wallet
+     RPC sent. nestly_v428's "Choose 1" wins over the count for the same reason it does on the
+     business page — several gifts on one stamp slot are claimable, but only one may be taken.
+     v457's number-free sentence survives for exactly one case: a payload with no count at all.
+     A count of 0 is NOT readiness, so it falls through to the progress lines below. */
+  const readyCountV465=customerCardReadyCountV465(card);
+  if(readyCountV465!==null&&readyCountV465>0)
+    return customerCardReadyChooseOneV465(card)
+      ?'Choose 1 reward'
+      :customerRewardReadyLineV397(readyCountV465);
+  if(readyCountV465===null&&reward.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to go`;
   if(unit==='stamps')return 'Stamp card';
   const sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0);
@@ -5151,9 +5245,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     ?{unavailable:effectiveTierResult.error.code==='42501'?'not_running':'error'}
     :(effectiveTierResult.data?.tier||{});
   const programmeOffersStatus=promotionsResult.error?'error':'ready';
+  /* V462 (owner ruling R2a): "customer sees ALL live offers on the business's own page". The
+     .slice(0,6) that used to be here was a second, invisible cap on top of the reader's own
+     `limit 6` — so a shop with eight live offers had two of them cut twice over, and the owner
+     had no way to see that from either side. The server now bounds this by the business's own
+     promotion entitlement and says so in the payload; nothing is trimmed again here. */
   presentation.offers=promotionsResult.error
     ?[]
-    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
+    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]);
   /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
      it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
      five times is one view, not five. */
@@ -5802,6 +5901,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       ${cost>0?`<p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>`:''}
       ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}
+      ${/* nestly_v464 (owner ruling R3(e): "the customer sees the expiry date on each earned
+           reward"). The server's date, printed with the same walletDate() the granted-entitlement
+           card already uses — never computed here from a day count, because the day count is
+           pinned to the card this customer is holding and the browser does not know which card
+           that is. */''}
+      ${r.expires_at?`<p class="muted small customer-reward-useby-v464" data-reward-useby-v464="${esc(String(r.expires_at))}" style="margin-top:5px">Use by ${esc(walletDate(r.expires_at))}</p>`:''}
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -5914,11 +6019,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            a reward the customer bought with points. 'reward' is the ordinary redemption and needs
            no chip; an unrecognised source gets none rather than a guess. */
         const sourceChipV429=entitlementSourceChipV429[String(item?.source||'')]||'';
-        return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422">
+        /* nestly_v464 (owner ruling R3(e)): the fifth source on this list is a reward the customer
+           EARNED AND LOST to its own deadline. It is not a claim and must never wear the "Claimed"
+           pill — the date beside it is the day it expired, not the day they were given anything.
+           Everything else about the card is the same, deliberately: this is the same reward, in
+           the same list, with an honest account of what happened to it. */
+        const lapsedV464=String(item?.source||'')==='expired';
+        return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422${lapsedV464?' customer-reward-card-expired-v464':''}"${lapsedV464?' data-reward-expired-v464="1"':''}>
           <div class="customer-reward-photo-v340${photo?'':' customer-reward-photo-empty-v340'}">${photo
             ?`<img src="${esc(photo)}" alt="" loading="lazy" data-reward-photo-v340>`
             :CUI.icon('loyalty',{size:24})}</div>
-          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span>${sourceChipV429?`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`:''}</div>
+          <div class="customer-reward-card-head-v339"><span class="pill">${lapsedV464?'Expired':'Claimed'}</span>${lapsedV464||!sourceChipV429?'':`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`}</div>
           <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
           ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
           ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}

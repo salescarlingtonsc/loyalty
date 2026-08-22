@@ -220,7 +220,9 @@ test('EVERY tests/browser/generate-*.mjs uses the fixed guard and is inert under
     for (const name of names) {
       const result = await run(process.execPath, [join(sandbox, 'tests', 'browser', name)], {
         cwd: sandbox,
-        env: cleanEnv({ NODE_TEST_CONTEXT: 'child-v8' }),
+        // NOT cleanEnv(): cleanEnv deletes NODE_TEST_CONTEXT after spreading extras,
+        // which silently removed the very context this case exists to simulate.
+        env: { ...cleanEnv(), NODE_TEST_CONTEXT: 'child-v8' },
       });
       assert.equal(result.code, 0, `${name} under simulated NODE_TEST_CONTEXT must still exit 0 (inert, not crashing):\n${result.stderr}`);
     }

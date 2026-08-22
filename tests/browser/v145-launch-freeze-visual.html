@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="42d51b902f855ed6cb9e9b6af0c80d729ff1b029763616bfc62281b6f7e6d60b"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="dc8fc5a0acb8513965034f47c4b05b26eaa8c91b72f4b2614ac2bc138b8f5cc1"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1946,10 +1946,18 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    row-gap is 24px, not the old 12: .grow-stamps-editcell-gift-v416 hangs 15px ABOVE its circle,
    which never showed while a card was one row and would sit on the row above the moment it was
    not. padding-top gives the FIRST row's glyphs the same clearance inside the scroll box.
-   The scroll box is the long-card guard: a 100-stamp card is twenty rows, and the length control
-   and the summary sit either side of this grid. Six rows are shown and the rest scrolls in place,
-   so a long card cannot push the rest of the page out of reach. A 15-stamp card is three rows and
-   never reaches the cap, so nothing scrolls in the ordinary case. */
+   The scroll box is the long-card guard: it caps the grid at six rows and scrolls the rest in
+   place, so a long card cannot push the length control above it and the summary below it a
+   page-length apart.
+   nestly_v463 KEPT this deliberately, rather than deleting it as dead. The owner's 15-stamp
+   maximum makes the longest card a firm may now SET three rows, which never reaches the cap — so
+   in the ordinary case nothing scrolls and this rule does nothing, exactly as it already did for
+   every card up to 30 stamps. It is not dead, though: existing stamp_target values are NOT
+   migrated by the v463 ruling, and business_set_stamp_card_length_v414 allowed up to 100 until
+   that same wave, so a card stored longer than 15 is still drawn at its real length (the editor
+   refuses to SET above 15 but never lies about what is stored — see GROW_STAMPS_RENDER_CAP_V463).
+   Removing the guard would be removing the only thing standing between such a card and a grid
+   twenty rows tall. Two declarations and no cost when it does not apply. */
 .grow-stamps-editgrid-v416{display:grid;grid-template-columns:repeat(5,44px);justify-content:start;
   gap:24px 10px;margin-top:6px;padding-top:18px;max-height:min(52vh,430px);overflow-x:hidden;overflow-y:auto}
 .grow-stamps-editcell-v416{position:relative;display:inline-flex;align-items:center;justify-content:center;
@@ -2965,8 +2973,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* The stamp ring row. Filled = solid fill AND a tick glyph; empty = dashed outline. Both signals
    are carried without colour, so the row reads in greyscale and to a colour-blind eye — the same
    rule the v186 tier ladder already follows. Wraps rather than scrolls: a row the thumb has to
-   drag sideways hides the goal, which is the one thing this figure exists to show. */
-.customer-programme-stamp-rings{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 2px}
+   drag sideways hides the goal, which is the one thing this figure exists to show.
+   nestly_v463 (owner ruling R3c, 2026-08-23): it wraps at exactly FIVE now, not at whatever the
+   card happens to be wide. This is the same row the workspace stamp editor draws (five fixed
+   tracks since v449) and the same row the red hero draws, so all three show one card the same
+   shape: 15 is three rows, 12 is 5/5/2, 6 is 5+1. The hero's own copy of this row already used
+   repeat(5,26px) — see .customer-business-stamp-figure-v386 below — so this brings the detail
+   page into line with a rule the surface was already half following.
+   5x30 + 4x7 = 178px, inside the 390px the customer shell caps .wallet-inner at at every viewport,
+   so five tracks can never make this row overflow its card. */
+.customer-programme-stamp-rings{display:grid;grid-template-columns:repeat(5,30px);justify-content:start;gap:7px;margin:2px 0 2px}
 .customer-programme-stamp-ring{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:2px dashed var(--line);color:transparent;background:transparent;transition:background-color .18s ease,border-color .18s ease}
 .customer-programme-stamp-ring.is-filled{border-style:solid;border-color:var(--coral);background:var(--coral);color:#fff}
 .customer-programme-stamp-ring.is-goal{border-width:2.5px;border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
@@ -3681,14 +3697,22 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* ===== nestly_v422 — the whole stamp card, inside the hero (owner photo 8) =====================
    The owner redrew the red hero as the card itself: numbered slots wrapping over rows, a star on
    each collected slot, a gift on each slot that pays out, and one line naming the next reward.
-   Slots are auto-fitted rather than a fixed 5 per row (which is what the v386 rings were) so a
-   card of any length wraps by itself; past 30 slots the cells step down a size rather than the
-   card hiding any of them — the owner's ruling, 2026-08-22. Everything is drawn in the hero's own
-   white-on-red palette, so no new colour token is introduced. */
+   Slots wrap over rows; past 30 slots the cells step down a size rather than the card hiding any
+   of them — the owner's ruling, 2026-08-22. Everything is drawn in the hero's own white-on-red
+   palette, so no new colour token is introduced.
+   nestly_v463 (owner ruling R3c, 2026-08-23): FIVE per row, not auto-fit. auto-fit sized the row
+   to whatever the hero happened to be wide, so a 15-stamp card was one long line on the phone the
+   owner was holding and the workspace editor beside it — which has been a fixed five-track grid
+   since v449 — drew the same card as three rows of five. The merchant and the customer are meant
+   to be looking at the same object, so the customer's copy now wraps where the editor's does: 15
+   is three rows, 12 is 5/5/2, 6 is 5+1. This is the same change v449 made on the business side and
+   it is made the same way — fixed tracks, left-aligned, identical at 390 and at 1440.
+   5x28 + 4x8 = 172px, and the compact variant is 5x22 + 4x6 = 134px; both sit well inside the
+   390px the customer shell caps .wallet-inner at, so no width can make this row overflow. */
 .customer-hero-stampcard-v422{position:relative;z-index:1}
 /* The top margin is clearance for the raised gift glyph on a first-row milestone — without it a
-   gift on stamp 1..8 sits on top of the STAMPS pill above. */
-.customer-hero-stamp-grid-v422{display:grid;grid-template-columns:repeat(auto-fit,28px);gap:15px 8px;
+   gift on stamp 1..5 sits on top of the STAMPS pill above. */
+.customer-hero-stamp-grid-v422{display:grid;grid-template-columns:repeat(5,28px);gap:15px 8px;
   justify-content:start;margin:15px 0 0}
 .customer-hero-stamp-cell-v422{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:28px;height:28px;border-radius:999px;border:2px dashed rgba(255,255,255,.55);
@@ -3702,7 +3726,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-hero-stamp-num-v422{opacity:.85}
 .customer-hero-stamp-next-v422{margin:16px 0 0;font-weight:750;font-size:14px;line-height:1.25;color:#fff}
 .customer-hero-stamp-carried-v422{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.78)}
-.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-grid-v422{grid-template-columns:repeat(auto-fit,22px);gap:12px 6px}
+.customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-grid-v422{grid-template-columns:repeat(5,22px);gap:12px 6px}
 .customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-cell-v422{width:22px;height:22px;font-size:9px;border-width:1.5px}
 .customer-hero-stampcard-v422.is-compact-v422 .customer-hero-stamp-gift-v422{top:-11px}
 @media(prefers-reduced-motion:no-preference){.customer-hero-stamp-cell-v422{transition:background-color .18s var(--ease),border-color .18s var(--ease)}}
@@ -4107,7 +4131,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 42d51b902f855ed6cb9e9b6af0c80d729ff1b029763616bfc62281b6f7e6d60b</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · dc8fc5a0acb8513965034f47c4b05b26eaa8c91b72f4b2614ac2bc138b8f5cc1</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7643,7 +7667,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'42d51b902f855ed6cb9e9b6af0c80d729ff1b029763616bfc62281b6f7e6d60b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'dc8fc5a0acb8513965034f47c4b05b26eaa8c91b72f4b2614ac2bc138b8f5cc1',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

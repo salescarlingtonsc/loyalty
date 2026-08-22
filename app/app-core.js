@@ -1611,6 +1611,20 @@ async function route(){
       toast('Gift cards are no longer part of this workspace.');
       return nav('#/dashboard');
     }
+    /* V466 (owner ruling 2026-08-23, R4: "hide memberships and gift cards until verified").
+       Same shape as the giftcards refusal immediately above — a typed #/memberships (or its
+       #/memberships/mn, #/memberships/plist deep-link ids, which are element ids inside
+       membershipsPage() reached via the SAME pageKey, not separate routes) is refused with a
+       toast rather than 404ing or silently rendering the dashboard. membershipsPage() and every
+       membership RPC are left in place; this is a surface decision only. The one tenant found
+       holding live membership/gift-card rows during the pre-gate data check (AhXiang,
+       33773caa-6d51-4cf2-9ad6-b83f015759e6) was confirmed by the owner to be their own test
+       tenant, not a real merchant obligation — no per-tenant carve-out. See
+       UNVERIFIED_MODULES_V466 below for the one-line un-gate when the module is verified. */
+    if(pageKey==='memberships'){
+      toast('Memberships are not part of this workspace yet.');
+      return nav('#/dashboard');
+    }
     /* Promotions are customer-facing publishing authority, not an ordinary staff module.
        Keep the authoring surface owner-only in the client and enforce the same boundary in
        v104 RPCs. Managers/front desk can continue operating the published programme without
@@ -1913,6 +1927,9 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'{filled} of {total} stamps on this card.',
     stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
+    /* nestly_v464 (owner ruling R3(e)): the deadline the owner set on an earned reward. */
+    stampsRewardUseBy:'Use by {date}',
+    stampsRewardExpired:'Expired',
     stampsQuestAllClaimed:'Every gift on this card is collected.',
     /* nestly_v435 — the card's clock and the paused-card promise (owner rules 4/7/15). */
     stampsCardExpires:'Complete your card by {date} — stamps on it lapse after that.',
@@ -2140,6 +2157,8 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'这张卡已集 {filled}/{total} 个章。',
     stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
+    stampsRewardUseBy:'请在 {date} 前使用',
+    stampsRewardExpired:'已过期',
     stampsQuestAllClaimed:'这张卡上的礼品都已领取。',
     stampsCardExpires:'请在 {date} 前集满这张卡——之后卡上的章将失效。',
     stampsCardExpired:'这张卡已过期。已赚取的礼品仍可领取；新的章将开始新卡。',
@@ -2362,6 +2381,8 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'{filled} daripada {total} cop pada kad ini.',
     stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
+    stampsRewardUseBy:'Guna sebelum {date}',
+    stampsRewardExpired:'Tamat tempoh',
     stampsQuestAllClaimed:'Semua hadiah pada kad ini sudah dituntut.',
     stampsCardExpires:'Lengkapkan kad anda sebelum {date} — cop padanya luput selepas itu.',
     stampsCardExpired:'Kad ini telah luput. Hadiah yang sudah anda peroleh masih boleh dituntut; cop baharu memulakan kad baharu.',
@@ -2584,6 +2605,8 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'இந்த அட்டையில் {total}-இல் {filled} முத்திரைகள்.',
     stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
+    stampsRewardUseBy:'{date}க்குள் பயன்படுத்தவும்',
+    stampsRewardExpired:'காலாவதியானது',
     stampsQuestAllClaimed:'இந்த அட்டையின் அனைத்துப் பரிசுகளும் பெறப்பட்டன.',
     stampsCardExpires:'{date}க்குள் உங்கள் அட்டையை நிறைவு செய்யுங்கள் — அதன் பிறகு அதிலுள்ள முத்திரைகள் காலாவதியாகும்.',
     stampsCardExpired:'இந்த அட்டை காலாவதியானது. நீங்கள் ஏற்கனவே பெற்ற பரிசுகள் பாதுகாப்பாக உள்ளன; புதிய முத்திரைகள் புதிய அட்டையைத் தொடங்கும்.',
@@ -4168,7 +4191,7 @@ function customerBusinessHeroModeV386(capabilities={},loyalty={}){
   if(live('tiers'))return 'tiers';
   return 'points';
 }
-function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={}}={}){
+function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
   /* v393: loyalty.tier is the SERVER's tier snapshot (app.customer_live_loyalty_v384 →
@@ -4177,18 +4200,34 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      legacy client-side shape kept so no caller that still passes one goes blank. */
   const tierLabel=String(loyalty.tier?.name||tier.current?.label||tier.current||tier.label||loyalty.tier_name||'').trim();
   const unit=String(loyalty.unit||presentation.unit||'points').toLowerCase();
-  const rewardReady=reward?.available_now===true;
+  /* nestly_v465 (owner ruling R1): readiness on this page now starts from the SERVER's per-business
+     count — the same figure Home prints — so the two surfaces agree from the first paint, not only
+     after loadRewards. reward.available_now is the fallback for a payload that carries no count. */
+  const readyCountV465=readyCount===null||readyCount===undefined?null:Math.max(0,Math.floor(Number(readyCount)||0));
+  const rewardReady=readyCountV465===null?reward?.available_now===true:readyCountV465>0;
   const remaining=Math.max(0,Number(reward?.remaining_units||0));
   const primary=unit==='stamps'
     ?`${customerPointTotalV103(balance)} stamps`
     :`${customerPointTotalV103(balance)} ${unitLabel}`;
-  /* nestly_v457: the pre-correction text. It is painted before loadRewards has read the
-     catalogue, so it must not assert a number either; customerRewardReadyCountApplyV397 replaces
-     it with the real count moments later. */
-  const subline=rewardReady?customerRewardReadySignalV457()
-    :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
+  /* nestly_v465 (owner ruling R6, B-REG-023) — THE PILL'S FALLBACK MAY NOT ASSERT READINESS.
+     The renderer stores its painted text on the node as data-reward-ready-fallback-v397, and
+     customerRewardReadyCountApplyV397 restores that text whenever the catalogue resolves to zero
+     claimable rewards. While the painted text was "Reward ready", the restore RE-ASSERTED a
+     readiness the catalogue had just disproved: the pill said the customer had a reward waiting
+     precisely in the case where the server had said they did not. The fallback is now the
+     readiness-FREE sentence — progress, membership, or "No reward yet" — so following the
+     catalogue down to zero says something true. The painted text keeps stating readiness when the
+     card says so; only the thing we fall BACK to changed. */
+  const progressSublineV465=remaining>0
+    ?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
     :membership.active===true?'Member'
     :'No reward yet';
+  /* nestly_v457's number-free wording survives only where no count arrived; nestly_v428's
+     "Choose 1" outranks the count, exactly as it does after loadRewards. */
+  const readySublineV465=readyCountV465!==null&&readyCountV465>0
+    ?(readyChooseOne===true?'Choose 1 reward':customerRewardReadyLineV397(readyCountV465))
+    :customerRewardReadySignalV457();
+  const subline=rewardReady?readySublineV465:progressSublineV465;
   const heroLabel=tierLabel?tierLabel.toUpperCase():membership.active===true?'MEMBER':unit==='stamps'?'STAMPS':'POINTS';
   const rewardName=String(reward?.name||'').trim();
   const sessions=Number(packages.sessions_remaining||0);
@@ -4311,7 +4350,7 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
                  own redraw carries no such chip. Points and tiers keep it exactly as v397/v399
                  left it: there the balance is a number and the count is the only readiness cue. */''}
             ${modeV386==='stamps'?''
-              :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(subline)}">${esc(subline)}</span></span>`}
+              :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(progressSublineV465)}">${esc(subline)}</span></span>`}
           </div>
           ${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
@@ -4326,6 +4365,20 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     <div class="customer-business-hero-dots-v395" data-hero-dots-v395 role="tablist" aria-label="Rewards" hidden></div>
   </div>`;
 }
+/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
+   catalogue row the server sent — name and cost only — and the distance is the customer's own
+   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
+   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
+   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
+/* nestly_v397 (owner photo C: "now available 2 / why show 1", written against BOTH the hero pill
+   and the Points & gifts tile). Every one of these labels printed the literal string
+   "1 reward ready", because at paint time the only reward the client holds is the server's
+   next_eligible_reward — ONE object. The real count lives in the reward catalogue, which
+   loadRewards fetches moments later, so the honest number can only be filled in then. This is the
+   same shape as the hero swipe pages: paint what is known, correct it from the catalogue, and
+   never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
+   actually honour — not the number the customer could afford. */
+const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
 /* nestly_v457 (B-REG-017; owner ruling 2026-08-22, LIVE-measured on build 9a57bac6aa95: Home said
    "2 rewards ready" in the greeting, "1 reward ready" on the Cubbly card AND on the QA Kaya Toast
    card, while QA Kaya Toast's own page said 2 — three figures, one customer, one screen).
@@ -4343,6 +4396,36 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
    Deliberately NOT done: adding a catalogue fetch to Home to chase the number. That is a
    performance decision, and it is not this wave's to take. */
 const customerRewardReadySignalV457=(plural=false)=>plural?'Rewards ready':'Reward ready';
+/* nestly_v465 (owner ruling R1, 2026-08-23) — HOME GETS ITS NUMBER BACK, FROM THE SERVER.
+   v457 was right that the browser may not invent a count and wrong only in that the server had
+   none to give. app.c45_base_actionable_wallet_card now sends `ready_count` (and
+   `ready_choose_one`) on every wallet card, counted inside the RPC Home already calls — no second
+   round trip — and counted THROUGH app.reward_availability_v432, the one availability core the
+   business page's own count comes from via customer_get_business_actions_v89. So the two surfaces
+   answer one question one way, and the v457 rule survives intact: Home still states no quantity it
+   did not receive.
+   These four readers are the ONLY place Home is permitted to learn about readiness. */
+/* The count, or null when the payload carries none — a bundle running against a pre-v465 server,
+   or a value we cannot read. null is not zero: every caller below falls back to v457's number-free
+   wording rather than reviving the literal 1 or printing "0 rewards ready". */
+function customerCardReadyCountV465(card){
+  const raw=card?.ready_count;
+  if(raw===null||raw===undefined||raw==='')return null;
+  const count=Number(raw);
+  return Number.isFinite(count)?Math.max(0,Math.floor(count)):null;
+}
+/* nestly_v428's slot rule, decided server-side because Home's card carries no per-reward costs. */
+function customerCardReadyChooseOneV465(card){return card?.ready_choose_one===true}
+/* Has this business got anything claimable right now? The server's count decides whenever it is
+   present — INCLUDING when it says 0 while next_eligible_reward still reports available_now.
+   next_eligible_reward is a progress candidate judged by older, narrower rules (no tier gate, no
+   cycle-pinned stamp version, no restricted-reward filter), so where the two disagree the count is
+   the one that matches what the counter will actually honour. Only with no count at all does the
+   card's own flag stand in. */
+function customerCardRewardReadyV465(card){
+  const count=customerCardReadyCountV465(card);
+  return count===null?card?.next_eligible_reward?.available_now===true:count>0;
+}
 function customerReferralSlotMarkupV360(){
   return '<div id="walletReferralSlot" hidden></div>';
 }
@@ -4410,7 +4493,9 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ?tier.current.benefits.filter(value=>String(value||'').trim()).map(value=>String(value).trim()):[];
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
-  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
+  /* V462 (R2a): the third and last place a business page quietly kept two of a shop's offers from
+     its own customers. The reader is already bounded by the entitlement. */
+  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]);
   /* v194 (owner: "show company details, phone number, address" beside the business name): the
      header is now the way in to the company sheet, and the booking action moved up here — "make
      it smaller and put upstair" — out of the full-width card that sat below the offers. */
@@ -4487,7 +4572,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
          The chip stays as the tap target for the details sheet; this line is the address itself,
          filled by the same contact read that fills the chip and hidden until it arrives. */''}
     <p class="customer-business-address-line-v386" data-company-address-line-v386 hidden></p>
-    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities})}
+    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities,readyCount:customerCardReadyCountV465(actionableCard),readyChooseOne:customerCardReadyChooseOneV465(actionableCard)})}
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
@@ -4658,7 +4743,9 @@ function customerCardProgressV2B(card){
   const unit=customerProgrammeCardMetricKindV360(card);
   const balance=Math.max(0,Number(card?.loyalty?.balance)||0);
   const remaining=Math.max(0,Number(reward.remaining_units)||0);
-  if(reward.available_now===true||!remaining)return '';
+  /* nestly_v465: one readiness answer per card, so the track cannot draw progress under a
+     "2 rewards ready" line, nor vanish under one that says 3 stamps to go. */
+  if(customerCardRewardReadyV465(card)||!remaining)return '';
   const total=balance+remaining;
   if(unit==='stamps'&&total>=2&&total<=10)
     return `<span class="cui-stamp-dots-v2b" role="img" aria-label="${balance} of ${total} stamps">${Array.from({length:total},(_,i)=>`<i${i<balance?' class="on"':''}></i>`).join('')}</span>`;
@@ -5691,6 +5778,15 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   stampLengthGiftBlocksShorter:Object.freeze({en:'A gift sits on stamp {stamp}. Move or remove it to make the card shorter.','zh-CN':'印章 {stamp} 上有一份礼物。请移走或删除它，才能缩短集章卡。',ms:'Sebuah hadiah terletak pada setem {stamp}. Alihkan atau buang ia untuk memendekkan kad.'}),
   stampLengthAtMinimum:Object.freeze({en:'{stamps} stamp is the shortest a card can be.','zh-CN':'集章卡最短为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpendek yang dibenarkan.'}),
   stampLengthAtMaximum:Object.freeze({en:'{stamps} stamps is the longest a card can be.','zh-CN':'集章卡最长为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpanjang yang dibenarkan.'}),
+  /* nestly_v462 (owner ruling R2): three sentences an owner reads at runtime, so three pieces of
+     reviewed copy rather than three interpolated template literals. offerOnCustomerHome confirms
+     the one-tap move; offerNotLiveForHome is the only refusal an owner can actually cause (the
+     offer stopped being live while the page was open); offerLiveCapReached is what the editor says
+     when the owner declines the demote dialog, and it interpolates the entitlement itself so the
+     sentence can never name a limit different from the one the server enforces. */
+  offerOnCustomerHome:Object.freeze({en:'"{name}" is now on customer Home','zh-CN':'“{name}” 现已显示在顾客首页',ms:'"{name}" kini dipaparkan di Laman Utama pelanggan'}),
+  offerNotLiveForHome:Object.freeze({en:'"{name}" is not live any more, so it cannot go on customer Home. Publish it first.','zh-CN':'“{name}” 已不在进行中，无法显示在顾客首页。请先发布它。',ms:'"{name}" tidak lagi disiarkan, jadi ia tidak boleh dipaparkan di Laman Utama pelanggan. Siarkan ia dahulu.'}),
+  offerLiveCapReached:Object.freeze({en:'Not published — you already have {max} offers live. Your work is saved as a draft. Move one live offer back to draft, then press Publish again.','zh-CN':'未发布 — 您已有 {max} 个进行中的优惠。您的内容已保存为草稿。请先将一个进行中的优惠改回草稿，然后再按“发布”。',ms:'Tidak disiarkan — anda sudah mempunyai {max} tawaran disiarkan. Kerja anda disimpan sebagai draf. Alihkan satu tawaran kembali ke draf, kemudian tekan Siarkan sekali lagi.'}),
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
   /* nestly_v420: the referral gift handed over at the counter. */
   referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
@@ -5865,6 +5961,8 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v456: why the destructive "Revoke all QRs" is disabled when no QR exists. Same shape
      as the three v453 refusals above — reviewed copy, because the owner reads it. */
   'joinQrNothingToRevoke',
+  /* nestly_v462 (owner ruling R2): the two Home-slot confirmations and the live-cap refusal. */
+  'offerOnCustomerHome','offerNotLiveForHome','offerLiveCapReached',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
