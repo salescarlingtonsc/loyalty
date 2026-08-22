@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5a9ff8b37adea1b1ae201f72ebca822a06f6a6e6cdbefd10fe87698d492faa46"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="1e89c2baa5f559122c699f38ff2a587b761acf04b28c71d4b71fe19ec34e62e3"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1851,7 +1851,10 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
+   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
+   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
+.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
@@ -3895,7 +3898,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 5a9ff8b37adea1b1ae201f72ebca822a06f6a6e6cdbefd10fe87698d492faa46</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1e89c2baa5f559122c699f38ff2a587b761acf04b28c71d4b71fe19ec34e62e3</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -15832,12 +15835,37 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsTargetV416=Math.max(0,Math.round(Number(snapshot.loyalty?.stamp_target)||0));
   const growStampsHighestGiftV416=growStampsLevelsSortedV350
     .reduce((most,reward)=>Math.max(most,Math.max(0,Number(reward.cost_points)||0)),0);
-  /* What the grid DRAWS. Never shorter than the highest gift: a gift past the end of the card is
-     the exact defect v414 was written for, and hiding it would leave the owner unable to see or
-     move the gift their customers cannot claim. A firm that has never set a length gets 15. */
+  /* What the grid DRAWS is the CARD'S OWN length and nothing else — loyalty_programs.stamp_target,
+     the number the engine enforces — falling back to 15 only for a firm that has never set one.
+     -------------------------------------------------------------------------------------------
+     nestly_v445 (REG-001). This used to read
+         Math.max(1, target||15, growStampsHighestGiftV416)
+     i.e. it STRETCHED the drawn card to cover the highest gift, capped at 100. A 15-stamp card
+     carrying a gift at stamp 1000 therefore drew 100 slots and put 100 in the "Card length in
+     stamps" field on EVERY render, while the server held 15. Every length control on this screen
+     is built from this one number — the two steppers, the grid's trailing "+", and the typed
+     field's own unchanged-value guard — so a single tap would have written that phantom length
+     back to loyalty_programs. The gift is not hidden by drawing the real card: an out-of-range
+     gift is a VALIDATION fault, not a length, and it is reported as one — named individually in
+     the warning band below (v363/v445) and still listed in the summary. Moving or removing it
+     stays the owner's decision; nothing here mutates their data. */
   const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
-    Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416,growStampsHighestGiftV416));
+    Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416));
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
+  /* nestly_v445: the gifts that sit past the end of the card, each one named. The old warning
+     mentioned only the highest, which on a card with several stranded gifts under-reports. */
+  const growStampsStrandedGiftsV445=growStampsLevelsSortedV350
+    .filter(reward=>Math.max(0,Number(reward.cost_points)||0)>growStampsCardLenV416);
+  /* nestly_v445: the shortest the card may be made from THIS screen — the highest gift that is
+     actually ON the card. It used to be the highest gift full stop, which with a gift at stamp
+     1000 disabled the "−" stepper permanently and left the owner unable to touch the length at
+     all. The server keeps its own veto (business_set_stamp_card_length_v414 refuses to strand a
+     live gift and names it), so this guard only spares the owner a request that must fail. */
+  const growStampsShortestLenV445=growStampsLevelsSortedV350
+    .reduce((most,reward)=>{
+      const stamp=Math.max(0,Number(reward.cost_points)||0);
+      return stamp>0&&stamp<=growStampsCardLenV416?Math.max(most,stamp):most;
+    },1);
   /* nestly_v422 (owner photo 2, the value ringed: "do as a field, so can edit number"). Getting
      from 10 stamps to 40 was thirty taps on the "+", because the length was a READ-ONLY <b>
      between two steppers. It is a real number input now — type 40, press Enter or tab away, done
@@ -15850,7 +15878,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
     <span class="spacer"></span>
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=Math.max(1,growStampsHighestGiftV416)?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
+    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=growStampsShortestLenV445?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
     ${canSetupGrow
       ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
       :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
@@ -15864,8 +15892,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const stamp=index+1;
       const reward=growStampsRewardAtV410.get(stamp);
       const name=reward?String(reward.customer_name||reward.name||'Reward'):'';
-      const past=growStampsStrandedV416&&stamp>growStampsTargetV416;
-      const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}${past?' is-past-v416':''}`;
+      /* nestly_v445: there is no longer an is-past-v416 cell here. The grid only ever draws slots
+         the card actually has, so no cell can be past its end; the warning style moved to the
+         stranded-gift chips in the note below, which are explicitly NOT slots of this card. */
+      const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}`;
       const label=reward
         ?`Stamp ${stamp} gives ${name}. Edit this gift.`
         :`Stamp ${stamp} has no gift. Add one.`;
@@ -15884,10 +15914,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
      end — so a firm in that state (Cubbly is, today) needs to be told which gift and offered the
      one-tap fix rather than left with a gift nobody can claim. */
-  const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px">
+  /* nestly_v445: the stranded gifts are now DRAWN here, in the warning style the grid's phantom
+     tail used to wear, and each one opens its own gift form so the owner can move it onto a stamp
+     inside the card. They are chips in a warning band, never slots in the grid: the card above is
+     the card, and this is a list of gifts that fall outside it. */
+  const growStampsStrandedChipsV445=!growStampsStrandedGiftsV445.length?''
+    :`<div class="grow-stamps-strandedgifts-v445">
+    ${growStampsStrandedGiftsV445.map(reward=>{
+      const stamp=Math.max(0,Number(reward.cost_points)||0);
+      const name=String(reward.customer_name||reward.name||'Reward');
+      const label=`Stamp ${stamp} gives ${name}, past the end of this card. Edit this gift.`;
+      if(!canSetupGrow)return `<span class="grow-stamps-editcell-v416 is-past-v416" data-merchant-content title="${esc(name)}"><span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><span class="grow-stamps-editcell-num-v416">${stamp}</span></span>`;
+      return `<button type="button" class="grow-stamps-editcell-v416 is-past-v416" data-grow-points-gift-edit-v343="${esc(String(reward.id))}" data-merchant-content aria-label="${esc(label)}" title="${esc(name)}"><span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><span class="grow-stamps-editcell-num-v416">${stamp}</span></button>`;
+    }).join('')}
+  </div>`;
+  const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
     <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
-    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but a gift sits at stamp ${growStampsHighestGiftV416}. Customers finish the card before they reach it, so the counter will refuse it. Make the card ${growStampsHighestGiftV416} stamps long, or move that gift onto a stamp inside the card.</p>
-    ${canSetupGrow?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
+    ${growStampsStrandedChipsV445}
+    ${canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V416?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
@@ -26211,6 +26256,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'5a9ff8b37adea1b1ae201f72ebca822a06f6a6e6cdbefd10fe87698d492faa46',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'1e89c2baa5f559122c699f38ff2a587b761acf04b28c71d4b71fe19ec34e62e3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

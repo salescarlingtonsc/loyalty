@@ -75,18 +75,24 @@ test('v416 a gift is marked ON the stamp that pays it out', () => {
   assert.match(g.growStampsGridV416, /aria-label="Stamp 4 has no gift\. Add one\."/);
 });
 
-test('v416 the card is never drawn shorter than a gift already on it', () => {
-  /* Cubbly's live state: a 5-stamp card with a gift at stamp 10, which the counter refuses. */
+test('v416/v445 a gift past the end is reported, and the card is still drawn at its real length', () => {
+  /* Cubbly's live state: a 5-stamp card with a gift at stamp 10, which the counter refuses.
+     v445 REVERSED this pin. It used to assert growStampsCardLenV416 === 10 — the drawn card was
+     stretched to cover the stranded gift — and that is exactly the defect REG-001 reported: the
+     stretched number is also what the length field, the steppers and the grid's "+" are built
+     from, so the editor offered to write a length the owner never asked for. The stranded gift is
+     still surfaced, in the warning band, which is where a validation fault belongs. */
   const g = grid({ stampTarget: 5, gifts: [GIFT('Free Massage Oil', 5), GIFT('Free Lotion', 10)] });
-  assert.equal(g.growStampsCardLenV416, 10,
-    'hiding the stranded gift would leave the owner unable to find the one nobody can claim');
+  assert.equal(g.growStampsCardLenV416, 5, 'the card is 5 stamps long, so 5 slots are drawn');
+  assert.deepEqual(cells(g.growStampsGridV416), [1, 2, 3, 4, 5]);
   assert.equal(g.growStampsStrandedV416, true);
   assert.match(g.growStampsStrandedNoteV416, /Stamps past 5 cannot be claimed yet/);
   assert.match(g.growStampsStrandedNoteV416, /data-grow-stamps-len-v416="10"/,
     'and it offers the one-tap fix rather than only describing the problem');
-  const past = [...g.growStampsGridV416.matchAll(/<button[^>]*data-grow-stamps-cell-v416="(\d+)"[^>]*>/g)]
-    .filter(m => m[0].includes('is-past-v416')).map(m => Number(m[1]));
-  assert.deepEqual(past, [6,7,8,9,10], 'the unreachable stretch is marked, not silently drawn');
+  assert.doesNotMatch(g.growStampsGridV416, /is-past-v416/,
+    'no cell of the grid can be past the end of the card it draws');
+  assert.match(g.growStampsStrandedNoteV416, /grow-stamps-strandedgifts-v445/,
+    'the stranded gift is drawn in the warning band instead — as a chip, not as a slot');
 });
 
 test('v416 the length stepper cannot shorten the card past a live gift', () => {

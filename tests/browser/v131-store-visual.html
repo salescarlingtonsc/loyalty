@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0c4e31914fc8bc406c65d7197730be9f25d70b52d212033fa240186b57a7ac71"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="827e6b50f0d3bdedaea4b695624dc2c3b38c94ab81f27ff51df8d408cf5fce20"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1850,7 +1850,10 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
+   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
+   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
+.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}

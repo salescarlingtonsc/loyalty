@@ -1882,7 +1882,10 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
+   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
+   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
+.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}

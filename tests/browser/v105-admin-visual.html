@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="0882e713647d433319aa1aad176a74d45f1eb86b414093f4b2e0e9fbec791c8a">
+<meta name="v105-production-component-sha256" content="c9cc3874f6e85b67fae801aa65fbbf2dad27048ece1d792446c05a0fc6ff131d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -1857,7 +1857,10 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
+   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
+   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
+.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
@@ -4709,7 +4712,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 0882e713647d</span>
+<span class="v105-provenance">v105 production-component harness · c9cc3874f6e8</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -4834,7 +4837,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'0882e713647d433319aa1aad176a74d45f1eb86b414093f4b2e0e9fbec791c8a',
+  sourceHash:'c9cc3874f6e85b67fae801aa65fbbf2dad27048ece1d792446c05a0fc6ff131d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

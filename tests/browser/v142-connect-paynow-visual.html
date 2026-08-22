@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="a4179d6b27001dfa04c6f90c79d2420c624bdc33f28226fca1c8ef6e46416db0"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="190bf5235caab145ff076c9b508cb9f7b5937f77dae06246eb32f9248c2c52fa"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1851,7 +1851,10 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
+   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
+   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
+.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
@@ -3895,7 +3898,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · a4179d6b27001dfa04c6f90c79d2420c624bdc33f28226fca1c8ef6e46416db0</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 190bf5235caab145ff076c9b508cb9f7b5937f77dae06246eb32f9248c2c52fa</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7275,7 +7278,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'a4179d6b27001dfa04c6f90c79d2420c624bdc33f28226fca1c8ef6e46416db0',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'190bf5235caab145ff076c9b508cb9f7b5937f77dae06246eb32f9248c2c52fa',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
