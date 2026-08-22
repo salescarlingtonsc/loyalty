@@ -841,8 +841,16 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
    .menu(42); this menu is opened last / sits top-right / and — once the workspace switcher moves
    inside it — will contain that 42-ranked menu as a descendant, so it is slotted one above at 43,
    keeping the scale monotonic instead of introducing an unrelated number. */
+/* V450: the owner reported dashboard text showing through this menu; V440 fixed the paint ORDER
+   (z-index 43, above the whole appbar family) but the menu was still the most SEE-THROUGH popover
+   in that family at .86 while its own sibling .business-workspace-switch .menu already sat at .94 —
+   and this is the one that opens over the busiest surface. Measured live on the dashboard: "Minimise",
+   "Apply", "Open calendar" and "INACTIVE CUSTOMERS" all sit behind it and "Minimise" read legibly
+   through it, on top of the Settings row. Opaque here: the blur still frames the menu against the
+   page, but nothing behind it can be read as if it were part of the menu. Legibility beats the
+   glass effect on a popover that covers live figures. */
 .profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;z-index:43;
-  background:rgba(255,255,255,.86);
+  background:var(--card,#fff);
   -webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg);
   transform-origin:top right;animation:pop .2s var(--spring)}
@@ -860,7 +868,10 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .business-workspace-switch>summary,.customer-workspace-switch>summary{list-style:none}
 .business-workspace-switch>summary::-webkit-details-marker,.customer-workspace-switch>summary::-webkit-details-marker{display:none}
 .business-workspace-switch .menu,.customer-workspace-switch .menu{position:absolute;top:calc(100% + 8px);right:0;z-index:42;
-  min-width:224px;background:rgba(255,255,255,.94);border:1px solid var(--hair);border-radius:var(--r-sm);
+  /* V450: opaque with the rest of the appbar popover family. At .94 the bleed was slight, but this
+     list now renders INSIDE the account menu (V443) as well as standalone on the customer shell,
+     so it has to be readable against both a menu and live page content. */
+  min-width:224px;background:var(--card,#fff);border:1px solid var(--hair);border-radius:var(--r-sm);
   padding:6px;box-shadow:var(--shadow-lg);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px)}
 .business-workspace-switch .menu a,.customer-workspace-switch .menu a{display:flex;align-items:center;min-height:44px;
   padding:9px 12px;border-radius:8px;color:var(--ink2);font-size:13.5px;font-weight:600;white-space:nowrap}
@@ -875,8 +886,12 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+/* V450: same fix as .profile .menu below — this dropdown opens over the same dashboard figures and
+   carried the same rgba(255,255,255,.86). It was not in the owner's report only because it needs
+   unread notifications to open; the defect is identical, so it is fixed with its sibling rather
+   than left in the register as a known-identical bug. */
 .notif-menu{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-width:calc(100vw - 40px);
-  background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  background:var(--card,#fff);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:8px;box-shadow:var(--shadow-lg);
   transform-origin:top right;animation:pop .2s var(--spring);max-height:420px;overflow-y:auto;z-index:41}
 .notif-item{display:block;width:100%;padding:10px 12px;border-radius:8px;cursor:pointer;text-align:left;background:transparent;color:inherit;transition:background .14s var(--ease)}
