@@ -15666,6 +15666,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   publishDraftVersion:Object.freeze({en:'Exactly what happens when you publish draft v{version}.','zh-CN':'发布草稿 v{version} 时将发生的确切变化。',ms:'Perkara tepat yang berlaku apabila anda menerbitkan draf v{version}.'}),
   publishConfirmationSensitive:Object.freeze({en:'This turns on a live rule that affects money or customers. Type PUBLISH below to confirm you reviewed the impact.','zh-CN':'这将启用影响金额或顾客的实时规则。请在下方输入 PUBLISH，确认您已审核影响。',ms:'Ini menghidupkan peraturan langsung yang mempengaruhi wang atau pelanggan. Taip PUBLISH di bawah untuk mengesahkan anda telah menyemak kesannya.'}),
   publishConfirmationStandard:Object.freeze({en:'Review complete. Type PUBLISH below to confirm this exact draft.','zh-CN':'审核完成。请在下方输入 PUBLISH，以确认这份确切草稿。',ms:'Semakan selesai. Taip PUBLISH di bawah untuk mengesahkan draf tepat ini.'}),
+  /* nestly_v456: why a disabled "Revoke all QRs" is refusing. Same shape as the v453 stepper
+     refusals — one source read by the button's title and by the visible status line, so the two
+     cannot disagree in any locale. */
+  joinQrNothingToRevoke:Object.freeze({en:'There is no active QR to revoke yet. Generate one first.','zh-CN':'目前没有可撤销的有效二维码。请先生成一个。',ms:'Tiada kod QR aktif untuk dibatalkan lagi. Jana satu dahulu.'}),
   stampsEligibleEarning:Object.freeze({en:'Eligible customer-linked sales add stamps when this programme is active, published, and available at the selected branch. Define what each milestone is worth — a free item to hand over, or store credit.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售会增加印花。请定义每个里程碑的价值，例如可交付的免费商品或店内余额。',ms:'Jualan layak yang dipautkan kepada pelanggan menambah cop apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Tetapkan nilai setiap pencapaian — item percuma untuk diserahkan atau kredit kedai.'}),
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
@@ -15677,6 +15681,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
      disabled button's title and as the line of text under the bar — from this one source, so the
      two can never disagree in any locale. */
   'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum',
+  /* nestly_v456: why the destructive "Revoke all QRs" is disabled when no QR exists. Same shape
+     as the three v453 refusals above — reviewed copy, because the owner reads it. */
+  'joinQrNothingToRevoke',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -15727,6 +15734,9 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
   'explainHelpDotV385',
+  /* nestly_v456: the disabled "Revoke all QRs" carries its reason as a title, for the same reason
+     the v453 steppers below do — and the same sentence is the visible status line it describes. */
+  'joinQrNothingToRevoke',
   /* nestly_v453: the disabled length steppers carry their reason as a title. A disabled button is
      not focusable, so the title is the mouse half only — the same sentence is rendered as visible
      text beside it, and aria-describedby ties the two together. */
@@ -27402,6 +27412,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      unchanged; only the arrow moved out of them. */
   const growTopicActionWordV428=topic=>{
     if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View';
+    /* nestly_v456 (audit A, A-REG-016). Every word below this line ASSERTS a state — "Set up"
+       says the firm has none, "Edit"/"View" say one is running, "Turn on" says one is switched
+       off. When the read behind the tile FAILED, growTileStatusV371 above has already refused to
+       guess and printed 'Unavailable'; the action word had no matching branch, so it fell all the
+       way through to `return 'Set up'` and contradicted the very pill beside it. An owner whose
+       overview read failed was invited to set up a programme that may well have been live.
+       'Open' is the only word that is true in that state: it does not claim the programme is on,
+       off, or absent, and it describes exactly what pressing the tile does — the tile's click
+       handler navigates to that programme's own page either way. Retrying belongs to the page's
+       own #growRewardsRetry control (see the rewardsOverviewIncomplete notice), which is where
+       the owner is already told to retry before making a decision; a tile chip that said "Retry"
+       and then navigated would just be the next version of this same lie.
+       Placed AFTER the read-only branch on purpose: 'View' is already non-asserting, so a
+       read-only manager's word is unchanged. */
+    if(String(topic?.status?.[0]||'')==='Unavailable')return 'Open';
     /* V303: "Set up" while this model is not reaching customers, "Edit" once it is — the
        wizard is the same door either way, and the word has to match what pressing it does. The
        card's OWN status decides, not the programme's, so on a firm running points the Tiered
@@ -42433,7 +42458,7 @@ async function expensesPage(){
     if(expensePage>=totalPages&&expensePage>0){expensePage=totalPages-1;load();return}
     const branchName=Object.fromEntries(expenseBranches.map(branch=>[branch.id,branch.name]));
     $('exList').innerHTML=(ex&&ex.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Expense records"><table data-responsive="true"><tr><th>Date</th><th>Scope</th><th>Category</th><th>Supplier</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr>
-      ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
+      ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${esc(e.occurred_on||'—')}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category||'—')}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td style="white-space:nowrap">${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn danger sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
@@ -42451,7 +42476,7 @@ async function expensesPage(){
     const card=$('expenseEditCardV285');
     if(!expense||!card)return;
     card.style.display='block';
-    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on)}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
+    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on||'on an unrecorded date')}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
       <label for="expEditAmountV285">Amount (${esc(S.biz.currency||'SGD')})</label><input id="expEditAmountV285" type="number" min="0.01" step="0.01" value="${(Number(expense.amount_cents||0)/100).toFixed(2)}">
       <label for="expEditCategoryV285">Category</label><input id="expEditCategoryV285" value="${esc(expense.category||'')}">
       <label for="expEditNoteV285">Note</label><input id="expEditNoteV285" value="${esc(expense.note||'')}" placeholder="Why it changed">
@@ -42985,6 +43010,21 @@ async function settingsPage(){
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
   if(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269.includes(requestedSettingsTab))
     return nav(`#/customer-interface/${SETTINGS_TAB_CUSTOMER_INTERFACE_VIEW_V296[requestedSettingsTab]}`);
+  /* nestly_v456 (audit A, A-REG-013). '#/settings?tab=team' and '#/staffmembers' rendered TWO
+     DIFFERENT PAGES from one address. staffMembersPage() calls this function and then enhances
+     what it produced (sub-tabs, a real "Add staff", per-row Modules/Deactivate/Delete, and the
+     honestly-labelled importer v439 preserved); arriving by the raw hash skipped all of it. And
+     the two doors were not independent — selectSettingsTab below replaceState()s the address to
+     '#/settings?tab=team' the moment the panel opens, so the rail's own click REWROTE the URL to
+     the variant that loses those controls. Reload or bookmark and "Import from Excel" was simply
+     gone, with no hint that a better page existed.
+     Worse, this hash rendered a state nobody designed: #settab-team is `hidden` in the markup and
+     nothing unhides it, so the raw variant showed the team panel underneath a tab strip whose
+     only visible tab was "Modules & plan".
+     Owner ruling (2026-08-22): the ENHANCED variant is canonical. So the address is a door to it,
+     not a second page. This cannot loop — staffMembersPage reaches us on '#/staffmembers' with no
+     ?tab at all, and the replaceState below no longer rewrites that hash. */
+  if(requestedSettingsTab==='team')return nav('#/staffmembers');
   if(['modules','catalogue','team'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
   if(!['modules','catalogue','team'].includes(settingsActiveTab))settingsActiveTab='modules';
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
@@ -43036,7 +43076,15 @@ async function settingsPage(){
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
     </section>
     <section class="settings-panel" id="setpanel-team" role="tabpanel" aria-labelledby="settab-team" tabindex="-1" hidden>
-    <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Add staff without app access','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
+    ${/* nestly_v456 (audit A, A-REG-013): one action, one word. This control is importBtn — it
+         opens the CSV importer and nothing else — but it was labelled "Add staff without app
+         access", so the same job was called two different things depending on which door you came
+         through, and the label described adding ONE person by hand. That is the exact mislabel
+         v439 unpicked when it found this button doubling as "Add staff": the honest name is the
+         one the enhanced toolbar already gives it. Naming it "Add staff" here (the literal
+         instruction) would have rebuilt v439's bug, because pressing it opens the import popup —
+         so "Add staff" is now reserved for the one control that really does add a teammate. */''}
+    <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Import from Excel','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
       <div id="team">${CUI.skeletonGrid({cards:2,lines:3})}</div>
       <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
       <b>Create company invite</b><p class="muted small" style="margin:5px 0 10px">Send the link or code to the staff member. They can choose “Join an existing business” during sign-up. The server assigns exactly this role when the invite is accepted.</p>
@@ -43066,7 +43114,14 @@ async function settingsPage(){
       if(panel)panel.hidden=!on;
     });
     settingsActiveTab=tab.dataset.settab;
-    history.replaceState(null,'',`${location.pathname}${location.search}#/settings?tab=${encodeURIComponent(settingsActiveTab)}`);
+    /* nestly_v456 (audit A, A-REG-013). This line is what stranded the owner: staffMembersPage
+       renders on '#/staffmembers' and then this runs, silently rewriting the address bar to
+       '#/settings?tab=team' — a hash that used to render the weaker variant. The address must
+       keep naming the page the owner is actually looking at, so on the Staff Members route it is
+       left alone. Every other Settings tab keeps the deep-linkable ?tab= address it has had since
+       V243, unchanged. */
+    if(!String(location.hash||'').startsWith('#/staffmembers'))
+      history.replaceState(null,'',`${location.pathname}${location.search}#/settings?tab=${encodeURIComponent(settingsActiveTab)}`);
     if(focus)tab.focus();
   }
   settingsTabs.forEach((tab,i)=>{
@@ -44018,19 +44073,46 @@ function openBusinessQrModalV368(){
   $('businessQrCloseV368').onclick=close;
   loadSignupConfig($('businessQrHostV368')).catch(fail);
 }
+/* nestly_v456: the one sentence that explains a disabled "Revoke all QRs", read from the workspace
+   copy table so it localises like every other refusal reason (v453 set this pattern). The button's
+   title and the JS that re-applies it after a revoke both call this, so they cannot drift. The
+   three LEAD sentences live at their state branches instead, for the reason v453 kept its refusal
+   copy at the call sites: each is only true where it is written. */
+const joinQrNothingToRevokeTextV456=()=>workspaceTemplateTextV97('joinQrNothingToRevoke');
 async function loadSignupConfig(host){
   const wrap=host||$('signupWrap');
   if(!wrap)return;
+  /* nestly_v456 (audit A, A-REG-020). Two things on this dialog contradicted its own state.
+     (1) The lead read "Print the current business-issued QR for your counter" while the panel
+         underneath said "Generate a QR to begin" and the status line said "No active QR exists" —
+         an instruction to print something that does not exist. The lead is now state-driven from
+         one place (setJoinQrLeadV456) and opens on the neutral sentence, which is true before any
+         read has come back.
+     (2) "Revoke all QRs" — destructive, and the only red button here — was live with nothing to
+         revoke. Pressing it in the empty state asked the owner to confirm destroying printed
+         copies, then reported "0 revoked". It now starts disabled and says why, in the v453
+         shape: the reason is real visible text (#joinQrStatus, role=status, which already carries
+         the state sentence) and the disabled button points at it with title + aria-describedby,
+         because a disabled control that gives no reason reads as a broken one. */
   wrap.innerHTML=`<b>My Business QR</b>
-    <p class="muted small" style="margin:6px 0 10px">Print the current business-issued QR for your counter. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
+    <p class="muted small" id="joinQrLeadV456" style="margin:6px 0 10px">Your counter QR is how a customer joins this business. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
     <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
     <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:16})}<span>Generate join QR</span></button>
     <button class="btn ghost sm" id="cpJoin" disabled>Copy link</button>
     <button class="btn ghost sm" id="dlQr" disabled>Download QR</button>
     ${window.NestlyNativeBridge?.isNative?'<button class="btn ghost sm" id="shareJoin" disabled>Share link</button>':''}
-    <button class="btn danger sm" id="revokeJoinQr">Revoke all QRs</button></div>
+    <button class="btn danger sm" id="revokeJoinQr" disabled ${workspaceTemplateAttributeV97('title','joinQrNothingToRevoke')} aria-describedby="joinQrStatus">Revoke all QRs</button></div>
     <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>`;
+  /* The two states this dialog can be in, named once so the lead, the disabled reason and the
+     enable/disable calls below cannot drift apart. */
+  const setJoinQrLeadV456=text=>{const lead=$('joinQrLeadV456');if(lead)lead.textContent=text};
+  const setRevokeAvailableV456=available=>{
+    const button=$('revokeJoinQr');if(!button)return;
+    button.disabled=!available;
+    if(available)button.removeAttribute('title');
+    else button.title=joinQrNothingToRevokeTextV456();
+  };
   let url='';
   const showJoinQr=async data=>{
     url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
@@ -44039,6 +44121,10 @@ async function loadSignupConfig(host){
     if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
     $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
     $('cpJoin').disabled=false;$('dlQr').disabled=false;if($('shareJoin'))$('shareJoin').disabled=false;
+    /* nestly_v456: there is now a QR on screen, so the lead may say "print it" and revoking is a
+       real act with a real consequence. */
+    setJoinQrLeadV456('Print this QR for your counter. Older slug links such as join.html?s=… are retired and cannot enrol a customer.');
+    setRevokeAvailableV456(true);
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
     const expires=data.expires_at?sgt(data.expires_at):'',replaced=Number(data.replaced_count||0);
     const key=expires&&replaced
@@ -44086,6 +44172,11 @@ async function loadSignupConfig(host){
     if(error){$('joinQrStatus').textContent='Active join QRs could not be revoked. Try again.';return}
     url='';$('joinQr').innerHTML='<span class="muted small">No active QR in this session</span>';
     $('joinQrLink').textContent='';$('cpJoin').disabled=true;$('dlQr').disabled=true;if($('shareJoin'))$('shareJoin').disabled=true;
+    /* nestly_v456: everything was just revoked, so there is nothing left to revoke and nothing to
+       print. Both statements go back to their empty-state wording rather than being left standing
+       from the state before the press. */
+    setJoinQrLeadV456('Your counter QR is how a customer joins this business. Generate one to print for your counter.');
+    setRevokeAvailableV456(false);
     $('createJoinQr').querySelector('span').textContent='Generate join QR';
     const revoked=Number(data?.revoked_count||0);
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(revoked===1?'activeQrRevoked':'activeQrsRevoked',{count:revoked});
@@ -44116,9 +44207,17 @@ async function loadSignupConfig(host){
   }else if(Number(statusResult.data?.active_count||0)>0){
     const activeExpiry=statusResult.data?.latest_expires_at||statusResult.data?.expires_at;
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(activeExpiry?'activeQrExistsUntil':'activeQrExists',{expires:activeExpiry?sgt(activeExpiry):''});
+    /* nestly_v456: active QRs exist but this session cannot draw them, so there IS something to
+       revoke even though there is nothing on screen to print. */
+    setJoinQrLeadV456('An active QR exists for this business but is not shown in this session. Replace it to print a fresh copy.');
+    setRevokeAvailableV456(true);
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
   }else{
     $('joinQrStatus').textContent='No active QR exists. Turn on new sign-ups, then generate one.';
+    /* nestly_v456: the state the audit caught — nothing exists, so nothing can be printed and
+       nothing can be revoked. Both controls and both sentences now say so. */
+    setJoinQrLeadV456('No counter QR yet. Generate one to print for your counter — older slug links such as join.html?s=… are retired and cannot enrol a customer.');
+    setRevokeAvailableV456(false);
   }
 }
 async function loadCommissionConfig(){

@@ -14,7 +14,19 @@ test('team access is discoverable and distinguishes roster-only from signed-in a
      that the setup surfaces live HERE rather than in the account menu, not that the group is
      frozen, so the new row is admitted explicitly and everything it protects still holds. */
   assert.match(source,/items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]/);
-  assert.match(source,/Add staff without app access/);
+  /* nestly_v456 (audit A, A-REG-013). This line used to pin the literal "Add staff without app
+     access" — which was importBtn, the CSV IMPORT control, wearing a label that described adding
+     ONE person by hand. That is the same mislabel v439 unpicked when the identical control was
+     also doubling as "Add staff", and pinning it here is what kept two names for one job alive
+     across two variants of this page. The pin is not deleted, it is pointed at the controls that
+     really do these jobs: the roster-only add form, its own copy, and the importer under its
+     honest name. What this test protects is unchanged — a roster-only teammate can be added, and
+     is told apart from a signed-in one. */
+  assert.match(source,/id="staffMembersAddTop">Add staff</);
+  assert.match(source,/They appear on the rota and can be credited for sales straight away\. They do not get a login/);
+  assert.match(source,/Import from Excel/);
+  assert.doesNotMatch(source,/Add staff without app access/,
+    'one job, one name: the importer is not also called a way to add a single teammate');
   assert.match(source,/No app access/);
   assert.match(source,/Invite pending/);
   assert.match(source,/App access active/);

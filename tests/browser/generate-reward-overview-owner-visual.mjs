@@ -176,8 +176,17 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
           else if(table==='membership_plans')data=fixture.memberships;
           else if(table==='firm_config_versions')data=state.equals.status==='draft'?(fixture.draft?[fixture.draft]:[]):[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
           else if(table==='firm_reward_taxonomy')data=fixture.taxonomy;
+          /* nestly_v456 (audit A). 'bringback_campaigns_v361' joins this set because nestly_v429
+             moved the Bring-back tile's read there — growRewardsSnapshot's retentionRequest is
+             that table now, and public.retention_programs is no longer read by this page at all.
+             The failure set had not moved with it, so \`partial=all\` left the one table the tile
+             actually depends on answering NORMALLY: the tile rendered a real, data-backed state
+             ("On / View") while the walkthrough asserted 'Unavailable', and the read-failure path
+             it exists to prove was never executed. retention_programs stays listed — harmless,
+             and the day a reader comes back to it the fixture is already honest about it. */
           const failedTables=partialOverview==='all'
-            ?new Set(['loyalty_programs','loyalty_rewards','retention_programs','referral_programs','membership_plans'])
+            ?new Set(['loyalty_programs','loyalty_rewards','retention_programs',
+              'bringback_campaigns_v361','referral_programs','membership_plans'])
             :new Set(partialOverview==='1'?['referral_programs']:[]);
           const error=failedTables.has(table)?{message:'Synthetic programme status failure'}:null;
           return Promise.resolve({data:error?null:data,error}).then(resolve,reject)}};

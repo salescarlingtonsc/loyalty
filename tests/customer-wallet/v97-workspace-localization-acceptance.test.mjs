@@ -340,7 +340,13 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      as a broken button. Each refusal is now a sentence an owner reads, so each is reviewed copy in
      all three locales. The two bounds interpolate the constants themselves ({stamps} = 1 and 100)
      so the sentence cannot drift away from the rule it describes. */
-  assert.equal(keys.length,143,'mixed-interface interpolation inventory changed without review');
+  /* 143 -> 144: nestly_v456 adds joinQrNothingToRevoke — why the destructive "Revoke all QRs" in
+     the My Business QR dialog is disabled. Audit A found that button live in the empty state, so
+     pressing it asked the owner to confirm destroying printed copies and then reported 0 revoked.
+     It is disabled now, and a disabled destructive control that gives no reason is the v453
+     problem again, so the reason is reviewed copy in all three locales — read once by the
+     button's title and by the JS that re-applies it after a revoke. */
+  assert.equal(keys.length,144,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -426,6 +432,12 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
        button is not focusable, so a title alone reaches neither keyboard nor screen reader — and
        both halves read this one template so they cannot disagree in any locale. */
     'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum',
+    /* nestly_v456: "Revoke all QRs" in the My Business QR dialog. Audit A found it live in the
+       empty state — a destructive control offering to destroy nothing. It is disabled now, and
+       the reason travels the same way the v453 refusals above do: this template is the button's
+       title AND the visible #joinQrStatus line it is aria-describedby, because a disabled button
+       is not focusable and a title alone would reach neither keyboard nor screen reader. */
+    'joinQrNothingToRevoke',
   ];
   assert.deepEqual([...interpolatedAttributeInventory].sort(),expected.sort());
   assert.equal(new Set(interpolatedAttributeInventory).size,interpolatedAttributeInventory.length);
