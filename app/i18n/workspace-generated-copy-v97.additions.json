@@ -1,0 +1,35 @@
+{
+  "note": [
+    "The reviewed input to scripts/quality/generate-workspace-copy-v97.mjs.",
+    "WORKSPACE_GENERATED_COPY_V97 in app/app.js is a GENERATED table: it was machine-translated in",
+    "one pass at v97 and, until nestly_v465, had no generator in the repo, so the only way to add a",
+    "string was to hand-edit 1472 entries of frozen JSON. Exactly one entry ('/month') had been added",
+    "that way, and it shows: it sits alone past the end of the sort order. v461's author declined to",
+    "hand-patch three more and said the generator's owner should add them; this file plus that script",
+    "IS the generator, and this is where the three strings go.",
+    "Every entry here is applied on every run and the run is idempotent, so this doubles as the",
+    "reviewed ledger of every source string added to the generated table since v97.",
+    "Curated overrides for critical labels still belong in WORKSPACE_COPY_V97, which wins over this",
+    "table at lookup time (curated ?? generated ?? source)."
+  ],
+  "entries": [
+    {
+      "source": "Stamps earned",
+      "reason": "nestly_v437/v461 made the Reports money card and the dashboard tile name the unit the figure is actually in, so a stamps merchant reads 'Stamps earned' where a points merchant reads 'Points earned'. The points row has been translated since v97; its stamps twin never was, so a zh-CN or ms merchant on a stamps programme read the row in English.",
+      "zh-CN": "赚取印花",
+      "ms": "Setem diperoleh"
+    },
+    {
+      "source": "Stamps redeemed",
+      "reason": "Same row group as 'Stamps earned' — the Reports money card renders all three from loyaltyUnitNounV461(d.loyalty_unit).",
+      "zh-CN": "印花兑换",
+      "ms": "Setem ditebus"
+    },
+    {
+      "source": "Stamps expired",
+      "reason": "Same row group as 'Stamps earned'.",
+      "zh-CN": "印花已过期",
+      "ms": "Setem tamat tempoh"
+    }
+  ]
+}

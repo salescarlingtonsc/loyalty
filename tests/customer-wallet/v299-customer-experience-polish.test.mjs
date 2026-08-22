@@ -85,16 +85,25 @@ test('the reward card sheds the legacy 7px corner radius',()=>{
 });
 
 test('home and rewards cards keep points/stamps labels honest and compact',()=>{
-  /* nestly_v457 re-pinned (B-REG-017). The greeting's figure was the SUM of per-card literal 1s
-     — LIVE it printed "2 rewards ready" while one of those two businesses alone had two ready —
-     so it is a quantity Home cannot substantiate and the hero now states the signal only. What is
-     pinned instead is that the hero is still DERIVED from the same cards, which is what stops it
-     drifting from them. */
+  /* nestly_v465 re-pinned (owner ruling R1). v457's pin said Home prints no quantity at all. The
+     owner has reversed that: the quantity comes back, from the server. What must NOT come back is
+     the thing v457 actually killed — a number Home worked out for itself. So the rule pinned here
+     is now: the greeting's figure is customerRewardReadyTotalV465(cards), which is the sum of the
+     server's per-card ready_count and of nothing else, and it is only printed when every card
+     supplied one. The old number-free sentence survives as the fallback for a pre-v465 server. */
   assert.match(app,/const readyCardsV457=customerRewardReadyCountV343\(cards\)/);
   assert.match(app,/const rewardReadyV457=readyCardsV457>0/);
-  assert.match(app,/rewardReadyV457\?`<b>\$\{esc\(customerRewardReadySignalV457\(true\)\)\}<\/b>`/);
+  assert.match(app,/const readyTotalV465=customerRewardReadyTotalV465\(cards\)/);
+  assert.match(app,/readyTotalV465\.known&&readyTotalV465\.total>0[\s\S]{0,120}customerRewardReadyLineV397\(readyTotalV465\.total\)/);
+  assert.match(app,/rewardReadyV457\?`<b>\$\{esc\(readyLineV465\)\}<\/b>`/);
   assert.doesNotMatch(app,/esc\(customerPointTotalV103\(rewardCount\)\)/,
-    'Home no longer prints a ready quantity');
+    'the browser still never invents the quantity');
+  /* The sum reads ready_count and nothing else — no arithmetic over balances or reward objects. */
+  const totalFn=app.slice(app.indexOf('function customerRewardReadyTotalV465'),
+    app.indexOf('/* nestly_v428 (item 6) — "2 REWARDS READY"'));
+  assert.match(totalFn,/customerCardReadyCountV465\(card\)/);
+  assert.doesNotMatch(totalFn,/available_now|remaining_units|balance/,
+    'the greeting may not derive readiness from anything but the server count');
   assert.match(app,/function customerProgrammeCardMetricKindV360/);
   assert.match(app,/if\(hasStamps&&!hasPoints\)return 'stamps'/);
   assert.match(app,/if\(tierLabel\)return 'points'/);
@@ -231,7 +240,10 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.doesNotMatch(collapsed,/customer-business-book-v346/);
   /* v386 (owner photo 7): the hero takes programmeCapabilities so its shape can follow the
      business's own choice of programme — number, stamp rings, or tier meter. */
-  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities\}\)/);
+  /* nestly_v465 (owner ruling R1): the hero also takes the SERVER's per-business ready count off
+     the same actionable card Home reads, so the pill on this page and the line on Home start from
+     one number instead of agreeing only after loadRewards. */
+  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities,readyCount:customerCardReadyCountV465\(actionableCard\),readyChooseOne:customerCardReadyChooseOneV465\(actionableCard\)\}\)/);
   assert.match(collapsed,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'\}\)/);
   assert.match(collapsed,/customerBusinessReferralDetailMarkupV362\(\)/);
   /* v386 (owner photo 4, the whole card struck through): "Earn more points → Visit and spend

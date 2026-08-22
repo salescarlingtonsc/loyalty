@@ -204,7 +204,14 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
     'rows.push','Number.isFinite','storedValuePage();','=>','||','&&','.dataset',
   ]) assert.doesNotMatch(serialized,new RegExp(artifact.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')),artifact);
   for(const locale of ['zh-CN','ms']){
-    assert.equal(Object.keys(generatedCopy[locale]).length,1472,`${locale} valid visible-literal inventory changed without catalog review`);
+    /* 1472 -> 1475: nestly_v465 (owner ruling R7) adds "Stamps earned", "Stamps redeemed" and
+       "Stamps expired" — the stamps twins of three Reports rows that have been translated since
+       v97, left behind when v437/v461 made the unit noun follow the pot. They went in THROUGH
+       scripts/quality/generate-workspace-copy-v97.mjs, from the reviewed ledger at
+       app/i18n/workspace-generated-copy-v97.additions.json, which is the generator this table
+       never had. This count stays the gate on catalogue review; the generator is the gate on how
+       the bytes get there. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,1475,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

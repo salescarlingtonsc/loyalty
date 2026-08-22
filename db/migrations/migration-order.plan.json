@@ -2337,6 +2337,12 @@
       "path": "db/migrations/20260822_nestly_v460_business_kpi_pot_scope.sql",
       "semanticVersion": "v460",
       "proposedDeployVersion": "20260822000017"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v465_home_ready_count.sql",
+      "semanticVersion": "v465",
+      "proposedDeployVersion": "20260823000001"
     }
   ]
 }
