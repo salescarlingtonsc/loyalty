@@ -27,13 +27,19 @@ test('workspace switching distinguishes customer view, current firm and other st
   const customer=section('function customerWorkspaceSwitchHtml(','function businessWorkspaceSwitchHtml(');
   const business=section('function businessWorkspaceSwitchHtml(','function renderNoCustomerDestination(');
   const shell=section('function renderShell(page){','const M=()=>');
+  const profile=section('function profileHtml(){','function wireProfile(page){');
   assert.match(customer,/\$\{esc\(name\)\} workspace/);
   assert.match(customer,/Business workspaces \(\$\{workspaces\.length\}\)/);
   assert.match(business,/workspace\.business_slug!==currentBusinessSlug/);
   assert.match(business,/hasCustomerPersona/);
   assert.match(business,/Customer view/);
   assert.match(business,/Switch workspace/);
-  assert.match(shell,/businessWorkspaceSwitchHtml\(S\.staffWorkspaces,S\.biz\.slug,S\.hasCustomerPersona\)/);
+  /* V443: businessWorkspaceSwitchHtml moved from the header appbar into the profile menu's
+     top workspace section, called with hasCustomerPersona forced false (the menu already
+     has its own dedicated Customer view row, so the shared function's fallback link must
+     not render a second time). */
+  assert.doesNotMatch(shell,/businessWorkspaceSwitchHtml\(/);
+  assert.match(profile,/businessWorkspaceSwitchHtml\(S\.staffWorkspaces,S\.biz\.slug,false\)/);
   assert.doesNotMatch(shell,/customerWorkspaceSwitchHtml\(S\.staffWorkspaces\)/);
 });
 

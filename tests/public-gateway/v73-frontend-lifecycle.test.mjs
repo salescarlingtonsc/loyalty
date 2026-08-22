@@ -75,7 +75,13 @@ test('staff-only multi-workspace business entry and shell use the same complete 
   assert.match(persona,/staff\.map\(workspace=>/);
   assert.match(persona,/const hasCustomer=includeCustomer&&/);
   const shell=section('function renderShell(page){','const M=');
-  assert.match(shell,/businessWorkspaceSwitchHtml\(S\.staffWorkspaces,S\.biz\.slug,S\.hasCustomerPersona\)/);
+  /* V443: the switcher moved out of the header appbar and into the profile menu's top
+     workspace section — it still reads the same S.staffWorkspaces the header used to, just
+     from profileHtml() now. hasCustomerPersona is forced false there because the profile
+     menu already carries its own separate Customer view row. */
+  assert.doesNotMatch(shell,/businessWorkspaceSwitchHtml\(/);
+  const profile=section('function profileHtml(){','function wireProfile(page){');
+  assert.match(profile,/businessWorkspaceSwitchHtml\(S\.staffWorkspaces,S\.biz\.slug,false\)/);
 });
 
 test('v73 staff decisions are authority-gated, duplicate-safe, state-aware, and truthfully refreshed',()=>{

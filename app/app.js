@@ -14297,7 +14297,19 @@ function profileHtml(){
         <span class="chev" aria-hidden="true">${profileOpen?'−':'+'}</span>
       </button>
       ${profileOpen?`<div class="menu" id="profmenu" aria-label="Account links">
-        <div class="profile-menu-section" style="overflow-wrap:anywhere"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
+        <!-- V443 (owner sketch, annotated screenshot): "Switch workspace" moved here from the
+             header, beside the current workspace name. It calls the exact same
+             businessWorkspaceSwitchHtml() the header used — same staff list, same
+             #/workspace/<slug>/dashboard links, same identity-verified route() handling — with
+             hasCustomerPersona forced false because this menu already carries its own Customer
+             view row (pmWallet, below); the shared function's own customer-view fallback would
+             otherwise be a second, duplicate door to the same place. -->
+        <div class="profile-menu-section" style="overflow-wrap:anywhere">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="min-width:0"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
+            ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,false)}
+          </div>
+        </div>
         <div class="profile-menu-section small muted" style="overflow-wrap:anywhere">Signed in as<br><b style="color:var(--ink)">${esc(displayName||S.user?.email||'User')}</b>${displayName&&S.user?.email?`<br><span>${esc(S.user.email)}</span>`:''}</div>
         <!-- V225 (owner: "put inside here" pointing from the top-bar language select to the
              profile menu). Language is a personal preference set once, not a per-task control,
@@ -15735,7 +15747,10 @@ function renderShell(page){
         ${mobileSearchShellHtml()}
         <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
 
-        ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
+        <!-- V443 (owner sketch): "Switch workspace" moved out of the header into the profile
+             menu's top workspace section (see profileHtml), reachable at every width — the
+             narrow-header media query used to hide this control entirely rather than relocate
+             it, so this also closes that gap. -->
         ${canReadModule('bookings')?bookingRequestsBadgeWrapHtml():''}
         ${bellHtml()}
         ${profileHtml()}
