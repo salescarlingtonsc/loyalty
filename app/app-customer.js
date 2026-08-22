@@ -3600,6 +3600,11 @@ function stampQuestNormaliseV323(card){
     carried:slots>0?Math.max(filled-slots,0):0,
     cycle:whole(card.cycle_index),
     running:card.running!==false,
+    /* nestly_v435: the card's own clock, from the version this card started under. */
+    validityDays:whole(card.validity_days),
+    expiresAt:card.expires_at||null,
+    expired:card.expired===true,
+    spendPerCents:whole(card.spend_per_stamp_cents),
     ready:card.ready===true,
     potMigrated:card.pot_migrated===true,
     milestones,
@@ -3643,9 +3648,19 @@ function customerStampQuestBodyV323(quest){
         rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`:''}</li>`).join('')
     }</ul>`
     :'';
+  /* nestly_v435: the card's clock (owner rules 4/15) and the paused-card promise (rule 7). The
+     expiry line renders only while a clock is actually running (validity set AND stamps on the
+     card); an expired flag outranks it. The kept line renders whenever collecting is off but the
+     customer still holds stamps — their value does not vanish with the switch. */
+  const expiryLineV435=quest.expired?ct('stampsCardExpired')
+    :(quest.expiresAt&&quest.filled>0&&quest.validityDays>0)?ct('stampsCardExpires',{date:walletDate(quest.expiresAt)})
+    :'';
+  const keptLineV435=(!quest.running&&quest.filled>0)?ct('stampsKeptWhilePaused',{count:customerPointTotalV103(quest.shown)}):'';
   return `${figure}
     <p class="muted small customer-programme-card-line-v310" data-stamp-quest-line-v323="progress">${esc(progress)}</p>
     <p class="muted small" data-stamp-quest-line-v323="next">${esc(nextLine)}</p>
+    ${expiryLineV435?`<p class="muted small" data-stamp-quest-line-v323="expiry">${esc(expiryLineV435)}</p>`:''}
+    ${keptLineV435?`<p class="muted small" data-stamp-quest-line-v323="kept">${esc(keptLineV435)}</p>`:''}
     ${quest.carried>0?`<p class="muted small" data-stamp-quest-line-v323="carried">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
     ${ladder}`;
 }
@@ -5461,11 +5476,21 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        stamps card lives inside a shortcut sub-page, and requiring the card would have left the
        hero on its wallet-derived guess forever. */
     const heroSlotV422=document.querySelector('[data-hero-stamp-slot-host-v422]');
-    if(!card&&!heroSlotV422)return;
+    /* nestly_v435 (owner rule 7, simulation A8): after a stamps→points switch the customer's
+       frozen stamps were INVISIBLE — no card, no note, nothing saying their value was kept. The
+       reader now also runs when the points card is mounted, purely to render the one-line "kept"
+       note below when a stopped stamp programme still holds the customer's stamps. */
+    const pointsCardV435=document.querySelector('[data-programme-card="points"]');
+    if(!card&&!heroSlotV422&&!pointsCardV435)return;
     const {data,error}=await customerRpc('customer_get_stamp_card_v323',{p_business_slug:businessSlug});
     if(!isWalletCurrent())return;
     if(error)return;
     const quest=stampQuestNormaliseV323(data);
+    if(!card&&pointsCardV435&&pointsCardV435.isConnected&&quest&&!quest.running&&quest.filled>0
+       &&!quest.potMigrated&&!document.querySelector('[data-stamps-kept-note-v435]')){
+      pointsCardV435.insertAdjacentHTML('afterend',
+        `<p class="muted small" data-stamps-kept-note-v435 style="margin:8px 4px 0">${esc(ct('stampsKeptWhilePaused',{count:customerPointTotalV103(quest.shown)}))}</p>`);
+    }
     /* THE HERO. Drawn from the card's real slots and milestones, replacing the rings that were
        sized by one reward's cost. A quest that is not running leaves the painted figure alone —
        same rule the card below follows. pot_migrated is deliberately NOT a gate here: the owner
@@ -5508,6 +5533,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       card.remove();
       return;
     }
+    /* nestly_v435 (rule 15): the stamp "?" trigger rides the card's head and carries the PINNED
+       version's own spend-per-stamp and validity from this payload as data-* facts. */
+    const stampsHeadV435=card.querySelector('.customer-programme-card-head-v310');
+    if(stampsHeadV435&&!stampsHeadV435.querySelector('[data-customer-explainer-v435]'))
+      stampsHeadV435.insertAdjacentHTML('beforeend',
+        `<button type="button" class="btn ghost sm customer-explainer-trigger-v435" data-customer-explainer-v435="stamps" data-exp-spend="${esc(String(quest.spendPerCents||0))}" data-exp-validity="${esc(String(quest.validityDays||0))}" data-exp-currency="${esc(String(b?.currency||'SGD'))}" aria-label="${esc(ct('expTitle'))}" style="margin-left:auto;min-width:30px;padding:2px 7px">${CUI.icon('info',{size:16})}</button>`);
     const figure=card.querySelector('.customer-programme-stamp-rings, .customer-programme-stamp-count');
     const line=card.querySelector('.customer-programme-card-line-v310');
     if(!line)return;
@@ -6027,6 +6058,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           </div></article>`;
         }
         const earned=Number(item.points_earned||0),redeemed=Number(item.points_redeemed||0),removed=Number(item.points_removed||0);
+        /* nestly_v437 (owner rule 13): the noun follows the ROW's own pot, never the live
+           programme — "+3 stamps" earned on the stamp card stays "+3 stamps" after a switch to
+           points. The server resolves loyalty_unit from points_ledger.programme_id. */
+        const unitNounV437=n=>`${item.loyalty_unit==='stamps'?'stamp':'point'}${Number(n)===1?'':'s'}`;
         const gross=item.gross_cents===null||item.gross_cents===undefined?null:Number(item.gross_cents);
         const net=item.net_cents===null||item.net_cents===undefined?null:Number(item.net_cents);
         const lines=Array.isArray(item.line_items)?item.line_items:[];
@@ -6034,7 +6069,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:'';
         return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
-          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} points earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} points redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} points removed</span>`:''}</p>`:''}
+          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       };

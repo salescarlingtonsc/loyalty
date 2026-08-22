@@ -192,7 +192,7 @@ test('photo 8: the hero paints from the wallet first and is replaced by the real
     'the stamps figure is a slot, so an unanswered v323 read leaves today\'s rings standing');
   const loader = section('const loadStampCardV323=async()=>', 'const loadGrowthOffers=async()=>');
   assert.match(loader, /heroSlotV422\.innerHTML=heroCardV422/);
-  assert.match(loader, /if\(!card&&!heroSlotV422\)return;/,
+  assert.match(loader, /if\(!card&&!heroSlotV422&&!pointsCardV435\)return;/,
     'the read fires for EITHER surface — the stamps card lives in a sub-page the hero does not');
   /* The card is authoritative about readiness, so a hero painted before it arrived can gain the
      Claim button — through the SAME contract and the same wiring, never a second claim path. */

@@ -290,12 +290,17 @@ test('W6I2 B3 every points expiry knob is reachable from the wizard', () => {
      the same page rather than two separate Next-throughs (owner markup 2026-08-15 photo 6). */
   assert.match(code, /\['points',\[\['earnExpiry','Earning & expiry'\],\['reward','Gifts'\]\]\]/);
   assert.match(wizard, /const expiryStepHtmlW6I2=\(\)=>\{/);
-  for (const mode of ['none', 'fixed', 'inactivity'])
+  /* nestly_v435 (owner rule 10, 2026-08-22, supersedes the 08-14 amendment's inactivity mode):
+     V1 withdraws 'inactivity' from every business surface — the engine still honours a legacy
+     row, the UI no longer offers the mode. */
+  assert.doesNotMatch(wizard, /<option value="inactivity"/,
+    'owner rule 10: the inactivity mode is withdrawn from V1 surfaces');
+  for (const mode of ['none', 'fixed'])
     assert.match(wizard, new RegExp(`<option value="${mode}"\\$\\{state\\.expiryMode==='${mode}'`),
       `the ${mode} expiry mode must be offered`);
   // Yearly is fixed + 365, exactly as the amendment spells it — never a fourth mode.
   assert.match(wizard, /else if\(preset==='year'\)\{state\.expiryMode='fixed';state\.expiryDays=365\}/);
-  assert.match(wizard, /else \{state\.expiryMode='inactivity';state\.expiryDays=365\}/);
+  assert.doesNotMatch(wizard, /state\.expiryMode='inactivity'/);
   // Same days-required helper the deep editor uses, so the two surfaces cannot disagree.
   assert.match(wizard, /const needsDays=expiryModeRequiresDays\(state\.expiryMode\);/);
   assert.match(wizard, /if\(expiryModeRequiresDays\(state\.expiryMode\)&&!\(Number\(state\.expiryDays\)>0\)\)\{/);
@@ -862,8 +867,22 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
   assert.match(confirmHandler, /const \{ok,error,cancelled,data\}=await writeProgrammeSwitchesWithStampConversionV384\(set,\{paused:false,key:crypto\.randomUUID\(\)\}\);/);
   assert.match(code, /async function writeProgrammeSwitchesWithStampConversionV384\(set,\{paused=false,key=null\}=\{\}\)\{\s*if\(set\?\.stamps===true&&paused!==true\)\{/,
     'the stamp-conversion dialog is reached only when stamps are being turned ON and left running');
-  assert.match(code, /\n  return writeProgrammeSwitchesV314\(S\.biz\.id,set,\{paused,key\}\);\n\}/,
-    'every other switch falls through to the ordinary one-call spine write, unchanged');
+  /* nestly_v435: the fall-through gained the REVERSE review (switching to points while stamps
+     runs states that stamps and earned gifts are KEPT — simulation A8) and the tiers-off
+     reminder after the write. What this pin protects is unchanged: exactly ONE plain
+     writeProgrammeSwitchesV314 call serves every non-stamps switch, and the two additions are
+     gated on `set?.points===true` — a referral (or any other) switch takes the same single
+     spine write it always did, with no dialog and no toast. */
+  assert.match(code, /const resultV435=await writeProgrammeSwitchesV314\(S\.biz\.id,set,\{paused,key\}\);/,
+    'every other switch falls through to the ordinary one-call spine write');
+  assert.match(code, /if\(set\?\.points===true&&paused!==true&&stampsRunningBeforeV435\)\{/,
+    'the kept-stamps review fires only when points goes ON over a running stamp card');
+  assert.match(code, /&&tiersOnBeforeV435&&set\?\.tiers!==true\)\{/,
+    'the tiers-off reminder fires only when a points switch dropped a running tiers programme');
+  const fallThroughV435=code.slice(code.indexOf('async function writeProgrammeSwitchesWithStampConversionV384'),
+    code.indexOf('function openBookingRequestPopupV329(row){'));
+  assert.equal((fallThroughV435.match(/writeProgrammeSwitchesV314\(/g)||[]).length,1,
+    'exactly one plain spine write in the wrapper — nothing else re-routes');
   /* nestly_v429 (B3 site 1): the two halves still move together, but they do so INSIDE
      set_programmes_v314 — v425 makes that function write referral_programs.enabled in the same
      transaction as the spine row, which is strictly stronger than the client write this line used

@@ -230,7 +230,7 @@ test('V323 the loader replaces the v310 card only on a clean answer, and never b
   assert.ok(Number.isFinite(anyCardMutation), 'the loader must mutate the card at some point');
 
   for (const guard of [
-    'if(!card&&!heroSlotV422)return;',     // neither surface this read serves is on the page
+    'if(!card&&!heroSlotV422&&!pointsCardV435)return;', /* nestly_v435: the kept-note also fires this read in points mode */     // neither surface this read serves is on the page
     'if(error)return;',                    // an old server behind a new bundle: no such RPC
     'if(!card||!card.isConnected)return;', // the hero was served; there is no stamps CARD to edit
     'if(!quest||!quest.running)return;'    // no card, a foreign contract, or a PAUSED programme

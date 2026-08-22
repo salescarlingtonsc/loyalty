@@ -544,7 +544,7 @@
     {
       "id": "db.fn:app.on_sale_recorded/0",
       "surface": "db_trigger_function",
-      "latest_file": "20260822000005_nestly_v425_referral_explicit_reward_type.sql",
+      "latest_file": "20260822000013_nestly_v436_stamp_earn_pinned_and_lazy_close.sql",
       "rows_written": "points_batches:INSERT, points_ledger:INSERT",
       "detected_signals": "idem-signal, config-version, sale-policy, effective-branch-module",
       "loyalty_boundary": "V121 permits a new points/stamps earn only when app.effective_platform_module_mode_v94(sale.business_id,sale.branch_id,'loyalty') resolves exactly rw. Disabled or read-only Loyalty preserves the sale, visit/retention processing and existing balances but creates no new points_ledger or points_batches earn.",
@@ -573,7 +573,7 @@
     {
       "id": "db.fn:app.redeem_reward_core/7",
       "surface": "db_function",
-      "latest_file": "20260821000007_nestly_v416_stamp_cycle_config_pin.sql",
+      "latest_file": "20260822000012_nestly_v435_stamp_cycle_expiry.sql",
       "rows_written": "credit_ledger:INSERT, loyalty_operations:INSERT/UPDATE, loyalty_redemption_batch_drains:INSERT, loyalty_redemption_provenance:INSERT, loyalty_redemptions:INSERT, points_batches:UPDATE, points_ledger:INSERT",
       "detected_signals": "idem-signal, for-update, config-version",
       "entry_point": "app.redeem_reward_core (internal reward redemption engine)",

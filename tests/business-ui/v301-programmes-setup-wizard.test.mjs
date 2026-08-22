@@ -836,11 +836,11 @@ test('W6I2 (g) every expiry knob is reachable — owner amendment 2026-08-14', (
   // The DB's own three modes, in the deep editor's own words.
   assert.match(wizard, /<option value="none"\$\{state\.expiryMode==='none'\?' selected':''\}>Never expire<\/option>/);
   assert.match(wizard, /Fixed shelf life from earn \(oldest expire first\)/);
-  assert.match(wizard, /Expire after inactivity \(clock resets on every earn\)/);
+  assert.doesNotMatch(wizard, /Expire after inactivity/); /* nestly_v435: owner rule 10 withdraws the mode */
   // Yearly is fixed + 365, exactly as the amendment spells it — not a fourth mode.
   assert.match(wizard, /else if\(preset==='year'\)\{state\.expiryMode='fixed';state\.expiryDays=365\}/);
   assert.match(wizard, /One year \(365 days\)/);
-  assert.match(wizard, /After 365 quiet days/);
+  assert.doesNotMatch(wizard, /After 365 quiet days/);
   // The days field follows the SAME helper the deep editor's lx/lxd pair follows.
   assert.match(wizard, /const needsDays=expiryModeRequiresDays\(state\.expiryMode\);/);
   assert.match(wizard, /if\(expiryModeRequiresDays\(state\.expiryMode\)&&!\(Number\(state\.expiryDays\)>0\)\)\{/);

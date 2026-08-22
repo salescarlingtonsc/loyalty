@@ -1796,6 +1796,10 @@ const OWNER_ERROR_NOISE_RULES_V170=[
      customer list should have been. These are precise server codes and correct ones, but they
      are not sentences. They are translated here rather than at each call site so every surface
      that surfaces a server error gets the plain-English version. */
+  /* nestly_v435: the virgin-tenant dead end. Every stamp/gift editor needs one published
+     configuration to version-forward from; before the first Go-live the raw server message read
+     like a fault. Point the owner at the step that mints it. */
+  [/no published loyalty configuration yet/i,'Finish setting up first: open Rewards and run the setup wizard to Go live. After that, everything here saves normally.'],
   [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
   [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
   [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
@@ -4527,6 +4531,28 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
     stampsQuestAllClaimed:'Every gift on this card is collected.',
+    /* nestly_v435 — the card's clock and the paused-card promise (owner rules 4/7/15). */
+    stampsCardExpires:'Complete your card by {date} — stamps on it lapse after that.',
+    stampsCardExpired:'This card has expired. Gifts you already earned are safe to claim; new stamps start a fresh card.',
+    stampsKeptWhilePaused:'Stamp collecting is paused. Your {count} stamps and any earned gifts are kept.',
+    /* nestly_v435 — the "?" explainer sheets (owner rule 15; templates are the owner's own). */
+    expTitle:'How it works',
+    expStampSpend:'Spend {amount} to collect 1 stamp.',
+    expStampPinned:'Your current Stamp Card keeps the rewards and rules that applied when you started it.',
+    expStampNewRules:'If this business updates its Stamp Card, the new rules apply from your next card, after your current one is completed or expires.',
+    expStampValidity:'Your current card is valid for {days} days from the day you collect your first stamp.',
+    expStampExpiryReset:'If the card expires, unfinished stamp progress resets. Rewards you already earned remain available to redeem.',
+    expPointsExpiry:'Points expire {days} days after you earn them.',
+    expPointsNever:'Points do not expire at this business.',
+    expPointsBatch:'Each batch of points has its own expiry date.',
+    expPointsFefo:'When you redeem points, the points expiring soonest are used first — automatically.',
+    expPointsNext:'Your next points expiry: {date}.',
+    expTierBasis:'Your tier is based on your total {basis} with this business.',
+    expTierNoDrop:'Once you reach a tier, redeeming or expiring points does not lower it.',
+    expTierAuto:'Higher tiers unlock automatically when you reach their target.',
+    expBasisPoints:'points earned',
+    expBasisVisits:'visits',
+    expBasisSpend:'spending',
     pointsRemaining:'{count} more for {gift}.',
     pointsReady:'{gift} is ready to claim.',
     tierDistance:'{count} more {unit} to {tier}.',
@@ -4732,6 +4758,26 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
     stampsQuestAllClaimed:'这张卡上的礼品都已领取。',
+    stampsCardExpires:'请在 {date} 前集满这张卡——之后卡上的章将失效。',
+    stampsCardExpired:'这张卡已过期。已赚取的礼品仍可领取；新的章将开始新卡。',
+    stampsKeptWhilePaused:'集章暂停中。您的 {count} 个章和已赚取的礼品都会保留。',
+    expTitle:'规则说明',
+    expStampSpend:'每消费 {amount} 集 1 个章。',
+    expStampPinned:'您当前的集章卡保留开卡时的礼品和规则。',
+    expStampNewRules:'如果商家更新集章卡，新规则将在您完成或到期当前卡后，从下一张卡开始适用。',
+    expStampValidity:'当前卡自您集到第一个章起 {days} 天内有效。',
+    expStampExpiryReset:'如果卡到期，未完成的集章进度将重置。您已赚取的礼品仍可领取。',
+    expPointsExpiry:'积分在获得后 {days} 天到期。',
+    expPointsNever:'此商家的积分不会过期。',
+    expPointsBatch:'每批积分都有自己的到期日。',
+    expPointsFefo:'兑换时会自动优先使用最先到期的积分。',
+    expPointsNext:'您最近的积分到期日：{date}。',
+    expTierBasis:'您的等级基于您在此商家的累计{basis}。',
+    expTierNoDrop:'达到等级后，兑换或积分过期都不会降级。',
+    expTierAuto:'达到目标后将自动解锁更高等级。',
+    expBasisPoints:'获得积分',
+    expBasisVisits:'到访次数',
+    expBasisSpend:'消费金额',
     pointsRemaining:'再要 {count} 即可换{gift}。',
     pointsReady:'{gift}已可领取。',
     tierDistance:'再要 {count} {unit}即可升到{tier}。',
@@ -4934,6 +4980,26 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
     stampsQuestAllClaimed:'Semua hadiah pada kad ini sudah dituntut.',
+    stampsCardExpires:'Lengkapkan kad anda sebelum {date} — cop padanya luput selepas itu.',
+    stampsCardExpired:'Kad ini telah luput. Hadiah yang sudah anda peroleh masih boleh dituntut; cop baharu memulakan kad baharu.',
+    stampsKeptWhilePaused:'Kutipan cop dijeda. {count} cop anda dan hadiah yang diperoleh disimpan.',
+    expTitle:'Cara ia berfungsi',
+    expStampSpend:'Belanja {amount} untuk mengumpul 1 cop.',
+    expStampPinned:'Kad Cop semasa anda mengekalkan hadiah dan peraturan yang terpakai semasa anda memulakannya.',
+    expStampNewRules:'Jika perniagaan ini mengemas kini Kad Copnya, peraturan baharu terpakai dari kad anda yang seterusnya, selepas kad semasa anda lengkap atau luput.',
+    expStampValidity:'Kad semasa anda sah selama {days} hari dari hari anda mengumpul cop pertama.',
+    expStampExpiryReset:'Jika kad luput, kemajuan cop yang belum selesai ditetapkan semula. Hadiah yang sudah anda peroleh masih boleh ditebus.',
+    expPointsExpiry:'Mata luput {days} hari selepas anda memperolehnya.',
+    expPointsNever:'Mata tidak luput di perniagaan ini.',
+    expPointsBatch:'Setiap kelompok mata ada tarikh luputnya sendiri.',
+    expPointsFefo:'Semasa menebus, mata yang paling hampir luput digunakan dahulu — secara automatik.',
+    expPointsNext:'Luput mata terdekat anda: {date}.',
+    expTierBasis:'Peringkat anda berdasarkan jumlah {basis} anda dengan perniagaan ini.',
+    expTierNoDrop:'Setelah mencapai peringkat, menebus atau mata luput tidak menurunkannya.',
+    expTierAuto:'Peringkat lebih tinggi terbuka secara automatik apabila anda mencapai sasarannya.',
+    expBasisPoints:'mata terkumpul',
+    expBasisVisits:'lawatan',
+    expBasisSpend:'perbelanjaan',
     pointsRemaining:'{count} lagi untuk {gift}.',
     pointsReady:'{gift} sedia untuk dituntut.',
     tierDistance:'{count} {unit} lagi ke {tier}.',
@@ -5136,6 +5202,26 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
     stampsQuestAllClaimed:'இந்த அட்டையின் அனைத்துப் பரிசுகளும் பெறப்பட்டன.',
+    stampsCardExpires:'{date}க்குள் உங்கள் அட்டையை நிறைவு செய்யுங்கள் — அதன் பிறகு அதிலுள்ள முத்திரைகள் காலாவதியாகும்.',
+    stampsCardExpired:'இந்த அட்டை காலாவதியானது. நீங்கள் ஏற்கனவே பெற்ற பரிசுகள் பாதுகாப்பாக உள்ளன; புதிய முத்திரைகள் புதிய அட்டையைத் தொடங்கும்.',
+    stampsKeptWhilePaused:'முத்திரை சேகரிப்பு இடைநிறுத்தப்பட்டுள்ளது. உங்கள் {count} முத்திரைகளும் பெற்ற பரிசுகளும் பாதுகாக்கப்படும்.',
+    expTitle:'இது எப்படி வேலை செய்கிறது',
+    expStampSpend:'{amount} செலவழித்து 1 முத்திரை சேகரியுங்கள்.',
+    expStampPinned:'உங்கள் தற்போதைய முத்திரை அட்டை, நீங்கள் தொடங்கியபோது இருந்த பரிசுகளையும் விதிகளையும் வைத்திருக்கும்.',
+    expStampNewRules:'இந்த வணிகம் தனது முத்திரை அட்டையைப் புதுப்பித்தால், உங்கள் தற்போதைய அட்டை நிறைவடைந்த அல்லது காலாவதியான பிறகு, அடுத்த அட்டையிலிருந்து புதிய விதிகள் பொருந்தும்.',
+    expStampValidity:'உங்கள் தற்போதைய அட்டை, முதல் முத்திரை சேகரித்த நாளிலிருந்து {days} நாட்களுக்கு செல்லுபடியாகும்.',
+    expStampExpiryReset:'அட்டை காலாவதியானால், முடிக்காத முத்திரை முன்னேற்றம் மீட்டமைக்கப்படும். நீங்கள் ஏற்கனவே பெற்ற பரிசுகள் தொடர்ந்து பெறலாம்.',
+    expPointsExpiry:'புள்ளிகள் நீங்கள் பெற்ற {days} நாட்களுக்குப் பிறகு காலாவதியாகும்.',
+    expPointsNever:'இந்த வணிகத்தில் புள்ளிகள் காலாவதியாகாது.',
+    expPointsBatch:'ஒவ்வொரு தொகுதி புள்ளிகளுக்கும் தனித்தனி காலாவதி தேதி உண்டு.',
+    expPointsFefo:'மீட்டெடுக்கும்போது, விரைவில் காலாவதியாகும் புள்ளிகள் தானாக முதலில் பயன்படுத்தப்படும்.',
+    expPointsNext:'உங்கள் அடுத்த புள்ளி காலாவதி: {date}.',
+    expTierBasis:'உங்கள் நிலை, இந்த வணிகத்துடனான உங்கள் மொத்த {basis} அடிப்படையிலானது.',
+    expTierNoDrop:'ஒரு நிலையை அடைந்த பிறகு, புள்ளிகளை மீட்பதோ காலாவதியோ அதைக் குறைக்காது.',
+    expTierAuto:'இலக்கை அடைந்ததும் உயர் நிலைகள் தானாகத் திறக்கும்.',
+    expBasisPoints:'சம்பாதித்த புள்ளிகள்',
+    expBasisVisits:'வருகைகள்',
+    expBasisSpend:'செலவு',
     pointsRemaining:'{gift} பெற இன்னும் {count} தேவை.',
     pointsReady:'{gift} பெறத் தயாராக உள்ளது.',
     tierDistance:'{tier} அடைய இன்னும் {count} {unit} தேவை.',
@@ -8161,6 +8247,50 @@ function openCustomerPointsExplainerV339(trigger){
     trigger?.remove();close();
   };
 }
+/* nestly_v435 (owner rule 15): the "?" explainers, on the v339 sheet infrastructure the ruling
+   asked to resurrect rather than a new system. One parameterized sheet, three surfaces (stamp
+   card / points / tier), every number SERVER-FED — spend-per-stamp and validity from the pinned
+   version the customer's own card reader returns, points expiry days from the wallet payload,
+   tier basis from the canonical tier resolver. No localStorage dismissal: these open on demand
+   and close, they are not a one-time banner. */
+/* No module state and no shared helper on purpose: the customer card renderers are executed in
+   isolation by a dozen extraction harnesses, so the trigger carries its OWN facts as data-*
+   attributes and this opener reads them back. The card functions emit plain markup only. */
+function openCustomerExplainerV435(trigger){
+  const d=trigger?.dataset||{};
+  const kind=String(d.customerExplainerV435||'');
+  const lines=[];
+  if(kind==='stamps'){
+    const spend=Number(d.expSpend)||0,validity=Number(d.expValidity)||0;
+    if(spend>0)lines.push(ct('expStampSpend',{amount:`${d.expCurrency||'SGD'} ${(spend/100).toFixed(2)}`}));
+    lines.push(ct('expStampPinned'),ct('expStampNewRules'));
+    if(validity>0)lines.push(ct('expStampValidity',{days:validity}),ct('expStampExpiryReset'));
+  }else if(kind==='points'){
+    const days=Number(d.expDays)||0;
+    if(d.expMode==='fixed'&&days>0)lines.push(ct('expPointsExpiry',{days}),ct('expPointsBatch'),ct('expPointsFefo'));
+    else if(d.expMode==='fixed')lines.push(ct('expPointsBatch'),ct('expPointsFefo'));
+    else lines.push(ct('expPointsNever'));
+    if(d.expNext)lines.push(ct('expPointsNext',{date:walletDate(d.expNext)}));
+  }else if(kind==='tier'){
+    const basisWord=d.expBasis==='points_earned'?ct('expBasisPoints'):d.expBasis==='spend'?ct('expBasisSpend'):ct('expBasisVisits');
+    lines.push(ct('expTierBasis',{basis:basisWord}),ct('expTierNoDrop'),ct('expTierAuto'));
+  }
+  if(!lines.length)return;
+  $('customerExplainerModalV435')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerExplainerModalV435" role="dialog" aria-modal="true" aria-labelledby="customerExplainerTitleV435" tabindex="-1"><div class="modal-card" style="max-width:460px">
+    <div class="row"><h2 id="customerExplainerTitleV435">${esc(ct('expTitle'))}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerExplainerCloseV435" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
+    ${lines.map(line=>`<p class="muted" style="margin-top:12px">${esc(line)}</p>`).join('')}
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('customerExplainerModalV435')?.remove()};
+  deactivate=CUI.activateDialog($('customerExplainerModalV435'),{onClose:close,initialFocus:'#customerExplainerCloseV435'});
+  $('customerExplainerCloseV435').onclick=close;
+}
+/* typeof-guarded: several extraction harnesses evaluate this region without a DOM. */
+if(typeof document!=='undefined')document.addEventListener('click',event=>{
+  const trigger=event.target?.closest?.('[data-customer-explainer-v435]');
+  if(trigger)openCustomerExplainerV435(trigger);
+});
 function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},bookingEnabled=false}={}){
   let body='';
   if(status==='error')body='<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>';
@@ -8699,6 +8829,11 @@ function stampQuestNormaliseV323(card){
     carried:slots>0?Math.max(filled-slots,0):0,
     cycle:whole(card.cycle_index),
     running:card.running!==false,
+    /* nestly_v435: the card's own clock, from the version this card started under. */
+    validityDays:whole(card.validity_days),
+    expiresAt:card.expires_at||null,
+    expired:card.expired===true,
+    spendPerCents:whole(card.spend_per_stamp_cents),
     ready:card.ready===true,
     potMigrated:card.pot_migrated===true,
     milestones,
@@ -8742,9 +8877,19 @@ function customerStampQuestBodyV323(quest){
         rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`:''}</li>`).join('')
     }</ul>`
     :'';
+  /* nestly_v435: the card's clock (owner rules 4/15) and the paused-card promise (rule 7). The
+     expiry line renders only while a clock is actually running (validity set AND stamps on the
+     card); an expired flag outranks it. The kept line renders whenever collecting is off but the
+     customer still holds stamps — their value does not vanish with the switch. */
+  const expiryLineV435=quest.expired?ct('stampsCardExpired')
+    :(quest.expiresAt&&quest.filled>0&&quest.validityDays>0)?ct('stampsCardExpires',{date:walletDate(quest.expiresAt)})
+    :'';
+  const keptLineV435=(!quest.running&&quest.filled>0)?ct('stampsKeptWhilePaused',{count:customerPointTotalV103(quest.shown)}):'';
   return `${figure}
     <p class="muted small customer-programme-card-line-v310" data-stamp-quest-line-v323="progress">${esc(progress)}</p>
     <p class="muted small" data-stamp-quest-line-v323="next">${esc(nextLine)}</p>
+    ${expiryLineV435?`<p class="muted small" data-stamp-quest-line-v323="expiry">${esc(expiryLineV435)}</p>`:''}
+    ${keptLineV435?`<p class="muted small" data-stamp-quest-line-v323="kept">${esc(keptLineV435)}</p>`:''}
     ${quest.carried>0?`<p class="muted small" data-stamp-quest-line-v323="carried">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
     ${ladder}`;
 }
@@ -8752,8 +8897,11 @@ function customerStampQuestBodyV323(quest){
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
 function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false,expiry=null}){
   const paused=entry?.active===false||loyalty.enabled===false;
+  /* nestly_v435 (rule 15): the "?" trigger carries its server-fed facts as data-* so the opener
+     (openCustomerExplainerV435) needs nothing from this render's scope. */
+  const explainerV435=paused?'':`<button type="button" class="btn ghost sm customer-explainer-trigger-v435" data-customer-explainer-v435="points" data-exp-mode="${esc(String(expiry?.mode||'none'))}" data-exp-days="${esc(String(Number(expiry?.days)||0))}" data-exp-next="${esc(String(expiry?.next_expiry_at||''))}" aria-label="${esc(ct('expTitle'))}" style="margin-left:auto;min-width:30px;padding:2px 7px">${CUI.icon('info',{size:16})}</button>`;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span>${explainerV435}</h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
       :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,expiry,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
@@ -8812,6 +8960,7 @@ function customerProgrammeTierCardV310({tier={},entry=null,pointsCardPresent=fal
     <div class="customer-tier-card-head-v339">
       <span class="customer-tier-avatar-v339" aria-hidden="true">${CUI.icon(avatarIconV339,{size:20})}</span>
       <h2 class="customer-programme-card-head-v310"><span>${esc(ct('tierCardTitle'))}</span></h2>
+      ${paused?'':`<button type="button" class="btn ghost sm customer-explainer-trigger-v435" data-customer-explainer-v435="tier" data-exp-basis="${esc(basisV339)}" aria-label="${esc(ct('expTitle'))}" style="margin-left:auto;min-width:30px;padding:2px 7px">${CUI.icon('info',{size:16})}</button>`}
     </div>
     ${paused?customerProgrammePausedMarkupV310(entry):`${customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
     ${standingV339?`<p class="muted small customer-tier-standing-v339">${esc(standingV339)}</p>`:''}
@@ -11317,11 +11466,21 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        stamps card lives inside a shortcut sub-page, and requiring the card would have left the
        hero on its wallet-derived guess forever. */
     const heroSlotV422=document.querySelector('[data-hero-stamp-slot-host-v422]');
-    if(!card&&!heroSlotV422)return;
+    /* nestly_v435 (owner rule 7, simulation A8): after a stamps→points switch the customer's
+       frozen stamps were INVISIBLE — no card, no note, nothing saying their value was kept. The
+       reader now also runs when the points card is mounted, purely to render the one-line "kept"
+       note below when a stopped stamp programme still holds the customer's stamps. */
+    const pointsCardV435=document.querySelector('[data-programme-card="points"]');
+    if(!card&&!heroSlotV422&&!pointsCardV435)return;
     const {data,error}=await customerRpc('customer_get_stamp_card_v323',{p_business_slug:businessSlug});
     if(!isWalletCurrent())return;
     if(error)return;
     const quest=stampQuestNormaliseV323(data);
+    if(!card&&pointsCardV435&&pointsCardV435.isConnected&&quest&&!quest.running&&quest.filled>0
+       &&!quest.potMigrated&&!document.querySelector('[data-stamps-kept-note-v435]')){
+      pointsCardV435.insertAdjacentHTML('afterend',
+        `<p class="muted small" data-stamps-kept-note-v435 style="margin:8px 4px 0">${esc(ct('stampsKeptWhilePaused',{count:customerPointTotalV103(quest.shown)}))}</p>`);
+    }
     /* THE HERO. Drawn from the card's real slots and milestones, replacing the rings that were
        sized by one reward's cost. A quest that is not running leaves the painted figure alone —
        same rule the card below follows. pot_migrated is deliberately NOT a gate here: the owner
@@ -11364,6 +11523,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       card.remove();
       return;
     }
+    /* nestly_v435 (rule 15): the stamp "?" trigger rides the card's head and carries the PINNED
+       version's own spend-per-stamp and validity from this payload as data-* facts. */
+    const stampsHeadV435=card.querySelector('.customer-programme-card-head-v310');
+    if(stampsHeadV435&&!stampsHeadV435.querySelector('[data-customer-explainer-v435]'))
+      stampsHeadV435.insertAdjacentHTML('beforeend',
+        `<button type="button" class="btn ghost sm customer-explainer-trigger-v435" data-customer-explainer-v435="stamps" data-exp-spend="${esc(String(quest.spendPerCents||0))}" data-exp-validity="${esc(String(quest.validityDays||0))}" data-exp-currency="${esc(String(b?.currency||'SGD'))}" aria-label="${esc(ct('expTitle'))}" style="margin-left:auto;min-width:30px;padding:2px 7px">${CUI.icon('info',{size:16})}</button>`);
     const figure=card.querySelector('.customer-programme-stamp-rings, .customer-programme-stamp-count');
     const line=card.querySelector('.customer-programme-card-line-v310');
     if(!line)return;
@@ -11883,6 +12048,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           </div></article>`;
         }
         const earned=Number(item.points_earned||0),redeemed=Number(item.points_redeemed||0),removed=Number(item.points_removed||0);
+        /* nestly_v437 (owner rule 13): the noun follows the ROW's own pot, never the live
+           programme — "+3 stamps" earned on the stamp card stays "+3 stamps" after a switch to
+           points. The server resolves loyalty_unit from points_ledger.programme_id. */
+        const unitNounV437=n=>`${item.loyalty_unit==='stamps'?'stamp':'point'}${Number(n)===1?'':'s'}`;
         const gross=item.gross_cents===null||item.gross_cents===undefined?null:Number(item.gross_cents);
         const net=item.net_cents===null||item.net_cents===undefined?null:Number(item.net_cents);
         const lines=Array.isArray(item.line_items)?item.line_items:[];
@@ -11890,7 +12059,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:'';
         return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
-          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} points earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} points redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} points removed</span>`:''}</p>`:''}
+          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       };
@@ -14609,7 +14778,23 @@ async function writeProgrammeSwitchesWithStampConversionV384(set,{paused=false,k
     rememberProgrammeSpineV314(data?.programmes);
     return {ok:true,skipped:false,error:null,data};
   }
-  return writeProgrammeSwitchesV314(S.biz.id,set,{paused,key});
+  /* nestly_v435 (simulation A8): the REVERSE direction gets its review too. Switching to points
+     while stamps is running used to say nothing about the customers' existing stamp value, and
+     a round trip left tiers silently off (the Diamond-vanishes surprise). Both facts are said
+     out loud now — before the write, and after it. Spine state is read BEFORE the write, because
+     the write's reply overwrites the cache. */
+  const stampsRunningBeforeV435=(S.programmes||[]).some(row=>row?.kind==='stamps'&&row.active);
+  const tiersOnBeforeV435=(S.programmes||[]).some(row=>row?.kind==='tiers'&&row.active);
+  if(set?.points===true&&paused!==true&&stampsRunningBeforeV435){
+    if(!await confirmActionV386('Switch customers to Points? Stamp collecting stops, but customers keep their stamps and any gifts they already earned — those can still be claimed at the counter. If you switch back later, their card continues.'))
+      return {ok:false,cancelled:true,skipped:true,error:null};
+  }
+  const resultV435=await writeProgrammeSwitchesV314(S.biz.id,set,{paused,key});
+  if(resultV435.ok&&!resultV435.skipped&&set?.points===true&&paused!==true
+     &&tiersOnBeforeV435&&set?.tiers!==true){
+    toast('Points are running. Tiers switched OFF with this change — turn them back on from the Tiers page if you still want them.');
+  }
+  return resultV435;
 }
 function openBookingRequestPopupV329(row){
   if($('bookingRequestPopupV329'))return;
@@ -17840,7 +18025,7 @@ async function clientDetail(id){
       ?`1 stamp for every ${money(prog.stamp_per_cents||500)} spent`
       :`${Number(prog.earn_points_per_dollar)||0} points for every SGD 1 spent`;
     let nextCopy='No reward milestone has been added yet.';
-    if(!redemptionEnabled)nextCopy='Redemption is currently unavailable.';
+    if(!redemptionEnabled)nextCopy='Customer redemption is switched off. Turn it on under Customer Interface → Customer Action.';
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
       ?`${projectedNextReward.name||'Reward'} is ready now`
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
@@ -20093,6 +20278,13 @@ async function tillPage(){
     const redeemableGroupsV432=groupRedeemableRewardsV432(affordableV392);
     const nextUpV392=giftsV392.filter(gift=>gift.available_now!==true&&gift.availability==='insufficient_balance')
       .sort((a,b)=>(Number(a.remaining_units)||0)-(Number(b.remaining_units)||0))[0]||null;
+    /* nestly_v435 (simulation P1): with the redemption capability OFF the till used to show
+       nothing at all here, and staff had no way to know WHY a customer with a full card had no
+       redeem button. Name the switch and where it lives. */
+    const redemptionOffHintV435=(giftProjectionV392&&giftProjectionV392.redemption_enabled===false&&giftProjectionV392.program)
+      ?`<div class="permission-banner till-tier-benefits-v369" style="margin-bottom:14px"><b>Customer redemption is switched off.</b>
+        <p class="muted small" style="margin:5px 0">Turn it on under Customer Interface → Customer Action to redeem rewards at the counter.</p></div>`
+      :'';
     const giftsBannerV392=(redeemableGroupsV432.length||nextUpV392)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>Rewards this customer can claim</b>
         ${/* V399: this banner is the one V372 missed. .permission-banner is display:flex with the
@@ -20144,7 +20336,7 @@ async function tillPage(){
            control must not shrink what a screen reader is told about it. */''}
         ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm till-gift-scan-v399" id="tGiftScanV392" aria-label="Scan customer QR" title="Scan customer QR">${CUI.icon('scan',{size:18})}</button>`:''}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${giftsBannerV392}${pendingVouchers}`;
+    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${redemptionOffHintV435}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
@@ -22861,7 +23053,6 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             <div><label for="bo-expiry-${idx}">Expiry</label><select id="bo-expiry-${idx}" data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
               <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
               <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
-              <option value="inactivity" ${o.expiry_mode==='inactivity'?'selected':''}>After inactivity</option>
               <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
             </select></div>
             <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label for="bo-days-${idx}">Expiry days</label><input id="bo-days-${idx}" data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
@@ -23127,11 +23318,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       ${model==='stamps'?'':`<label for="lpc">Cost per point (${S.biz.currency||'SGD'})</label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
         <p class="muted small" style="margin-top:4px">What one point is worth when redeemed. Used to price every reward.</p>`}
       <details class="loyalty-advanced-v235" id="loyaltyAdvancedV235" style="margin-top:18px"><summary>Advanced settings</summary>
-      <label for="lx">${model==='stamps'?'Stamp':'Points'} expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
-        <option value="none" ${firmExpiryMode==='none'?'selected':''}>Never expire</option>
-        <option value="inactivity" ${p?.expiry_mode==='inactivity'?'selected':''}>Expire after inactivity (clock resets on every earn)</option>
+      ${model==='stamps'
+        /* nestly_v435: stamp card validity is a VERSION-pinned policy (days from the first stamp
+           of each card) and is edited on the Stamp Card page's earning rule — the points expiry
+           selector that used to sit here under a "Stamp expiry" label saved an unrelated points
+           policy (the simulation's phantom selector). */
+        ?`<p class="muted small" style="margin-top:8px">Stamp Card validity (how long a card stays open after its first stamp) is set on the Stamp Card page under <b>Edit earning rule</b>.</p>`
+        :`<label for="lx">Points expiry</label><select id="lx" aria-controls="lxdField"${loyaltyControlDisabled}>
+        <option value="none" ${firmExpiryMode!=='fixed'?'selected':''}>Never expire</option>
         <option value="fixed" ${p?.expiry_mode==='fixed'?'selected':''}>Fixed shelf life from earn (oldest expire first)</option></select>
-      <div class="expiry-days-field" id="lxdField" ${firmExpiryNeedsDays?'':'hidden'}><label for="lxd">Expiry window (days)</label><input id="lxd" data-expiry-fallback="${firmExpiryDays}" type="number" min="1" step="1" value="${firmExpiryDays}" ${firmExpiryNeedsDays?'required':'disabled'}${loyaltyControlDisabled}></div>
+      <div class="expiry-days-field" id="lxdField" ${firmExpiryNeedsDays?'':'hidden'}><label for="lxd">Expiry window (days)</label><input id="lxd" data-expiry-fallback="${firmExpiryDays}" type="number" min="1" step="1" value="${firmExpiryDays}" ${firmExpiryNeedsDays?'required':'disabled'}${loyaltyControlDisabled}></div>`}
       ${branchOverrideRows()}
       </details></div>
     <div class="card" id="loyaltyRewardEditor">
@@ -23536,8 +23732,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   });
   const loyaltySave=$('lsave');
   if(loyaltySave)loyaltySave.onclick=async()=>{
-    const expiryMode=$('lx').value,expiryDays=expiryDaysForMode(expiryMode,$('lxd'));
-    if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');$('lxd').focus();return}
+    /* nestly_v435: the stamps model no longer renders the points-expiry control here. */
+    const expiryMode=$('lx')?$('lx').value:undefined;
+    const expiryDays=expiryMode===undefined?undefined:expiryDaysForMode(expiryMode,$('lxd'));
+    if(expiryMode!==undefined&&Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');$('lxd').focus();return}
     /* V230: the three-way selection decides BOTH stores. loyalty_model goes into the draft as
        before; points_mode is the instant business switch the server enforces, so switching away
        from a chosen model asks first and states what it stops. */
@@ -23556,7 +23754,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redeem:'Switch points to reward redemption? Tiers stay saved, and stop being what customers see.',
       both:'Run points and tiers together? Customers spend points on rewards and climb tiers on the basis you chose above.'};
     if(loyaltySelectionV230!=='stamps'&&liveModeForAskV314&&targetModeV230!==liveModeForAskV314
-       &&!await confirmActionV386(modeSwitchAskV240[targetModeV230]))return;
+       /* nestly_v435 (rule 7): moving OFF a running stamp card must say what happens to the
+          customers' stamps — they are kept, and earned gifts stay claimable. */
+       &&!await confirmActionV386(`${liveModeForAskV314==='stamps'?'Customers keep their stamps and any gifts they already earned — those can still be claimed at the counter. ':''}${modeSwitchAskV240[targetModeV230]}`))return;
     const row={business_id:S.biz.id,kind:'points',active:$('la').value==='true',loyalty_model:model,
       configuration_status:'published',
       expiry_mode:expiryMode};
@@ -23616,7 +23816,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     }
     if(!switchResultV314.skipped){
       loyaltyModeDraftV230=null;
-      if($('la').value!=='true')toast('Programme paused — customers stop earning and cannot claim rewards');
+      if($('la').value!=='true')toast(model==='stamps'
+        /* nestly_v435 (rule 7): a paused stamp programme stops EARNING; gifts already earned on
+           the card remain claimable at the counter — saying otherwise here was simply untrue. */
+        ?'Programme paused — customers stop collecting stamps. Gifts they already earned can still be claimed.'
+        :'Programme paused — customers stop earning and cannot claim rewards');
       else toast(loyaltySelectionV230==='stamps'?'Customers now collect stamps'
         :targetModeV230==='tiers'?'Points now build tier membership'
         :targetModeV230==='both'?'Points buy rewards, and tiers run alongside them'
@@ -24699,7 +24903,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
      could clobber a stored target. Both are read-only additions; nothing else in this snapshot
      changes shape. */
   const loyaltyRequest=canRewards
-    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,tier_basis,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,stamp_validity_days,tier_basis,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   /* V291: credit_cents, entitlement_expiry_days, usage_limit and the tier gate join the read.
      They were already stored and already editable; only the comparison could not see them, which
@@ -26389,7 +26593,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growEarnUnitV271=(value,unit)=>`${value} ${Number(value)===1?(unit==='stamps'?'stamp':'point'):(unit==='stamps'?'stamps':'points')}`;
   const growEarnRateTextV271=earning=>{
     if(!earning)return '';
-    if(earning.model==='stamps')return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp`;
+    if(earning.model==='stamps'){
+      /* nestly_v435: the card validity is part of the earning rule the owner reads here. */
+      const validityV435=Number(snapshot.loyalty?.stamp_validity_days)||0;
+      return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp${validityV435>0?` · cards valid ${validityV435} days from the first stamp`:''}`;
+    }
     return `${growCurrencyV271} 1 spent → ${growEarnUnitV271(Math.max(0,Number(earning.rate)||0),earning.unit)}`;
   };
   const earningOverviewCopy=`Current setting: ${growEarnRateTextV271(rewardJourney.earning)}`;
@@ -27833,18 +28041,33 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      both the Points System and Stamp Card pages; which field shows follows growPointsIsStampsV326,
      because a firm running stamps sets spend-per-stamp and a firm running points sets points-per-
      dollar, and showing both would offer a knob the live engine ignores. */
+  /* nestly_v435: the two expiry policies are DIFFERENT products and no longer share a
+     selector. Points expiry is batch-anchored (mode + days, stamped on each batch at earn —
+     rule changes reach new batches only). Stamp Card validity is version-pinned (days from
+     the FIRST STAMP of a card; an open card keeps the validity it started with). The old
+     form showed the points selector under a "When stamps expire" label and saved it as
+     points policy — the "phantom selector" from the 2026-08-22 simulation. The 'inactivity'
+     points mode is withdrawn from V1 surfaces (owner rule 10); the engine still honours it
+     for any legacy row, the UI just no longer offers it. */
   const growEarnRuleFormV359=growEarnEditOpenV359?`<li class="grow-points-form-card-v343" data-grow-earn-form-v359>
     <b>Edit earning rule</b>
     ${growPointsIsStampsV326
-      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">Spend per stamp (${esc(S.biz?.currency||'SGD')})</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>`
-      :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">Points per ${esc(S.biz?.currency||'SGD')} 1 spent</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>`}
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnExpiryModeV359">When ${growPointsUnitV326}s expire</label><br>
-      <select id="growEarnExpiryModeV359" class="grow-setup-input-v301" style="width:100%;max-width:260px">
-        <option value="none"${(snapshot.loyalty?.expiry_mode||'none')==='none'?' selected':''}>Never expire</option>
-        <option value="fixed"${snapshot.loyalty?.expiry_mode==='fixed'?' selected':''}>A fixed number of days after earning</option>
-        <option value="inactivity"${snapshot.loyalty?.expiry_mode==='inactivity'?' selected':''}>After a period of no visits</option>
+      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">Spend per stamp (${esc(S.biz?.currency||'SGD')})</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnValidityModeV435">Stamp card validity</label><br>
+      <select id="growEarnValidityModeV435" class="grow-setup-input-v301" style="width:100%;max-width:260px">
+        <option value="none"${!Number(snapshot.loyalty?.stamp_validity_days)?' selected':''}>Cards never expire</option>
+        <option value="fixed"${Number(snapshot.loyalty?.stamp_validity_days)>0?' selected':''}>Cards expire some days after the first stamp</option>
       </select></p>
-    <p class="grow-setup-sentence-v301" data-grow-earn-days-v359${(snapshot.loyalty?.expiry_mode||'none')==='none'?' hidden':''}><label class="muted small" for="growEarnExpiryDaysV359">Number of days</label><br><input id="growEarnExpiryDaysV359" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.expiry_days||''))}" placeholder="e.g. 365"></p>
+    <p class="grow-setup-sentence-v301" data-grow-earn-validity-days-v435${Number(snapshot.loyalty?.stamp_validity_days)>0?'':' hidden'}><label class="muted small" for="growEarnValidityDaysV435">Days from the first stamp</label><br><input id="growEarnValidityDaysV435" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.stamp_validity_days||''))}" placeholder="e.g. 180"></p>
+    <p class="muted small" style="margin-top:8px">Changes apply to new Stamp Cards. Customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.</p>`
+      :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">Points per ${esc(S.biz?.currency||'SGD')} 1 spent</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnExpiryModeV359">When points expire</label><br>
+      <select id="growEarnExpiryModeV359" class="grow-setup-input-v301" style="width:100%;max-width:260px">
+        <option value="none"${(snapshot.loyalty?.expiry_mode||'none')!=='fixed'?' selected':''}>Never expire</option>
+        <option value="fixed"${snapshot.loyalty?.expiry_mode==='fixed'?' selected':''}>A fixed number of days after earning</option>
+      </select></p>
+    <p class="grow-setup-sentence-v301" data-grow-earn-days-v359${snapshot.loyalty?.expiry_mode==='fixed'?'':' hidden'}><label class="muted small" for="growEarnExpiryDaysV359">Number of days</label><br><input id="growEarnExpiryDaysV359" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.expiry_days||''))}" placeholder="e.g. 365"></p>
+    <p class="muted small" style="margin-top:8px">Applies to points your customers earn from now on. Points they already have keep the expiry they were earned with.</p>`}
     ${growEarnErrorV359?`<p class="notice warn small" style="margin-top:8px">${esc(growEarnErrorV359)}</p>`:''}
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-earn-save-v359="1"${growEarnBusyV359?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-earn-cancel-v359="1">Cancel</button></div>
   </li>`:'';
@@ -28110,7 +28333,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?`<button type="button" class="grow-stamps-editcell-v416 is-add-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}" aria-label="Make the card one stamp longer">+</button>`:''}
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
-    ?`${growStampsLevelsSortedV350.length} gift${growStampsLevelsSortedV350.length===1?'':'s'} on this card. When a customer fills it, it starts again with whatever you have set up then.`
+    ?`${growStampsLevelsSortedV350.length} gift${growStampsLevelsSortedV350.length===1?'':'s'} on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.`
     :`No gifts yet — a good starting point is one every ${GROW_STAMPS_DEFAULT_EVERY_V416} stamps. Tap stamp ${Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)} to begin.`}</p>`;
   /* v414's refusal, said BEFORE the owner hits it. business_set_stamp_card_length_v414 will not
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
@@ -28921,7 +29144,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        tab name in the deep-link parameter slot, and before this guard the handler built
        {surface:'overview'}, read .hash off an undefined dictionary entry, and took the whole
        workspace down with "undefined is not an object" — from the page's own tabs. */
-    if(!definition){console.error('unknown grow surface',surface);return}
+    if(!definition){
+      /* nestly_v435: #/grow/ongoing|available|settings (and plain overview) are the page's OWN
+         tab names travelling in the deep-link slot — a normal render, not a fault. The console
+         noise (22 errors on one Overview visit in the 2026-08-22 simulation) buried real errors.
+         Anything else in the slot is still worth shouting about. */
+      if(!['overview','ongoing','available','settings',''].includes(String(surface||'')))console.error('unknown grow surface',surface);
+      return
+    }
     $('growOverview')?.classList.add('grow-editor-active');
     const protectedStudioReview=surface==='studio'&&draft&&sessionStorage.getItem(`nestly:grow-publish-review:${draft}`)==='1';
     const suffix=draft&&(['rewards','winback'].includes(surface)||protectedStudioReview)?`/${draft}`:'';
@@ -29617,29 +29847,43 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const wrap=outerMain.querySelector('[data-grow-earn-days-v359]');
     if(wrap)wrap.hidden=growEarnModeSel.value==='none';
   };
+  const growEarnValiditySel=$('growEarnValidityModeV435');
+  if(growEarnValiditySel)growEarnValiditySel.onchange=()=>{
+    const wrap=outerMain.querySelector('[data-grow-earn-validity-days-v435]');
+    if(wrap)wrap.hidden=growEarnValiditySel.value==='none';
+  };
   const growEarnSave=outerMain.querySelector('[data-grow-earn-save-v359]');
   if(growEarnSave)growEarnSave.onclick=async()=>{
     if(growEarnBusyV359)return;
-    const mode=String($('growEarnExpiryModeV359')?.value||'none');
-    const daysRaw=String($('growEarnExpiryDaysV359')?.value||'').trim();
-    let days=null;
-    if(mode!=='none'){
-      days=Math.round(Number(daysRaw));
-      if(!Number.isFinite(days)||days<1||days>3650){growEarnErrorV359='Enter a number of days between 1 and 3650.';return growRerenderV322({quiet:true});}
-    }
-    let pointsRate=null,stampCents=null;
+    /* nestly_v435: stamps and points send DIFFERENT policies. Stamps: spend-per-stamp + card
+       validity (p_stamp_validity_days, 0 = never; version-pinned server-side). Points: rate +
+       batch expiry (p_expiry_mode/p_expiry_days). Neither touches the other's fields. */
+    let pointsRate=null,stampCents=null,mode=null,days=null,validityDays=null;
     if(growPointsIsStampsV326){
       const spend=Number(String($('growEarnStampV359')?.value||'').trim());
       if(!Number.isFinite(spend)||spend<=0){growEarnErrorV359='Spend per stamp must be more than zero.';return growRerenderV322({quiet:true});}
       stampCents=Math.round(spend*100);
+      const validityMode=String($('growEarnValidityModeV435')?.value||'none');
+      if(validityMode==='none')validityDays=0;
+      else{
+        validityDays=Math.round(Number(String($('growEarnValidityDaysV435')?.value||'').trim()));
+        if(!Number.isFinite(validityDays)||validityDays<1||validityDays>3650){growEarnErrorV359='Enter a card validity between 1 and 3650 days.';return growRerenderV322({quiet:true});}
+      }
     }else{
+      mode=String($('growEarnExpiryModeV359')?.value||'none');
+      if(mode!=='none'){
+        days=Math.round(Number(String($('growEarnExpiryDaysV359')?.value||'').trim()));
+        if(!Number.isFinite(days)||days<1||days>3650){growEarnErrorV359='Enter a number of days between 1 and 3650.';return growRerenderV322({quiet:true});}
+      }
       pointsRate=Number(String($('growEarnPointsV359')?.value||'').trim());
       if(!Number.isFinite(pointsRate)||pointsRate<=0){growEarnErrorV359='Points per dollar must be more than zero.';return growRerenderV322({quiet:true});}
     }
     growEarnBusyV359=true;growEarnErrorV359='';growRerenderV322({quiet:true});
-    const {error}=await sb.rpc('business_set_earning_rule_v359',{p_business:S.biz.id,
+    const earnSaveCallV435=await sb.rpc('business_set_earning_rule_v359',{p_business:S.biz.id,
       p_earn_points_per_dollar:pointsRate,p_stamp_per_cents:stampCents,
-      p_expiry_mode:mode,p_expiry_days:days});
+      p_expiry_mode:mode,p_expiry_days:days,p_stamp_validity_days:validityDays});
+    const earnSaveV435=earnSaveCallV435.data;
+    const error=earnSaveCallV435.error;
     if(!isGrowCurrent())return;
     growEarnBusyV359=false;
     if(error){growEarnErrorV359=ownerErrorText(error);return growRerenderV322({quiet:true});}
@@ -29647,9 +29891,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!snapshot.loyalty)snapshot.loyalty={};
     if(pointsRate!=null)snapshot.loyalty.earn_points_per_dollar=pointsRate;
     if(stampCents!=null)snapshot.loyalty.stamp_per_cents=stampCents;
-    snapshot.loyalty.expiry_mode=mode;snapshot.loyalty.expiry_days=days;
+    if(mode!=null){snapshot.loyalty.expiry_mode=mode;snapshot.loyalty.expiry_days=days}
+    if(validityDays!=null)snapshot.loyalty.stamp_validity_days=validityDays||null;
     growEarnEditOpenV359=false;
-    toast('Earning rule saved');
+    /* nestly_v433: a stamp-shape edit can come back publish_status='pending' with owner-language
+       blockers ("add a gift at stamp 6 to finish this change"). Saved-but-pending is a state the
+       owner must SEE, not a silent success. */
+    if(earnSaveV435?.publish_status==='pending'){
+      const blockerV433=(earnSaveV435.blockers||[]).map(b=>b?.message).filter(Boolean).join(' · ');
+      toast(blockerV433?`Saved — ${blockerV433}`:'Saved — one more step needed before this goes live');
+    }else{
+      toast('Earning rule saved');
+    }
     growRerenderV322({quiet:true});
   };
   /* V343: two elements can now carry data-grow-points-add-v326 — the header's own "Add gifts"
@@ -29700,19 +29953,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* nestly_v422: ONE write, two ways in — the steppers below and the typed field above both call
      this. Keeping it a single function is the point: a second copy would be a second place for the
      server's stranded-gift refusal to be handled differently. */
+  /* nestly_v433: every stamp edit version-forwards, and a half-finished two-part change (length
+     without a final gift at the new end, or vice versa) comes back publish_status='pending' with
+     owner-language blockers. Saved-but-pending must be SEEN, never rendered as a plain success. */
+  const growStampPublishToastV433=(res,fallback)=>{
+    if(res?.publish_status==='pending'){
+      const msg=(res.blockers||[]).map(b=>b?.message).filter(Boolean).join(' · ');
+      toast(msg?`Saved — ${msg}`:'Saved — one more step needed before this goes live');
+      return;
+    }
+    toast(fallback);
+  };
   const growStampsSetLengthV422=async next=>{
     if(growPointsBusyV326)return;
     if(!(next>=1))return;
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
-    const {error}=await sb.rpc('business_set_stamp_card_length_v414',
+    const lenCallV433=await sb.rpc('business_set_stamp_card_length_v414',
       {p_business:S.biz.id,p_stamps:next});
+    const lenResV433=lenCallV433.data;
+    const error=lenCallV433.error;
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the grid redraws at the new length without a second read — the same pattern
        the model switch uses. The snapshot is refetched on the next full load either way. */
     if(snapshot.loyalty)snapshot.loyalty.stamp_target=next;else snapshot.loyalty={stamp_target:next};
-    toast(workspaceTemplateTextV97('stampCardLength',{stamps:next}));
+    growStampPublishToastV433(lenResV433,workspaceTemplateTextV97('stampCardLength',{stamps:next}));
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-stamps-len-v416]').forEach(button=>button.onclick=()=>
@@ -29796,15 +30062,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(!isGrowCurrent())return;
     }
     let error;
+    let saveResV433;
     if(growPointsEditingV326){
-      ({error}=await sb.rpc('business_update_reward_v326',{
+      ({data:saveResV433,error}=await sb.rpc('business_update_reward_v326',{
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
         p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
-      ({error}=await sb.rpc('business_create_reward_v326',{
+      ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
         p_description:description||null,p_image_ref:imageRef||null}));
     }
@@ -29818,9 +30085,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        pages now close straight back — same rule V351 applied to Tiers. */
     const wasEditingV356=Boolean(growPointsEditingV326);
     growPointsEditingV326=null;growPointsAddOpenV326='';growStampsPickedV416=null;
-    toast(wasEditingV356
-      ?(growPointsIsStampsV326?'Level updated':'Gift updated')
-      :(growPointsIsStampsV326?'Level added and live for customers':'Gift added and live for customers'));
+    /* nestly_v433 (owner rule 14): a stamp edit reaches NEW cards; customers mid-card keep the
+       card they started. The old "live for customers" claim is only true for points gifts. */
+    growStampPublishToastV433(saveResV433,wasEditingV356
+      ?(growPointsIsStampsV326?'Level updated — applies to new cards. Customers mid-card keep their current card.':'Gift updated')
+      :(growPointsIsStampsV326?'Level added — customers will see it on their next card.':'Gift added and live for customers'));
     growRerenderV322({quiet:true});
   };
   /* ---- V356: Stamp Card inline row editing (owner mockup, photo 1) -------------------------
@@ -29848,14 +30117,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!values.name){growPointsErrorV326='Name the reward customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(values.stamps)||values.stamps<=0){growPointsErrorV326='Stamps required must be a positive number.';return growRerenderV322({quiet:true});}
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
-    const {error}=await sb.rpc('business_update_reward_v326',{
+    const rowCallV433=await sb.rpc('business_update_reward_v326',{
       p_business:S.biz.id,p_reward:id,p_name:values.name,p_points:values.stamps,
       p_description:values.description||null,p_credit_cents:0,
       p_image_ref:imageRef||null,p_clear_image:false});
+    const rowResV433=rowCallV433.data;
+    const error=rowCallV433.error;
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
-    toast('Level updated');
+    growStampPublishToastV433(rowResV433,'Level updated — applies to new cards. Customers mid-card keep their current card.');
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-stamps-field-v356]').forEach(field=>{
@@ -32039,7 +32310,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        the knob — and "reachable" is what the amendment requires. The three modes are the DB's own
        (none | fixed | inactivity, expiryModeRequiresDays), and yearly is fixed + 365 rather than a
        fourth mode, exactly as the amendment spells it. */
-    expiryMode:['none','fixed','inactivity'].includes(String(base?.expiry_mode||''))
+    expiryMode:['none','fixed'].includes(String(base?.expiry_mode||''))
       ?String(base.expiry_mode):'none',
     expiryDays:Number(base?.expiry_days)>0?Math.round(Number(base.expiry_days)):365,
     /* Referral settings live on public.referral_programs, which is NOT part of the versioned
@@ -32770,7 +33041,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         <select id="growSetupExpiryModeW6I2">
           <option value="none"${state.expiryMode==='none'?' selected':''}>Never expire</option>
           <option value="fixed"${state.expiryMode==='fixed'?' selected':''}>Fixed shelf life from earn (oldest expire first)</option>
-          <option value="inactivity"${state.expiryMode==='inactivity'?' selected':''}>Expire after inactivity (clock resets on every earn)</option>
         </select></div>
       <div class="full" id="growSetupExpiryDaysFieldW6I2"${needsDays?'':' hidden'}><label for="growSetupExpiryDaysW6I2">Days</label>
         <input id="growSetupExpiryDaysW6I2" inputmode="numeric" value="${esc(String(state.expiryDays))}"${needsDays?'':' disabled'}></div>
@@ -32778,7 +33048,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     <div class="grow-setup-chips-v301" aria-label="Common expiry settings">
       <button type="button" class="grow-setup-chip-v301" data-grow-setup-expiry-w6i2="none">Never</button>
       <button type="button" class="grow-setup-chip-v301" data-grow-setup-expiry-w6i2="year">One year (365 days)</button>
-      <button type="button" class="grow-setup-chip-v301" data-grow-setup-expiry-w6i2="inactive-year">After 365 quiet days</button>
     </div>
     <p class="muted small" style="margin-top:10px">Expiry runs on its own every day. Rung start and end dates stay in the full rewards editor.</p>`;
   };
@@ -33247,7 +33516,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(kind==='earn'||kind==='earnExpiry')state.earn=parseFloat($('growSetupEarnV301')?.value||'')||state.earn;
     if(kind==='expiry'||kind==='earnExpiry'){
       const mode=String($('growSetupExpiryModeW6I2')?.value||state.expiryMode);
-      state.expiryMode=['none','fixed','inactivity'].includes(mode)?mode:'none';
+      state.expiryMode=['none','fixed'].includes(mode)?mode:'none';
       const days=parseInt($('growSetupExpiryDaysW6I2')?.value||'',10);
       if(Number.isInteger(days)&&days>0)state.expiryDays=days;
       return;
@@ -33364,7 +33633,6 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       /* Yearly is fixed + 365, which is how the OWNER AMENDMENT spells it — not a fourth mode. */
       if(preset==='none'){state.expiryMode='none'}
       else if(preset==='year'){state.expiryMode='fixed';state.expiryDays=365}
-      else {state.expiryMode='inactivity';state.expiryDays=365}
       render();
     });
     const referralRewardInput=$('growSetupReferralRewardW6I2'),referralMinInput=$('growSetupReferralMinW6I2');

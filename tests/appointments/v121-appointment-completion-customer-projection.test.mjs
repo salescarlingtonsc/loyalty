@@ -142,9 +142,10 @@ test('writer registry and both migration plans bind v121',()=>{
   // predicate is verbatim and the postcondition battery below re-runs against this body.
   assert.equal(
     saleWriter.latest_file,
-    // nestly_v425 restated app.on_sale_recorded (typed referral payout + legacy retention loop
-    // removal), so discovery now attributes the trigger body there.
-    '20260822000005_nestly_v425_referral_explicit_reward_type.sql'
+    // nestly_v436 restated app.on_sale_recorded again (the stamps earn rate now resolves the
+    // OPEN CARD's pinned version and a due card lazy-closes before earning — owner rules 4/5/6,
+    // 2026-08-22). The v121 boundary predicate itself is verbatim from v425.
+    '20260822000013_nestly_v436_stamp_earn_pinned_and_lazy_close.sql'
   );
   assert.match(saleWriter.loyalty_boundary,/resolves exactly rw/);
   assert.match(saleWriter.programme_scope,/ON CONFLICT arbiter NAMES/);

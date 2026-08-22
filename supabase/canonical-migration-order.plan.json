@@ -2284,6 +2284,36 @@
       "version": "20260822000009",
       "name": "nestly_v432_staff_redeem_list_matches_customer",
       "sourcePath": "db/migrations/20260822_nestly_v432_staff_redeem_list_matches_customer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000010",
+      "name": "nestly_v433_stamp_edit_version_split",
+      "sourcePath": "db/migrations/20260822_nestly_v433_stamp_edit_version_split.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000011",
+      "name": "nestly_v434_switch_publish_guard",
+      "sourcePath": "db/migrations/20260822_nestly_v434_switch_publish_guard.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000012",
+      "name": "nestly_v435_stamp_cycle_expiry",
+      "sourcePath": "db/migrations/20260822_nestly_v435_stamp_cycle_expiry.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000013",
+      "name": "nestly_v436_stamp_earn_pinned_and_lazy_close",
+      "sourcePath": "db/migrations/20260822_nestly_v436_stamp_earn_pinned_and_lazy_close.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000014",
+      "name": "nestly_v437_history_rows_keep_their_unit",
+      "sourcePath": "db/migrations/20260822_nestly_v437_history_rows_keep_their_unit.sql"
     }
   ]
 }

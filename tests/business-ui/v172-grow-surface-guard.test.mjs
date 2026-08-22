@@ -15,8 +15,16 @@ const app = (readFileSync(resolve(repoRoot, 'app/index.html'),'utf8')+'\n'+readF
 test('mountGrowSurface refuses unknown surfaces instead of crashing', () => {
   const fn = app.slice(app.indexOf('async function mountGrowSurface'), app.indexOf('const preserveExactRoute'));
   assert.match(fn, /const definition=surfaceDefinition\[surface\];/);
-  assert.match(fn, /if\(!definition\)\{console\.error\('unknown grow surface',surface\);return\}/,
+  /* nestly_v435: the guard still refuses and returns, but the page's OWN tab names (overview /
+     ongoing / available / settings, and an empty slot) no longer shout console.error on every
+     Overview render — 22 errors per visit buried real ones in the 2026-08-22 simulation.
+     Genuinely unknown values still log. */
+  assert.match(fn, /if\(!definition\)\{/,
     'the guard must run before any definition.* access');
+  assert.match(fn, /console\.error\('unknown grow surface',surface\)/,
+    'a genuinely unknown surface is still reported');
+  assert.match(fn, /\['overview','ongoing','available','settings',''\]\.includes\(String\(surface\|\|''\)\)/,
+    'the page\'s own tab names are a silent no-op, not console noise');
   assert.ok(fn.indexOf('if(!definition)') < fn.indexOf('definition.hash'),
     'guard must precede the definition.hash read');
 });

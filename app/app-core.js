@@ -873,6 +873,10 @@ const OWNER_ERROR_NOISE_RULES_V170=[
      customer list should have been. These are precise server codes and correct ones, but they
      are not sentences. They are translated here rather than at each call site so every surface
      that surfaces a server error gets the plain-English version. */
+  /* nestly_v435: the virgin-tenant dead end. Every stamp/gift editor needs one published
+     configuration to version-forward from; before the first Go-live the raw server message read
+     like a fault. Point the owner at the step that mints it. */
+  [/no published loyalty configuration yet/i,'Finish setting up first: open Rewards and run the setup wizard to Go live. After that, everything here saves normally.'],
   [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
   [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
   [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
@@ -1902,6 +1906,28 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
     stampsQuestAllClaimed:'Every gift on this card is collected.',
+    /* nestly_v435 — the card's clock and the paused-card promise (owner rules 4/7/15). */
+    stampsCardExpires:'Complete your card by {date} — stamps on it lapse after that.',
+    stampsCardExpired:'This card has expired. Gifts you already earned are safe to claim; new stamps start a fresh card.',
+    stampsKeptWhilePaused:'Stamp collecting is paused. Your {count} stamps and any earned gifts are kept.',
+    /* nestly_v435 — the "?" explainer sheets (owner rule 15; templates are the owner's own). */
+    expTitle:'How it works',
+    expStampSpend:'Spend {amount} to collect 1 stamp.',
+    expStampPinned:'Your current Stamp Card keeps the rewards and rules that applied when you started it.',
+    expStampNewRules:'If this business updates its Stamp Card, the new rules apply from your next card, after your current one is completed or expires.',
+    expStampValidity:'Your current card is valid for {days} days from the day you collect your first stamp.',
+    expStampExpiryReset:'If the card expires, unfinished stamp progress resets. Rewards you already earned remain available to redeem.',
+    expPointsExpiry:'Points expire {days} days after you earn them.',
+    expPointsNever:'Points do not expire at this business.',
+    expPointsBatch:'Each batch of points has its own expiry date.',
+    expPointsFefo:'When you redeem points, the points expiring soonest are used first — automatically.',
+    expPointsNext:'Your next points expiry: {date}.',
+    expTierBasis:'Your tier is based on your total {basis} with this business.',
+    expTierNoDrop:'Once you reach a tier, redeeming or expiring points does not lower it.',
+    expTierAuto:'Higher tiers unlock automatically when you reach their target.',
+    expBasisPoints:'points earned',
+    expBasisVisits:'visits',
+    expBasisSpend:'spending',
     pointsRemaining:'{count} more for {gift}.',
     pointsReady:'{gift} is ready to claim.',
     tierDistance:'{count} more {unit} to {tier}.',
@@ -2107,6 +2133,26 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
     stampsQuestAllClaimed:'这张卡上的礼品都已领取。',
+    stampsCardExpires:'请在 {date} 前集满这张卡——之后卡上的章将失效。',
+    stampsCardExpired:'这张卡已过期。已赚取的礼品仍可领取；新的章将开始新卡。',
+    stampsKeptWhilePaused:'集章暂停中。您的 {count} 个章和已赚取的礼品都会保留。',
+    expTitle:'规则说明',
+    expStampSpend:'每消费 {amount} 集 1 个章。',
+    expStampPinned:'您当前的集章卡保留开卡时的礼品和规则。',
+    expStampNewRules:'如果商家更新集章卡，新规则将在您完成或到期当前卡后，从下一张卡开始适用。',
+    expStampValidity:'当前卡自您集到第一个章起 {days} 天内有效。',
+    expStampExpiryReset:'如果卡到期，未完成的集章进度将重置。您已赚取的礼品仍可领取。',
+    expPointsExpiry:'积分在获得后 {days} 天到期。',
+    expPointsNever:'此商家的积分不会过期。',
+    expPointsBatch:'每批积分都有自己的到期日。',
+    expPointsFefo:'兑换时会自动优先使用最先到期的积分。',
+    expPointsNext:'您最近的积分到期日：{date}。',
+    expTierBasis:'您的等级基于您在此商家的累计{basis}。',
+    expTierNoDrop:'达到等级后，兑换或积分过期都不会降级。',
+    expTierAuto:'达到目标后将自动解锁更高等级。',
+    expBasisPoints:'获得积分',
+    expBasisVisits:'到访次数',
+    expBasisSpend:'消费金额',
     pointsRemaining:'再要 {count} 即可换{gift}。',
     pointsReady:'{gift}已可领取。',
     tierDistance:'再要 {count} {unit}即可升到{tier}。',
@@ -2309,6 +2355,26 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
     stampsQuestAllClaimed:'Semua hadiah pada kad ini sudah dituntut.',
+    stampsCardExpires:'Lengkapkan kad anda sebelum {date} — cop padanya luput selepas itu.',
+    stampsCardExpired:'Kad ini telah luput. Hadiah yang sudah anda peroleh masih boleh dituntut; cop baharu memulakan kad baharu.',
+    stampsKeptWhilePaused:'Kutipan cop dijeda. {count} cop anda dan hadiah yang diperoleh disimpan.',
+    expTitle:'Cara ia berfungsi',
+    expStampSpend:'Belanja {amount} untuk mengumpul 1 cop.',
+    expStampPinned:'Kad Cop semasa anda mengekalkan hadiah dan peraturan yang terpakai semasa anda memulakannya.',
+    expStampNewRules:'Jika perniagaan ini mengemas kini Kad Copnya, peraturan baharu terpakai dari kad anda yang seterusnya, selepas kad semasa anda lengkap atau luput.',
+    expStampValidity:'Kad semasa anda sah selama {days} hari dari hari anda mengumpul cop pertama.',
+    expStampExpiryReset:'Jika kad luput, kemajuan cop yang belum selesai ditetapkan semula. Hadiah yang sudah anda peroleh masih boleh ditebus.',
+    expPointsExpiry:'Mata luput {days} hari selepas anda memperolehnya.',
+    expPointsNever:'Mata tidak luput di perniagaan ini.',
+    expPointsBatch:'Setiap kelompok mata ada tarikh luputnya sendiri.',
+    expPointsFefo:'Semasa menebus, mata yang paling hampir luput digunakan dahulu — secara automatik.',
+    expPointsNext:'Luput mata terdekat anda: {date}.',
+    expTierBasis:'Peringkat anda berdasarkan jumlah {basis} anda dengan perniagaan ini.',
+    expTierNoDrop:'Setelah mencapai peringkat, menebus atau mata luput tidak menurunkannya.',
+    expTierAuto:'Peringkat lebih tinggi terbuka secara automatik apabila anda mencapai sasarannya.',
+    expBasisPoints:'mata terkumpul',
+    expBasisVisits:'lawatan',
+    expBasisSpend:'perbelanjaan',
     pointsRemaining:'{count} lagi untuk {gift}.',
     pointsReady:'{gift} sedia untuk dituntut.',
     tierDistance:'{count} {unit} lagi ke {tier}.',
@@ -2511,6 +2577,26 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
     stampsQuestAllClaimed:'இந்த அட்டையின் அனைத்துப் பரிசுகளும் பெறப்பட்டன.',
+    stampsCardExpires:'{date}க்குள் உங்கள் அட்டையை நிறைவு செய்யுங்கள் — அதன் பிறகு அதிலுள்ள முத்திரைகள் காலாவதியாகும்.',
+    stampsCardExpired:'இந்த அட்டை காலாவதியானது. நீங்கள் ஏற்கனவே பெற்ற பரிசுகள் பாதுகாப்பாக உள்ளன; புதிய முத்திரைகள் புதிய அட்டையைத் தொடங்கும்.',
+    stampsKeptWhilePaused:'முத்திரை சேகரிப்பு இடைநிறுத்தப்பட்டுள்ளது. உங்கள் {count} முத்திரைகளும் பெற்ற பரிசுகளும் பாதுகாக்கப்படும்.',
+    expTitle:'இது எப்படி வேலை செய்கிறது',
+    expStampSpend:'{amount} செலவழித்து 1 முத்திரை சேகரியுங்கள்.',
+    expStampPinned:'உங்கள் தற்போதைய முத்திரை அட்டை, நீங்கள் தொடங்கியபோது இருந்த பரிசுகளையும் விதிகளையும் வைத்திருக்கும்.',
+    expStampNewRules:'இந்த வணிகம் தனது முத்திரை அட்டையைப் புதுப்பித்தால், உங்கள் தற்போதைய அட்டை நிறைவடைந்த அல்லது காலாவதியான பிறகு, அடுத்த அட்டையிலிருந்து புதிய விதிகள் பொருந்தும்.',
+    expStampValidity:'உங்கள் தற்போதைய அட்டை, முதல் முத்திரை சேகரித்த நாளிலிருந்து {days} நாட்களுக்கு செல்லுபடியாகும்.',
+    expStampExpiryReset:'அட்டை காலாவதியானால், முடிக்காத முத்திரை முன்னேற்றம் மீட்டமைக்கப்படும். நீங்கள் ஏற்கனவே பெற்ற பரிசுகள் தொடர்ந்து பெறலாம்.',
+    expPointsExpiry:'புள்ளிகள் நீங்கள் பெற்ற {days} நாட்களுக்குப் பிறகு காலாவதியாகும்.',
+    expPointsNever:'இந்த வணிகத்தில் புள்ளிகள் காலாவதியாகாது.',
+    expPointsBatch:'ஒவ்வொரு தொகுதி புள்ளிகளுக்கும் தனித்தனி காலாவதி தேதி உண்டு.',
+    expPointsFefo:'மீட்டெடுக்கும்போது, விரைவில் காலாவதியாகும் புள்ளிகள் தானாக முதலில் பயன்படுத்தப்படும்.',
+    expPointsNext:'உங்கள் அடுத்த புள்ளி காலாவதி: {date}.',
+    expTierBasis:'உங்கள் நிலை, இந்த வணிகத்துடனான உங்கள் மொத்த {basis} அடிப்படையிலானது.',
+    expTierNoDrop:'ஒரு நிலையை அடைந்த பிறகு, புள்ளிகளை மீட்பதோ காலாவதியோ அதைக் குறைக்காது.',
+    expTierAuto:'இலக்கை அடைந்ததும் உயர் நிலைகள் தானாகத் திறக்கும்.',
+    expBasisPoints:'சம்பாதித்த புள்ளிகள்',
+    expBasisVisits:'வருகைகள்',
+    expBasisSpend:'செலவு',
     pointsRemaining:'{gift} பெற இன்னும் {count} தேவை.',
     pointsReady:'{gift} பெறத் தயாராக உள்ளது.',
     tierDistance:'{tier} அடைய இன்னும் {count} {unit} தேவை.',
@@ -3277,6 +3363,50 @@ function customerPointsExplainerMarkupV417Removed(business={}){
     <span class="customer-points-explainer-chevron-v339" aria-hidden="true">${CUI.icon('forward',{size:16})}</span>
   </button>`;
 }
+/* nestly_v435 (owner rule 15): the "?" explainers, on the v339 sheet infrastructure the ruling
+   asked to resurrect rather than a new system. One parameterized sheet, three surfaces (stamp
+   card / points / tier), every number SERVER-FED — spend-per-stamp and validity from the pinned
+   version the customer's own card reader returns, points expiry days from the wallet payload,
+   tier basis from the canonical tier resolver. No localStorage dismissal: these open on demand
+   and close, they are not a one-time banner. */
+/* No module state and no shared helper on purpose: the customer card renderers are executed in
+   isolation by a dozen extraction harnesses, so the trigger carries its OWN facts as data-*
+   attributes and this opener reads them back. The card functions emit plain markup only. */
+function openCustomerExplainerV435(trigger){
+  const d=trigger?.dataset||{};
+  const kind=String(d.customerExplainerV435||'');
+  const lines=[];
+  if(kind==='stamps'){
+    const spend=Number(d.expSpend)||0,validity=Number(d.expValidity)||0;
+    if(spend>0)lines.push(ct('expStampSpend',{amount:`${d.expCurrency||'SGD'} ${(spend/100).toFixed(2)}`}));
+    lines.push(ct('expStampPinned'),ct('expStampNewRules'));
+    if(validity>0)lines.push(ct('expStampValidity',{days:validity}),ct('expStampExpiryReset'));
+  }else if(kind==='points'){
+    const days=Number(d.expDays)||0;
+    if(d.expMode==='fixed'&&days>0)lines.push(ct('expPointsExpiry',{days}),ct('expPointsBatch'),ct('expPointsFefo'));
+    else if(d.expMode==='fixed')lines.push(ct('expPointsBatch'),ct('expPointsFefo'));
+    else lines.push(ct('expPointsNever'));
+    if(d.expNext)lines.push(ct('expPointsNext',{date:walletDate(d.expNext)}));
+  }else if(kind==='tier'){
+    const basisWord=d.expBasis==='points_earned'?ct('expBasisPoints'):d.expBasis==='spend'?ct('expBasisSpend'):ct('expBasisVisits');
+    lines.push(ct('expTierBasis',{basis:basisWord}),ct('expTierNoDrop'),ct('expTierAuto'));
+  }
+  if(!lines.length)return;
+  $('customerExplainerModalV435')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerExplainerModalV435" role="dialog" aria-modal="true" aria-labelledby="customerExplainerTitleV435" tabindex="-1"><div class="modal-card" style="max-width:460px">
+    <div class="row"><h2 id="customerExplainerTitleV435">${esc(ct('expTitle'))}</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerExplainerCloseV435" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
+    ${lines.map(line=>`<p class="muted" style="margin-top:12px">${esc(line)}</p>`).join('')}
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('customerExplainerModalV435')?.remove()};
+  deactivate=CUI.activateDialog($('customerExplainerModalV435'),{onClose:close,initialFocus:'#customerExplainerCloseV435'});
+  $('customerExplainerCloseV435').onclick=close;
+}
+/* typeof-guarded: several extraction harnesses evaluate this region without a DOM. */
+if(typeof document!=='undefined')document.addEventListener('click',event=>{
+  const trigger=event.target?.closest?.('[data-customer-explainer-v435]');
+  if(trigger)openCustomerExplainerV435(trigger);
+});
 function customerProgrammeOffersMarkupV167({items=[],status='ready',business={},bookingEnabled=false}={}){
   let body='';
   if(status==='error')body='<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>';
@@ -3751,8 +3881,11 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
    body is customerProgrammePointsPanelV230 verbatim, with only its progress sentence localized. */
 function customerProgrammePointsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,hideSummaryV338=false,expiry=null}){
   const paused=entry?.active===false||loyalty.enabled===false;
+  /* nestly_v435 (rule 15): the "?" trigger carries its server-fed facts as data-* so the opener
+     (openCustomerExplainerV435) needs nothing from this render's scope. */
+  const explainerV435=paused?'':`<button type="button" class="btn ghost sm customer-explainer-trigger-v435" data-customer-explainer-v435="points" data-exp-mode="${esc(String(expiry?.mode||'none'))}" data-exp-days="${esc(String(Number(expiry?.days)||0))}" data-exp-next="${esc(String(expiry?.next_expiry_at||''))}" aria-label="${esc(ct('expTitle'))}" style="margin-left:auto;min-width:30px;padding:2px 7px">${CUI.icon('info',{size:16})}</button>`;
   return `<section class="card customer-programme-card-v310" data-programme-card="points" aria-label="${esc(ct('pointsCardTitle'))}">
-    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span></h2>
+    <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>${esc(ct('pointsCardTitle'))}</span>${explainerV435}</h2>
     ${paused?customerProgrammePausedMarkupV310(entry)
       :customerProgrammePointsPanelV230({loyalty,presentation,reward,rewardsHost,hideSummaryV338:hideSummaryV338&&!paused,expiry,
         progressMarkupV310:customerRewardProgressMarkupV310({loyalty,reward})})}
@@ -3811,6 +3944,7 @@ function customerProgrammeTierCardV310({tier={},entry=null,pointsCardPresent=fal
     <div class="customer-tier-card-head-v339">
       <span class="customer-tier-avatar-v339" aria-hidden="true">${CUI.icon(avatarIconV339,{size:20})}</span>
       <h2 class="customer-programme-card-head-v310"><span>${esc(ct('tierCardTitle'))}</span></h2>
+      ${paused?'':`<button type="button" class="btn ghost sm customer-explainer-trigger-v435" data-customer-explainer-v435="tier" data-exp-basis="${esc(basisV339)}" aria-label="${esc(ct('expTitle'))}" style="margin-left:auto;min-width:30px;padding:2px 7px">${CUI.icon('info',{size:16})}</button>`}
     </div>
     ${paused?customerProgrammePausedMarkupV310(entry):`${customerTierPanelMarkupV194(tierForStack,{localizeV310:true})}
     ${standingV339?`<p class="muted small customer-tier-standing-v339">${esc(standingV339)}</p>`:''}

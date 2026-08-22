@@ -48,7 +48,7 @@
  * concurrently on 2026-08-22 and the second one's fresh-init deleted the first one's cluster
  * mid-suite. Set them only when you want a stable cluster to attach to with psql.
  */
-import { mkdirSync, existsSync, rmSync } from 'node:fs';
+import { mkdirSync, existsSync, rmSync , readFileSync} from 'node:fs';
 import { join } from 'node:path';
 import {
   SNAPSHOT_PATH, SNAPSHOT_WATERMARK_VERSION, ScratchCluster, applyBootstrap,
@@ -103,7 +103,14 @@ async function runExecutedSuite(cluster, phase, template, tests) {
       }
 
       /* Contract: an executed test wraps itself in begin; … rollback; and leaves nothing
-         behind. Verified per file so the culprit is named rather than guessed. */
+         behind. Verified per file so the culprit is named rather than guessed.
+         ESCAPE HATCH: a file whose header carries the literal marker
+         `HARNESS: PHASED-COMMITS` runs as several committed transactions instead — needed
+         when the logic under test is time-ordered (version pins, expiry clocks), because
+         now() is transaction-fixed and a single rolled-back transaction collapses every
+         event onto one instant. Safe because every test file gets its own database, dropped
+         after the run; the marker only waives the leak check, nothing else. */
+      const phasedCommits = readFileSync(test.path, 'utf8').includes('HARNESS: PHASED-COMMITS');
       const shipped = cluster.scalarOrNull(db, "select to_regclass('public.businesses')::text");
       if (!shipped) {
         warnings.push({
@@ -115,7 +122,7 @@ async function runExecutedSuite(cluster, phase, template, tests) {
         });
       } else {
         const leaked = cluster.scalarOrNull(db, 'select count(*) from public.businesses');
-        if (leaked && leaked !== '0') {
+        if (!phasedCommits && leaked && leaked !== '0') {
           failures.push({
             phase,
             file: test.path,

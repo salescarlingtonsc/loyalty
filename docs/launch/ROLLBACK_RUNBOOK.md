@@ -111,3 +111,41 @@ run time: never drop the core while a reader still names it). Reverting re-opens
 closed: the till offering gifts `app.redeem_reward_core` refuses (wrong-programme, past-card-end,
 claimed-this-cycle). Frontend (grouping + per-reward units) rolls back by reverting the release
 commit through the normal path.
+
+## 2026-08-22 stamp lifecycle wave (v433–v436)
+
+Order matters both ways. Applied v433 → v434 → v435 → v436; roll back in strict reverse.
+
+- **v436 (earn pinning + lazy close)**: re-issue the v425 pre-image of `app.on_sale_recorded`
+  (byte-captured in `db/migrations/20260822_nestly_v425_referral_explicit_reward_type.sql` §3).
+  Reverting re-opens rule 6: sales stamp open cards at the newest published rate.
+- **v435 (stamp cycle expiry)**: re-issue the pre-images of `app.redeem_reward_core` (v416 body),
+  `app.reward_availability_v432` (v432 file §1), `public.customer_get_stamp_card_v323` (v416
+  file), `public.publish_loyalty_config` (v434 §1), `public.create_loyalty_config_draft` (prod
+  pre-image), and `public.business_set_earning_rule_v359` — the 6-arg overload must be DROPPED
+  and the 5-arg re-created, never left side by side (PGRST203). THEN
+  `select cron.unschedule('nestly-stamp-expiry')` and drop the four `app.*_v435` helpers, in
+  caller-first order (sweep driver → per-business worker → closer → deadline). Do NOT drop the
+  `stamp_validity_days` columns or narrow the `stamp_cycles` constraints while any
+  `origin='expired'` row exists — history rows are the customer's record; leave schema in place.
+- **v434 (publish guard on draft model)**: re-issue the v431 pre-image of
+  `public.publish_loyalty_config` (v431 file) and the pre-image of
+  `public.save_loyalty_reward_draft` (prod pre-image / pre-apply capsule). Reverting re-opens the
+  blocked wizard switch (stamps→points publish refusal).
+- **v433 (edit version split)**: re-issue the pre-images of `business_update_reward_v326`,
+  `business_create_reward_v326`, `business_set_stamp_card_length_v414` (all in the v423/v414
+  files), `app.loyalty_version_immutable_guard` (pre-v433 body, no token carve-out), then drop
+  `app.stamp_config_edit_begin_v433` / `app.stamp_config_edit_commit_v433` /
+  `app.stamp_open_card_risk_v433` last. Reverting re-opens the P0: a mid-cycle stamp edit
+  rewrites the customer's open card in place. Version rows minted by the split path are ordinary
+  published `firm_config_versions` and stay.
+
+## 2026-08-22 history unit + wallet expiry rule (v437)
+
+Read-side only: two re-issued readers, no schema or write-path change. Rolls back by re-issuing
+the two captured pre-image bodies — `public.customer_get_transaction_history_v81` (pre-image in
+prod history / this migration's header describes the only delta: the per-item `loyalty_unit` key
+and unit-aware standalone descriptions) and `app.c45_base_actionable_wallet_card` (nestly_v426
+body; delta is the `expiry.days` key). Reverting re-opens rule 13's defect: after a programme
+switch the customer's Activity relabels historical stamp rows as points, and the points "?"
+explainer loses its server-fed expiry rule.
