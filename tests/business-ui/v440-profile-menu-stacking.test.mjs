@@ -166,6 +166,9 @@ test('V440: profileHtml() really renders <div class="menu"> nested inside <div c
     profileBranchScopeLabelV158: () => 'All branches',
     workspaceLanguagePickerV97: () => '<select id="workspaceLanguageV97"></select>',
     workspaceTemplateAttributeV97: (attr) => `${attr}="Account menu"`,
+    /* V443 moved the workspace switcher inside profileHtml(); its own rendering is covered by
+       tests/business-ui/v443-switch-workspace-in-menu.test.mjs — here it only needs to exist. */
+    businessWorkspaceSwitchHtml: () => '<div class="business-workspace-switch"></div>',
   };
   const html = vm.runInNewContext(`${source}\nprofileHtml();`, sandbox);
   assert.match(html, /^<div class="profile" id="profwrap">/);
