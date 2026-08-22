@@ -32,7 +32,11 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
   /* v194: the owner then struck the jump-off cards too — the same two destinations are tabs on
      every customer screen, and they now carry counts. */
   assert.doesNotMatch(legacyHome,/customerHomeQuickLinksV183/);
-  assert.match(legacyHome,/applyCustomerNavCountsV194\(\{programmes:cards\.length/);
+  /* nestly_v457 re-pinned (B-REG-017, owner ruling 2026-08-22). The My Rewards badge counted
+     REWARD ACCOUNTS while sitting on a tab named "Rewards", next to a greeting and cards
+     talking about rewards READY — LIVE it read "Rewards 7" beside "2 rewards ready" and two
+     cards each claiming 1. Bookings keeps its badge; it counts the thing its tab is named for. */
+  assert.match(legacyHome,/applyCustomerNavCountsV194\(\{bookings:/);
   const programmesTab=section('async function renderCustomerProgrammes(){','const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES');
   assert.match(programmesTab,/customerMyRewardsHeadingV156\(cards\.length,\{scanId:'customerHomeScan',categories:customerRewardCategoriesPresentV395\(cards\)\}\)/);
   assert.match(programmesTab,/\$\('customerHomeScan'\)\.onclick=openCustomerJoinScanner/,

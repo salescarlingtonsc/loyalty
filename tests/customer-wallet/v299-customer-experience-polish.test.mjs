@@ -85,8 +85,16 @@ test('the reward card sheds the legacy 7px corner radius',()=>{
 });
 
 test('home and rewards cards keep points/stamps labels honest and compact',()=>{
-  assert.match(app,/const rewardWord=rewardCount===1\?'reward':'rewards'/);
-  assert.match(app,/\$\{esc\(customerPointTotalV103\(rewardCount\)\)\}<\/span> \$\{esc\(rewardWord\)\} ready/);
+  /* nestly_v457 re-pinned (B-REG-017). The greeting's figure was the SUM of per-card literal 1s
+     — LIVE it printed "2 rewards ready" while one of those two businesses alone had two ready —
+     so it is a quantity Home cannot substantiate and the hero now states the signal only. What is
+     pinned instead is that the hero is still DERIVED from the same cards, which is what stops it
+     drifting from them. */
+  assert.match(app,/const readyCardsV457=customerRewardReadyCountV343\(cards\)/);
+  assert.match(app,/const rewardReadyV457=readyCardsV457>0/);
+  assert.match(app,/rewardReadyV457\?`<b>\$\{esc\(customerRewardReadySignalV457\(true\)\)\}<\/b>`/);
+  assert.doesNotMatch(app,/esc\(customerPointTotalV103\(rewardCount\)\)/,
+    'Home no longer prints a ready quantity');
   assert.match(app,/function customerProgrammeCardMetricKindV360/);
   assert.match(app,/if\(hasStamps&&!hasPoints\)return 'stamps'/);
   assert.match(app,/if\(tierLabel\)return 'points'/);

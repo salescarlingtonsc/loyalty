@@ -3853,6 +3853,39 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-actions-v346 .customer-business-call-icon-v366 span{display:none!important}
 .customer-business-profile-v346 .customer-business-summary-v346{margin-top:2px!important}
 @media(max-width:380px){.customer-business-header-v346{grid-template-columns:24px minmax(0,1fr) auto!important;gap:6px!important}.customer-business-identity-v346 .customer-programme-logo{width:40px!important;height:40px!important}.customer-business-identity-v346 b{font-size:17px!important}.customer-business-identity-v346 small{font-size:12px!important}.customer-business-actions-v346{grid-template-columns:auto 32px!important;gap:5px!important}.customer-business-actions-v346 .customer-business-address-icon-v422{width:32px!important}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:32px!important;padding:0 7px!important;font-size:11px!important}.customer-business-actions-v346 .customer-business-call-icon-v366{width:32px!important}}
+/* ===== nestly_v457 — three owner rulings from the 2026-08-22 customer audit ==================
+   Geometry only; no colour, no token, nothing the dark block below has to answer for. Kept in one
+   place so the .customer-* consolidation pass has a single hunk to reason about. */
+
+/* --- B-REG-016: a business's own name is never clipped on its own profile header --------------
+   Owner ruling: "the NAME takes the space it needs; Directions/Call yield." Two causes, both
+   MEASURED on 9a57bac at 390 and 1180:
+     (1) the wordy placeholder actions took a 172px track (fixed in app.js — they are icon-only
+         now, matching the row the contact read writes over them), and
+     (2) even with the approved 106px icon row, `white-space:nowrap;text-overflow:ellipsis` on the
+         name clipped anything past ~156px: "Ah Xiang Traditional Kopitiam & Bakery" measured a
+         177px box against 347px of content, and a 27-character Tamil name 170px against 263px.
+   (2) is the one that cannot be solved by making something else narrower, and it is why this rule
+   does not depend on English label widths at all: the name WRAPS instead of being cut. A long
+   name costs the header a second line, which is the trade the ruling names. The bio underneath
+   keeps its deliberate v417 two-line clamp — that is a description, not an identity. */
+.customer-business-header-v346 .customer-business-identity-v346 b{
+  white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
+.customer-business-header-v346 .customer-business-identity-v346{align-items:flex-start}
+/* Both actions stay reachable and both reach the 44px the design system sets in --control-h. */
+.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:var(--control-h)!important}
+
+/* --- B-REG-018: the two worst tap targets on the customer surface -----------------------------
+   MEASURED: "View all ›" 62.8x16.8 and "See all" 45.3x16.8 — under half the 44px --control-h sets,
+   on a product whose brief is explicitly big-tap-target, low-literacy-first. Real height, not a
+   pseudo-element expander: an invisible 44px overlay centred on a 17px line reaches ~14px past a
+   10px margin and would sit on top of the first card's own links, which is the overlap class this
+   wave has just spent its time removing. The section head grows by ~23px; nothing else moves. */
+.customer-home-section-head-v343 a,.customer-home-offers-head a,.customer-business-offers-head-v349 a{
+  display:inline-flex;align-items:center;gap:2px;min-height:44px}
+/* The reward-directory filter chips measured 36px tall. */
+.customer-rewards-filter-chip-v395,.customer-rewards-filter-chips-v344 span{min-height:44px}
+
 /* V167 Phase 4: customer-only system dark mode. Merchant/admin surfaces retain their
    established light palette. The redemption QR intentionally stays on a light scan surface. */
 .customer-surface{min-height:100dvh;background:var(--bg);color:var(--ink)}

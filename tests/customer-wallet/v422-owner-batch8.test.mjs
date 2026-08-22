@@ -85,7 +85,10 @@ test('photo 4: a stamps firm contributes no balance figure to the My Rewards til
 
 test('photo 4: the status line the tile still shows is the one that tells the customer to walk in', () => {
   const { customerProgrammeDirectoryStatusV346: status } = harness;
-  assert.equal(status(stampsCard(13, 0, true)), '1 reward ready');
+  /* nestly_v457 re-pinned (B-REG-017): the literal 1. This surface holds ONE reward object and no
+     count, so it states the signal; the business page, which reads the catalogue, states the
+     number. The photo-4 point — that the line tells the customer to walk in — is unchanged. */
+  assert.equal(status(stampsCard(13, 0, true)), 'Reward ready');
   assert.equal(status(stampsCard(2, 3)), '3 stamps to reward');
 });
 

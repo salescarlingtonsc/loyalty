@@ -46,8 +46,12 @@ test('V183 Home leads with offers and delegates the reward grid to the My Reward
     'the My Rewards tab still puts its heading above its grid');
 
   assert.doesNotMatch(fallback,/customerHomeQuickLinksV183/);
-  assert.match(fallback,/applyCustomerNavCountsV194\(\{programmes:cards\.length/,
-    'the legacy Home still feeds the nav badges that replaced the quick links');
+  /* nestly_v457 re-pinned (B-REG-017, owner ruling 2026-08-22). The My Rewards badge counted
+     REWARD ACCOUNTS while sitting on a tab named "Rewards", next to a greeting and cards
+     talking about rewards READY — LIVE it read "Rewards 7" beside "2 rewards ready" and two
+     cards each claiming 1. Bookings keeps its badge; it counts the thing its tab is named for. */
+  assert.match(fallback,/applyCustomerNavCountsV194\(\{bookings:bookingsAvailable\?bookingCount:0\}\)/,
+    'the legacy Home still feeds the Bookings badge that replaced the quick links');
   assert.doesNotMatch(fallback,/customerProgrammeGridMarkupV96\(cards\)/,'legacy Home drops the grid too');
   assert.doesNotMatch(fallback,/Programme guidance is unavailable|<h2 style="margin:20px 0 10px">Programmes<\/h2>/);
 });

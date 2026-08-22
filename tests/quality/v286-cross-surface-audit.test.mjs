@@ -80,8 +80,14 @@ test('a hash with no page is refused out loud instead of silently showing the da
 
 test('the customer nav badge cache is cleared with the session', () => {
   const reset = between('function resetClientSessionState(', 'customerLocale=\'en\';');
-  assert.match(reset, /customerNavCountsV194=\{programmes:0,bookings:0\};/);
-  assert.match(app, /let customerNavCountsV194=\{programmes:0,bookings:0\};/);
+  /* nestly_v457 re-pinned (B-REG-017, owner ruling 2026-08-22). The My Rewards badge counted
+     REWARD ACCOUNTS while sitting on a tab named "Rewards", next to a greeting and cards
+     talking about rewards READY — LIVE it read "Rewards 7" beside "2 rewards ready" and two
+     cards each claiming 1. Bookings keeps its badge; it counts the thing its tab is named for. */
+  assert.match(reset, /customerNavCountsV194=\{bookings:0\};/);
+  assert.match(app, /let customerNavCountsV194=\{bookings:0\};/);
+  assert.doesNotMatch(app, /customerNavCountsV194=\{[^}]*programmes:/,
+    'nothing seeds a My Rewards badge any more');
 });
 
 test('Create account shows a busy state and cannot be double-fired', () => {

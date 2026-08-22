@@ -27,10 +27,18 @@ export const customerFixtureSource=({
   bookingEnabled=true,
   /* A stamps programme puts the "Stamp card" tile on the profile, which is the tile whose shortcut
      page is titled "Rewards" — the exact doubling REG-002 reported. */
-  withStamps=false
+  withStamps=false,
+  /* Names that must not be clipped on the merchant's own header: a long Latin one and a
+     non-Latin one, because the fix must not depend on English label widths. */
+  businessName=BUSINESS_NAME,
+  withBranchContact=true,
+  /* Home realism, from the coordinator's LIVE reading: this customer holds nine businesses, most
+     at 0 pts, one with sessions left, and readiness spread across two of them. A greeting that is
+     derived from the cards is only meaningfully testable across several cards in mixed states. */
+  extraBusinesses=false
 }={})=>`(()=>{
   const BIZ='${BIZ}',SLUG='${SLUG}';
-  const BUSINESS={id:BIZ,slug:SLUG,name:${JSON.stringify(BUSINESS_NAME)},currency:'SGD',
+  const BUSINESS={id:BIZ,slug:SLUG,name:${JSON.stringify(businessName)},currency:'SGD',
     brand_color:'#C24135',bio:'A neighbourhood kopitiam.',
     address:'313 Orchard Road #02-11 Singapore 238895',phone:'+65 6123 4567'};
   /* next.label, NOT next.name: customerTierPanelMarkupV194 reads next.label, and a fixture that
@@ -57,6 +65,22 @@ export const customerFixtureSource=({
   const CARD={business:BUSINESS,loyalty:LOYALTY,credit:{},packages:{sessions_remaining:0},
     next_eligible_reward:NEXT_REWARD,visit_progress:{},birthday_benefit:null,
     expiry:{expiring_next_30_days:0,next_expiry_at:null}};
+  /* A second READY business, so the greeting's old "sum of the per-card 1s" would have printed 2
+     — the exact figure measured live — plus three that are not ready, one of them on sessions. */
+  const otherCard=(slug,name,ready,over)=>({business:{id:'b-'+slug,slug,name,currency:'SGD'},
+    loyalty:{balance:over&&over.balance!=null?over.balance:0,unit:'points',enabled:true,tier:null},
+    credit:{},packages:{sessions_remaining:(over&&over.sessions)||0},
+    next_eligible_reward:ready
+      ?{name:'Free pastry',cost_units:50,available_now:true,remaining_units:0,unit:'points'}
+      :{name:'Free pastry',cost_units:50,available_now:false,remaining_units:20,unit:'points'},
+    visit_progress:{},birthday_benefit:null,expiry:{expiring_next_30_days:0,next_expiry_at:null}});
+  const EXTRA_CARDS=${extraBusinesses?`[
+    otherCard('qa-kaya-toast','QA Kaya Toast',true,null),
+    otherCard('qa-kopi-lab','QA Kopi Lab',false,null),
+    otherCard('bistro-999','Bistro 999',false,{balance:116,sessions:3}),
+    otherCard('cafe2u','Cafe2U',false,null)
+  ]`:'[]'};
+  const ALL_CARDS=[CARD,...EXTRA_CARDS];
   const CAPS={wallet:true,rewards:true,tiers:true,points_mode:'both',activity:true,
     appointments:true,booking_request:${bookingEnabled?'true':'false'},packages:false,membership:false,
     programmes_contract:'v391',
@@ -101,10 +125,12 @@ export const customerFixtureSource=({
       case 'get_my_personas':return {staff:[],customer:[{business_id:BIZ,business_slug:SLUG,
         business_name:BUSINESS.name}],default_route:'#/wallet'};
       case 'customer_get_actionable_business':return {card:CARD};
-      case 'customer_get_actionable_wallet':return {cards:[CARD]};
-      case 'customer_get_wallet':return [CARD];
-      case 'customer_list_programmes_v89':return {programmes:[{business_id:BIZ,business_slug:SLUG,
-        business_name:BUSINESS.name,loyalty:LOYALTY,unit:'points',balance:920}]};
+      case 'customer_get_actionable_wallet':return {cards:ALL_CARDS};
+      case 'customer_get_wallet':return ALL_CARDS;
+      case 'customer_list_programmes_v89':return {programmes:ALL_CARDS.map(card=>({
+        business_id:card.business.id,business_slug:card.business.slug,
+        business_name:card.business.name,loyalty:card.loyalty,unit:'points',
+        balance:card.loyalty.balance}))};
       case 'customer_get_programme_selector_media_v96':return {items:[]};
       case 'customer_get_business_summary':return {business:BUSINESS,loyalty:LOYALTY,
         packages:{},membership:{}};
@@ -137,7 +163,11 @@ export const customerFixtureSource=({
       case 'customer_record_account_open_v175':return {status:'ok'};
       case 'customer_sync_in_app_inbox_global':return {status:'ok'};
       case 'customer_get_in_app_inbox_global_count':return {unread:0};
-      case 'customer_get_offer_business_contact_v173':return {business:BUSINESS};
+      /* The compact header's Directions/Call buttons are REPLACED by this read (app.js ~11220).
+         Until it lands — and permanently, for a branch with neither address nor phone — the wordy
+         placeholder stands. withBranchContact:false exercises that state on purpose. */
+      case 'customer_get_offer_business_contact_v173':return {business:BUSINESS,
+        branch:${withBranchContact?'{address:BUSINESS.address,phone:BUSINESS.phone}':'{}'}};
       default:return null;
     }
   };

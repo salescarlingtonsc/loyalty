@@ -464,6 +464,152 @@ try{
     }
   }
 
+  /* ============ nestly_v457, ruling 1 — Home states no quantity it has not loaded =============
+     LIVE on 9a57bac: greeting "2 rewards ready", Cubbly card "1 reward ready", QA Kaya Toast card
+     "1 reward ready", nav badge "Rewards 7" — while QA Kaya Toast's own page said 2. The fixture
+     here reproduces the shape: five businesses, TWO of them ready, one on sessions, the rest at
+     zero. Under the old code the greeting printed the sum of the per-card 1s, i.e. "2", and the
+     business page printed "2 rewards ready" for one of those businesses alone. */
+  const homeReadySource=`(()=>{
+    const surface=document.querySelector('.customer-shell.customer-surface')||document.body;
+    const text=String(surface.innerText||'').replace(/\\s+/g,' ');
+    const hero=document.querySelector('.customer-home-ready-card-v343');
+    const cards=[...document.querySelectorAll('.customer-home-business-track-v343 .customer-programme-card-v95,'
+      +'.customer-home-business-track-v343 a')];
+    const cardText=cards.map(card=>String(card.innerText||'').replace(/\\s+/g,' ').trim());
+    const navRewards=document.querySelector('.customer-primary-nav a[href="#/customer/programmes"]');
+    return {
+      text,
+      heroText:hero?String(hero.innerText||'').replace(/\\s+/g,' ').trim():null,
+      heroLabel:hero?String(hero.getAttribute('aria-label')||''):null,
+      cardText,
+      cardsClaimingReady:cardText.filter(t=>/reward[s]? ready/i.test(t)).length,
+      navRewardsBadge:navRewards?!!navRewards.querySelector('.customer-nav-count'):null,
+      navRewardsLabel:navRewards?String(navRewards.getAttribute('aria-label')||navRewards.innerText||'')
+        .replace(/\\s+/g,' ').trim():null
+    };
+  })`;
+  /* Any digit immediately in front of "reward(s) ready" is a quantity Home cannot substantiate. */
+  const READY_QUANTITY=/\d[\d,]*\s+rewards?\s+ready/i;
+
+  for(const width of WIDTHS){
+    say(`Home never states a ready COUNT at ${width}x900`);
+    const {context,page}=await open(width,900,'#/wallet',{extraBusinesses:true});
+    await page.waitForFunction(()=>!!document.querySelector('.customer-home-ready-card-v343'),null,{timeout:20000});
+    const home=await page.evaluate(homeReadySource+'()');
+    assertTrue(!READY_QUANTITY.test(home.text),
+      `${width}: no surface on Home prints a ready quantity`
+      +(READY_QUANTITY.test(home.text)?` — "${(home.text.match(READY_QUANTITY)||[''])[0]}"`:''));
+    assertTrue(!READY_QUANTITY.test(home.heroText||'')&&!READY_QUANTITY.test(home.heroLabel||''),
+      `${width}: the greeting hero reads "${home.heroText}" `
+      +`(accessible name "${home.heroLabel}") — no quantity in either`);
+    /* The greeting and the cards are two readings of one array and must not drift: the hero
+       asserts readiness exactly when at least one card does. */
+    const heroSaysReady=/reward[s]? ready/i.test(home.heroText||'');
+    assertTrue(heroSaysReady===(home.cardsClaimingReady>0),
+      `${width}: the greeting (${heroSaysReady?'ready':'not ready'}) agrees with the `
+      +`${home.cardsClaimingReady} card(s) that claim readiness`);
+    assertTrue(home.cardsClaimingReady===2,
+      `${width}: both ready businesses say so on Home (${home.cardsClaimingReady} of 5 cards)`);
+    assertTrue(home.navRewardsBadge===false,
+      `${width}: the Rewards tab carries no bare number (badge present: ${home.navRewardsBadge})`);
+    assertTrue(!/\d/.test(home.navRewardsLabel||''),
+      `${width}: and its accessible name is "${home.navRewardsLabel}", with no count in it`);
+    await context.close();
+  }
+
+  /* The other half of the ruling: the page that HAS loaded the catalogue still prints the exact
+     number. Removing the unsubstantiated 1 must not have removed the substantiated 2. */
+  say('the business page still prints the exact ready count it loaded');
+  {
+    const {context,page}=await open(1180,900,`#/wallet/${SLUG}`,{extraBusinesses:true,withStamps:true});
+    /* The tiles paint "Reward ready" and customerRewardReadyCountApplyV397 replaces it with the
+       real figure once loadRewards has the catalogue. Waiting for that figure IS the assertion. */
+    const exact=await page.waitForFunction(
+      ()=>/2 rewards ready/.test(String(document.body.innerText||''))||null,
+      null,{timeout:20000}).then(()=>true).catch(()=>false);
+    assertTrue(exact,
+      'the business page names the real count (2) once the catalogue is in — so removing the '
+      +'unsubstantiated 1 did not remove the substantiated 2');
+    await context.close();
+  }
+
+  /* ============ nestly_v457, ruling 2 — the merchant's name is never clipped ==================
+     Both causes are covered: the wordy placeholder that starved the name's track (measured 172px
+     of actions against a 104px name box), and the nowrap+ellipsis that clipped any name past
+     ~156px whatever the track. The non-Latin name is here because the fix must not depend on
+     English label widths. */
+  const headerNameSource=`(()=>{
+    const header=document.querySelector('.customer-business-header-v346');
+    if(!header)return {missing:true};
+    const name=header.querySelector('.customer-business-identity-v346 b');
+    if(!name)return {missing:'name'};
+    const style=getComputedStyle(name);
+    const actions=header.querySelector('.customer-business-actions-v346');
+    return {columns:getComputedStyle(header).gridTemplateColumns,
+      text:String(name.textContent||'').trim(),
+      clientWidth:name.clientWidth,scrollWidth:name.scrollWidth,
+      whiteSpace:style.whiteSpace,textOverflow:style.textOverflow,
+      actionsWidth:actions?actions.getBoundingClientRect().width:0,
+      actionTargets:actions?[...actions.children].map(el=>{
+        const box=el.getBoundingClientRect();
+        return {label:String(el.getAttribute('aria-label')||el.textContent||'').trim().slice(0,24),
+          width:Math.round(box.width),height:Math.round(box.height)};
+      }):[]};
+  })`;
+  const NAME_CASES=[
+    ['short, contact read landed',{withBranchContact:true}],
+    ['short, contact read never lands',{withBranchContact:false}],
+    ['long Latin name',{withBranchContact:true,businessName:'Ah Xiang Traditional Kopitiam & Bakery'}],
+    ['long Latin name, no contact',{withBranchContact:false,businessName:'Ah Xiang Traditional Kopitiam & Bakery'}],
+    ['Tamil name',{withBranchContact:true,businessName:'கோபி டீக்கடை மற்றும் பேக்கரி'}],
+    ['Chinese name',{withBranchContact:true,businessName:'新加坡传统咖啡店与烘焙坊'}]
+  ];
+  for(const [label,options] of NAME_CASES){
+    for(const width of [390,520,834,1440]){
+      say(`business name not clipped — ${label} at ${width}x900`);
+      const {context,page}=await open(width,900,`#/wallet/${SLUG}`,{withStamps:true,...options});
+      await page.waitForFunction(()=>!!document.querySelector('.customer-business-header-v346 .customer-business-identity-v346 b'),null,{timeout:20000});
+      /* The contact read replaces the whole action row; give it a beat so both states are the
+         SETTLED state rather than a race. */
+      await page.waitForTimeout(900);
+      const header=await page.evaluate(headerNameSource+'()');
+      assertTrue(!header.missing&&header.scrollWidth<=header.clientWidth+1,
+        `${width}: ${label} — "${header.text}" renders in ${header.clientWidth}px for `
+        +`${header.scrollWidth}px of content (tracks ${header.columns})`);
+      assertTrue(header.textOverflow!=='ellipsis',
+        `${width}: ${label} — the name is not set to ellipsise (${header.textOverflow})`);
+      assertTrue(header.actionTargets.length===2
+        &&header.actionTargets.every(target=>target.height>=44&&target.width>=34),
+        `${width}: ${label} — both header actions stay reachable at a real size `
+        +`(${JSON.stringify(header.actionTargets)})`);
+      await context.close();
+    }
+  }
+
+  /* ============ nestly_v457, ruling 3 — the two worst tap targets reach 44px ================== */
+  say('Home section-head links and the reward filter chips are 44px tall');
+  for(const [route,selector,what] of [
+    ['#/wallet','.customer-home-section-head-v343 a,.customer-home-offers-head a','Home "View all" / "See all"'],
+    ['#/customer/programmes','.customer-rewards-filter-chip-v395,.customer-rewards-filter-chips-v344 span','reward filter chips']
+  ]){
+    for(const width of [390,834,1440]){
+      const {context,page}=await open(width,900,route,{extraBusinesses:true});
+      await page.waitForTimeout(1400);
+      const targets=await page.evaluate(sel=>[...document.querySelectorAll(sel)]
+        .filter(el=>{const b=el.getBoundingClientRect();return b.width>0&&b.height>0})
+        .map(el=>{const b=el.getBoundingClientRect();
+          return {label:String(el.textContent||'').trim().slice(0,18),
+            width:Math.round(b.width),height:Math.round(b.height)}}),selector);
+      assertTrue(targets.length>0,`${width}: ${what} — found ${targets.length} control(s) to measure`);
+      const short=targets.filter(target=>target.height<44);
+      assertTrue(short.length===0,
+        `${width}: ${what} — every hit area is at least 44px tall`
+        +(short.length?` — ${JSON.stringify(short)}`:` (${JSON.stringify(targets)})`));
+      await context.close();
+    }
+  }
+
   assertTrue(pageErrors.length===0,`no uncaught page errors (${pageErrors.length})`
     +(pageErrors.length?`: ${pageErrors.slice(0,3).join(' | ')}`:''));
 

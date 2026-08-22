@@ -23,7 +23,11 @@ test('customer Home removes the redundant Messages summary while retaining the h
   assert.doesNotMatch(app,/customerHomeQuickLinksV183/);
   assert.match(app,/href:'#\/customer\/programmes'/);
   assert.match(app,/href:'#\/customer\/bookings'/);
-  assert.match(app,/applyCustomerNavCountsV194\(\{programmes:cards\.length,bookings:bookingsAvailable\?bookingCount:0\}\)/);
+  /* nestly_v457 re-pinned (B-REG-017, owner ruling 2026-08-22). The My Rewards badge counted
+     REWARD ACCOUNTS while sitting on a tab named "Rewards", next to a greeting and cards
+     talking about rewards READY — LIVE it read "Rewards 7" beside "2 rewards ready" and two
+     cards each claiming 1. Bookings keeps its badge; it counts the thing its tab is named for. */
+  assert.match(app,/applyCustomerNavCountsV194\(\{bookings:bookingsAvailable\?bookingCount:0\}\)/);
   assert.match(shell,/id="customerInboxBellSlot"/);
   assert.match(shell,/href="#\/customer\/messages"/);
   assert.match(shell,/CUI\.icon\('bell'/);
