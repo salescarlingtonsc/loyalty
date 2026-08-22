@@ -2355,6 +2355,12 @@
       "path": "db/migrations/20260823_nestly_v464_earned_reward_expiry.sql",
       "semanticVersion": "v464",
       "proposedDeployVersion": "20260823000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v462_featured_offer_and_live_cap.sql",
+      "semanticVersion": "v462",
+      "proposedDeployVersion": "20260823000004"
     }
   ]
 }

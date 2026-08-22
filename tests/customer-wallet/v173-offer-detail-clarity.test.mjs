@@ -3,6 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const app = ((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
+/* V462: copy assertions run against a comment-stripped copy. app.js documents its own history in
+   prose, so a retired sentence survives as a QUOTATION of itself long after the shipped string is
+   gone — asserting "this text no longer appears" against the raw file measures the changelog, not
+   the product. */
+const shipped = app.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const section = (start, end) => {
   const from = app.indexOf(start);
   assert.notEqual(from, -1, `missing section start ${start}`);
@@ -40,12 +45,22 @@ test('home offer cards open the offer detail sheet with full marketing content',
   assert.match(detail, /CUI\.activateDialog/);
 });
 
-test('business page and console agree on the six-offer cap and the join CTA is self-explanatory', () => {
-  assert.doesNotMatch(app, /presentation\.offers:\[\]\)\.slice\(0,2\)/);
-  assert.match(app, /const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
-  assert.match(app, /items:\[\]\)\.slice\(0,6\)|\.items:\[\]\)\.slice\(0,6\)/);
-  assert.match(app, /Customers see up to six current offers\./);
-  assert.doesNotMatch(app, /Customers see at most two current offers\./);
+/* V462 (owner ruling R2a): there is no six-offer cap any more, so "business page and console agree
+   on it" is no longer the property to hold. The successor property is stronger and is what the
+   owner actually asked for: the CLIENT imposes no cap at all on either the fetch or the render,
+   and the console tells the owner the same thing. The bound that remains lives in one place —
+   app.v104_effective_promotion_entitlement, applied by customer_get_promotions_v155 and reported
+   truthfully in its own `limit` field (db/tests/v462_featured_offer_and_live_cap.sql, checks 3-4). */
+test('the business page imposes no offer cap of its own, and the console says the same', () => {
+  assert.doesNotMatch(app, /presentation\.offers:\[\]\)\.slice\(/,
+    'the render must not trim what the reader returned');
+  assert.doesNotMatch(app, /promotionsResult\.data\?\.items:\[\]\)\.slice\(/,
+    'the fetch must not trim it either');
+  assert.match(app, /const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\);/);
+  assert.match(shipped, /Customers see every live offer on your business page\./);
+  assert.doesNotMatch(shipped, /Customers see up to six current offers\./);
+  assert.doesNotMatch(shipped, /Customers see at most two current offers\./);
+  assert.doesNotMatch(shipped, /Customers see no more than two current offers at once\./);
   assert.match(app, /addProgramme:'Scan to join'/);
 });
 

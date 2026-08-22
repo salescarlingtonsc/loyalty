@@ -30,7 +30,9 @@ test('a 504 after commit keeps the exact finalization receipt and photo for repl
      joined that set: it is definitively rolled back, but it is retryable with re-read versions and
      the retry needs the SAME uploaded photo. Deleting it there is what made a stale version an
      offer that could never be published. */
-  assert.match(page,/if\(!promotionRpcErrorIsAmbiguousV104\(result\.error\)\s*&&!promotionVersionConflictV280\(result\.error\)\)\{[\s\S]*cleanFailedUpload\(pending\)[\s\S]*writeSessionValue\(pendingStorageKey,null\)/);
+  /* V462: a live-offer-cap refusal joined the same set, for the same reason — definitively rolled
+     back, but retryable with the SAME photo the moment the owner moves another offer to draft. */
+  assert.match(page,/if\(!promotionRpcErrorIsAmbiguousV104\(result\.error\)\s*&&!promotionVersionConflictV280\(result\.error\)\s*&&!promotionPublishLimitRefusalV462\(result\.error\)\)\{[\s\S]*cleanFailedUpload\(pending\)[\s\S]*writeSessionValue\(pendingStorageKey,null\)/);
   assert.match(page,/The save outcome is still unconfirmed\. Check your connection, then press again\./);
 });
 

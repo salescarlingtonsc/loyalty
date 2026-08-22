@@ -18,11 +18,17 @@ const merchant=section('function customerPromotionCtaV104','function actionableW
 const merchantExperience=section('function customerMerchantExperienceMarkupV95','function actionableWalletCardMarkup');
 const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
 
-test('customer programme makes up to six promotions primary and keeps identity/points compact',()=>{
+/* V462 (owner ruling R2a): "customer sees ALL live offers on the business's own page". This test
+   used to pin the .slice(0,6) that has now gone — a client cap stacked on top of the reader's own
+   `limit 6`, so a shop with eight live offers had two cut twice. The pin is inverted rather than
+   deleted: the property that matters is that this surface adds NO cap of its own. */
+test('customer programme makes every live promotion primary and keeps identity/points compact',()=>{
   assert.match(merchant,/customer-programme-compact-head/);
   // v194 moved the balance into the Reward points tab; v103 owns that assertion now.
   assert.match(app,/customer-programme-balance/);
-  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
+  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\);/);
+  assert.doesNotMatch(merchant,/presentation\.offers:\[\]\)\.slice\(/,
+    'the business page must not re-cap what the server already bounded by the entitlement');
   assert.match(merchant,/customer-promotions-section/);
   assert.match(merchant,/customer-promotions-grid/);
   assert.ok(merchant.indexOf('customer-promotions-section')<merchant.indexOf('presentation.products.length'),

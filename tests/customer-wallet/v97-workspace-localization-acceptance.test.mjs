@@ -353,7 +353,13 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      It is disabled now, and a disabled destructive control that gives no reason is the v453
      problem again, so the reason is reviewed copy in all three locales — read once by the
      button's title and by the JS that re-applies it after a revoke. */
-  assert.equal(keys.length,144,'mixed-interface interpolation inventory changed without review');
+  /* 144 -> 147: nestly_v462 (owner ruling R2) adds the three sentences the offers model speaks at
+     runtime — offerOnCustomerHome and offerNotLiveForHome for the one-tap "Show on Home" move, and
+     offerLiveCapReached for an owner who declines the demote dialog. All three name an owner's own
+     data ({name}, {max}), so all three are reviewed copy rather than template literals; {max}
+     interpolates the entitlement itself so the sentence cannot name a limit the server does not
+     enforce. */
+  assert.equal(keys.length,147,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

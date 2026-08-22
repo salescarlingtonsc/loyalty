@@ -15,7 +15,9 @@ test('Promotions is an owner-only submodule reached from the consolidated Grow o
   assert.match(route,/pageKey==='promotions'&&S\.myRole!=='owner'/);
   assert.match(route,/Only the owner can publish promotions/);
   assert.match(app,/programmeRow\(\{kind:'promotions'/);
-  assert.match(app,/Customers see no more than two current offers at once\./);
+  /* V462 (owner ruling R2a): the overview row used to promise "up to six current offers"; the
+     rule now is that the business page shows every live one. */
+  assert.match(app,/Customers see every live offer on your business page\./);
   assert.match(app,/href:'#\/promotions'/);
   // The rail label became 'Programmes' when the owner consolidated the section.
   assert.match(app,/>Programmes</);
@@ -104,9 +106,18 @@ test('quota and recovery states are explicit without silently deleting offers',(
   assert.match(page,/published_count/);
   assert.match(page,/quota_used/);
   assert.match(page,/max_published_offers/);
-  assert.match(page,/launch offer slots used/);
-  assert.match(page,/currently published\. Complimentary first-time publishing ends/);
-  assert.match(page,/Customers see no more than two current offers at once/);
+  /* V462 (owner ruling R2c): the slots figure is the LIVE count now, not a lifetime allowance —
+     "launch offer slots" was a number moving an offer to draft could never free, which would have
+     made the demote dialog a lie. The two-offer promise underneath it was never true of anything. */
+  assert.match(page,/\$\{quotaUsed\} of \$\{max\} offers live/);
+  assert.doesNotMatch(page,/launch offer slots used/);
+  assert.match(page,/Complimentary first-time publishing ends/);
+  assert.match(page,/Customers see every live offer on your business page, and one of them on their Home screen\./);
+  assert.doesNotMatch(page,/Customers see no more than two current offers at once/);
+  /* R2c's dialog: the editor answers a cap refusal by naming the live offers and moving one to
+     draft, rather than reporting a failure the owner cannot act on. */
+  assert.match(page,/promotionDemoteDialogV462\(\{/);
+  assert.match(page,/demoteLiveOfferV462/);
   assert.match(page,/canPublishThis=initial\.active\|\|Boolean\(initial\.metadata\?\.published_once_at\)\|\|canPublishNew/);
   assert.match(page,/max_published_offers\?\?10/);
   assert.match(page,/Publishing is not available for this company/);

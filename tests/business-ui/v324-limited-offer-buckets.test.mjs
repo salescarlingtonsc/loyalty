@@ -50,11 +50,21 @@ const bucketBody = [
 
 const promotionDateTextV104 = new Function(`${promotionDateTextSrc}\nreturn promotionDateTextV104;`)();
 
+/* V462: the row now also states which single live offer is on the customer Home feed. Both new
+   inputs are server-supplied (business_get_promotion_editor_v155.featured_offer_id /
+   .featured_offer_pinned), so they enter the harness the same way every other snapshot value
+   does — as a parameter, never recomputed here. CUI is stubbed to a marker rather than to '' so
+   an assertion cannot pass on an accidentally empty icon call. */
 const build = new Function('esc', 'isOwner', 'canRewards', 'growOffersTabV324', 'growOffersNowV324',
-  'promotionLifecycleV186', 'promotionDateTextV104', 'customerMediaUrlV95', 'items', bucketBody);
+  'promotionLifecycleV186', 'promotionDateTextV104', 'customerMediaUrlV95',
+  'growFeaturedOfferIdV462', 'growFeaturedPinnedV462', 'CUI', 'items', bucketBody);
 
-const call = (items, {isOwner = true, canRewards = true, tab = 'published'} = {}) =>
-  build(esc, isOwner, canRewards, tab, NOW, promotionLifecycleV186, promotionDateTextV104, () => '', items);
+const CUI_STUB = {icon: () => '<svg data-icon></svg>'};
+
+const call = (items, {isOwner = true, canRewards = true, tab = 'published',
+  featuredId = '', featuredPinned = false} = {}) =>
+  build(esc, isOwner, canRewards, tab, NOW, promotionLifecycleV186, promotionDateTextV104, () => '',
+    featuredId, featuredPinned, CUI_STUB, items);
 
 const PUBLISHED_LIVE = {id: 'p1', name: '20% off spa', active: true, ends_at: '2026-08-27T23:59:59+08:00'};
 const PUBLISHED_SCHEDULED = {id: 'p2', name: 'National Day', active: true, starts_at: '2026-09-01T00:00:00+08:00', ends_at: '2026-09-10T23:59:59+08:00'};
@@ -200,4 +210,82 @@ test('V324 the Limited Offer rail page keeps its pinned wrapper open string, and
   assert.match(app, /programmeView==='offers'\?`<div class="grow-limited-offer-v319" data-grow-limited-offer-v319>/);
   assert.match(app, /\$\{topicOnV229\('promotions'\)\?growLimitedOfferCategoryHtmlV319:''\}/);
   assert.equal((app.match(/const growLimitedOfferCategoryHtmlV319=/g) || []).length, 1);
+});
+
+/* V462 (owner ruling R2b): "exactly ONE live offer per business is FEATURED on the customer Home
+ * feed, owner-selected in #/grow/offers with a clear 'Shown on customer Home — change'
+ * affordance; DEFAULT until picked = most recently published live offer."
+ *
+ * These execute the shipped growOffersRowHtmlV324 with the server's answer handed in, exactly the
+ * way growPage hands it in. What is deliberately NOT tested here is which offer is featured: that
+ * is app.v462_effective_featured_offer's job and db/tests/v462_featured_offer_and_live_cap.sql
+ * proves it. A second opinion about it on this side is precisely the drift R2b forbids. */
+const FEATURED_MARK = 'Shown on customer Home';
+/* A SECOND genuinely live offer. PUBLISHED_SCHEDULED is deliberately not reused for the positive
+   cases: it is active but has not started, so it is not something a customer can be shown today
+   and the server writer would refuse it. */
+const PUBLISHED_LIVE_2 = {id: 'p3', name: 'Kopi hour', active: true, ends_at: '2026-08-30T23:59:59+08:00'};
+
+test('V462 the featured live row says so, and does not offer to feature itself again', () => {
+  const {list} = call([PUBLISHED_LIVE, PUBLISHED_LIVE_2], {featuredId: 'p1', featuredPinned: true});
+  assert.match(list, /data-grow-offer-is-featured-v462="1"/);
+  assert.ok(list.includes(FEATURED_MARK), 'the featured row states where the customer sees it');
+  const featuredRow = list.slice(list.indexOf('data-grow-offer-is-featured-v462'),
+    list.indexOf('</div></div>', list.indexOf('data-grow-offer-is-featured-v462')));
+  assert.doesNotMatch(featuredRow, /data-grow-offer-feature-v462/,
+    'the offer already on Home must not carry a control that would do nothing');
+});
+
+test('V462 every OTHER live row carries the one-tap change, addressed to its own id', () => {
+  const {list} = call([PUBLISHED_LIVE, PUBLISHED_LIVE_2], {featuredId: 'p1', featuredPinned: true});
+  assert.match(list, /data-grow-offer-feature-v462="p3"/);
+  assert.match(list, /data-grow-offer-feature-name-v462="Kopi hour"/);
+  assert.equal((list.match(/data-grow-offer-feature-v462="/g) || []).length, 1,
+    'exactly one other live offer, so exactly one change control');
+});
+
+test('V462 an unpicked default admits it was chosen automatically', () => {
+  const chosen = call([PUBLISHED_LIVE], {featuredId: 'p1', featuredPinned: true}).list;
+  const defaulted = call([PUBLISHED_LIVE], {featuredId: 'p1', featuredPinned: false}).list;
+  assert.ok(chosen.includes(FEATURED_MARK) && defaulted.includes(FEATURED_MARK));
+  assert.doesNotMatch(chosen, /chosen for you/i, 'an owner choice is not described as automatic');
+  assert.match(defaulted, /chosen for you because it went live most recently/i);
+});
+
+test('V462 NEGATIVE CONTROL: a scheduled, ended or draft row is never offered to Home', () => {
+  /* PUBLISHED_SCHEDULED is active but has not started; ENDED_NATURALLY and RETIRED_PUBLISHED are
+     past their end date. None of them is something a customer can be shown today, and the server
+     writer refuses all three (featured_offer_must_be_live), so the control must not appear. */
+  const scheduledOnly = call([PUBLISHED_SCHEDULED], {featuredId: '', featuredPinned: false}).list;
+  assert.doesNotMatch(scheduledOnly, /data-grow-offer-feature-v462/);
+  const history = call([ENDED_NATURALLY, RETIRED_PUBLISHED], {tab: 'history', featuredId: ''}).list;
+  assert.doesNotMatch(history, /data-grow-offer-feature-v462/);
+  assert.ok(!history.includes(FEATURED_MARK));
+});
+
+test('V462 NEGATIVE CONTROL: a read-only viewer is never offered the Home slot', () => {
+  const {list} = call([PUBLISHED_LIVE, PUBLISHED_LIVE_2],
+    {isOwner: false, featuredId: 'p1', featuredPinned: true});
+  assert.doesNotMatch(list, /data-grow-offer-feature-v462/);
+  assert.ok(list.includes(FEATURED_MARK),
+    'reading which offer is on Home is not a write, so it still shows');
+});
+
+test('V462 NEGATIVE CONTROL: with no featured id at all, no row claims the Home slot', () => {
+  const {list} = call([PUBLISHED_LIVE, PUBLISHED_LIVE_2], {featuredId: '', featuredPinned: false});
+  assert.ok(!list.includes(FEATURED_MARK));
+  assert.doesNotMatch(list, /data-grow-offer-is-featured-v462/);
+  /* The change control still appears on the live row — the affordance does not depend on
+     something already being featured. */
+  assert.match(list, /data-grow-offer-feature-v462="p1"/);
+});
+
+test('V462 the feature handler calls the one writer, and repaints from the server reply', () => {
+  const handler = app.slice(app.indexOf("outerMain.querySelectorAll('[data-grow-offer-feature-v462]')"),
+    app.indexOf('/* V324: show/hide the inline confirm block in place'));
+  assert.ok(handler.length > 200, 'the handler was found and sliced');
+  assert.match(handler, /sb\.rpc\('business_set_featured_offer_v462',\{\s*p_business:S\.biz\.id,p_promotion_id:id\}\)/);
+  assert.match(handler, /growRerenderV322\(\)/, 'the row order and marker come back from the server');
+  assert.doesNotMatch(handler, /confirmActionV386/,
+    'moving the Home slot is reversible in one tap and must not interrupt the owner');
 });

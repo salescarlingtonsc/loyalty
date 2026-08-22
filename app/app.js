@@ -7530,6 +7530,52 @@ function interleaveCustomerOffersV173(items){
     for(const key of order){const bucket=byBusiness.get(key);if(round<bucket.length)out.push(bucket[round])}
   return out;
 }
+/* V462 (owner ruling R2d): "Home-feed fairness = CLIENT-SIDE shuffle of the featured offers'
+   ORDER on each app load/refresh — zero Supabase load; no server rotation logic."
+   Since v462 the Home feed carries exactly one offer per business, so the ORDER of that list is
+   the whole of a shop's visibility: whoever is first is the one seen without scrolling. Rotating
+   it server-side would mean either state to keep or a query that is different every call; doing
+   it here costs nothing and no two customers see the same running order.
+   The seed is drawn ONCE, when the bundle loads. That is deliberate and is the difference between
+   "shuffled per load" and "shuffled per render": Home re-renders on every wallet poll (v295/v370),
+   and a fresh permutation each time would make the rail jump under the customer's thumb while
+   they were reading it. One load, one order; reload, new order.
+   __peekaaOfferShuffleSeedV462 exists so a test can pin the permutation and prove that two
+   different seeds really do produce two different orders. */
+const CUSTOMER_HOME_OFFER_SHUFFLE_SEED_V462=(()=>{
+  const injected=Number(globalThis.__peekaaOfferShuffleSeedV462);
+  if(Number.isFinite(injected))return injected>>>0;
+  try{
+    const buffer=new Uint32Array(1);crypto.getRandomValues(buffer);return buffer[0]>>>0;
+  }catch(_error){
+    return ((Date.now()^Math.floor(Math.random()*0x100000000))>>>0);
+  }
+})();
+/* mulberry32 — a small, well-behaved 32-bit PRNG. Math.random() would also be fine statistically
+   but cannot be pinned, and pinning is what makes R2d testable rather than merely asserted. */
+function offerShuffleRandomV462(seed){
+  let state=(Number(seed)||0)>>>0;
+  return()=>{
+    state=(state+0x6D2B79F5)>>>0;
+    let t=state;
+    t=Math.imul(t^(t>>>15),t|1);
+    t^=t+Math.imul(t^(t>>>7),t|61);
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+/* Fisher-Yates, descending, drawing j from [0,i] inclusive — the unbiased form. The naive
+   "swap with any index" variant produces n^n equally likely swap sequences over n! orderings and
+   therefore favours some orders over others, which for a fairness rotation would be the one bug
+   that matters. Returns a copy; the caller's array is never reordered in place. */
+function shuffleCustomerHomeOffersV462(items,seed=CUSTOMER_HOME_OFFER_SHUFFLE_SEED_V462){
+  const out=Array.isArray(items)?items.slice():[];
+  const random=offerShuffleRandomV462(seed);
+  for(let i=out.length-1;i>0;i-=1){
+    const j=Math.floor(random()*(i+1));
+    const swap=out[i];out[i]=out[j];out[j]=swap;
+  }
+  return out;
+}
 let customerHomeOfferIndexV173=new Map();
 /* v195 (owner, arrow above Limited offers: "before limited offers i want to see a glance of my
    expiring rewards"): points that quietly expire are the one thing a loyalty app must never let
@@ -7572,7 +7618,10 @@ function customerExpiringRowsV286(cards=[]){
   }).filter(Boolean).sort((a,b)=>String(a.at).localeCompare(String(b.at)));
 }
 function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
-  const items=interleaveCustomerOffersV173(state.items);
+  /* V462 (R2d): shuffled on each app load. interleaveCustomerOffersV173 still runs first — it is
+     a no-op now that the server sends one offer per business, and keeping it means the rail
+     degrades gracefully rather than clumping if that ever changes. */
+  const items=shuffleCustomerHomeOffersV462(interleaveCustomerOffersV173(state.items));
   customerHomeOfferIndexV173=new Map(items.map(item=>[String(item?.id||''),item]));
   let body='<div class="card customer-home-offers-state"><p class="muted small">Loading offers…</p></div>';
   if(state.status==='ready'){
@@ -10051,7 +10100,9 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ?tier.current.benefits.filter(value=>String(value||'').trim()).map(value=>String(value).trim()):[];
   const unitLabel=ct(presentation.unit);
   const cardImage=item=>customerMediaUrlV95(item?.image_url);
-  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]).slice(0,6);
+  /* V462 (R2a): the third and last place a business page quietly kept two of a shop's offers from
+     its own customers. The reader is already bounded by the entitlement. */
+  const offers=(Array.isArray(presentation.offers)?presentation.offers:[]);
   /* v194 (owner: "show company details, phone number, address" beside the business name): the
      header is now the way in to the company sheet, and the booking action moved up here — "make
      it smaller and put upstair" — out of the full-width card that sat below the offers. */
@@ -11347,9 +11398,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     ?{unavailable:effectiveTierResult.error.code==='42501'?'not_running':'error'}
     :(effectiveTierResult.data?.tier||{});
   const programmeOffersStatus=promotionsResult.error?'error':'ready';
+  /* V462 (owner ruling R2a): "customer sees ALL live offers on the business's own page". The
+     .slice(0,6) that used to be here was a second, invisible cap on top of the reader's own
+     `limit 6` — so a shop with eight live offers had two of them cut twice over, and the owner
+     had no way to see that from either side. The server now bounds this by the business's own
+     promotion entitlement and says so in the payload; nothing is trimmed again here. */
   presentation.offers=promotionsResult.error
     ?[]
-    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]).slice(0,6);
+    :(Array.isArray(promotionsResult.data?.items)?promotionsResult.data.items:[]);
   /* v255 (audit finding: promotion views were class C — nothing recorded between "we published
      it" and "someone redeemed"). Deduped per browser session so a wallet the customer reopens
      five times is one view, not five. */
@@ -15760,6 +15816,15 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   stampLengthGiftBlocksShorter:Object.freeze({en:'A gift sits on stamp {stamp}. Move or remove it to make the card shorter.','zh-CN':'印章 {stamp} 上有一份礼物。请移走或删除它，才能缩短集章卡。',ms:'Sebuah hadiah terletak pada setem {stamp}. Alihkan atau buang ia untuk memendekkan kad.'}),
   stampLengthAtMinimum:Object.freeze({en:'{stamps} stamp is the shortest a card can be.','zh-CN':'集章卡最短为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpendek yang dibenarkan.'}),
   stampLengthAtMaximum:Object.freeze({en:'{stamps} stamps is the longest a card can be.','zh-CN':'集章卡最长为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpanjang yang dibenarkan.'}),
+  /* nestly_v462 (owner ruling R2): three sentences an owner reads at runtime, so three pieces of
+     reviewed copy rather than three interpolated template literals. offerOnCustomerHome confirms
+     the one-tap move; offerNotLiveForHome is the only refusal an owner can actually cause (the
+     offer stopped being live while the page was open); offerLiveCapReached is what the editor says
+     when the owner declines the demote dialog, and it interpolates the entitlement itself so the
+     sentence can never name a limit different from the one the server enforces. */
+  offerOnCustomerHome:Object.freeze({en:'"{name}" is now on customer Home','zh-CN':'“{name}” 现已显示在顾客首页',ms:'"{name}" kini dipaparkan di Laman Utama pelanggan'}),
+  offerNotLiveForHome:Object.freeze({en:'"{name}" is not live any more, so it cannot go on customer Home. Publish it first.','zh-CN':'“{name}” 已不在进行中，无法显示在顾客首页。请先发布它。',ms:'"{name}" tidak lagi disiarkan, jadi ia tidak boleh dipaparkan di Laman Utama pelanggan. Siarkan ia dahulu.'}),
+  offerLiveCapReached:Object.freeze({en:'Not published — you already have {max} offers live. Your work is saved as a draft. Move one live offer back to draft, then press Publish again.','zh-CN':'未发布 — 您已有 {max} 个进行中的优惠。您的内容已保存为草稿。请先将一个进行中的优惠改回草稿，然后再按“发布”。',ms:'Tidak disiarkan — anda sudah mempunyai {max} tawaran disiarkan. Kerja anda disimpan sebagai draf. Alihkan satu tawaran kembali ke draf, kemudian tekan Siarkan sekali lagi.'}),
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
   /* nestly_v420: the referral gift handed over at the counter. */
   referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
@@ -15934,6 +15999,8 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v456: why the destructive "Revoke all QRs" is disabled when no QR exists. Same shape
      as the three v453 refusals above — reviewed copy, because the owner reads it. */
   'joinQrNothingToRevoke',
+  /* nestly_v462 (owner ruling R2): the two Home-slot confirmations and the live-cap refusal. */
+  'offerOnCustomerHome','offerNotLiveForHome','offerLiveCapReached',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -25732,6 +25799,14 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     referral:referralsError?null:(referrals||[])[0]||null,
     memberships:membershipsError?[]:memberships||[],
     promotions:promotionsError?[]:(Array.isArray(promotions?.items)?promotions.items:[]),
+    /* V462 (owner ruling R2b): which single offer this firm puts on the customer Home feed, and
+       whether that is the owner's own choice or still the default. Both come from the SAME
+       business_get_promotion_editor_v155 read the list already makes — no extra round trip — and
+       from the same server-side resolver customer_get_home_offers_v167 filters by, so the marker
+       on this screen cannot disagree with the card the customer receives. */
+    promotionsFeaturedV462:promotionsError?null:(promotions?.featured_offer_id||null),
+    promotionsFeaturedPinnedV462:promotionsError?false:promotions?.featured_offer_pinned===true,
+    promotionsEntitlementV462:promotionsError?null:(promotions?.entitlement||null),
     draft:draftHeaderV268,
     draftDetail:draftDetailV268,
     draftDetailError:Boolean(draftDetailErrorV268),
@@ -26344,6 +26419,18 @@ function promotionVersionConflictV280(error){
   const code=String(error.code||''),message=String(error.message||error.error||'');
   return code==='40001'||/promotion_version_conflict|promotion_copy_version_conflict|promotion_target_media_version_conflict/.test(message);
 }
+/* V462 (owner ruling R2c): the one refusal that is neither a bug nor a lost race — the business
+   is at its live-offer limit. business_finalize_promotion_v155 returns it as a structured 200
+   (v378), so it arrives with an explicit `reason` and never has to be recognised from prose.
+   Treating it as its own kind matters twice: the owner gets the demote dialog instead of a
+   generic "was not saved", and — like a version conflict, and unlike a real failure — the photo
+   already uploaded for this save is KEPT, because the very next thing that happens is the same
+   save being sent again with the same photo. */
+function promotionPublishLimitRefusalV462(error){
+  if(!error)return false;
+  return String(error.reason||'')==='promotion_publish_limit_reached'
+    ||/promotion_publish_limit_reached/.test(String(error.message||error.error||''));
+}
 /* V186 (owner: "i dont see the published marketing content - live sync"). The offer WAS
    published — and scheduled to start two days later — but every owner-facing label said only
    "Published", so an offer that no customer could yet see looked live. Customers were right;
@@ -26399,6 +26486,83 @@ async function uploadRewardPhotoV326(file){
   if(error)throw new Error(error.message||'The photo could not be uploaded.');
   return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
 }
+/* V462 (owner ruling R2b) — "Shown on customer Home", stated on the editor as well as on the
+   Limited Offer list, because an owner who publishes from here never sees that list. Both
+   surfaces render the SAME server answer (business_get_promotion_editor_v155.featured_offer_id,
+   which is app.v462_effective_featured_offer, which is what customer_get_home_offers_v167
+   filters by), so there is one fact on screen, not two guesses at it. Everything arrives as an
+   argument: this function sits in the gap between promotionsPage and growPage that
+   tests/grow/v104-promotion-retry-safety.test.mjs requires to be free of direct S.biz reads. */
+function promotionFeaturedCardV462({items=[],featuredOfferId='',pinned=false,canWrite=false}={}){
+  const live=(Array.isArray(items)?items:[]).filter(item=>promotionLifecycleV186(item).live);
+  if(!live.length)return '';
+  const featured=live.find(item=>String(item.id)===String(featuredOfferId))||null;
+  const name=String(featured?.name||featured?.offerFacts||'').trim();
+  const others=live.filter(item=>item!==featured);
+  return `<div class="imp-note promotion-featured-v462" data-promotion-featured-v462 style="margin-top:12px">
+    <b>Shown on customer Home: ${featured?esc(name||'this offer'):'nothing yet'}</b>
+    <p class="muted small" style="margin-top:6px">${featured
+      ?(pinned
+        ?'You chose this one. Customers see it on their Home screen alongside offers from other shops; every other live offer is still on your own business page.'
+        :'Chosen for you because it went live most recently. Pick a different one any time.')
+      :'None of your live offers is on the Home screen yet.'}</p>
+    ${canWrite&&others.length?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+      <label class="muted small" for="promotionFeaturedPickV462">Show this one instead</label>
+      <select id="promotionFeaturedPickV462" class="grow-setup-input-v301" style="max-width:280px">
+        <option value="">Choose an offer…</option>
+        ${others.map(item=>`<option value="${esc(item.id)}">${esc(String(item.name||item.offerFacts||'Untitled offer').slice(0,70))}</option>`).join('')}
+      </select>
+      <button type="button" class="btn ghost sm" id="promotionFeaturedApplyV462">Show on Home</button>
+    </div>`:''}
+  </div>`;
+}
+/* V462 (owner ruling R2c) — "publishing when 10 are live prompts the owner to move one to draft
+   first (honest dialog, no silent failure)". The dialog is honest in three specific ways: it
+   names the real limit, it LISTS the live offers rather than telling the owner to go and find
+   them, and pressing its button performs the demotion here and then continues the publish the
+   owner already asked for — it does not send them away to do it and come back. Cancelling leaves
+   everything exactly as it was, including the draft they were editing.
+   It never invents the refusal: it is only ever opened after the server has answered
+   promotion_publish_limit_reached. */
+function promotionDemoteDialogV462({live=[],max=0}={}){
+  const rows=(Array.isArray(live)?live:[]).slice();
+  return new Promise(resolve=>{
+    const dialog=document.createElement('div');
+    dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-labelledby','promotionDemoteTitleV462');dialog.tabIndex=-1;
+    dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
+      <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">You already have ${rows.length} offer${rows.length===1?'':'s'} live</h2>
+      <p class="muted small" style="margin-top:10px">${max} live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
+      <div class="promotion-demote-list-v462" role="radiogroup" aria-label="Offer to move back to draft" style="margin-top:12px;display:grid;gap:8px">
+        ${rows.map((item,index)=>`<label class="welcome-offer-optioncard-v350" style="display:flex;gap:10px;align-items:flex-start">
+          <input type="radio" name="promotionDemotePickV462" value="${esc(item.id)}"${index===0?' checked':''}>
+          <span><b>${esc(String(item.name||item.offerFacts||'Untitled offer').slice(0,70))}</b><br>
+          <span class="muted small">${esc(promotionLifecycleV186(item).label)}</span></span></label>`).join('')}
+      </div>
+      <div class="row" style="margin-top:18px"><span class="spacer"></span>
+        <button type="button" class="btn ghost" id="promotionDemoteCancelV462">Keep them all — do not publish</button>
+        <button type="button" class="btn" id="promotionDemoteOkV462">Move to draft and publish</button></div>
+    </div>`;
+    document.body.append(dialog);
+    let settled=false,deactivate=null;
+    const finish=value=>{
+      if(settled)return;
+      settled=true;
+      const close=deactivate;deactivate=null;
+      if(close)close({restoreFocus:true});else dialog.remove();
+      resolve(value);
+    };
+    /* R5 (owner ruling, 2026-08-23): backdrop-click dismissal stays OFF. Escape and navigation
+       already close it, and this dialog is opened mid-publish — a stray click behind it must not
+       silently abandon the save. */
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(null),initialFocus:'#promotionDemoteCancelV462'});
+    dialog.querySelector('#promotionDemoteOkV462').onclick=()=>{
+      const picked=dialog.querySelector('input[name="promotionDemotePickV462"]:checked');
+      finish(picked?String(picked.value):null);
+    };
+    dialog.querySelector('#promotionDemoteCancelV462').onclick=()=>finish(null);
+  });
+}
 async function promotionsPage(selectedPromotionId=null){
   const host=M();
   const businessId=S.biz.id,businessName=S.biz.name,businessSlug=S.biz.slug,
@@ -26424,6 +26588,13 @@ async function promotionsPage(selectedPromotionId=null){
     published=Math.max(0,Number(entitlement.published_count||0)),
     quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
     canPublishNew=entitlement.can_publish_new!==false;
+  /* V462 (owner ruling R2b/R2c). featuredOfferId is the server's answer to "which one offer is on
+     customer Home" — the same app.v462_effective_featured_offer the customer Home reader filters
+     by — and featuredPinned says whether an owner chose it or it is the default standing in. */
+  const featuredOfferIdV462=String(data?.featured_offer_id||''),
+    featuredPinnedV462=data?.featured_offer_pinned===true,
+    liveOffersV462=items.filter(item=>promotionLifecycleV186(item).live),
+    atLiveCapV462=liveOffersV462.length>=max&&max>0;
   const customerVisibleCount=visiblePromotionResult.error?null:Math.max(0,Number(visiblePromotionResult.data?.visible_count||0));
   const selected=items.find(item=>item.id===selectedPromotionId)||null;
   const today=promotionDateInputV104(new Date());
@@ -26454,10 +26625,15 @@ async function promotionsPage(selectedPromotionId=null){
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
     ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',canWrite:true,moduleLabel:'Customer programme'})}
     ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>Customers currently see no offers.</b><p class="muted small" style="margin-top:5px">An offer only shows to customers while its dates are current and it has a photo. Publish one, or check the dates and photo on an existing promotion below.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
-    <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} launch offer slots used</b>
-      <p class="muted small" style="margin-top:4px">${published} currently published. Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}. Customers see no more than two current offers at once.</p></div>
-      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} launch offer slots used" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
+    ${/* V462 (R2c): the slots figure is now the LIVE count — the number the publish gate actually
+         enforces and the number an owner can change by moving an offer to draft. The old copy
+         called it a "launch slot" (a lifetime allowance that drafting could never free) and then
+         promised "no more than two current offers at once", which was never true of anything. */''}
+    <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} offers live</b>
+      <p class="muted small" style="margin-top:4px">Customers see every live offer on your business page, and one of them on their Home screen. ${atLiveCapV462?'You are at the limit — move one back to draft before publishing another.':`You can publish ${Math.max(0,max-quotaUsed)} more.`} Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}.</p></div>
+      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} offers live" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
       ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
+      ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true})}
     </section>
     <ol class="promotion-studio-progress" aria-label="Promotion publishing steps">
       <li><strong>1. Offer</strong>Add exact facts and dates</li>
@@ -26755,6 +26931,44 @@ async function promotionsPage(selectedPromotionId=null){
     p_expected_target_media_version:exactTargetMediaVersion(promotion,draft.branch_id),
     p_attempt_key:attemptKey
   });
+  /* V462 (owner ruling R2c): "move one to draft" performed here, on the owner's behalf, through
+     the SAME writer the editor uses for its own Unpublish button — business_finalize_promotion_v155
+     with p_publish false. No new RPC, no second unpublish path, and deliberately NOT
+     business_delete_promotion_v183: that one RETIRES an offer (active false AND ends_at pulled to
+     now), which is a different, less reversible thing than the draft the dialog promises.
+     Every field is echoed back from the row the editor already read, so this changes exactly one
+     property of that offer. p_object_path is null, so its photo is left where it is. */
+  const demoteLiveOfferV462=async promotionId=>{
+    const target=items.find(item=>String(item.id)===String(promotionId));
+    if(!target)return {error:new Error('That offer could not be found. Reload and try again.')};
+    const scope=target.branchScope||{},
+      scopeIds=(scope.branch_ids||scope.branchIds||[]).filter(Boolean),
+      result=await safeRpc('business_finalize_promotion_v155',{
+        p_business:businessId,p_promotion_id:target.id,
+        p_scope_mode:scopeIds.length?'selected':'all',
+        p_branch_ids:scopeIds.length?scopeIds:null,
+        p_operational_branch:operationalPromotionBranch,
+        p_name:target.name,p_tagline:null,p_description:target.description,
+        p_terms:target.terms||null,
+        p_starts_at:target.starts_at,p_ends_at:target.ends_at,
+        p_display_order:Number(target.display_order??100),
+        p_cta_kind:target.ctaKind,p_cta_label:target.ctaLabel,
+        p_offer_facts:target.offerFacts,p_occasion:target.occasion||null,
+        p_publish:false,
+        p_object_path:null,p_mime_type:null,p_width_px:null,p_height_px:null,p_alt_en:null,
+        p_expected_content_version:Number(target.contentVersion||0),
+        p_expected_copy_version:Number(target.copyVersion||0),
+        p_expected_target_media_version:exactTargetMediaVersion(target,null),
+        p_attempt_key:crypto.randomUUID()
+      });
+    if(result.error)return {error:result.error};
+    /* A structured 200 refusal is a failure however friendly it looks (v378). */
+    if(result.data?.blocked===true){
+      return {error:{code:'promotion_finalize_rejected',reason:result.data.reason||'',
+        message:`That offer was not moved to draft (${result.data.reason||'refused'}).`}};
+    }
+    return {error:null,data:result.data};
+  };
   const clearFinalizedObjects=async(result,pending)=>{
     const oldPath=result?.previous_object_path||null;
     if(oldPath&&oldPath!==pending?.objectPath){
@@ -26799,7 +27013,9 @@ async function promotionsPage(selectedPromotionId=null){
        successful publish, so it is converted to the definitive failure it is — which takes the
        existing path: release the receipt and its orphaned photo, say so once, stop. */
     if(!result.error&&result.data?.blocked===true&&result.data?.code==='promotion_finalize_rejected'){
-      result={data:null,error:{code:'promotion_finalize_rejected',
+      /* V462: the server's own `reason` is carried through instead of being flattened into the
+         message. Reading a refusal back out of English prose is how the cap became invisible. */
+      result={data:null,error:{code:'promotion_finalize_rejected',reason:result.data.reason||'',
         message:`This promotion was not saved (${result.data.reason||'refused'}). Reopen it to see the latest version, then publish again.`}};
     }
     if(!result.error){
@@ -26810,8 +27026,13 @@ async function promotionsPage(selectedPromotionId=null){
     /* V280: a version conflict is RETRYABLE with re-read versions, and the photo it refers to is
        the same photo that retry will attach. Deleting it here is what turned a recoverable
        conflict into an offer that could never be published. */
+    /* V462: a live-cap refusal joins the retryable set for exactly the reason a version conflict
+       is in it — the owner is about to make the change that clears it and press again with the
+       same photo. Deleting the photo here is what would turn "move one to draft" into "and now
+       choose your picture again". */
     if(!promotionRpcErrorIsAmbiguousV104(result.error)
-       &&!promotionVersionConflictV280(result.error)){
+       &&!promotionVersionConflictV280(result.error)
+       &&!promotionPublishLimitRefusalV462(result.error)){
       await cleanFailedUpload(pending);
       pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
     }
@@ -26967,6 +27188,39 @@ async function promotionsPage(selectedPromotionId=null){
           finalized=await runPendingFinalize(pendingFinalize);
         }
       }
+      /* V462 (owner ruling R2c): the honest dialog. The server has refused because this business
+         already has its maximum number of offers live; the owner is shown WHICH ones, picks one
+         to move back to draft, and the publish they asked for continues by itself. A new attempt
+         key is minted because the first attempt definitively rolled back — replaying the old key
+         would only raise promotion_attempt_key_reused. */
+      if(finalized.error&&publish&&!unpublish&&promotionPublishLimitRefusalV462(finalized.error)){
+        if(!isPromotionCurrent())return;
+        const demoteId=await promotionDemoteDialogV462({
+          live:liveOffersV462.filter(item=>String(item.id)!==String(workingPromotionId)),max});
+        if(!isPromotionCurrent())return;
+        if(!demoteId){
+          const abandoned=pendingFinalize;
+          pendingFinalize=null;writeSessionValue(pendingStorageKey,null);
+          await cleanFailedUpload(abandoned);
+          if(!isPromotionCurrent())return;
+          buttons.forEach(button=>button.disabled=false);
+          status.textContent=workspaceTemplateTextV97('offerLiveCapReached',{max});
+          field('promotionImageStatus').textContent='Choose the photo again when you publish.';
+          return;
+        }
+        status.textContent='Moving the other offer back to draft…';
+        const demoted=await demoteLiveOfferV462(demoteId);
+        if(!isPromotionCurrent())return;
+        if(demoted.error){
+          buttons.forEach(button=>button.disabled=false);
+          status.textContent='That offer could not be moved back to draft, so nothing was published.';
+          return fail(demoted.error);
+        }
+        pendingFinalize=buildPendingFinalizeV280(workingPromotion,crypto.randomUUID());
+        writeSessionValue(pendingStorageKey,pendingFinalize);
+        status.textContent='Publishing…';
+        finalized=await runPendingFinalize(pendingFinalize);
+      }
       if(finalized.error&&promotionVersionConflictV280(finalized.error)){
         /* Two conflicts in a row means this promotion is being changed somewhere else. Release the
            held receipt — keeping it would lock the editor into replaying a request that cannot
@@ -27039,6 +27293,22 @@ async function promotionsPage(selectedPromotionId=null){
         });
       }
     }
+  };
+  /* V462 (R2b): the same one-tap change the Limited Offer list offers, on the editor. It calls the
+     same RPC and then re-renders the page from the server rather than patching the card, so the
+     line the owner reads afterwards is the server's answer and not this handler's assumption. */
+  if(field('promotionFeaturedApplyV462'))field('promotionFeaturedApplyV462').onclick=async()=>{
+    const picker=field('promotionFeaturedPickV462'),chosen=String(picker?.value||'');
+    if(!chosen)return toast('Choose an offer first.');
+    const button=field('promotionFeaturedApplyV462');
+    CUI.setButtonBusy(button,{busy:true,label:'Moving…'});
+    const {error}=await sb.rpc('business_set_featured_offer_v462',{
+      p_business:businessId,p_promotion_id:chosen});
+    if(!isPromotionCurrent())return;
+    CUI.setButtonBusy(button,{busy:false});
+    if(error)return fail(error);
+    toast('Customer Home now shows that offer');
+    promotionsPage(selectedPromotionId);
   };
   if(field('promotionSave'))field('promotionSave').onclick=()=>save(false);
   field('promotionPublish').onclick=()=>save(true);
@@ -29526,7 +29796,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the drill already had — the owner asked for a place to edit these, not for a new editor. */
   const growLimitedOfferListHtmlV319=snapshot.overviewErrors?.promotions
     ?programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),title:'Promotions',copy:'Status could not be confirmed. Retry the programme overview.',status:'Unavailable'})
-    :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. Customers see up to six current offers.`:'No promotion has been created yet.'}</p>
+    :`<p class="muted small grow-promotions-count-v296" style="padding:0 14px 4px">${growPromotionItemsV296.length?`${publishedPromotions} published · ${promotionDrafts} draft${promotionDrafts===1?'':'s'}. ${/* V462: the old sentence here named a cap of six that existed only inside one reader's SQL. */''}Customers see every live offer on your business page.`:'No promotion has been created yet.'}</p>
       ${growPromotionItemsV296.map(item=>{const life=promotionLifecycleV186(item);
         const detailV296=[life.label,String(item.offerFacts||item.tagline||item.description||'').replace(/\s+/g,' ').trim().slice(0,120)].filter(Boolean).join(' · ');
         return programmeRow({kind:'promotions',icon:CUI.icon('loyalty',{size:20}),
@@ -29651,6 +29921,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growOffersBucketedV324={published:[],draft:[],history:[]};
   growPromotionItemsV296.forEach(item=>{growOffersBucketedV324[growOfferBucketV324(item)].push(item)});
   const growOffersCanWriteV324=isOwner&&canRewards;
+  /* V462 (owner ruling R2b): "exactly ONE live offer per business is FEATURED on the customer
+     Home feed... with a clear 'Shown on customer Home — change' affordance". The id comes from
+     the server resolver, never from anything this page works out for itself: the owner must be
+     told which card the customer is actually getting, and a client-side guess at "most recently
+     published" would be a second definition that can drift from the one Home filters by.
+     `pinned` false means nobody has chosen yet and the default is standing in, which the row
+     says out loud rather than presenting the default as a decision. */
+  const growFeaturedOfferIdV462=String(snapshot.promotionsFeaturedV462||'');
+  const growFeaturedPinnedV462=snapshot.promotionsFeaturedPinnedV462===true;
+  const growOfferLiveLimitV462=Math.max(0,Number(
+    snapshot.promotionsEntitlementV462?.live_limit
+    ??snapshot.promotionsEntitlementV462?.max_published_offers
+    ??10));
+  const growOfferLiveCountV462=Math.max(0,Number(
+    snapshot.promotionsEntitlementV462?.live_count
+    ??growPromotionItemsV296.filter(item=>item?.active===true).length));
   /* "Delete"/"Retire" match the deep editor's own wording exactly (promotionsPage, V183 —
      "the button says which of the two will happen"), not the owner's one word for both: a
      Published item's RECORD survives underneath (reports and alert history still reference it),
@@ -29674,11 +29960,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        Published-bucket button reads "End" now, styled red — Draft's "Delete" is unchanged. */
     const deleteLabel=bucket==='published'?'End':'Delete';
     const deleteBtnClass=bucket==='published'?'btn sm danger':'btn ghost sm';
-    return `<div class="promotion-item-row" data-merchant-content>
+    /* V462: only a LIVE offer can be on Home, so only a live row carries the affordance. The
+       featured row states it in plain words and offers no "feature" button (it is already there);
+       every other live row offers the one-tap change. */
+    const featuredV462=growFeaturedOfferIdV462&&String(item.id)===growFeaturedOfferIdV462;
+    const featurableV462=growOffersCanWriteV324&&life.live&&bucket==='published';
+    const featureNoteV462=featuredV462
+      ?`<p class="muted small grow-offer-featured-note-v462" data-grow-offer-featured-v462="${esc(item.id)}">${CUI.icon('loyalty',{size:14})} Shown on customer Home${growFeaturedPinnedV462?'':' — chosen for you because it went live most recently'}</p>`
+      :'';
+    return `<div class="promotion-item-row${featuredV462?' grow-offer-featured-row-v462':''}" data-merchant-content${featuredV462?' data-grow-offer-is-featured-v462="1"':''}>
       ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
       <div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b>
-      <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p></div>
+      <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p>${featureNoteV462}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
+        ${featurableV462&&!featuredV462?`<button type="button" class="btn ghost sm grow-offer-feature-v462" data-grow-offer-feature-v462="${esc(item.id)}" data-grow-offer-feature-name-v462="${esc(item.name||item.offerFacts||'this offer')}">Show on Home</button>`:''}
         ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
         ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
@@ -29822,7 +30117,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${topicOnV229('promotions')?growLimitedOfferCategoryHtmlV319:''}
       ${programmeView==='offers'?`<div class="grow-limited-offer-v319" data-grow-limited-offer-v319>
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap;padding:0 0 10px">
-          <p class="muted small" style="flex:1 1 260px;margin:0">These are the current offers customers see in their app. Edit one here and the change reaches the customer programme when you publish it.</p>
+          ${/* V462 (R2a/R2b): the page used to promise "up to six current offers", which was never
+               a number the system held anywhere. It now states the two rules an owner actually
+               lives under: every live offer is on their page, and one of them is on Home. */''}
+          <p class="muted small" style="flex:1 1 260px;margin:0">Customers see <b>every</b> live offer on your business page — ${growOfferLiveCountV462} of ${growOfferLiveLimitV462} live now. One of them also shows on their Home screen; pick which with <b>Show on Home</b>.<br>Edit one here and the change reaches customers when you publish it.</p>
           ${growOffersCanWriteV324?'<a class="btn sm grow-offers-add-v324" href="#/promotions" aria-label="Add another promotion"><span aria-hidden="true">+</span> Add</a>':''}
         </div>
         ${growOffersTabStripV324}
@@ -30320,6 +30618,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       toast(ownerErrorText(error));return;
     }
     toast(published?'Offer retired — customers no longer see it':'Draft deleted');
+    growRerenderV322();
+  });
+  /* V462 (owner ruling R2b): one tap moves the Home slot. There is no confirm and no dialog — the
+     action is reversible by tapping another row, it changes nothing a customer has already
+     received, and the row it moves FROM says where it went on the next render. The server is the
+     authority on which offer ends up featured (it refuses a draft, and it re-resolves the default
+     when the choice is cleared), so the answer is read back out of the RPC rather than assumed. */
+  outerMain.querySelectorAll('[data-grow-offer-feature-v462]').forEach(button=>button.onclick=async()=>{
+    const id=button.dataset.growOfferFeatureV462;
+    const name=button.dataset.growOfferFeatureNameV462||'this offer';
+    CUI.setButtonBusy(button,{busy:true,label:'Moving…'});
+    const {error}=await sb.rpc('business_set_featured_offer_v462',{
+      p_business:S.biz.id,p_promotion_id:id});
+    if(!isGrowCurrent())return;
+    if(error){
+      CUI.setButtonBusy(button,{busy:false});
+      /* The one refusal an owner can actually cause is choosing an offer that stopped being live
+         while this page was open. Say that, not the server's word for it. */
+      toast(/featured_offer_must_be_live/.test(String(error.message||''))
+        ?workspaceTemplateTextV97('offerNotLiveForHome',{name})
+        :ownerErrorText(error));
+      return;
+    }
+    toast(workspaceTemplateTextV97('offerOnCustomerHome',{name}));
     growRerenderV322();
   });
   /* V324: show/hide the inline confirm block in place — see the template comment above. Every

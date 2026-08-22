@@ -79,8 +79,10 @@ test('merchant feature groups and birthday participation render only from actual
     'authoritative wallet rewards are the only reward cards on programme detail');
   assert.match(merchant,/presentation\.products\.length\|\|presentation\.services\.length\?/);
   assert.match(merchant,/presentation\.benefits\.length\?`<div class="customer-section-title"/);
-  // v173 raised the customer offer shelf from 2 to 6.
-  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\)\.slice\(0,6\)/);
+  /* v173 raised the customer offer shelf from 2 to 6; V462 (owner ruling R2a) removed the client
+     cap entirely — the shelf shows every live offer, bounded only by the business's own promotion
+     entitlement, which the server applies and reports. */
+  assert.match(merchant,/const offers=\(Array\.isArray\(presentation\.offers\)\?presentation\.offers:\[\]\);/);
   // v167 moved the offers shelf into a shared renderer (one section, one empty state) instead of
   // an inline conditional per surface. v339 moved that shelf again — the offer cards are now the
   // pages after the reward banner in the swipe region — but the property this line guards is the

@@ -162,8 +162,10 @@ test('a photo that will not upload cannot take the draft down with it', () => {
 test('a stale version is re-read and retried instead of bricking the promotion', () => {
   assert.match(app, /function promotionVersionConflictV280\(error\)\{/);
   assert.match(app, /code==='40001'\|\|\/promotion_version_conflict/);
-  // the uploaded photo the retry needs is NOT deleted on a conflict
-  assert.match(app, /if\(!promotionRpcErrorIsAmbiguousV104\(result\.error\)\s*\n\s*&&!promotionVersionConflictV280\(result\.error\)\)\{/);
+  /* The uploaded photo the retry needs is NOT deleted on a conflict. V462 added a THIRD retryable
+     refusal to the same condition — the live-offer cap, which the owner clears in a dialog before
+     the identical save is sent again — so the pin names all three rather than freezing the pair. */
+  assert.match(app, /if\(!promotionRpcErrorIsAmbiguousV104\(result\.error\)\s*\n\s*&&!promotionVersionConflictV280\(result\.error\)\s*\n\s*&&!promotionPublishLimitRefusalV462\(result\.error\)\)\{/);
   // re-read, then retry exactly once, with a NEW attempt key because the arguments changed
   assert.match(app, /const refreshPromotionV280=async promotionId=>/);
   assert.match(app, /pendingFinalize=buildPendingFinalizeV280\(refreshed,crypto\.randomUUID\(\)\);/);

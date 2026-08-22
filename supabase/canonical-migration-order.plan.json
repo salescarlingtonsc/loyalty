@@ -2350,6 +2350,12 @@
       "version": "20260823000003",
       "name": "nestly_v464_earned_reward_expiry",
       "sourcePath": "db/migrations/20260823_nestly_v464_earned_reward_expiry.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000004",
+      "name": "nestly_v462_featured_offer_and_live_cap",
+      "sourcePath": "db/migrations/20260823_nestly_v462_featured_offer_and_live_cap.sql"
     }
   ]
 }
