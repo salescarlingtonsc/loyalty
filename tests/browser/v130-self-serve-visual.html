@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1a577e4dd45573b35e46529f51409b6bce3e25c6b1f299af12714e6b9454bae5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="40f5cb64dea62168faf1767ff18597581e3a3238e9f97b0b2dd1ad40dac0c5d2"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -233,14 +233,28 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grow-overview[data-programme-view="points"] .grow-points-gift-body-v343>b{font-size:1.06rem}
 .grow-overview[data-programme-view="points"] .grow-topic-group-head-v244{display:none}
 .grow-overview[data-programme-view="points"] .btn.ghost.sm[data-grow-points-gift-delete-v326]{color:var(--red);border-color:#F2D5D1}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{display:grid;grid-template-columns:minmax(120px,.5fr) minmax(160px,.85fr) minmax(110px,.55fr) minmax(200px,.95fr) minmax(190px,.8fr);gap:10px 14px;align-items:end;padding:14px 16px;border:1px solid #F2D5D1;border-radius:14px;background:#fff;box-shadow:0 10px 24px rgba(48,36,28,.06)}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b{align-self:center;color:#9A4B30;font-size:16px}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 .grow-setup-sentence-v301{margin:0;line-height:1.3}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{max-width:none!important;text-align:center;font-weight:600;min-height:36px;padding:4px 8px}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{min-height:0}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.notice{grid-column:1/-1;margin:0!important}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1;margin-top:6px!important;justify-content:flex-end}
-@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr}}
+/* nestly_v449: every rule below describes the INLINE card — the five-column row that the gift
+   form has when it sits in the list, full page width. The SAME element is also the v410 dialog,
+   and these selectors used to catch it there too. Specificity decided it and the dialog lost:
+   `.grow-overview[data-programme-view="points"] .grow-points-form-card-v343` is (0,3,0) against
+   the dialog's own `.grow-points-form-card-v343.grow-points-form-modal-v410` at (0,2,0), so the
+   dialog was laid out as a five-track grid whose track MINIMUMS alone come to
+   120+160+110+200+190 + 4×14 gap = 836px inside a 520px modal. `>*{grid-column:1/-1}` then
+   stretched every child across all 836 of them, and the input rule below — (0,3,1), beating the
+   dialog's (0,3,0) text-align:left — re-centred the text inside those 836px boxes, which is why
+   the name, stamp number and description appeared shoved off the right edge. Measured live at
+   1564px on both tenants before this fix.
+   `:not(.grow-points-form-modal-v410)` states the thing the comment above the dialog rules always
+   claimed: these are the inline card's rules. Raising the dialog's specificity instead would have
+   left the two blocks fighting; this way the dialog simply does not match them. */
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){display:grid;grid-template-columns:minmax(120px,.5fr) minmax(160px,.85fr) minmax(110px,.55fr) minmax(200px,.95fr) minmax(190px,.8fr);gap:10px 14px;align-items:end;padding:14px 16px;border:1px solid #F2D5D1;border-radius:14px;background:#fff;box-shadow:0 10px 24px rgba(48,36,28,.06)}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>b{align-self:center;color:#9A4B30;font-size:16px}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) .grow-setup-sentence-v301{margin:0;line-height:1.3}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) textarea{max-width:none!important;text-align:center;font-weight:600;min-height:36px;padding:4px 8px}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) textarea{min-height:0}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.notice{grid-column:1/-1;margin:0!important}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.row{grid-column:1/-1;margin-top:6px!important;justify-content:flex-end}
+@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -1840,7 +1854,19 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
   background:#fff;color:var(--ink);font-size:19px;line-height:1;font-family:inherit;cursor:pointer}
 .grow-stamps-lenstep-v416:hover:not(:disabled){background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .grow-stamps-lenstep-v416:disabled{opacity:.4;cursor:default}
-.grow-stamps-editgrid-v416{display:flex;flex-wrap:wrap;gap:12px 10px;margin-top:20px}
+/* nestly_v449 (owner, repeated): "i want to have rows of 5 instead of so lengthy rows — 5 stamps
+   then next row." Five FIXED tracks, not auto-fill, so the card reads the same at 390px and at
+   1564px: 15 stamps is always three rows of five, 12 is 5/5/2. This was a width-filling flex wrap
+   that put nineteen circles on one line at 1564.
+   row-gap is 24px, not the old 12: .grow-stamps-editcell-gift-v416 hangs 15px ABOVE its circle,
+   which never showed while a card was one row and would sit on the row above the moment it was
+   not. padding-top gives the FIRST row's glyphs the same clearance inside the scroll box.
+   The scroll box is the long-card guard: a 100-stamp card is twenty rows, and the length control
+   and the summary sit either side of this grid. Six rows are shown and the rest scrolls in place,
+   so a long card cannot push the rest of the page out of reach. A 15-stamp card is three rows and
+   never reaches the cap, so nothing scrolls in the ordinary case. */
+.grow-stamps-editgrid-v416{display:grid;grid-template-columns:repeat(5,44px);justify-content:start;
+  gap:24px 10px;margin-top:6px;padding-top:18px;max-height:min(52vh,430px);overflow-x:hidden;overflow-y:auto}
 .grow-stamps-editcell-v416{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:44px;height:44px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
   color:#B08462;font-weight:700;font-size:14px;padding:0;font-family:inherit;cursor:pointer;
@@ -1859,7 +1885,9 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
 .grow-stamps-gridlegend-v416{margin-top:14px}
 @media(max-width:768px){
-  .grow-stamps-editgrid-v416{gap:12px 8px}
+  /* nestly_v449: still five per row — the whole point of the owner's ruling is that the card
+     looks the same everywhere. 5×40 + 4×8 = 232px, which fits inside a 390px viewport. */
+  .grow-stamps-editgrid-v416{grid-template-columns:repeat(5,40px);gap:22px 8px}
   .grow-stamps-editcell-v416{width:40px;height:40px}
 }
 
@@ -1884,7 +1912,12 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
      own content — 273px inside a 480px dialog, so no two fields ended at the same place.
      nowrap is the whole fix for that: one column, every child the width of the dialog. */
   display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;border:0}
-.grow-points-form-card-v343.grow-points-form-modal-v410>*{grid-column:1/-1;min-width:0}
+/* nestly_v449: `grid-column:1/-1` was the old defence against the inline card's five-track grid
+   catching the dialog — and it was the thing that stretched every child to the full 836px of
+   those tracks once it did. The inline rules no longer match a modal at all (see the
+   :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
+   flex column and each child is simply bounded by it. */
+.grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -1893,8 +1926,13 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    .grow-setup-input-v301 is centred because it was built as a fill-in-the-blank box inside a
    sentence ("earn ( 1 ) point per $1"), but here every box has its own label above it, and a
    centred value under a left-aligned label is exactly the misalignment in the photo. */
+/* nestly_v449: `margin:0 4px` comes from the base .grow-setup-input-v301 — the fill-in-the-blank
+   box's breathing room inside a sentence. With width:100% and border-box that is 8px MORE than
+   the content box, so the field would run past the dialog's right edge by exactly that much.
+   The base's min-height/padding/font-weight now reach the dialog too (the inline card used to
+   shrink them to 36px); 44px is the house tap target, so they are kept, not undone. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;max-width:none;
-  box-sizing:border-box;text-align:left}
+  box-sizing:border-box;text-align:left;margin-inline:0}
 /* line-height:2 belongs to the sentence form of this row; in the dialog it opened a ~19px gap
    between a label and the field it names, so the label read as floating between two fields. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
