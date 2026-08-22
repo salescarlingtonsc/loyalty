@@ -4,75 +4,43 @@ import test from 'node:test';
 
 const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migration=readFileSync(new URL('../../db/migrations/20260801_nestly_v128_simple_rewards_recommender.sql',import.meta.url),'utf8');
-const browserFixture=readFileSync(new URL('../browser/reward-overview-owner-visual.html',import.meta.url),'utf8');
 const evidence=readFileSync(new URL('../../docs/qa/evidence/V128-SIMPLE-REWARDS-SETUP.md',import.meta.url),'utf8');
-const currentEvidence=readFileSync(new URL('../../docs/qa/evidence/V136-GROW-STREAMLINE.md',import.meta.url),'utf8');
-const latestEvidence=readFileSync(new URL('../../docs/qa/evidence/V137-MINIMAL-AUTO-REWARDS.md',import.meta.url),'utf8');
-const v138Evidence=readFileSync(new URL('../../docs/qa/evidence/V138-AUTH-GROW-CLOSURE.md',import.meta.url),'utf8');
-const v139Evidence=readFileSync(new URL('../../docs/qa/evidence/V139-GROW-EDITOR-ISOLATION.md',import.meta.url),'utf8');
-const v140Evidence=readFileSync(new URL('../../docs/qa/evidence/V140-GROW-DRAFT-AUTHORITY-LABEL.md',import.meta.url),'utf8');
-const v281Evidence=readFileSync(new URL('../../docs/qa/evidence/V281-GROW-OVERVIEW-FIXTURE-CURRENCY.md',import.meta.url),'utf8');
 /* V288: the fixture is regenerated from app/app.js on every change to it, so the doc that
    records the CURRENT hash is whichever release last re-captured it. */
-const v288Evidence=readFileSync(new URL('../../docs/qa/evidence/V288-A2-GAP-CLOSURE.md',import.meta.url),'utf8');
 /* V294: the owner-batch UI changes regenerated the fixture, so its provenance hash lives in the V294 evidence. */
-const v294Evidence=readFileSync(new URL('../../docs/qa/evidence/V294-OWNER-BATCH-ACCEPTANCE.md',import.meta.url),'utf8');
-const v295Evidence=readFileSync(new URL('../../docs/qa/evidence/V295-AUDIT-MEDIUM-CLOSURE.md',import.meta.url),'utf8');
 /* V295 (owner markup 2026-08-12/13): the shared production stylesheet moved with the Customer
    360 and publish-gate fixes, so this fixture's source hash moved with it. The rule is unchanged
    — the checked-in evidence must name the exact component the fixture was built from. */
-const v295FixesEvidence=readFileSync(new URL('../../docs/qa/evidence/V295-OWNER-FIXES-ACCEPTANCE.md',import.meta.url),'utf8');
 /* V296 (owner markup 2026-08-12): the grow page changed again — the promotions drill, the pending
    card copy and the Points System rename — so the extracted component, and with it the fixture's
    source hash, moved again. Same rule, new release's evidence. */
-const v296Evidence=readFileSync(new URL('../../docs/qa/evidence/V296-PROGRAMMES-BATCH-ACCEPTANCE.md',import.meta.url),'utf8');
-const v299Evidence=readFileSync(new URL('../../docs/qa/evidence/V299-CUSTOMER-EXPERIENCE-POLISH-ACCEPTANCE.md',import.meta.url),'utf8');
-const v300Evidence=readFileSync(new URL('../../docs/qa/evidence/V300-GROWTH-LOOP-ACCEPTANCE.md',import.meta.url),'utf8');
 /* V301 (owner 2026-08-13: "Business owners cannot set up rewards"): the setup wizard changed
    growPage and the shared stylesheet, so the extracted component — and with it the fixture's
    source hash — moved again. Same rule, new release's evidence. */
-const v301Evidence=readFileSync(new URL('../../docs/qa/evidence/V301-PROGRAMMES-SETUP-WIZARD-ACCEPTANCE.md',import.meta.url),'utf8');
 /* V306: the wizard hotfix wave re-extracted growSetupWizardV301 into the shared fixture, so
    the current tree's byte identity lives in the W0 acceptance evidence. */
-const v306Evidence=readFileSync(new URL('../../docs/qa/evidence/V306-W0-PROGRAMME-HOTFIXES-ACCEPTANCE.md',import.meta.url),'utf8');
-const v310bEvidence=readFileSync(new URL('../../docs/qa/evidence/V310-W4B-CUSTOMER-STACK-ACCEPTANCE.md',import.meta.url),'utf8');
 /* W6 increment 2 regenerated this fixture — the V313/V314 acceptance recorded it as a residual
    ("still inlines the pre-v314 wizard source"), and the switchboard rewrote the wizard it inlines.
    Wave-keyed rather than vNNN: v315-v318 are held by a parallel session. */
-const w6i2Evidence=readFileSync(new URL('../../docs/qa/evidence/W6I2-PROGRAMMES-HOME-ACCEPTANCE.md',import.meta.url),'utf8');
 /* V319 (owner markup 2026-08-14): the module rename, the Limited Offer child and the two-category
    Overview all landed in growPage, and the period strip moved in the shared stylesheet — so the
    extracted component, and with it this fixture's source hash, moved again. Same rule, new
    release's evidence. */
-const v319Evidence=readFileSync(new URL('../../docs/qa/evidence/V319-REWARDS-AND-OFFER-ACCEPTANCE.md',import.meta.url),'utf8');
 /* V322 (the six owner rulings of 2026-08-14): R6 rewrote the wizard's Programmes step into a scope
    selector, R2/R3 added the exclusivity confirmation, R5 replaced the stamp-gift screen with the
    milestone ladder and R1/R4 re-worded every referral line in points — all inside growPage and the
    wizard the extracted component inlines, so this fixture's source hash moved again. Same rule,
    new release's evidence. */
-const v322Evidence=readFileSync(new URL('../../docs/qa/evidence/V322-OWNER-PROGRAMME-RULINGS-ACCEPTANCE.md',import.meta.url),'utf8');
-const v324Evidence=readFileSync(new URL('../../docs/qa/evidence/V324-REWARDS-OFFER-COSMETICS-ACCEPTANCE.md',import.meta.url),'utf8');
-const v323Evidence=readFileSync(new URL('../../docs/qa/evidence/V323-STAMP-QUEST-MILESTONES-ACCEPTANCE.md',import.meta.url),'utf8');
-const v324OffersEvidence=readFileSync(new URL('../../docs/qa/evidence/V324-LIMITED-OFFER-BUCKETS-ACCEPTANCE.md',import.meta.url),'utf8');
-const v324PointsEvidence=readFileSync(new URL('../../docs/qa/evidence/V324-POINTS-REWARD-TABS-ACCEPTANCE.md',import.meta.url),'utf8');
-const v324WizardGiftsEvidence=readFileSync(new URL('../../docs/qa/evidence/V324-WIZARD-GIFTS-TABS-ACCEPTANCE.md',import.meta.url),'utf8');
-const v324BannerEvidence=readFileSync(new URL('../../docs/qa/evidence/V324-REMOVE-LIST-DRAFT-BANNER-ACCEPTANCE.md',import.meta.url),'utf8');
-const v326PointsPageEvidence=readFileSync(new URL('../../docs/qa/evidence/V326-POINTS-SYSTEM-PAGE-ACCEPTANCE.md',import.meta.url),'utf8');
 /* V331/V332 (owner: "proceed all at once" — Tiered membership, Stamp card, Memberships, Lifestyle
    bring-back): Tiers got its own page and Bring-back rules got a real delete, both changing
    growPage/retentionPage and the shared stylesheet, so the extracted component's source hash
    moved again. Same rule, new release's evidence — batched into one file for the whole arc. */
-const v332GrowthLifecycleEvidence=readFileSync(new URL('../../docs/qa/evidence/V332-GROWTH-LIFECYCLE-COMPLETION-ACCEPTANCE.md',import.meta.url),'utf8');
 /* v333 regenerated this fixture again: the customer tier rail gained two CSS rules
    (.customer-tier-bar.is-compact, the last-marker label shift), and this fixture inlines
    app/index.html's stylesheet under the same pin. */
-const v333Evidence=readFileSync(new URL('../../docs/qa/evidence/V333-CUSTOMER-TIER-FIRST-AND-SEAMLESS-REFRESH-ACCEPTANCE.md',import.meta.url),'utf8');
-const v371Evidence=readFileSync(new URL('../../docs/qa/evidence/V371-PROGRAMME-OFF-REACHES-CUSTOMER-ACCEPTANCE.md',import.meta.url),'utf8');
-const v401Evidence=readFileSync(new URL('../../docs/qa/evidence/V401-REWARDS-OVERVIEW-VISUAL-PASS.md',import.meta.url),'utf8');
 /* nestly_v421: the reward-overview browser fixture had stopped rendering and had drifted out of
    step with its own generator; this document carries the hash of the repaired one. V401's is left
    as it was — it is the record of what was captured then, not a value to keep current. */
-const v421Evidence=readFileSync(new URL('../../docs/qa/evidence/V421-REWARDS-OVERVIEW-BROWSER-RECOVERY.md',import.meta.url),'utf8');
 
 function section(start,end){
   const from=app.indexOf(start),to=app.indexOf(end,from+start.length);
@@ -170,8 +138,14 @@ test('server recommendation uses governed sectors and serializes stale tabs onto
   assert.doesNotMatch(migration,/publish_loyalty_config|publish_config/);
 });
 
-test('checked-in browser evidence identifies the exact extracted production component',()=>{
-  const sourceHash=browserFixture.match(/name="production-source-sha256" content="([a-f0-9]{64})"/)?.[1];
-  assert.ok(sourceHash,'generated browser fixture must carry its production source hash');
-  assert.match(`${evidence}\n${currentEvidence}\n${latestEvidence}\n${v138Evidence}\n${v139Evidence}\n${v140Evidence}\n${v281Evidence}\n${v288Evidence}\n${v294Evidence}\n${v295Evidence}\n${v295FixesEvidence}\n${v296Evidence}\n${v299Evidence}\n${v300Evidence}\n${v301Evidence}\n${v306Evidence}\n${v310bEvidence}\n${w6i2Evidence}\n${v319Evidence}\n${v322Evidence}\n${v324Evidence}\n${v323Evidence}\n${v324OffersEvidence}\n${v324PointsEvidence}\n${v324WizardGiftsEvidence}\n${v324BannerEvidence}\n${v326PointsPageEvidence}\n${v332GrowthLifecycleEvidence}\n${v333Evidence}\n${v371Evidence}\n${v401Evidence}\n${v421Evidence}`,new RegExp(sourceHash));
-});
+/* The evidence-markdown reads that fed the deleted assertion went with it: each was a
+   readFileSync bound to a name nothing referenced any more, and thirty dead file reads at
+   the top of a test file read as coverage that is not there. */
+/* REMOVED (2026-08-22): a test that read the production-source SHA out of the checked-in
+   fixture and asserted that same SHA appeared somewhere in thirty-two evidence markdown files.
+   It proved only that two copies of one string matched, and it INVERTED the incentive: the
+   fixture was 33 hunks behind app/app.js, and regenerating it to current source made this
+   assertion FAIL, so scripts/quality/regen-visual-fixtures.mjs had to `git checkout --` the
+   fixture back to stale on every run. Byte-equality against a fresh regeneration now lives in
+   tests/business-ui/reward-overview-fixture-parity.test.mjs, which fails when the fixture is
+   stale instead of when it is current. */

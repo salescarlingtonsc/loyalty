@@ -145,7 +145,8 @@ test('W6I2 A3 the switch SET reaches public.set_programmes_v314 whole, once, aft
   assert.match(code, /if\(!Object\.keys\(set\)\.length\)return null;/);
   assert.match(code, /if\(set\.stamps===true\)programmeExclusionsV322\('stamps'\)\.forEach\(kind=>\{set\[kind\]=false\}\);\s*\r?\n?\s*else if\(set\.points===true\|\|set\.tiers===true\)set\.stamps=false;/);
   // A run with nothing in scope sends nothing at all, rather than four `false`s.
-  assert.match(code, /if\(!switches\|\|!businessId\)return \{ok:true,skipped:true,error:null\};/);
+  /* nestly_v429 (B5): the writer carries the server's reply out now, so the skipped shape carries a null `data` beside it — v425 added referral_reward_kind_now_unpayable to that reply and only this return path can pass it on. */
+  assert.match(code, /if\(!switches\|\|!businessId\)return \{ok:true,skipped:true,error:null,data:null\};/);
   // The retired payload must not come back: it is the defect, not a style.
   assert.doesNotMatch(wizardCode, /writeProgrammeSwitchesV314\(S\.biz\.id,\{\.\.\.state\.switches\}/);
   // Still exactly ONE call to the shared writer from the whole wizard.
@@ -214,8 +215,11 @@ test('W6I2 A6 a tile hands over a programme to turn ON, never a model to switch 
   /* ON only. The deleted helper answered "which of four exclusive models is this card", so opening
      the Stamp card tile at a points firm proposed the live points programme off. */
   assert.doesNotMatch(code, /growSetupModelForTileV303/);
-  assert.match(grow, /if\(label==='Off'\)return 'Turn on →';/);
+  /* nestly_v428 (item 1): the arrow moved into growTopicActionV244's wrapper so the chip and the
+     aria label share one derivation; the word this branch returns is unchanged. */
+  assert.match(grow, /if\(label==='Off'\)return 'Turn on';/);
   assert.doesNotMatch(code, /'Switch to this →'/);
+  assert.doesNotMatch(code, /'Switch to this'/);
 });
 
 test('W6I2 A7 switch state is READ from the spine, and sector defaults cannot overwrite a decision', () => {
@@ -323,9 +327,13 @@ test('W6I2 B4 the referral rail writes referral_programs at Go-live, never on a 
      said no more store credits"): the writer is save_referral_program_v322 and its amount argument
      is p_reward_points, an integer count of POINTS with no ×100. The placement fact this test
      exists for — a LIVE-table write that happens at Go-live and nowhere else — is untouched. */
-  assert.match(switchApply, /sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,/);
-  assert.match(switchApply, /p_reward_points:Math\.max\(0,Math\.round\(Number\(state\.referralReward\)\|\|0\)\),/);
+  /* nestly_v429 (B3 site 2): the writer is save_referral_program_v421 — v425 gave the reward an explicit TYPE and v322 has no argument for one, so it would have written the amount while leaving the kind to be guessed. The placement fact this test exists for is untouched. */
+  assert.match(switchApply, /sb\.rpc\('save_referral_program_v421',\{p_business:S\.biz\.id,/);
+  assert.match(switchApply, /p_reward_points:carriedKind==='voucher'\?null:Math\.max\(0,Math\.round\(Number\(state\.referralReward\)\|\|0\)\),/);
   assert.doesNotMatch(switchApply, /p_reward_cents/);
+  /* And the fields this wizard never collects are carried through from what the firm saved, so a Go-live cannot turn a free-gift referral into a points one, or drop the friend's side. */
+  assert.match(switchApply, /const carriedKind=growReferralKindV425\(carried\.reward_kind\);/);
+  assert.match(switchApply, /p_reward_label:carriedKind==='voucher'\?\(carried\.reward_label\|\|null\):null,/);
   /* V322 (OWNER RULING R6): and it happens only when referral is IN SCOPE. The spine payload no
      longer names a programme the owner did not select, so its companion live-table write must not
      either — a wizard run that never went near the referral screens leaves referral_programs
@@ -641,9 +649,11 @@ function mountWizard({ spine = null, industry = 'salon', snapshot = {}, liveTier
     save_loyalty_tier_draft_v143: async () => ({ data: { snapshot_hash: 'h3' }, error: null }),
     preview_publish_impact: async () => ({ data: { rules: [], requires_confirmation: false }, error: null }),
     publish_loyalty_config: async () => ({ data: {}, error: null }),
-    /* V322 (OWNER RULING R1/R4): the referral writer is save_referral_program_v322 and it takes
-       p_reward_points — an integer count of points — because the payout stopped being money. */
-    save_referral_program_v322: async () => ({ data: {}, error: null }),
+    /* V322 (OWNER RULING R1/R4): the referral writer takes p_reward_points — an integer count of
+       points — because the payout stopped being money.
+       nestly_v429 (B3): and it is save_referral_program_v421 now, because v425 gave that payout an
+       explicit TYPE and v322 has no argument that can name one. */
+    save_referral_program_v421: async () => ({ data: {}, error: null }),
     get_loyalty_reward_draft: async () => ({ data: { program: null, rewards: [], tiers: [] }, error: null }),
     set_programmes_v314: async args => ({ data: { programmes: Object.entries(args.p_switches)
       .map(([kind, active]) => ({ kind, active })) }, error: null })
@@ -797,7 +807,7 @@ test('W6I2 E3 turning Referral ON writes referral_programs, default accepted (de
      save_referral_program_v322 and the amount is p_reward_points, an integer count of POINTS.
      The seeded default moved with the unit — 100 points, not $10.00 held as 1000 cents — because
      a unit that changes on one side of a round trip is how a 10 becomes a 1000. */
-  const [referral] = w.called('save_referral_program_v322');
+  const [referral] = w.called('save_referral_program_v421');
   assert.ok(referral, 'accepting the seeded default must still write the live referral row');
   assert.equal(referral.args.p_enabled, true);
   assert.equal(referral.args.p_reward_points, 100);
@@ -827,7 +837,7 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
   assert.ok(!w.rail().includes('Referral'), 'the referral rail went with the scope');
   await w.runToPublish();
   assert.equal(w.called('publish_loyalty_config').length, 1, 'the publish itself still happened');
-  assert.deepEqual(w.called('save_referral_program_v322'), [],
+  assert.deepEqual(w.called('save_referral_program_v421'), [],
     'a programme merely dropped from scope must not have its live payout row rewritten');
   const [switches] = w.called('set_programmes_v314');
   assert.ok(!('referral' in switches.args.p_switches),
@@ -848,12 +858,26 @@ test('W6I2 E3 turning Referral OFF disables referral_programs, untouched inputs 
      V314 spine write this test was written to pin. Both halves are asserted, because re-pointing the
      name alone would let a later edit route the referral switch through the stamp-conversion dialog
      without anything going red. */
-  assert.match(confirmHandler, /const \{ok,error,cancelled\}=await writeProgrammeSwitchesWithStampConversionV384\(set,\{paused:false,key:crypto\.randomUUID\(\)\}\);/);
+  /* nestly_v429 (B5): the reply is destructured out too — v425 put referral_reward_kind_now_unpayable on it and nothing else on this page could know that fact. */
+  assert.match(confirmHandler, /const \{ok,error,cancelled,data\}=await writeProgrammeSwitchesWithStampConversionV384\(set,\{paused:false,key:crypto\.randomUUID\(\)\}\);/);
   assert.match(code, /async function writeProgrammeSwitchesWithStampConversionV384\(set,\{paused=false,key=null\}=\{\}\)\{\s*if\(set\?\.stamps===true&&paused!==true\)\{/,
     'the stamp-conversion dialog is reached only when stamps are being turned ON and left running');
   assert.match(code, /\n  return writeProgrammeSwitchesV314\(S\.biz\.id,set,\{paused,key\}\);\n\}/,
     'every other switch falls through to the ordinary one-call spine write, unchanged');
-  assert.match(confirmHandler, /if\(kind==='referral'\)\{\s*\r?\n?\s*const \{error:referralError\}=await sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,\s*\r?\n?\s*p_enabled:want,/);
+  /* nestly_v429 (B3 site 1): the two halves still move together, but they do so INSIDE
+     set_programmes_v314 — v425 makes that function write referral_programs.enabled in the same
+     transaction as the spine row, which is strictly stronger than the client write this line used
+     to pin: a second RPC from the browser can fail after the first has already committed, leaving
+     exactly the split this test exists to forbid. So the client write must now be ABSENT, and what
+     the panel owes the owner instead is the server's verdict on what the switch just did. */
+  /* Bounded to the handler itself: `confirmHandler` above runs to the end of the page, and the
+     Referral SETTINGS editor further down legitimately writes the programme. */
+  const confirmBodyV429 = confirmHandler.slice(0, confirmHandler.indexOf('/* V229: tiles drill in'));
+  assert.ok(confirmBodyV429.length > 200, 'the confirm handler body was found and sliced');
+  assert.doesNotMatch(confirmBodyV429, /save_referral_program_v/,
+    'a second client write could commit half of a decision the server makes atomically');
+  assert.match(confirmBodyV429, /if\(data\?\.referral_reward_kind_now_unpayable===true\)/,
+    'a switch that leaves the referral reward unpayable has to say so');
 });
 
 test('W6I2 E3 a keep-it-paused publish disables referral too (defect 3)', async () => {
@@ -878,7 +902,7 @@ test('W6I2 E3 a keep-it-paused publish disables referral too (defect 3)', async 
   assert.ok(pause, '"Keep it paused for now" must still be offered on the gated publish');
   pause.checked = true; pause.onchange();
   await w.press('growSetupNextV301');
-  const [referral] = w.called('save_referral_program_v322');
+  const [referral] = w.called('save_referral_program_v421');
   assert.ok(referral, '"customers earn nothing" has to reach the table the engine reads');
   assert.equal(referral.args.p_enabled, false);
   const [switches] = w.called('set_programmes_v314');
@@ -929,7 +953,7 @@ test('W6I2 E3 the referral "before" is read from referral_programs, not from the
   /* V360: no gate holds this run, so it published itself on the way in. */
   await untouched.runToPublish();
   assert.equal(untouched.called('publish_loyalty_config').length, 1, 'the publish itself happened');
-  assert.deepEqual(untouched.called('save_referral_program_v322'), [],
+  assert.deepEqual(untouched.called('save_referral_program_v421'), [],
     'a programme the owner never put in scope must not be written by this run');
   const [untouchedSwitches] = untouched.called('set_programmes_v314');
   assert.ok(!('referral' in untouchedSwitches.args.p_switches),
@@ -943,7 +967,7 @@ test('W6I2 E3 the referral "before" is read from referral_programs, not from the
   await new Promise(resolve => setTimeout(resolve, 5));
   /* V360: ungated, so it publishes itself on the way in. */
   await w.runToPublish();
-  const [referral] = w.called('save_referral_program_v322');
+  const [referral] = w.called('save_referral_program_v421');
   assert.ok(referral,
     'a spine row switched on with a dead referral_programs row behind it must be healed at publish');
   assert.equal(referral.args.p_enabled, true);

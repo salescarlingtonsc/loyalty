@@ -111,7 +111,8 @@ test('v415 every writer on the Loyalty page publishes, and none claims success w
      banner was removed, a writer left on drafts would have had no way to publish at all. */
   const publishes = appJs.match(/await publishOnSaveV415\(/g) || [];
   assert.equal(publishes.length, 4, 'configuration, birthday, reward, tier');
-  assert.equal((appJs.match(/sb\.rpc\('publish_loyalty_config'/g) || []).length, 5,
+  /* nestly_v429 (A): four, because the v364 birthday popup's own publish call went with its three-call save — public.business_save_birthday_program_v424 opens the draft and publishes it in one server transaction. The four writers on THIS page still share publishOnSaveV415. */
+  assert.equal((appJs.match(/sb\.rpc\('publish_loyalty_config'/g) || []).length, 4,
     'and they share ONE helper rather than each calling the RPC');
   const refusals = appJs.match(/savedNotLive/g) || [];
   assert.ok(refusals.length >= 5, 'every writer reports a refused publish instead of toasting live');

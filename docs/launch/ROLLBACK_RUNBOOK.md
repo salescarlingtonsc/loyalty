@@ -65,3 +65,36 @@ only at `gadpooereceldfpfxsod` with the expected CSP/security headers.
 1. Confirm PITR + retention on `gadpooereceldfpfxsod` (dashboard), record retention window + owner.
 2. Rehearse a restore on an isolated Supabase branch.
 3. Record this runbook's decision path as the approved no-split-brain rollback plan.
+
+## 2026-08-22 rewards go-live wave (v423–v427)
+
+All five are function/grant migrations plus two small data passes; none drops an object, so
+each rolls back by re-issuing the captured predecessor bodies (quoted in each migration's own
+header/regions and in the repo history) and dropping only what the wave created.
+
+- **v423 (reward edit reaches customers)** — re-issue pre-v423 `business_update_reward_v326`
+  (body in `20260816_nestly_v343_reward_edit_v326.sql`) and the pre-v423
+  `app.reward_version_immutable_guard`. Version rows already synced by an edit stay — they are
+  correct snapshots. Re-granting anon is never needed.
+- **v424 (birthday window honoured)** — re-issue pre-v424 `customer_activate_birthday_benefit`
+  (md5 d279ca7b0b4e211fc39ac5773d40a712); drop `business_save_birthday_program_v424(uuid,jsonb,text)`
+  and `birthday_program_save_operations_v424` ONLY if the frontend calling it has been rolled
+  back first. Entitlements written under v424 are correct and immutable — leave them.
+- **v425 (referral explicit reward type)** — order matters: (1) re-issue the four captured
+  pre-apply bodies (`app.on_sale_recorded`, `save_referral_program_v421`, `_v420`,
+  `set_programmes_v314`); (2) only if no row holds `reward_kind='stamps'`, restore the
+  `referral_programs_reward_kind_check` to `('points','voucher')`; (3) optionally
+  `alter table public.referrals drop column blocked_reason` (inert if left);
+  (4) drop `app.referral_payout_programme_v425(uuid,text)` last. Reverting re-opens the
+  wrong-pot payout at any stamps-model tenant.
+- **v426 (canonical tier resolver)** — re-issue the seven captured pre-image bodies; drop
+  `app.tier_resolve_v426` and `app.conversion_tag_v426`. The `loyalty_programs.loyalty_model`
+  backfill (2 rows: Cubbly, Hougang ABC) is data — pre-images are recorded in
+  `db/tests/executed/v426_tier_resolver.sql`'s header if reversal is ever wanted.
+- **v427 (entitlements reach customers)** — re-issue prior `customer_get_reward_history_v422`,
+  `business_programme_usage_v271`/`_v386`, `business_set_welcome_offer_v215` from their own
+  migrations; drop `customer_get_entitlements_v427(text)`. Roll the frontend back first if it
+  has shipped the customer entitlement cards.
+
+Frontend for the wave (nestly_v428/v429) rolls back by reverting the release commit through
+the normal path — no storage or data coupling beyond the RPCs named above.

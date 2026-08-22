@@ -1240,6 +1240,19 @@ function growPointsWordV322(points){
   const value=Math.max(0,Math.round(Number(points)||0));
   return `${value} ${value===1?'point':'points'}`;
 }
+/* nestly_v429 (B1): a referral reward now has THREE declared types (v425), and the two accruing
+   ones share referral_programs.reward_points — one number, and reward_kind says which pot it
+   lands in. So every sentence about that number has to take the noun from the kind rather than
+   assume "points". These two are the single place the workspace decides that noun. */
+const growReferralKindV425=kind=>{
+  const raw=String(kind||'').trim().toLowerCase();
+  return raw==='voucher'?'voucher':raw==='stamps'?'stamps':'points';
+};
+function growReferralAmountWordV425(kind,amount){
+  if(growReferralKindV425(kind)!=='stamps')return growPointsWordV322(amount);
+  const value=Math.max(0,Math.round(Number(amount)||0));
+  return `${value} ${value===1?'stamp':'stamps'}`;
+}
 function programmeScopeSwitchesV322(scope,{paused=false}={}){
   const set={};
   PROGRAMME_KINDS_W6I2.forEach(kind=>{if(scope&&scope[kind]===true)set[kind]=paused!==true});
@@ -1251,31 +1264,43 @@ function programmeScopeSwitchesV322(scope,{paused=false}={}){
 /* Server truth in, cache out. set_programmes_v314 returns the spine it just wrote, so the reply
    to the write IS the refresh — no second round trip and no window in which the page renders a
    state the server never reached. */
+/* nestly_v428 (item 3): the spine now carries its DEACTIVATION BREADCRUMB as well as its flag.
+   business_programmes.deactivated_at is stamped only on a true->false flip and is never cleared
+   (v308:60-61), which makes it the one honest answer to "which programmes has this firm turned
+   off?" — a question the Programmes History tab was asking with a hardcoded zero. The switch RPC
+   returns the same column under its W4b name `paused_since` (v348), so both writers into this
+   cache agree on the field and neither has to guess. Absent on an older server, which reads as
+   "never turned off" — the same thing an unread breadcrumb has always meant. */
+const programmeSpineRowV428=row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true,
+  deactivatedAt:row?.deactivated_at||row?.paused_since||null});
 function rememberProgrammeSpineV314(programmes){
   if(!Array.isArray(programmes))return false;
-  S.programmes=programmes.map(row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true}));
+  S.programmes=programmes.map(programmeSpineRowV428);
   S.programmesBusinessId=S.biz?.id||null;
   return true;
 }
 async function refreshProgrammeSpineV314(){
   if(!S.biz?.id)return null;
-  const {data,error}=await sb.from('business_programmes').select('id,kind,active').eq('business_id',S.biz.id);
+  const {data,error}=await sb.from('business_programmes').select('id,kind,active,deactivated_at').eq('business_id',S.biz.id);
   if(error)return null;
-  S.programmes=(data||[]).map(row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true}));
+  S.programmes=(data||[]).map(programmeSpineRowV428);
   S.programmesBusinessId=S.biz.id;
   return S.programmes;
 }
-/* The one client-side call site of public.set_programmes_v314. Returns {ok,error,skipped} and
+/* The one client-side call site of public.set_programmes_v314. Returns {ok,error,skipped,data} and
    never throws, because every caller has already done something the owner can see (a draft save,
-   a publish) and must report the switch separately from it. */
+   a publish) and must report the switch separately from it.
+   nestly_v429 (B5): `data` is carried out now. v425 added referral_reward_kind_now_unpayable to
+   the reply — "the referral is on, its reward is points or stamps, and that pot is not running" —
+   which is a fact only this reply knows, so swallowing the payload here would lose it. */
 async function writeProgrammeSwitchesV314(businessId,selection,{paused=false,key=null}={}){
   const switches=programmeSwitchSetV314(selection,{paused});
-  if(!switches||!businessId)return {ok:true,skipped:true,error:null};
+  if(!switches||!businessId)return {ok:true,skipped:true,error:null,data:null};
   const {data,error}=await sb.rpc('set_programmes_v314',{
     p_business:businessId,p_switches:switches,p_idempotency_key:key||crypto.randomUUID()});
-  if(error)return {ok:false,skipped:false,error};
+  if(error)return {ok:false,skipped:false,error,data:null};
   rememberProgrammeSpineV314(data?.programmes);
-  return {ok:true,skipped:false,error:null};
+  return {ok:true,skipped:false,error:null,data};
 }
 /* The publish routes' shared rule: apply the switch set IFF the draft being published actually
    carries a loyalty programme row. A rules-only Studio publish leaves loyalty_programs untouched,
@@ -5571,6 +5596,30 @@ function customerRelationshipSyncCanRecover(){
   return customerRelationshipSyncState.attempted===false
     &&customerRelationshipSyncState.result?.outcome==='try_later';
 }
+/* nestly_v428 (item 8) — THE AUTO-LINK HAD NO CALLER.
+   syncVerifiedCustomerRelationshipsOnce is the client half of
+   public.customer_sync_verified_relationships_v81: it takes the businesses that already hold this
+   person's VERIFIED phone number and links them to the signed-in account. Nothing called it. A
+   shop that added an existing walk-in customer by phone therefore never appeared in that
+   customer's wallet at all — the programme existed on the server and the customer could only find
+   it by re-registering or scanning a QR, which is not a thing anyone knows to do.
+   It is safe to call on a wallet render: the RPC is idempotent, advisory-locked and rate-limited
+   server-side (20 per 15 minutes), and the client memoizes the answer per user id, so a session
+   sends it once however many times Home is opened.
+   FIRE AND FORGET, and DELIBERATELY NOT RE-ARMED. The memoized branch keeps reporting linked:true
+   for the rest of the session, so re-running it on every visit to Home would schedule a wallet
+   reload each time; the already-answered case therefore returns before the call is made. Failures
+   are swallowed into state (the retry lives on the no-destination screen) and never touch this
+   render — the wallet the customer is looking at is painted either way. */
+function customerAutoLinkOnceV428(isCurrent=()=>true,onLinked=()=>{}){
+  const userId=S.user?.id||null;
+  if(!userId)return false;
+  if(customerRelationshipSyncState.userId===userId&&customerRelationshipSyncState.attempted)return false;
+  syncVerifiedCustomerRelationshipsOnce(isCurrent)
+    .then(result=>{if(result?.linked&&isCurrent())onLinked()})
+    .catch(()=>{});
+  return true;
+}
 function customerRelationshipCheckActionHtml(){
   const retry=customerRelationshipSyncCanRecover();
   return `${retry?'<span class="muted small" id="customerRelationshipRetryHelp" role="status">We could not complete the last programme check. Your account is unchanged.</span>':''}<button class="btn ghost sm" id="customerRelationshipCheck" type="button"${retry?' aria-describedby="customerRelationshipRetryHelp"':''}>${retry?'Retry programme check':'Check for existing programmes'}</button>`;
@@ -7081,7 +7130,9 @@ function actionableWalletActionText(card){
   if(action.reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
   if(action.reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
   if(action.reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
-  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${unit} to ${reward.name||'your next reward'}`;
+  /* nestly_v429 (E): the DISTANCE to a reward is counted in the reward's unit, which v426 now
+     sends; the expiry lines above stay on the balance's unit, because that is what expires. */
+  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${customerUnitNounV429(customerRewardUnitV429(reward,unit),reward.remaining_units)} to ${reward.name||'your next reward'}`;
   if(action.reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
   if(action.reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
   return 'No urgent action right now';
@@ -7147,6 +7198,30 @@ function customerProgrammeSwitcherMarkup(cards=[],activeSlug=''){
 function customerPointTotalV103(value){
   return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
     .format(Math.max(0,Number(value)||0));
+}
+/* nestly_v429 (E) — WHICH UNIT A NEXT-REWARD FIGURE IS QUOTED IN.
+   v426 stamps `unit` onto next_eligible_reward: the price of the reward and the distance still to
+   go are denominated in the RUNNING programme's unit, which is not always the one a caller would
+   infer from the card around it. So the reward's own field is consulted first, and only when it
+   says something this build understands; anything else (an older server, a reward with no unit)
+   falls back to whatever the caller already knows the balance is counted in.
+   Deliberately parameterised on the fallback rather than reaching for the card: a caller holding
+   the whole wallet card passes customerBalanceUnitV428(card), which owns the payload-first rules
+   for a BALANCE, so those rules are extended here, not restated. A caller holding only
+   {reward, loyalty} passes loyalty.unit. One function either way — two copies of "is this a stamp
+   card?" is exactly how a figure and its noun come apart. Declared beside customerPointTotalV103
+   because the two are always used together, and because the sentence renderers that need them are
+   extracted as a unit by the wallet test harnesses. */
+function customerRewardUnitV429(reward,fallbackUnit){
+  const declared=String(reward?.unit||'').trim().toLowerCase();
+  if(declared==='stamps'||declared==='points')return declared;
+  return String(fallbackUnit||'').trim().toLowerCase()==='stamps'?'stamps':'points';
+}
+/* The noun for that unit, singular or plural. "1 points to your reward" is the kind of sentence a
+   customer reads as a fault in the shop's system. */
+function customerUnitNounV429(unit,count){
+  const one=Math.abs(Number(count)||0)===1;
+  return String(unit||'').trim().toLowerCase()==='stamps'?(one?'stamp':'stamps'):(one?'point':'points');
 }
 const CUSTOMER_SEEN_OFFERS_KEY_V167='peekaa.customer.offers.seen.v1';
 /* nestly_v398 (owner, twice: "i still dont see the new"). The New flag was placed correctly by
@@ -7612,7 +7687,15 @@ function customerRewardProgressMarkupV167(card){
   const reward=card?.next_eligible_reward||null,loyalty=card?.loyalty||{};
   if(!reward)return '';
   const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
-    unit=String(loyalty.unit||'points'),available=reward.available_now===true||cost===0,
+    /* nestly_v429 (E): the reward's own unit (v426) rather than the balance's, so a stamp
+       milestone stops being counted out in points. */
+    unit=customerUnitNounV429(customerRewardUnitV429(reward,loyalty.unit),reward.remaining_units),
+    /* nestly_v428 (item 7): `||cost===0` was a browser deciding readiness, which v145 forbids —
+       a free reward that the server has disabled, ended, tier-locked or claim-limited answers
+       available_now:false and was still announced as "ready to redeem" here. The server's own
+       flag is the only authority; the arithmetic below still draws the distance for the reward
+       the customer is still earning. */
+    available=reward.available_now===true,
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100;
   return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
 }
@@ -8501,7 +8584,9 @@ function customerProgrammePausedMarkupV310(entry){
 function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
   if(!reward)return '';
   const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
-    available=reward.available_now===true||cost===0,
+    /* nestly_v428 (item 7): the same v145 violation as customerRewardProgressMarkupV167 above —
+       a zero cost is not a permission. available_now is the server's answer and the only one. */
+    available=reward.available_now===true,
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100,
     gift=String(reward.name||'').trim()||ct('rewardsTab');
   const sentence=available?ct('pointsReady',{gift})
@@ -8543,9 +8628,13 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
   const rings=customerProgrammeStampRingsV310(collected,target);
   const gift=String(reward?.name||'').trim();
   const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  /* nestly_v428 (item 7): `||remaining===0` announced a full card as claimable whatever the
+     server said. A completed card whose milestone has already been claimed this cycle, or whose
+     reward is disabled or tier-locked, still reports remaining_units 0 — and this line told the
+     customer to go and collect it. available_now is the one authority (v145). */
   const sentence=paused?''
     :!reward?ct('stampsNoGift',{count:customerPointTotalV103(collected)})
-    :(reward.available_now===true||remaining===0)?ct('stampsReady',{gift:gift||ct('rewardsTab')})
+    :reward.available_now===true?ct('stampsReady',{gift:gift||ct('rewardsTab')})
     :ct('stampsRemaining',{count:customerPointTotalV103(remaining),gift:gift||ct('rewardsTab')});
   const figure=paused?''
     :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
@@ -8844,8 +8933,13 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
   const fraction=reward&&cost>0&&remaining>0
     ?`${esc(customerPointTotalV103(Math.min(balance,cost)))}/${esc(customerPointTotalV103(cost))}`:'';
   const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
+  /* nestly_v428 (item 7): the worst of the four, because `remaining` on this line falls back to
+     `cost - balance` — so a member holding 77,877 points against a 1,000-point reward reached
+     remaining 0 by arithmetic alone and the red hero told them to claim a reward the counter may
+     refuse. Readiness is available_now and nothing else (v145); the distance sentence keeps its
+     arithmetic, which is what that arithmetic is actually for. */
   const nextLine=reward
-    ?(reward.available_now===true||remaining===0
+    ?(reward.available_now===true
       ?`${esc(rewardName)} is ready to claim`
       :`${esc(customerPointTotalV103(remaining))} more ${esc(unitLabel)} to ${esc(rewardName)}`)
     :'';
@@ -9206,6 +9300,30 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
    never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
    actually honour — not the number the customer could afford. */
 const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
+/* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
+   A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
+   (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
+   on (business, client, programme, cycle, slot_position): "one gift per milestone per card"
+   (v323:402-407). A firm that authored two gifts at the same slot — which is legal — therefore
+   shows a completed card with BOTH claimable and lets the customer claim exactly one; claiming
+   either makes the other unavailable for the cycle (v323:753).
+   So "2 rewards ready" is arithmetic that is true and a promise that is false. The owner-locked
+   wording is "Choose 1".
+   The test is the slot rule itself, not a guess: two or more CLAIMABLE catalogue rewards sharing
+   one cost, on a firm whose balance is counted in stamps. Points rewards that happen to cost the
+   same are genuinely independent — a customer with the balance may take both — so the stamps gate
+   is load-bearing and not decoration. */
+function customerStampChooseOneSlotV428(claimable,unit){
+  if(String(unit||'').trim().toLowerCase()!=='stamps')return false;
+  const perSlot=new Map();
+  (Array.isArray(claimable)?claimable:[]).forEach(item=>{
+    if(!item||item.redemption_kind==='classic_points')return;
+    const slot=Math.max(0,Math.floor(Number(item.cost_points)||0));
+    if(!slot)return;
+    perSlot.set(slot,(perSlot.get(slot)||0)+1);
+  });
+  return [...perSlot.values()].some(count=>count>1);
+}
 /* nestly_v399. The final swipe page's "View all rewards" control. It does NOT navigate on its
    own: it clicks the reward shortcut tile the modules row already renders, so the customer lands
    on the very same Points & gifts / Stamp card catalogue page that tile opens, wired by
@@ -9224,14 +9342,18 @@ function wireCustomerHeroViewAllV399(root=document){
   }});
   return buttons.length;
 }
-function customerRewardReadyCountApplyV397(count,root=document){
+function customerRewardReadyCountApplyV397(count,root=document,{chooseOneV428=false}={}){
   const ready=Math.max(0,Number(count)||0);
   const nodes=[...root.querySelectorAll('[data-reward-ready-count-v397]')];
   nodes.forEach(node=>{
     /* A firm can lose its last claimable reward between renders (redeemed, expired, limit hit).
        The node then goes back to whatever it said before a reward was ready, which the renderer
        stored on it, rather than printing "0 rewards ready". */
-    node.textContent=ready>0?customerRewardReadyLineV397(ready):String(node.dataset.rewardReadyFallbackV397||'');
+    /* nestly_v428 (item 6): when the claimable set is several gifts on ONE stamp slot, the tile
+       says how many the customer may take rather than how many exist. */
+    node.textContent=ready>0
+      ?(chooseOneV428?'Choose 1 reward':customerRewardReadyLineV397(ready))
+      :String(node.dataset.rewardReadyFallbackV397||'');
   });
   return nodes.length;
 }
@@ -9975,6 +10097,19 @@ function customerProgrammeCardMetricKindV360(card){
   const rawUnit=String(loyalty.unit||'points').toLowerCase();
   return rawModel==='stamps'||rawUnit==='stamps'?'stamps':'points';
 }
+/* nestly_v428 (item 9) — WHICH UNIT IS THIS BALANCE COUNTED IN.
+   The kind resolver above answers a slightly different question: which PROGRAMME shape the card
+   is in, decided from the programme stack first and from loyalty.unit only when nothing else
+   spoke. That ordering is right for the stack, and wrong for a figure: a wallet card carrying
+   {balance:758, unit:'stamps'} but no programmes array fell all the way through to the default
+   'points' and printed "758 pts" over 758 stamps (Cubbly, go-live review).
+   So the payload's own unit is consulted FIRST, and only in the stamps direction — a card the
+   resolver already calls stamps is never talked back into points by a missing or stale field, and
+   a server that does not send the unit yet renders exactly as it does today. */
+function customerBalanceUnitV428(card){
+  return String(card?.loyalty?.unit||'').trim().toLowerCase()==='stamps'
+    ?'stamps':customerProgrammeCardMetricKindV360(card);
+}
 /* nestly_v422 (owner photo 4, "13 / 13 stamps" ringed: "for stamps dont need show this"; and
    photo 5, the same figure on the home card: "don't write this"). A points balance is a number the
    customer spends and has to know. A stamp count is not: the card itself IS the figure, it is drawn
@@ -9983,10 +10118,14 @@ function customerProgrammeCardMetricKindV360(card){
    rather than the card's real length — so it disagreed with the card the customer then opened.
    Stamps therefore contribute no metric here at all, and the caller drops the slot rather than
    printing an empty one. Points, sessions and membership are untouched. */
+/* nestly_v428 (item 9): the unit comes from the payload through customerBalanceUnitV428, so a
+   stamps balance can no longer reach the "pts" line below by defaulting. The v422 ruling that
+   stamps print NO figure on this surface is unchanged — this only makes the test that reaches it
+   read the field the server actually sends. */
 function customerProgrammeDirectoryMetricV346(card){
   const loyalty=card?.loyalty||{},
     packages=card?.packages||{},membership=card?.membership||{};
-  const unit=customerProgrammeCardMetricKindV360(card);
+  const unit=customerBalanceUnitV428(card);
   const balance=Math.max(0,Number(loyalty.balance)||0);
   if(unit==='stamps')return '';
   if(membership.active===true)return 'Member';
@@ -9997,9 +10136,10 @@ function customerProgrammeDirectoryStatusV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
     packages=card?.packages||{},membership=card?.membership||{},
     remaining=Math.max(0,Number(reward?.remaining_units||0)),
-    unit=customerProgrammeCardMetricKindV360(card);
+    /* nestly_v429 (E): the reward's declared unit (v426), falling back to the card's. */
+    unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card));
   if(reward?.available_now===true)return '1 reward ready';
-  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamps to reward`;
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to reward`;
   if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} session${Number(packages.sessions_remaining)===1?'':'s'} left`;
   if(membership.active===true)return '1 active perk';
@@ -10114,10 +10254,11 @@ function customerNearestGoalV2B(cards=[]){
     if(reward.available_now===true)continue;
     const remaining=Math.max(0,Number(reward.remaining_units)||0);
     if(!remaining)continue;
-    if(!best||remaining<best.remaining)best={remaining,unit:customerProgrammeCardMetricKindV360(card),name:card?.business?.name||''};
+    /* nestly_v429 (E): the reward's own unit (v426) decides the noun printed below. */
+    if(!best||remaining<best.remaining)best={remaining,unit:customerRewardUnitV429(reward,customerBalanceUnitV428(card)),name:card?.business?.name||''};
   }
   if(!best||!best.name)return '';
-  const word=best.unit==='stamps'?`stamp${best.remaining===1?'':'s'}`:'points';
+  const word=customerUnitNounV429(best.unit,best.remaining);
   return `${customerPointTotalV103(best.remaining)} ${word} from a reward at ${best.name}`;
 }
 function customerHomeSummaryV343(cards=[]){
@@ -10136,11 +10277,14 @@ function customerHomeSummaryV343(cards=[]){
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
+/* nestly_v428 (item 9): same payload-first unit as the two balance renderers, so the status line
+   and the figure above it can never describe one card in two different units. */
 function customerHomeBusinessStatusV345(card){
   const reward=card?.next_eligible_reward||{},
-    unit=customerProgrammeCardMetricKindV360(card),remaining=Math.max(0,Number(reward.remaining_units)||0);
+    /* nestly_v429 (E): the reward's own unit (v426) with the v428 balance rules as the fallback. */
+    unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card)),remaining=Math.max(0,Number(reward.remaining_units)||0);
   if(reward.available_now===true)return '1 reward ready';
-  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamp${remaining===1?'':'s'} to go`;
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to go`;
   if(unit==='stamps')return 'Stamp card';
   const sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0);
   if(sessions>0)return `${customerPointTotalV103(sessions)} session${sessions===1?'':'s'} left`;
@@ -10151,8 +10295,11 @@ function customerHomeBusinessStatusV345(card){
    write this"). Same ruling as customerProgrammeDirectoryMetricV346 above, on the home surface:
    stamps print no balance line here. The status line under it still says what matters
    ("1 reward ready" / "2 stamps to go"), and the card itself is one tap away. */
+/* nestly_v428 (item 9): THIS is the line that printed "758 pts" over 758 stamps. The v422 ruling
+   above already says a stamps card shows no figure here; what was missing was the payload's own
+   unit in the test that decides which card is a stamps card. */
 function customerHomeBusinessBalanceV345(card){
-  const loyalty=card?.loyalty||{},unit=customerProgrammeCardMetricKindV360(card),
+  const loyalty=card?.loyalty||{},unit=customerBalanceUnitV428(card),
     balance=Math.max(0,Number(loyalty.balance)||0);
   if(unit==='stamps')return '';
   return `${customerPointTotalV103(balance)} pts`;
@@ -10544,6 +10691,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   if(silent&&!$('walletBody')?.isConnected)return;
   const context=await loadCustomerSurfaceContext(isWalletCurrent,{silent});if(!context)return;
+  /* nestly_v428 (item 8): the one call site of the auto-link. It runs on a REAL render only — a
+     silent 20-second poll must not start work — and at most once per signed-in customer per
+     session (customerAutoLinkOnceV428 returns before calling when the answer is already held).
+     It does not block this render: the wallet paints from the reads below whatever the sync does,
+     and a sync that actually linked something re-reads the wallet silently so the new business
+     appears without the customer doing anything. */
+  if(!silent)customerAutoLinkOnceV428(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}));
   const customerFeatures=context.features;
   if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,compactBusinessHeadV339:!!businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
@@ -11255,7 +11409,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        round trip for an answer we were already holding. `businessActionsResult` is reused
        verbatim (same {data,error} shape) so every consumer below is unchanged, including the
        error branch: a failed actions read still degrades exactly as it did before. */
-    const catalogResult=await customerRpc('customer_get_reward_catalog',args);
+    /* nestly_v429 (C): the three GRANTED entitlements — a welcome offer, a bring-back voucher, a
+       referral gift — have been issued server-side since v215/v361/v420 and have never once
+       appeared on the customer's own screen; only the till could see them. v427's
+       customer_get_entitlements_v427 is the customer's read over exactly those three tables.
+       Fetched WITH the catalogue rather than after it: this is one screen, not two round trips.
+       Fail closed — 28000 (no session) and 42501 (no verified link), and anything else, render
+       NOTHING. No error card: a customer holding no entitlement and a customer whose read was
+       refused should both simply see the catalogue, and inventing a retry for a list they may
+       have no rows in would be a worse lie than silence. */
+    const [catalogResult,entitlementsResultV427]=await Promise.all([
+      customerRpc('customer_get_reward_catalog',args),
+      customerRpc('customer_get_entitlements_v427',{p_business_slug:businessSlug})
+    ]);
     /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
     const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
     const {data,error}=catalogResult;
@@ -11316,8 +11482,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const heroRootV397=$('walletBody')||document;
     /* nestly_v397: the ONE number both the hero pill and the Points & gifts tile now print, taken
        from the same server-backed check the reward list uses. */
-    const readyCountV397=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled)).length;
-    customerRewardReadyCountApplyV397(readyCountV397,heroRootV397);
+    /* nestly_v428 (item 6): the claimable SET is computed once here and the Available panel below
+       reuses it. It was filtered twice with the same predicate, and the tile copy and the list now
+       have to agree about more than a number, so one derivation is the only safe shape. */
+    const claimableRewardsV422=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled));
+    const readyCountV397=claimableRewardsV422.length;
+    const chooseOneSlotV428=customerStampChooseOneSlotV428(claimableRewardsV422,loyalty.unit);
+    customerRewardReadyCountApplyV397(readyCountV397,heroRootV397,{chooseOneV428:chooseOneSlotV428});
     customerHeroRewardPagesV395(rewards,{
       balance:actionableCard?.loyalty?.balance,
       unit:actionableCard?.loyalty?.unit,
@@ -11367,8 +11538,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        what the stamp card / points figure at the top of the page is for, and it reappears here the
        moment it becomes claimable. `rewards` keeps every row for the wiring below (the hero swipe
        pages and the ready-count are built from the FULL catalogue, above); only what this list
-       PAINTS is narrowed. */
-    const claimableRewardsV422=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled));
+       PAINTS is narrowed.
+       nestly_v428 (item 6): the second copy of this filter is gone — the set is built once above,
+       where the ready-count is taken from it, so the pill, the tile subtitle and this list are
+       three readings of one array rather than three filters that have to be kept in step. */
     /* v195: this now renders inside the Reward points tab, which already prints the balance in
        full. The repeated balance and the three-step "how rewards work" strip went with the card
        the owner crossed out; one line of instruction survives, on the control it describes. */
@@ -11396,6 +11569,38 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
       <div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div></article>`;
     };
+    /* nestly_v429 (C): an entitlement card. Deliberately NOT a rewardCardV422 with fields blanked
+       out — the two are different things and only one of them has a QR. A granted entitlement is
+       redeemed by STAFF at the till (staff_redeem_welcome_v215 / _bringback_v361 / _referral_v420
+       each take the grant id), so offering a QR here would be a button that leads nowhere.
+       Every line comes from the payload as sent. There is NO client-side eligibility arithmetic:
+       the server already decided what is active, derived the status from expires_at, and wrote the
+       instructions sentence — a browser second-guessing any of that is how the promise and the
+       counter start to disagree. */
+    const entitlementSourceChipV429={welcome:'Welcome gift',bringback:'We miss you',referral:'Referral'};
+    const entitlementCurrencyV429=b?.currency||'SGD';
+    const entitlementCardV429=grant=>{
+      const chip=entitlementSourceChipV429[String(grant?.source||'')]||'Gift';
+      const label=String(grant?.label||'').trim()||chip;
+      const granted=grant?.granted_at?walletDate(grant.granted_at):'';
+      const expires=grant?.expires_at?walletDate(grant.expires_at):'';
+      const floor=Number(grant?.min_spend_cents)>0
+        ?`Valid on a visit of ${customerReferralMoneyV300(grant.min_spend_cents,entitlementCurrencyV429)}+`:'';
+      const instructions=String(grant?.instructions||'').trim();
+      return `<article class="wallet-reward customer-reward-card-v339" data-customer-entitlement-v429="${esc(String(grant?.source||''))}">
+      <div class="customer-reward-photo-v340 customer-reward-photo-empty-v340">${CUI.icon('loyalty',{size:24})}</div>
+      <div class="customer-reward-card-head-v339"><span class="pill ok">${esc(chip)}</span></div>
+      <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(label)}</b>
+      ${granted?`<p class="muted small" style="margin-top:5px">Given to you on ${esc(granted)}</p>`:''}
+      ${expires?`<p class="muted small" style="margin-top:5px">Use it by ${esc(expires)}</p>`:''}
+      ${floor?`<p class="muted small" style="margin-top:5px">${esc(floor)}</p>`:''}
+      ${instructions?`<p class="muted small" style="margin-top:7px">${esc(instructions)}</p>`:''}
+      </article>`;
+    };
+    /* The server's own list, in the server's own order (soonest to lapse first). An error or an
+       unrecognised payload leaves it empty, which is the fail-closed rule above. */
+    const entitlementsV429=!entitlementsResultV427?.error&&Array.isArray(entitlementsResultV427?.data?.active)
+      ?entitlementsResultV427.data.active:[];
     /* nestly_v422 (owner photo 6, "Available" and "History" written as tabs over this heading, with
        "once redeemed, rewards go history"). History is NOT fetched here: it is a second server read
        and most customers open this screen to claim, not to reminisce, so it loads the first time
@@ -11405,16 +11610,34 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
       :`<div class="customer-rewards-carousel-head-v337"><h2>Your rewards</h2></div>`}
       <div class="v150-segment customer-rewards-tabs-v422" role="tablist" aria-label="Your rewards">
-        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${claimableRewardsV422.length?` (${claimableRewardsV422.length})`:''}</button>
+        ${/* nestly_v429 (C): the count is what the panel PAINTS — catalogue rewards plus the
+             entitlements the counter already owes this customer. A voucher sitting in the panel
+             uncounted would make the number an undercount of what they can walk in and use. */''}
+        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${claimableRewardsV422.length+entitlementsV429.length?` (${claimableRewardsV422.length+entitlementsV429.length})`:''}</button>
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
+        ${/* nestly_v428 (item 6): "Available (2)" is true and, on one stamp slot, misleading — the
+             card carries two gifts and the cycle honours one. The count stays (two ARE on offer);
+             the sentence says which part of that the customer gets, above the cards it applies
+             to, rather than after they have chosen and been refused. */''}
         ${claimableRewardsV422.length
-          ?`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
+          ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick.</p>':''}
+            <p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337">${claimableRewardsV422.map(rewardCardV422).join('')}</div>`
+          :entitlementsV429.length?''
           :`<p class="muted small customer-rewards-empty-v422">${esc(redemptionUncheckedV286
               ?'We could not check this business’s redemption settings, so nothing can be claimed right now.'
               :'Nothing to claim yet — keep collecting and your reward will appear here.')}</p>`}
+        ${/* nestly_v429 (C): AFTER the catalogue cards, and under their own heading, because these
+             are not earned with a balance and are not claimed with a QR — the counter already owes
+             them. The "nothing to claim yet" line above is suppressed when there are entitlements:
+             a customer holding a welcome gift has plainly got something to claim. */''}
+        ${entitlementsV429.length
+          ?`<div class="customer-rewards-carousel-head-v337" style="margin-top:14px"><h3>Given to you</h3></div>
+            <p class="muted small customer-programme-rewards-lede">Nothing to scan — staff apply these at the counter.</p>
+            <div class="wallet-rewards customer-rewards-carousel-v337" data-customer-entitlements-v429>${entitlementsV429.map(entitlementCardV429).join('')}</div>`
+          :''}
       </div>
       <div data-rewards-panel-v422="history" role="tabpanel" hidden></div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
@@ -11445,11 +11668,18 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            those rows; printing "0 points" would invent a price the customer never paid. */
         const spent=item?.consumes_balance===true?Math.max(0,Number(item.points_spent)||0):0;
         const photo=customerMediaUrlV95(item?.image_ref);
+        /* nestly_v429 (C): v427 merged redeemed welcome / bring-back / referral grants into this
+           list, so a row now says WHICH engine gave it. Every grant row carries consumes_balance
+           false and points_spent 0, so the cost line was already suppressed correctly — the only
+           thing missing was the label, without which a free coffee the shop handed over reads as
+           a reward the customer bought with points. 'reward' is the ordinary redemption and needs
+           no chip; an unrecognised source gets none rather than a guess. */
+        const sourceChipV429=entitlementSourceChipV429[String(item?.source||'')]||'';
         return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422">
           <div class="customer-reward-photo-v340${photo?'':' customer-reward-photo-empty-v340'}">${photo
             ?`<img src="${esc(photo)}" alt="" loading="lazy" data-reward-photo-v340>`
             :CUI.icon('loyalty',{size:24})}</div>
-          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span></div>
+          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span>${sourceChipV429?`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`:''}</div>
           <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
           ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
           ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}
@@ -11599,13 +11829,44 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     }else transactionState.items=incoming;
     transactionState.nextCursor=data?.next_cursor||null;
     host.setAttribute('aria-busy','false');
-    if(!transactionState.items.length){
+    /* nestly_v429 (D): a points→stamps conversion is ONE event the customer lived through, not two
+       anonymous adjustments. v426 tags each ledger row with `entry`, and a conversion row carries
+       the entry_group that pairs its two halves plus THIS customer's own points_delta /
+       stamps_delta. Two rules follow:
+         · the pair collapses to one sentence, built from this customer's figures — never from the
+           batch's converted_points / issued_stamps, which would tell every customer the whole
+           firm's total as if it were their own;
+         · a programme pot transfer is dropped outright. It is an internal move of a balance
+           between two pots that changed nothing the customer owns, and it surfaced as "Points
+           adjustment −75,800" — the single most alarming line this screen has ever printed.
+       A row with no `entry` is an ordinary transaction and is untouched. */
+    const conversionGroupsSeenV429=new Set();
+    const historyRowsV429=transactionState.items.filter(item=>{
+      const entry=String(item?.entry||'');
+      if(entry==='pot_transfer')return false;
+      if(entry!=='conversion')return true;
+      const group=String(item?.entry_group||'');
+      if(!group)return true;
+      if(conversionGroupsSeenV429.has(group))return false;
+      conversionGroupsSeenV429.add(group);return true;
+    });
+    if(!historyRowsV429.length){
       host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Transactions & points'))}</h2><p class="muted small">${esc(ct('No purchases or points activity has been recorded for this programme yet.'))}</p></div></div>`;
       return;
     }
     const historyCurrency=String(data?.business?.currency||currency);
     const historyMoney=cents=>`${historyCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
     const historyItemMarkup=item=>{
+        /* nestly_v429 (D): the collapsed conversion line. It carries no money, no earned/redeemed
+           breakdown and no line items — none of those exist for a conversion — so it returns
+           early rather than being threaded through a markup built for a sale. */
+        if(String(item?.entry||'')==='conversion'){
+          const spentV429=Math.abs(Number(item.points_delta)||0),issuedV429=Math.abs(Number(item.stamps_delta)||0);
+          return `<article class="wallet-line" style="align-items:flex-start" data-conversion-v429="${esc(String(item.entry_group||''))}"><div style="min-width:0;flex:1">
+            <b>${esc(`${customerPointTotalV103(spentV429)} ${spentV429===1?'point':'points'} converted to ${customerPointTotalV103(issuedV429)} ${issuedV429===1?'stamp':'stamps'}`)}</b>
+            <p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}</p>
+          </div></article>`;
+        }
         const earned=Number(item.points_earned||0),redeemed=Number(item.points_redeemed||0),removed=Number(item.points_removed||0);
         const gross=item.gross_cents===null||item.gross_cents===undefined?null:Number(item.gross_cents);
         const net=item.net_cents===null||item.net_cents===undefined?null:Number(item.net_cents);
@@ -11619,8 +11880,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         </div></article>`;
       };
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Recent activity'))}</h2><p class="muted small">${esc(ct('Your latest events with this business.'))}</p></div></div>
-      <div class="wallet-history">${transactionState.items.slice(0,3).map(historyItemMarkup).join('')}</div>
-      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>${esc(ct('Full history'))}</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
+      <div class="wallet-history">${historyRowsV429.slice(0,3).map(historyItemMarkup).join('')}</div>
+      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>${esc(ct('Full history'))}</span><span class="muted small">${historyRowsV429.length} event${historyRowsV429.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${historyRowsV429.map(historyItemMarkup).join('')}</div></div></details>
       ${transactionState.nextCursor?'<button class="btn ghost sm" id="walletTransactionsMore" style="margin-top:12px">Load more history</button>':''}`;
     const more=$('walletTransactionsMore');
     if(more)more.onclick=()=>{more.disabled=true;more.textContent='Loading…';loadTransactions(transactionState.nextCursor)};
@@ -24437,9 +24698,26 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   if(!isCurrent())return null;
   if(businessError)throw businessError;
   const currentVersion=business?.active_config_version_id||null;
-  const retentionRequest=canWinback&&currentVersion
-    ?sb.from('retention_programs').select('id,name,active,goal_visits,period_days,starts_on,created_at').eq('business_id',S.biz.id)
-      .eq('current_config_version_id',currentVersion)
+  /* nestly_v429 (F): the Rewards snapshot's bring-back figure now comes from the engine that
+     actually ISSUES bring-backs. This read was public.retention_programs — the LEGACY engine,
+     which pays on visit FREQUENCY ("3 visits in 30 days"), the opposite question from "this
+     customer stopped coming". bringback_campaigns_v361 is the canonical bring-back (owner ruling
+     2026-08-22) and it was contributing NOTHING to this page: the tile, the running count and the
+     programme list were all reading an engine most firms no longer use, so a firm with three live
+     bring-back campaigns read "Not set up".
+     v427 makes the server's usage RPCs report the v361 rows inside the SAME `retention` array
+     (tagged source:'bringback_v361', keyed by program_id = the campaign id) alongside the legacy
+     rows, so every id-matched usage lookup below keeps working against these rows unchanged.
+     The snapshot KEY stays `retention`: renaming it would be an eight-site rename for no
+     behaviour, and every consumer already means "the bring-back engine's rows".
+     The query is the shape growBbCampaignsRequestV361 already uses, verbatim — one shape, one
+     meaning of "which campaigns exist". It is NOT version-gated: v361 campaigns are a live table,
+     not part of the versioned config, so requiring currentVersion would blank the tile for a firm
+     that has campaigns and has never published a loyalty config. */
+  const retentionRequest=canWinback
+    ?sb.from('bringback_campaigns_v361')
+      .select('id,name,reward_label,away_days,expiry_days,active,created_at')
+      .eq('business_id',S.biz.id).is('deleted_at',null).order('away_days')
     :Promise.resolve(none);
   const birthdayRequest=canRewards&&currentVersion
     ?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
@@ -24624,6 +24902,9 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       <div class="row" style="margin-top:18px;flex-wrap:wrap"><button type="button" class="btn primary" id="birthdaySaveV364">Save birthday gift</button><button type="button" class="btn ghost sm" id="birthdayCancelV364">Cancel</button></div>
     </section></div>`);
   const dialog=$('birthdayBenefitModalV364');
+  /* nestly_v429 (A): one idempotency key per editor session, regenerated only on a 40001. The
+     server accepts 8..200 characters; a uuid is 36. */
+  let birthdaySaveKeyV424=crypto.randomUUID();
   let deactivate,busy=false;
   const close=()=>deactivate?.();
   deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayKindV364'});
@@ -24689,24 +24970,30 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       window_days_before:before,window_days_after:after,sort:0};
     if(kind==='discount_pct')payload.discount_percent=discount;else payload.manual_item=item;
     const finish=message=>{busy=false;$('birthdaySaveV364').disabled=false;showError(message)};
-    /* A fresh draft off the ACTIVE version — see the header comment for why never an existing one. */
-    const {data:draft,error:draftError}=await sb.rpc('create_loyalty_config_draft',
-      {p_business:S.biz.id,p_based_on:null,p_source:'birthday_editor_v364'});
-    if(draftError)return finish(ownerErrorText(draftError));
-    const versionId=draft?.version_id;
-    if(!versionId)return finish('The editable draft was not returned. Reload and try again.');
-    /* save_birthday_program_draft compares the header hash and refuses on a mismatch, so the hash
-       is READ back rather than assumed — create_loyalty_config_draft writes one and then
-       refresh_loyalty_config_snapshot rewrites it, so no value known here would be current. */
-    const {data:header,error:headerError}=await sb.from('firm_config_versions')
-      .select('snapshot_hash').eq('id',versionId).maybeSingle();
-    if(headerError)return finish(ownerErrorText(headerError));
-    const programId=current?.program_id||crypto.randomUUID();
-    const {error:saveError}=await sb.rpc('save_birthday_program_draft',{p_config_version:versionId,
-      p_program_id:programId,p_program:payload,p_expected_snapshot_hash:header?.snapshot_hash||null});
-    if(saveError)return finish(ownerErrorText(saveError));
-    const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:versionId});
-    if(publishError)return finish(`Saved to the draft, but it could not be made live — ${ownerErrorText(publishError)}`);
+    /* nestly_v429 (A): ONE transaction, not three round trips. This used to be
+       create_loyalty_config_draft -> read snapshot_hash -> save_birthday_program_draft ->
+       publish_loyalty_config; a closed tab or a dropped connection between the last two left a
+       draft holding the owner's edit while every customer was still served the old one.
+       public.business_save_birthday_program_v424 does the whole chain server-side.
+       program_id is OMITTED for a programme that does not exist yet — the browser inventing a
+       crypto.randomUUID() here (what this code did) mints a SECOND birthday programme on every
+       save of a firm's first one. The server resolves the live programme, or makes exactly one. */
+    if(current?.program_id)payload.program_id=current.program_id;
+    const attempt=async()=>sb.rpc('business_save_birthday_program_v424',
+      {p_business:S.biz.id,p_payload:payload,p_idempotency_key:birthdaySaveKeyV424});
+    let {data:saved,error:saveError}=await attempt();
+    /* 40001 = this key already carries a DIFFERENT edit (the owner saved, edited again, saved
+       again inside one editor session). The key is per-attempt, so a fresh one is the correct
+       answer; a double-tap of one edit still replays on the first key instead of publishing
+       twice. Retried once only — a second 40001 is a real conflict and is shown. */
+    if(saveError?.code==='40001'){
+      birthdaySaveKeyV424=crypto.randomUUID();
+      ({data:saved,error:saveError}=await attempt());
+    }
+    if(saveError)return finish(saveError.code==='42501'
+      ?'Only the business owner can change the birthday gift.'
+      :ownerErrorText(saveError));
+    if(saved?.status!=='published')return finish('The birthday gift was not made live. Reload and try again.');
     busy=false;
     close();
     toast($('birthdayActiveV364')?.checked===false?'Birthday gift saved and paused':'Birthday gift saved and live for customers');
@@ -25853,7 +26140,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Bring-back" folded it into a route that led straight back to Retention.
      'bringback' is a VIEW now and only a view. The winback surface is still reachable by its own
      focus token 'new' (routedAction below), which is what the deep editor's own links use. */
-  const directFocusTokens=new Set(['earning','classic','birthday','add','new']);
+  /* nestly_v428 (item 5) — THE SAME TRAP, ONE PAGE LATER, ON 'birthday'.
+     V382 built a Birthday benefit landing page and gave it a view name, but 'birthday' was already
+     in this set, so the rescue below ran first: hashParam moved into the focus slot, programmeView
+     fell back to 'list', routedAction mapped the focus onto {surface:'rewards',focusTarget:
+     'birthdayLabel'}, and #/grow/birthday mounted the rewards DEEP EDITOR over the list with the
+     H1 still reading "Rewards Programme" and no back control. growBirthdayPageV382 has therefore
+     never rendered from the tile that exists to open it — exactly what V366 fixed for 'bringback'.
+     'birthday' is a VIEW now and only a view. The rewards-editor focus target is untouched and
+     still reachable: it arrives in the FOCUS slot of #/loyalty/<draft>/birthday, which is the hash
+     mountGrowSurface builds (growFocusPath) and the only shape openGrowEditorV258 can produce —
+     that path never consults this set. */
+  const directFocusTokens=new Set(['earning','classic','add','new']);
   /* V294: a focus token may carry an entry-context suffix (earning~ctx-points) or be a bare
      context (ctx-tiers); both belong in the focus slot, not the draft-id slot. */
   const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
@@ -26407,25 +26705,33 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      same split canSetupGrow/canSetupWinback already make. "Not included" keeps its own word: a
      plan a firm has not bought is a different sentence from a permission a person lacks. */
   const growTopicWritableV421=topic=>String(topic?.key||'')==='bringback'?canSetupWinback:canSetupGrow;
-  const growTopicActionV244=topic=>{
-    if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View →';
-    /* V303: "Set up →" while this model is not reaching customers, "Edit →" once it is — the
+  /* nestly_v428 (item 1, go-live review). V421 fixed the ARIA label and left the VISIBLE chip
+     alone, so the tile said one thing to a screen reader and the opposite to eyes: a read-only
+     manager read "View →" in the accessible name and "Edit" on the button, and a 'Not included'
+     tile read "See plan →" against a chip saying "Edit". Two independent derivations of one
+     word will always drift, so there is only one now — this function returns the bare word, the
+     aria label appends the arrow, and the chip prints it as-is. Every branch below is V421's,
+     unchanged; only the arrow moved out of them. */
+  const growTopicActionWordV428=topic=>{
+    if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View';
+    /* V303: "Set up" while this model is not reaching customers, "Edit" once it is — the
        wizard is the same door either way, and the word has to match what pressing it does. The
        card's OWN status decides, not the programme's, so on a firm running points the Tiered
-       membership card still says "Set up →" rather than offering to edit something that is off. */
-    if(growSetupEntryV301(topic.key))return growTopicOngoingV244(topic)?'Edit →'
-      :(growDraftPendingId?'Continue set up →':'Set up →');
-    if(growTopicOngoingV244(topic))return 'View →';
+       membership card still says "Set up" rather than offering to edit something that is off. */
+    if(growSetupEntryV301(topic.key))return growTopicOngoingV244(topic)?'Edit'
+      :(growDraftPendingId?'Continue set up':'Set up');
+    if(growTopicOngoingV244(topic))return 'View';
     const label=String(topic.status[0]||'');
-    if(label==='Draft')return 'Finish setup →';
-    if(label==='Paused')return 'Resume →';
-    if(label==='Not included')return 'See plan →';
-    /* W6 increment 2: 'Switch to this →' promised a replacement — pressing it used to move the
+    if(label==='Draft')return 'Finish setup';
+    if(label==='Paused')return 'Resume';
+    if(label==='Not included')return 'See plan';
+    /* W6 increment 2: 'Switch to this' promised a replacement — pressing it used to move the
        firm from one exclusive model to another. Nothing is replaced any more, so the word is the
        one that is now true. */
-    if(label==='Off')return 'Turn on →';
-    return 'Set up →';
+    if(label==='Off')return 'Turn on';
+    return 'Set up';
   };
+  const growTopicActionV244=topic=>`${growTopicActionWordV428(topic)} →`;
   /* V294: a pending-setup card leads with the owner's benefit line (item 7c of the 2026-08-12
      markup) and keeps its stateful summary underneath when that summary says something the
      benefit line does not — an error or the next action must never be hidden by marketing copy. */
@@ -26437,7 +26743,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V343 (owner markup: "photo 1 change to become photo 2") — the square tile grid becomes a
      compact row list: icon, name, status pill inline, chevron trailing. Same button, same
      data-grow-topic-v229/aria-label wiring, only the layout class and markup shape changed. */
-  const growTopicButtonLabelV343=topic=>growTopicOngoingV244(topic)?'Edit':(String(topic.status[0]||'').toLowerCase().includes('not set up')?'Set up':'Edit');
+  /* nestly_v428 (item 1): the chip is the aria label without its arrow. It used to be its own
+     two-branch guess off the status word alone, which is how "Edit" came to sit on a tile whose
+     accessible name said "See plan →" and on a tile the reader may not write at all. */
+  const growTopicButtonLabelV343=topic=>growTopicActionWordV428(topic);
   const growTileHtmlV244=topic=>`<button type="button" class="grow-topic-card-v343${growTopicOngoingV244(topic)?'':' grow-topic-tile-pending-v244'}" data-grow-topic-v229="${topic.key}" data-workspace-i18n aria-label="${esc(topic.title)} — ${esc(growTopicActionV244(topic))}">
     <span class="grow-topic-card-head-v343"><span class="grow-topic-tile-icon-v229">${CUI.icon(topic.icon,{size:28})}</span><span><b>${esc(topic.title)}</b><small>${esc(topic.blurb)}</small></span></span>
     <span class="pill ${topic.status[1]}">${esc(topic.status[0])}</span>
@@ -26532,7 +26841,45 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      list answering two different questions. The count is the list's own length now. Deleted rungs
      and gifts are not lost: each has its own History tab on its own page, which is where a row
      that belongs to one programme belongs. */
-  const growDisplayHistoryCountV343=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History').length;
+  /* nestly_v428 (item 3) — THE TAB WAS A PERMANENT FABRICATED ZERO.
+     V368 made the count the list's own length, and both then read `status[0]==='History'` — a
+     status word growTopicDefsV229 above never produces, from loyaltyModelTileStatusV235 or any of
+     the six literal arrays beside it. So the count was 0 for every firm forever, under the words
+     "No programme has been deleted", and neither could ever become true.
+     Owner ruling: a real count or no count, never a permanent zero. The real answer was already
+     on the page — business_programmes stamps deactivated_at on a true->false flip and never
+     clears it (v308:60-61), and growPage already holds those rows in snapshot.programmes. A
+     programme with that breadcrumb and active=false is a programme this firm TURNED OFF, which is
+     what a History tab on a programme list is for; the count is the list's own length, so V368's
+     rule survives by construction. The spine's own kinds map onto tile keys ('referral' is the
+     tile 'referrals'); the four tiles with no spine row of their own (welcome, birthday,
+     bring-back, memberships) simply never appear here, which is honest — this list answers only
+     what the spine can answer.
+     When the spine could not be READ the tab carries no number at all rather than a zero, which is
+     the same distinction the rest of this page draws between "off" and "unavailable".
+     The rows come from programmeSpineRowsV314() — the SAME accessor the on/off panel above and
+     every other spine reader on this page uses. growOverviewSnapshot does not carry them (its
+     return has no `programmes` key), so reading them off the snapshot would have silently been
+     undefined and rendered a countless tab forever, which is this defect wearing a new hat. */
+  const growSpineHistoryKeyV428={points:'points',tiers:'tiers',stamps:'stamps',referral:'referrals'};
+  const growSpineRowsV428=programmeSpineRowsV314();
+  const growHistoryDateV428=value=>{
+    const at=new Date(String(value||''));
+    return Number.isNaN(at.getTime())?''
+      :new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(at);
+  };
+  const growHistoryTopicsV428=!growSpineRowsV428?[]:growSpineRowsV428
+    .filter(row=>row&&row.active!==true&&row.deactivatedAt)
+    .map(row=>{
+      const topic=growDisplayTopicsV343.find(item=>item.key===growSpineHistoryKeyV428[String(row.kind||'')]);
+      if(!topic)return null;
+      const when=growHistoryDateV428(row.deactivatedAt);
+      /* The tile keeps its REAL status pill — a programme that was turned off reads "Off", which
+         is what it is — and spends its one line of blurb on the fact this tab exists to show. */
+      return {...topic,blurb:when?`Turned off ${when}`:'Turned off'};
+    })
+    .filter(Boolean);
+  const growDisplayHistoryCountV343=growSpineRowsV428?growHistoryTopicsV428.length:null;
   /* V357 (owner: "why cannot click" against all four tabs). They were decoration — no click
      handler, no data attribute, and aria-pressed hardcoded to All. They never filtered anything.
      Now a real filter over the same list, with History routing to the History page (that view
@@ -26543,7 +26890,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      pill and a different hover/cursor from its three neighbours. It is the SAME component as the
      others now — one filter, one interaction — and selecting it shows the deleted/ended rows
      inline instead of navigating away. */
-  const growHistoryTilesV362=growTopicDefsV229.filter(topic=>String(topic.status?.[0]||'')==='History');
+  /* nestly_v428 (item 3): the list is the same set the count is taken from, so the tab's number
+     and the tiles under it cannot disagree — V368's rule, now over data that can be non-empty. */
+  const growHistoryTilesV362=growHistoryTopicsV428;
   const growFilteredTilesV357=growTileFilterV357==='live'?growDisplayLiveV343
     :growTileFilterV357==='pending'?growDisplayPendingV343
     :growTileFilterV357==='history'?growHistoryTilesV362:growDisplayTopicsV343;
@@ -26552,10 +26901,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <button type="button" aria-pressed="${growTileFilterV357==='all'}" data-grow-tile-filter-v357="all">All (${growDisplayTopicsV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='live'}" data-grow-tile-filter-v357="live">${STATUS_WORDS.on} (${growDisplayLiveV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='pending'}" data-grow-tile-filter-v357="pending">Not set up (${growDisplayPendingV343.length})</button>
-        <button type="button" aria-pressed="${growTileFilterV357==='history'}" data-grow-tile-filter-v357="history">History (${growDisplayHistoryCountV343})</button>
+        ${/* nestly_v428 (item 3): no number when the spine could not be read — an unread count is
+             not a zero, and printing one is the exact defect this item exists to remove. */''}
+        <button type="button" aria-pressed="${growTileFilterV357==='history'}" data-grow-tile-filter-v357="history">History${growDisplayHistoryCountV343===null?'':` (${growDisplayHistoryCountV343})`}</button>
       </div>
     </div>
-    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':growTileFilterV357==='history'?'No programme has been deleted. Deleted gifts and tiers are kept on their own page&rsquo;s History tab.':'Everything here is already set up.'}</p>`}</div>`;
+    ${/* nestly_v428 (item 3): the History empty line said "No programme has been deleted", which
+         described neither the data (nothing here is deleted — turning a programme off keeps every
+         setting) nor a state this list could ever leave. It now names what the tab holds and what
+         puts something in it, and separates "nothing yet" from "could not be read". */''}
+    <div class="grow-topic-card-grid-v343">${growFilteredTilesV357.length?growFilteredTilesV357.map(growTileHtmlV244).join(''):`<p class="muted small" style="padding:8px 4px">${growTileFilterV357==='live'?'No programme is live yet.':growTileFilterV357==='history'?(growDisplayHistoryCountV343===null?'This could not be read, so nothing is shown here. Reload and try again.':'No programme has been turned off yet. Any programme you turn off appears here, with its settings kept. Deleted gifts and tiers are kept on their own page&rsquo;s History tab.'):'Everything here is already set up.'}</p>`}</div>`;
   /* V229 (owner: "firms can only choose 1"): the single choice for what points are FOR. */
   /* V250 (owner crossed out the "● Live: Points redemption / ● Live: Tiered membership /
      Stamp card" chip column on the Points redemption page). Which model is live is already the
@@ -26756,7 +27111,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         started:program.starts_on||program.created_at||null,ended:null,
         state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
         customers:growRetentionUsageV271.get(String(program.id))??null,
-        detail:`${Math.max(0,Number(program.goal_visits)||0)} visit${Number(program.goal_visits)===1?'':'s'} within ${Math.max(0,Number(program.period_days)||0)} days`});
+        /* nestly_v429 (F): these rows are bringback_campaigns_v361 now, which have no goal_visits
+           and no period_days — the old sentence would have printed "0 visits within 0 days" under
+           every campaign. A bring-back is defined by the absence it reacts to. */
+        detail:`away ${Math.max(0,Number(program.away_days)||0)}+ days${String(program.reward_label||'').trim()?` · ${program.reward_label}`:''}`});
     });
     if(rewardJourney.birthday)entries.push({name:rewardJourney.birthday.name,type:'Birthday benefit',usageScopeV386:'birthday',openV388:{topic:'birthday'},
       started:growUsageV271?.birthday?.started_at||null,ended:null,
@@ -26793,9 +27151,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       /* nestly_v420: a referral may pay a gift now, so the row names whichever it is. */
       /* nestly_v421: and to the friend, unless the firm has switched that side off. */
       detail:(()=>{
-        const side=(points,label)=>snapshot.referral.reward_kind==='voucher'
+        /* nestly_v429 (B1): the unit comes from reward_kind, which may now be 'stamps'. */
+        const side=(points,label)=>growReferralKindV425(snapshot.referral.reward_kind)==='voucher'
           ?(String(label||'').trim()||'A gift')
-          :(Number(points)>0?growPointsWordV322(points):'');
+          :(Number(points)>0?growReferralAmountWordV425(snapshot.referral.reward_kind,points):'');
         const referrer=side(snapshot.referral.reward_points,snapshot.referral.reward_label);
         if(!referrer)return '';
         if(snapshot.referral.friend_enabled===false)return `${referrer} to the referrer`;
@@ -28040,8 +28399,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Owner markup 2026-08-16 (photo 3): the Referrals row circled with "settings put here, when
      click edit setting page prompt here" and an arrow from Edit down into the space below it.
      Two fields, because two is what public.referral_programs actually holds that an owner sets:
-     the points the referrer earns and the floor the friend must spend. save_referral_program_v322
-     is its only writer and the table is LIVE (not versioned), so this is immediate-write like the
+     the points the referrer earns and the floor the friend must spend. save_referral_program_v421
+     (nestly_v429: v322, the four-argument writer that could not name a reward type, has no call
+     sites left) is its writer and the table is LIVE (not versioned), so this is immediate-write like the
      rest of the module — no draft, no publish. `enabled` is deliberately NOT touched here: the
      programme's on/off already has its own confirmed control (R6's "seperate button"), and a save
      that silently switched a paused programme on would be the defect R6 exists to prevent. */
@@ -28049,9 +28409,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      editor can never describe the same setting three different ways. A blank friend figure or a
      blank friend gift means the same as the referrer, which is exactly what the saver stores as
      NULL and what app.on_sale_recorded resolves at payout time. */
-  const growReferralRewardWordV421=(kind,points,label)=>kind==='voucher'
+  /* nestly_v429 (B1): the noun follows the declared kind, so a stamp referral is never summarised
+     as "50 points" on the row above the editor that says Stamps. */
+  const growReferralRewardWordV421=(kind,points,label)=>growReferralKindV425(kind)==='voucher'
     ?(String(label||'').trim()||'A free gift')
-    :(Number(points)>0?growPointsWordV322(points):'Not set yet');
+    :(Number(points)>0?growReferralAmountWordV425(kind,points):'Not set yet');
   const growReferralRewardV364=Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0));
   const growReferralMinCentsV364=Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0));
   /* V375 (owner, photo 10: "once set, can put referral info here" circled in the empty space
@@ -28089,16 +28451,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            for a points figure it will never award is asking for a number that means nothing. */''}
       <p class="grow-setup-sentence-v301" style="margin-top:10px"><span class="muted small">What the referrer gets</span></p>
       <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px" role="radiogroup" aria-label="What the referrer gets">
-        ${[['points','Points'],['voucher','A free gift']].map(([kind,label])=>`<label class="welcome-offer-optioncard-v350${growReferralKindV420===kind?' selected':''}" style="flex:1;min-width:min(100%,180px)"><input type="radio" name="growReferralKindV420" value="${kind}" ${growReferralKindV420===kind?'checked':''}><span><b>${esc(label)}</b></span></label>`).join('')}
+      ${/* nestly_v429 (B1): a third type. v425 made reward_kind explicit — the payout used to be
+           handed to "whichever accruing programme happens to be on", so a firm configured for 50
+           POINTS whose stamp card was running paid 50 STAMPS. The owner now names the pot, and
+           the amount box is relabelled to match so the number on screen has a unit. */''}
+        ${[['points','Points'],['stamps','Stamps'],['voucher','A free gift']].map(([kind,label])=>`<label class="welcome-offer-optioncard-v350${growReferralKindV420===kind?' selected':''}" style="flex:1;min-width:min(100%,180px)"><input type="radio" name="growReferralKindV420" value="${kind}" ${growReferralKindV420===kind?'checked':''}><span><b>${esc(label)}</b></span></label>`).join('')}
       </div>
-      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">Points for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
       <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
       ${/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's
            side, on by default because that is the ruling — a firm that wants the old one-sided
            referral back unticks it here. The amount is left blank on purpose: blank means the same
            as the referrer, so a firm that simply wants both sides paid fills in nothing. */''}
       <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
-      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">Points for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
       <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least (${esc(S.biz?.currency||'SGD')})</label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
@@ -28199,7 +28565,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            to the left of the H1 rather than on its own line beneath it, so the title reads as one
            row. Same shared composer, so it applies to every reward page at once. -->
       <div class="cui-page-title grow-title-row-v362">${(()=>{
-        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
+        /* nestly_v428 (item 5): 'birthday' joins the dedicated pages. It could not be here before
+           because the view never resolved (see directFocusTokens), so the page it names had no
+           way back except the sidebar. */
+        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday'].includes(programmeView);
         if(growActiveTopicV229)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button>`;
         return dedicatedBackV362?`<a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a>`:'';
       })()}${/* v401: the module mark. Every one of the 37 CUI.pageHeader() calls renders a 24px glyph
@@ -28207,7 +28576,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            (home, customers, sales, services) — this was the fifth, and the only top-level page in
            the workspace whose header had none. 'star' is the glyph the rail already assigns to this
            group, so the page now matches the row that opened it. It is decoration, so it is
-           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
+           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':programmeView==='birthday'?'Birthday benefit':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
       ${/* V364: the "More reward settings" header action went with the block it opened. */''}
       <div class="v150-title-actions"></div>
     </header>
@@ -28222,8 +28591,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            dedicated standalone pages — Points System, Tiers, Limited Offer, History — had no way
            back except the sidebar. Same button, same destination, on those pages too. -->
       ${(()=>{
-        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history'].includes(programmeView);
-        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
+        /* nestly_v428 (item 5): 'birthday' is a dedicated page like the five beside it, so its
+           sr-only h2 names the page rather than repeating the module. */
+        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday'].includes(programmeView);
+        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='birthday'?'Birthday benefit':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:20})} `:'';
         /* Wave 2A: the landing's h2 repeats the page h1 verbatim — keep it for structure, hide it from eyes. */
         const hideH2V2A=dedicatedViewV341||h2TextV341==='Rewards Programme';
@@ -28801,27 +29172,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        points pot — V314 residual §7.1 — and it also passes briefly through the shape the server
        now refuses, so it would fail on the first half. */
     if(want)programmeExclusionsV322(kind).forEach(other=>{set[other]=false});
-    const {ok,error,cancelled}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
+    const {ok,error,cancelled,data}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
     if(!isGrowCurrent())return;
     if(cancelled){button.disabled=false;return;}
     if(!ok){
       growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
       growSwitchPendingV322='';return growRerenderV322({quiet:true});
     }
-    /* SA-4 is still open: app.on_sale_recorded gates the referral payout on
-       referral_programs.enabled, not on the spine. A switch that moved only the spine row would
-       leave a programme that reads off on every surface while the engine keeps paying. The
-       amount and floor are handed straight back so this write changes nothing but the flag. */
-    if(kind==='referral'){
-      const {error:referralError}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
-        p_enabled:want,
-        p_reward_points:Math.max(0,Math.round(Number(snapshot.referral?.reward_points)||0)),
-        p_min_spend_cents:Math.max(0,Math.round(Number(snapshot.referral?.min_spend_cents)||0))});
-      if(!isGrowCurrent())return;
-      if(referralError)growSwitchErrorV322=`The switch was applied, but the referral payout setting could not be saved — ${ownerErrorText(referralError)}`;
-    }
+    /* nestly_v429 (B3, site 1): the companion write is GONE. SA-4 — app.on_sale_recorded gates the
+       payout on referral_programs.enabled, not on the spine — is closed inside the server now:
+       v425 makes set_programmes_v314 move that column in the SAME transaction as the spine row,
+       so the second RPC from here could only ever repeat what already happened, and could fail
+       on its own after the first had committed. The old call also round-tripped the amount and
+       floor through the browser, which is a way for a stale snapshot to write a stale figure.
+       The server deliberately syncs an EXISTING row only; a firm that has never configured a
+       referral still gets no row, and an unconfigured referral pays nothing, which is correct. */
     growSwitchPendingV322='';
+    /* nestly_v429 (B5): the switch that just moved may have turned off the very pot the referral
+       reward is denominated in. The server says so; nothing else on this page could know it. It is
+       raised AFTER the confirmation toast, so the warning is the message left on screen. */
     if(!growSwitchErrorV322)toast(want?'Turned on for customers':'Turned off for customers');
+    if(data?.referral_reward_kind_now_unpayable===true)
+      toast('Referrals pay a reward type that is now switched off — new referrals will wait until you fix the referral reward.');
     growRerenderV322({quiet:true});
   });
   /* V229: tiles drill in, Back returns, and the mode switch is one confirmed write. */
@@ -28869,12 +29241,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        birthday reuses the rewards editor's existing birthday focus target; bring-back has its own
        page. All three doors already existed — only the entry point moved. */
     if(tile.dataset.growTopicV229==='welcome'){
-      if(!canSetupGrow)return;
+      /* nestly_v428 (item 2): `if(!canSetupGrow)return` absorbed the tap in silence — a manager
+         pressed a tile that looked exactly like the six around it and nothing happened at all,
+         which reads as a broken app rather than as a refusal. The welcome tile's destination is a
+         WRITE modal with no read-only shape, so it stays closed and says why, using the same
+         sentence the Overview rows at [data-grow-open-v388] already use for this refusal. */
+      if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
       return openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
         ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
     }
     if(tile.dataset.growTopicV229==='birthday'){
-      if(!canSetupGrow)return;
+      /* nestly_v428 (item 2): birthday is the other half of the same defect and gets the opposite
+         answer, because its destination is different. #/grow/birthday is a LANDING PAGE that
+         states the saved gift and gates its own Edit button on canSetupGrow (growBirthdayPageV382),
+         so there is nothing here for a non-owner to be refused — reading what the business is
+         giving away is the same read every other programme tile grants. The gate that used to sit
+         here was guarding a write that moved to that page two versions ago. */
       /* V364 sent this tile straight into the editor ("straightaway pop up birthday gift setting").
          V382 reverses that at the owner's request: "i need a landing page for birthday gift > then
          leads to [the editor] when i press edit ... if not birthday rewards that are saved can be
@@ -29105,11 +29487,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
-    const {ok,error,cancelled}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
+    const {ok,error,cancelled,data}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
     if(cancelled)return growRerenderV322({quiet:true});
     if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
+    /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
+       strand a referral denominated in the pot that just closed. The server says when it has. */
+    if(data?.referral_reward_kind_now_unpayable===true)
+      toast('Referrals pay a reward type that is now switched off — new referrals will wait until you fix the referral reward.');
     /* The server just moved loyalty_model with the spine (V354), so the cached copy this page's
        own "configured" check reads is stale by exactly one field. Mirror it rather than refetch
        the whole snapshot — same local-echo the tier-basis handler uses. */
@@ -29528,7 +29914,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      until Save, so a mis-tap costs a tap. The kind is captured into state so a re-render (an
      error, a toast) does not throw the choice away. */
   outerMain.querySelectorAll('input[name="growReferralKindV420"]').forEach(radio=>radio.onchange=()=>{
-    growReferralKindV420=radio.value==='voucher'?'voucher':'points';
+    /* nestly_v429 (B1): three kinds now, normalised through the one helper. */
+    growReferralKindV420=growReferralKindV425(radio.value);
     growReferralGiftV420=String($('growReferralGiftV420')?.value||growReferralGiftV420||'');
     /* nestly_v421: the friend's half of the form is captured on the same tap, for the same reason
        — a re-render must not eat what has already been typed into it. */
@@ -29547,11 +29934,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growReferralSaveV364=outerMain.querySelector('[data-grow-referral-save-v364]');
   if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{
     if(growReferralBusyV364)return;
-    const kind=growReferralKindV420==='voucher'?'voucher':'points';
+    const kind=growReferralKindV425(growReferralKindV420);
     const points=Math.round(Number($('growReferralRewardV364')?.value||''));
     const gift=String($('growReferralGiftV420')?.value||'').trim();
     const amount=Number($('growReferralMinV364')?.value||'');
-    if(kind==='points'&&(!Number.isFinite(points)||points<1)){growReferralErrorV364='A points referral must award at least one point.';return growRerenderV322({quiet:true});}
+    /* nestly_v429 (B1): points and stamps share one amount field, so they share one floor. */
+    if(kind!=='voucher'&&(!Number.isFinite(points)||points<1)){growReferralErrorV364=kind==='stamps'?'A stamp referral must award at least one stamp.':'A points referral must award at least one point.';return growRerenderV322({quiet:true});}
     if(kind==='voucher'&&gift.length<2){growReferralErrorV364='Name the gift the referrer receives.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(amount)||amount<0){growReferralErrorV364='The minimum spend must be zero or more.';return growRerenderV322({quiet:true});}
     /* nestly_v421: the friend's side. An EMPTY figure and an empty gift name are sent as null,
@@ -29561,8 +29949,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const friendPointsRaw=String($('growReferralFriendPointsV421')?.value??'').trim();
     const friendGift=String($('growReferralFriendGiftV421')?.value||'').trim();
     const friendPoints=friendPointsRaw===''?null:Math.round(Number(friendPointsRaw));
-    if(friendOn&&kind==='points'&&friendPoints!==null&&(!Number.isFinite(friendPoints)||friendPoints<0)){
-      growReferralErrorV364="The friend's points must be zero or more, or blank for the same as the referrer.";
+    if(friendOn&&kind!=='voucher'&&friendPoints!==null&&(!Number.isFinite(friendPoints)||friendPoints<0)){
+      growReferralErrorV364=kind==='stamps'
+        ?"The friend's stamps must be zero or more, or blank for the same as the referrer."
+        :"The friend's points must be zero or more, or blank for the same as the referrer.";
       return growRerenderV322({quiet:true});
     }
     growReferralGiftV420=gift;
@@ -29575,14 +29965,18 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        twin rather than replacing it (see nestly_v410). */
     const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
       p_enabled:snapshot.referral?.enabled===true,p_reward_kind:kind,
-      p_reward_points:kind==='points'?points:null,
+      p_reward_points:kind==='voucher'?null:points,
       p_reward_label:kind==='voucher'?gift:null,
       p_min_spend_cents:Math.round(amount*100),
       p_friend_enabled:friendOn,
-      p_friend_reward_points:kind==='points'?friendPoints:null,
+      p_friend_reward_points:kind==='voucher'?null:friendPoints,
       p_friend_reward_label:kind==='voucher'?(friendGift||null):null});
     if(!isGrowCurrent())return;
     growReferralBusyV364=false;
+    /* nestly_v429 (B2): v425 refuses a reward type whose pot is not running, and the refusal names
+       the switch to turn on ("referral reward type \"points\" needs the Point system switched
+       on"). That sentence is the whole answer, so it is shown as written rather than replaced by a
+       generic "could not be saved" — ownerErrorText passes owner-authored prose through. */
     if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growReferralEditOpenV364=false;
     toast('Referral settings saved');
@@ -29829,7 +30223,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       /* nestly_v420: opening the editor seeds the payout choice from what is SAVED, so the form
          opens on the firm's own setting rather than on whatever was last previewed. */
       if(!growReferralEditOpenV364){
-        growReferralKindV420=snapshot.referral?.reward_kind==='voucher'?'voucher':'points';
+        /* nestly_v429 (B1): 'stamps' is a saved value now, so seeding must be able to return it. */
+        growReferralKindV420=growReferralKindV425(snapshot.referral?.reward_kind);
         growReferralGiftV420=String(snapshot.referral?.reward_label||'');
         /* nestly_v421: the friend's side seeds from the saved row too. A NULL amount stays BLANK
            rather than being filled in with the referrer's figure — blank is the setting, and
@@ -31592,6 +31987,17 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     referralMinSpend:Number(snapshot?.referral?.min_spend_cents)>=0
       ?Number(snapshot.referral.min_spend_cents)/100:0,
     referralDirty:false,
+    /* nestly_v429 (B3, site 2): the referral fields this wizard does NOT collect, captured as the
+       firm saved them so Go-live can hand them back unchanged. save_referral_program_v421 takes
+       the whole configuration, not a patch — omitting these would rewrite a free-gift referral as
+       a points one, and would drop the friend's side that v421 added. */
+    referralConfigV429:{
+      reward_kind:snapshot?.referral?.reward_kind??'points',
+      reward_label:snapshot?.referral?.reward_label??null,
+      friend_enabled:snapshot?.referral?.friend_enabled,
+      friend_reward_points:snapshot?.referral?.friend_reward_points??null,
+      friend_reward_label:snapshot?.referral?.friend_reward_label??null
+    },
     /* W6 increment 2 (SA-4) — whether public.referral_programs.enabled is TRUE as this wizard
        opens, captured BEFORE anything is written and never re-read from the spine afterwards.
        It exists because the first cut read the spine AFTER set_programmes_v314 had already
@@ -33264,16 +33670,29 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        programme the owner did not select, so its companion write must not either — a wizard run
        that never went near the referral screens has to leave referral_programs exactly as it
        found it, the same way it now leaves the referral spine row alone.
-       V322 (R1/R4): the amount is POINTS. save_referral_program_v322 is the writer that speaks
-       them; the pre-v322 four-argument money signature stays installed for the cached bundle's
-       window and is not called from here. */
+       V322 (R1/R4): the amount is POINTS.
+       nestly_v429 (B3, site 2): through save_referral_program_v421, not v322. v425 made the reward
+       TYPE explicit, and v322's four-argument signature cannot name one — it writes the amount and
+       leaves reward_kind at whatever the row already held, which is exactly the "pay into whichever
+       pot happens to be on" guess v425 exists to remove. This wizard has no reward-type control, so
+       the firm's OWN saved type and its gift/friend wording are carried through untouched from
+       state.referralConfigV429 (captured when the wizard opened); only the two numbers this wizard
+       actually collects are new. A voucher firm's amount is ignored by the saver, so a wizard run
+       cannot convert a free-gift referral into a points one behind the owner's back. */
     if(state.switches.referral!==true){state.modeError='';if(fromRetry)render();return true}
     const referralWanted=state.keepPaused!==true;
     const referralWasOn=state.referralEnabledW6I2===true;
     if(state.referralDirty||referralWanted!==referralWasOn){
-      const {error:referralError}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
+      const carried=state.referralConfigV429||{};
+      const carriedKind=growReferralKindV425(carried.reward_kind);
+      const {error:referralError}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
         p_enabled:referralWanted,
-        p_reward_points:Math.max(0,Math.round(Number(state.referralReward)||0)),
+        p_reward_kind:carriedKind,
+        p_reward_points:carriedKind==='voucher'?null:Math.max(0,Math.round(Number(state.referralReward)||0)),
+        p_reward_label:carriedKind==='voucher'?(carried.reward_label||null):null,
+        p_friend_enabled:carried.friend_enabled!==false,
+        p_friend_reward_points:carriedKind==='voucher'?null:(carried.friend_reward_points??null),
+        p_friend_reward_label:carriedKind==='voucher'?(carried.friend_reward_label||null):null,
         p_min_spend_cents:Math.round(Math.max(0,Number(state.referralMinSpend)||0)*100)});
       if(!isCurrent())return false;
       if(referralError){
@@ -35096,15 +35515,25 @@ async function referralsPage(){
   if(!isReferralsCurrent())return;
   if(programError)throw programError;
   const p=rp?.[0];
+  /* nestly_v429 (B1): this page's amount box is denominated in the firm's declared reward type,
+     which since v425 may be stamps. The gift case keeps its own wording below. */
+  const referralKindV429=growReferralKindV425(p?.reward_kind);
+  const referralAmountLabelV429=referralKindV429==='voucher'?'Reward the referrer earns'
+    :referralKindV429==='stamps'?'Stamps to referrer':'Points to referrer';
   const referralEnabled=p?.enabled===true;
   const referralStatusCopy=referralEnabled
     ?'Referral programme is Enabled. The first qualifying sale can reward the referrer once.'
     :'Referral programme is Off. Referral links are saved, but no reward is paid while it remains Off.';
   const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>${STATUS_WORDS.on}</option><option value="false" ${!p||!p.enabled?'selected':''}>${STATUS_WORDS.off}</option></select>
-      <label for="fr">Points to referrer</label><input id="fr" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(p?.reward_points)||0))}">
+      <label for="fr">${esc(referralAmountLabelV429)}</label><input id="fr" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(p?.reward_points)||0))}"${referralKindV429==='voucher'?' disabled':''}>
+      ${referralKindV429==='voucher'?`<p class="muted small">This referral pays a free gift — ${esc(String(p?.reward_label||'').trim()||'not named yet')}. Change the reward type in Rewards Programme → Referrals.</p>`:''}
       <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
-    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>Points to referrer</dt><dd>${esc(growPointsWordV322(p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
+    :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>${esc(referralAmountLabelV429)}</dt><dd>${esc(referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'A free gift'):growReferralAmountWordV425(referralKindV429,p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
+    ${/* nestly_v429 (B4): filled in once the referral rows have loaded — v425 records WHY a
+         qualified referral could not be paid on referrals.blocked_reason, which until now was a
+         row that silently never moved. */''}
+    <div id="referralBlockedV429"></div>
     <div class="split"><div class="card"><div class="cui-card-head"><h2>Program settings</h2></div>
       ${referralSettings}
       <p class="muted small" style="margin-top:8px">${referralEnabled?'When Enabled, a reward is considered only after the new customer has actually come in and spent above your floor. One reward per referred customer, ever.':'The programme is Off. Existing referral links remain in history and no reward is paid while it stays Off.'}</p>
@@ -35127,11 +35556,20 @@ async function referralsPage(){
   }
   if($('fsave'))$('fsave').onclick=async()=>{
     const saveButton=$('fsave');saveButton.disabled=true;
-    /* V322 (R1/R4): the points writer. The pre-v322 money signature stays installed for the CDN
-       window but nothing in this bundle calls it. */
-    const {error}=await sb.rpc('save_referral_program_v322',{p_business:S.biz.id,
+    /* nestly_v429 (B3, site 3): through save_referral_program_v421. v322 could not name a reward
+       TYPE, so saving from this page left reward_kind at whatever was there and wrote the amount
+       regardless — the guess v425 replaced with a declaration. This page has only the amount and
+       the floor, so the firm's saved type, gift wording and friend settings are carried through
+       from the row this page already read (`p`), unchanged. A refusal here is the server telling
+       the owner the named pot is switched off; it is shown as written. */
+    const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
       p_enabled:$('fe').value==='true',
-      p_reward_points:Math.max(0,parseInt($('fr').value||'0',10)||0),
+      p_reward_kind:referralKindV429,
+      p_reward_points:referralKindV429==='voucher'?null:Math.max(0,parseInt($('fr').value||'0',10)||0),
+      p_reward_label:referralKindV429==='voucher'?(p?.reward_label||null):null,
+      p_friend_enabled:p?.friend_enabled!==false,
+      p_friend_reward_points:referralKindV429==='voucher'?null:(p?.friend_reward_points??null),
+      p_friend_reward_label:referralKindV429==='voucher'?(p?.friend_reward_label||null):null,
       p_min_spend_cents:Math.round(parseFloat($('fm').value||'0')*100)});
     if(!isReferralsCurrent())return;
     if(error){saveButton.disabled=false;return fail(error)}toast('Referral program saved');referralsPage();
@@ -35141,6 +35579,12 @@ async function referralsPage(){
     .eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id'));
   if(!isReferralsCurrent())return;
   if(referralsError)throw referralsError;
+  /* nestly_v429 (B4): one banner, not one per row. blocked_reason is the same fact for every
+     stranded referral a firm holds — the configured reward type names a pot that is switched off —
+     and the fix is one screen away, so the page states it once and says where to go. */
+  const referralBlockedHostV429=$('referralBlockedV429');
+  if(referralBlockedHostV429&&(refs||[]).some(row=>String(row?.blocked_reason||'').trim()))
+    referralBlockedHostV429.innerHTML=`<div class="notice warn" role="status" style="margin-bottom:12px">Referral rewards are paused: the configured reward type isn't switched on. Fix it in Rewards Programme → Referrals.</div>`;
   let referralPage=0;const REFERRAL_PAGE_SIZE=100;
   const renderReferrals=()=>{
     const total=(refs||[]).length,pages=Math.max(1,Math.ceil(total/REFERRAL_PAGE_SIZE));
@@ -35148,7 +35592,8 @@ async function referralsPage(){
     $('flist').innerHTML=pageRows.length?`<table><tr><th>Referrer</th><th>Brought in</th><th>Status</th><th>Reward</th><th>Qualified</th></tr>
       ${pageRows.map(r=>`<tr><td><b>${esc(r.referrer?.full_name||'—')}</b></td><td>${esc(r.referred?.full_name||'—')}</td>
       <td><span class="pill ${r.status==='rewarded'?'ok':r.status==='pending'?'new':'off'}">${r.status}</span></td>
-      <td>${r.status==='rewarded'?esc(growPointsWordV322(r.reward_points)):'—'}</td>
+      ${/* nestly_v429 (B1): the unit follows the programme's declared reward type. */''}
+      <td>${r.status==='rewarded'?esc(referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'A free gift'):growReferralAmountWordV425(referralKindV429,r.reward_points)):'—'}</td>
       <td>${r.qualified_at?r.qualified_at.slice(0,10):'—'}</td></tr>`).join('')}</table>
       <div class="row" style="margin-top:14px"><span class="muted small">${total} referral${total===1?'':'s'} · page ${referralPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="refPrev" ${referralPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="refNext" ${referralPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'referrals',title:'No referrals yet',body:'Link a referral with the “Referred by” field when adding a customer.'});

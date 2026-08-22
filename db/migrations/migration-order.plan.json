@@ -2247,6 +2247,36 @@
       "path": "db/migrations/20260822_nestly_v422_customer_reward_history.sql",
       "semanticVersion": "v422",
       "proposedDeployVersion": "20260822000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v423_reward_edit_reaches_customers.sql",
+      "semanticVersion": "v423",
+      "proposedDeployVersion": "20260822000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v424_birthday_window_honoured.sql",
+      "semanticVersion": "v424",
+      "proposedDeployVersion": "20260822000004"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v425_referral_explicit_reward_type.sql",
+      "semanticVersion": "v425",
+      "proposedDeployVersion": "20260822000005"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v426_canonical_tier_resolver.sql",
+      "semanticVersion": "v426",
+      "proposedDeployVersion": "20260822000006"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v427_entitlements_reach_customers.sql",
+      "semanticVersion": "v427",
+      "proposedDeployVersion": "20260822000007"
     }
   ]
 }

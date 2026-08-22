@@ -36,3 +36,88 @@ jobs:
 
       - name: Build validation
         run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # Executed SQL. Added 2026-08-22.
+  #
+  # WHY: `npm test` executes no SQL. The 334 files under db/tests/ were read by regex and never
+  # run, and a mutation test proved the consequence — two real Rewards defects passed a
+  # 3297-test suite. This job runs the loyalty engine for real: real triggers, real RPCs, real
+  # constraints, on real Postgres.
+  #
+  # NO PRODUCTION CREDENTIALS. The baseline is tests/fixtures/db-schema-snapshot.sql, which is
+  # built from the committed migration chain (scripts/db-tests/snapshot-schema.mjs). This job
+  # never talks to Supabase.
+  #
+  # WHY BINARIES AND NOT A `services:` CONTAINER: the harness runs `initdb` itself and clones a
+  # template database per test file, so it needs the SERVER binaries on PATH, not a pre-started
+  # server on a port. A service container cannot provide initdb.
+  #
+  # WHY POSTGRES 17 SPECIFICALLY: production is Postgres 17 and the snapshot is a 17 pg_dump.
+  # ubuntu-latest ships 16, which cannot reliably restore it.
+  # ---------------------------------------------------------------------------
+  executed-sql:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install PostgreSQL 17
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-17 postgresql-client-17
+          # The harness needs initdb/pg_ctl/pg_dump, which live outside the default PATH.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      # The committed baseline must still be what the committed chain produces. Pinned at the
+      # snapshot watermark, so migrations landing above it never make this step fail; only an
+      # edit to a migration already baked into the baseline does, which is exactly when the
+      # snapshot needs refreshing.
+      - name: Schema snapshot is a faithful replay of the committed chain
+        run: npm run test:db:snapshot -- --check
+
+      - name: Executed SQL suite
+        run: npm run test:db
+
+  # ---------------------------------------------------------------------------
+  # Real-browser walkthrough. Added 2026-08-22.
+  #
+  # tests/browser/verify-reward-overview-owner.mjs renders the Rewards owner page in Chromium and
+  # asserts on measured layout, console errors and RPC usage. It was in no npm script and no
+  # workflow, so it had not run in months and three of its expectations had frozen behind the
+  # page. Locally it SKIPS when no driver is installed (loudly); here the driver is installed, so
+  # it runs for real.
+  # ---------------------------------------------------------------------------
+  browser-walkthrough:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install browser driver
+        run: |
+          set -euo pipefail
+          npm i --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Browser checks
+        run: npm run test:browser

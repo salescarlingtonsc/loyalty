@@ -2242,6 +2242,36 @@
       "version": "20260822000002",
       "name": "nestly_v422_customer_reward_history",
       "sourcePath": "db/migrations/20260822_nestly_v422_customer_reward_history.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000003",
+      "name": "nestly_v423_reward_edit_reaches_customers",
+      "sourcePath": "db/migrations/20260822_nestly_v423_reward_edit_reaches_customers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000004",
+      "name": "nestly_v424_birthday_window_honoured",
+      "sourcePath": "db/migrations/20260822_nestly_v424_birthday_window_honoured.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000005",
+      "name": "nestly_v425_referral_explicit_reward_type",
+      "sourcePath": "db/migrations/20260822_nestly_v425_referral_explicit_reward_type.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000006",
+      "name": "nestly_v426_canonical_tier_resolver",
+      "sourcePath": "db/migrations/20260822_nestly_v426_canonical_tier_resolver.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000007",
+      "name": "nestly_v427_entitlements_reach_customers",
+      "sourcePath": "db/migrations/20260822_nestly_v427_entitlements_reach_customers.sql"
     }
   ]
 }

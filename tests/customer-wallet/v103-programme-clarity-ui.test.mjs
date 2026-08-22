@@ -96,7 +96,10 @@ test('secondary programme metrics render only when they carry meaningful value',
 
 test('successful empty Rewards and History states do not offer a misleading retry',()=>{
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  const emptyTransactions=/if\(!transactionState\.items\.length\)\{([\s\S]*?)\n\s*\}/.exec(wallet)?.[1]||'';
+  /* nestly_v429 (D): the guard reads the RENDERED list, not the raw page — a v426 pot transfer is
+     dropped and a conversion pair collapses to one line, so "the server sent rows" and "there is
+     something to show" are no longer the same question. */
+  const emptyTransactions=/if\(!historyRowsV429\.length\)\{([\s\S]*?)\n\s*\}/.exec(wallet)?.[1]||'';
   assert.match(emptyTransactions,/No purchases or points activity has been recorded/);
   assert.doesNotMatch(emptyTransactions,/Retry|Refresh|walletTransactionsRetry/);
   /* nestly_v422: an empty CATALOGUE no longer replaces this section — it also holds the customer's

@@ -199,9 +199,11 @@ test('V322 R1 no referral surface still writes or reads a money amount', () => {
 });
 
 test('V322 R1 the points writer is the one the bundle calls, with an integer count', () => {
-  assert.match(code, /sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,/);
+  /* nestly_v429 (B3): v425 gave the referral reward an explicit TYPE, which v322's four-argument signature cannot carry, so every call site moved to save_referral_program_v421 and none of them calls v322 any more. */
+  assert.doesNotMatch(code, /sb\.rpc\('save_referral_program_v322'/);
+  assert.match(code, /sb\.rpc\('save_referral_program_v421',\{p_business:S\.biz\.id,/);
   /* Points are whole. A ×100 anywhere on this path is the dollars round trip coming back. */
-  const wizardWrite = code.match(/sb\.rpc\('save_referral_program_v322',\{p_business:S\.biz\.id,[\s\S]{0,300}?\}\)/g) || [];
+  const wizardWrite = code.match(/sb\.rpc\('save_referral_program_v421',\{p_business:S\.biz\.id,[\s\S]{0,700}?\}\)/g) || [];
   assert.ok(wizardWrite.length >= 2, 'the wizard and the Referrals page both write points');
   for (const call of wizardWrite) {
     assert.match(call, /p_reward_points:/);
@@ -395,8 +397,14 @@ test('V322 R6 the panel switches in ONE call and keeps referral_programs in step
     'a two-step switch is what strands a pot');
   assert.match(app, /function writeProgrammeSwitchesWithStampConversionV384[\s\S]*business_switch_to_stamps_v384[\s\S]*writeProgrammeSwitchesV314/,
     'the wrapper adds the stamp conversion confirmation without creating a second ordinary switch write');
-  assert.match(handler, /if\(kind==='referral'\)\{[\s\S]{0,400}save_referral_program_v322/,
-    'the spine and the column the engine actually reads must move together');
+  /* nestly_v429 (B3 site 1): the companion write is gone. v425 moves referral_programs.enabled
+     inside set_programmes_v314's OWN transaction, so the spine and the column the engine reads
+     can no longer be two writes one of which commits without the other. What this panel still owes
+     the owner is the server's verdict on what the switch just did. */
+  assert.doesNotMatch(handler, /save_referral_program_v/,
+    'the spine and the column move together in one server transaction; a second client write could land half of it');
+  assert.match(handler, /data\?\.referral_reward_kind_now_unpayable===true/,
+    'a switch that strands the referral reward has to say so');
 });
 
 /* =================================================================================================

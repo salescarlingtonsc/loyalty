@@ -203,13 +203,30 @@ try{
   metrics=await page.evaluate(()=>window.rewardOverviewMetrics());
   assert.equal(metrics.viewport.clientWidth,375);assert.equal(metrics.viewport.scrollWidth,375,'375px owner overview must not overflow');
   assert.ok(metrics.cards.every(card=>card.width<=351&&card.height>=44));
-  /* The All/On/Not set up/History strip is WIDER than this phone and scrolls inside itself. That
-     is deliberate — pinned so a later pass cannot turn it into a clip, which would put History out
-     of reach on a phone with nothing saying so. */
+  /* The All/On/Not set up/History strip.
+     UPDATED 2026-08-22, the first time this walkthrough had run since the CSS changed. It used to
+     assert overflow-x:auto — the strip was wider than the phone and scrolled inside itself. The
+     @media(max-width:480px) rule in app/index.html now WRAPS it into two rows of two instead, and
+     its own comment says why: a horizontal scroller at 375px showed no affordance, so "History"
+     was reachable only by a swipe nothing advertised. Wrapping is strictly better and the old
+     assertion was pinning the behaviour that was deliberately removed.
+     What is worth pinning is the INVARIANT both shapes were serving — every filter is reachable
+     on a phone — so that is what is asserted now: nothing is clipped, and all four tabs are
+     inside the viewport. */
   const tabStrip=await page.locator('.grow-programme-tabs-v343').evaluate(strip=>({
-    clientWidth:strip.clientWidth,scrollWidth:strip.scrollWidth,overflowX:getComputedStyle(strip).overflowX}));
-  assert.equal(tabStrip.overflowX,'auto','the tab strip is a scroller, not a clip');
-  assert.ok(tabStrip.scrollWidth>tabStrip.clientWidth,'…and it genuinely has more to reveal here');
+    clientWidth:strip.clientWidth,scrollWidth:strip.scrollWidth,
+    overflowX:getComputedStyle(strip).overflowX,flexWrap:getComputedStyle(strip).flexWrap,
+    tabs:[...strip.querySelectorAll('button')].map(button=>{
+      const rect=button.getBoundingClientRect();
+      return {label:button.textContent.trim(),left:rect.left,right:rect.right,height:rect.height};
+    })}));
+  assert.equal(tabStrip.flexWrap,'wrap','the tab strip wraps at phone width rather than scrolling');
+  assert.equal(tabStrip.scrollWidth,tabStrip.clientWidth,'…so nothing is hidden off its right edge');
+  assert.ok(tabStrip.tabs.length>=4,'all four filters are present');
+  for(const tab of tabStrip.tabs){
+    assert.ok(tab.left>=0&&tab.right<=375,`filter "${tab.label}" must be inside a 375px viewport`);
+    assert.ok(tab.height>=44,`filter "${tab.label}" must keep a 44px touch target`);
+  }
   await page.screenshot({path:new URL('owner-overview-small-375.png',evidenceDir).pathname,fullPage:true});
 
   /* nestly_v421: landscape. The popup this used to open is gone from this page (see the note

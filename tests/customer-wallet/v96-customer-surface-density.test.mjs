@@ -102,8 +102,12 @@ test('successful empty optional feature feeds remove sections, while featured pr
 
 test('enabled transaction history preserves a calm explicit zero-history state',()=>{
   const wallet=section('async function renderCustomerWallet','function renderCustomerNotificationPreferences');
-  assert.match(wallet,/if\(!transactionState\.items\.length\)\{[\s\S]*No purchases or points activity has been recorded for this programme yet\./);
+  /* nestly_v429 (D): the guard reads the RENDERED list. v426 lets a page of server rows contain
+     nothing a customer should see (a programme pot transfer is dropped outright), so "no rows came
+     back" and "there is nothing to show" stopped being the same question — and the zero state has
+     to answer the second one. */
+  assert.match(wallet,/if\(!historyRowsV429\.length\)\{[\s\S]*No purchases or points activity has been recorded for this programme yet\./);
   assert.doesNotMatch(wallet,/id="walletTransactionsRetry"/);
   assert.doesNotMatch(wallet,/\$\('walletTransactionsRetry'\)\.onclick/);
-  assert.doesNotMatch(wallet,/if\(!transactionState\.items\.length\)\{\s*host\.remove\(\)/s);
+  assert.doesNotMatch(wallet,/if\(!historyRowsV429\.length\)\{\s*host\.remove\(\)/s);
 });

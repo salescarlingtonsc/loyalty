@@ -420,11 +420,23 @@ function programmeSpineRowsV314(){
   return Array.isArray(S.programmes)&&S.programmesBusinessId&&S.biz&&S.programmesBusinessId===S.biz.id
     ?S.programmes:null;
 }
+/* Server truth in, cache out. set_programmes_v314 returns the spine it just wrote, so the reply
+   to the write IS the refresh — no second round trip and no window in which the page renders a
+   state the server never reached. */
+/* nestly_v428 (item 3): the spine now carries its DEACTIVATION BREADCRUMB as well as its flag.
+   business_programmes.deactivated_at is stamped only on a true->false flip and is never cleared
+   (v308:60-61), which makes it the one honest answer to "which programmes has this firm turned
+   off?" — a question the Programmes History tab was asking with a hardcoded zero. The switch RPC
+   returns the same column under its W4b name `paused_since` (v348), so both writers into this
+   cache agree on the field and neither has to guess. Absent on an older server, which reads as
+   "never turned off" — the same thing an unread breadcrumb has always meant. */
+const programmeSpineRowV428=row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true,
+  deactivatedAt:row?.deactivated_at||row?.paused_since||null});
 async function refreshProgrammeSpineV314(){
   if(!S.biz?.id)return null;
-  const {data,error}=await sb.from('business_programmes').select('id,kind,active').eq('business_id',S.biz.id);
+  const {data,error}=await sb.from('business_programmes').select('id,kind,active,deactivated_at').eq('business_id',S.biz.id);
   if(error)return null;
-  S.programmes=(data||[]).map(row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true}));
+  S.programmes=(data||[]).map(programmeSpineRowV428);
   S.programmesBusinessId=S.biz.id;
   return S.programmes;
 }
@@ -2819,41 +2831,6 @@ function focusCustomerRoute(){
   const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
   if(S.user&&typeof completePendingCustomerDestination==='function')completePendingCustomerDestination(location.hash);
 }
-async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
-  const userId=S.user?.id||null;
-  if(!userId)return {attempted:false,linked:false};
-  if(customerRelationshipSyncState.userId!==userId){
-    customerRelationshipSyncState={userId,attempted:false,result:null};
-  }
-  if(customerRelationshipSyncState.attempted){
-    const result=customerRelationshipSyncState.result;
-    return {
-      attempted:true,linked:Number(result?.linked_count||0)>0,result,
-      backendNotApplied:result?.outcome==='backend_not_applied'
-    };
-  }
-  const {data,error}=await sb.rpc('customer_sync_verified_relationships_v81',{
-    p_idempotency_key:crypto.randomUUID()
-  });
-  if(!isCurrent())return {attempted:false,linked:false,stale:true};
-  if(error){
-    // A build can safely run before v81 is applied. Missing-function responses must
-    // preserve the earlier explicit-claim wallet instead of turning it into an error.
-    if(error.code==='PGRST202'||error.code==='42883'){
-      customerRelationshipSyncState.attempted=true;
-      customerRelationshipSyncState.result={outcome:'backend_not_applied'};
-      return {attempted:true,linked:false,backendNotApplied:true};
-    }
-    // Transport, gateway and RPC failures are recoverable. Do not memoize them as
-    // a completed session attempt: the empty/destination state exposes a retry.
-    customerRelationshipSyncState.attempted=false;
-    customerRelationshipSyncState.result={outcome:'try_later'};
-    return {attempted:false,linked:false,error,retryable:true};
-  }
-  customerRelationshipSyncState.attempted=true;
-  customerRelationshipSyncState.result=data||{outcome:'synchronized',linked_count:0};
-  return {attempted:true,linked:Number(data?.linked_count||0)>0,result:data};
-}
 function customerRelationshipSyncCanRecover(){
   return customerRelationshipSyncState.attempted===false
     &&customerRelationshipSyncState.result?.outcome==='try_later';
@@ -3073,6 +3050,30 @@ function customerPointTotalV103(value){
   return new Intl.NumberFormat('en-SG',{maximumFractionDigits:0})
     .format(Math.max(0,Number(value)||0));
 }
+/* nestly_v429 (E) — WHICH UNIT A NEXT-REWARD FIGURE IS QUOTED IN.
+   v426 stamps `unit` onto next_eligible_reward: the price of the reward and the distance still to
+   go are denominated in the RUNNING programme's unit, which is not always the one a caller would
+   infer from the card around it. So the reward's own field is consulted first, and only when it
+   says something this build understands; anything else (an older server, a reward with no unit)
+   falls back to whatever the caller already knows the balance is counted in.
+   Deliberately parameterised on the fallback rather than reaching for the card: a caller holding
+   the whole wallet card passes customerBalanceUnitV428(card), which owns the payload-first rules
+   for a BALANCE, so those rules are extended here, not restated. A caller holding only
+   {reward, loyalty} passes loyalty.unit. One function either way — two copies of "is this a stamp
+   card?" is exactly how a figure and its noun come apart. Declared beside customerPointTotalV103
+   because the two are always used together, and because the sentence renderers that need them are
+   extracted as a unit by the wallet test harnesses. */
+function customerRewardUnitV429(reward,fallbackUnit){
+  const declared=String(reward?.unit||'').trim().toLowerCase();
+  if(declared==='stamps'||declared==='points')return declared;
+  return String(fallbackUnit||'').trim().toLowerCase()==='stamps'?'stamps':'points';
+}
+/* The noun for that unit, singular or plural. "1 points to your reward" is the kind of sentence a
+   customer reads as a fault in the shop's system. */
+function customerUnitNounV429(unit,count){
+  const one=Math.abs(Number(count)||0)===1;
+  return String(unit||'').trim().toLowerCase()==='stamps'?(one?'stamp':'stamps'):(one?'point':'points');
+}
 /* nestly_v421: a url safe to drop inside a CSS url("…") in a style attribute. esc() handles the
    HTML layer; this one closes the CSS layer, where a quote, a bracket or a backslash would end
    the function early. Percent-encoding them is lossless for a real image url — the server that
@@ -3117,7 +3118,15 @@ function customerRewardProgressMarkupV167(card){
   const reward=card?.next_eligible_reward||null,loyalty=card?.loyalty||{};
   if(!reward)return '';
   const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
-    unit=String(loyalty.unit||'points'),available=reward.available_now===true||cost===0,
+    /* nestly_v429 (E): the reward's own unit (v426) rather than the balance's, so a stamp
+       milestone stops being counted out in points. */
+    unit=customerUnitNounV429(customerRewardUnitV429(reward,loyalty.unit),reward.remaining_units),
+    /* nestly_v428 (item 7): `||cost===0` was a browser deciding readiness, which v145 forbids —
+       a free reward that the server has disabled, ended, tier-locked or claim-limited answers
+       available_now:false and was still announced as "ready to redeem" here. The server's own
+       flag is the only authority; the arithmetic below still draws the distance for the reward
+       the customer is still earning. */
+    available=reward.available_now===true,
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100;
   return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
 }
@@ -3669,7 +3678,9 @@ function customerProgrammePausedMarkupV310(entry){
 function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
   if(!reward)return '';
   const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
-    available=reward.available_now===true||cost===0,
+    /* nestly_v428 (item 7): the same v145 violation as customerRewardProgressMarkupV167 above —
+       a zero cost is not a permission. available_now is the server's answer and the only one. */
+    available=reward.available_now===true,
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100,
     gift=String(reward.name||'').trim()||ct('rewardsTab');
   const sentence=available?ct('pointsReady',{gift})
@@ -3711,9 +3722,13 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
   const rings=customerProgrammeStampRingsV310(collected,target);
   const gift=String(reward?.name||'').trim();
   const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  /* nestly_v428 (item 7): `||remaining===0` announced a full card as claimable whatever the
+     server said. A completed card whose milestone has already been claimed this cycle, or whose
+     reward is disabled or tier-locked, still reports remaining_units 0 — and this line told the
+     customer to go and collect it. available_now is the one authority (v145). */
   const sentence=paused?''
     :!reward?ct('stampsNoGift',{count:customerPointTotalV103(collected)})
-    :(reward.available_now===true||remaining===0)?ct('stampsReady',{gift:gift||ct('rewardsTab')})
+    :reward.available_now===true?ct('stampsReady',{gift:gift||ct('rewardsTab')})
     :ct('stampsRemaining',{count:customerPointTotalV103(remaining),gift:gift||ct('rewardsTab')});
   const figure=paused?''
     :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
@@ -3922,8 +3937,13 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
   const fraction=reward&&cost>0&&remaining>0
     ?`${esc(customerPointTotalV103(Math.min(balance,cost)))}/${esc(customerPointTotalV103(cost))}`:'';
   const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
+  /* nestly_v428 (item 7): the worst of the four, because `remaining` on this line falls back to
+     `cost - balance` — so a member holding 77,877 points against a 1,000-point reward reached
+     remaining 0 by arithmetic alone and the red hero told them to claim a reward the counter may
+     refuse. Readiness is available_now and nothing else (v145); the distance sentence keeps its
+     arithmetic, which is what that arithmetic is actually for. */
   const nextLine=reward
-    ?(reward.available_now===true||remaining===0
+    ?(reward.available_now===true
       ?`${esc(rewardName)} is ready to claim`
       :`${esc(customerPointTotalV103(remaining))} more ${esc(unitLabel)} to ${esc(rewardName)}`)
     :'';

@@ -224,7 +224,8 @@ test('V271 (b) every Overview number names its source', () => {
   assert.match(entries, /customers:growRetentionUsageV271\.get\(String\(program\.id\)\)\?\?null/);
   // The reads those columns depend on are actually requested.
   assert.match(app, /claim_available_until,created_at'\)/);
-  assert.match(app, /sb\.from\('retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'\)/);
+  /* nestly_v429 (F): the bring-back row's own read is bringback_campaigns_v361 now — the engine that issues bring-backs — so the column it names its start date from is that table's created_at. */
+  assert.match(app, /sb\.from\('bringback_campaigns_v361'\)\s*\n?\s*\.select\('id,name,reward_label,away_days,expiry_days,active,created_at'\)/);
   assert.match(app, /sb\.from\('membership_plans'\)\.select\('id,name,active,created_at'\)/);
   /* V322 (OWNER RULING R1/R4 — "why referral is a stored credits? please remove it as i already
      said no more store credits"): the referral payout is POINTS now, so the live column this

@@ -153,8 +153,11 @@ test('V314 (3) every publish route applies the switches through the same helper'
      ONE helper rather than each calling the RPC. It applies no programme switch, for the same
      reason the v364 birthday popup does not: these writers change what is IN a programme, never
      which programme is running, so the three helper counts below stay as they were. */
+  /* nestly_v429 (A): the v364 birthday popup's route is GONE — its three-call save became one atomic public.business_save_birthday_program_v424, which opens the draft and publishes it server-side, so the browser no longer calls publish_loyalty_config there at all. */
   const publishes = [...code.matchAll(/sb\.rpc\('publish_loyalty_config'/g)].length;
-  assert.equal(publishes, 5, `expected the five known publish routes, found ${publishes}`);
+  assert.equal(publishes, 4, `expected the four known publish routes, found ${publishes}`);
+  assert.equal([...code.matchAll(/sb\.rpc\('business_save_birthday_program_v424'/g)].length, 1,
+    'the birthday popup saves and publishes in exactly one server call');
   assert.equal([...code.matchAll(/await publishOnSaveV415\(/g)].length, 4,
     'four writers on the Loyalty page, one publish helper between them');
   assert.equal([...code.matchAll(/applyPublishedProgrammeSwitchesV314\(/g)].length, 3,
@@ -207,7 +210,13 @@ test('V314 the spine is cached once per business and refreshed from the server',
   // Same shape as S.myModules: fetched once in route(), invalidated when the business changes.
   assert.match(code, /programmes:null,programmesBusinessId:null\}/);
   assert.match(code, /if\(programmeSpineRowsV314\(\)===null&&S\.myModules&&S\.myModules\.includes\('loyalty'\)\)\{\s*\r?\n?\s*await refreshProgrammeSpineV314\(\);/);
-  assert.match(code, /sb\.from\('business_programmes'\)\.select\('id,kind,active'\)\.eq\('business_id',S\.biz\.id\)/);
+  /* nestly_v428 (item 3): the select also carries deactivated_at — the never-cleared true->false
+     breadcrumb (v308:60-61) — so the Programmes History tab can answer from data instead of a
+     hardcoded zero. Still SELECT-only, still one read, one column wider. */
+  assert.match(code, /sb\.from\('business_programmes'\)\.select\('id,kind,active,deactivated_at'\)\.eq\('business_id',S\.biz\.id\)/);
+  /* Both writers into the cache map through ONE row builder, so the reply to set_programmes_v314
+     (which names the same column `paused_since`) and the direct table read cannot disagree. */
+  assert.match(code, /const programmeSpineRowV428=row=>\(\{id:row\?\.id\|\|null,kind:row\?\.kind\|\|null,active:row\?\.active===true,\s*\r?\n?\s*deactivatedAt:row\?\.deactivated_at\|\|row\?\.paused_since\|\|null\}\);/);
   /* A cache belonging to another business must never answer for this one — the id is checked on
      every read, not only when it is written. */
   assert.match(code, /S\.programmesBusinessId===S\.biz\.id\s*\r?\n?\s*\?S\.programmes:null/);

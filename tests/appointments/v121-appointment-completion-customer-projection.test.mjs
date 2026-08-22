@@ -142,7 +142,9 @@ test('writer registry and both migration plans bind v121',()=>{
   // predicate is verbatim and the postcondition battery below re-runs against this body.
   assert.equal(
     saleWriter.latest_file,
-    '20260822000001_nestly_v421_two_sided_referral.sql'
+    // nestly_v425 restated app.on_sale_recorded (typed referral payout + legacy retention loop
+    // removal), so discovery now attributes the trigger body there.
+    '20260822000005_nestly_v425_referral_explicit_reward_type.sql'
   );
   assert.match(saleWriter.loyalty_boundary,/resolves exactly rw/);
   assert.match(saleWriter.programme_scope,/ON CONFLICT arbiter NAMES/);

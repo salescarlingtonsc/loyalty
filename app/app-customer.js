@@ -1374,6 +1374,65 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
     };
   });
 }
+async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
+  const userId=S.user?.id||null;
+  if(!userId)return {attempted:false,linked:false};
+  if(customerRelationshipSyncState.userId!==userId){
+    customerRelationshipSyncState={userId,attempted:false,result:null};
+  }
+  if(customerRelationshipSyncState.attempted){
+    const result=customerRelationshipSyncState.result;
+    return {
+      attempted:true,linked:Number(result?.linked_count||0)>0,result,
+      backendNotApplied:result?.outcome==='backend_not_applied'
+    };
+  }
+  const {data,error}=await sb.rpc('customer_sync_verified_relationships_v81',{
+    p_idempotency_key:crypto.randomUUID()
+  });
+  if(!isCurrent())return {attempted:false,linked:false,stale:true};
+  if(error){
+    // A build can safely run before v81 is applied. Missing-function responses must
+    // preserve the earlier explicit-claim wallet instead of turning it into an error.
+    if(error.code==='PGRST202'||error.code==='42883'){
+      customerRelationshipSyncState.attempted=true;
+      customerRelationshipSyncState.result={outcome:'backend_not_applied'};
+      return {attempted:true,linked:false,backendNotApplied:true};
+    }
+    // Transport, gateway and RPC failures are recoverable. Do not memoize them as
+    // a completed session attempt: the empty/destination state exposes a retry.
+    customerRelationshipSyncState.attempted=false;
+    customerRelationshipSyncState.result={outcome:'try_later'};
+    return {attempted:false,linked:false,error,retryable:true};
+  }
+  customerRelationshipSyncState.attempted=true;
+  customerRelationshipSyncState.result=data||{outcome:'synchronized',linked_count:0};
+  return {attempted:true,linked:Number(data?.linked_count||0)>0,result:data};
+}
+/* nestly_v428 (item 8) — THE AUTO-LINK HAD NO CALLER.
+   syncVerifiedCustomerRelationshipsOnce is the client half of
+   public.customer_sync_verified_relationships_v81: it takes the businesses that already hold this
+   person's VERIFIED phone number and links them to the signed-in account. Nothing called it. A
+   shop that added an existing walk-in customer by phone therefore never appeared in that
+   customer's wallet at all — the programme existed on the server and the customer could only find
+   it by re-registering or scanning a QR, which is not a thing anyone knows to do.
+   It is safe to call on a wallet render: the RPC is idempotent, advisory-locked and rate-limited
+   server-side (20 per 15 minutes), and the client memoizes the answer per user id, so a session
+   sends it once however many times Home is opened.
+   FIRE AND FORGET, and DELIBERATELY NOT RE-ARMED. The memoized branch keeps reporting linked:true
+   for the rest of the session, so re-running it on every visit to Home would schedule a wallet
+   reload each time; the already-answered case therefore returns before the call is made. Failures
+   are swallowed into state (the retry lives on the no-destination screen) and never touch this
+   render — the wallet the customer is looking at is painted either way. */
+function customerAutoLinkOnceV428(isCurrent=()=>true,onLinked=()=>{}){
+  const userId=S.user?.id||null;
+  if(!userId)return false;
+  if(customerRelationshipSyncState.userId===userId&&customerRelationshipSyncState.attempted)return false;
+  syncVerifiedCustomerRelationshipsOnce(isCurrent)
+    .then(result=>{if(result?.linked&&isCurrent())onLinked()})
+    .catch(()=>{});
+  return true;
+}
 function localCustomerPreviewProfileV345(){
   return {display_name:'Jamie Tan',full_name:'Jamie Tan'};
 }
@@ -2690,7 +2749,9 @@ function actionableWalletActionText(card){
   if(action.reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
   if(action.reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
   if(action.reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
-  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${unit} to ${reward.name||'your next reward'}`;
+  /* nestly_v429 (E): the DISTANCE to a reward is counted in the reward's unit, which v426 now
+     sends; the expiry lines above stay on the balance's unit, because that is what expires. */
+  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${customerUnitNounV429(customerRewardUnitV429(reward,unit),reward.remaining_units)} to ${reward.name||'your next reward'}`;
   if(action.reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
   if(action.reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
   return 'No urgent action right now';
@@ -3700,6 +3761,30 @@ function customerHeroStampCardV422(quest){
     ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
   </div>`;
 }
+/* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
+   A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
+   (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
+   on (business, client, programme, cycle, slot_position): "one gift per milestone per card"
+   (v323:402-407). A firm that authored two gifts at the same slot — which is legal — therefore
+   shows a completed card with BOTH claimable and lets the customer claim exactly one; claiming
+   either makes the other unavailable for the cycle (v323:753).
+   So "2 rewards ready" is arithmetic that is true and a promise that is false. The owner-locked
+   wording is "Choose 1".
+   The test is the slot rule itself, not a guess: two or more CLAIMABLE catalogue rewards sharing
+   one cost, on a firm whose balance is counted in stamps. Points rewards that happen to cost the
+   same are genuinely independent — a customer with the balance may take both — so the stamps gate
+   is load-bearing and not decoration. */
+function customerStampChooseOneSlotV428(claimable,unit){
+  if(String(unit||'').trim().toLowerCase()!=='stamps')return false;
+  const perSlot=new Map();
+  (Array.isArray(claimable)?claimable:[]).forEach(item=>{
+    if(!item||item.redemption_kind==='classic_points')return;
+    const slot=Math.max(0,Math.floor(Number(item.cost_points)||0));
+    if(!slot)return;
+    perSlot.set(slot,(perSlot.get(slot)||0)+1);
+  });
+  return [...perSlot.values()].some(count=>count>1);
+}
 /* nestly_v399. The final swipe page's "View all rewards" control. It does NOT navigate on its
    own: it clicks the reward shortcut tile the modules row already renders, so the customer lands
    on the very same Points & gifts / Stamp card catalogue page that tile opens, wired by
@@ -3718,14 +3803,18 @@ function wireCustomerHeroViewAllV399(root=document){
   }});
   return buttons.length;
 }
-function customerRewardReadyCountApplyV397(count,root=document){
+function customerRewardReadyCountApplyV397(count,root=document,{chooseOneV428=false}={}){
   const ready=Math.max(0,Number(count)||0);
   const nodes=[...root.querySelectorAll('[data-reward-ready-count-v397]')];
   nodes.forEach(node=>{
     /* A firm can lose its last claimable reward between renders (redeemed, expired, limit hit).
        The node then goes back to whatever it said before a reward was ready, which the renderer
        stored on it, rather than printing "0 rewards ready". */
-    node.textContent=ready>0?customerRewardReadyLineV397(ready):String(node.dataset.rewardReadyFallbackV397||'');
+    /* nestly_v428 (item 6): when the claimable set is several gifts on ONE stamp slot, the tile
+       says how many the customer may take rather than how many exist. */
+    node.textContent=ready>0
+      ?(chooseOneV428?'Choose 1 reward':customerRewardReadyLineV397(ready))
+      :String(node.dataset.rewardReadyFallbackV397||'');
   });
   return nodes.length;
 }
@@ -4174,6 +4263,19 @@ function wireCustomerGalleryV418(root){
     openCustomerGalleryPhotoV418(image?.getAttribute('src')||'',image?.getAttribute('alt')||'');
   });
 }
+/* nestly_v428 (item 9) — WHICH UNIT IS THIS BALANCE COUNTED IN.
+   The kind resolver above answers a slightly different question: which PROGRAMME shape the card
+   is in, decided from the programme stack first and from loyalty.unit only when nothing else
+   spoke. That ordering is right for the stack, and wrong for a figure: a wallet card carrying
+   {balance:758, unit:'stamps'} but no programmes array fell all the way through to the default
+   'points' and printed "758 pts" over 758 stamps (Cubbly, go-live review).
+   So the payload's own unit is consulted FIRST, and only in the stamps direction — a card the
+   resolver already calls stamps is never talked back into points by a missing or stale field, and
+   a server that does not send the unit yet renders exactly as it does today. */
+function customerBalanceUnitV428(card){
+  return String(card?.loyalty?.unit||'').trim().toLowerCase()==='stamps'
+    ?'stamps':customerProgrammeCardMetricKindV360(card);
+}
 /* nestly_v422 (owner photo 4, "13 / 13 stamps" ringed: "for stamps dont need show this"; and
    photo 5, the same figure on the home card: "don't write this"). A points balance is a number the
    customer spends and has to know. A stamp count is not: the card itself IS the figure, it is drawn
@@ -4182,10 +4284,14 @@ function wireCustomerGalleryV418(root){
    rather than the card's real length — so it disagreed with the card the customer then opened.
    Stamps therefore contribute no metric here at all, and the caller drops the slot rather than
    printing an empty one. Points, sessions and membership are untouched. */
+/* nestly_v428 (item 9): the unit comes from the payload through customerBalanceUnitV428, so a
+   stamps balance can no longer reach the "pts" line below by defaulting. The v422 ruling that
+   stamps print NO figure on this surface is unchanged — this only makes the test that reaches it
+   read the field the server actually sends. */
 function customerProgrammeDirectoryMetricV346(card){
   const loyalty=card?.loyalty||{},
     packages=card?.packages||{},membership=card?.membership||{};
-  const unit=customerProgrammeCardMetricKindV360(card);
+  const unit=customerBalanceUnitV428(card);
   const balance=Math.max(0,Number(loyalty.balance)||0);
   if(unit==='stamps')return '';
   if(membership.active===true)return 'Member';
@@ -4196,9 +4302,10 @@ function customerProgrammeDirectoryStatusV346(card){
   const loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null,
     packages=card?.packages||{},membership=card?.membership||{},
     remaining=Math.max(0,Number(reward?.remaining_units||0)),
-    unit=customerProgrammeCardMetricKindV360(card);
+    /* nestly_v429 (E): the reward's declared unit (v426), falling back to the card's. */
+    unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card));
   if(reward?.available_now===true)return '1 reward ready';
-  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamps to reward`;
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to reward`;
   if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} session${Number(packages.sessions_remaining)===1?'':'s'} left`;
   if(membership.active===true)return '1 active perk';
@@ -4299,10 +4406,11 @@ function customerNearestGoalV2B(cards=[]){
     if(reward.available_now===true)continue;
     const remaining=Math.max(0,Number(reward.remaining_units)||0);
     if(!remaining)continue;
-    if(!best||remaining<best.remaining)best={remaining,unit:customerProgrammeCardMetricKindV360(card),name:card?.business?.name||''};
+    /* nestly_v429 (E): the reward's own unit (v426) decides the noun printed below. */
+    if(!best||remaining<best.remaining)best={remaining,unit:customerRewardUnitV429(reward,customerBalanceUnitV428(card)),name:card?.business?.name||''};
   }
   if(!best||!best.name)return '';
-  const word=best.unit==='stamps'?`stamp${best.remaining===1?'':'s'}`:'points';
+  const word=customerUnitNounV429(best.unit,best.remaining);
   return `${customerPointTotalV103(best.remaining)} ${word} from a reward at ${best.name}`;
 }
 function customerHomeSummaryV343(cards=[]){
@@ -4321,11 +4429,14 @@ function customerHomeSummaryV343(cards=[]){
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
+/* nestly_v428 (item 9): same payload-first unit as the two balance renderers, so the status line
+   and the figure above it can never describe one card in two different units. */
 function customerHomeBusinessStatusV345(card){
   const reward=card?.next_eligible_reward||{},
-    unit=customerProgrammeCardMetricKindV360(card),remaining=Math.max(0,Number(reward.remaining_units)||0);
+    /* nestly_v429 (E): the reward's own unit (v426) with the v428 balance rules as the fallback. */
+    unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card)),remaining=Math.max(0,Number(reward.remaining_units)||0);
   if(reward.available_now===true)return '1 reward ready';
-  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} stamp${remaining===1?'':'s'} to go`;
+  if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to go`;
   if(unit==='stamps')return 'Stamp card';
   const sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0);
   if(sessions>0)return `${customerPointTotalV103(sessions)} session${sessions===1?'':'s'} left`;
@@ -4336,8 +4447,11 @@ function customerHomeBusinessStatusV345(card){
    write this"). Same ruling as customerProgrammeDirectoryMetricV346 above, on the home surface:
    stamps print no balance line here. The status line under it still says what matters
    ("1 reward ready" / "2 stamps to go"), and the card itself is one tap away. */
+/* nestly_v428 (item 9): THIS is the line that printed "758 pts" over 758 stamps. The v422 ruling
+   above already says a stamps card shows no figure here; what was missing was the payload's own
+   unit in the test that decides which card is a stamps card. */
 function customerHomeBusinessBalanceV345(card){
-  const loyalty=card?.loyalty||{},unit=customerProgrammeCardMetricKindV360(card),
+  const loyalty=card?.loyalty||{},unit=customerBalanceUnitV428(card),
     balance=Math.max(0,Number(loyalty.balance)||0);
   if(unit==='stamps')return '';
   return `${customerPointTotalV103(balance)} pts`;
@@ -4729,6 +4843,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const isWalletCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   if(silent&&!$('walletBody')?.isConnected)return;
   const context=await loadCustomerSurfaceContext(isWalletCurrent,{silent});if(!context)return;
+  /* nestly_v428 (item 8): the one call site of the auto-link. It runs on a REAL render only — a
+     silent 20-second poll must not start work — and at most once per signed-in customer per
+     session (customerAutoLinkOnceV428 returns before calling when the answer is already held).
+     It does not block this render: the wallet paints from the reads below whatever the sync does,
+     and a sync that actually linked something re-reads the wallet silently so the new business
+     appears without the customer doing anything. */
+  if(!silent)customerAutoLinkOnceV428(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}));
   const customerFeatures=context.features;
   if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,compactBusinessHeadV339:!!businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
@@ -5440,7 +5561,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        round trip for an answer we were already holding. `businessActionsResult` is reused
        verbatim (same {data,error} shape) so every consumer below is unchanged, including the
        error branch: a failed actions read still degrades exactly as it did before. */
-    const catalogResult=await customerRpc('customer_get_reward_catalog',args);
+    /* nestly_v429 (C): the three GRANTED entitlements — a welcome offer, a bring-back voucher, a
+       referral gift — have been issued server-side since v215/v361/v420 and have never once
+       appeared on the customer's own screen; only the till could see them. v427's
+       customer_get_entitlements_v427 is the customer's read over exactly those three tables.
+       Fetched WITH the catalogue rather than after it: this is one screen, not two round trips.
+       Fail closed — 28000 (no session) and 42501 (no verified link), and anything else, render
+       NOTHING. No error card: a customer holding no entitlement and a customer whose read was
+       refused should both simply see the catalogue, and inventing a retry for a list they may
+       have no rows in would be a worse lie than silence. */
+    const [catalogResult,entitlementsResultV427]=await Promise.all([
+      customerRpc('customer_get_reward_catalog',args),
+      customerRpc('customer_get_entitlements_v427',{p_business_slug:businessSlug})
+    ]);
     /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
     const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
     const {data,error}=catalogResult;
@@ -5501,8 +5634,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const heroRootV397=$('walletBody')||document;
     /* nestly_v397: the ONE number both the hero pill and the Points & gifts tile now print, taken
        from the same server-backed check the reward list uses. */
-    const readyCountV397=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled)).length;
-    customerRewardReadyCountApplyV397(readyCountV397,heroRootV397);
+    /* nestly_v428 (item 6): the claimable SET is computed once here and the Available panel below
+       reuses it. It was filtered twice with the same predicate, and the tile copy and the list now
+       have to agree about more than a number, so one derivation is the only safe shape. */
+    const claimableRewardsV422=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled));
+    const readyCountV397=claimableRewardsV422.length;
+    const chooseOneSlotV428=customerStampChooseOneSlotV428(claimableRewardsV422,loyalty.unit);
+    customerRewardReadyCountApplyV397(readyCountV397,heroRootV397,{chooseOneV428:chooseOneSlotV428});
     customerHeroRewardPagesV395(rewards,{
       balance:actionableCard?.loyalty?.balance,
       unit:actionableCard?.loyalty?.unit,
@@ -5552,8 +5690,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        what the stamp card / points figure at the top of the page is for, and it reappears here the
        moment it becomes claimable. `rewards` keeps every row for the wiring below (the hero swipe
        pages and the ready-count are built from the FULL catalogue, above); only what this list
-       PAINTS is narrowed. */
-    const claimableRewardsV422=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled));
+       PAINTS is narrowed.
+       nestly_v428 (item 6): the second copy of this filter is gone — the set is built once above,
+       where the ready-count is taken from it, so the pill, the tile subtitle and this list are
+       three readings of one array rather than three filters that have to be kept in step. */
     /* v195: this now renders inside the Reward points tab, which already prints the balance in
        full. The repeated balance and the three-step "how rewards work" strip went with the card
        the owner crossed out; one line of instruction survives, on the control it describes. */
@@ -5581,6 +5721,38 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
       <div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div></article>`;
     };
+    /* nestly_v429 (C): an entitlement card. Deliberately NOT a rewardCardV422 with fields blanked
+       out — the two are different things and only one of them has a QR. A granted entitlement is
+       redeemed by STAFF at the till (staff_redeem_welcome_v215 / _bringback_v361 / _referral_v420
+       each take the grant id), so offering a QR here would be a button that leads nowhere.
+       Every line comes from the payload as sent. There is NO client-side eligibility arithmetic:
+       the server already decided what is active, derived the status from expires_at, and wrote the
+       instructions sentence — a browser second-guessing any of that is how the promise and the
+       counter start to disagree. */
+    const entitlementSourceChipV429={welcome:'Welcome gift',bringback:'We miss you',referral:'Referral'};
+    const entitlementCurrencyV429=b?.currency||'SGD';
+    const entitlementCardV429=grant=>{
+      const chip=entitlementSourceChipV429[String(grant?.source||'')]||'Gift';
+      const label=String(grant?.label||'').trim()||chip;
+      const granted=grant?.granted_at?walletDate(grant.granted_at):'';
+      const expires=grant?.expires_at?walletDate(grant.expires_at):'';
+      const floor=Number(grant?.min_spend_cents)>0
+        ?`Valid on a visit of ${customerReferralMoneyV300(grant.min_spend_cents,entitlementCurrencyV429)}+`:'';
+      const instructions=String(grant?.instructions||'').trim();
+      return `<article class="wallet-reward customer-reward-card-v339" data-customer-entitlement-v429="${esc(String(grant?.source||''))}">
+      <div class="customer-reward-photo-v340 customer-reward-photo-empty-v340">${CUI.icon('loyalty',{size:24})}</div>
+      <div class="customer-reward-card-head-v339"><span class="pill ok">${esc(chip)}</span></div>
+      <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(label)}</b>
+      ${granted?`<p class="muted small" style="margin-top:5px">Given to you on ${esc(granted)}</p>`:''}
+      ${expires?`<p class="muted small" style="margin-top:5px">Use it by ${esc(expires)}</p>`:''}
+      ${floor?`<p class="muted small" style="margin-top:5px">${esc(floor)}</p>`:''}
+      ${instructions?`<p class="muted small" style="margin-top:7px">${esc(instructions)}</p>`:''}
+      </article>`;
+    };
+    /* The server's own list, in the server's own order (soonest to lapse first). An error or an
+       unrecognised payload leaves it empty, which is the fail-closed rule above. */
+    const entitlementsV429=!entitlementsResultV427?.error&&Array.isArray(entitlementsResultV427?.data?.active)
+      ?entitlementsResultV427.data.active:[];
     /* nestly_v422 (owner photo 6, "Available" and "History" written as tabs over this heading, with
        "once redeemed, rewards go history"). History is NOT fetched here: it is a second server read
        and most customers open this screen to claim, not to reminisce, so it loads the first time
@@ -5590,16 +5762,34 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
       :`<div class="customer-rewards-carousel-head-v337"><h2>Your rewards</h2></div>`}
       <div class="v150-segment customer-rewards-tabs-v422" role="tablist" aria-label="Your rewards">
-        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${claimableRewardsV422.length?` (${claimableRewardsV422.length})`:''}</button>
+        ${/* nestly_v429 (C): the count is what the panel PAINTS — catalogue rewards plus the
+             entitlements the counter already owes this customer. A voucher sitting in the panel
+             uncounted would make the number an undercount of what they can walk in and use. */''}
+        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${claimableRewardsV422.length+entitlementsV429.length?` (${claimableRewardsV422.length+entitlementsV429.length})`:''}</button>
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
+        ${/* nestly_v428 (item 6): "Available (2)" is true and, on one stamp slot, misleading — the
+             card carries two gifts and the cycle honours one. The count stays (two ARE on offer);
+             the sentence says which part of that the customer gets, above the cards it applies
+             to, rather than after they have chosen and been refused. */''}
         ${claimableRewardsV422.length
-          ?`<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
+          ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick.</p>':''}
+            <p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337">${claimableRewardsV422.map(rewardCardV422).join('')}</div>`
+          :entitlementsV429.length?''
           :`<p class="muted small customer-rewards-empty-v422">${esc(redemptionUncheckedV286
               ?'We could not check this business’s redemption settings, so nothing can be claimed right now.'
               :'Nothing to claim yet — keep collecting and your reward will appear here.')}</p>`}
+        ${/* nestly_v429 (C): AFTER the catalogue cards, and under their own heading, because these
+             are not earned with a balance and are not claimed with a QR — the counter already owes
+             them. The "nothing to claim yet" line above is suppressed when there are entitlements:
+             a customer holding a welcome gift has plainly got something to claim. */''}
+        ${entitlementsV429.length
+          ?`<div class="customer-rewards-carousel-head-v337" style="margin-top:14px"><h3>Given to you</h3></div>
+            <p class="muted small customer-programme-rewards-lede">Nothing to scan — staff apply these at the counter.</p>
+            <div class="wallet-rewards customer-rewards-carousel-v337" data-customer-entitlements-v429>${entitlementsV429.map(entitlementCardV429).join('')}</div>`
+          :''}
       </div>
       <div data-rewards-panel-v422="history" role="tabpanel" hidden></div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
@@ -5630,11 +5820,18 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            those rows; printing "0 points" would invent a price the customer never paid. */
         const spent=item?.consumes_balance===true?Math.max(0,Number(item.points_spent)||0):0;
         const photo=customerMediaUrlV95(item?.image_ref);
+        /* nestly_v429 (C): v427 merged redeemed welcome / bring-back / referral grants into this
+           list, so a row now says WHICH engine gave it. Every grant row carries consumes_balance
+           false and points_spent 0, so the cost line was already suppressed correctly — the only
+           thing missing was the label, without which a free coffee the shop handed over reads as
+           a reward the customer bought with points. 'reward' is the ordinary redemption and needs
+           no chip; an unrecognised source gets none rather than a guess. */
+        const sourceChipV429=entitlementSourceChipV429[String(item?.source||'')]||'';
         return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422">
           <div class="customer-reward-photo-v340${photo?'':' customer-reward-photo-empty-v340'}">${photo
             ?`<img src="${esc(photo)}" alt="" loading="lazy" data-reward-photo-v340>`
             :CUI.icon('loyalty',{size:24})}</div>
-          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span></div>
+          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span>${sourceChipV429?`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`:''}</div>
           <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
           ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
           ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}
@@ -5784,13 +5981,44 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     }else transactionState.items=incoming;
     transactionState.nextCursor=data?.next_cursor||null;
     host.setAttribute('aria-busy','false');
-    if(!transactionState.items.length){
+    /* nestly_v429 (D): a points→stamps conversion is ONE event the customer lived through, not two
+       anonymous adjustments. v426 tags each ledger row with `entry`, and a conversion row carries
+       the entry_group that pairs its two halves plus THIS customer's own points_delta /
+       stamps_delta. Two rules follow:
+         · the pair collapses to one sentence, built from this customer's figures — never from the
+           batch's converted_points / issued_stamps, which would tell every customer the whole
+           firm's total as if it were their own;
+         · a programme pot transfer is dropped outright. It is an internal move of a balance
+           between two pots that changed nothing the customer owns, and it surfaced as "Points
+           adjustment −75,800" — the single most alarming line this screen has ever printed.
+       A row with no `entry` is an ordinary transaction and is untouched. */
+    const conversionGroupsSeenV429=new Set();
+    const historyRowsV429=transactionState.items.filter(item=>{
+      const entry=String(item?.entry||'');
+      if(entry==='pot_transfer')return false;
+      if(entry!=='conversion')return true;
+      const group=String(item?.entry_group||'');
+      if(!group)return true;
+      if(conversionGroupsSeenV429.has(group))return false;
+      conversionGroupsSeenV429.add(group);return true;
+    });
+    if(!historyRowsV429.length){
       host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Transactions & points'))}</h2><p class="muted small">${esc(ct('No purchases or points activity has been recorded for this programme yet.'))}</p></div></div>`;
       return;
     }
     const historyCurrency=String(data?.business?.currency||currency);
     const historyMoney=cents=>`${historyCurrency} ${(Number(cents||0)/100).toFixed(2)}`;
     const historyItemMarkup=item=>{
+        /* nestly_v429 (D): the collapsed conversion line. It carries no money, no earned/redeemed
+           breakdown and no line items — none of those exist for a conversion — so it returns
+           early rather than being threaded through a markup built for a sale. */
+        if(String(item?.entry||'')==='conversion'){
+          const spentV429=Math.abs(Number(item.points_delta)||0),issuedV429=Math.abs(Number(item.stamps_delta)||0);
+          return `<article class="wallet-line" style="align-items:flex-start" data-conversion-v429="${esc(String(item.entry_group||''))}"><div style="min-width:0;flex:1">
+            <b>${esc(`${customerPointTotalV103(spentV429)} ${spentV429===1?'point':'points'} converted to ${customerPointTotalV103(issuedV429)} ${issuedV429===1?'stamp':'stamps'}`)}</b>
+            <p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}</p>
+          </div></article>`;
+        }
         const earned=Number(item.points_earned||0),redeemed=Number(item.points_redeemed||0),removed=Number(item.points_removed||0);
         const gross=item.gross_cents===null||item.gross_cents===undefined?null:Number(item.gross_cents);
         const net=item.net_cents===null||item.net_cents===undefined?null:Number(item.net_cents);
@@ -5804,8 +6032,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         </div></article>`;
       };
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Recent activity'))}</h2><p class="muted small">${esc(ct('Your latest events with this business.'))}</p></div></div>
-      <div class="wallet-history">${transactionState.items.slice(0,3).map(historyItemMarkup).join('')}</div>
-      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>${esc(ct('Full history'))}</span><span class="muted small">${transactionState.items.length} event${transactionState.items.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${transactionState.items.map(historyItemMarkup).join('')}</div></div></details>
+      <div class="wallet-history">${historyRowsV429.slice(0,3).map(historyItemMarkup).join('')}</div>
+      <details class="wallet-history-disclosure" style="margin-top:12px"><summary><span>${esc(ct('Full history'))}</span><span class="muted small">${historyRowsV429.length} event${historyRowsV429.length===1?'':'s'} shown · newest first</span></summary><div class="wallet-history-disclosure-body"><div class="wallet-history">${historyRowsV429.map(historyItemMarkup).join('')}</div></div></details>
       ${transactionState.nextCursor?'<button class="btn ghost sm" id="walletTransactionsMore" style="margin-top:12px">Load more history</button>':''}`;
     const more=$('walletTransactionsMore');
     if(more)more.onclick=()=>{more.disabled=true;more.textContent='Loading…';loadTransactions(transactionState.nextCursor)};

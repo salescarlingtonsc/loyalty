@@ -116,7 +116,8 @@ test('v420 the till payload and the reads carry the new fields', () => {
   /* nestly_v421 added the friend's three columns to the same select. */
   assert.match(appJs, /select\('id,enabled,reward_points,reward_kind,reward_label,min_spend_cents,friend_enabled,friend_reward_points,friend_reward_label,created_at'\)/);
   /* The programme row names whichever payout it actually is. */
-  assert.match(appJs, /snapshot\.referral\.reward_kind==='voucher'/);
+  /* nestly_v429 (B1): three kinds since v425 (points | stamps | voucher), normalised through one helper so the row, the summary and the editor cannot disagree about which it is. */
+  assert.match(appJs, /growReferralKindV425\(snapshot\.referral\.reward_kind\)==='voucher'/);
 });
 
 test('v420 leaves the friend unpaid, and says so rather than pretending otherwise', () => {

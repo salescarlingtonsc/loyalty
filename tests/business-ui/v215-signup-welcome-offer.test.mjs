@@ -52,8 +52,12 @@ test('V215 appears in Programmes with a state an owner can act on', () => {
      act on" are asserted against what actually ships. */
   assert.match(app, /status:growTileStatusV371\('rewards',!canRewards\?\['Not included','off'\]:welcomeOfferStatusV215\?\.active\?\[STATUS_WORDS\.on,'on'\]:welcomeOfferStatusV215\?\.configured\?\['Paused','warn'\]:\['Not set up','warn'\]\)/,
     'the tile reports live / paused / not set up, and says Unavailable when its read failed');
-  assert.match(app, /if\(tile\.dataset\.growTopicV229==='welcome'\)\{\s*\n\s*if\(!canSetupGrow\)return;\s*\n\s*return openWelcomeOfferEditorV215\(/,
-    'and pressing it opens the editor, gated on setup permission');
+  /* nestly_v428 (item 2): the permission gate is unchanged; what changed is that it no longer
+     ABSORBS the tap in silence. A non-owner pressing a tile that looks like the six beside it
+     used to get nothing at all, which reads as a broken app rather than a refusal, so it now
+     says who can change this — the same sentence the Overview row for this offer already uses. */
+  assert.match(app, /if\(tile\.dataset\.growTopicV229==='welcome'\)\{[\s\S]{0,900}?if\(!canSetupGrow\)return toast\('Ask an owner to change reward settings\.'\);\s*\n\s*return openWelcomeOfferEditorV215\(/,
+    'and pressing it opens the editor, gated on setup permission, refusing out loud');
   // A failed status read must not blank the whole programme overview.
   assert.match(app, /business_get_welcome_offer_v215[\s\S]{0,200}catch\(\(\)=>null\)/);
 });

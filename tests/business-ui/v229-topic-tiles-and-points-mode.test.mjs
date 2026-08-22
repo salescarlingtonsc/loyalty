@@ -39,7 +39,10 @@ test('V358 the overview is eight peer topic tiles, and drilling in is the only w
   assert.match(app, /data-grow-tile-filter-v357="all">All \(\$\{growDisplayTopicsV343\.length\}\)/);
   assert.match(app, /data-grow-tile-filter-v357="live">\$\{STATUS_WORDS\.on\} \(\$\{growDisplayLiveV343\.length\}\)/);
   assert.match(app, /data-grow-tile-filter-v357="pending">Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
-  assert.match(app, /data-grow-tile-filter-v357="history">History \(\$\{growDisplayHistoryCountV343\}\)/);
+  /* nestly_v428 (item 3): History is the one count that could be UNKNOWN — it is read off the
+     programme spine, and an unread spine must render no number rather than "(0)", which is what
+     it printed for every firm forever. The count is still the length of the list it labels. */
+  assert.match(app, /data-grow-tile-filter-v357="history">History\$\{growDisplayHistoryCountV343===null\?'':` \(\$\{growDisplayHistoryCountV343\}\)`\}/);
   /* V343 (owner markup: "photo 1 change to become photo 2"): the square-tile grid became a
      compact row list, one row per programme, inside its group's card border. */
   assert.match(shell, /\.grow-topic-tiles-v229\{display:flex;flex-direction:column/);

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="055839ae112f31178afc59b2d53b596ec2d6642d722480ac10fa285cd343464d"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="484d6a7e9b656fcb05e7230b29ff14a5373d9f8f070a73cafa17358bab657488"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1706,6 +1706,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* Compact: the filter joins the standard scrolling segment instead of breaking into a 2x2 grid
    (audit P0-8). */
 @media(max-width:720px){.grow-programme-tabs-v343{display:inline-flex;width:auto;max-width:100%}.grow-topic-card-grid-v343{grid-template-columns:1fr}.grow-programme-toolbar-v343{border-radius:18px;padding:10px}}
+/* nestly_v428 (item 4). The scrolling segment above works when the overflow is small and the
+   reader can see there is more; at 375px this strip measures 400px of labels into 311px of track
+   with its scrollbar hidden by the .v150-segment rule, so "History" sat ~84px past the edge with
+   no affordance at all — a filter that cannot be seen is a filter that does not exist. Compacting
+   type and padding does not reliably clear 311px, because the labels carry counts that grow
+   ("Not set up (12)"), so the fix is the one shape that cannot hide a tab: two rows of two.
+   Deliberately scoped to THIS strip and to <=480px — every other .v150-segment, and this one on a
+   tablet, keeps the scrolling behaviour audit P0-8 chose. Later in the sheet than both the 768px
+   and 720px rules, which is what lets it win at equal specificity. */
+@media(max-width:480px){
+  .grow-programme-tabs-v343{display:flex;flex-wrap:wrap;overflow-x:visible;width:100%;border-radius:18px}
+  .grow-programme-tabs-v343 button{flex:1 1 calc(50% - 4px);min-width:0;padding:8px 10px}
+}
 .grow-topic-row-v343{position:relative;display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);padding:14px 16px;cursor:pointer;color:inherit}
 .grow-topic-row-v343:last-child{border-bottom:none}
 .grow-topic-row-v343:hover{background:var(--tint)}
@@ -3047,7 +3060,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    horizontally-scrolling 3-up row — same .wallet-reward cards (ready/locked/progress markup
    unchanged), just laid out side by side with a section title above them. */
 .customer-rewards-carousel-head-v337{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
-.customer-rewards-carousel-head-v337 h2{font-size:18px;margin:0}
+/* nestly_v429 (C): the v427 entitlements sit under their own "Given to you" heading INSIDE the
+   Available panel, so it is an h3 under the panel's h2 rather than a second h2 — a heading level
+   is a document outline, not a font size. It reads at the same size, which is what this rule was
+   for. */
+.customer-rewards-carousel-head-v337 h2,
+.customer-rewards-carousel-head-v337 h3{font-size:18px;margin:0}
 /* ---- nestly_v417: rewards are a LIST, not a side-swipe ---------------------------------------
    Owner, photo 8: the carousel crossed out — "i don't want this page to scrollable to left like
    this, i want list format" — with a sketch of stacked rows, each carrying a QR button, and

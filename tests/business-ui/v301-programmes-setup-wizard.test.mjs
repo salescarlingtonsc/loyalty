@@ -681,11 +681,15 @@ test('V301 (e) the pending point-engine cards and the bare Point system row open
   assert.match(wizard, /\?\(handoffV303\.from==='tiers'\?'ctx-tiers':'ctx-points'\)/);
   assert.match(grow, /const growSetupKindForTileW6I2=key=>key==='stamps'\?'stamps':key==='tiers'\?'tiers':'points';/);
   assert.doesNotMatch(appCode, /growSetupModelForTileV303/);
-  // The replacement word on an off programme: nothing is replaced any more.
-  assert.match(grow, /if\(label==='Off'\)return 'Turn on →';/);
+  /* The replacement word on an off programme: nothing is replaced any more.
+     nestly_v428 (item 1): the arrow moved out of these branches into the one-line
+     growTopicActionV244 wrapper, so the visible chip and the aria label are the same derivation.
+     The WORD each branch returns is unchanged. */
+  assert.match(grow, /if\(label==='Off'\)return 'Turn on';/);
   assert.doesNotMatch(appCode, /'Switch to this →'/);
-  // "Set up →" while this model is not reaching customers, "Edit →" once it is.
-  assert.match(grow, /if\(growSetupEntryV301\(topic\.key\)\)return growTopicOngoingV244\(topic\)\?'Edit →'/);
+  assert.doesNotMatch(appCode, /'Switch to this'/);
+  // "Set up" while this model is not reaching customers, "Edit" once it is.
+  assert.match(grow, /if\(growSetupEntryV301\(topic\.key\)\)return growTopicOngoingV244\(topic\)\?'Edit'/);
   assert.match(grow, /if\(kind==='earning'&&!rewardJourney\.earning&&canSetupGrow\)return nav\('#\/grow\/setup'\);/);
   // The drill is still what a non-point-engine card opens.
   assert.match(grow, /growTopicV229=tile\.dataset\.growTopicV229;/);
@@ -957,20 +961,21 @@ test('W6I2 (g) turning a programme on NEVER deletes: the wizard writes through a
        signature stays installed for the cached bundle's window, and a stale bundle calling the old
        name cannot accidentally be read as paying points. The allowlist's own claim — every data
        call the wizard makes is enumerated, and none of them can destroy a row — is unchanged. */
-    'save_referral_program_v322'          // W6I2: the referral rail, applied at Go-live only
+    /* nestly_v429 (B3): v425 made the referral reward TYPE explicit, and v322's four-argument signature cannot name one, so the wizard writes through v421 and carries the firm's saved type/gift/friend settings back unchanged. */
+    'save_referral_program_v421'          // W6I2: the referral rail, applied at Go-live only
   ].sort(), `wizard RPC allowlist drifted: ${JSON.stringify(rpcNames)}`);
-  /* save_referral_program_v322 is the ONE live-table write the wizard performs besides the spine,
+  /* save_referral_program_v421 is the ONE live-table write the wizard performs besides the spine,
      and it is deliberately not a draft write: public.referral_programs is not versioned. It runs at
      Go-live, beside the switches, never on a screen's Next — otherwise a setup the owner walks
      away from would have turned referrals on for real. */
-  const referralWrites = [...wizard.matchAll(/sb\.rpc\('save_referral_program_v322'/g)].length;
+  const referralWrites = [...wizard.matchAll(/sb\.rpc\('save_referral_program_v421'/g)].length;
   assert.equal(referralWrites, 1, 'exactly one referral write');
   // The retired money signature is not called from the wizard at all.
   assert.doesNotMatch(wizard, /sb\.rpc\('save_referral_program'/);
   assert.doesNotMatch(wizard, /p_reward_cents/);
   const switchApply = wizard.slice(wizard.indexOf('async function applyProgrammeSwitchesV314(fromRetry){'),
     wizard.indexOf('const programRowV305=model=>{'));
-  assert.match(switchApply, /sb\.rpc\('save_referral_program_v322'/, 'and it lives inside the Go-live switch application');
+  assert.match(switchApply, /sb\.rpc\('save_referral_program_v421'/, 'and it lives inside the Go-live switch application');
   /* V322 (OWNER RULING R6): and it is reached only when referral is IN SCOPE. The spine payload no
      longer names a programme the owner did not select, so its companion write must not either — a
      run that never went near the referral screens leaves referral_programs exactly as it found it. */

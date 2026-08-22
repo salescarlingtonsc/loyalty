@@ -19,11 +19,17 @@
  * Check `git diff` on its metrics.json before committing — if the only differences are
  * *_idempotency_key values, revert that directory rather than committing the churn.
  *
- * DELIBERATELY EXCLUDED: tests/browser/reward-overview-owner-visual.html and
- * tests/browser/v181-onboarding-board.html were already stale before the 2026-08-18 UI standard
- * work, and their tests do not assert byte equality, so they pass either way. Regenerating them
- * sweeps ~400 lines of unrelated drift into your diff. They are worth a separate look; until
- * then this script restores them to HEAD so they stay out of the way.
+ * PREVIOUSLY EXCLUDED, NOW REGENERATED: this script used to `git checkout --` two fixtures
+ * back to HEAD after generating them — reward-overview-owner-visual.html and
+ * v181-onboarding-board.html — because their tests did not assert byte equality and the drift
+ * was noisy. The first of those is the Rewards owner page, and holding it 33 hunks behind
+ * production is exactly how a Rewards regression stays invisible: its only test read a SHA out
+ * of the stale artifact, so regenerating it FAILED the suite and staying stale passed it. It is
+ * now covered by tests/business-ui/reward-overview-fixture-parity.test.mjs, which asserts byte
+ * equality the way the other six fixtures do, and nothing is checked out any more.
+ *
+ * tests/browser/v181-onboarding-board.html is generated here too and still has no byte-equality
+ * test. That is a smaller version of the same gap and is worth closing next.
  */
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -72,10 +78,6 @@ try {
     process.stdout.write(`  ${name}\n`);
     await run(process.execPath, [join('tests/browser', name)], { stdio: 'ignore' });
   }
-
-  await run('git', ['checkout', '--',
-    'tests/browser/reward-overview-owner-visual.html',
-    'tests/browser/v181-onboarding-board.html'], { stdio: 'ignore' }).catch(() => {});
 
   await new Promise(ok => server.listen(PORT, '127.0.0.1', ok));
   const env = { ...process.env, PLAYWRIGHT_EXECUTABLE_PATH: CHROME };

@@ -319,8 +319,9 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
   assert.doesNotMatch(app, /sb\.from\('referral_programs'\)\.(?:insert|upsert|update|delete)/i);
   assert.doesNotMatch(app, /sb\.from\('membership_plans'\)\.(?:insert|upsert|update|delete)/i);
   assert.doesNotMatch(app, /sb\.from\('memberships'\)\.(?:insert|upsert|update|delete)/i);
-  /* V322 (R1/R4): the referral writer the SPA calls is the points one now. */
-  for (const rpc of ['save_referral_program_v322', 'save_membership_plan', 'set_membership_status']) {
+  /* V322 (R1/R4): the referral writer the SPA calls is the points one now.
+     nestly_v429 (B3): and it names the reward TYPE, which is what v421 adds over v322. */
+  for (const rpc of ['save_referral_program_v421', 'save_membership_plan', 'set_membership_status']) {
     assert.match(app, new RegExp(`sb\\.rpc\\('${rpc}'`, 'i'));
   }
 

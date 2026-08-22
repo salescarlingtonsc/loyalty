@@ -122,7 +122,13 @@ test('retention UI uses RPC drafts and keeps draft identities out of live reads'
   assert.match(app, /sb\.rpc\('get_retention_config_draft'/i);
   assert.match(app, /sb\.rpc\('save_retention_program_draft'/i);
   assert.match(app, /sb\.rpc\('save_reward_taxonomy'/i);
-  assert.match(app, /\.eq\('current_config_version_id',currentVersion\)/i);
+  /* nestly_v429 (F): the plain equality filter this line matched lived on the Rewards OVERVIEW
+     snapshot's bring-back read, which now comes from bringback_campaigns_v361 — a live table that
+     is not part of the versioned config and therefore has no config version to be scoped to. The
+     claim being protected is unchanged and belongs to the retention PAGE, which still scopes its
+     live read to the ACTIVE version, in the `.or(...)` form V332 gave it so that a DELETED rule
+     with a stale version pointer still appears in History. */
+  assert.match(app, /\.or\(`current_config_version_id\.eq\.\$\{currentVersion\},deleted_at\.not\.is\.null`\)/i);
   assert.match(app, /const livePrograms=currentVersion[\s\S]*Promise\.resolve\(\{data:\[\],error:null\}\)/i,
     'a new business without an active version must not serialize null through a UUID equality filter');
   assert.match(app, /Promise\.all\(\[\s*livePrograms,/i);

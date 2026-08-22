@@ -406,9 +406,13 @@ test('V326 the add-gift RPC looks up the spine id for whichever kind is actually
   assert.doesNotMatch(app, /find\(row=>row\.kind==='points'\)\?\.id;\s*\r?\n\s*if\(!spineId\)/,
     'the add-gift handler must no longer hardcode a points-only spine lookup');
   assert.match(app, /const spineId=growPointsSpineIdV326;/);
-  assert.match(app, /S\.programmes=programmes\.map\(row=>\(\{id:row\?\.id\|\|null,kind:row\?\.kind\|\|null,active:row\?\.active===true\}\)\)/,
+  /* nestly_v428 (item 3): both cache writers share one row builder now, and it still preserves
+     the id — the thing this assertion exists to protect — alongside the deactivation breadcrumb
+     the Programmes History tab reads. */
+  assert.match(app, /const programmeSpineRowV428=row=>\(\{id:row\?\.id\|\|null,kind:row\?\.kind\|\|null,active:row\?\.active===true,/,
     'the programme-spine cache must preserve the row id that business_create_reward_v326 needs');
-  assert.match(app, /sb\.from\('business_programmes'\)\.select\('id,kind,active'\)/,
+  assert.match(app, /S\.programmes=programmes\.map\(programmeSpineRowV428\);/);
+  assert.match(app, /sb\.from\('business_programmes'\)\.select\('id,kind,active,deactivated_at'\)/,
     'refreshing the spine must select the id as well as the display flags');
 });
 

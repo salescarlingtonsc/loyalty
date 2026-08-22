@@ -53,27 +53,35 @@ test('V371 every view is also recognised by the deep-link guard, so none mounts 
      page resolved as a view AND fell through to mountGrowSurface with draftOverride:'bringback' —
      a deep editor surface the owner never asked for, handed a view name where a draft id belongs.
      They read one frozen constant now, and this case proves the two answers cannot disagree. */
-  for (const view of ['bringback', 'points', 'tiers', 'offers', 'history', 'overview', 'setup',
-                      'ongoing', 'available', 'settings']) {
+  /* nestly_v428 (item 5): 'birthday' joins the list. It was the third instance of this exact
+     trap — a name in BOTH the view list and directFocusTokens, so #/grow/birthday resolved as a
+     focus, mounted the rewards deep editor, and growBirthdayPageV382 never rendered once. */
+  for (const view of ['bringback', 'birthday', 'points', 'tiers', 'offers', 'history', 'overview',
+                      'setup', 'ongoing', 'available', 'settings']) {
     const resolved = resolve(view);
     assert.equal(resolved.programmeView, view, `${view} must render as itself`);
     assert.equal(resolved.hashParamIsProgrammeView, true,
       `#/grow/${view} must be recognised as a view, or it also mounts a deep editor surface`);
   }
   // A genuine deep-link token is still NOT a view, so the editor path it needs stays open.
-  assert.equal(resolve('birthday').hashParamIsProgrammeView, false);
+  assert.equal(resolve('earning').hashParamIsProgrammeView, false);
 });
 
 test('V366 every dedicated Programmes view resolves as a VIEW, never as a focus token', () => {
-  for (const view of ['bringback', 'points', 'tiers', 'offers', 'history', 'overview']) {
+  for (const view of ['bringback', 'birthday', 'points', 'tiers', 'offers', 'history', 'overview']) {
     const resolved = resolve(view);
     assert.equal(resolved.programmeView, view, `#/grow/${view} must render the ${view} view`);
     assert.equal(resolved.routedFocus, null, `#/grow/${view} must not be treated as a focus token`);
   }
 });
 
+/* nestly_v428 (item 5): 'birthday' leaves this list. The rewards-editor focus target it used to
+   name is NOT lost — it arrives in the focus SLOT of #/loyalty/<draft>/birthday, which is the hash
+   growFocusPath builds and mountGrowSurface pushes, and that path never consults
+   directFocusTokens. Only the one-segment #/grow/birthday changed meaning, and it changed to the
+   page built for it. */
 test('V366 the remaining focus tokens still reach their editors', () => {
-  for (const focus of ['earning', 'classic', 'birthday', 'add', 'new']) {
+  for (const focus of ['earning', 'classic', 'add', 'new']) {
     const resolved = resolve(focus);
     assert.equal(resolved.routedFocus, focus, `${focus} must still be a focus token`);
     assert.equal(resolved.programmeView, 'list');
@@ -81,7 +89,12 @@ test('V366 the remaining focus tokens still reach their editors', () => {
 });
 
 test('V366 no view name may ever be a focus token again', () => {
-  const views = [...viewExpression.matchAll(/'([a-z]+)'/g)].map(([, name]) => name);
+  /* nestly_v428 (item 5): this read viewExpression, whose only quoted name is the 'list' fallback
+     — so it compared ['list'] against the token set and was green while 'birthday' sat in both
+     lists. It reads the frozen VIEW LIST itself now, which is the thing the invariant is about,
+     and would have failed on the defect this item fixes. */
+  const views = [...viewsConst.matchAll(/'([a-z]+)'/g)].map(([, name]) => name);
+  assert.ok(views.length >= 10, 'the view list must be the frozen constant, not the fallback');
   const tokens = [...tokenLine.matchAll(/'([a-z]+)'/g)].map(([, name]) => name);
   const both = views.filter((name) => tokens.includes(name));
   assert.deepEqual(both, [], `a name in both lists is unreachable as a view: ${both.join(', ')}`);

@@ -74,7 +74,8 @@ test('overview reads enough server state to label programme status without inven
      surfaces (Serve & sell, Customer Interface); this assertion only concerns this snapshot. */
   assert.doesNotMatch(snapshot,/sb\.rpc\('business_get_checkout_preferences_v102'/);
   // V271 added created_at so Programmes History can say when a bring-back reward ran.
-  assert.match(snapshot,/retention_programs'\)\.select\('id,name,active,goal_visits,period_days,starts_on,created_at'/);
+  /* nestly_v429 (F): the snapshot's bring-back rows come from bringback_campaigns_v361, the engine that issues them, not from the legacy visit-frequency retention_programs table. */
+  assert.match(snapshot,/bringback_campaigns_v361'\)\s*\n?\s*\.select\('id,name,reward_label,away_days,expiry_days,active,created_at'/);
   assert.match(snapshot,/overviewErrors:[\s\S]*referrals:[\s\S]*memberships:[\s\S]*promotions:/);
   /* V229/V358 replaced the per-programme retention ROWS on the overview with one Bring-back tile
      that reports a status. The point of this assertion — the label is read off real server state,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="09eeb109743bebf54997a299bc27c356841945ace9550b1df7ba0d49e05b83b0">
+<meta name="v104-production-source-sha256" content="85f7d909649e8d9e9eb8efb3bc37712ca569e34781fcbd48db8a7bcc195600d8">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1714,6 +1714,19 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 /* Compact: the filter joins the standard scrolling segment instead of breaking into a 2x2 grid
    (audit P0-8). */
 @media(max-width:720px){.grow-programme-tabs-v343{display:inline-flex;width:auto;max-width:100%}.grow-topic-card-grid-v343{grid-template-columns:1fr}.grow-programme-toolbar-v343{border-radius:18px;padding:10px}}
+/* nestly_v428 (item 4). The scrolling segment above works when the overflow is small and the
+   reader can see there is more; at 375px this strip measures 400px of labels into 311px of track
+   with its scrollbar hidden by the .v150-segment rule, so "History" sat ~84px past the edge with
+   no affordance at all — a filter that cannot be seen is a filter that does not exist. Compacting
+   type and padding does not reliably clear 311px, because the labels carry counts that grow
+   ("Not set up (12)"), so the fix is the one shape that cannot hide a tab: two rows of two.
+   Deliberately scoped to THIS strip and to <=480px — every other .v150-segment, and this one on a
+   tablet, keeps the scrolling behaviour audit P0-8 chose. Later in the sheet than both the 768px
+   and 720px rules, which is what lets it win at equal specificity. */
+@media(max-width:480px){
+  .grow-programme-tabs-v343{display:flex;flex-wrap:wrap;overflow-x:visible;width:100%;border-radius:18px}
+  .grow-programme-tabs-v343 button{flex:1 1 calc(50% - 4px);min-width:0;padding:8px 10px}
+}
 .grow-topic-row-v343{position:relative;display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--line);padding:14px 16px;cursor:pointer;color:inherit}
 .grow-topic-row-v343:last-child{border-bottom:none}
 .grow-topic-row-v343:hover{background:var(--tint)}
@@ -3055,7 +3068,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    horizontally-scrolling 3-up row — same .wallet-reward cards (ready/locked/progress markup
    unchanged), just laid out side by side with a section title above them. */
 .customer-rewards-carousel-head-v337{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
-.customer-rewards-carousel-head-v337 h2{font-size:18px;margin:0}
+/* nestly_v429 (C): the v427 entitlements sit under their own "Given to you" heading INSIDE the
+   Available panel, so it is an h3 under the panel's h2 rather than a second h2 — a heading level
+   is a document outline, not a font size. It reads at the same size, which is what this rule was
+   for. */
+.customer-rewards-carousel-head-v337 h2,
+.customer-rewards-carousel-head-v337 h3{font-size:18px;margin:0}
 /* ---- nestly_v417: rewards are a LIST, not a side-swipe ---------------------------------------
    Owner, photo 8: the carousel crossed out — "i don't want this page to scrollable to left like
    this, i want list format" — with a sketch of stacked rows, each carrying a QR button, and
@@ -3817,7 +3835,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 09eeb109743bebf54997a299bc27c356841945ace9550b1df7ba0d49e05b83b0</p>
+  <p class="v104-provenance">Local production-render harness · source 85f7d909649e8d9e9eb8efb3bc37712ca569e34781fcbd48db8a7bcc195600d8</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3829,7 +3847,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="09eeb109743bebf54997a299bc27c356841945ace9550b1df7ba0d49e05b83b0";
+const PRODUCTION_SOURCE_SHA256="85f7d909649e8d9e9eb8efb3bc37712ca569e34781fcbd48db8a7bcc195600d8";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -4767,7 +4785,9 @@ function customerProgrammePausedMarkupV310(entry){
 function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
   if(!reward)return '';
   const balance=Math.max(0,Number(loyalty.balance)||0),cost=Math.max(0,Number(reward.cost_units)||0),
-    available=reward.available_now===true||cost===0,
+    /* nestly_v428 (item 7): the same v145 violation as customerRewardProgressMarkupV167 above —
+       a zero cost is not a permission. available_now is the server's answer and the only one. */
+    available=reward.available_now===true,
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100,
     gift=String(reward.name||'').trim()||ct('rewardsTab');
   const sentence=available?ct('pointsReady',{gift})
@@ -4809,9 +4829,13 @@ function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null
   const rings=customerProgrammeStampRingsV310(collected,target);
   const gift=String(reward?.name||'').trim();
   const remaining=Math.max(0,Number(reward?.remaining_units??0));
+  /* nestly_v428 (item 7): `||remaining===0` announced a full card as claimable whatever the
+     server said. A completed card whose milestone has already been claimed this cycle, or whose
+     reward is disabled or tier-locked, still reports remaining_units 0 — and this line told the
+     customer to go and collect it. available_now is the one authority (v145). */
   const sentence=paused?''
     :!reward?ct('stampsNoGift',{count:customerPointTotalV103(collected)})
-    :(reward.available_now===true||remaining===0)?ct('stampsReady',{gift:gift||ct('rewardsTab')})
+    :reward.available_now===true?ct('stampsReady',{gift:gift||ct('rewardsTab')})
     :ct('stampsRemaining',{count:customerPointTotalV103(remaining),gift:gift||ct('rewardsTab')});
   const figure=paused?''
     :rings||`<p class="customer-programme-stamp-count"><b>${esc(customerPointTotalV103(collected))}</b> <span class="muted">${esc(ct(presentation.unit))}</span></p>`;
@@ -5110,8 +5134,13 @@ function customerProgrammePointsHeroMarkupV337({loyalty={},reward=null,tier={},p
   const fraction=reward&&cost>0&&remaining>0
     ?`${esc(customerPointTotalV103(Math.min(balance,cost)))}/${esc(customerPointTotalV103(cost))}`:'';
   const rewardName=reward?String(reward.name||'').trim()||ct('rewardsTab'):'';
+  /* nestly_v428 (item 7): the worst of the four, because `remaining` on this line falls back to
+     `cost - balance` — so a member holding 77,877 points against a 1,000-point reward reached
+     remaining 0 by arithmetic alone and the red hero told them to claim a reward the counter may
+     refuse. Readiness is available_now and nothing else (v145); the distance sentence keeps its
+     arithmetic, which is what that arithmetic is actually for. */
   const nextLine=reward
-    ?(reward.available_now===true||remaining===0
+    ?(reward.available_now===true
       ?`${esc(rewardName)} is ready to claim`
       :`${esc(customerPointTotalV103(remaining))} more ${esc(unitLabel)} to ${esc(rewardName)}`)
     :'';
@@ -5472,6 +5501,30 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
    never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
    actually honour — not the number the customer could afford. */
 const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
+/* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
+   A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
+   (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
+   on (business, client, programme, cycle, slot_position): "one gift per milestone per card"
+   (v323:402-407). A firm that authored two gifts at the same slot — which is legal — therefore
+   shows a completed card with BOTH claimable and lets the customer claim exactly one; claiming
+   either makes the other unavailable for the cycle (v323:753).
+   So "2 rewards ready" is arithmetic that is true and a promise that is false. The owner-locked
+   wording is "Choose 1".
+   The test is the slot rule itself, not a guess: two or more CLAIMABLE catalogue rewards sharing
+   one cost, on a firm whose balance is counted in stamps. Points rewards that happen to cost the
+   same are genuinely independent — a customer with the balance may take both — so the stamps gate
+   is load-bearing and not decoration. */
+function customerStampChooseOneSlotV428(claimable,unit){
+  if(String(unit||'').trim().toLowerCase()!=='stamps')return false;
+  const perSlot=new Map();
+  (Array.isArray(claimable)?claimable:[]).forEach(item=>{
+    if(!item||item.redemption_kind==='classic_points')return;
+    const slot=Math.max(0,Math.floor(Number(item.cost_points)||0));
+    if(!slot)return;
+    perSlot.set(slot,(perSlot.get(slot)||0)+1);
+  });
+  return [...perSlot.values()].some(count=>count>1);
+}
 /* nestly_v399. The final swipe page's "View all rewards" control. It does NOT navigate on its
    own: it clicks the reward shortcut tile the modules row already renders, so the customer lands
    on the very same Points & gifts / Stamp card catalogue page that tile opens, wired by
@@ -5490,14 +5543,18 @@ function wireCustomerHeroViewAllV399(root=document){
   }});
   return buttons.length;
 }
-function customerRewardReadyCountApplyV397(count,root=document){
+function customerRewardReadyCountApplyV397(count,root=document,{chooseOneV428=false}={}){
   const ready=Math.max(0,Number(count)||0);
   const nodes=[...root.querySelectorAll('[data-reward-ready-count-v397]')];
   nodes.forEach(node=>{
     /* A firm can lose its last claimable reward between renders (redeemed, expired, limit hit).
        The node then goes back to whatever it said before a reward was ready, which the renderer
        stored on it, rather than printing "0 rewards ready". */
-    node.textContent=ready>0?customerRewardReadyLineV397(ready):String(node.dataset.rewardReadyFallbackV397||'');
+    /* nestly_v428 (item 6): when the claimable set is several gifts on ONE stamp slot, the tile
+       says how many the customer may take rather than how many exist. */
+    node.textContent=ready>0
+      ?(chooseOneV428?'Choose 1 reward':customerRewardReadyLineV397(ready))
+      :String(node.dataset.rewardReadyFallbackV397||'');
   });
   return nodes.length;
 }

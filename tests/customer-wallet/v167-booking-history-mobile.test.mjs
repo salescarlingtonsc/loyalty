@@ -70,9 +70,14 @@ test('package session history requires explicit immutable provenance',()=>{
 
 test('history keeps individual rows, adds recent activity, and retains full history',()=>{
   assert.match(app,/<h2>\$\{esc\(ct\('Recent activity'\)\)\}<\/h2>/);
-  assert.match(app,/transactionState\.items\.slice\(0,3\)\.map\(historyItemMarkup\)/);
+  /* nestly_v429 (D): both lists render historyRowsV429 — the same items, with a v426 pot transfer
+     dropped and each conversion PAIR collapsed to the single event it was. Individual rows are
+     still individual; only the two halves of one machine operation are joined. */
+  assert.match(app,/historyRowsV429\.slice\(0,3\)\.map\(historyItemMarkup\)/);
   assert.match(app,/<span>\$\{esc\(ct\('Full history'\)\)\}<\/span>/);
-  assert.match(app,/transactionState\.items\.map\(historyItemMarkup\)/);
+  assert.match(app,/historyRowsV429\.map\(historyItemMarkup\)/);
+  assert.match(app,/const historyRowsV429=transactionState\.items\.filter\(item=>\{/,
+    'the rendered list is derived from the server rows, never a second fetch');
   assert.doesNotMatch(app,/groupBy\([^)]*event_at|new Map\([^)]*event_at/);
 });
 

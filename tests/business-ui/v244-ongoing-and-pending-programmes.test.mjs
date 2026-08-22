@@ -16,8 +16,14 @@ const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
 /* The real helpers, executed — a grouping rule asserted only by regex can be wrong and green. */
 function loadHelpersV244() {
   const ongoing = topic => topic.status[1] === 'on';
-  const start = app.indexOf('const growTopicActionV244=topic=>{');
-  assert.notEqual(start, -1, 'growTopicActionV244 must exist');
+  /* nestly_v428 (item 1): the branch logic moved into growTopicActionWordV428, which returns the
+     bare word so the aria label and the visible chip cannot state different actions;
+     growTopicActionV244 is now the one-line wrapper that appends the arrow. This extracts the
+     word helper and re-applies that wrapper, so every expectation below is unchanged. */
+  const start = app.indexOf('const growTopicActionWordV428=topic=>{');
+  assert.notEqual(start, -1, 'growTopicActionWordV428 must exist');
+  assert.match(app, /const growTopicActionV244=topic=>`\$\{growTopicActionWordV428\(topic\)\} →`;/,
+    'the aria label must be the chip word plus an arrow, never a second derivation');
   const body = app.slice(start, app.indexOf('\n  };', start) + 4);
   /* V301 (owner 2026-08-13: "Business owners cannot set up rewards"). The two point-engine cards
      open the setup wizard while nothing is live, so the helper asks growSetupEntryV301 first. It
@@ -29,7 +35,7 @@ function loadHelpersV244() {
      substitution has to replace EVERY occurrence, not the first. growSetupEntryV301 stays stubbed
      false for the same reason as V301 — these six assertions describe the non-wizard cards. */
   // eslint-disable-next-line no-eval
-  const action = eval(`(${body.replace('const growTopicActionV244=', '').replace(/;$/, '')})`
+  const word = eval(`(${body.replace('const growTopicActionWordV428=', '').replace(/;$/, '')})`
     .replaceAll('growTopicOngoingV244(topic)', 'topic.status[1]===\'on\'')
     .replaceAll('growSetupEntryV301(topic.key)', 'false')
     /* nestly_v421: the helper now returns 'View →' outright for someone who may not write the
@@ -38,7 +44,9 @@ function loadHelpersV244() {
        six assertions describe; the read-only case is covered in the browser walkthrough
        (tests/browser/verify-reward-overview-owner.mjs), which drives the real page as a manager. */
     .replaceAll('growTopicWritableV421(topic)', 'true'));
-  return { ongoing, action };
+  /* nestly_v428 (item 1): the wrapper the app itself applies, asserted verbatim above. */
+  const action = topic => `${word(topic)} →`;
+  return { ongoing, action, word };
 }
 
 test('V244 only a live tone counts as ongoing; everything else is pending', () => {
@@ -64,6 +72,29 @@ test('V244 a pending tile says which job it is, not a generic View', () => {
      pick was. Nothing is replaced any more — a programme is turned on beside the others. */
   assert.equal(action({ status: ['Off', 'off'] }), 'Turn on →');
   assert.equal(action({ status: ['Not included', 'off'] }), 'See plan →');
+  /* nestly_v428 (item 1): the VISIBLE chip is now the same derivation minus the arrow, so the
+     "Not included" tile can no longer print "Edit" under an aria label saying "See plan". */
+  const { word } = loadHelpersV244();
+  assert.equal(word({ status: ['Not included', 'off'] }), 'See plan');
+  assert.equal(word({ status: ['Off', 'off'] }), 'Turn on');
+  assert.equal(word({ status: ['Live', 'on'] }), 'View');
+});
+
+/* nestly_v428 (item 1): a reader who may not write the module is offered a read, in the chip as
+   well as in the accessible name — V421 fixed only the latter and the two disagreed on screen. */
+test('nestly_v428 a read-only reader is offered View in both the chip and the aria label', () => {
+  const start = app.indexOf('const growTopicActionWordV428=topic=>{');
+  const body = app.slice(start, app.indexOf('\n  };', start) + 4);
+  // eslint-disable-next-line no-eval
+  const word = eval(`(${body.replace('const growTopicActionWordV428=', '').replace(/;$/, '')})`
+    .replaceAll('growTopicOngoingV244(topic)', 'topic.status[1]===\'on\'')
+    .replaceAll('growSetupEntryV301(topic.key)', 'false')
+    .replaceAll('growTopicWritableV421(topic)', 'false'));
+  assert.equal(word({ status: ['Not set up', 'off'] }), 'View');
+  assert.equal(word({ status: ['Off', 'off'] }), 'View');
+  assert.equal(word({ status: ['Live', 'on'] }), 'View');
+  // A plan a firm has not bought keeps its own sentence, exactly as V421 ruled.
+  assert.equal(word({ status: ['Not included', 'off'] }), 'See plan');
 });
 
 test('V343 the programme landing renders the owner mockup status strip and five-card grid', () => {
@@ -75,14 +106,24 @@ test('V343 the programme landing renders the owner mockup status strip and five-
      words "Nothing has been deleted yet". The count is the length of the list it labels now, which
      is the whole point of the tab, and deleted rungs still have their own History tab on the Tiers
      page. Pinning the old formula would be pinning the defect. */
-  assert.match(app, /growDisplayHistoryCountV343=growTopicDefsV229\.filter\(topic=>String\(topic\.status\?\.\[0\]\|\|''\)==='History'\)\.length;/);
+  /* nestly_v428 (item 3): V368's rule is unchanged — the count is the length of the list it
+     labels — but the list is no longer a filter on a status word growTopicDefsV229 never
+     produces, which made it a permanent zero. It is the spine's deactivated programmes now, and
+     the count is null (no number rendered) when the spine could not be read. */
+  assert.match(app, /growDisplayHistoryCountV343=growSpineRowsV428\?growHistoryTopicsV428\.length:null;/);
+  assert.match(app, /const growHistoryTilesV362=growHistoryTopicsV428;/,
+    'the count and the list must be the same array');
   assert.doesNotMatch(app, /growDisplayHistoryCountV343=[^;]*growTiersHistoryV331\.length/,
     'the History tab must not count rows its list does not show');
+  assert.doesNotMatch(app, /growDisplayHistoryCountV343=growTopicDefsV229\.filter\(topic=>String\(topic\.status\?\.\[0\]\|\|''\)==='History'\)/,
+    'no tile ever carries a History status, so that filter could only ever print zero');
   assert.doesNotMatch(stripSetup, /growHistoryRowsV271/);
   assert.match(tiles, /All \(\$\{growDisplayTopicsV343\.length\}\)/);
   assert.match(tiles, /\$\{STATUS_WORDS\.on\} \(\$\{growDisplayLiveV343\.length\}\)/);
   assert.match(tiles, /Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
-  assert.match(tiles, /History \(\$\{growDisplayHistoryCountV343\}\)/);
+  /* nestly_v428 (item 3): the number is omitted rather than printed as (0) when the spine is
+     unreadable — an unread count is not a zero. */
+  assert.match(tiles, /History\$\{growDisplayHistoryCountV343===null\?'':` \(\$\{growDisplayHistoryCountV343\}\)`\}/);
   /* V357 made the four status tabs real filters, so the grid renders the FILTERED list and shows
      an explaining line when a filter is empty, rather than always mapping the full set. */
   assert.match(tiles, /<div class="grow-topic-card-grid-v343">\$\{growFilteredTilesV357\.length\?growFilteredTilesV357\.map\(growTileHtmlV244\)\.join\(''\)/);

@@ -49,9 +49,16 @@ const harness = new Function('esc', 'CUI', `
   ${section('function programmeStackCardVisibleV310(', '/* One paused block, used by whichever card is paused.')}
   ${section('function customerProgrammeCardProgrammesV360(', 'function customerProgrammeTileMarkupV96')}
   ${section('function customerHomeBusinessBalanceV345(', 'function customerHomeBusinessCardV345')}
+  ${/* nestly_v428: the three helpers the go-live review changed, executed here rather than
+        grepped — two of them decide what a customer is TOLD they can claim. */''}
+  ${section('function customerRewardProgressMarkupV310(', '/* How many rings the card draws.')}
+  ${section('const customerRewardReadyLineV397=', '/* nestly_v399. The final swipe page')}
+  ${section('function customerRewardReadyCountApplyV397(', '/* nestly_v399. The customer-facing words')}
   return {stampQuestNormaliseV323, customerHeroStampCardV422,
     customerProgrammeDirectoryMetricV346, customerProgrammeDirectoryStatusV346,
-    customerHomeBusinessBalanceV345, HERO_STAMP_COMPACT_FROM_V422};`)(esc, CUI);
+    customerHomeBusinessBalanceV345, HERO_STAMP_COMPACT_FROM_V422,
+    customerRewardProgressMarkupV310, customerStampChooseOneSlotV428,
+    customerRewardReadyCountApplyV397};`)(esc, CUI);
 
 const quest = (slots, filled, milestones = []) => harness.stampQuestNormaliseV323({
   enabled: true, contract: 'v323', running: true, ready: true,
@@ -284,8 +291,14 @@ test('photo 6: Available and History are tabs, and History is not fetched until 
     'fetched once, on first open — most customers open this screen to claim, not to reminisce');
   /* A tab cannot carry a count for something not yet read; guessing one would be a fabrication. */
   assert.doesNotMatch(rewards, /History\$\{[a-zA-Z]*[Hh]istory[a-zA-Z]*\.length/);
-  assert.match(rewards, /Available\$\{claimableRewardsV422\.length\?` \(\$\{claimableRewardsV422\.length\}\)`:''\}/,
+  /* nestly_v429 (C): the count is what the panel PAINTS — the claimable catalogue rewards plus the
+     v427 entitlements the counter already owes this customer, both of which have been read by the
+     time it is printed. A voucher sitting in the panel uncounted would make the number an
+     undercount of what the customer can walk in and use. */
+  assert.match(rewards, /Available\$\{claimableRewardsV422\.length\+entitlementsV429\.length\?` \(\$\{claimableRewardsV422\.length\+entitlementsV429\.length\}\)`:''\}/,
     'Available does carry a count, because it has been read');
+  assert.match(rewards, /const entitlementsV429=!entitlementsResultV427\?\.error&&Array\.isArray\(entitlementsResultV427\?\.data\?\.active\)/,
+    'and it is the server\'s own active list, empty on any refusal');
 });
 
 test('photo 6: an unread History failure is distinguishable from an empty one', () => {
@@ -346,4 +359,115 @@ test('the history read is scoped by the wallet context, never by an argument', a
   assert.match(sql, /grant execute on function public\.customer_get_reward_history_v422\(text, integer\) to authenticated, service_role;/);
   /* The browser calls it with exactly those two arguments. */
   assert.match(app, /customerRpc\('customer_get_reward_history_v422',\s*\n?\s*\{p_business_slug:businessSlug,p_limit:50\}\)/);
+});
+
+/* ======================================================================================
+   nestly_v428 — the go-live review's customer-side findings, on the same surfaces.
+   Every case below EXECUTES the shipped helper: each one decides what a customer is told
+   they may walk in and claim, which is the one class of copy a grep must not be trusted with.
+   ====================================================================================== */
+
+test('nestly_v428 item 7: readiness is the server\'s answer, never arithmetic on the balance', () => {
+  const { customerRewardProgressMarkupV310 } = harness;
+  const line = markup => markup.match(/<p class="muted small">([^<]*)<\/p>/)?.[1] ?? '';
+
+  /* THE DEFECT. A free reward (cost 0) that the server has disabled, ended, tier-locked or
+     claim-limited answers available_now:false — and `||cost===0` announced it as ready anyway. */
+  const freeButRefused = customerRewardProgressMarkupV310({
+    loyalty: { balance: 0 }, reward: { name: 'Free Tote', cost_units: 0, remaining_units: 0, available_now: false }
+  });
+  assert.doesNotMatch(line(freeButRefused), /ready/i,
+    'a zero cost is not a permission — only availability is');
+
+  /* Nor does a cleared threshold speak for the server. */
+  const clearedButRefused = customerRewardProgressMarkupV310({
+    loyalty: { balance: 77877 }, reward: { name: 'Facial', cost_units: 1000, remaining_units: 0, available_now: false }
+  });
+  assert.doesNotMatch(line(clearedButRefused), /ready/i);
+
+  // What the server DOES allow is still announced, and the distance sentence still counts.
+  const allowed = customerRewardProgressMarkupV310({
+    loyalty: { balance: 1000 }, reward: { name: 'Facial', cost_units: 1000, remaining_units: 0, available_now: true }
+  });
+  assert.match(line(allowed), /Facial/);
+  const earning = customerRewardProgressMarkupV310({
+    loyalty: { balance: 400 }, reward: { name: 'Facial', cost_units: 1000, remaining_units: 600, available_now: false }
+  });
+  assert.match(line(earning), /600/, 'the "N to go" arithmetic is what arithmetic is for');
+});
+
+test('nestly_v428 item 6: two gifts on ONE stamp slot are a choice, not two rewards', () => {
+  const { customerStampChooseOneSlotV428: chooseOne } = harness;
+  const gift = (name, slot) => ({ customer_name: name, cost_points: slot, redemption_kind: 'catalog_reward' });
+
+  /* public.stamp_milestone_claims is unique on (business, client, programme, cycle, slot) — one
+     gift per milestone per card (v323) — and a milestone's slot IS its cost. Two claimable gifts
+     sharing a cost are therefore one choice, however the count reads. */
+  assert.equal(chooseOne([gift('Cake', 8), gift('Coffee', 8)], 'stamps'), true);
+  assert.equal(chooseOne([gift('Cake', 8), gift('Coffee', 5)], 'stamps'), false,
+    'different slots are independent claims');
+  assert.equal(chooseOne([gift('Cake', 8)], 'stamps'), false);
+
+  /* The stamps gate is load-bearing, not decoration: two POINTS rewards that happen to cost the
+     same are genuinely independent, and a customer with the balance may take both. */
+  assert.equal(chooseOne([gift('Cake', 8), gift('Coffee', 8)], 'points'), false);
+  assert.equal(chooseOne([gift('Cake', 8), gift('Coffee', 8)], undefined), false);
+
+  // A classic points redemption carries no slot and can never make the card look like a choice.
+  assert.equal(chooseOne([
+    { cost_points: 0, redemption_kind: 'classic_points' },
+    { cost_points: 0, redemption_kind: 'classic_points' }
+  ], 'stamps'), false);
+});
+
+test('nestly_v428 item 6: the tile says how many the customer may TAKE, not how many exist', () => {
+  const { customerRewardReadyCountApplyV397 } = harness;
+  const node = () => ({ textContent: '', dataset: { rewardReadyFallbackV397: 'Collect stamps here' } });
+  const root = target => ({ querySelectorAll: () => [target] });
+
+  const choice = node();
+  customerRewardReadyCountApplyV397(2, root(choice), { chooseOneV428: true });
+  assert.equal(choice.textContent, 'Choose 1 reward');
+
+  // Independent rewards keep the count — two really are claimable.
+  const independent = node();
+  customerRewardReadyCountApplyV397(2, root(independent));
+  assert.equal(independent.textContent, '2 rewards ready');
+
+  /* Unchanged: a firm that loses its last claimable reward between renders falls back to what the
+     renderer painted, never to "0 rewards ready". */
+  const none = node();
+  customerRewardReadyCountApplyV397(0, root(none), { chooseOneV428: true });
+  assert.equal(none.textContent, 'Collect stamps here');
+});
+
+test('nestly_v428 item 6: the Available panel says which part of the count the customer gets', () => {
+  const rewards = code(section('const loadRewards=async()=>', 'const activityState={items:[],nextCursor:null}'));
+  /* One derivation feeds the pill, the tile subtitle and the list, so the three cannot disagree. */
+  assert.match(rewards, /const claimableRewardsV422=rewards\.filter\(item=>item\.action_key&&customerRewardCanRedeem\(item,redemptionEnabled\)\);\s*\r?\n\s*const readyCountV397=claimableRewardsV422\.length;/);
+  assert.match(rewards, /const chooseOneSlotV428=customerStampChooseOneSlotV428\(claimableRewardsV422,loyalty\.unit\);/);
+  assert.match(rewards, /customerRewardReadyCountApplyV397\(readyCountV397,heroRootV397,\{chooseOneV428:chooseOneSlotV428\}\)/);
+  assert.match(rewards, /data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick\./);
+  // The count itself stays: two ARE on offer, and the customer picks between them.
+  /* nestly_v429 (C): and it now also counts the v427 entitlements painted below the catalogue
+     cards — a welcome gift or bring-back voucher the counter already owes them is claimable, so
+     leaving it out would make this number an undercount of the same panel. */
+  assert.match(rewards, /data-rewards-tab-v422="available">Available\$\{claimableRewardsV422\.length\+entitlementsV429\.length\?` \(\$\{claimableRewardsV422\.length\+entitlementsV429\.length\}\)`:''\}/);
+});
+
+test('nestly_v428 item 9: a stamps balance never prints as points because the unit was missed', () => {
+  const { customerHomeBusinessBalanceV345, customerProgrammeDirectoryMetricV346 } = harness;
+
+  /* THE DEFECT (Cubbly, go-live review): an actionable wallet card carries {balance, unit} and no
+     programme stack, so the kind resolver fell through to its 'points' default and 758 stamps were
+     printed as "758 pts". The payload's own unit is read first now. */
+  const stampsCard = { loyalty: { balance: 758, unit: 'stamps' } };
+  assert.equal(customerHomeBusinessBalanceV345(stampsCard), '',
+    'v422: a stamps card contributes no balance figure here — but it must be RECOGNISED as one');
+  assert.equal(customerProgrammeDirectoryMetricV346(stampsCard), '');
+
+  // Points are untouched, with or without the field.
+  assert.equal(customerHomeBusinessBalanceV345({ loyalty: { balance: 758, unit: 'points' } }), '758 pts');
+  assert.equal(customerHomeBusinessBalanceV345({ loyalty: { balance: 758 } }), '758 pts',
+    'a server that does not send the unit yet renders exactly as it did before');
 });
