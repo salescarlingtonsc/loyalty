@@ -5516,7 +5516,10 @@ function businessWorkspaceSwitchHtml(staffWorkspaces=[],currentBusinessSlug='',h
       :'';
   }
   const destinationCount=otherWorkspaces.length+(hasCustomerPersona?1:0);
-  return `<details class="business-workspace-switch"><summary class="btn ghost sm" ${workspaceTemplateAttributeV97('aria-label',destinationCount===1?'switchOtherWorkspace':'switchOtherWorkspaces',{count:destinationCount})}>${CUI.icon('branch',{size:16})}<span>Switch workspace</span></summary>
+  return `<details class="business-workspace-switch"><summary class="btn ghost sm" ${workspaceTemplateAttributeV97('aria-label',destinationCount===1?'switchOtherWorkspace':'switchOtherWorkspaces',{count:destinationCount})}>${CUI.icon('branch',{size:16})}<span>Switch</span></summary>${/* V444: visible label shortened
+      from "Switch workspace" — the trigger now lives inside the 222px profile menu (V443) where
+      the long label starved the workspace name of width; the aria-label above keeps the full
+      wording. The nested list's aria-label and behaviour are unchanged. */''}
     <div class="menu" aria-label="Switch workspace">
       ${hasCustomerPersona?`<a href="#/wallet">${CUI.icon('customers',{size:16})}<span>Customer view</span></a>`:''}
       ${otherWorkspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${CUI.icon('branch',{size:16})}<span data-merchant-content>${esc(workspace.business_name||workspace.business_slug)}</span></a>`).join('')}
@@ -14306,7 +14309,10 @@ function profileHtml(){
              otherwise be a second, duplicate door to the same place. -->
         <div class="profile-menu-section" style="overflow-wrap:anywhere">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-            <div style="min-width:0"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
+            ${/* V444: the name column must own the row's spare width (flex:1). Without it, the
+                 switch trigger's content width squeezed the name to nothing inside the 222px
+                 menu and "Cubbly SPA" rendered one character per line (seen live on v443). */''}
+            <div style="min-width:0;flex:1 1 auto"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
             ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,false)}
           </div>
         </div>
