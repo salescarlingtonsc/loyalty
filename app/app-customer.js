@@ -3781,6 +3781,20 @@ function customerHeroStampCardV422(quest){
     ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
   </div>`;
 }
+/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
+   catalogue row the server sent — name and cost only — and the distance is the customer's own
+   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
+   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
+   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
+/* nestly_v397 (owner photo C: "now available 2 / why show 1", written against BOTH the hero pill
+   and the Points & gifts tile). Every one of these labels printed the literal string
+   "1 reward ready", because at paint time the only reward the client holds is the server's
+   next_eligible_reward — ONE object. The real count lives in the reward catalogue, which
+   loadRewards fetches moments later, so the honest number can only be filled in then. This is the
+   same shape as the hero swipe pages: paint what is known, correct it from the catalogue, and
+   never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
+   actually honour — not the number the customer could afford. */
+const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
 /* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
    (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
@@ -4067,15 +4081,29 @@ function openCustomerBusinessShortcutPageV348({action='',title='Details',target=
       card.hidden=true;
       hiddenByShortcutV386.push(card);
     });
-    /* The explainer and the section's own "Rewards / ready rewards, catalogue" head are points
-       guidance, so they follow the points half rather than standing alone over a tier ladder —
-       the page already carries "Tier benefits" as its title. */
-    if(action==='tiers')target.querySelectorAll('[data-points-explainer],.customer-business-group-head-v346').forEach(node=>{
+    /* The explainer is points guidance, so it follows the points half rather than standing alone
+       over a tier ladder. (v386 hid the section's group head here too; nestly_v446 hides it for
+       every action instead — see below — so this line no longer has to.) */
+    if(action==='tiers')target.querySelectorAll('[data-points-explainer]').forEach(node=>{
       if(node.hidden)return;
       node.hidden=true;
       hiddenByShortcutV386.push(node);
     });
   }
+  /* nestly_v446 (REG-002, "the page shows a doubled Rewards heading"). A section carries its own
+     `<h2>` because on the profile it is one group among several; on THIS page it is the whole
+     page, and the page already prints its title in `<h1>` beside the Back button. So the stamp
+     card tile opened a page headed "Rewards" over a section headed "Rewards" — the same word
+     twice, one under the other. v386 already removed it, but only for the tiers action, where it
+     had been noticed. The rule is not about tiers: a group head inside this page is redundant
+     whatever tile opened it, and the ONE place the section is named is now the page title.
+     Hidden, not detached, and restored on close like everything else here, so the profile page
+     underneath is unchanged. */
+  target.querySelectorAll('.customer-business-group-head-v346').forEach(node=>{
+    if(node.hidden)return;
+    node.hidden=true;
+    hiddenByShortcutV386.push(node);
+  });
   page._customerBusinessShortcutRestoreV348=()=>{
     hiddenByShortcutV386.forEach(node=>{node.hidden=false});
     hiddenByShortcutV386.length=0;
@@ -4326,7 +4354,8 @@ function customerProgrammeDirectoryStatusV346(card){
     remaining=Math.max(0,Number(reward?.remaining_units||0)),
     /* nestly_v429 (E): the reward's declared unit (v426), falling back to the card's. */
     unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card));
-  if(reward?.available_now===true)return '1 reward ready';
+  /* nestly_v457 (B-REG-017): the literal 1. This surface holds one reward object, never a count. */
+  if(reward?.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to reward`;
   if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} session${Number(packages.sessions_remaining)===1?'':'s'} left`;
@@ -4436,18 +4465,24 @@ function customerNearestGoalV2B(cards=[]){
   return `${customerPointTotalV103(best.remaining)} ${word} from a reward at ${best.name}`;
 }
 function customerHomeSummaryV343(cards=[]){
-  const rewardCount=customerRewardReadyCountV343(cards);
+  /* nestly_v457 (B-REG-017). customerRewardReadyCountV343 counts CARDS whose single
+     next_eligible_reward is claimable — so this figure was the sum of the per-card literal 1s,
+     and it was wrong in both directions at once: LIVE it printed "2" while one of those two
+     businesses alone had two rewards ready. Home keeps the signal and drops the quantity, and
+     because the greeting is derived from the same cards it can no longer disagree with them:
+     the hero says "Rewards ready" exactly when at least one card does. */
+  const readyCardsV457=customerRewardReadyCountV343(cards);
+  const rewardReadyV457=readyCardsV457>0;
   const expiringCount=customerExpiringRowsV286(cards).length;
-  const rewardWord=rewardCount===1?'reward':'rewards';
   /* v386 (owner photo 1, "across 0 businesses" struck out). The line counted the businesses that
      have a reward ready — the SAME filter as rewardCount above it, so it could only ever restate
      the number already printed one line up ("0 rewards ready / across 0 businesses"), and it read
      as a second, contradictory-looking figure. The count of businesses is not a fact this card
      needs: "Your Peekaa" directly below lists them by name. */
-  const nearestV2B=rewardCount?'':customerNearestGoalV2B(cards);
-  return `<a class="customer-home-ready-card-v343${rewardCount?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardCount?`${esc(rewardCount)} ${esc(rewardWord)} ready`:esc(nearestV2B||'No rewards ready yet')}">
+  const nearestV2B=rewardReadyV457?'':customerNearestGoalV2B(cards);
+  return `<a class="customer-home-ready-card-v343${rewardReadyV457?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardReadyV457?esc(customerRewardReadySignalV457(true)):esc(nearestV2B||'No rewards ready yet')}">
     <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:32})}</span>
-    <span class="customer-home-ready-copy-v343">${rewardCount?`<b><span>${esc(customerPointTotalV103(rewardCount))}</span> ${esc(rewardWord)} ready</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:16})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:16})}</em>`:''}</span>
+    <span class="customer-home-ready-copy-v343">${rewardReadyV457?`<b>${esc(customerRewardReadySignalV457(true))}</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:16})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:16})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
 }
@@ -4457,7 +4492,8 @@ function customerHomeBusinessStatusV345(card){
   const reward=card?.next_eligible_reward||{},
     /* nestly_v429 (E): the reward's own unit (v426) with the v428 balance rules as the fallback. */
     unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card)),remaining=Math.max(0,Number(reward.remaining_units)||0);
-  if(reward.available_now===true)return '1 reward ready';
+  /* nestly_v457 (B-REG-017): same literal 1, on Home. */
+  if(reward.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to go`;
   if(unit==='stamps')return 'Stamp card';
   const sessions=Math.max(0,Number(card?.packages?.sessions_remaining)||0);
@@ -4935,11 +4971,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         profile:context.profile
       }))return;
       customerWalletFactsPaintedV333(homeSignatureV333);
-      /* v194: My Rewards counts the REWARD ACCOUNTS this customer holds; Bookings counts what is
-         still live — a request awaiting the business plus an upcoming appointment. Both come from
-         data already fetched above, so neither badge costs a round trip. */
+      /* v194: Bookings counts what is still live — a request awaiting the business plus an
+         upcoming appointment. It comes from data already fetched above, so the badge costs no
+         round trip.
+         nestly_v457 (B-REG-017): the My Rewards badge is gone. It counted REWARD ACCOUNTS — LIVE
+         it read "Rewards 7" for a customer holding seven businesses — but it sits on a tab
+         labelled "Rewards", beside a greeting and cards that were talking about rewards READY, and
+         its accessible name rendered as "Rewards, 7". Three numbers with three meanings and no
+         label between them. The destination page is headed "My Rewards" and lists those businesses
+         by name, which is the same reasoning v386 used to delete "across N businesses". Bookings
+         keeps its badge: it is a count of the thing its tab is named for. */
       applyCustomerNavCountsV194({
-        programmes:Array.isArray(data?.cards)?data.cards.length:0,
         bookings:customerHomeOverview.activeRequestCount
           +customerHomeOverview.walletCards.reduce((total,card)=>
             total+Math.max(0,Number(card?.upcoming_appointments?.count||0)),0)
@@ -5018,7 +5060,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     /* v194: the fallback Home carries the same nav badges as the primary path — a customer who
        lands here through the legacy read must not see empty tabs where the other path shows
        counts. A booking read that failed contributes 0, never a guess. */
-    applyCustomerNavCountsV194({programmes:cards.length,bookings:bookingsAvailable?bookingCount:0});
+    /* nestly_v457: same as the primary path — Bookings only. */
+    applyCustomerNavCountsV194({bookings:bookingsAvailable?bookingCount:0});
     if($('customerHomeScan'))$('customerHomeScan').onclick=openCustomerJoinScanner;
     wireCustomerHomeOffersV167(()=>renderCustomerWallet());
     if(!silent)focusCustomerRoute();

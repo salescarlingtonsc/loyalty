@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="67a4bcc79f87543909a88c66e48e3c4327798de8d76704ae7d86e52f2a1e5df1">
+<meta name="v104-production-source-sha256" content="fd842083f834ebba4ec003b71431bcdf6852de8c310f0585297a1b8305c80ef0">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -2706,9 +2706,23 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
 /* v296: the account menu is gone; the push-state colour belongs to the control itself. */
 .customer-push-setting [data-push-state="enabled"]{color:var(--green)}
-.customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}
+/* nestly_v446 (found by the REG-002 sweep; the SAME defect, on Profile and Messages). The card was
+   `minmax(0,1fr) auto` above 560px of VIEWPORT — but this card lives in the customer shell, whose
+   .wallet-inner is capped at 390px at every viewport, so its box is 358px wide on a phone and
+   358px wide on a 1440px monitor. Above 560 the `auto` button track took its max-content
+   ("Turn on device notifications" + bell) and the copy column was left with the remainder.
+   MEASURED on origin/main at 834 and 1180: grid-template-columns 47.03px 248.97px on Profile and
+   32.3px on Messages — the h2 "Device notifications" rendered 47px wide against a 115px
+   scrollWidth, and with overflow visible the heading and both paragraphs painted straight across
+   the button. One column is what fits the real box, and it is exactly what <=560px already
+   specified, so phone rendering is byte-for-byte what it was; what changes is that 561px and up
+   now get the same correct layout instead of a two-column one that never fitted.
+   Reinstating a two-column variant needs a CONTAINER query (as the reward row now uses), not a
+   viewport one — there is no wrapper to hang `container-type` on here, so it is left out rather
+   than re-added on the measurement that caused this. */
+.customer-push-setting{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:center}
+.customer-push-setting .btn{width:100%}
 .customer-push-setting [data-push-status]{max-width:62ch;line-height:1.55}
-@media(max-width:560px){.customer-push-setting{grid-template-columns:1fr}.customer-push-setting .btn{width:100%}}
 /* Top-20 #20: Profile was ~14 visually identical white cards in one flat stack, so account closure,
    a marketing choice and a sound switch all carried the same weight. Four serif headings sit OUTSIDE
    the cards, on the ivory ground, in the same section-heading voice the customer Home screen uses —
@@ -3183,7 +3197,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .wallet-reward-trade{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
 .wallet-reward-cost{color:var(--coral)}
 .wallet-reward-arrow{color:var(--ink2);font-weight:700}
-.customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.55fr);gap:14px;align-items:start}
+/* nestly_v446 (found by the REG-002 sweep; the SAME defect again, on Profile). Two columns above
+   720px of VIEWPORT, inside a shell whose .wallet-inner is 390px at every viewport. MEASURED on
+   origin/main at 834 and 1440: grid-template-columns 104px 240px in a 358px box — the 240px
+   minimum on the second track takes what it asks for and the FIRST column, which holds Personal
+   details / Date of birth / My Peekaa QR, is left 104px wide, so its headings render 58px against
+   an 81px scrollWidth. One column is what fits, and it is what <=720px already specified: phone
+   rendering is unchanged and 721px and up stop getting a two-column layout that never fitted.
+   `.customer-home-grid` and `.customer-balance-panel` share the same media rule and the same
+   flaw, but app.js emits neither class — reported as dead, not repaired here. */
+.customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
 .entry-choice-card{width:min(720px,100%);padding:30px}
 .entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
 .entry-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:18px;min-height:190px;padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
@@ -3230,7 +3253,12 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    Stacked rows show every reward at once and put its action at the end of its own line.
    The CARD markup is unchanged — same fields, same data-customer-redeem binding, same
    availability copy. Only the frame changed, so nothing about claiming moved. */
-.wallet-rewards.customer-rewards-carousel-v337{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0;margin-top:8px;overflow:visible}
+/* nestly_v446 (REG-002): `container-type:inline-size` makes THIS LIST the thing the row's layout
+   is measured against. The row is a fixed 324px inside a shell that caps .wallet-inner at 390px on
+   every viewport, so a viewport media query below could never be asking the right question — see
+   the @container rule further down. `min-width:0` is v415's floor and still needed: this is a grid
+   item and must be allowed to shrink. */
+.wallet-rewards.customer-rewards-carousel-v337{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0;margin-top:8px;overflow:visible;container-type:inline-size;container-name:rewardrow}
 /* nestly_v422: the narrow template names TWO rows, and the action sat in row 2 — so the name, the
    cost and the description, which are auto-placed, landed in implicit rows 3 and below and the
    button rendered ABOVE the reward it claims (measured on origin/main at 390px: action top 130,
@@ -3247,10 +3275,29 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-rewards-carousel-v337 .wallet-reward>:not(.customer-reward-photo-v340):not(.customer-reward-card-head-v339):not(.wallet-reward-actions){grid-column:2}
 .customer-rewards-carousel-v337 .wallet-reward-actions{grid-column:1/-1;margin-top:8px}
 .customer-rewards-carousel-v337 .wallet-reward-actions .btn{width:100%;justify-content:center;min-height:44px}
-@media(min-width:641px){
-  /* Wider screens can put the action back on the row's own line rather than under it. */
+/* ---- nestly_v446 (REG-002): the three-column row asks the ROW how wide it is -----------------
+   WAS `@media(min-width:641px)`. The viewport is not what this layout depends on: the customer
+   shell caps `.wallet-inner` at 390px at every viewport, so the row's own box is 324px on a phone
+   and 324px on a 1440px monitor. Above 640 the browser was therefore asked to fit
+   `64px minmax(0,1fr) auto` into 324px. The `auto` action track sizes to the claim button's
+   max-content and takes it; the copy track, floored at 0 by `minmax(0,1fr)`, is left with the
+   remainder. MEASURED on origin/main at 834/1024/1180/1440: `64px 31.1406px 174.859px` — a 31px
+   copy column, so `.customer-reward-name-v339`'s overflow-wrap:anywhere shattered "Free Kopi Set
+   Breakfast Platter" into ten lines, the description into twelve, and the nowrap "Ready to claim"
+   pill spilled 60px across the claim button. Nothing about that is a wide-screen refinement; it is
+   a layout that never fitted the box it was applied to.
+   A container query asks the question that actually decides the answer, so the row is deliberate
+   at EVERY width: three columns when the ROW is wide enough to hold them, stacked when it is not.
+   Today the shell's cap means "not", at 390 and at 1440 alike — the phone layout is now the
+   layout, rather than an accident of being under 641px. Lift the cap and the wide row returns on
+   its own.
+   460px is the floor at which all three fit: 64 photo + 24 gaps + 26 padding + the button's
+   ~175px max-content still leaves the copy column over 170px. `minmax(9rem,1fr)` is the second
+   guard and the important one — whatever a longer button label or a future track does, the copy
+   column can never be squeezed below a readable measure again. */
+@container rewardrow (min-width:460px){
   .wallet-rewards.customer-rewards-carousel-v337 .wallet-reward{
-    grid-template-columns:64px minmax(0,1fr) auto;grid-template-areas:'photo copy action';align-items:center}
+    grid-template-columns:64px minmax(9rem,1fr) auto;grid-template-areas:'photo copy action';align-items:center}
   .customer-rewards-carousel-v337 .wallet-reward-actions{grid-area:action;margin-top:0}
   .customer-rewards-carousel-v337 .wallet-reward-actions .btn{width:auto}
 }
@@ -3467,7 +3514,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
   .customer-nav-scan{min-width:64px;margin-top:-18px}
   .customer-nav-scan-fab{width:54px;height:54px;border:4px solid var(--bg)}
   .customer-primary-nav .cui-icon{width:19px;height:19px}
-  .customer-home-grid,.customer-profile-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
+  .customer-home-grid,.customer-balance-panel{grid-template-columns:1fr}.customer-home-quick{grid-template-columns:1fr}
   .customer-home-summary .customer-home-quick{grid-template-columns:1fr}.customer-home-summary-body{max-height:30dvh}
   .customer-programme-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -3606,7 +3653,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 @media(max-width:560px){.customer-next-action>.row{align-items:stretch}.customer-next-action .btn{width:100%;justify-content:center}}
 /* V347 exact customer visual spec: final cosmetic sizing pass from the supplied boards.
    Data wiring, hrefs, ids and action hooks are unchanged. */
-.customer-shell.customer-surface{--bg:var(--peekaa-bg);--card:var(--peekaa-card);--ink:var(--peekaa-text);--ink2:var(--peekaa-text);--muted:var(--peekaa-text-secondary);--hair:var(--peekaa-border);--line:var(--peekaa-divider);--control-border:var(--peekaa-border);--tint:var(--peekaa-red-soft);--coral:var(--peekaa-red);--coral-hover:var(--peekaa-red-dark);--red:var(--peekaa-red);--green:var(--peekaa-success);--amber:var(--peekaa-gold);--grad:linear-gradient(135deg,var(--peekaa-red),var(--peekaa-red-dark));padding-top:max(16px,env(safe-area-inset-top));padding-bottom:calc(88px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--peekaa-bg),var(--peekaa-bg));font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;color:var(--peekaa-text)}
+.customer-shell.customer-surface{--bg:var(--peekaa-bg);--card:var(--peekaa-card);--ink:var(--peekaa-text);--ink2:var(--peekaa-text);--muted:var(--peekaa-text-secondary);--hair:var(--peekaa-border);--line:var(--peekaa-divider);--control-border:var(--peekaa-border);--tint:var(--peekaa-red-soft);--coral:var(--peekaa-red);--coral-hover:var(--peekaa-red-dark);--red:var(--peekaa-red);--green:var(--peekaa-success);--amber:var(--peekaa-gold);--grad:linear-gradient(135deg,var(--peekaa-red),var(--peekaa-red-dark));padding-top:max(16px,env(safe-area-inset-top));padding-bottom:calc(116px + env(safe-area-inset-bottom));background:linear-gradient(180deg,var(--peekaa-bg),var(--peekaa-bg));font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;color:var(--peekaa-text)}
 .customer-shell .wallet-inner{width:min(100%,390px);max-width:390px;margin:0 auto;padding:0 16px}
 .customer-shell .wallet-head{min-height:82px;margin:0 0 6px;padding:0}.customer-shell .wallet-head .brand-logo{width:82px;max-height:52px}.customer-shell .customer-inbox-bell{min-width:42px;min-height:42px;border:0;background:var(--peekaa-white);box-shadow:var(--shadow-warm);color:var(--peekaa-text)}.customer-shell .customer-inbox-badge{top:-1px;right:-1px;min-width:17px;height:17px;font-size:10px;background:var(--peekaa-red);border:2px solid #fff}
 .customer-shell .card,.customer-shell .customer-booking-business,.customer-shell .customer-booking-chooser,.customer-shell .customer-booking-tabs,.customer-shell .customer-programme-card-v95,.customer-shell .customer-home-offer,.customer-shell .wallet-reward,.customer-shell .wallet-section,.customer-shell .customer-programme-card-v310{border-color:var(--peekaa-border);background:var(--peekaa-card);box-shadow:var(--shadow-warm)}
@@ -3678,13 +3725,21 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-address-line-v386 .cui-icon{flex:0 0 auto;margin-top:1px;color:var(--coral)}
 .customer-business-group-v346{gap:10px;margin-top:6px}.customer-business-group-head-v346 p{display:none}.customer-business-rewards-v346 .customer-programme-card-v310,.customer-business-group-v346 .wallet-section,.customer-business-group-v346 .wallet-history-disclosure{border-radius:16px;padding:16px}.customer-business-rewards-v346 .customer-programme-card-head-v310,.customer-business-group-v346 .wallet-section-head h2{font-size:16px}.customer-referral-card-v300{min-height:112px;border-radius:16px;padding:20px}.customer-referral-card-v300 .wallet-section-head h2{font-family:Georgia,'Times New Roman',serif;font-size:18px}.customer-referral-code{min-height:44px;padding:10px 16px;border:2px dashed var(--peekaa-red);border-radius:12px;background:transparent;color:var(--peekaa-red);font-size:20px}.customer-referral-code-row .btn{min-height:44px;padding:0 18px;border-radius:22px}
 .customer-primary-nav{position:fixed;top:auto;left:50%;right:auto;bottom:max(12px,env(safe-area-inset-bottom));z-index:70;width:min(358px,calc(100vw - 32px));height:72px;display:grid;grid-template-columns:1fr 1fr 64px 1fr 1fr;gap:0;padding:8px 12px;border:0;border-radius:24px;background:rgba(255,255,255,.96);box-shadow:var(--shadow-warm);transform:translateX(-50%)}.customer-primary-nav a,.customer-primary-nav button:not(.customer-nav-scan){min-height:56px;padding:4px 2px;border-radius:16px;font-size:12px;line-height:1.05;font-weight:650}.customer-primary-nav .cui-icon{width:24px;height:24px}.customer-primary-nav a[aria-current="page"]{background:var(--peekaa-red-soft);color:var(--peekaa-red-on-soft)}.customer-primary-nav a[aria-current="page"] .cui-icon{width:28px;height:28px}.customer-nav-scan{min-width:64px;margin-top:-24px;font-size:12px;font-weight:720;color:var(--peekaa-text)}.customer-nav-scan-fab{width:62px;height:62px;border:4px solid #fff;background:var(--peekaa-red);box-shadow:0 8px 22px rgba(238,77,58,.24)}.customer-nav-scan-fab svg{width:24px;height:24px}
-@media(min-width:721px){.customer-shell.customer-surface{padding-top:24px}.customer-primary-nav{bottom:22px}.customer-shell .wallet-inner{max-width:390px}}
+/* nestly_v446 (REG-002, "the dock's Scan-QR control overlaps content buttons"). The dock is not
+   72px tall: the Scan FAB carries margin-top:-24px and rides ABOVE the bar, so its real footprint
+   above the viewport floor is bottom + 72 + ~15. MEASURED on origin/main in a 900px-tall window:
+   107px under 721 and 109px at and above it, against 88px of reserved padding — so the last
+   19-21px of any page that scrolls to its end sat under the FAB, un-tappable, and no amount of
+   scrolling could free it. The reserve is now taller than the footprint at both bottom offsets
+   (116 vs 107, 126 vs 109). It is stated in the same two places the dock's own offset is, so the
+   pair stay in step. */
+@media(min-width:721px){.customer-shell.customer-surface{padding-top:24px;padding-bottom:calc(126px + env(safe-area-inset-bottom))}.customer-primary-nav{bottom:22px}.customer-shell .wallet-inner{max-width:390px}}
 @media(max-width:380px){.customer-shell .wallet-inner{padding-inline:14px}.customer-home-offer{flex-basis:min(72vw,288px)!important}.customer-primary-nav{width:calc(100vw - 24px);grid-template-columns:1fr 1fr 60px 1fr 1fr}.customer-nav-scan{min-width:60px}.customer-nav-scan-fab{width:58px;height:58px}.customer-programme-card-body{grid-template-columns:46px minmax(0,1fr) minmax(66px,auto);gap:10px}.customer-programme-card-balance b{max-width:76px;font-size:14px!important}.customer-business-balance-v347{font-size:40px!important}.customer-home-booking-action-v344{display:none}}
 /* V348 business detail reference match: compact business dashboard first, detailed sections later. */
 .customer-business-profile-v346{gap:8px;padding-bottom:8px;overflow:hidden}.customer-business-header-v346{grid-template-columns:28px minmax(0,1fr);min-height:56px;margin-top:0}.customer-business-back-v346{align-self:center}.customer-business-identity-v346{gap:9px}.customer-business-identity-v346 .customer-programme-logo{width:44px!important;height:44px!important}.customer-business-identity-v346 b{font-size:19px!important;line-height:1.05}.customer-business-identity-v346 small{font-size:13px!important;text-transform:none}.customer-business-actions-v346{grid-template-columns:minmax(0,1fr) minmax(96px,124px);gap:8px;margin-top:0;overflow:hidden}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-width:0;min-height:40px;padding:0 10px;border-radius:14px;background:var(--peekaa-card);font-size:13px}.customer-business-actions-v346 .customer-programme-contact-item-v337 span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-business-book-v346{min-height:48px!important;margin-top:0;border-radius:14px!important;font-size:15px!important}
 .customer-shell .wallet-head.wallet-head-compact-v339{min-height:0;height:0;margin:0;padding:0;overflow:hidden}.customer-business-profile-v346 .customer-business-summary-v346{margin-top:0}.customer-shell .card.customer-business-summary-v346{min-height:136px!important;padding:16px!important;border-radius:18px!important}.customer-business-summary-top-v347{margin-bottom:12px}.customer-business-tier-pill-v347,.customer-business-ready-v347{min-height:24px;padding:0 9px;font-size:11px}.customer-business-balance-v347{font-size:40px!important}.customer-shell .card.customer-business-summary-v346 p{margin-top:6px;font-size:13px}.customer-business-summary-actions-v349{margin-top:12px}.customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-height:32px;font-size:13px}.customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{min-width:146px}.customer-business-modules-v347{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.customer-business-module-v347{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) 10px;align-items:center;gap:8px;min-height:86px;padding:11px 10px;border:1px solid var(--peekaa-border);border-radius:16px;background:var(--peekaa-card);box-shadow:var(--shadow-warm);color:var(--peekaa-text);text-decoration:none;overflow:hidden}.customer-business-module-icon-v347{display:grid;place-items:center;width:32px;height:32px;border-radius:12px;background:var(--peekaa-red-soft);color:var(--peekaa-red)}.customer-business-module-copy-v347{display:grid;gap:2px;min-width:0}.customer-business-module-copy-v347 b{font-size:12px;line-height:1.05;font-weight:760;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.customer-business-module-copy-v347 small{font-size:10.5px;line-height:1.12;color:var(--peekaa-text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.customer-business-module-chevron-v347{color:var(--peekaa-text-muted);font-size:19px;line-height:1}
 .customer-business-profile-v346 .customer-reward-offer-swipe-v339{display:grid!important;gap:8px;margin:0 0 6px;min-width:0}.customer-business-offers-head-v349{display:flex;align-items:center;justify-content:space-between}.customer-business-offers-head-v349 h2{font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.1;color:var(--peekaa-text)}.customer-business-profile-v346 .customer-claimable-banner-v337{margin:0;min-height:92px;padding:14px 16px;border-radius:16px}.customer-business-profile-v346 .customer-claimable-banner-cta-v337{min-height:38px}/* nestly_v417 (owner, photo 3: a brace down the offer card — "Wording/picture got cut, shift about to right"). MEASURED at 375/390/412: the track's left edge sat at -16 and its right edge at viewport-16, i.e. the whole strip was displaced 16px to the LEFT. margin-inline:-16px is a full-bleed pull that padding-inline:16px pays back, and the width should therefore be parent+32 — but max-width:100vw clamped it to the viewport, so the pull moved the box left and nothing let it reach the right edge again. Dropping the clamp restores the symmetric bleed: -16 to viewport+16. Re-measured after: left -16, right viewport+16, first card fully on screen at every width. */
-.customer-business-profile-v346 .customer-reward-offer-track-v339{margin-inline:-16px;padding-inline:16px}.customer-business-profile-v346 .customer-business-group-v346{scroll-margin-top:16px}.customer-business-profile-v346>.customer-business-rewards-v346{display:none!important}.customer-business-main-v348[hidden],.customer-business-shortcut-page-v348[hidden],.customer-business-detail-store-v348[hidden]{display:none!important}.customer-business-shortcut-page-v348{display:grid;gap:12px;padding-bottom:calc(100px + env(safe-area-inset-bottom))}.customer-business-shortcut-head-v348{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center}.customer-business-shortcut-back-v348{min-height:38px;border-radius:14px}.customer-business-shortcut-head-v348 h1{font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.05;color:var(--peekaa-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-business-shortcut-content-v348{display:grid;gap:10px}.customer-business-shortcut-content-v348>.customer-business-group-v346{display:grid!important;margin-top:0}.wallet-sections{display:grid;gap:14px;padding-bottom:calc(132px + env(safe-area-inset-bottom));overflow:hidden}.wallet-sections .customer-business-group-v346,.customer-business-shortcut-content-v348 .customer-business-group-v346{gap:9px;margin-top:0}.wallet-sections .customer-business-group-head-v346 h2,.customer-business-shortcut-content-v348 .customer-business-group-head-v346 h2{font-size:18px!important}.wallet-sections .wallet-section,.wallet-sections .wallet-history-disclosure,.customer-business-shortcut-content-v348 .wallet-section,.customer-business-shortcut-content-v348 .wallet-history-disclosure{border-radius:16px;padding:16px;overflow:hidden}.wallet-sections .wallet-section-head h2,.customer-business-shortcut-content-v348 .wallet-section-head h2{font-size:16px!important}.wallet-sections .wallet-line,.wallet-sections .wallet-appt,.customer-business-shortcut-content-v348 .wallet-line,.customer-business-shortcut-content-v348 .wallet-appt{min-width:0;overflow:hidden}.wallet-sections .wallet-appt,.customer-business-shortcut-content-v348 .wallet-appt{padding:12px;border-radius:16px}.wallet-sections .wallet-appt b,.customer-business-shortcut-content-v348 .wallet-appt b{font-size:15px}.wallet-sections .wallet-appt p,.wallet-sections .wallet-line p,.customer-business-shortcut-content-v348 .wallet-appt p,.customer-business-shortcut-content-v348 .wallet-line p{font-size:13px;line-height:1.25}.customer-business-profile-v346 [id^="wallet"],.customer-business-profile-v346 .customer-rewards-grid,.customer-business-profile-v346 .customer-perks-grid{max-width:100%;overflow:hidden}.customer-business-profile-v346 .customer-rewards-grid,.customer-business-profile-v346 .customer-perks-grid{grid-template-columns:1fr;gap:10px}.customer-referral-card-v300{overflow:hidden}.customer-referral-card-v300 .wallet-section-head{align-items:flex-start}.customer-referral-code-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}.customer-referral-code{justify-content:center;min-width:0;font-size:18px}
+.customer-business-profile-v346 .customer-reward-offer-track-v339{margin-inline:-16px;padding-inline:16px}.customer-business-profile-v346 .customer-business-group-v346{scroll-margin-top:16px}.customer-business-profile-v346>.customer-business-rewards-v346{display:none!important}.customer-business-main-v348[hidden],.customer-business-shortcut-page-v348[hidden],.customer-business-detail-store-v348[hidden]{display:none!important}/* nestly_v446 (REG-002, "doubled Rewards heading"). openCustomerBusinessShortcutPageV348 hides nodes with the `hidden` property, and the UA's `[hidden]{display:none}` is an ORIGIN below every author rule — so `.customer-business-group-head-v346{display:flex}` and `.customer-points-explainer{display:flex}` simply outranked it and the node stayed on screen. MEASURED on origin/main: with the tiers shortcut open the group head reported hidden===true, attribute set, and computed display 'flex'. v386's own hide has therefore been dead since v386; this is what makes it, and the v446 hide that generalises it, actually take effect. Scoped to the shortcut page's own content plus the two nodes hidden from outside it, so no other use of `hidden` on the surface changes meaning. */.customer-business-shortcut-content-v348 [hidden],.customer-business-group-head-v346[hidden],.customer-points-explainer[hidden]{display:none!important}.customer-business-shortcut-page-v348{display:grid;gap:12px;padding-bottom:calc(100px + env(safe-area-inset-bottom))}.customer-business-shortcut-head-v348{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center}.customer-business-shortcut-back-v348{min-height:38px;border-radius:14px}.customer-business-shortcut-head-v348 h1{font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.05;color:var(--peekaa-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-business-shortcut-content-v348{display:grid;gap:10px}.customer-business-shortcut-content-v348>.customer-business-group-v346{display:grid!important;margin-top:0}.wallet-sections{display:grid;gap:14px;padding-bottom:calc(132px + env(safe-area-inset-bottom));overflow:hidden}.wallet-sections .customer-business-group-v346,.customer-business-shortcut-content-v348 .customer-business-group-v346{gap:9px;margin-top:0}.wallet-sections .customer-business-group-head-v346 h2,.customer-business-shortcut-content-v348 .customer-business-group-head-v346 h2{font-size:18px!important}.wallet-sections .wallet-section,.wallet-sections .wallet-history-disclosure,.customer-business-shortcut-content-v348 .wallet-section,.customer-business-shortcut-content-v348 .wallet-history-disclosure{border-radius:16px;padding:16px;overflow:hidden}.wallet-sections .wallet-section-head h2,.customer-business-shortcut-content-v348 .wallet-section-head h2{font-size:16px!important}.wallet-sections .wallet-line,.wallet-sections .wallet-appt,.customer-business-shortcut-content-v348 .wallet-line,.customer-business-shortcut-content-v348 .wallet-appt{min-width:0;overflow:hidden}.wallet-sections .wallet-appt,.customer-business-shortcut-content-v348 .wallet-appt{padding:12px;border-radius:16px}.wallet-sections .wallet-appt b,.customer-business-shortcut-content-v348 .wallet-appt b{font-size:15px}.wallet-sections .wallet-appt p,.wallet-sections .wallet-line p,.customer-business-shortcut-content-v348 .wallet-appt p,.customer-business-shortcut-content-v348 .wallet-line p{font-size:13px;line-height:1.25}.customer-business-profile-v346 [id^="wallet"],.customer-business-profile-v346 .customer-rewards-grid,.customer-business-profile-v346 .customer-perks-grid{max-width:100%;overflow:hidden}.customer-business-profile-v346 .customer-rewards-grid,.customer-business-profile-v346 .customer-perks-grid{grid-template-columns:1fr;gap:10px}.customer-referral-card-v300{overflow:hidden}.customer-referral-card-v300 .wallet-section-head{align-items:flex-start}.customer-referral-code-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}.customer-referral-code{justify-content:center;min-width:0;font-size:18px}
 @media(max-width:380px){.customer-business-actions-v346{grid-template-columns:minmax(0,1fr) minmax(82px,106px)}.customer-business-module-v347{grid-template-columns:32px minmax(0,1fr) 10px;gap:8px;padding:11px 10px}.customer-business-module-icon-v347{width:32px;height:32px}.customer-business-module-copy-v347 b{font-size:12px}.customer-business-module-copy-v347 small{font-size:10.5px}.customer-referral-code-row{grid-template-columns:1fr 1fr}.customer-referral-code{grid-column:1/-1}}
 /* V360: reward-directory and home-wallet metrics are one compact line. A stale legacy
    unit must never make a points balance look like a wrapped stamp counter. */
@@ -3774,6 +3829,39 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-actions-v346 .customer-business-call-icon-v366 span{display:none!important}
 .customer-business-profile-v346 .customer-business-summary-v346{margin-top:2px!important}
 @media(max-width:380px){.customer-business-header-v346{grid-template-columns:24px minmax(0,1fr) auto!important;gap:6px!important}.customer-business-identity-v346 .customer-programme-logo{width:40px!important;height:40px!important}.customer-business-identity-v346 b{font-size:17px!important}.customer-business-identity-v346 small{font-size:12px!important}.customer-business-actions-v346{grid-template-columns:auto 32px!important;gap:5px!important}.customer-business-actions-v346 .customer-business-address-icon-v422{width:32px!important}.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:32px!important;padding:0 7px!important;font-size:11px!important}.customer-business-actions-v346 .customer-business-call-icon-v366{width:32px!important}}
+/* ===== nestly_v457 — three owner rulings from the 2026-08-22 customer audit ==================
+   Geometry only; no colour, no token, nothing the dark block below has to answer for. Kept in one
+   place so the .customer-* consolidation pass has a single hunk to reason about. */
+
+/* --- B-REG-016: a business's own name is never clipped on its own profile header --------------
+   Owner ruling: "the NAME takes the space it needs; Directions/Call yield." Two causes, both
+   MEASURED on 9a57bac at 390 and 1180:
+     (1) the wordy placeholder actions took a 172px track (fixed in app.js — they are icon-only
+         now, matching the row the contact read writes over them), and
+     (2) even with the approved 106px icon row, `white-space:nowrap;text-overflow:ellipsis` on the
+         name clipped anything past ~156px: "Ah Xiang Traditional Kopitiam & Bakery" measured a
+         177px box against 347px of content, and a 27-character Tamil name 170px against 263px.
+   (2) is the one that cannot be solved by making something else narrower, and it is why this rule
+   does not depend on English label widths at all: the name WRAPS instead of being cut. A long
+   name costs the header a second line, which is the trade the ruling names. The bio underneath
+   keeps its deliberate v417 two-line clamp — that is a description, not an identity. */
+.customer-business-header-v346 .customer-business-identity-v346 b{
+  white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
+.customer-business-header-v346 .customer-business-identity-v346{align-items:flex-start}
+/* Both actions stay reachable and both reach the 44px the design system sets in --control-h. */
+.customer-business-actions-v346 .customer-programme-contact-item-v337{min-height:var(--control-h)!important}
+
+/* --- B-REG-018: the two worst tap targets on the customer surface -----------------------------
+   MEASURED: "View all ›" 62.8x16.8 and "See all" 45.3x16.8 — under half the 44px --control-h sets,
+   on a product whose brief is explicitly big-tap-target, low-literacy-first. Real height, not a
+   pseudo-element expander: an invisible 44px overlay centred on a 17px line reaches ~14px past a
+   10px margin and would sit on top of the first card's own links, which is the overlap class this
+   wave has just spent its time removing. The section head grows by ~23px; nothing else moves. */
+.customer-home-section-head-v343 a,.customer-home-offers-head a,.customer-business-offers-head-v349 a{
+  display:inline-flex;align-items:center;gap:2px;min-height:44px}
+/* The reward-directory filter chips measured 36px tall. */
+.customer-rewards-filter-chip-v395,.customer-rewards-filter-chips-v344 span{min-height:44px}
+
 /* V167 Phase 4: customer-only system dark mode. Merchant/admin surfaces retain their
    established light palette. The redemption QR intentionally stays on a light scan surface. */
 .customer-surface{min-height:100dvh;background:var(--bg);color:var(--ink)}
@@ -4030,7 +4118,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 67a4bcc79f87543909a88c66e48e3c4327798de8d76704ae7d86e52f2a1e5df1</p>
+  <p class="v104-provenance">Local production-render harness · source fd842083f834ebba4ec003b71431bcdf6852de8c310f0585297a1b8305c80ef0</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4042,7 +4130,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="67a4bcc79f87543909a88c66e48e3c4327798de8d76704ae7d86e52f2a1e5df1";
+const PRODUCTION_SOURCE_SHA256="fd842083f834ebba4ec003b71431bcdf6852de8c310f0585297a1b8305c80ef0";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -5609,7 +5697,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const primary=unit==='stamps'
     ?`${customerPointTotalV103(balance)} stamps`
     :`${customerPointTotalV103(balance)} ${unitLabel}`;
-  const subline=rewardReady?customerRewardReadyLineV397(1)
+  /* nestly_v457: the pre-correction text. It is painted before loadRewards has read the
+     catalogue, so it must not assert a number either; customerRewardReadyCountApplyV397 replaces
+     it with the real count moments later. */
+  const subline=rewardReady?customerRewardReadySignalV457()
     :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
     :membership.active===true?'Member'
     :'No reward yet';
@@ -5764,6 +5855,23 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
    never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
    actually honour — not the number the customer could afford. */
 const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
+/* nestly_v457 (B-REG-017; owner ruling 2026-08-22, LIVE-measured on build 9a57bac6aa95: Home said
+   "2 rewards ready" in the greeting, "1 reward ready" on the Cubbly card AND on the QA Kaya Toast
+   card, while QA Kaya Toast's own page said 2 — three figures, one customer, one screen).
+   THE CAUSE. Every one of those Home strings is a literal 1: the only reward Home holds is the
+   server's `next_eligible_reward`, which is ONE object. app.c45_base_actionable_wallet_card
+   (checked against production) builds it as {name, cost_units, remaining_units, available_now,
+   unit} — there is NO ready COUNT anywhere in the payload Home fetches. The greeting is then the
+   SUM of those literal 1s (customerRewardReadyCountV343 counts CARDS, not rewards), so the cap on
+   the cards was the single root cause of the greeting being wrong too.
+   THE RULE. Readiness comes from the server (v145/v397); a browser-invented 1 is the thing that
+   rule exists to forbid, so removing it moves toward the rule, not away from it. Home therefore
+   keeps the SIGNAL — this business has something claimable — and states no quantity, because it
+   has loaded nothing that could substantiate one. The exact count is the business page's job:
+   loadRewards reads the catalogue there and customerRewardReadyCountApplyV397 fills it in.
+   Deliberately NOT done: adding a catalogue fetch to Home to chase the number. That is a
+   performance decision, and it is not this wave's to take. */
+const customerRewardReadySignalV457=(plural=false)=>plural?'Rewards ready':'Reward ready';
 /* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
    (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
@@ -6015,8 +6123,8 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const modules=[];
   /* nestly_v399: readyCount is now unconditional on both reward tiles — the count is corrected
      from the catalogue in stamps mode too, not only when a points reward happened to be ready. */
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:true,fallback:'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadySignalV457():'Collect stamps here',readyCount:true,fallback:'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadySignalV457():reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
@@ -6092,15 +6200,29 @@ function openCustomerBusinessShortcutPageV348({action='',title='Details',target=
       card.hidden=true;
       hiddenByShortcutV386.push(card);
     });
-    /* The explainer and the section's own "Rewards / ready rewards, catalogue" head are points
-       guidance, so they follow the points half rather than standing alone over a tier ladder —
-       the page already carries "Tier benefits" as its title. */
-    if(action==='tiers')target.querySelectorAll('[data-points-explainer],.customer-business-group-head-v346').forEach(node=>{
+    /* The explainer is points guidance, so it follows the points half rather than standing alone
+       over a tier ladder. (v386 hid the section's group head here too; nestly_v446 hides it for
+       every action instead — see below — so this line no longer has to.) */
+    if(action==='tiers')target.querySelectorAll('[data-points-explainer]').forEach(node=>{
       if(node.hidden)return;
       node.hidden=true;
       hiddenByShortcutV386.push(node);
     });
   }
+  /* nestly_v446 (REG-002, "the page shows a doubled Rewards heading"). A section carries its own
+     `<h2>` because on the profile it is one group among several; on THIS page it is the whole
+     page, and the page already prints its title in `<h1>` beside the Back button. So the stamp
+     card tile opened a page headed "Rewards" over a section headed "Rewards" — the same word
+     twice, one under the other. v386 already removed it, but only for the tiers action, where it
+     had been noticed. The rule is not about tiers: a group head inside this page is redundant
+     whatever tile opened it, and the ONE place the section is named is now the page title.
+     Hidden, not detached, and restored on close like everything else here, so the profile page
+     underneath is unchanged. */
+  target.querySelectorAll('.customer-business-group-head-v346').forEach(node=>{
+    if(node.hidden)return;
+    node.hidden=true;
+    hiddenByShortcutV386.push(node);
+  });
   page._customerBusinessShortcutRestoreV348=()=>{
     hiddenByShortcutV386.forEach(node=>{node.hidden=false});
     hiddenByShortcutV386.length=0;

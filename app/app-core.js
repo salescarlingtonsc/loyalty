@@ -716,7 +716,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
   S={user:null,biz:null,charts:[],myModules:null,myModulePerms:null,myRole:null,isSA:false,saChecked:false,hasCustomerPersona:null,staffWorkspaces:[],customerProfile:null,programmes:null,programmesBusinessId:null};
   /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
-  customerNavCountsV194={programmes:0,bookings:0};
+  customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
@@ -2647,7 +2647,7 @@ function customerMediaUrlV95(value){
 /* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
    re-applied in place once they resolve. A stale count is never shown as fresh — see
    applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
-let customerNavCountsV194={programmes:0,bookings:0};
+let customerNavCountsV194={bookings:0};
 /* v195 (owner circled Scan QR and drew it up beside the bell): scanning is an ACTION, not a
    destination — it opens the camera and returns you to where you were. Sitting in the tab bar it
    claimed a quarter of the navigation and read like a fourth page. It is now the header control
@@ -4182,7 +4182,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const primary=unit==='stamps'
     ?`${customerPointTotalV103(balance)} stamps`
     :`${customerPointTotalV103(balance)} ${unitLabel}`;
-  const subline=rewardReady?customerRewardReadyLineV397(1)
+  /* nestly_v457: the pre-correction text. It is painted before loadRewards has read the
+     catalogue, so it must not assert a number either; customerRewardReadyCountApplyV397 replaces
+     it with the real count moments later. */
+  const subline=rewardReady?customerRewardReadySignalV457()
     :remaining>0?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to reward`
     :membership.active===true?'Member'
     :'No reward yet';
@@ -4323,20 +4326,23 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
     <div class="customer-business-hero-dots-v395" data-hero-dots-v395 role="tablist" aria-label="Rewards" hidden></div>
   </div>`;
 }
-/* nestly_v395. Fills the hero swipe with the rest of the reward ladder. Every page is built from a
-   catalogue row the server sent — name and cost only — and the distance is the customer's own
-   balance against that row's cost, the same subtraction customerRewardProgressMarkupV310 does. A
-   row whose cost we cannot read is skipped rather than drawn with a guessed number, and the reward
-   already shown on page 1 is not repeated. Returns the number of pages the region ended up with. */
-/* nestly_v397 (owner photo C: "now available 2 / why show 1", written against BOTH the hero pill
-   and the Points & gifts tile). Every one of these labels printed the literal string
-   "1 reward ready", because at paint time the only reward the client holds is the server's
-   next_eligible_reward — ONE object. The real count lives in the reward catalogue, which
-   loadRewards fetches moments later, so the honest number can only be filled in then. This is the
-   same shape as the hero swipe pages: paint what is known, correct it from the catalogue, and
-   never guess. `count` is the number of rewards customerRewardCanRedeem says the counter will
-   actually honour — not the number the customer could afford. */
-const customerRewardReadyLineV397=count=>`${customerPointTotalV103(count)} reward${count===1?'':'s'} ready`;
+/* nestly_v457 (B-REG-017; owner ruling 2026-08-22, LIVE-measured on build 9a57bac6aa95: Home said
+   "2 rewards ready" in the greeting, "1 reward ready" on the Cubbly card AND on the QA Kaya Toast
+   card, while QA Kaya Toast's own page said 2 — three figures, one customer, one screen).
+   THE CAUSE. Every one of those Home strings is a literal 1: the only reward Home holds is the
+   server's `next_eligible_reward`, which is ONE object. app.c45_base_actionable_wallet_card
+   (checked against production) builds it as {name, cost_units, remaining_units, available_now,
+   unit} — there is NO ready COUNT anywhere in the payload Home fetches. The greeting is then the
+   SUM of those literal 1s (customerRewardReadyCountV343 counts CARDS, not rewards), so the cap on
+   the cards was the single root cause of the greeting being wrong too.
+   THE RULE. Readiness comes from the server (v145/v397); a browser-invented 1 is the thing that
+   rule exists to forbid, so removing it moves toward the rule, not away from it. Home therefore
+   keeps the SIGNAL — this business has something claimable — and states no quantity, because it
+   has loaded nothing that could substantiate one. The exact count is the business page's job:
+   loadRewards reads the catalogue there and customerRewardReadyCountApplyV397 fills it in.
+   Deliberately NOT done: adding a catalogue fetch to Home to chase the number. That is a
+   performance decision, and it is not this wave's to take. */
+const customerRewardReadySignalV457=(plural=false)=>plural?'Rewards ready':'Reward ready';
 function customerReferralSlotMarkupV360(){
   return '<div id="walletReferralSlot" hidden></div>';
 }
@@ -4363,8 +4369,8 @@ function customerBusinessDashboardModulesV347({reward=null,tier={},packages={},m
   const modules=[];
   /* nestly_v399: readyCount is now unconditional on both reward tiles — the count is corrected
      from the catalogue in stamps mode too, not only when a points reward happened to be ready. */
-  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadyLineV397(1):'Collect stamps here',readyCount:true,fallback:'Collect stamps here'});
-  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadyLineV397(1):reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
+  if(hasStamps)modules.push({href:'#customerBusinessRewardsDetailV347',action:'rewards',icon:'giftcard',title:'Stamp card',body:reward?.available_now===true?customerRewardReadySignalV457():'Collect stamps here',readyCount:true,fallback:'Collect stamps here'});
+  if(hasPoints)modules.push({href:'#customerBusinessRewardsDetailV347',action:'points',icon:'star',title:'Points & gifts',readyCount:true,fallback:reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`,body:reward?.available_now===true?customerRewardReadySignalV457():reward?`${customerPointTotalV103(Math.max(0,Number(reward.remaining_units)||0))} ${ct(loyalty.unit||'points')} to reward`:`${customerPointTotalV103(Math.max(0,Number(loyalty.balance)||0))} ${ct(loyalty.unit||'points')}`});
   if(hasTiers)modules.push({href:'#customerBusinessOverviewDetailV347',action:'tiers',icon:'diamond',title:'Tier benefits',body:tierLabel?`Explore your ${tierLabel} perks`:'Member perks'});
   if(sessions>0)modules.push({href:'#customerBusinessPackagesDetailV347',action:'packages',icon:'packages',title:'Packages',body:`${sessions} session${sessions===1?'':'s'} left`});
   if(membership.active===true)modules.push({href:'#customerBusinessPackagesDetailV347',action:'membership',icon:'memberships',title:'Membership',body:'Active membership'});
@@ -4458,9 +4464,22 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
         <span class="customer-programme-logo">${customerProgrammeLogoV95(presentation,business.name)}</span>
         <span><b>${headV327}</b>${customerBusinessTaglineV385(business)}</span>
       </button>
+      ${/* nestly_v457 (B-REG-016). These two are a PLACEHOLDER: customer_get_offer_business_contact_v173
+           replaces the whole row a moment later (see the v366/v422 block in renderCustomerWallet),
+           and what it writes is two icon-only 34px buttons — the shape v422 measured and the owner
+           approved. The placeholder carried the words, so until that read landed the actions
+           column asked for 172px instead of 106px and starved the name beside it. MEASURED on
+           9a57bac at 390 and 1180: header tracks 28px / 141.98px / 172.02px, name box 104px
+           against 117px of content — "Kopi Test Bar" ellipsised on its own profile. And when the
+           branch has neither address nor phone the read returns early, so the placeholder is not
+           a flash but the permanent state.
+           They are the same icons, the same [data-company-detail] target and the same sheet; only
+           the labels move from visible text to aria-label/title, which is exactly what the
+           replacement does. Two controls that look identical before and after the read is also
+           the point — the header no longer reflows when it resolves. */''}
       <div class="customer-programme-contact-v326 customer-business-actions-v346" data-company-contact-inline-v326>
-        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('branch',{size:20})}<span>Directions</span></button>
-        <button type="button" class="customer-programme-contact-item-v337" data-company-detail>${CUI.icon('phone',{size:20})}<span>Call</span></button>
+        <button type="button" class="customer-programme-contact-item-v337 customer-business-address-v366 customer-business-address-icon-v422" data-company-detail aria-label="Locations" title="Locations">${CUI.icon('branch',{size:20})}</button>
+        <button type="button" class="customer-programme-contact-item-v337 customer-business-call-icon-v366" data-company-detail aria-label="Call" title="Call">${CUI.icon('phone',{size:20})}</button>
       </div>
     </header>
     ${/* v386 (owner photo 9): the header chip truncated the address to "313 Orcha…", which the
