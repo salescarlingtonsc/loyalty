@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="647d1f80eae0f90a5826f9b6e1883ce1216c0b77063cf057177b005f8b0e1e9a"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="e0fb96a7518fc642cc979a2180af1f43e13ee0a46d19bd10d9aa5f779741f751"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -235,28 +235,14 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grow-overview[data-programme-view="points"] .grow-points-gift-body-v343>b{font-size:1.06rem}
 .grow-overview[data-programme-view="points"] .grow-topic-group-head-v244{display:none}
 .grow-overview[data-programme-view="points"] .btn.ghost.sm[data-grow-points-gift-delete-v326]{color:var(--red);border-color:#F2D5D1}
-/* nestly_v449: every rule below describes the INLINE card — the five-column row that the gift
-   form has when it sits in the list, full page width. The SAME element is also the v410 dialog,
-   and these selectors used to catch it there too. Specificity decided it and the dialog lost:
-   `.grow-overview[data-programme-view="points"] .grow-points-form-card-v343` is (0,3,0) against
-   the dialog's own `.grow-points-form-card-v343.grow-points-form-modal-v410` at (0,2,0), so the
-   dialog was laid out as a five-track grid whose track MINIMUMS alone come to
-   120+160+110+200+190 + 4×14 gap = 836px inside a 520px modal. `>*{grid-column:1/-1}` then
-   stretched every child across all 836 of them, and the input rule below — (0,3,1), beating the
-   dialog's (0,3,0) text-align:left — re-centred the text inside those 836px boxes, which is why
-   the name, stamp number and description appeared shoved off the right edge. Measured live at
-   1564px on both tenants before this fix.
-   `:not(.grow-points-form-modal-v410)` states the thing the comment above the dialog rules always
-   claimed: these are the inline card's rules. Raising the dialog's specificity instead would have
-   left the two blocks fighting; this way the dialog simply does not match them. */
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){display:grid;grid-template-columns:minmax(120px,.5fr) minmax(160px,.85fr) minmax(110px,.55fr) minmax(200px,.95fr) minmax(190px,.8fr);gap:10px 14px;align-items:end;padding:14px 16px;border:1px solid #F2D5D1;border-radius:14px;background:#fff;box-shadow:0 10px 24px rgba(48,36,28,.06)}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>b{align-self:center;color:#9A4B30;font-size:16px}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) .grow-setup-sentence-v301{margin:0;line-height:1.3}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) textarea{max-width:none!important;text-align:center;font-weight:600;min-height:36px;padding:4px 8px}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) textarea{min-height:0}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.notice{grid-column:1/-1;margin:0!important}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.row{grid-column:1/-1;margin-top:6px!important;justify-content:flex-end}
-@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){grid-template-columns:1fr}}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{display:grid;grid-template-columns:minmax(120px,.5fr) minmax(160px,.85fr) minmax(110px,.55fr) minmax(200px,.95fr) minmax(190px,.8fr);gap:10px 14px;align-items:end;padding:14px 16px;border:1px solid #F2D5D1;border-radius:14px;background:#fff;box-shadow:0 10px 24px rgba(48,36,28,.06)}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b{align-self:center;color:#9A4B30;font-size:16px}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 .grow-setup-sentence-v301{margin:0;line-height:1.3}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{max-width:none!important;text-align:center;font-weight:600;min-height:36px;padding:4px 8px}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{min-height:0}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.notice{grid-column:1/-1;margin:0!important}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1;margin-top:6px!important;justify-content:flex-end}
+@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -667,7 +653,7 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .current-time-line{position:absolute;left:0;right:0;height:2px;background:var(--coral);z-index:3;pointer-events:none}
 .current-time-line span{position:absolute;left:6px;top:-12px;background:var(--coral);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:2px 6px}
 @media(max-width:1100px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-charts.v150-understand{grid-template-columns:1fr}.v150-title-actions{justify-content:flex-start}.cui-skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:768px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.split{grid-template-columns:1fr}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;text-align:left}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
+@media(max-width:768px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;text-align:left}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}.cui-fade-in{animation:none}}
 .permission-banner{display:flex;gap:11px;align-items:flex-start;background:var(--warn-bg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 32%,#fff);border-radius:var(--r-sm);padding:13px 15px;margin:-7px 0 18px}
 .permission-banner p{font-size:12.5px;line-height:1.5;margin-top:2px}.permission-banner svg{margin-top:1px}
@@ -1144,8 +1130,17 @@ input[type=range]:focus{box-shadow:none}
 .qbtn:active{transform:scale(.94)}
 /* Presets are filter chips, not primary controls: selection is the brand wash, not ink fill. */
 .qbtn.act{background:var(--tint);color:var(--brand-red);border-color:var(--brand-red-soft);font-weight:700}
+/* `.split` is the app's generic two-column row: 37 render sites, from a two-field form row to a
+   whole panel pair (Customer Interface = form | live phone preview). It has exactly ONE base
+   declaration and ONE collapse, and the collapse MUST stay directly underneath it.
+   V447: it used to live 480 lines further up, inside the shared @media(max-width:768px) block.
+   A media query buys no specificity, so this later `.split` — same (0,1,0) — beat it at every
+   width and the collapse never fired anywhere in the app: two-column forms on a 390px phone, and
+   the 390px preview phone squeezed into a 131px cell. Moving the override here is the whole fix;
+   the breakpoint and the declaration are the ones the original author wrote. */
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0;max-width:100%}
 .split>*{min-width:0;max-width:100%}
+@media(max-width:768px){.split{grid-template-columns:1fr}}
 #slist{min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .row{display:flex;gap:10px;align-items:center}
 .settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
@@ -1840,14 +1835,6 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
-/* nestly_v453: the three controls of the stepper are ONE unit. The bar wraps at narrow widths and
-   used to wrap between them, leaving "−" beside the heading and "15 stamps +" on the line below.
-   The label may stack above this group; the group itself never splits. */
-.grow-stamps-lensteps-v453{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:nowrap}
-/* nestly_v453: why a stepper is refused, on its own line at the foot of the bar. flex-basis:100%
-   rather than a separate block so it belongs to the bar it explains, and stays put when the bar
-   wraps on a phone. */
-.grow-stamps-lenwhy-v453{flex:0 0 100%;margin-top:2px;font-size:.86rem;color:var(--muted)}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
 /* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
    stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar
@@ -1864,19 +1851,7 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
   background:#fff;color:var(--ink);font-size:19px;line-height:1;font-family:inherit;cursor:pointer}
 .grow-stamps-lenstep-v416:hover:not(:disabled){background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .grow-stamps-lenstep-v416:disabled{opacity:.4;cursor:default}
-/* nestly_v449 (owner, repeated): "i want to have rows of 5 instead of so lengthy rows — 5 stamps
-   then next row." Five FIXED tracks, not auto-fill, so the card reads the same at 390px and at
-   1564px: 15 stamps is always three rows of five, 12 is 5/5/2. This was a width-filling flex wrap
-   that put nineteen circles on one line at 1564.
-   row-gap is 24px, not the old 12: .grow-stamps-editcell-gift-v416 hangs 15px ABOVE its circle,
-   which never showed while a card was one row and would sit on the row above the moment it was
-   not. padding-top gives the FIRST row's glyphs the same clearance inside the scroll box.
-   The scroll box is the long-card guard: a 100-stamp card is twenty rows, and the length control
-   and the summary sit either side of this grid. Six rows are shown and the rest scrolls in place,
-   so a long card cannot push the rest of the page out of reach. A 15-stamp card is three rows and
-   never reaches the cap, so nothing scrolls in the ordinary case. */
-.grow-stamps-editgrid-v416{display:grid;grid-template-columns:repeat(5,44px);justify-content:start;
-  gap:24px 10px;margin-top:6px;padding-top:18px;max-height:min(52vh,430px);overflow-x:hidden;overflow-y:auto}
+.grow-stamps-editgrid-v416{display:flex;flex-wrap:wrap;gap:12px 10px;margin-top:20px}
 .grow-stamps-editcell-v416{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:44px;height:44px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
   color:#B08462;font-weight:700;font-size:14px;padding:0;font-family:inherit;cursor:pointer;
@@ -1886,18 +1861,13 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
-   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
-   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
-.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
 .grow-stamps-gridlegend-v416{margin-top:14px}
 @media(max-width:768px){
-  /* nestly_v449: still five per row — the whole point of the owner's ruling is that the card
-     looks the same everywhere. 5×40 + 4×8 = 232px, which fits inside a 390px viewport. */
-  .grow-stamps-editgrid-v416{grid-template-columns:repeat(5,40px);gap:22px 8px}
+  .grow-stamps-editgrid-v416{gap:12px 8px}
   .grow-stamps-editcell-v416{width:40px;height:40px}
 }
 
@@ -1922,12 +1892,7 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
      own content — 273px inside a 480px dialog, so no two fields ended at the same place.
      nowrap is the whole fix for that: one column, every child the width of the dialog. */
   display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;border:0}
-/* nestly_v449: `grid-column:1/-1` was the old defence against the inline card's five-track grid
-   catching the dialog — and it was the thing that stretched every child to the full 836px of
-   those tracks once it did. The inline rules no longer match a modal at all (see the
-   :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
-   flex column and each child is simply bounded by it. */
-.grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
+.grow-points-form-card-v343.grow-points-form-modal-v410>*{grid-column:1/-1;min-width:0}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -1936,13 +1901,8 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    .grow-setup-input-v301 is centred because it was built as a fill-in-the-blank box inside a
    sentence ("earn ( 1 ) point per $1"), but here every box has its own label above it, and a
    centred value under a left-aligned label is exactly the misalignment in the photo. */
-/* nestly_v449: `margin:0 4px` comes from the base .grow-setup-input-v301 — the fill-in-the-blank
-   box's breathing room inside a sentence. With width:100% and border-box that is 8px MORE than
-   the content box, so the field would run past the dialog's right edge by exactly that much.
-   The base's min-height/padding/font-weight now reach the dialog too (the inline card used to
-   shrink them to 36px); 44px is the house tap target, so they are kept, not undone. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;max-width:none;
-  box-sizing:border-box;text-align:left;margin-inline:0}
+  box-sizing:border-box;text-align:left}
 /* line-height:2 belongs to the sentence form of this row; in the dialog it opened a ~19px gap
    between a label and the field it names, so the label read as floating between two fields. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
@@ -5052,6 +5012,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'647d1f80eae0f90a5826f9b6e1883ce1216c0b77063cf057177b005f8b0e1e9a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'e0fb96a7518fc642cc979a2180af1f43e13ee0a46d19bd10d9aa5f779741f751',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
