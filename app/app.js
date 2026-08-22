@@ -477,6 +477,19 @@ function configureChartDefaults(){
 }
 
 const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
+/* V466 (owner ruling 2026-08-23, R4: "hide memberships and gift cards until verified"). Single
+   source of truth for every merchant-facing DOOR to these two modules — the router refusal guard,
+   the grow-page tile/topic list, and the till "Add item" sheet all read this same array, so
+   un-gating a module once it is verified is the one-line removal of its key here. The module
+   keys themselves stay in ALLMODS/MODULES/sector bundles and in branch + per-staff scopes
+   untouched (server-side entitlement other tenants' rows and RLS policies are written against —
+   same reasoning V303 already established for gift cards; deleting an entitlement key is a data
+   change, not a UI one). Gift cards were already fully gated business-side on 2026-08-13 (V303);
+   memberships were not, until this ruling. Pre-gate data check found ONE non-QA tenant (AhXiang,
+   business 33773caa-6d51-4cf2-9ad6-b83f015759e6) holding live membership_plans/memberships/
+   gift_cards rows; the owner confirmed AhXiang is their own test tenant, not a real merchant
+   obligation, so there is no per-tenant carve-out here. */
+const UNVERIFIED_MODULES_V466=['memberships','giftcards'];
 const INDUSTRIES={
   fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
@@ -3513,6 +3526,20 @@ async function route(){
        balances or their ledger rows changes. */
     if(pageKey==='giftcards'){
       toast('Gift cards are no longer part of this workspace.');
+      return nav('#/dashboard');
+    }
+    /* V466 (owner ruling 2026-08-23, R4: "hide memberships and gift cards until verified").
+       Same shape as the giftcards refusal immediately above — a typed #/memberships (or its
+       #/memberships/mn, #/memberships/plist deep-link ids, which are element ids inside
+       membershipsPage() reached via the SAME pageKey, not separate routes) is refused with a
+       toast rather than 404ing or silently rendering the dashboard. membershipsPage() and every
+       membership RPC are left in place; this is a surface decision only. The one tenant found
+       holding live membership/gift-card rows during the pre-gate data check (AhXiang,
+       33773caa-6d51-4cf2-9ad6-b83f015759e6) was confirmed by the owner to be their own test
+       tenant, not a real merchant obligation — no per-tenant carve-out. See
+       UNVERIFIED_MODULES_V466 below for the one-line un-gate when the module is verified. */
+    if(pageKey==='memberships'){
+      toast('Memberships are not part of this workspace yet.');
       return nav('#/dashboard');
     }
     /* Promotions are customer-facing publishing authority, not an ordinary staff module.
@@ -21325,7 +21352,9 @@ async function tillPage(){
       products:(catalog.products||[]).length>0,
       usepackage:!walkin&&(catalog.customerPackages||[]).some(item=>Number(item.remaining)>0),
       sellpackage:canPkg&&(catalog.packages||[]).length>0,
-      membership:canMem&&(catalog.memberships||[]).length>0,
+      /* V466: staff cannot enrol a customer into a membership at checkout while the module is
+         gated — same UNVERIFIED_MODULES_V466 flag as the router refusal and the grow tile. */
+      membership:canMem&&(catalog.memberships||[]).length>0&&!UNVERIFIED_MODULES_V466.includes('memberships'),
       custom:canCustomLine
     };
     return TILL_SHEET_TABS_V373.filter(tab=>available[tab.key]);
@@ -27435,7 +27464,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'recurring',icon:'wallet',title:'Memberships',blurb:'Let customers subscribe and save',
       status:activeMembershipCount?[STATUS_WORDS.on,'on']:membershipConfigured?['Paused','warn']:['Not set up','warn'],
       summary:activeMembershipCount?`${activeMembershipCount} membership plan${activeMembershipCount===1?'':'s'}`:membershipConfigured?'Membership plans exist but are currently paused':'Let customers subscribe and save'},
-  ];
+  /* V466: filtered out here rather than never appended, so the array literal above stays the
+     readable, un-diffed record of every programme tile — un-gating is deleting 'memberships'
+     from UNVERIFIED_MODULES_V466, not reconstructing this entry. */
+  ].filter(topic=>topic.key!=='recurring'||!UNVERIFIED_MODULES_V466.includes('memberships'));
   const growActiveTopicV229=growTopicDefsV229.find(topic=>topic.key===growTopicV229)||null;
   /* V268 (owner drew the hierarchy: category name, then its items with their set-up status).
      Drilling in already showed the category name and its items — what was missing was WHERE the
@@ -29605,10 +29637,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growReferralSummaryV375}${growReferralSettingsPanelV364}
       </div></div>
       `:''}
-      ${topicOnV229('recurring')?`
+      ${topicOnV229('recurring')&&!UNVERIFIED_MODULES_V466.includes('memberships')?`
       <!-- V294: the category follows the card — Memberships only. V303 removed gift-card
            management from the business workspace altogether (owner: "remove gift cards from the
-           business UI entirely"), so there is no destination left to point at here either. -->
+           business UI entirely"), so there is no destination left to point at here either.
+           V466: the whole block is ALSO gated on UNVERIFIED_MODULES_V466 directly, not only via
+           the topic tile being filtered out of growTopicDefsV229/growDisplayTopicsV343 above —
+           topicOnV229() returns true unconditionally for every category on the legacy
+           #/grow/ongoing, #/grow/available and #/grow/settings deep-link views (growCategoryViewV271
+           does not exclude those three), so a tile-list filter alone does not stop this block from
+           rendering on those routes. Explicit is the only safe guard here. -->
       <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
         ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
