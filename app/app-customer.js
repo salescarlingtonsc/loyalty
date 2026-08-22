@@ -3383,8 +3383,13 @@ function customerReferralMoneyV300(cents,currency){
 /* V322 (OWNER RULING R1/R4): the reward is POINTS now, and the qualifying FLOOR is still money —
    the friend still has to spend. Two units on one card, so each gets its own formatter and the
    money one is left exactly as it is rather than being taught a second job. */
-function customerReferralPointsV322(points){
+function customerReferralPointsV322(points,kind){
   const value=Math.max(0,Math.round(Number(points)||0));
+  /* nestly_v430: v425 gave the referral an explicit reward TYPE and the engine pays the declared
+     kind's pot — but this sentence still said "50 points" for a stamps payout (go-live battery,
+     2026-08-22: Cubbly promised points, paid stamps). The noun now follows card.reward_kind, the
+     same field the payout switches on, so the promise cannot disagree with the pot again. */
+  if(String(kind||'')==='stamps')return ct(value===1?'referralOneStamp':'referralStamps',{count:value});
   return ct(value===1?'referralOnePoint':'referralPoints',{count:value});
 }
 function customerReferralCardMarkupV300(card,business){
@@ -3406,11 +3411,11 @@ function customerReferralCardMarkupV300(card,business){
   const isGiftV421=String(card?.reward_kind||'points')==='voucher';
   const reward=isGiftV421
     ?(String(card?.reward_label||'').trim()||ct('referralGiftFallback'))
-    :customerReferralPointsV322(card?.reward_points);
+    :customerReferralPointsV322(card?.reward_points,card?.reward_kind);
   const friendReward=card?.friend_enabled===false?''
     :isGiftV421
       ?(String(card?.friend_reward_label||'').trim()||'')
-      :(Number(card?.friend_reward_points)>0?customerReferralPointsV322(card.friend_reward_points):'');
+      :(Number(card?.friend_reward_points)>0?customerReferralPointsV322(card.friend_reward_points,card?.reward_kind):'');
   const floor=Number(card?.min_spend_cents||0)>0?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
   return `<section class="card wallet-section customer-referral-card-v300" id="walletReferral" aria-labelledby="customerReferralTitle">
     <div class="wallet-section-head"><div>

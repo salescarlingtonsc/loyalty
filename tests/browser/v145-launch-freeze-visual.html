@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9739d947271cb47dfc4f184610f012a31da9837ce230532525a5f7740e5cc6e9"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="eed4742b33d6ef44f64d3d2ff7584f465cc81ca6971209dfaee60e6c8fff022a"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3824,7 +3824,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 9739d947271cb47dfc4f184610f012a31da9837ce230532525a5f7740e5cc6e9</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · eed4742b33d6ef44f64d3d2ff7584f465cc81ca6971209dfaee60e6c8fff022a</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5460,7 +5460,9 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>item?.active===true).slice(0,6)
     .map(item=>programmeRowHtmlV294(item.name||'Promotion',String(item.description||item.tagline||'A current offer customers can see.').slice(0,140),true));
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
-    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growPointsWordV322(referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
+    /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
+       "50 points" over a stamps payout in the go-live battery. Same helper the Grow panel uses. */
+    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
     referralProgrammeV294.enabled===true));
   if(welcomeOfferV294?.configured)programmeRowsV294.push(programmeRowHtmlV294('Welcome offer',
     welcomeOfferV294.reward_label?`New sign-ups get ${welcomeOfferV294.reward_label} free${Number(welcomeOfferV294.min_spend_cents)>0?` once they spend ${money(welcomeOfferV294.min_spend_cents)}`:''}.`:'A free item on the first visit.',
@@ -7282,7 +7284,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'9739d947271cb47dfc4f184610f012a31da9837ce230532525a5f7740e5cc6e9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'eed4742b33d6ef44f64d3d2ff7584f465cc81ca6971209dfaee60e6c8fff022a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

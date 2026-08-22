@@ -2277,6 +2277,12 @@
       "path": "db/migrations/20260822_nestly_v427_entitlements_reach_customers.sql",
       "semanticVersion": "v427",
       "proposedDeployVersion": "20260822000007"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v431_publish_keeps_the_spine_model.sql",
+      "semanticVersion": "v431",
+      "proposedDeployVersion": "20260822000008"
     }
   ]
 }

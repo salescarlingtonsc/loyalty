@@ -5029,7 +5029,9 @@ async function clientDetail(id){
   const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>item?.active===true).slice(0,6)
     .map(item=>programmeRowHtmlV294(item.name||'Promotion',String(item.description||item.tagline||'A current offer customers can see.').slice(0,140),true));
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
-    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growPointsWordV322(referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
+    /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
+       "50 points" over a stamps payout in the go-live battery. Same helper the Grow panel uses. */
+    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
     referralProgrammeV294.enabled===true));
   if(welcomeOfferV294?.configured)programmeRowsV294.push(programmeRowHtmlV294('Welcome offer',
     welcomeOfferV294.reward_label?`New sign-ups get ${welcomeOfferV294.reward_label} free${Number(welcomeOfferV294.min_spend_cents)>0?` once they spend ${money(welcomeOfferV294.min_spend_cents)}`:''}.`:'A free item on the first visit.',
@@ -5678,14 +5680,15 @@ function renderHistPage(history,n){
 function canScanCustomerRedemption({createSales,clientsReadable,loyaltyWritable}={}){
   return createSales===true&&clientsReadable===true&&loyaltyWritable===true;
 }
-function legacySaleReceiptV145(doneInfo={}){
+function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
   const duplicate=doneInfo.duplicate===true;
   const pointsEarned=Number.isFinite(Number(doneInfo.pointsEarned))?Number(doneInfo.pointsEarned):0;
   const pointsTotal=Number.isFinite(Number(doneInfo.pointsTotal))?Number(doneInfo.pointsTotal):null;
   return {
     heading:duplicate?'Already recorded':'Done',
-    message:duplicate?'This sale was already recorded — no extra points added.'
-      :pointsEarned>0?`+${pointsEarned} points`:'No points earned for this purchase.',
+    /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
+    message:duplicate?`This sale was already recorded — no extra ${unitNounV430} added.`
+      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:`No ${unitNounV430} earned for this purchase.`,
     pointsEarned,
     pointsTotal:pointsEarned>0?pointsTotal:null,
     duplicate
@@ -5865,6 +5868,16 @@ function printPosReceiptV385(){
   /* afterprint does not fire in every browser; the page must never be left print-only. */
   setTimeout(clear,60000);
   try{window.print()}catch(error){clear();toast('This browser could not open the print dialog.')}
+}
+/* nestly_v430 — the till's own unit noun. Every VALUE the counter shows was already pot-correct
+   (the v155 lookup and v145's ask-the-server rule), but the labels hardcoded points: a stamps
+   firm's counter read "764 pts" over 764 stamps, the receipt said "+6 points", and the voucher
+   banner priced a stamp gift in points (go-live battery, 2026-08-22). One resolver, read off the
+   same catalogue payload the v404 dialog already trusts; points wording is byte-identical to
+   before for every points firm. */
+function tillUnitNounV430(catalogRef,short){
+  const stampsV430=catalogRef?.customerGiftsV392?.program?.unit==='stamps';
+  return stampsV430?'stamps':(short?'pts':'points');
 }
 async function tillPage(){
   const routeMain=M();
@@ -6856,7 +6869,7 @@ async function tillPage(){
     }
     const tierLabel=catalog?.customerTierBenefits?.tier?.label||'';
     const pointsValue=Number(cust?.points);
-    const standing=[tierLabel?esc(tierLabel):'',Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} pts`:'']
+    const standing=[tierLabel?esc(tierLabel):'',Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} ${tillUnitNounV430(catalog,true)}`:'']
       .filter(Boolean).join(' · ');
     return `<div class="till-head-v373">
       <div class="till-head-id-v373"><b class="till-head-name-v373" data-merchant-content>${esc(cust.full_name)}</b>
@@ -7008,7 +7021,7 @@ async function tillPage(){
       :'';
     const pendingVouchers=(catalog.customerVouchers||[]).length
       ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
-        ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} points <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
+        ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} ${tillUnitNounV430(catalog)} <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
         ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
       :'';
     const allBenefits=Array.isArray(catalog.customerTierBenefits?.benefits)?catalog.customerTierBenefits.benefits:[];
@@ -7181,7 +7194,14 @@ async function tillPage(){
         ${row('Reward',rewardName)}
         ${row('Quantity',String(qty))}
         ${row(`Cost`,`${total} ${unit}${qty>1?` (${Number(costUnits)||0} × ${qty})`:''}`)}
-        ${Number.isFinite(balanceNow)?row(`${unit==='stamps'?'Stamps':'Points'} after`,`${balanceNow-total} (now ${balanceNow})`):''}
+        ${Number.isFinite(balanceNow)?(unit==='stamps'
+          /* nestly_v430: a stamp gift is claimed against the COMPLETED CARD — app.redeem_reward_core
+             writes a milestone claim and closes the cycle, consumes_balance=false, so the stamp
+             count is NOT deducted. The old line subtracted the cost and promised "759 (now 764)",
+             a balance the server never produces (go-live battery, 2026-08-22). Points keep the
+             debit projection; the server does debit those. */
+          ?row('Stamps after',`${balanceNow} — a completed card is used, stamps are not deducted`)
+          :row('Points after',`${balanceNow-total} (now ${balanceNow})`)):''}
         ${branchName?row('Branch',branchName):''}
         ${staffName?row('Staff',staffName):''}
       </div>
@@ -7467,7 +7487,7 @@ async function tillPage(){
         ?saleResult?.duplicate
           ?'Sale already recorded earlier · no extra points added'
           :Number(saleResult?.pointsEarned)>0
-            ?`Sale recorded · +${Number(saleResult.pointsEarned)} points`
+            ?`Sale recorded · +${Number(saleResult.pointsEarned)} ${tillUnitNounV430(catalog)}`
             :'Sale recorded · no points earned'
         :'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:20})} Retry unfinished</button>
@@ -8171,7 +8191,7 @@ async function tillPage(){
   }
   function drawStep3(){
     if(doneInfo&&doneInfo.receipt)return drawCartReceipt();
-    const outcome=legacySaleReceiptV145(doneInfo);
+    const outcome=legacySaleReceiptV145(doneInfo,tillUnitNounV430(catalog));
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:32})}
@@ -8205,7 +8225,7 @@ async function tillPage(){
       </div>`:'';
     const extraRows=d.extras.map(x=>{
       const failed=x.status==='failed';
-      const name=x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':`· sold${x.pointsEarned>0?` · +${x.pointsEarned} points`:''}`}`
+      const name=x.type==='package'?`${esc(x.label)} ${failed?'(not sold)':`· sold${x.pointsEarned>0?` · +${x.pointsEarned} ${tillUnitNounV430(catalog)}`:''}`}`
         :`${esc(x.label)} ${failed?'(not enrolled)':'· enrolled'}`;
       return `<li><span>${name}</span><span>${failed?'—':money(x.amount)}</span></li>`;
     }).join('');
@@ -8227,7 +8247,7 @@ async function tillPage(){
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
           :d.pointsEarned>0
-          ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} points</p>`
+          ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
           ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
@@ -8242,7 +8262,7 @@ async function tillPage(){
               <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
-        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">Points balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
+        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">${tillUnitNounV430(catalog)==='stamps'?'Stamps':'Points'} balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
