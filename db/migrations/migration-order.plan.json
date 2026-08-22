@@ -2343,6 +2343,12 @@
       "path": "db/migrations/20260823_nestly_v463_stamp_card_max_length.sql",
       "semanticVersion": "v463",
       "proposedDeployVersion": "20260823000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v465_home_ready_count.sql",
+      "semanticVersion": "v465",
+      "proposedDeployVersion": "20260823000002"
     }
   ]
 }

@@ -116,7 +116,7 @@ begin
   exception when others then
     get stacked diagnostics v_msg = message_text;
     insert into _r values('07_bounds',
-      case when v_msg like '%between 1 and 100%' then 'PASS '||v_msg else 'FAIL '||v_msg end);
+      case when v_msg like '%between 1 and 15%' then 'PASS '||v_msg else 'FAIL '||v_msg end); -- bound tightened by v463 (owner ruling R3a)
   end;
 
   -- tenant isolation: a business this session does not own is refused by the gate.
