@@ -5615,6 +5615,14 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   savedNotLive:Object.freeze({en:'Saved, but not yet live — {reason}','zh-CN':'已保存，但尚未上线 — {reason}',ms:'Disimpan, tetapi belum disiarkan — {reason}'}),
   /* nestly_v416: the stamp card's length, confirmed after business_set_stamp_card_length_v414. */
   stampCardLength:Object.freeze({en:'Card is now {stamps} stamps','zh-CN':'集章卡现在是 {stamps} 个印章',ms:'Kad kini {stamps} setem'}),
+  /* nestly_v453: why a length stepper is refusing. The owner reported "I can't press − or +" for
+     a card whose last stamp carried a gift — the guard doing exactly its job, silently, which
+     from their chair is indistinguishable from a broken button. Each refusal names its reason, so
+     each is runtime copy an owner reads, and therefore reviewed copy in all three locales. The
+     two bounds interpolate the constants themselves so the sentence cannot drift from the rule. */
+  stampLengthGiftBlocksShorter:Object.freeze({en:'A gift sits on stamp {stamp}. Move or remove it to make the card shorter.','zh-CN':'印章 {stamp} 上有一份礼物。请移走或删除它，才能缩短集章卡。',ms:'Sebuah hadiah terletak pada setem {stamp}. Alihkan atau buang ia untuk memendekkan kad.'}),
+  stampLengthAtMinimum:Object.freeze({en:'{stamps} stamp is the shortest a card can be.','zh-CN':'集章卡最短为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpendek yang dibenarkan.'}),
+  stampLengthAtMaximum:Object.freeze({en:'{stamps} stamps is the longest a card can be.','zh-CN':'集章卡最长为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpanjang yang dibenarkan.'}),
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
   /* nestly_v420: the referral gift handed over at the counter. */
   referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
@@ -5778,6 +5786,10 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
   'savedNotLive','stampCardLength','linkNeedsHttps','referralGiftGiven',
+  /* nestly_v453: the three reasons a length stepper can refuse. Each is shown twice — as the
+     disabled button's title and as the line of text under the bar — from this one source, so the
+     two can never disagree in any locale. */
+  'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -5827,7 +5839,11 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem','deleteItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
-  'explainHelpDotV385'
+  'explainHelpDotV385',
+  /* nestly_v453: the disabled length steppers carry their reason as a title. A disabled button is
+     not focusable, so the title is the mouse half only — the same sentence is rendered as visible
+     text beside it, and aria-describedby ties the two together. */
+  'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum'
 ]);
 const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';

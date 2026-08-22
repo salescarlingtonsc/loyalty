@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1f0f26abbe5617dde5b159d0fc7de5c6589bf6f8932259c855a86ea738155b71"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="33fe55b9c70396ec86431f573e0dc4e7832893815e0ca95058b580e5b23c4940"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -234,14 +234,28 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grow-overview[data-programme-view="points"] .grow-points-gift-body-v343>b{font-size:1.06rem}
 .grow-overview[data-programme-view="points"] .grow-topic-group-head-v244{display:none}
 .grow-overview[data-programme-view="points"] .btn.ghost.sm[data-grow-points-gift-delete-v326]{color:var(--red);border-color:#F2D5D1}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{display:grid;grid-template-columns:minmax(120px,.5fr) minmax(160px,.85fr) minmax(110px,.55fr) minmax(200px,.95fr) minmax(190px,.8fr);gap:10px 14px;align-items:end;padding:14px 16px;border:1px solid #F2D5D1;border-radius:14px;background:#fff;box-shadow:0 10px 24px rgba(48,36,28,.06)}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b{align-self:center;color:#9A4B30;font-size:16px}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 .grow-setup-sentence-v301{margin:0;line-height:1.3}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{max-width:none!important;text-align:center;font-weight:600;min-height:36px;padding:4px 8px}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343 textarea{min-height:0}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.notice{grid-column:1/-1;margin:0!important}
-.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1;margin-top:6px!important;justify-content:flex-end}
-@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343{grid-template-columns:1fr}}
+/* nestly_v449: every rule below describes the INLINE card — the five-column row that the gift
+   form has when it sits in the list, full page width. The SAME element is also the v410 dialog,
+   and these selectors used to catch it there too. Specificity decided it and the dialog lost:
+   `.grow-overview[data-programme-view="points"] .grow-points-form-card-v343` is (0,3,0) against
+   the dialog's own `.grow-points-form-card-v343.grow-points-form-modal-v410` at (0,2,0), so the
+   dialog was laid out as a five-track grid whose track MINIMUMS alone come to
+   120+160+110+200+190 + 4×14 gap = 836px inside a 520px modal. `>*{grid-column:1/-1}` then
+   stretched every child across all 836 of them, and the input rule below — (0,3,1), beating the
+   dialog's (0,3,0) text-align:left — re-centred the text inside those 836px boxes, which is why
+   the name, stamp number and description appeared shoved off the right edge. Measured live at
+   1564px on both tenants before this fix.
+   `:not(.grow-points-form-modal-v410)` states the thing the comment above the dialog rules always
+   claimed: these are the inline card's rules. Raising the dialog's specificity instead would have
+   left the two blocks fighting; this way the dialog simply does not match them. */
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){display:grid;grid-template-columns:minmax(120px,.5fr) minmax(160px,.85fr) minmax(110px,.55fr) minmax(200px,.95fr) minmax(190px,.8fr);gap:10px 14px;align-items:end;padding:14px 16px;border:1px solid #F2D5D1;border-radius:14px;background:#fff;box-shadow:0 10px 24px rgba(48,36,28,.06)}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>b{align-self:center;color:#9A4B30;font-size:16px}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) .grow-setup-sentence-v301{margin:0;line-height:1.3}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) input,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) textarea{max-width:none!important;text-align:center;font-weight:600;min-height:36px;padding:4px 8px}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410) textarea{min-height:0}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>[role="alert"],.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.notice{grid-column:1/-1;margin:0!important}
+.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.row{grid-column:1/-1;margin-top:6px!important;justify-content:flex-end}
+@media(max-width:1180px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){grid-template-columns:1fr 1fr}.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>b,.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410)>.row{grid-column:1/-1}}@media(max-width:720px){.grow-overview[data-programme-view="points"] .grow-points-form-card-v343:not(.grow-points-form-modal-v410){grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse}
 caption{text-align:left;font-size:12px;font-weight:650;color:var(--muted);padding:0 12px 10px}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;
@@ -796,8 +810,16 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
    .menu(42); this menu is opened last / sits top-right / and — once the workspace switcher moves
    inside it — will contain that 42-ranked menu as a descendant, so it is slotted one above at 43,
    keeping the scale monotonic instead of introducing an unrelated number. */
+/* V450: the owner reported dashboard text showing through this menu; V440 fixed the paint ORDER
+   (z-index 43, above the whole appbar family) but the menu was still the most SEE-THROUGH popover
+   in that family at .86 while its own sibling .business-workspace-switch .menu already sat at .94 —
+   and this is the one that opens over the busiest surface. Measured live on the dashboard: "Minimise",
+   "Apply", "Open calendar" and "INACTIVE CUSTOMERS" all sit behind it and "Minimise" read legibly
+   through it, on top of the Settings row. Opaque here: the blur still frames the menu against the
+   page, but nothing behind it can be read as if it were part of the menu. Legibility beats the
+   glass effect on a popover that covers live figures. */
 .profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;z-index:43;
-  background:rgba(255,255,255,.86);
+  background:var(--card,#fff);
   -webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg);
   transform-origin:top right;animation:pop .2s var(--spring)}
@@ -815,7 +837,10 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .business-workspace-switch>summary,.customer-workspace-switch>summary{list-style:none}
 .business-workspace-switch>summary::-webkit-details-marker,.customer-workspace-switch>summary::-webkit-details-marker{display:none}
 .business-workspace-switch .menu,.customer-workspace-switch .menu{position:absolute;top:calc(100% + 8px);right:0;z-index:42;
-  min-width:224px;background:rgba(255,255,255,.94);border:1px solid var(--hair);border-radius:var(--r-sm);
+  /* V450: opaque with the rest of the appbar popover family. At .94 the bleed was slight, but this
+     list now renders INSIDE the account menu (V443) as well as standalone on the customer shell,
+     so it has to be readable against both a menu and live page content. */
+  min-width:224px;background:var(--card,#fff);border:1px solid var(--hair);border-radius:var(--r-sm);
   padding:6px;box-shadow:var(--shadow-lg);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px)}
 .business-workspace-switch .menu a,.customer-workspace-switch .menu a{display:flex;align-items:center;min-height:44px;
   padding:9px 12px;border-radius:8px;color:var(--ink2);font-size:13.5px;font-weight:600;white-space:nowrap}
@@ -830,8 +855,12 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+/* V450: same fix as .profile .menu below — this dropdown opens over the same dashboard figures and
+   carried the same rgba(255,255,255,.86). It was not in the owner's report only because it needs
+   unread notifications to open; the defect is identical, so it is fixed with its sibling rather
+   than left in the register as a known-identical bug. */
 .notif-menu{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-width:calc(100vw - 40px);
-  background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  background:var(--card,#fff);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:8px;box-shadow:var(--shadow-lg);
   transform-origin:top right;animation:pop .2s var(--spring);max-height:420px;overflow-y:auto;z-index:41}
 .notif-item{display:block;width:100%;padding:10px 12px;border-radius:8px;cursor:pointer;text-align:left;background:transparent;color:inherit;transition:background .14s var(--ease)}
@@ -1834,6 +1863,14 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* nestly_v453: the three controls of the stepper are ONE unit. The bar wraps at narrow widths and
+   used to wrap between them, leaving "−" beside the heading and "15 stamps +" on the line below.
+   The label may stack above this group; the group itself never splits. */
+.grow-stamps-lensteps-v453{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:nowrap}
+/* nestly_v453: why a stepper is refused, on its own line at the foot of the bar. flex-basis:100%
+   rather than a separate block so it belongs to the bar it explains, and stays put when the bar
+   wraps on a phone. */
+.grow-stamps-lenwhy-v453{flex:0 0 100%;margin-top:2px;font-size:.86rem;color:var(--muted)}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
 /* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
    stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar
@@ -1850,7 +1887,19 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
   background:#fff;color:var(--ink);font-size:19px;line-height:1;font-family:inherit;cursor:pointer}
 .grow-stamps-lenstep-v416:hover:not(:disabled){background:var(--tint);border-color:var(--coral);color:var(--coral)}
 .grow-stamps-lenstep-v416:disabled{opacity:.4;cursor:default}
-.grow-stamps-editgrid-v416{display:flex;flex-wrap:wrap;gap:12px 10px;margin-top:20px}
+/* nestly_v449 (owner, repeated): "i want to have rows of 5 instead of so lengthy rows — 5 stamps
+   then next row." Five FIXED tracks, not auto-fill, so the card reads the same at 390px and at
+   1564px: 15 stamps is always three rows of five, 12 is 5/5/2. This was a width-filling flex wrap
+   that put nineteen circles on one line at 1564.
+   row-gap is 24px, not the old 12: .grow-stamps-editcell-gift-v416 hangs 15px ABOVE its circle,
+   which never showed while a card was one row and would sit on the row above the moment it was
+   not. padding-top gives the FIRST row's glyphs the same clearance inside the scroll box.
+   The scroll box is the long-card guard: a 100-stamp card is twenty rows, and the length control
+   and the summary sit either side of this grid. Six rows are shown and the rest scrolls in place,
+   so a long card cannot push the rest of the page out of reach. A 15-stamp card is three rows and
+   never reaches the cap, so nothing scrolls in the ordinary case. */
+.grow-stamps-editgrid-v416{display:grid;grid-template-columns:repeat(5,44px);justify-content:start;
+  gap:24px 10px;margin-top:6px;padding-top:18px;max-height:min(52vh,430px);overflow-x:hidden;overflow-y:auto}
 .grow-stamps-editcell-v416{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:44px;height:44px;flex:0 0 auto;border-radius:999px;border:2px solid #F0C9AE;background:#fff;
   color:#B08462;font-weight:700;font-size:14px;padding:0;font-family:inherit;cursor:pointer;
@@ -1860,13 +1909,18 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-editcell-num-v416{line-height:1}
 .grow-stamps-editcell-v416.is-gift-v416{border-color:var(--coral);color:var(--coral);background:var(--tint)}
 .grow-stamps-editcell-gift-v416{position:absolute;top:-15px;left:50%;transform:translateX(-50%);color:var(--coral);line-height:0}
-/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough. */
+/* Past the card's end: this gift cannot be claimed, and saying so quietly is not enough.
+   nestly_v445: these chips live in the warning band, NOT in the grid — the grid only ever draws
+   slots the card really has. Top margin clears the gift icon, which hangs 15px above the circle. */
+.grow-stamps-strandedgifts-v445{display:flex;flex-wrap:wrap;gap:12px 10px;align-items:center;margin-top:22px}
 .grow-stamps-editcell-v416.is-past-v416{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .grow-stamps-editcell-v416.is-past-v416 .grow-stamps-editcell-gift-v416{color:var(--warn)}
 .grow-stamps-editcell-v416.is-add-v416{border-style:dashed;border-color:var(--control-border);color:var(--muted);font-size:20px}
 .grow-stamps-gridlegend-v416{margin-top:14px}
 @media(max-width:768px){
-  .grow-stamps-editgrid-v416{gap:12px 8px}
+  /* nestly_v449: still five per row — the whole point of the owner's ruling is that the card
+     looks the same everywhere. 5×40 + 4×8 = 232px, which fits inside a 390px viewport. */
+  .grow-stamps-editgrid-v416{grid-template-columns:repeat(5,40px);gap:22px 8px}
   .grow-stamps-editcell-v416{width:40px;height:40px}
 }
 
@@ -1891,7 +1945,12 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
      own content — 273px inside a 480px dialog, so no two fields ended at the same place.
      nowrap is the whole fix for that: one column, every child the width of the dialog. */
   display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;border:0}
-.grow-points-form-card-v343.grow-points-form-modal-v410>*{grid-column:1/-1;min-width:0}
+/* nestly_v449: `grid-column:1/-1` was the old defence against the inline card's five-track grid
+   catching the dialog — and it was the thing that stretched every child to the full 836px of
+   those tracks once it did. The inline rules no longer match a modal at all (see the
+   :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
+   flex column and each child is simply bounded by it. */
+.grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -1900,8 +1959,13 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    .grow-setup-input-v301 is centred because it was built as a fill-in-the-blank box inside a
    sentence ("earn ( 1 ) point per $1"), but here every box has its own label above it, and a
    centred value under a left-aligned label is exactly the misalignment in the photo. */
+/* nestly_v449: `margin:0 4px` comes from the base .grow-setup-input-v301 — the fill-in-the-blank
+   box's breathing room inside a sentence. With width:100% and border-box that is 8px MORE than
+   the content box, so the field would run past the dialog's right edge by exactly that much.
+   The base's min-height/padding/font-weight now reach the dialog too (the inline card used to
+   shrink them to 36px); 44px is the house tap target, so they are kept, not undone. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;max-width:none;
-  box-sizing:border-box;text-align:left}
+  box-sizing:border-box;text-align:left;margin-inline:0}
 /* line-height:2 belongs to the sentence form of this row; in the dialog it opened a ~19px gap
    between a label and the field it names, so the label read as floating between two fields. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
@@ -3904,7 +3968,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1f0f26abbe5617dde5b159d0fc7de5c6589bf6f8932259c855a86ea738155b71</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 33fe55b9c70396ec86431f573e0dc4e7832893815e0ca95058b580e5b23c4940</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -15841,12 +15905,87 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsTargetV416=Math.max(0,Math.round(Number(snapshot.loyalty?.stamp_target)||0));
   const growStampsHighestGiftV416=growStampsLevelsSortedV350
     .reduce((most,reward)=>Math.max(most,Math.max(0,Number(reward.cost_points)||0)),0);
-  /* What the grid DRAWS. Never shorter than the highest gift: a gift past the end of the card is
-     the exact defect v414 was written for, and hiding it would leave the owner unable to see or
-     move the gift their customers cannot claim. A firm that has never set a length gets 15. */
+  /* What the grid DRAWS is the CARD'S OWN length and nothing else — loyalty_programs.stamp_target,
+     the number the engine enforces — falling back to 15 only for a firm that has never set one.
+     -------------------------------------------------------------------------------------------
+     nestly_v445 (REG-001). This used to read
+         Math.max(1, target||15, growStampsHighestGiftV416)
+     i.e. it STRETCHED the drawn card to cover the highest gift, capped at 100. A 15-stamp card
+     carrying a gift at stamp 1000 therefore drew 100 slots and put 100 in the "Card length in
+     stamps" field on EVERY render, while the server held 15. Every length control on this screen
+     is built from this one number — the two steppers, the grid's trailing "+", and the typed
+     field's own unchanged-value guard — so a single tap would have written that phantom length
+     back to loyalty_programs. The gift is not hidden by drawing the real card: an out-of-range
+     gift is a VALIDATION fault, not a length, and it is reported as one — named individually in
+     the warning band below (v363/v445) and still listed in the summary. Moving or removing it
+     stays the owner's decision; nothing here mutates their data. */
   const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
-    Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416,growStampsHighestGiftV416));
+    Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416));
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
+  /* nestly_v445: the gifts that sit past the end of the card, each one named. The old warning
+     mentioned only the highest, which on a card with several stranded gifts under-reports. */
+  const growStampsStrandedGiftsV445=growStampsLevelsSortedV350
+    .filter(reward=>Math.max(0,Number(reward.cost_points)||0)>growStampsCardLenV416);
+  /* nestly_v445: the shortest the card may be made from THIS screen — the highest gift that is
+     actually ON the card. It used to be the highest gift full stop, which with a gift at stamp
+     1000 disabled the "−" stepper permanently and left the owner unable to touch the length at
+     all. The server keeps its own veto (business_set_stamp_card_length_v414 refuses to strand a
+     live gift and names it), so this guard only spares the owner a request that must fail. */
+  const growStampsShortestLenV445=growStampsLevelsSortedV350
+    .reduce((most,reward)=>{
+      const stamp=Math.max(0,Number(reward.cost_points)||0);
+      return stamp>0&&stamp<=growStampsCardLenV416?Math.max(most,stamp):most;
+    },1);
+  /* nestly_v453: a disabled stepper that gives no reason is, from the owner's chair, the same
+     experience as a broken one — the last report of "I can't press − or +" was this guard working
+     as designed. Each refusal now names ITS OWN reason, and the way out where there is one.
+     The two conditions below are the v445 and v416 guards copied verbatim, named so the markup
+     can ask them twice (once to disable, once to explain); nothing about when a stepper is
+     refused has changed, and no new way to shorten a card is offered. Moving a gift remains the
+     v445 stranded chips and the ordinary tap-a-stamp edit flow.
+     Order matters in the shorter case: at one stamp the card cannot be shorter whatever gifts are
+     on it, so "already one stamp long" is the true reason and naming a gift there would send the
+     owner to move something that would not help. */
+  const growStampsShorterOffV453=growStampsCardLenV416<=growStampsShortestLenV445;
+  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416;
+  /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
+     rather than looked up through a variable: the workspace audit
+     (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
+     interpolated accessibility attribute is registered, reviewed copy, and a key hidden behind a
+     variable is a key nobody can review. The key and its values therefore appear twice per case,
+     once for the title and once for the visible line — and a v453 test asserts the two render the
+     SAME sentence in all three locales, so they cannot drift apart unnoticed. */
+  const growStampsShorterMinV453=growStampsShorterOffV453&&growStampsCardLenV416<=1;
+  const growStampsShorterGiftV453=growStampsShorterOffV453&&growStampsCardLenV416>1;
+  const growStampsShorterTitleV453=growStampsShorterMinV453
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMinimum',{stamps:1})
+    :growStampsShorterGiftV453
+      ?workspaceTemplateAttributeV97('title','stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
+      :'';
+  const growStampsShorterTextV453=growStampsShorterMinV453
+    ?workspaceTemplateTextV97('stampLengthAtMinimum',{stamps:1})
+    :growStampsShorterGiftV453
+      ?workspaceTemplateTextV97('stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
+      :'';
+  const growStampsLongerTitleV453=growStampsLongerOffV453
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+  const growStampsLongerTextV453=growStampsLongerOffV453
+    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+  /* The sentence is rendered as TEXT in the bar, not only as a title. A disabled button is not
+     focusable and several screen readers drop it from the tree entirely, so a tooltip on it is
+     reachable by neither keyboard nor assistive tech; the visible line is the only version every
+     owner gets. title + aria-describedby point at it for the mouse and for the readers that do
+     announce disabled controls. Both halves read the SAME workspace template, so they cannot
+     disagree — including in Chinese and Malay.
+     Built as ONE string appended to the bar rather than two interpolations inside it, so that a
+     bar with nothing to explain is byte-for-byte the bar v445 shipped — two empty `${}` slots
+     would have left two blank lines behind, which is the kind of drift a byte pin exists to
+     catch and a reader would waste time on. */
+  const growStampsWhyLinesV453=!canSetupGrow?'':[
+    ['growStampsLenShorterWhyV453',growStampsShorterTextV453],
+    ['growStampsLenLongerWhyV453',growStampsLongerTextV453],
+  ].filter(([,text])=>text).map(([id,text])=>
+    `\n    <span class="grow-stamps-lenwhy-v453" id="${id}" data-grow-stamps-lenwhy-v453>${esc(text)}</span>`).join('');
   /* nestly_v422 (owner photo 2, the value ringed: "do as a field, so can edit number"). Getting
      from 10 stamps to 40 was thirty taps on the "+", because the length was a READ-ONLY <b>
      between two steppers. It is a real number input now — type 40, press Enter or tab away, done
@@ -15859,11 +15998,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
     <span class="spacer"></span>
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=Math.max(1,growStampsHighestGiftV416)?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
+    ${/* nestly_v453 (owner photo at 390): the bar is a wrapping flex row, and at a phone width it
+         was wrapping BETWEEN the three controls — the "−" rode up onto the heading's line at the
+         far right while "15 stamps +" dropped to a second line, so the minus read as an unrelated
+         button beside the title rather than as the left half of a stepper. The three controls are
+         one nowrap unit now: the LABEL may stack above them at 390, which is fine and is what the
+         owner's own photo shows working elsewhere on this page, but the stepper cannot split. */''}
+    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} aria-label="One stamp shorter">−</button>`:''}
     ${canSetupGrow
       ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
       :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416?' disabled':''} aria-label="One stamp longer">+</button>`:''}
+    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsLongerOffV453?` disabled ${growStampsLongerTitleV453} aria-describedby="growStampsLenLongerWhyV453"`:''} aria-label="One stamp longer">+</button>`:''}</span>${growStampsWhyLinesV453}
   </div>`;
   /* The grid. One cell per stamp, in order, with a gift marked on the stamps that pay out — the
      owner's drawing exactly. A cell is a BUTTON when the owner may edit, plain text otherwise, so
@@ -15873,8 +16018,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const stamp=index+1;
       const reward=growStampsRewardAtV410.get(stamp);
       const name=reward?String(reward.customer_name||reward.name||'Reward'):'';
-      const past=growStampsStrandedV416&&stamp>growStampsTargetV416;
-      const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}${past?' is-past-v416':''}`;
+      /* nestly_v445: there is no longer an is-past-v416 cell here. The grid only ever draws slots
+         the card actually has, so no cell can be past its end; the warning style moved to the
+         stranded-gift chips in the note below, which are explicitly NOT slots of this card. */
+      const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}`;
       const label=reward
         ?`Stamp ${stamp} gives ${name}. Edit this gift.`
         :`Stamp ${stamp} has no gift. Add one.`;
@@ -15893,10 +16040,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
      end — so a firm in that state (Cubbly is, today) needs to be told which gift and offered the
      one-tap fix rather than left with a gift nobody can claim. */
-  const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px">
+  /* nestly_v445: the stranded gifts are now DRAWN here, in the warning style the grid's phantom
+     tail used to wear, and each one opens its own gift form so the owner can move it onto a stamp
+     inside the card. They are chips in a warning band, never slots in the grid: the card above is
+     the card, and this is a list of gifts that fall outside it. */
+  const growStampsStrandedChipsV445=!growStampsStrandedGiftsV445.length?''
+    :`<div class="grow-stamps-strandedgifts-v445">
+    ${growStampsStrandedGiftsV445.map(reward=>{
+      const stamp=Math.max(0,Number(reward.cost_points)||0);
+      const name=String(reward.customer_name||reward.name||'Reward');
+      const label=`Stamp ${stamp} gives ${name}, past the end of this card. Edit this gift.`;
+      if(!canSetupGrow)return `<span class="grow-stamps-editcell-v416 is-past-v416" data-merchant-content title="${esc(name)}"><span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><span class="grow-stamps-editcell-num-v416">${stamp}</span></span>`;
+      return `<button type="button" class="grow-stamps-editcell-v416 is-past-v416" data-grow-points-gift-edit-v343="${esc(String(reward.id))}" data-merchant-content aria-label="${esc(label)}" title="${esc(name)}"><span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><span class="grow-stamps-editcell-num-v416">${stamp}</span></button>`;
+    }).join('')}
+  </div>`;
+  const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
     <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
-    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but a gift sits at stamp ${growStampsHighestGiftV416}. Customers finish the card before they reach it, so the counter will refuse it. Make the card ${growStampsHighestGiftV416} stamps long, or move that gift onto a stamp inside the card.</p>
-    ${canSetupGrow?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
+    ${growStampsStrandedChipsV445}
+    ${canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V416?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
@@ -26220,6 +26382,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'1f0f26abbe5617dde5b159d0fc7de5c6589bf6f8932259c855a86ea738155b71',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'33fe55b9c70396ec86431f573e0dc4e7832893815e0ca95058b580e5b23c4940',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

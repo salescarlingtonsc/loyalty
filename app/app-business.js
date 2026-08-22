@@ -15339,12 +15339,87 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsTargetV416=Math.max(0,Math.round(Number(snapshot.loyalty?.stamp_target)||0));
   const growStampsHighestGiftV416=growStampsLevelsSortedV350
     .reduce((most,reward)=>Math.max(most,Math.max(0,Number(reward.cost_points)||0)),0);
-  /* What the grid DRAWS. Never shorter than the highest gift: a gift past the end of the card is
-     the exact defect v414 was written for, and hiding it would leave the owner unable to see or
-     move the gift their customers cannot claim. A firm that has never set a length gets 15. */
+  /* What the grid DRAWS is the CARD'S OWN length and nothing else — loyalty_programs.stamp_target,
+     the number the engine enforces — falling back to 15 only for a firm that has never set one.
+     -------------------------------------------------------------------------------------------
+     nestly_v445 (REG-001). This used to read
+         Math.max(1, target||15, growStampsHighestGiftV416)
+     i.e. it STRETCHED the drawn card to cover the highest gift, capped at 100. A 15-stamp card
+     carrying a gift at stamp 1000 therefore drew 100 slots and put 100 in the "Card length in
+     stamps" field on EVERY render, while the server held 15. Every length control on this screen
+     is built from this one number — the two steppers, the grid's trailing "+", and the typed
+     field's own unchanged-value guard — so a single tap would have written that phantom length
+     back to loyalty_programs. The gift is not hidden by drawing the real card: an out-of-range
+     gift is a VALIDATION fault, not a length, and it is reported as one — named individually in
+     the warning band below (v363/v445) and still listed in the summary. Moving or removing it
+     stays the owner's decision; nothing here mutates their data. */
   const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
-    Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416,growStampsHighestGiftV416));
+    Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416));
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
+  /* nestly_v445: the gifts that sit past the end of the card, each one named. The old warning
+     mentioned only the highest, which on a card with several stranded gifts under-reports. */
+  const growStampsStrandedGiftsV445=growStampsLevelsSortedV350
+    .filter(reward=>Math.max(0,Number(reward.cost_points)||0)>growStampsCardLenV416);
+  /* nestly_v445: the shortest the card may be made from THIS screen — the highest gift that is
+     actually ON the card. It used to be the highest gift full stop, which with a gift at stamp
+     1000 disabled the "−" stepper permanently and left the owner unable to touch the length at
+     all. The server keeps its own veto (business_set_stamp_card_length_v414 refuses to strand a
+     live gift and names it), so this guard only spares the owner a request that must fail. */
+  const growStampsShortestLenV445=growStampsLevelsSortedV350
+    .reduce((most,reward)=>{
+      const stamp=Math.max(0,Number(reward.cost_points)||0);
+      return stamp>0&&stamp<=growStampsCardLenV416?Math.max(most,stamp):most;
+    },1);
+  /* nestly_v453: a disabled stepper that gives no reason is, from the owner's chair, the same
+     experience as a broken one — the last report of "I can't press − or +" was this guard working
+     as designed. Each refusal now names ITS OWN reason, and the way out where there is one.
+     The two conditions below are the v445 and v416 guards copied verbatim, named so the markup
+     can ask them twice (once to disable, once to explain); nothing about when a stepper is
+     refused has changed, and no new way to shorten a card is offered. Moving a gift remains the
+     v445 stranded chips and the ordinary tap-a-stamp edit flow.
+     Order matters in the shorter case: at one stamp the card cannot be shorter whatever gifts are
+     on it, so "already one stamp long" is the true reason and naming a gift there would send the
+     owner to move something that would not help. */
+  const growStampsShorterOffV453=growStampsCardLenV416<=growStampsShortestLenV445;
+  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416;
+  /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
+     rather than looked up through a variable: the workspace audit
+     (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
+     interpolated accessibility attribute is registered, reviewed copy, and a key hidden behind a
+     variable is a key nobody can review. The key and its values therefore appear twice per case,
+     once for the title and once for the visible line — and a v453 test asserts the two render the
+     SAME sentence in all three locales, so they cannot drift apart unnoticed. */
+  const growStampsShorterMinV453=growStampsShorterOffV453&&growStampsCardLenV416<=1;
+  const growStampsShorterGiftV453=growStampsShorterOffV453&&growStampsCardLenV416>1;
+  const growStampsShorterTitleV453=growStampsShorterMinV453
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMinimum',{stamps:1})
+    :growStampsShorterGiftV453
+      ?workspaceTemplateAttributeV97('title','stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
+      :'';
+  const growStampsShorterTextV453=growStampsShorterMinV453
+    ?workspaceTemplateTextV97('stampLengthAtMinimum',{stamps:1})
+    :growStampsShorterGiftV453
+      ?workspaceTemplateTextV97('stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
+      :'';
+  const growStampsLongerTitleV453=growStampsLongerOffV453
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+  const growStampsLongerTextV453=growStampsLongerOffV453
+    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+  /* The sentence is rendered as TEXT in the bar, not only as a title. A disabled button is not
+     focusable and several screen readers drop it from the tree entirely, so a tooltip on it is
+     reachable by neither keyboard nor assistive tech; the visible line is the only version every
+     owner gets. title + aria-describedby point at it for the mouse and for the readers that do
+     announce disabled controls. Both halves read the SAME workspace template, so they cannot
+     disagree — including in Chinese and Malay.
+     Built as ONE string appended to the bar rather than two interpolations inside it, so that a
+     bar with nothing to explain is byte-for-byte the bar v445 shipped — two empty `${}` slots
+     would have left two blank lines behind, which is the kind of drift a byte pin exists to
+     catch and a reader would waste time on. */
+  const growStampsWhyLinesV453=!canSetupGrow?'':[
+    ['growStampsLenShorterWhyV453',growStampsShorterTextV453],
+    ['growStampsLenLongerWhyV453',growStampsLongerTextV453],
+  ].filter(([,text])=>text).map(([id,text])=>
+    `\n    <span class="grow-stamps-lenwhy-v453" id="${id}" data-grow-stamps-lenwhy-v453>${esc(text)}</span>`).join('');
   /* nestly_v422 (owner photo 2, the value ringed: "do as a field, so can edit number"). Getting
      from 10 stamps to 40 was thirty taps on the "+", because the length was a READ-ONLY <b>
      between two steppers. It is a real number input now — type 40, press Enter or tab away, done
@@ -15357,11 +15432,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
     <span class="spacer"></span>
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=Math.max(1,growStampsHighestGiftV416)?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
+    ${/* nestly_v453 (owner photo at 390): the bar is a wrapping flex row, and at a phone width it
+         was wrapping BETWEEN the three controls — the "−" rode up onto the heading's line at the
+         far right while "15 stamps +" dropped to a second line, so the minus read as an unrelated
+         button beside the title rather than as the left half of a stepper. The three controls are
+         one nowrap unit now: the LABEL may stack above them at 390, which is fine and is what the
+         owner's own photo shows working elsewhere on this page, but the stepper cannot split. */''}
+    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} aria-label="One stamp shorter">−</button>`:''}
     ${canSetupGrow
       ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
       :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416?' disabled':''} aria-label="One stamp longer">+</button>`:''}
+    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsLongerOffV453?` disabled ${growStampsLongerTitleV453} aria-describedby="growStampsLenLongerWhyV453"`:''} aria-label="One stamp longer">+</button>`:''}</span>${growStampsWhyLinesV453}
   </div>`;
   /* The grid. One cell per stamp, in order, with a gift marked on the stamps that pay out — the
      owner's drawing exactly. A cell is a BUTTON when the owner may edit, plain text otherwise, so
@@ -15371,8 +15452,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const stamp=index+1;
       const reward=growStampsRewardAtV410.get(stamp);
       const name=reward?String(reward.customer_name||reward.name||'Reward'):'';
-      const past=growStampsStrandedV416&&stamp>growStampsTargetV416;
-      const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}${past?' is-past-v416':''}`;
+      /* nestly_v445: there is no longer an is-past-v416 cell here. The grid only ever draws slots
+         the card actually has, so no cell can be past its end; the warning style moved to the
+         stranded-gift chips in the note below, which are explicitly NOT slots of this card. */
+      const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}`;
       const label=reward
         ?`Stamp ${stamp} gives ${name}. Edit this gift.`
         :`Stamp ${stamp} has no gift. Add one.`;
@@ -15391,10 +15474,25 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
      end — so a firm in that state (Cubbly is, today) needs to be told which gift and offered the
      one-tap fix rather than left with a gift nobody can claim. */
-  const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px">
+  /* nestly_v445: the stranded gifts are now DRAWN here, in the warning style the grid's phantom
+     tail used to wear, and each one opens its own gift form so the owner can move it onto a stamp
+     inside the card. They are chips in a warning band, never slots in the grid: the card above is
+     the card, and this is a list of gifts that fall outside it. */
+  const growStampsStrandedChipsV445=!growStampsStrandedGiftsV445.length?''
+    :`<div class="grow-stamps-strandedgifts-v445">
+    ${growStampsStrandedGiftsV445.map(reward=>{
+      const stamp=Math.max(0,Number(reward.cost_points)||0);
+      const name=String(reward.customer_name||reward.name||'Reward');
+      const label=`Stamp ${stamp} gives ${name}, past the end of this card. Edit this gift.`;
+      if(!canSetupGrow)return `<span class="grow-stamps-editcell-v416 is-past-v416" data-merchant-content title="${esc(name)}"><span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><span class="grow-stamps-editcell-num-v416">${stamp}</span></span>`;
+      return `<button type="button" class="grow-stamps-editcell-v416 is-past-v416" data-grow-points-gift-edit-v343="${esc(String(reward.id))}" data-merchant-content aria-label="${esc(label)}" title="${esc(name)}"><span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span><span class="grow-stamps-editcell-num-v416">${stamp}</span></button>`;
+    }).join('')}
+  </div>`;
+  const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
     <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
-    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but a gift sits at stamp ${growStampsHighestGiftV416}. Customers finish the card before they reach it, so the counter will refuse it. Make the card ${growStampsHighestGiftV416} stamps long, or move that gift onto a stamp inside the card.</p>
-    ${canSetupGrow?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
+    ${growStampsStrandedChipsV445}
+    ${canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V416?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
