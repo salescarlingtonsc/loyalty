@@ -75,7 +75,11 @@ test('V373 the sheet and the page share ONE binder, so a tile behaves the same w
   assert.equal((till.match(/document\.querySelectorAll\('\[data-plan\]'\)/g) || []).length, 1);
   // Two focus traps on screen at once is how a keyboard user gets stuck: the custom-price dialog
   // replaces the sheet rather than stacking on it.
-  assert.match(composer, /\$\('tCustomOpen'\)\.onclick=\(\)=>\{closeTillAddSheetV373\(\);openCustomModal\(\)\}/);
+  /* nestly_v438: replacement is now a HISTORY HAND-OFF, not two independent operations — the
+     sheet's async history.back() was landing on the modal's fresh entry and closing it the
+     instant it opened. The executing proof lives in v438-till-custom-item-handoff.test.mjs;
+     this pin only keeps the replace-not-stack shape. */
+  assert.match(composer, /closeTillAddSheetV373\(\{handOffHistory:true\}\);\s*openCustomModal\(\{inheritHistoryId:inheritV438\}\);/);
 });
 
 test('V373 only rewards that can be given today are shown, and the automatic one is not a button', () => {

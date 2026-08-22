@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="9758e94dd7fe9e527ba74ee82a5fdcd336c2f9f6d9193ae0fa2b3ecbf0bc79b5"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="00c011fcb0d798283ff55ad02874292083cababcf51c0cdb3db3deb6288a3d2a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3824,7 +3824,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 9758e94dd7fe9e527ba74ee82a5fdcd336c2f9f6d9193ae0fa2b3ecbf0bc79b5</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 00c011fcb0d798283ff55ad02874292083cababcf51c0cdb3db3deb6288a3d2a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6275,17 +6275,17 @@ async function tillPage(){
     </div></div>`);
     const node=$('tillAddSheetV373');
     let deactivate;
-    const close=()=>{tillAddSheetV373=null;if(deactivate)deactivate();else node.remove()};
+    const close=(options)=>{tillAddSheetV373=null;if(deactivate)deactivate(options);else node.remove()};
     deactivate=CUI.activateDialog(node,{onClose:close,initialFocus:'#tillAddSheetCloseV373'});
     node._closeV373=close;
     $('tillAddSheetCloseV373').onclick=close;
     paintTillAddSheetV373();
   }
-  function closeTillAddSheetV373(){
+  function closeTillAddSheetV373(options){
     const node=$('tillAddSheetV373');
     tillAddSheetV373=null;
     if(!node)return;
-    if(typeof node._closeV373==='function')node._closeV373();else node.remove();
+    if(typeof node._closeV373==='function')node._closeV373(options);else node.remove();
   }
   function paintTillAddSheetV373(){
     const body=$('tillAddSheetBodyV373');
@@ -6515,7 +6515,18 @@ async function tillPage(){
     });
     /* The custom-price dialog replaces the sheet rather than stacking on it: two focus traps on
        screen at once is how a keyboard user gets stuck. */
-    if($('tCustomOpen'))$('tCustomOpen').onclick=()=>{closeTillAddSheetV373();openCustomModal()};
+    if($('tCustomOpen'))$('tCustomOpen').onclick=()=>{
+      /* nestly_v438: the v183 hand-off, at the till. closeTillAddSheetV373()'s deactivate
+         unwinds its history entry with history.back(), which is ASYNCHRONOUS — the pop used to
+         land AFTER openCustomModal() had pushed its own entry, fire the new modal's popstate
+         handler, and close the "Other item" form the instant it opened (silently: no error, the
+         sheet just vanished). On a fresh business with no catalogue this was the ONLY way to key
+         a sale, so the till dead-ended. The outgoing sheet hands its history entry to the
+         incoming modal instead — one Back still closes exactly one dialog. */
+      const inheritV438=CUI.currentDialogHistoryId();
+      closeTillAddSheetV373({handOffHistory:true});
+      openCustomModal({inheritHistoryId:inheritV438});
+    };
     document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>changeQty(b.dataset.line,parseInt(b.dataset.qty,10)));
     document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeLine(b.dataset.remove));
     document.querySelectorAll('[data-tender]').forEach(button=>button.onclick=()=>{
@@ -6558,7 +6569,7 @@ async function tillPage(){
   function startNewCheckout(){payError=null;saleCommitted=false;staleConfirm=false;staleReevaluationsV257=0;clearWriteAttempt(FINALISE_SLOT);onSaleLinesChanged();}
   // "Other item" modal — amount + a MANDATORY short reason (3..200). The reason is required by the
   // kernel for custom (unpriced) lines; the amount is sent as amount_cents and re-validated server-side.
-  function openCustomModal(){
+  function openCustomModal({inheritHistoryId=0}={}){
     if(cartLocked())return;
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tCustomModal" role="dialog" aria-modal="true" aria-labelledby="tCustomTitle" tabindex="-1"><div class="modal-card" style="max-width:460px">
       <div class="row"><div><h2 id="tCustomTitle">Other item</h2><p class="muted small">A one-off charge that isn't in your catalogue. Owner and manager only.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tCustomClose">Close</button></div>
@@ -6572,7 +6583,7 @@ async function tillPage(){
     </div></div>`);
     let deactivate;
     const close=()=>{if(deactivate)deactivate();else $('tCustomModal')?.remove();};
-    deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt'});
+    deactivate=CUI.activateDialog($('tCustomModal'),{onClose:close,initialFocus:'#tCustomAmt',inheritHistoryId});
     $('tCustomClose').onclick=$('tCustomCancel').onclick=close;
     const submit=()=>{
       /* V206 (owner: "dont need reason when add item ... for over sold or ad hoc purchase that
@@ -6947,7 +6958,7 @@ async function tillPage(){
               <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
-        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">${tillUnitNounV430(catalog)==='stamps'?'Stamps':'Points'} balance after this visit: <b>${d.pointsTotal}</b></p>`:''}
+        ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">${tillUnitNounV430(catalog)==='stamps'?`Total stamps earned to date: <b>${d.pointsTotal}</b>`:`Points balance after this visit: <b>${d.pointsTotal}</b>`}</p>`:''}
         ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
@@ -7023,7 +7034,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'9758e94dd7fe9e527ba74ee82a5fdcd336c2f9f6d9193ae0fa2b3ecbf0bc79b5',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'00c011fcb0d798283ff55ad02874292083cababcf51c0cdb3db3deb6288a3d2a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

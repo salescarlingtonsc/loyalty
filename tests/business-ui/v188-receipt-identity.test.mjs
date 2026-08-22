@@ -20,9 +20,12 @@ test('the trading name is kept when it differs from the registered name', () => 
 });
 
 test('the customer sees their points balance as its own line', () => {
-  /* nestly_v430: the line is unit-aware now — 'Stamps balance after this visit' for a stamps
-     firm. The pin follows the ternary rather than the single-unit literal. */
-  assert.match(app, /\?'Stamps':'Points'\} balance after this visit/);
+  /* nestly_v430 made the line unit-aware; nestly_v438 split the copy: points keeps
+     'balance after this visit', but stamps says 'Total stamps earned to date' — the RPC's
+     points_total is the LIFETIME pot, which stops matching the card the moment a cycle
+     closes ("balance 10" beside a fresh 0/6 card read as a bug on the till). */
+  assert.match(app, /Total stamps earned to date: <b>\$\{d\.pointsTotal\}<\/b>/);
+  assert.match(app, /Points balance after this visit: <b>\$\{d\.pointsTotal\}<\/b>/);
   assert.ok(!app.includes('· now ${d.pointsTotal} points total'),
     'the balance should not be buried in a tail clause');
 });
