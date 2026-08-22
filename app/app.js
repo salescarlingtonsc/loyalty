@@ -9801,15 +9801,29 @@ function openCustomerBusinessShortcutPageV348({action='',title='Details',target=
       card.hidden=true;
       hiddenByShortcutV386.push(card);
     });
-    /* The explainer and the section's own "Rewards / ready rewards, catalogue" head are points
-       guidance, so they follow the points half rather than standing alone over a tier ladder —
-       the page already carries "Tier benefits" as its title. */
-    if(action==='tiers')target.querySelectorAll('[data-points-explainer],.customer-business-group-head-v346').forEach(node=>{
+    /* The explainer is points guidance, so it follows the points half rather than standing alone
+       over a tier ladder. (v386 hid the section's group head here too; nestly_v446 hides it for
+       every action instead — see below — so this line no longer has to.) */
+    if(action==='tiers')target.querySelectorAll('[data-points-explainer]').forEach(node=>{
       if(node.hidden)return;
       node.hidden=true;
       hiddenByShortcutV386.push(node);
     });
   }
+  /* nestly_v446 (REG-002, "the page shows a doubled Rewards heading"). A section carries its own
+     `<h2>` because on the profile it is one group among several; on THIS page it is the whole
+     page, and the page already prints its title in `<h1>` beside the Back button. So the stamp
+     card tile opened a page headed "Rewards" over a section headed "Rewards" — the same word
+     twice, one under the other. v386 already removed it, but only for the tiers action, where it
+     had been noticed. The rule is not about tiers: a group head inside this page is redundant
+     whatever tile opened it, and the ONE place the section is named is now the page title.
+     Hidden, not detached, and restored on close like everything else here, so the profile page
+     underneath is unchanged. */
+  target.querySelectorAll('.customer-business-group-head-v346').forEach(node=>{
+    if(node.hidden)return;
+    node.hidden=true;
+    hiddenByShortcutV386.push(node);
+  });
   page._customerBusinessShortcutRestoreV348=()=>{
     hiddenByShortcutV386.forEach(node=>{node.hidden=false});
     hiddenByShortcutV386.length=0;

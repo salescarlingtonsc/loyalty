@@ -275,9 +275,16 @@ test('photo 6: the claim button sits under the reward it claims, not above it', 
     /\.wallet-rewards\.customer-rewards-carousel-v337 \.wallet-reward\{max-width:none;\s*\n\s*display:grid;grid-template-columns:64px minmax\(0,1fr\);grid-template-areas:'photo copy';/,
     'the action row is gone from the narrow template, so the button auto-places after the copy');
   assert.match(indexHtml, /\.customer-rewards-carousel-v337 \.wallet-reward-actions\{grid-column:1\/-1;margin-top:8px\}/);
-  /* The wide layout still puts the action on the row's own line, so it must keep the named area. */
-  assert.match(indexHtml, /@media\(min-width:641px\)\{[\s\S]*?grid-template-areas:'photo copy action'[\s\S]*?\.customer-rewards-carousel-v337 \.wallet-reward-actions\{grid-area:action;margin-top:0\}/,
-    'the wide row is unchanged and still names the area it places into');
+  /* The wide layout still puts the action on the row's own line, so it must keep the named area.
+     nestly_v446 (REG-002) re-pinned: the gate is now the ROW's width, not the VIEWPORT's. This
+     assertion used to require `@media(min-width:641px)`, which is exactly the bug — the customer
+     shell caps .wallet-inner at 390px on every viewport, so above 640px the browser was asked to
+     fit three tracks into a 324px row and the copy column measured 31px. A pin that required the
+     broken gate is not preserved; it is corrected. */
+  assert.match(indexHtml, /@container rewardrow \(min-width:460px\)\{[\s\S]*?grid-template-areas:'photo copy action'[\s\S]*?\.customer-rewards-carousel-v337 \.wallet-reward-actions\{grid-area:action;margin-top:0\}/,
+    'the wide row is gated on the row, and still names the area it places into');
+  assert.match(indexHtml, /\.wallet-rewards\.customer-rewards-carousel-v337\{[^}]*container-type:inline-size;container-name:rewardrow/,
+    'and the list is the container that gate measures');
 });
 
 test('photo 6: Available and History are tabs, and History is not fetched until it is opened', () => {

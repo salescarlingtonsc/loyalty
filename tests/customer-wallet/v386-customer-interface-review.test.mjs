@@ -63,7 +63,14 @@ test('photos 5+10: each shortcut shows only the cards that belong to it',()=>{
   assert.match(open,/hiddenByShortcutV386\.push\(card\)/);
   assert.match(open,/hiddenByShortcutV386\.forEach\(node=>\{node\.hidden=false\}\)/,
     'and restores them on close, so the main page is unchanged');
-  assert.match(open,/action==='tiers'\)target\.querySelectorAll\('\[data-points-explainer\],\.customer-business-group-head-v346'\)/);
+  assert.match(open,/action==='tiers'\)target\.querySelectorAll\('\[data-points-explainer\]'\)/,
+    'the points explainer still follows the points half');
+  /* nestly_v446 (REG-002) re-pinned. v386 hid the section's own group head for the TIERS action
+     only, because that is where it had been noticed; the stamp-card tile therefore opened a page
+     headed "Rewards" over a section headed "Rewards". The head is redundant on this page whatever
+     tile opened it — the page prints the title in its own h1 — so it is hidden unconditionally. */
+  assert.match(open,/target\.querySelectorAll\('\.customer-business-group-head-v346'\)\.forEach/,
+    'and the section group head is hidden for every action, not only tiers');
 });
 
 test('photo 6: the tier ladder ships open',()=>{

@@ -225,7 +225,19 @@ test('customer account and profile controls are touch-sized, accessible, private
   assert.match(html,/controls whether this device can show notifications at all/);
   assert.doesNotMatch(html,/Businesses cannot send promotional push notifications/);
   assert.match(html,/\.customer-push-setting \[data-push-state=\"enabled\"\]\{color:var\(--green\)\}/);
-  assert.match(html,/@media\(max-width:560px\)\{\.customer-push-setting\{grid-template-columns:1fr\}/);
+  /* nestly_v446 re-pinned. This asserted a VIEWPORT media query for a card that lives in the
+     customer shell, whose .wallet-inner is capped at 390px at every viewport — so the card's box
+     is 358px wide on a phone and 358px wide on a 1440px monitor, and the two-column layout the
+     media query switched OFF below 560px was never possible above it either. MEASURED on
+     origin/main at 834 and 1180: grid-template-columns 47.03px 248.97px (Profile) and 32.3px
+     (Messages), with the heading and both paragraphs painting across the button. One column is
+     now the base, which is byte-for-byte what phones already rendered; what the pin guards is
+     that the copy always gets the full width of the card, and that the button is full-width
+     under it. */
+  assert.match(html,/\.customer-push-setting\{display:grid;grid-template-columns:minmax\(0,1fr\);gap:16px;align-items:center\}/);
+  assert.match(html,/\.customer-push-setting \.btn\{width:100%\}/);
+  assert.doesNotMatch(html,/@media\(max-width:560px\)\{\.customer-push-setting\{/,
+    'the viewport gate is gone, not merely narrowed');
   assert.match(html,/function resetClientSessionState[\s\S]*NestlyCustomerPush\?\.clearSession/);
   assert.match(html,/onAuthStateChange\(\(event,session\)=>\{[\s\S]*NestlyCustomerPush\?\.setAuthenticatedUser/);
   assert.match(html,/configure\(\{rpc:\(name,args\)=>sb\.rpc\(name,args\),userId:S\.user\?\.id\}\)/);
