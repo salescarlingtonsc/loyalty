@@ -4598,6 +4598,9 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'{filled} of {total} stamps on this card.',
     stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
+    /* nestly_v464 (owner ruling R3(e)): the deadline the owner set on an earned reward. */
+    stampsRewardUseBy:'Use by {date}',
+    stampsRewardExpired:'Expired',
     stampsQuestAllClaimed:'Every gift on this card is collected.',
     /* nestly_v435 — the card's clock and the paused-card promise (owner rules 4/7/15). */
     stampsCardExpires:'Complete your card by {date} — stamps on it lapse after that.',
@@ -4825,6 +4828,8 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'这张卡已集 {filled}/{total} 个章。',
     stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
+    stampsRewardUseBy:'请在 {date} 前使用',
+    stampsRewardExpired:'已过期',
     stampsQuestAllClaimed:'这张卡上的礼品都已领取。',
     stampsCardExpires:'请在 {date} 前集满这张卡——之后卡上的章将失效。',
     stampsCardExpired:'这张卡已过期。已赚取的礼品仍可领取；新的章将开始新卡。',
@@ -5047,6 +5052,8 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'{filled} daripada {total} cop pada kad ini.',
     stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
+    stampsRewardUseBy:'Guna sebelum {date}',
+    stampsRewardExpired:'Tamat tempoh',
     stampsQuestAllClaimed:'Semua hadiah pada kad ini sudah dituntut.',
     stampsCardExpires:'Lengkapkan kad anda sebelum {date} — cop padanya luput selepas itu.',
     stampsCardExpired:'Kad ini telah luput. Hadiah yang sudah anda peroleh masih boleh dituntut; cop baharu memulakan kad baharu.',
@@ -5269,6 +5276,8 @@ const CUSTOMER_COPY=Object.freeze({
     stampsQuestProgress:'இந்த அட்டையில் {total}-இல் {filled} முத்திரைகள்.',
     stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
+    stampsRewardUseBy:'{date}க்குள் பயன்படுத்தவும்',
+    stampsRewardExpired:'காலாவதியானது',
     stampsQuestAllClaimed:'இந்த அட்டையின் அனைத்துப் பரிசுகளும் பெறப்பட்டன.',
     stampsCardExpires:'{date}க்குள் உங்கள் அட்டையை நிறைவு செய்யுங்கள் — அதன் பிறகு அதிலுள்ள முத்திரைகள் காலாவதியாகும்.',
     stampsCardExpired:'இந்த அட்டை காலாவதியானது. நீங்கள் ஏற்கனவே பெற்ற பரிசுகள் பாதுகாப்பாக உள்ளன; புதிய முத்திரைகள் புதிய அட்டையைத் தொடங்கும்.',
@@ -8890,6 +8899,9 @@ function stampQuestNormaliseV323(card){
   const milestones=(Array.isArray(card.milestones)?card.milestones:[])
     .map(rung=>({slot:whole(rung?.slot),name:String(rung?.name||'').trim(),
       claimed:rung?.claimed_this_cycle===true,availability:String(rung?.availability||''),
+      /* nestly_v464: the server's date for an earned reward's own deadline. Null for every reward
+         whose card was started under a version that set none, which is every card today. */
+      expiresAt:rung?.expires_at||null,
       isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go)}))
     .filter(rung=>rung.slot>0)
     .sort((a,b)=>a.slot-b.slot);
@@ -8944,8 +8956,15 @@ function customerStampQuestBodyV323(quest){
     :ct('stampsRemaining',{count:customerPointTotalV103(next.toGo),gift});
   const ladder=quest.milestones.length
     ?`<ul class="customer-programme-stamp-quest-v323" data-stamp-quest-list-v323="${quest.milestones.length}">${
-      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
-        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`:''}</li>`).join('')
+      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
+        /* nestly_v464: the rung carries its own deadline so the ladder can say it in the same
+           place the customer reads the gift's name. Only the SERVER's verdict decides "expired";
+           the date is printed, never compared, because the browser's clock is not the authority. */''
+        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
+        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`
+        :rung.availability==='reward_expired'?`<span class="muted small" data-stamp-quest-rung-state-v464="expired"> · ${esc(ct('stampsRewardExpired'))}</span>`
+        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small" data-stamp-quest-rung-state-v464="useby"> · ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
+        :''}</li>`).join('')
     }</ul>`
     :'';
   /* nestly_v435: the card's clock (owner rules 4/15) and the paused-card promise (rule 7). The
@@ -9690,7 +9709,11 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
   limit_reached:'Claim limit reached',
   claimed_this_cycle:'Already claimed on this card',
   not_on_card:'Not on the current card',
-  tier_locked:'Unlocks at a higher tier'
+  tier_locked:'Unlocks at a higher tier',
+  /* nestly_v464: the owner gave this reward a shelf life and it ran out. Named here rather than
+     left to the vague default, because "Not available right now" would read as a temporary state
+     for something that is gone. */
+  reward_expired:'This reward has expired'
 };
 function customerRewardAvailabilityLineV399(reward){
   const key=String(reward?.availability||'').trim();
@@ -11975,6 +11998,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       ${cost>0?`<p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>`:''}
       ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}
+      ${/* nestly_v464 (owner ruling R3(e): "the customer sees the expiry date on each earned
+           reward"). The server's date, printed with the same walletDate() the granted-entitlement
+           card already uses — never computed here from a day count, because the day count is
+           pinned to the card this customer is holding and the browser does not know which card
+           that is. */''}
+      ${r.expires_at?`<p class="muted small customer-reward-useby-v464" data-reward-useby-v464="${esc(String(r.expires_at))}" style="margin-top:5px">Use by ${esc(walletDate(r.expires_at))}</p>`:''}
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -12087,11 +12116,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            a reward the customer bought with points. 'reward' is the ordinary redemption and needs
            no chip; an unrecognised source gets none rather than a guess. */
         const sourceChipV429=entitlementSourceChipV429[String(item?.source||'')]||'';
-        return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422">
+        /* nestly_v464 (owner ruling R3(e)): the fifth source on this list is a reward the customer
+           EARNED AND LOST to its own deadline. It is not a claim and must never wear the "Claimed"
+           pill — the date beside it is the day it expired, not the day they were given anything.
+           Everything else about the card is the same, deliberately: this is the same reward, in
+           the same list, with an honest account of what happened to it. */
+        const lapsedV464=String(item?.source||'')==='expired';
+        return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422${lapsedV464?' customer-reward-card-expired-v464':''}"${lapsedV464?' data-reward-expired-v464="1"':''}>
           <div class="customer-reward-photo-v340${photo?'':' customer-reward-photo-empty-v340'}">${photo
             ?`<img src="${esc(photo)}" alt="" loading="lazy" data-reward-photo-v340>`
             :CUI.icon('loyalty',{size:24})}</div>
-          <div class="customer-reward-card-head-v339"><span class="pill">Claimed</span>${sourceChipV429?`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`:''}</div>
+          <div class="customer-reward-card-head-v339"><span class="pill">${lapsedV464?'Expired':'Claimed'}</span>${lapsedV464||!sourceChipV429?'':`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`}</div>
           <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
           ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
           ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}
@@ -25559,7 +25594,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
      could clobber a stored target. Both are read-only additions; nothing else in this snapshot
      changes shape. */
   const loyaltyRequest=canRewards
-    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,stamp_validity_days,tier_basis,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
+    ?sb.from('loyalty_programs').select('id,active,loyalty_model,current_config_version_id,earn_points_per_dollar,redeem_points,reward_credit_cents,stamp_target,stamp_per_cents,stamp_validity_days,stamp_reward_expiry_days,tier_basis,expiry_mode,expiry_days').eq('business_id',S.biz.id).limit(1)
     :Promise.resolve(none);
   /* V291: credit_cents, entitlement_expiry_days, usage_limit and the tier gate join the read.
      They were already stored and already editable; only the comparison could not see them, which
@@ -27252,7 +27287,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(earning.model==='stamps'){
       /* nestly_v435: the card validity is part of the earning rule the owner reads here. */
       const validityV435=Number(snapshot.loyalty?.stamp_validity_days)||0;
-      return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp${validityV435>0?` · cards valid ${validityV435} days from the first stamp`:''}`;
+      /* nestly_v464: the earned-reward deadline reads here too, in the same sentence and only when
+         the owner has set one — an optional rule that is silent when it is off. */
+      const rewardExpiryV464=Number(snapshot.loyalty?.stamp_reward_expiry_days)||0;
+      return `${growCurrencyV271} ${(Math.max(0,Number(earning.rate)||0)/100).toFixed(2)} spent → 1 stamp${validityV435>0?` · cards valid ${validityV435} days from the first stamp`:''}${rewardExpiryV464>0?` · rewards expire ${rewardExpiryV464} days after they are earned`:''}`;
     }
     return `${growCurrencyV271} 1 spent → ${growEarnUnitV271(Math.max(0,Number(earning.rate)||0),earning.unit)}`;
   };
@@ -28733,6 +28771,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <option value="fixed"${Number(snapshot.loyalty?.stamp_validity_days)>0?' selected':''}>Cards expire some days after the first stamp</option>
       </select></p>
     <p class="grow-setup-sentence-v301" data-grow-earn-validity-days-v435${Number(snapshot.loyalty?.stamp_validity_days)>0?'':' hidden'}><label class="muted small" for="growEarnValidityDaysV435">Days from the first stamp</label><br><input id="growEarnValidityDaysV435" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.stamp_validity_days||''))}" placeholder="e.g. 180"></p>
+    ${/* nestly_v464 (owner ruling R3(e)). A SECOND, separate clock, and it is optional. Card
+         validity above is about the card the customer is still filling; this is about a gift they
+         have already earned and not yet collected. Blank is the default and means what it has
+         always meant — the gift waits forever. */''}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnRewardExpiryModeV464">Reward expiry</label><br>
+      <select id="growEarnRewardExpiryModeV464" class="grow-setup-input-v301" style="width:100%;max-width:260px">
+        <option value="none"${!Number(snapshot.loyalty?.stamp_reward_expiry_days)?' selected':''}>Rewards never expire</option>
+        <option value="fixed"${Number(snapshot.loyalty?.stamp_reward_expiry_days)>0?' selected':''}>Rewards expire some days after they are earned</option>
+      </select></p>
+    <p class="grow-setup-sentence-v301" data-grow-earn-reward-expiry-days-v464${Number(snapshot.loyalty?.stamp_reward_expiry_days)>0?'':' hidden'}><label class="muted small" for="growEarnRewardExpiryDaysV464">Days from when the reward is earned</label><br><input id="growEarnRewardExpiryDaysV464" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.stamp_reward_expiry_days||''))}" placeholder="e.g. 30"></p>
+    <p class="muted small" style="margin-top:8px" data-grow-earn-reward-expiry-help-v464>Rewards expire this many days after they are earned. Leave it blank and they never expire. Rewards your customers have already earned keep the rule they were earned under.</p>
     <p class="muted small" style="margin-top:8px">Changes apply to new Stamp Cards. Customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.</p>`
       :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">Points per ${esc(S.biz?.currency||'SGD')} 1 spent</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnExpiryModeV359">When points expire</label><br>
@@ -30685,13 +30734,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const wrap=outerMain.querySelector('[data-grow-earn-validity-days-v435]');
     if(wrap)wrap.hidden=growEarnValiditySel.value==='none';
   };
+  /* nestly_v464: the earned-reward deadline's own days field. Same reveal contract as the card
+     validity above it, and deliberately a separate control — the two clocks answer different
+     questions and sharing one selector is the "phantom selector" mistake v435 already fixed. */
+  const growEarnRewardExpirySelV464=$('growEarnRewardExpiryModeV464');
+  if(growEarnRewardExpirySelV464)growEarnRewardExpirySelV464.onchange=()=>{
+    const wrap=outerMain.querySelector('[data-grow-earn-reward-expiry-days-v464]');
+    if(wrap)wrap.hidden=growEarnRewardExpirySelV464.value==='none';
+  };
   const growEarnSave=outerMain.querySelector('[data-grow-earn-save-v359]');
   if(growEarnSave)growEarnSave.onclick=async()=>{
     if(growEarnBusyV359)return;
     /* nestly_v435: stamps and points send DIFFERENT policies. Stamps: spend-per-stamp + card
        validity (p_stamp_validity_days, 0 = never; version-pinned server-side). Points: rate +
        batch expiry (p_expiry_mode/p_expiry_days). Neither touches the other's fields. */
-    let pointsRate=null,stampCents=null,mode=null,days=null,validityDays=null;
+    let pointsRate=null,stampCents=null,mode=null,days=null,validityDays=null,rewardExpiryDaysV464=null;
     if(growPointsIsStampsV326){
       const spend=Number(String($('growEarnStampV359')?.value||'').trim());
       if(!Number.isFinite(spend)||spend<=0){growEarnErrorV359='Spend per stamp must be more than zero.';return growRerenderV322({quiet:true});}
@@ -30701,6 +30758,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       else{
         validityDays=Math.round(Number(String($('growEarnValidityDaysV435')?.value||'').trim()));
         if(!Number.isFinite(validityDays)||validityDays<1||validityDays>3650){growEarnErrorV359='Enter a card validity between 1 and 3650 days.';return growRerenderV322({quiet:true});}
+      }
+      /* nestly_v464: 0 is the server's "never expires" and NULL is its "leave this alone", so the
+         stamps branch always sends a number — otherwise turning the deadline back off would be
+         indistinguishable from not mentioning it. */
+      const rewardExpiryModeV464=String($('growEarnRewardExpiryModeV464')?.value||'none');
+      if(rewardExpiryModeV464==='none')rewardExpiryDaysV464=0;
+      else{
+        rewardExpiryDaysV464=Math.round(Number(String($('growEarnRewardExpiryDaysV464')?.value||'').trim()));
+        if(!Number.isFinite(rewardExpiryDaysV464)||rewardExpiryDaysV464<1||rewardExpiryDaysV464>3650){growEarnErrorV359='Enter a reward expiry between 1 and 3650 days.';return growRerenderV322({quiet:true});}
       }
     }else{
       mode=String($('growEarnExpiryModeV359')?.value||'none');
@@ -30714,7 +30780,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growEarnBusyV359=true;growEarnErrorV359='';growRerenderV322({quiet:true});
     const earnSaveCallV435=await sb.rpc('business_set_earning_rule_v359',{p_business:S.biz.id,
       p_earn_points_per_dollar:pointsRate,p_stamp_per_cents:stampCents,
-      p_expiry_mode:mode,p_expiry_days:days,p_stamp_validity_days:validityDays});
+      p_expiry_mode:mode,p_expiry_days:days,p_stamp_validity_days:validityDays,
+      p_stamp_reward_expiry_days:rewardExpiryDaysV464});
     const earnSaveV435=earnSaveCallV435.data;
     const error=earnSaveCallV435.error;
     if(!isGrowCurrent())return;
@@ -30726,6 +30793,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(stampCents!=null)snapshot.loyalty.stamp_per_cents=stampCents;
     if(mode!=null){snapshot.loyalty.expiry_mode=mode;snapshot.loyalty.expiry_days=days}
     if(validityDays!=null)snapshot.loyalty.stamp_validity_days=validityDays||null;
+    if(rewardExpiryDaysV464!=null)snapshot.loyalty.stamp_reward_expiry_days=rewardExpiryDaysV464||null;
     growEarnEditOpenV359=false;
     /* nestly_v433: a stamp-shape edit can come back publish_status='pending' with owner-language
        blockers ("add a gift at stamp 6 to finish this change"). Saved-but-pending is a state the

@@ -2349,6 +2349,12 @@
       "path": "db/migrations/20260823_nestly_v465_home_ready_count.sql",
       "semanticVersion": "v465",
       "proposedDeployVersion": "20260823000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v464_earned_reward_expiry.sql",
+      "semanticVersion": "v464",
+      "proposedDeployVersion": "20260823000003"
     }
   ]
 }

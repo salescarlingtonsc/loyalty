@@ -2344,6 +2344,12 @@
       "version": "20260823000002",
       "name": "nestly_v465_home_ready_count",
       "sourcePath": "db/migrations/20260823_nestly_v465_home_ready_count.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000003",
+      "name": "nestly_v464_earned_reward_expiry",
+      "sourcePath": "db/migrations/20260823_nestly_v464_earned_reward_expiry.sql"
     }
   ]
 }

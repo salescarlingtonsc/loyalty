@@ -580,7 +580,7 @@
     {
       "id": "db.fn:app.redeem_reward_core/7",
       "surface": "db_function",
-      "latest_file": "20260822000012_nestly_v435_stamp_cycle_expiry.sql",
+      "latest_file": "20260823000001_nestly_v464_earned_reward_expiry.sql",
       "rows_written": "credit_ledger:INSERT, loyalty_operations:INSERT/UPDATE, loyalty_redemption_batch_drains:INSERT, loyalty_redemption_provenance:INSERT, loyalty_redemptions:INSERT, points_batches:UPDATE, points_ledger:INSERT",
       "detected_signals": "idem-signal, for-update, config-version",
       "entry_point": "app.redeem_reward_core (internal reward redemption engine)",
