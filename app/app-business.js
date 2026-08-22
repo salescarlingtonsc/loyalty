@@ -1776,9 +1776,13 @@ function wireMobileSearchShell(){
   const show=()=>{sheet.setAttribute('open','');requestAnimationFrame(()=>input.focus({preventScroll:true}))};
   const hide=()=>sheet.removeAttribute('open');
   const run=()=>{if(runWorkspaceCustomerLookup(input.value)){input.value='';hide()}};
-  open.onclick=show;close&&(close.onclick=hide);go&&(go.onclick=run);
+  /* V452: the sheet is its own full-viewport backdrop, so "click outside" can never fire for it
+     and the backdrop test below stays. Escape moves to the shared controller, which fires
+     wherever focus is rather than only inside this input, and closes the sheet on navigation. */
+  wirePopoverDismissV452();
+  open.onclick=()=>{closeAllPopoversV452('mobile-search');show()};close&&(close.onclick=hide);go&&(go.onclick=run);
   sheet.addEventListener('click',event=>{if(event.target===sheet)hide()});
-  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();run()}else if(e.key==='Escape'){e.preventDefault();hide()}};
+  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();run()}};
 }
 function wireGlobalActions(){
   const input=$('globalSearch');
@@ -1925,12 +1929,102 @@ function profileHtml(){
       </div>`:''}
     </div>`;
 }
+let popoverPageV452='';
+let popoverDismissWiredV452=false;
+const popoverKindsV452=()=>[
+  {name:'profile',
+   roots:()=>[$('profwrap')].filter(Boolean),
+   isOpen:()=>profileOpen,
+   close:(root,quiet)=>{if(!profileOpen)return false;profileOpen=false;if(!quiet)renderProfile(popoverPageV452);return true},
+   triggerId:'profWho'},
+  {name:'notifications',
+   roots:()=>[$('bellwrap')].filter(Boolean),
+   isOpen:()=>bellOpen,
+   close:(root,quiet)=>{if(!bellOpen)return false;bellOpen=false;if(!quiet)renderBell(popoverPageV452);return true},
+   triggerId:'bellBtn'},
+  {name:'workspace-switch',
+   roots:()=>[...document.querySelectorAll(POPOVER_SWITCH_SEL_V452)],
+   isOpen:root=>!!root.open,
+   close:root=>{if(!root.open)return false;root.open=false;return true},
+   closeOnInnerActivate:true},
+  {name:'mobile-search',
+   /* The sheet IS its own full-viewport backdrop, so "click outside the root" can never fire for
+      it; its existing backdrop handler stays. What it gains here is Escape from anywhere and
+      closing on navigation. */
+   roots:()=>[$(POPOVER_SHEET_ID_V452)].filter(Boolean),
+   isOpen:root=>root.hasAttribute('open'),
+   close:root=>{if(!root.hasAttribute('open'))return false;root.removeAttribute('open');return true},
+   triggerId:'mobileSearchOpen'},
+  {name:'grow-row-menu',
+   roots:()=>[...document.querySelectorAll(POPOVER_ROWMENU_SEL_V452)],
+   isOpen:root=>!!root.open,
+   close:root=>{if(!root.open)return false;root.open=false;return true},
+   closeOnInnerActivate:true},
+];
+/* quiet=true skips the re-render: on navigation the shell is about to be rebuilt anyway, so
+   repainting the outgoing header first is wasted work. */
+function closeAllPopoversV452(exceptName,quiet){
+  let closed=0;
+  for(const kind of popoverKindsV452()){
+    if(exceptName&&kind.name===exceptName)continue;
+    for(const root of kind.roots()){
+      try{if(kind.close(root,quiet))closed++}catch(error){console.error(error)}
+    }
+  }
+  return closed;
+}
+function wirePopoverDismissV452(page){
+  if(page!==undefined)popoverPageV452=page;
+  if(popoverDismissWiredV452)return;
+  popoverDismissWiredV452=true;
+  /* Bubble phase, and nothing here calls stopPropagation: an item's own handler must run
+     untouched. The grow row menus' buttons in particular do NOT stopPropagation, so a capture-
+     phase closer or a synchronous one could pull the ground out from under them. */
+  document.addEventListener('click',event=>{
+    for(const kind of popoverKindsV452()){
+      /* The trigger is not always inside the popover it opens: the mobile search sheet's button
+         sits in the app bar while the sheet is a separate full-screen node, so without this the
+         very click that opened it would immediately close it again. (The profile and bell
+         triggers happen to stopPropagation, so they never reached here — a difference this
+         controller should not depend on.) */
+      if(kind.triggerId&&event.target.closest?.('#'+kind.triggerId))continue;
+      for(const root of kind.roots()){
+        if(!kind.isOpen(root))continue;
+        if(!root.contains(event.target)){kind.close(root);continue}
+        /* A menu whose items act or navigate must close when one is chosen. Deferred one tick so
+           the item's handler runs first, against a DOM that is still the one it was rendered
+           into. */
+        if(kind.closeOnInnerActivate
+          &&event.target.closest?.('a[href],button,[role="button"]')
+          &&!event.target.closest?.('summary'))setTimeout(()=>kind.close(root),0);
+      }
+    }
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape')return;
+    for(const kind of popoverKindsV452()){
+      for(const root of kind.roots()){
+        if(!kind.isOpen(root))continue;
+        event.preventDefault();
+        /* Escape must not strand the keyboard: focus goes back to whatever opened the thing. */
+        const trigger=kind.triggerId?$(kind.triggerId):root.querySelector('summary');
+        kind.close(root);
+        (kind.triggerId?$(kind.triggerId):trigger)?.focus?.();
+        return;
+      }
+    }
+  });
+}
+
 /* Opening/closing the profile menu must NOT touch #main or #navwrap — it used to call
    renderShell(page), which also re-invokes the current page's render function (full
    Supabase refetch, chart re-animation, any custom date range reset). This widget now
    re-renders only itself. */
 function wireProfile(page){
-  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
+  wirePopoverDismissV452(page);
+  /* V452: opening one popover closes every other, through the shared controller, instead of
+     this widget knowing the bell exists. */
+  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen)closeAllPopoversV452('profile');renderProfile(page);};
   /* V219. Owner: "i need a drop down in the header to select which branch they want to view now".
      V210 moved this selector OUT of the profile menu and into the top bar, but left its
      hydration inside `if(profileOpen)`. The mount div was rendered on every page and filled on
@@ -1938,8 +2032,8 @@ function wireProfile(page){
      shell is wired, which is what the top-bar position always meant. */
   hydrateProfileBranchSelectorV158(page);
   if(profileOpen){
-    const menu=$('profmenu');
-    menu.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();profileOpen=false;renderProfile(page);$('profWho')?.focus()}};
+    /* V452: Escape (and the focus return to the account chip) is the shared controller's job now.
+       It used to be bound to the panel, so it only fired when focus was already inside it. */
     const profileNameForm=$('profileNameFormV158');
     if(profileNameForm)profileNameForm.onsubmit=async(e)=>{
       e.preventDefault();
@@ -1978,14 +2072,8 @@ function wireProfile(page){
     /* v188: the profile menu links to the data-request page instead of opening a self-service
        deletion dialog; closing an account goes through Peekaa. */
     const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=()=>{profileOpen=false};
-    /* click-away to dismiss — expected of a native popover, and without it the menu
-       could only be closed by re-clicking the chip. One-shot listener, re-armed on
-       each open, so it can't stack up across renders. */
-    setTimeout(()=>document.addEventListener('click',function away(ev){
-      const w=$('profwrap');
-      if(w&&!w.contains(ev.target)){profileOpen=false;document.removeEventListener('click',away);renderProfile(page);}
-      else if(!w){document.removeEventListener('click',away);}
-    }),0);
+    /* V452: click-away is the shared controller's, installed once at boot rather than re-armed
+       on every render of this menu. */
   }
 }
 function renderProfile(page){
@@ -2054,7 +2142,8 @@ function notifMenuHtml(){
     </div>`;
 }
 function wireBell(page){
-  $('bellBtn').onclick=(e)=>{e.stopPropagation();bellOpen=!bellOpen;if(bellOpen){profileOpen=false;renderProfile(page);}renderBell(page);};
+  wirePopoverDismissV452(page);
+  $('bellBtn').onclick=(e)=>{e.stopPropagation();bellOpen=!bellOpen;if(bellOpen)closeAllPopoversV452('notifications');renderBell(page);};
   if(!bellOpen) return;
   const markAll=$('markAll');
   if(markAll) markAll.onclick=async(e)=>{
@@ -2096,12 +2185,7 @@ function wireBell(page){
     }
     renderBell(page);
   };
-  /* click-away, same one-shot pattern as the profile menu */
-  setTimeout(()=>document.addEventListener('click',function away(ev){
-    const w=$('bellwrap');
-    if(w&&!w.contains(ev.target)){bellOpen=false;document.removeEventListener('click',away);renderBell(page);}
-    else if(!w){document.removeEventListener('click',away);}
-  }),0);
+  /* V452: click-away and Escape come from the shared controller. */
 }
 function renderBell(page){
   const wrap=$('bellwrap');
@@ -14042,6 +14126,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      unchanged; only the arrow moved out of them. */
   const growTopicActionWordV428=topic=>{
     if(!growTopicWritableV421(topic)&&String(topic?.status?.[0]||'')!=='Not included')return 'View';
+    /* nestly_v456 (audit A, A-REG-016). Every word below this line ASSERTS a state — "Set up"
+       says the firm has none, "Edit"/"View" say one is running, "Turn on" says one is switched
+       off. When the read behind the tile FAILED, growTileStatusV371 above has already refused to
+       guess and printed 'Unavailable'; the action word had no matching branch, so it fell all the
+       way through to `return 'Set up'` and contradicted the very pill beside it. An owner whose
+       overview read failed was invited to set up a programme that may well have been live.
+       'Open' is the only word that is true in that state: it does not claim the programme is on,
+       off, or absent, and it describes exactly what pressing the tile does — the tile's click
+       handler navigates to that programme's own page either way. Retrying belongs to the page's
+       own #growRewardsRetry control (see the rewardsOverviewIncomplete notice), which is where
+       the owner is already told to retry before making a decision; a tile chip that said "Retry"
+       and then navigated would just be the next version of this same lie.
+       Placed AFTER the read-only branch on purpose: 'View' is already non-asserting, so a
+       read-only manager's word is unchanged. */
+    if(String(topic?.status?.[0]||'')==='Unavailable')return 'Open';
     /* V303: "Set up" while this model is not reaching customers, "Edit" once it is — the
        wizard is the same door either way, and the word has to match what pressing it does. The
        card's OWN status decides, not the programme's, so on a firm running points the Tiered
@@ -28709,7 +28808,7 @@ async function expensesPage(){
     if(expensePage>=totalPages&&expensePage>0){expensePage=totalPages-1;load();return}
     const branchName=Object.fromEntries(expenseBranches.map(branch=>[branch.id,branch.name]));
     $('exList').innerHTML=(ex&&ex.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Expense records"><table data-responsive="true"><tr><th>Date</th><th>Scope</th><th>Category</th><th>Supplier</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr>
-      ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${e.occurred_on}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category)}</td>
+      ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${esc(e.occurred_on||'—')}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category||'—')}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td style="white-space:nowrap">${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn danger sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
@@ -28727,7 +28826,7 @@ async function expensesPage(){
     const card=$('expenseEditCardV285');
     if(!expense||!card)return;
     card.style.display='block';
-    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on)}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
+    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on||'on an unrecorded date')}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
       <label for="expEditAmountV285">Amount (${esc(S.biz.currency||'SGD')})</label><input id="expEditAmountV285" type="number" min="0.01" step="0.01" value="${(Number(expense.amount_cents||0)/100).toFixed(2)}">
       <label for="expEditCategoryV285">Category</label><input id="expEditCategoryV285" value="${esc(expense.category||'')}">
       <label for="expEditNoteV285">Note</label><input id="expEditNoteV285" value="${esc(expense.note||'')}" placeholder="Why it changed">
@@ -29261,6 +29360,21 @@ async function settingsPage(){
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
   if(SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269.includes(requestedSettingsTab))
     return nav(`#/customer-interface/${SETTINGS_TAB_CUSTOMER_INTERFACE_VIEW_V296[requestedSettingsTab]}`);
+  /* nestly_v456 (audit A, A-REG-013). '#/settings?tab=team' and '#/staffmembers' rendered TWO
+     DIFFERENT PAGES from one address. staffMembersPage() calls this function and then enhances
+     what it produced (sub-tabs, a real "Add staff", per-row Modules/Deactivate/Delete, and the
+     honestly-labelled importer v439 preserved); arriving by the raw hash skipped all of it. And
+     the two doors were not independent — selectSettingsTab below replaceState()s the address to
+     '#/settings?tab=team' the moment the panel opens, so the rail's own click REWROTE the URL to
+     the variant that loses those controls. Reload or bookmark and "Import from Excel" was simply
+     gone, with no hint that a better page existed.
+     Worse, this hash rendered a state nobody designed: #settab-team is `hidden` in the markup and
+     nothing unhides it, so the raw variant showed the team panel underneath a tab strip whose
+     only visible tab was "Modules & plan".
+     Owner ruling (2026-08-22): the ENHANCED variant is canonical. So the address is a door to it,
+     not a second page. This cannot loop — staffMembersPage reaches us on '#/staffmembers' with no
+     ?tab at all, and the replaceState below no longer rewrites that hash. */
+  if(requestedSettingsTab==='team')return nav('#/staffmembers');
   if(['modules','catalogue','team'].includes(requestedSettingsTab))settingsActiveTab=requestedSettingsTab;
   if(!['modules','catalogue','team'].includes(settingsActiveTab))settingsActiveTab='modules';
   const mods=Object.keys(MODULES).filter(m=>m!=='settings'&&m!=='dashboard'&&m!=='setup');
@@ -29312,7 +29426,15 @@ async function settingsPage(){
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
     </section>
     <section class="settings-panel" id="setpanel-team" role="tabpanel" aria-labelledby="settab-team" tabindex="-1" hidden>
-    <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Add staff without app access','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
+    ${/* nestly_v456 (audit A, A-REG-013): one action, one word. This control is importBtn — it
+         opens the CSV importer and nothing else — but it was labelled "Add staff without app
+         access", so the same job was called two different things depending on which door you came
+         through, and the label described adding ONE person by hand. That is the exact mislabel
+         v439 unpicked when it found this button doubling as "Add staff": the honest name is the
+         one the enhanced toolbar already gives it. Naming it "Add staff" here (the literal
+         instruction) would have rebuilt v439's bug, because pressing it opens the import popup —
+         so "Add staff" is now reserved for the one control that really does add a teammate. */''}
+    <div class="card settings-team-card"><div class="row"><b>Team</b><span class="spacer"></span>${importBtn('staff','Import from Excel','settingsPage')}</div><p class="muted small" style="margin:6px 0 10px">Add a roster-only staff member for appointments or reporting, or create an invite when they need to sign in. Owners inherit every enabled module. Other teammates can receive Off / Read / Edit access per enabled module.</p>
       <div id="team">${CUI.skeletonGrid({cards:2,lines:3})}</div>
       <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
       <b>Create company invite</b><p class="muted small" style="margin:5px 0 10px">Send the link or code to the staff member. They can choose “Join an existing business” during sign-up. The server assigns exactly this role when the invite is accepted.</p>
@@ -29342,7 +29464,14 @@ async function settingsPage(){
       if(panel)panel.hidden=!on;
     });
     settingsActiveTab=tab.dataset.settab;
-    history.replaceState(null,'',`${location.pathname}${location.search}#/settings?tab=${encodeURIComponent(settingsActiveTab)}`);
+    /* nestly_v456 (audit A, A-REG-013). This line is what stranded the owner: staffMembersPage
+       renders on '#/staffmembers' and then this runs, silently rewriting the address bar to
+       '#/settings?tab=team' — a hash that used to render the weaker variant. The address must
+       keep naming the page the owner is actually looking at, so on the Staff Members route it is
+       left alone. Every other Settings tab keeps the deep-linkable ?tab= address it has had since
+       V243, unchanged. */
+    if(!String(location.hash||'').startsWith('#/staffmembers'))
+      history.replaceState(null,'',`${location.pathname}${location.search}#/settings?tab=${encodeURIComponent(settingsActiveTab)}`);
     if(focus)tab.focus();
   }
   settingsTabs.forEach((tab,i)=>{
@@ -30250,19 +30379,46 @@ function openBusinessQrModalV368(){
   $('businessQrCloseV368').onclick=close;
   loadSignupConfig($('businessQrHostV368')).catch(fail);
 }
+/* nestly_v456: the one sentence that explains a disabled "Revoke all QRs", read from the workspace
+   copy table so it localises like every other refusal reason (v453 set this pattern). The button's
+   title and the JS that re-applies it after a revoke both call this, so they cannot drift. The
+   three LEAD sentences live at their state branches instead, for the reason v453 kept its refusal
+   copy at the call sites: each is only true where it is written. */
+const joinQrNothingToRevokeTextV456=()=>workspaceTemplateTextV97('joinQrNothingToRevoke');
 async function loadSignupConfig(host){
   const wrap=host||$('signupWrap');
   if(!wrap)return;
+  /* nestly_v456 (audit A, A-REG-020). Two things on this dialog contradicted its own state.
+     (1) The lead read "Print the current business-issued QR for your counter" while the panel
+         underneath said "Generate a QR to begin" and the status line said "No active QR exists" —
+         an instruction to print something that does not exist. The lead is now state-driven from
+         one place (setJoinQrLeadV456) and opens on the neutral sentence, which is true before any
+         read has come back.
+     (2) "Revoke all QRs" — destructive, and the only red button here — was live with nothing to
+         revoke. Pressing it in the empty state asked the owner to confirm destroying printed
+         copies, then reported "0 revoked". It now starts disabled and says why, in the v453
+         shape: the reason is real visible text (#joinQrStatus, role=status, which already carries
+         the state sentence) and the disabled button points at it with title + aria-describedby,
+         because a disabled control that gives no reason reads as a broken one. */
   wrap.innerHTML=`<b>My Business QR</b>
-    <p class="muted small" style="margin:6px 0 10px">Print the current business-issued QR for your counter. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
+    <p class="muted small" id="joinQrLeadV456" style="margin:6px 0 10px">Your counter QR is how a customer joins this business. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
     <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
     <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:16})}<span>Generate join QR</span></button>
     <button class="btn ghost sm" id="cpJoin" disabled>Copy link</button>
     <button class="btn ghost sm" id="dlQr" disabled>Download QR</button>
     ${window.NestlyNativeBridge?.isNative?'<button class="btn ghost sm" id="shareJoin" disabled>Share link</button>':''}
-    <button class="btn danger sm" id="revokeJoinQr">Revoke all QRs</button></div>
+    <button class="btn danger sm" id="revokeJoinQr" disabled ${workspaceTemplateAttributeV97('title','joinQrNothingToRevoke')} aria-describedby="joinQrStatus">Revoke all QRs</button></div>
     <p class="muted small" id="joinQrStatus" role="status" aria-live="polite" style="margin-top:8px">The raw join token is shown only in this browser session. Download the QR before leaving this page.</p>`;
+  /* The two states this dialog can be in, named once so the lead, the disabled reason and the
+     enable/disable calls below cannot drift apart. */
+  const setJoinQrLeadV456=text=>{const lead=$('joinQrLeadV456');if(lead)lead.textContent=text};
+  const setRevokeAvailableV456=available=>{
+    const button=$('revokeJoinQr');if(!button)return;
+    button.disabled=!available;
+    if(available)button.removeAttribute('title');
+    else button.title=joinQrNothingToRevokeTextV456();
+  };
   let url='';
   const showJoinQr=async data=>{
     url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
@@ -30271,6 +30427,10 @@ async function loadSignupConfig(host){
     if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
     $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
     $('cpJoin').disabled=false;$('dlQr').disabled=false;if($('shareJoin'))$('shareJoin').disabled=false;
+    /* nestly_v456: there is now a QR on screen, so the lead may say "print it" and revoking is a
+       real act with a real consequence. */
+    setJoinQrLeadV456('Print this QR for your counter. Older slug links such as join.html?s=… are retired and cannot enrol a customer.');
+    setRevokeAvailableV456(true);
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
     const expires=data.expires_at?sgt(data.expires_at):'',replaced=Number(data.replaced_count||0);
     const key=expires&&replaced
@@ -30318,6 +30478,11 @@ async function loadSignupConfig(host){
     if(error){$('joinQrStatus').textContent='Active join QRs could not be revoked. Try again.';return}
     url='';$('joinQr').innerHTML='<span class="muted small">No active QR in this session</span>';
     $('joinQrLink').textContent='';$('cpJoin').disabled=true;$('dlQr').disabled=true;if($('shareJoin'))$('shareJoin').disabled=true;
+    /* nestly_v456: everything was just revoked, so there is nothing left to revoke and nothing to
+       print. Both statements go back to their empty-state wording rather than being left standing
+       from the state before the press. */
+    setJoinQrLeadV456('Your counter QR is how a customer joins this business. Generate one to print for your counter.');
+    setRevokeAvailableV456(false);
     $('createJoinQr').querySelector('span').textContent='Generate join QR';
     const revoked=Number(data?.revoked_count||0);
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(revoked===1?'activeQrRevoked':'activeQrsRevoked',{count:revoked});
@@ -30348,9 +30513,17 @@ async function loadSignupConfig(host){
   }else if(Number(statusResult.data?.active_count||0)>0){
     const activeExpiry=statusResult.data?.latest_expires_at||statusResult.data?.expires_at;
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(activeExpiry?'activeQrExistsUntil':'activeQrExists',{expires:activeExpiry?sgt(activeExpiry):''});
+    /* nestly_v456: active QRs exist but this session cannot draw them, so there IS something to
+       revoke even though there is nothing on screen to print. */
+    setJoinQrLeadV456('An active QR exists for this business but is not shown in this session. Replace it to print a fresh copy.');
+    setRevokeAvailableV456(true);
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
   }else{
     $('joinQrStatus').textContent='No active QR exists. Turn on new sign-ups, then generate one.';
+    /* nestly_v456: the state the audit caught — nothing exists, so nothing can be printed and
+       nothing can be revoked. Both controls and both sentences now say so. */
+    setJoinQrLeadV456('No counter QR yet. Generate one to print for your counter — older slug links such as join.html?s=… are retired and cannot enrol a customer.');
+    setRevokeAvailableV456(false);
   }
 }
 async function loadCommissionConfig(){

@@ -1225,6 +1225,14 @@ async function route(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   globalThis.document?.documentElement?.removeAttribute('data-customer-surface');
   disposeCurrentRoute();
+  /* V452: navigation closes every popover. Without this the account menu (and the workspace
+     switcher nested inside it, whose own links are what navigated) reappeared open on the next
+     page — the owner saw exactly that. It sits AFTER disposeCurrentRoute() deliberately: seven
+     tests pin `disposeCurrentRoute()` to within 320 characters of `async function route(){`,
+     and inserting a commented call above it pushed dispose out of that window. The shell is
+     about to be rebuilt, so only the STATE has to change here; see resetPopoverStateV452 for
+     why route() must not reach a renderer. */
+  resetPopoverStateV452();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -5556,6 +5564,47 @@ window.openImport=function(moduleKey,onDone){
   render();
   deactivateDialog=CUI.activateDialog(wrap,{onClose:close,initialFocus:'#impX'});
 };
+/* ---------- V452: ONE dismiss discipline for every popover in the app ----------------------
+   Before this each popover invented its own, and no two agreed:
+     .profile .menu     JS flag + a ONE-SHOT document click listener re-armed on every render;
+                        Escape only when focus happened to be inside the panel.
+     .notif-menu        same one-shot listener; no Escape at all.
+     .business-workspace-switch   a bare <details>. No outside click, no Escape, nothing.
+     mobile search sheet          closed on its own backdrop only.
+     .grow-row-menu-v351          bare <details>, three per row set, all openable at once.
+   And NOTHING closed on navigation. That is the owner-reported bug: the workspace switcher's
+   links live INSIDE #profwrap, so the outside-click listener can never fire for them, they carry
+   no onclick, and route() never touched the flags — so the account menu survived a workspace
+   switch and the route change that followed it, and reappeared open on the next page.
+
+   The registry is SELECTOR-DRIVEN and re-queried on every event, deliberately: this app rewrites
+   #profwrap/#bellwrap outerHTML on each toggle and re-renders whole pages, so any registry that
+   held element references would hold corpses.
+
+   NOT REGISTERED, on purpose: the ~20 disclosure <details> (appointment-more, staff-mobile-more,
+   loyalty-optional-v235, till-who-v373, studio-advanced, card sections …). Those are expandable
+   sections, not popovers — they are MEANT to stay open while you work elsewhere on the page. */
+/* The ONE list of what counts as a popover. Both the interactive controller below and the
+   core-safe reset used by route() read these, so "which elements dismiss" has a single source
+   of truth even though the two paths differ in whether they repaint. */
+const POPOVER_SWITCH_SEL_V452='details.business-workspace-switch';
+const POPOVER_ROWMENU_SEL_V452='details.grow-row-menu-v351';
+const POPOVER_DETAILS_SEL_V452=POPOVER_SWITCH_SEL_V452+','+POPOVER_ROWMENU_SEL_V452;
+const POPOVER_SHEET_ID_V452='mobileSearchSheet';
+/* Called from route(). It deliberately does NOT reach renderProfile/renderBell, for two reasons:
+   the shell is about to be rebuilt so repainting the outgoing header is wasted work, and — the
+   load-bearing one — scripts/quality/split-app-bundle.mjs severs route's edges to the SURFACE
+   ENTRY POINTS only. A route -> renderProfile edge is not severed, so it drags the entire
+   business surface into the always-loaded core chunk (measured: core 472KB -> 2824KB, business
+   2368KB -> 21KB). Keep this function free of business-surface names. */
+function resetPopoverStateV452(){
+  profileOpen=false;
+  bellOpen=false;
+  const doc=globalThis.document;
+  if(!doc)return;
+  for(const node of doc.querySelectorAll(POPOVER_DETAILS_SEL_V452))node.open=false;
+  doc.getElementById(POPOVER_SHEET_ID_V452)?.removeAttribute('open');
+}
 let autoRefreshTimerV370=0,pendingBookingCountTimerV370=0;
 function killChannels(){
   if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
@@ -5779,6 +5828,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   publishDraftVersion:Object.freeze({en:'Exactly what happens when you publish draft v{version}.','zh-CN':'发布草稿 v{version} 时将发生的确切变化。',ms:'Perkara tepat yang berlaku apabila anda menerbitkan draf v{version}.'}),
   publishConfirmationSensitive:Object.freeze({en:'This turns on a live rule that affects money or customers. Type PUBLISH below to confirm you reviewed the impact.','zh-CN':'这将启用影响金额或顾客的实时规则。请在下方输入 PUBLISH，确认您已审核影响。',ms:'Ini menghidupkan peraturan langsung yang mempengaruhi wang atau pelanggan. Taip PUBLISH di bawah untuk mengesahkan anda telah menyemak kesannya.'}),
   publishConfirmationStandard:Object.freeze({en:'Review complete. Type PUBLISH below to confirm this exact draft.','zh-CN':'审核完成。请在下方输入 PUBLISH，以确认这份确切草稿。',ms:'Semakan selesai. Taip PUBLISH di bawah untuk mengesahkan draf tepat ini.'}),
+  /* nestly_v456: why a disabled "Revoke all QRs" is refusing. Same shape as the v453 stepper
+     refusals — one source read by the button's title and by the visible status line, so the two
+     cannot disagree in any locale. */
+  joinQrNothingToRevoke:Object.freeze({en:'There is no active QR to revoke yet. Generate one first.','zh-CN':'目前没有可撤销的有效二维码。请先生成一个。',ms:'Tiada kod QR aktif untuk dibatalkan lagi. Jana satu dahulu.'}),
   stampsEligibleEarning:Object.freeze({en:'Eligible customer-linked sales add stamps when this programme is active, published, and available at the selected branch. Define what each milestone is worth — a free item to hand over, or store credit.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售会增加印花。请定义每个里程碑的价值，例如可交付的免费商品或店内余额。',ms:'Jualan layak yang dipautkan kepada pelanggan menambah cop apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Tetapkan nilai setiap pencapaian — item percuma untuk diserahkan atau kredit kedai.'}),
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
@@ -5790,6 +5843,9 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
      disabled button's title and as the line of text under the bar — from this one source, so the
      two can never disagree in any locale. */
   'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum',
+  /* nestly_v456: why the destructive "Revoke all QRs" is disabled when no QR exists. Same shape
+     as the three v453 refusals above — reviewed copy, because the owner reads it. */
+  'joinQrNothingToRevoke',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -5840,6 +5896,9 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
   'explainHelpDotV385',
+  /* nestly_v456: the disabled "Revoke all QRs" carries its reason as a title, for the same reason
+     the v453 steppers below do — and the same sentence is the visible status line it describes. */
+  'joinQrNothingToRevoke',
   /* nestly_v453: the disabled length steppers carry their reason as a title. A disabled button is
      not focusable, so the title is the mouse half only — the same sentence is rendered as visible
      text beside it, and aria-describedby ties the two together. */
