@@ -2326,6 +2326,12 @@
       "version": "20260822000016",
       "name": "nestly_v455_stock_follows_sale_items",
       "sourcePath": "db/migrations/20260822_nestly_v455_stock_follows_sale_items.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000017",
+      "name": "nestly_v460_business_kpi_pot_scope",
+      "sourcePath": "db/migrations/20260822_nestly_v460_business_kpi_pot_scope.sql"
     }
   ]
 }
