@@ -819,7 +819,15 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;flex-shrink:0;
   box-shadow:0 2px 6px rgba(194,65,53,.3)}
 /* menu now drops DOWN from the top-right chip (was: up from the bottom-left rail) */
-.profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;
+/* V440: the account/profile menu is the outermost popover in the .appbar family — it must win
+   paint order against everything else opened from the bar (and against ordinary page content,
+   which is what broke: the menu had no explicit z-index, so the Dashboard Performance card's
+   heading, date range and Minimise button painted through it at 1180px). The bar's popover scale
+   is .appbar(40) < .notif-menu(41) < .business-workspace-switch/.customer-workspace-switch
+   .menu(42); this menu is opened last / sits top-right / and — once the workspace switcher moves
+   inside it — will contain that 42-ranked menu as a descendant, so it is slotted one above at 43,
+   keeping the scale monotonic instead of introducing an unrelated number. */
+.profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;z-index:43;
   background:rgba(255,255,255,.86);
   -webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg);
