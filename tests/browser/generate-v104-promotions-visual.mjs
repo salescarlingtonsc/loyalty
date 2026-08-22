@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
-import {fileURLToPath,pathToFileURL} from 'node:url';
+import {fileURLToPath} from 'node:url';
+import {isDirectCliInvocation} from '../../scripts/quality/is-direct-cli-invocation.mjs';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
 /* The application script was extracted from index.html into app.js. The .test.mjs files
@@ -192,7 +193,7 @@ export async function currentProductionVisualFixture(){
   return buildV104PromotionVisualFixture(await readAppSource());
 }
 
-if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
+if(isDirectCliInvocation(import.meta.url)){
   await writeFile(FIXTURE_URL,await currentProductionVisualFixture());
   process.stdout.write(`${fileURLToPath(FIXTURE_URL)}\n`);
 }

@@ -5,10 +5,19 @@ const base=process.env.V104_FIXTURE_URL||'http://127.0.0.1:4173/tests/browser/v1
 const evidence=new URL('../../docs/qa/evidence/',import.meta.url);
 const FIXTURE_FILE=new URL('./v104-promotions-visual.html',import.meta.url);
 
-/* CROSS-TREE CAPTURE GUARD (nestly_v448): runs BEFORE the playwright import below is even
+/* CROSS-TREE CAPTURE GUARD (nestly_v448/v459): runs BEFORE the playwright import below is even
    touched, so a mismatch aborts fast with no browser driver required. See
-   scripts/quality/fixture-cross-tree-guard.mjs for why this exists (REG-009). */
-await assertFixtureMatchesTree({servedUrl:base,localFixtureUrl:FIXTURE_FILE,label:'v104'});
+   scripts/quality/fixture-cross-tree-guard.mjs for why this exists (REG-009), including why the
+   check is a poll (not a single fetch) and carries a named CSS marker and a named JS marker on
+   top of the byte hash. Both markers are env-overridable so this same script can be pointed at a
+   deliberately unfixed/different tree for a negative control. */
+await assertFixtureMatchesTree({
+  servedUrl:base,localFixtureUrl:FIXTURE_FILE,label:'v104',
+  markers:{
+    css:process.env.V104_CSS_MARKER||'.customer-promotion-card{position:relative;overflow:hidden;border-radius:18px',
+    js:process.env.V104_JS_MARKER||'function customerPromotionCardV104',
+  },
+});
 
 const playwrightModule=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const {chromium}=playwrightModule.chromium?playwrightModule:playwrightModule.default;

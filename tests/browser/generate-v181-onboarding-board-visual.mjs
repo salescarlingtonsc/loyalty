@@ -9,8 +9,14 @@
 // ran end-to-end as a CLI script that wrote straight to disk, so nothing could prove the checked-in
 // fixture still matched current production source (the gap regen-visual-fixtures.mjs's own header
 // comment names).
+// V459: the CLI-invocation guard below now also excludes node's OWN test-runner children — see
+// scripts/quality/is-direct-cli-invocation.mjs for why (the nondeterministic-suite bug, REG-009
+// follow-up). node --test swept this file up as a "test file" purely because it lives under a
+// directory named tests/, ran it in a child process where process.argv[1] pointed at itself, and
+// the old guard could not tell that apart from a real `node tests/browser/generate-v181...mjs`.
 import { readFile, writeFile } from 'node:fs/promises';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { isDirectCliInvocation } from '../../scripts/quality/is-direct-cli-invocation.mjs';
 import vm from 'node:vm';
 
 const root = new URL('../../', import.meta.url).pathname;
@@ -133,7 +139,7 @@ document.querySelectorAll('[data-lane-drop]').forEach(zone=>{
 </script>`;
 }
 
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+if (isDirectCliInvocation(import.meta.url)) {
   const { consoleSource, consoleCss, baseCss } = await readOnboardingBoardSources();
   const html = buildOnboardingBoardVisualFixture(consoleSource, consoleCss, baseCss);
   await writeFile(FIXTURE_URL, html);

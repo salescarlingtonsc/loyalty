@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
-import {fileURLToPath,pathToFileURL} from 'node:url';
+import {fileURLToPath} from 'node:url';
+import {isDirectCliInvocation} from '../../scripts/quality/is-direct-cli-invocation.mjs';
 
 const APP_URL=new URL('../../app/index.html',import.meta.url);
 /* The application script was extracted from index.html into app.js. The .test.mjs files
@@ -91,7 +92,7 @@ export function buildV141DashboardVisual(app,customerUi){
   </script></body></html>`;
 }
 
-if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
+if(isDirectCliInvocation(import.meta.url)){
   const [app,customerUi]=await Promise.all([readAppSource(),readFile(CUSTOMER_UI_URL,'utf8')]);
   await writeFile(FIXTURE_URL,buildV141DashboardVisual(app,customerUi));
   process.stdout.write(`${fileURLToPath(FIXTURE_URL)}\n`);
