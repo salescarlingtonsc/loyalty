@@ -20093,7 +20093,7 @@ async function tillPage(){
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
         ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale (no customer)</button>
+        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>
         <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
@@ -20806,14 +20806,31 @@ async function tillPage(){
     const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'';
     const staffName=(tillAttributableStaff.find(person=>person.id===tillSaleStaffId)
       ||tillRoster.find(person=>person.id===tillSaleStaffId))?.full_name||'';
-    const contextLine=[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
     /* Only offered where there is a genuine choice to make. With one branch and one teammate the
        line above already says which, and a disclosure hiding two read-only facts is furniture. */
-    const pickers=(accessibleTillBranches.length>1||tillAttributableStaff.length>1)
-      ?`<details class="till-who-v373" id="tillWhoV373"${tillWhoOpenV373?' open':''}><summary>Change branch or teammate</summary>
+    const branchSwitchableV468=accessibleTillBranches.length>1;
+    const staffSwitchableV468=tillAttributableStaff.length>1;
+    const hasPickersV468=branchSwitchableV468||staffSwitchableV468;
+    /* V468-B (owner photo, Record sale items step): "Change branch or teammate" used to be a
+       muted 12.5px text link sitting under a separate read-only line — "the control is too
+       hidden" per the owner's ruling ("one staff per sale is fine, tag it + commission, but I
+       need to see and change who without hunting"). The <details>/<summary>/<select> pair is
+       otherwise UNCHANGED — same ids, same tillAttributableStaffFor/branch candidate rules, same
+       onchange handlers bound in bindTillControlsV373 further down. Only the summary's content
+       and styling change: it now shows the CURRENT branch/teammate (legible at a glance) inside a
+       visible chip button that opens the same picker in one tap, instead of a generic link that
+       said nothing about who the sale is tagged to. */
+    const whoChipTextV468=[branchSwitchableV468?`<b data-merchant-content>${esc(branchName)}</b>`:'',
+      staffSwitchableV468?`<b data-merchant-content>${esc(staffName||'Choose teammate')}</b>`:'']
+      .filter(Boolean).join(' <span class="till-who-sep-v468">·</span> ');
+    const pickers=hasPickersV468
+      ?`<details class="till-who-v373 till-who-v468" id="tillWhoV373"${tillWhoOpenV373?' open':''}>
+        <summary class="till-who-summary-v468">${CUI.icon('staff',{size:18})}<span class="till-who-summary-text-v468">${whoChipTextV468}</span><span class="till-who-summary-change-v468">Change</span></summary>
         ${branchPicker}
         ${staffPickerV287}</details>`
       :'';
+    // Nothing switchable here (one branch, one teammate) — the old plain read-only line stands.
+    const contextLine=hasPickersV468?'':[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
     if(walkin){
       return `<div class="till-head-v373">
         <div class="till-head-id-v373"><b class="till-head-name-v373">Walk-in customer</b>
@@ -20845,12 +20862,41 @@ async function tillPage(){
     const selectedCatalogQty=(type,id)=>saleLines.reduce((sum,line)=>sum+(line.type===type&&String(line.ref)===String(id)?Number(line.qty||0):0),0);
     return selectedCatalogQty;
   }
+  /* V468-B: the ONE cart line a tile's type+ref maps to (addCatalogLine/addBundleLines always
+     merge into an existing line rather than pushing a second one for the same item), so a tile
+     needing to show/adjust "its" line just needs this line's id. */
+  function tillLineForTileV468(type,id){
+    return cart.find(line=>line.type===type&&String(line.ref)===String(id))||null;
+  }
+  /* V468-B (owner photo, Record sale items step: "I need to be able to deduct the quantity or
+     remove entirely in this page"). Reuses the Confirm step's OWN handlers verbatim — data-qty/
+     data-remove/data-line are the exact attributes tillCartLinesHtmlV373's row uses, and both are
+     wired by the single delegated binder in bindTillControlsV373 (already runs after every draw,
+     no new listener needed). The only new decision made here, not a new mutation: at qty 1 the
+     "−" tap is wired to data-remove instead of data-qty="-1", because changeQty on its own clamps
+     at a floor of 1 (by design, for the Confirm step's separate always-visible × button) — on a
+     tile there is no second remove affordance, so decrementing at 1 IS the remove gesture and
+     drops the tile back to its untouched, unselected look. */
+  function tillTileQtyCtlV468(type,id,qty,itemLabel){
+    if(!qty)return '';
+    const line=tillLineForTileV468(type,id);
+    if(!line)return '';
+    const minus=qty>1
+      ?`<button type="button" data-qty="-1" data-line="${esc(line.lineId)}" aria-label="Reduce ${esc(itemLabel)} quantity">−</button>`
+      :`<button type="button" class="till-choice-qtyctl-remove-v468" data-remove="${esc(line.lineId)}" aria-label="Remove ${esc(itemLabel)}">−</button>`;
+    return `<div class="till-choice-qtyctl-v468" role="group" aria-label="${esc(itemLabel)} quantity" data-merchant-content>
+      ${minus}<output aria-label="Quantity">${qty}</output>
+      <button type="button" data-qty="1" data-line="${esc(line.lineId)}" aria-label="Increase ${esc(itemLabel)} quantity">+</button>
+    </div>`;
+  }
   function tillCatalogueTilesV373(entries){
     const selectedCatalogQty=tillSelectedQtyV373();
     return entries.map(({type,item})=>{
       const qty=selectedCatalogQty(type,item.id);
       const image=catalogueImageUrlV158(item);
-      return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      const tile=`<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      // Untouched tiles are unwrapped, unchanged markup — the qty row only ever appears once the item is in the cart.
+      return qty?`<div class="till-choice-tile-wrap-v468">${tile}${tillTileQtyCtlV468(type,item.id,qty,item.name)}</div>`:tile;
     }).join('');
   }
   /* v187: a bundle is several services at one price. It keeps the service tile's badge — it is a
@@ -20860,7 +20906,8 @@ async function tillPage(){
     const selectedCatalogQty=tillSelectedQtyV373();
     return bundles.map(bundle=>{
       const qty=selectedCatalogQty('bundle',bundle.id);
-      return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      const tile=`<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      return qty?`<div class="till-choice-tile-wrap-v468">${tile}${tillTileQtyCtlV468('bundle',bundle.id,qty,bundle.name)}</div>`:tile;
     }).join('');
   }
   /* V216 (owner: "i need a product modules - instead of just services (because products have no
@@ -21471,6 +21518,10 @@ async function tillPage(){
     const pointsNote=(!walkin&&hasSale)
       ?`<p class="muted small" style="margin-top:8px">Points are worked out when the sale is recorded — the receipt shows exactly how many were earned.</p>`
       :'';
+    /* V468-B: owner struck "Different number" on the Confirm sale step (photo) — no
+       ${tillLeaveRowV373()} here any more. The route it served still exists one tap away via
+       "Add more items" -> the items stage, which keeps its own tillLeaveRowV373() back-to-keypad
+       button, so removing it here does not strand the cashier. */
     return `<b class="small till-review-head-v373">Confirm sale</b>
       ${tillCartLinesHtmlV373()}
       ${checkoutPanelHtml()}
@@ -21482,8 +21533,7 @@ async function tillPage(){
       ${paynowHtml}
       ${partialHtml}
       ${actionHtml}
-      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}
-      ${tillLeaveRowV373()}`;
+      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}`;
   }
   // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
   // figures live in the checkout panel (evaluation-authoritative).
