@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="64bf3d3721687a3914b4e3fb3264bdb5cbe093cb2876f5a2f069a42769b5a5ba"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="3da5a91bf3ffdab3b308083d9d4e736820cb45142f14e6283aede7868da9e586"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -371,10 +371,26 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .till-gift-scan-v399{display:inline-flex;align-items:center;justify-content:center;
   width:44px;height:44px;min-height:44px;padding:0;margin-top:10px;flex:0 0 auto}
 
-/* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
-   changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
-   tap they were aiming at. `flex` on the buttons is off so labels keep their natural width. */
-.section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+/* V200 sub-module tabs. The original rule chose horizontal scrolling over wrapping, and said why:
+   "a wrapped pill strip changes height as tabs re-flow, which shifts the whole page under the
+   owner's thumb on the exact tap they were aiming at."
+
+   V458 revisits that, because the scroll it chose was made invisible in the same rule
+   (scrollbar-width:none plus a ::-webkit-scrollbar reset), and measurement showed the cost:
+   on #/reports the strip is 682px inside a 561px box at 599, so elementFromPoint at the fourth
+   tab's centre returns MAIN, not the button. At 430 and 390, two tabs are unreachable. And
+   "Team Performance" lost its own rail row at V272, so this strip is its ONLY door — an owner on
+   a phone cannot reach that report at all, with no cue that anything is missing.
+
+   The original objection does not apply to these strips: each carries a FIXED set of tabs for its
+   page, so the wrapped height is constant at a given viewport width and cannot change under a
+   thumb mid-tap. What genuinely moves a page under a thumb is a control the owner cannot see.
+   flex-wrap is also self-limiting — a strip that fits stays exactly as it was, on one row, so
+   nothing changes at desktop width. overflow-x:auto stays as the fallback for the pathological
+   case of a single tab wider than its container.
+
+   `flex` on the buttons is off so labels keep their natural width. */
+.section-subtabs-v200{display:flex;flex-wrap:wrap;row-gap:4px;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .section-subtabs-v200::-webkit-scrollbar{display:none}
 .section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
 /* V209 staff list groups. The heading carries the count so an owner can see "3 roster only" at a
@@ -619,21 +635,6 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .settings-tabs{display:none}
 .staff-members-page .settings-tabs{display:none}.staff-members-page .settings-panel{margin-top:0}
 .staff-members-page .settings-team-card{display:grid;gap:16px}.staff-members-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.staff-members-tabs{display:inline-flex;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:#fff}.staff-members-tab{min-height:var(--control-h);padding:0 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-weight:750;cursor:pointer}.staff-members-tab.active{background:var(--ink);color:#fff}.staff-members-tab:focus-visible{outline:3px solid rgba(194,65,53,.22);outline-offset:2px}.staff-members-tab-panel[hidden]{display:none!important}.staff-members-add-top{margin-left:auto;min-height:40px}.staff-members-section-card{display:grid;gap:12px}
-@media(min-width:769px) and (max-width:1180px){
-  .appbar{gap:8px;padding:10px 14px;overflow:visible}
-  .global-actions{gap:6px;min-width:0}
-  .global-search{flex:0 0 48px;width:48px;min-width:48px;padding-left:0;justify-content:center}
-  .global-search input{display:none}
-  .global-search-ic{display:none}
-  .global-search-go{width:44px;height:44px;background:#fff;color:var(--coral);box-shadow:var(--shadow)}
-  .global-quick{gap:6px}
-  .global-act{min-height:44px;padding-inline:12px}
-  .dashboard-appbar-branch{flex:0 1 170px;min-width:132px}
-  .dashboard-appbar-branch select{font-size:12.5px;padding-left:12px;padding-right:28px;text-overflow:ellipsis}
-  .workspace-language-picker{display:none}
-  .business-workspace-switch .who,.profile .who{max-width:156px}
-  .business-workspace-switch .who span:not(.avatar),.profile .who div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-}
 @media(max-width:900px){.dashboard-schedule-top{align-items:flex-start;flex-direction:column}.dashboard-schedule-actions{width:100%}.dashboard-schedule-actions .btn{flex:1}}
 @media(max-width:700px){.staff-members-toolbar{align-items:stretch}.staff-members-tabs{width:100%;justify-content:space-between}.staff-members-tab{flex:1}.staff-members-add-top{width:100%;margin-left:0}}
 @media(min-width:769px) and (max-width:940px){
@@ -666,8 +667,8 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 @keyframes v150flash{0%,50%{box-shadow:0 0 0 4px rgba(31,107,72,.18);background:#F0FFF7}100%{box-shadow:none;background:transparent}}
 .current-time-line{position:absolute;left:0;right:0;height:2px;background:var(--coral);z-index:3;pointer-events:none}
 .current-time-line span{position:absolute;left:6px;top:-12px;background:var(--coral);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:2px 6px}
-@media(max-width:1100px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-charts.v150-understand{grid-template-columns:1fr}.v150-title-actions{justify-content:flex-start}.cui-skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:768px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.cui-skeleton-grid{grid-template-columns:1fr}.card{padding:18px}.v150-soft-head,.dashboard-chart-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start}.dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;text-align:left}.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
+@media(max-width:1100px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-charts.v150-understand{grid-template-columns:1fr}.v150-title-actions{justify-content:flex-start}}
+@media(max-width:768px){.dashboard-kpis.v150-dashboard-kpis{grid-template-columns:1fr}.v150-titlebar{display:block}.v150-title-actions{margin-top:12px}.client-summary-card{flex:1 1 100%}.merchant-insights-grid,.retention-readiness-grid,.campaign-prep-grid{grid-template-columns:1fr}.merchant-insights-head,.retention-readiness-head{display:block}.health-row{display:block}.health-row span{text-align:left;display:block;margin-top:2px}.card{padding:18px}.v150-soft-head{margin:-18px -18px 14px;padding:14px 18px}.cui-page-head{gap:12px}.cui-page-title h1{font-size:1.58rem}.cui-page-actions,.v150-title-actions{width:100%}.cui-page-actions .btn,.v150-title-actions .btn{flex:1 1 160px}.cui-table-wrap{border:1px solid var(--line)}table[data-responsive="true"] thead{display:none}table[data-responsive="true"] tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}table[data-responsive="true"] td{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:12px;border-bottom:0;padding:9px 12px}table[data-responsive="true"] td::before{content:attr(data-label);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;text-align:left}.btn{width:auto;min-width:44px}input,select,textarea{font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}.cui-fade-in{animation:none}}
 .permission-banner{display:flex;gap:11px;align-items:flex-start;background:var(--warn-bg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 32%,#fff);border-radius:var(--r-sm);padding:13px 15px;margin:-7px 0 18px}
 .permission-banner p{font-size:12.5px;line-height:1.5;margin-top:2px}.permission-banner svg{margin-top:1px}
@@ -695,6 +696,11 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-skeleton-card.kpi-skel-metric{min-height:149px}   /* Dashboard .dashboard-metric.kpi */
 .cui-skeleton-card.kpi-skel-plain{min-height:95px}     /* Waitlist / Daily report .card.kpi */
 .cui-skeleton-card.v150-kpi{min-height:138px}          /* P&L .card.kpi.v150-kpi */.cui-skeleton-card .cui-skeleton-line:first-child{height:16px}.cui-skeleton-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+/* V451: these two lived in the shared 1100px/768px blocks 28 lines above the rule they were
+   meant to narrow, so the 4-column base won at every width and a phone drew four skeleton
+   columns while the real content below it drew one. */
+@media(max-width:1100px){.cui-skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:768px){.cui-skeleton-grid{grid-template-columns:1fr}}
 .cui-table-skeleton td{padding:14px 12px}.cui-chart-skeleton{min-height:260px;display:grid;grid-template-rows:auto 1fr;gap:14px}.cui-chart-skeleton-head{display:grid;gap:9px}.cui-chart-placeholder{height:170px;border-radius:14px;background:linear-gradient(180deg,var(--shell),#fff);border:1px solid var(--hair);display:flex;align-items:end;gap:8px;padding:18px}
 .cui-chart-placeholder span{flex:1;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#F7C7BE,#F7E6DF);animation:cui-skeleton 1.15s linear infinite}.cui-chart-placeholder span:nth-child(1){height:35%}.cui-chart-placeholder span:nth-child(2){height:68%}.cui-chart-placeholder span:nth-child(3){height:48%}.cui-chart-placeholder span:nth-child(4){height:82%}.cui-chart-placeholder span:nth-child(5){height:55%}
 .cui-form-skeleton{display:grid;gap:16px}.cui-form-skeleton-field{display:grid;gap:8px}
@@ -708,6 +714,10 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
   box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:99;opacity:0;pointer-events:none;
   transform:translateX(-50%) translateY(12px) scale(.96);
   transition:opacity .26s var(--ease),transform .32s var(--spring)}
+/* V451: the phone toast has to clear the bottom dock. This was declared in the shared 768px
+   block 15 lines ABOVE the rule above, so `bottom:26px` won and every toast on a phone was
+   painted behind the dock. */
+@media(max-width:768px){.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 .err{background:var(--danger-bg);color:var(--danger);padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-top:12px}
 /* P0-5 (audit): .err is a page-level alert block, and inside a table cell it was still INLINE —
@@ -898,6 +908,32 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .mobile-search-sheet[open]{display:block;position:fixed;inset:0;z-index:190;background:rgba(23,22,26,.22);padding:max(16px,env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom))}
 .mobile-search-panel{margin:0 auto;background:#fff;border:1px solid var(--hair);border-radius:20px;padding:14px;box-shadow:var(--shadow-lg);max-width:520px}
 .mobile-search-panel .row{gap:8px}.mobile-search-panel input{font-size:16px}
+/* The tablet header. Between 769 and 1180 there is not room for a 340px search field AND the
+   action buttons, so the field collapses to a 48px icon button. This block MUST stay below the
+   base .appbar, .global-search, .global-quick and .dashboard-appbar-branch rules above it — a
+   media query adds no specificity, and it lived 260 lines ABOVE them until V451, so every
+   declaration here except the one property no base rule sets (the search input's display) was
+   silently beaten.
+   The half-applied result: a 340px-flex search pill with its input hidden but its magnifier and
+   its 44px flex-shrink:0 go-arrow still drawn, so at 961-1040px the arrow overflowed its own
+   shrunken pill and landed ON the Record sale button — measured 24.0px of overlap at 961,
+   10.0px at 1024. Note the band: 1180 itself was CLEAR, so the owner's own screen never showed
+   it and a check pinned at 1180 alone would pass. */
+@media(min-width:769px) and (max-width:1180px){
+  .appbar{gap:8px;padding:10px 14px;overflow:visible}
+  .global-actions{gap:6px;min-width:0}
+  .global-search{flex:0 0 48px;width:48px;min-width:48px;padding-left:0;justify-content:center}
+  .global-search input{display:none}
+  .global-search-ic{display:none}
+  .global-search-go{width:44px;height:44px;background:#fff;color:var(--coral);box-shadow:var(--shadow)}
+  .global-quick{gap:6px}
+  .global-act{min-height:44px;padding-inline:12px}
+  .dashboard-appbar-branch{flex:0 1 170px;min-width:132px}
+  .dashboard-appbar-branch select{font-size:12.5px;padding-left:12px;padding-right:28px;text-overflow:ellipsis}
+  .workspace-language-picker{display:none}
+  .business-workspace-switch .who,.profile .who{max-width:156px}
+  .business-workspace-switch .who span:not(.avatar),.profile .who div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 .mobile-action-sheet{display:grid;gap:10px;padding:8px 6px 12px;border-bottom:1px solid var(--hair);margin-bottom:8px}
 .mobile-action-sheet .workspace-language-picker{width:100%;min-width:0;border-radius:12px;font-size:16px}
 .mobile-action-sheet .btn{width:100%;justify-content:center}
@@ -1796,7 +1832,23 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-tiers-page-v343{display:grid;gap:22px}
 .grow-tier-basis-card-v343{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:74px;padding:18px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
 .grow-tier-basis-card-v343 b{font-size:1rem}
-.grow-tier-ladder-v343{position:relative;min-height:118px;margin:4px 8px 0;padding:26px 0 62px}
+/* V458: the ladder contains its own overhang at EVERY width. Each stop is position:absolute with
+   translateX(-50%) and min-width:92px, so the top tier — always at left:100% by construction, it
+   is the one that defines the maximum — hangs ~46px past the ladder's right edge, and a long tier
+   name hangs further still. `overflow:auto` was applied only inside @media(max-width:768px), so
+   below 769 the ladder swallowed its own overflow and above it the overflow reached the document:
+   measured documentElement.scrollWidth - clientWidth = 4px at 1024/1180/1280/1440, 0px at 900 and
+   below. Same shape as REG-003 — a containment rule that exists but is scoped away from the
+   widths that need it — except here the media query is too NARROW rather than defeated.
+   `overflow-x:clip` is the containment rather than `auto`, for two measured reasons. `auto` (or
+   `hidden`) on one axis forces the other to `auto` too, and the stops legitimately paint 6px below
+   the ladder's box — that turned into a clipped label or a stray vertical scrollbar. `clip` is the
+   only value that leaves `overflow-y:visible` alone. And `overflow-clip-margin` lets the 46px
+   overhang keep PAINTING while contributing no scrollable overflow, so the fix costs nothing
+   visually: the top tier's label still sits centred on the end of the rail, it just no longer
+   drags the document with it. The @media(max-width:768px) rule below still switches the ladder to
+   a real scroller, because there the rail is deliberately wider than the screen. */
+.grow-tier-ladder-v343{position:relative;min-height:118px;margin:4px 8px 0;padding:26px 0 62px;overflow-x:clip;overflow-y:visible;overflow-clip-margin:60px}
 .grow-tier-ladder-line-v343{position:absolute;left:0;right:0;top:38px;height:6px;border-radius:999px;background:linear-gradient(90deg,#A46B3D 0%,#C98D32 55%,#C7D8E9 100%)}
 .grow-tier-ladder-stop-v343{position:absolute;top:28px;transform:translateX(-50%);display:grid;justify-items:center;gap:7px;min-width:92px;text-align:center}
 .grow-tier-ladder-stop-v343 i{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid #C98D32;box-shadow:0 0 0 2px #fff}
@@ -2157,6 +2209,12 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
    margin pulled every chart title up under the card edge and clipped it. */
 .dashboard-chart-head{display:flex;align-items:flex-start;gap:10px;margin:0;padding:15px 17px;background:var(--head-tint);border-bottom:1px solid #EEE2DA}
 .dashboard-chart-head>.cui-icon{color:var(--coral);margin-top:1px}.dashboard-chart-head>div{min-width:0;flex:1}.dashboard-chart-head b{display:block}.dashboard-chart-head p{margin-top:3px}.dashboard-chart-link{display:inline-flex;align-items:center;min-height:44px;padding:7px 9px;color:var(--coral);font-size:12px;font-weight:700;white-space:nowrap;border-radius:9px}
+/* V451: the phone variant of the chart head (bleed to the card edge, and the "see all" link
+   wrapping to its own row instead of competing for width with the title) was declared in the
+   shared 768px block ~1450 lines above this base rule, so it never applied and a 390px screen
+   kept the desktop flex row and desktop padding. */
+@media(max-width:768px){.dashboard-chart-head{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;margin:-18px -18px 14px;padding:14px 18px}
+  .dashboard-chart-head .dashboard-chart-link{grid-column:2;margin-left:0;margin-top:4px}}
 .dashboard-chart-link:hover{background:var(--tint)}
 .dashboard-chart-card .chart-frame{margin:8px 14px 16px}
 .dashboard-chart-empty{display:grid;place-items:center;min-height:176px;margin:10px 14px 16px;padding:20px;border:1px dashed var(--line);border-radius:14px;background:var(--shell);color:var(--muted);text-align:center;line-height:1.45}
@@ -2277,13 +2335,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-rewards-head b{display:block;color:var(--ink)}
 .c360-rewards-head span{display:block;margin-top:2px;color:var(--muted);font-size:11.5px}
 .c360-rewards-body{padding:18px}
-.c360-more{position:relative}
-.c360-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid var(--hair);border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:6px;min-width:230px;display:grid;gap:2px}
-.c360-more-menu[hidden]{display:none}
 .c360-edit-card[hidden]{display:none}
-.c360-more-menu button{display:block;text-align:left;width:100%;background:none;border:0;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:650;color:var(--ink);cursor:pointer;min-height:44px}
-.c360-more-menu button:hover,.c360-more-menu button:focus-visible{background:#FBF7F3}
-.c360-more-menu .sub{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px}
 .customer360-kpis-v249{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:start}
 .customer360-points-card-v249 .c360-points-expiry{margin-top:6px}
 /* V294 (owner sketch 2026-08-12): compact summary card at the upper right of the Customer 360
@@ -2475,7 +2527,7 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 @keyframes c360ActFlashV267{0%,55%{background:#FFF3D6}100%{background:transparent}}
 @media(prefers-reduced-motion:reduce){.c360-act-flash-v267{animation:none;outline:2px solid var(--coral);outline-offset:-2px}}
 .c360-activity-filters-v267{align-items:flex-end;row-gap:10px}
-@media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}.c360-nba-actions .c360-more-menu{right:auto;left:0}}
+@media(max-width:560px){.c360-tl-item{grid-template-columns:34px minmax(0,1fr)}.c360-tl-side{grid-column:2/-1;text-align:left;margin-top:4px}.c360-tl-when{margin-top:0}}
 @media(max-width:960px){
   .shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;min-width:0}
   .side{display:none}
@@ -3011,7 +3063,6 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-preview-screen-v243{height:640px;max-height:70vh;border-radius:24px;overflow-y:auto;overscroll-behavior:contain;background:#fff}
 .ci-live-preview-inner-v326{height:100%;min-height:0;overflow-y:auto;box-sizing:border-box}
 .ci-live-preview-sample-badge-v326{background:var(--warn-bg);color:#8a6d1a;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-weight:600}
-.settings-page,.settings-page .split,.settings-page .card{min-width:0;max-width:100%}
 /* v244 · Explore — the ecosystem search behind its own tab */
 /* v264 · sharing a promotion */
 .customer-share-button{flex:none}
@@ -5076,6 +5127,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'64bf3d3721687a3914b4e3fb3264bdb5cbe093cb2876f5a2f069a42769b5a5ba',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'3da5a91bf3ffdab3b308083d9d4e736820cb45142f14e6283aede7868da9e586',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -144,8 +144,17 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
   assert.match(app, /if\(routeKey==='grow'\)return routeView\?page\[1\]===routeView:!\['overview','history','offers'\]\.includes\(String\(page\[1\]\|\|''\)\)/);
   assert.doesNotMatch(app, /data-grow-view-v271/);
   assert.doesNotMatch(app, /aria-label="Programme views"/);
-  // The shared sub-module strip styling stays — other pages still use it.
-  assert.match(html, /\.section-subtabs-v200\{display:flex;max-width:100%/);
+  /* The shared sub-module strip styling stays — other pages still use it.
+     V458 loosened this from a literal declaration-ORDER match to the two properties it was
+     actually guarding. The rule gained flex-wrap:wrap, because at phone widths the #/reports
+     strip scrolled with its scrollbar suppressed and the fourth tab ("Team Performance", whose
+     only door this strip is since V272) was not hit-testable at all — see
+     tests/browser/verify-v458-ladder-and-report-tabs.mjs, which measures that rather than
+     grepping for it. A pin on the exact byte order of a declaration list fails on any edit to
+     that list, including the fix for a bug it was never watching for. */
+  const subtabsRule = /\.section-subtabs-v200\{([^}]*)\}/.exec(html)?.[1] || '';
+  assert.match(subtabsRule, /display:flex/);
+  assert.match(subtabsRule, /max-width:100%/);
 });
 
 test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {

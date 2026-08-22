@@ -401,10 +401,26 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .till-gift-scan-v399{display:inline-flex;align-items:center;justify-content:center;
   width:44px;height:44px;min-height:44px;padding:0;margin-top:10px;flex:0 0 auto}
 
-/* V200 sub-module tabs. The strip scrolls horizontally rather than wrapping: a wrapped pill strip
-   changes height as tabs re-flow, which shifts the whole page under the owner's thumb on the exact
-   tap they were aiming at. `flex` on the buttons is off so labels keep their natural width. */
-.section-subtabs-v200{display:flex;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+/* V200 sub-module tabs. The original rule chose horizontal scrolling over wrapping, and said why:
+   "a wrapped pill strip changes height as tabs re-flow, which shifts the whole page under the
+   owner's thumb on the exact tap they were aiming at."
+
+   V458 revisits that, because the scroll it chose was made invisible in the same rule
+   (scrollbar-width:none plus a ::-webkit-scrollbar reset), and measurement showed the cost:
+   on #/reports the strip is 682px inside a 561px box at 599, so elementFromPoint at the fourth
+   tab's centre returns MAIN, not the button. At 430 and 390, two tabs are unreachable. And
+   "Team Performance" lost its own rail row at V272, so this strip is its ONLY door — an owner on
+   a phone cannot reach that report at all, with no cue that anything is missing.
+
+   The original objection does not apply to these strips: each carries a FIXED set of tabs for its
+   page, so the wrapped height is constant at a given viewport width and cannot change under a
+   thumb mid-tap. What genuinely moves a page under a thumb is a control the owner cannot see.
+   flex-wrap is also self-limiting — a strip that fits stays exactly as it was, on one row, so
+   nothing changes at desktop width. overflow-x:auto stays as the fallback for the pathological
+   case of a single tab wider than its container.
+
+   `flex` on the buttons is off so labels keep their natural width. */
+.section-subtabs-v200{display:flex;flex-wrap:wrap;row-gap:4px;max-width:100%;margin:0 0 16px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .section-subtabs-v200::-webkit-scrollbar{display:none}
 .section-subtabs-v200 button{flex:0 0 auto;white-space:nowrap}
 /* V209 staff list groups. The heading carries the count so an owner can see "3 roster only" at a
@@ -1846,7 +1862,23 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .grow-tiers-page-v343{display:grid;gap:22px}
 .grow-tier-basis-card-v343{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:74px;padding:18px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
 .grow-tier-basis-card-v343 b{font-size:1rem}
-.grow-tier-ladder-v343{position:relative;min-height:118px;margin:4px 8px 0;padding:26px 0 62px}
+/* V458: the ladder contains its own overhang at EVERY width. Each stop is position:absolute with
+   translateX(-50%) and min-width:92px, so the top tier — always at left:100% by construction, it
+   is the one that defines the maximum — hangs ~46px past the ladder's right edge, and a long tier
+   name hangs further still. `overflow:auto` was applied only inside @media(max-width:768px), so
+   below 769 the ladder swallowed its own overflow and above it the overflow reached the document:
+   measured documentElement.scrollWidth - clientWidth = 4px at 1024/1180/1280/1440, 0px at 900 and
+   below. Same shape as REG-003 — a containment rule that exists but is scoped away from the
+   widths that need it — except here the media query is too NARROW rather than defeated.
+   `overflow-x:clip` is the containment rather than `auto`, for two measured reasons. `auto` (or
+   `hidden`) on one axis forces the other to `auto` too, and the stops legitimately paint 6px below
+   the ladder's box — that turned into a clipped label or a stray vertical scrollbar. `clip` is the
+   only value that leaves `overflow-y:visible` alone. And `overflow-clip-margin` lets the 46px
+   overhang keep PAINTING while contributing no scrollable overflow, so the fix costs nothing
+   visually: the top tier's label still sits centred on the end of the rail, it just no longer
+   drags the document with it. The @media(max-width:768px) rule below still switches the ladder to
+   a real scroller, because there the rail is deliberately wider than the screen. */
+.grow-tier-ladder-v343{position:relative;min-height:118px;margin:4px 8px 0;padding:26px 0 62px;overflow-x:clip;overflow-y:visible;overflow-clip-margin:60px}
 .grow-tier-ladder-line-v343{position:absolute;left:0;right:0;top:38px;height:6px;border-radius:999px;background:linear-gradient(90deg,#A46B3D 0%,#C98D32 55%,#C7D8E9 100%)}
 .grow-tier-ladder-stop-v343{position:absolute;top:28px;transform:translateX(-50%);display:grid;justify-items:center;gap:7px;min-width:92px;text-align:center}
 .grow-tier-ladder-stop-v343 i{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid #C98D32;box-shadow:0 0 0 2px #fff}
