@@ -2325,6 +2325,12 @@
       "path": "db/migrations/20260822_nestly_v454_audit_log_detail_column.sql",
       "semanticVersion": "v454",
       "proposedDeployVersion": "20260822000015"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260822_nestly_v455_stock_follows_sale_items.sql",
+      "semanticVersion": "v455",
+      "proposedDeployVersion": "20260822000016"
     }
   ]
 }

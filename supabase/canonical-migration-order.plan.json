@@ -2320,6 +2320,12 @@
       "version": "20260822000015",
       "name": "nestly_v454_audit_log_detail_column",
       "sourcePath": "db/migrations/20260822_nestly_v454_audit_log_detail_column.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260822000016",
+      "name": "nestly_v455_stock_follows_sale_items",
+      "sourcePath": "db/migrations/20260822_nestly_v455_stock_follows_sale_items.sql"
     }
   ]
 }
