@@ -47,6 +47,21 @@ const CHECKS = [
     urlEnv: 'REWARD_OVERVIEW_FIXTURE_URL',
     fixture: '/tests/browser/reward-overview-owner-visual.html',
   },
+  /* V448 (REG-009): verify-v441-preview-dock-scope.mjs boots the REAL app (real router, real
+     bundles), which needs app/ as its docroot — the chunks it loads are absolute paths like
+     /app-core.js?b=… that only resolve when the server root IS app/, not the repo root this
+     runner's own server serves for the reward-overview check above. Rather than force it through
+     that repo-root server (which would require a docroot it cannot use), it is `standalone`:
+     the script already spawns and probes its OWN docroot=app/ server (on its own port, 4441 by
+     default, distinct from this runner's ephemeral one), so it only needs the resolved
+     playwright driver forwarded — no fixture/urlEnv wiring. This was previously runnable only by
+     hand; registering it here puts it in `npm run test:browser`, which is already the job CI
+     runs (.github/workflows/production-baseline.yml, "browser-walkthrough"), so no separate
+     workflow or npm script was needed. */
+  {
+    script: 'tests/browser/verify-v441-preview-dock-scope.mjs',
+    standalone: true,
+  },
 ];
 
 function resolvePlaywright() {
@@ -133,11 +148,13 @@ const { port } = server.address();
 try {
   for (const check of CHECKS) {
     process.stdout.write(`\n── ${check.script}\n`);
-    const env = {
-      ...process.env,
-      PLAYWRIGHT_MODULE: driver.specifier,
-      [check.urlEnv]: `http://127.0.0.1:${port}${check.fixture}`,
-    };
+    const env = check.standalone
+      ? { ...process.env, PLAYWRIGHT_MODULE: driver.specifier }
+      : {
+          ...process.env,
+          PLAYWRIGHT_MODULE: driver.specifier,
+          [check.urlEnv]: `http://127.0.0.1:${port}${check.fixture}`,
+        };
     try {
       await run(check.script, env);
       process.stdout.write(`   ok\n`);

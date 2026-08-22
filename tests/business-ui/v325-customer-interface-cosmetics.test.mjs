@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -118,6 +119,50 @@ test('V325 steps 1-2 pair the form with the SAME live-preview renderer as step 3
   assert.doesNotMatch(sideCard, /<iframe/);
   // Step 3 (Preview) still renders the untouched, pinned V243 card — no forced-open param.
   assert.match(page, /ciSectionV296\('preview',customerInterfacePreviewCardHtmlV243\(\)\)/);
+});
+
+/* V448 (REG-009): the test above proves the SOURCE TEXT calls the renderer from both places; it
+   does not run either function, so it cannot tell a real shared call from one that silently
+   diverged (a stray argument, a second copy that drifted). This executes both real functions
+   (extracted from app.js, run in a vm sandbox with only the wallet-content renderer and the
+   handful of page globals they read stubbed — location/S/esc — none of which affect the claim
+   under test) and diffs their actual output around the shared renderer's markup. */
+test('V325/V243 EXECUTING: the step 1-2 side card and the step-3 card render byte-identical phone-preview markup', () => {
+  const previewSideCardSrc = section(app, 'function customerInterfacePreviewSideCardHtmlV325(', 'function customerInterfacePreviewUrlV243(');
+  const previewCardSrc = section(app, 'function customerInterfacePreviewCardHtmlV243(', 'function wireCustomerInterfacePreviewV243(');
+  const previewUrlSrc = section(app, 'function customerInterfacePreviewUrlV243(', 'function customerInterfacePreviewCardHtmlV243(');
+  const sandboxGlobals = `
+    const location={pathname:'/app'};
+    const S={biz:{slug:'kopi-corner'}};
+    const esc=s=>String(s??'');
+    const customerInterfaceLivePreviewMarkupV326=()=>'<div id="stubWalletMarkup">sample wallet render</div>';
+  `;
+  const sideCardHtml = vm.runInNewContext(
+    `${sandboxGlobals}\n${previewSideCardSrc}\ncustomerInterfacePreviewSideCardHtmlV325();`, {}
+  );
+  const stepThreeCardHtml = vm.runInNewContext(
+    `${sandboxGlobals}\n${previewUrlSrc}\n${previewCardSrc}\ncustomerInterfacePreviewCardHtmlV243();`, {}
+  );
+  assert.equal(typeof sideCardHtml, 'string');
+  assert.equal(typeof stepThreeCardHtml, 'string');
+  // Both must have actually called the shared renderer, not skipped it.
+  assert.match(sideCardHtml, /stubWalletMarkup/);
+  assert.match(stepThreeCardHtml, /stubWalletMarkup/);
+  // Extract the phone-frame fragment from each (from the phone wrapper to its closing div).
+  // The side card legitimately adds its own `style="margin-top:10px"` to sit under the "Live
+  // preview" label — an inline-style difference, not a divergent renderer — so that one
+  // attribute is normalized away before comparing; everything else, especially the renderer's
+  // OWN output nested inside, must be identical.
+  const framePattern = /<div class="customer-preview-phone-v243"[^>]*><div class="customer-preview-screen-v243[^"]*">.*?<\/div><\/div>/s;
+  const normalize = (html) => html?.replace(/ style="[^"]*"/g, '');
+  const sideFrame = normalize(sideCardHtml.match(framePattern)?.[0]);
+  const stepThreeFrame = normalize(stepThreeCardHtml.match(framePattern)?.[0]);
+  assert.ok(sideFrame, 'step 1-2 side card must render the phone-frame markup');
+  assert.ok(stepThreeFrame, 'step 3 card must render the phone-frame markup');
+  assert.equal(sideFrame, stepThreeFrame,
+    'the two cards must render identical phone-preview markup (ignoring the side card\'s own '
+    + 'layout-only inline style) — divergence here would mean steps 1-2 are no longer showing '
+    + 'what step 3 (and the customer) actually sees');
 });
 
 /* ------------------------------------------------------------------- (b) bio field, exception 1 */

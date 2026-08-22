@@ -1,9 +1,17 @@
 import {mkdir,writeFile} from 'node:fs/promises';
+import {assertFixtureMatchesTree} from '../../scripts/quality/fixture-cross-tree-guard.mjs';
+
+const base=process.env.V142_FIXTURE_URL||'http://127.0.0.1:4173/tests/browser/v142-connect-paynow-visual.html';
+const evidence=new URL('../../docs/qa/evidence/v142-connect-paynow-pos/',import.meta.url);
+const FIXTURE_FILE=new URL('./v142-connect-paynow-visual.html',import.meta.url);
+
+/* CROSS-TREE CAPTURE GUARD (nestly_v448): runs BEFORE the playwright import below is even
+   touched, so a mismatch aborts fast with no browser driver required. See
+   scripts/quality/fixture-cross-tree-guard.mjs for why this exists (REG-009). */
+await assertFixtureMatchesTree({servedUrl:base,localFixtureUrl:FIXTURE_FILE,label:'v142'});
 
 const playwrightModule=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const {chromium}=playwrightModule.chromium?playwrightModule:playwrightModule.default;
-const base=process.env.V142_FIXTURE_URL||'http://127.0.0.1:4173/tests/browser/v142-connect-paynow-visual.html';
-const evidence=new URL('../../docs/qa/evidence/v142-connect-paynow-pos/',import.meta.url);
 await mkdir(evidence,{recursive:true});
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
 const metrics={};

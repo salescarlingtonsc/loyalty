@@ -28,8 +28,19 @@
  * now covered by tests/business-ui/reward-overview-fixture-parity.test.mjs, which asserts byte
  * equality the way the other six fixtures do, and nothing is checked out any more.
  *
- * tests/browser/v181-onboarding-board.html is generated here too and still has no byte-equality
- * test. That is a smaller version of the same gap and is worth closing next.
+ * tests/browser/v181-onboarding-board.html is generated here too, and (nestly_v448) is now
+ * covered the same way: tests/business-ui/v181-onboarding-board-fixture-parity.test.mjs asserts
+ * byte equality against buildOnboardingBoardVisualFixture(), exported from
+ * tests/browser/generate-v181-onboarding-board-visual.mjs for that purpose.
+ *
+ * PORT SAFETY (nestly_v448, REG-009). This used to hardcode PORT=4173 and NOT tell the two
+ * Chrome-capture scripts what URL to hit, so they fell back to their own 4173 default — which
+ * happened to line up here, but is exactly the shared-port assumption that let one session's
+ * capture silently record another session's tree when the two DIDN'T agree (see
+ * fixture-cross-tree-guard.mjs). Now: PORT is overridable via $PORT (default stays 4173 for
+ * back-compat); the server refuses to start if that port is already bound by something else,
+ * rather than colliding with it; and V104_FIXTURE_URL / V142_FIXTURE_URL are always set to THIS
+ * run's own server, so the captures can never coast on a same-numbered default.
  */
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -37,9 +48,10 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readdirSync } from 'node:fs';
+import { visualFixtureUrls } from './visual-fixture-urls.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const PORT = 4173;
+const PORT = Number(process.env.PORT || 4173);
 const CHROME = process.env.PLAYWRIGHT_EXECUTABLE_PATH
   || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
@@ -79,8 +91,30 @@ try {
     await run(process.execPath, [join('tests/browser', name)], { stdio: 'ignore' });
   }
 
-  await new Promise(ok => server.listen(PORT, '127.0.0.1', ok));
-  const env = { ...process.env, PLAYWRIGHT_EXECUTABLE_PATH: CHROME };
+  await new Promise((resolveListen, rejectListen) => {
+    const onError = (error) => { server.removeListener('listening', onListening); rejectListen(error); };
+    const onListening = () => { server.removeListener('error', onError); resolveListen(); };
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(PORT, '127.0.0.1');
+  }).catch(error => {
+    if (error && error.code === 'EADDRINUSE') {
+      throw new Error(
+        `Port ${PORT} is already bound by something else — refusing to start. That is very likely `
+        + `ANOTHER SESSION'S server (4173 is the shared default across worktrees; see REG-009), and `
+        + `this script's own captures must hit only ITS OWN server, never whatever else answers `
+        + `that port. Re-run with PORT=<a free port> node scripts/quality/regen-visual-fixtures.mjs.`
+      );
+    }
+    throw error;
+  });
+  const env = {
+    ...process.env,
+    PLAYWRIGHT_EXECUTABLE_PATH: CHROME,
+    /* Always point the captures at THIS run's own server, by construction — never at whatever
+       happens to default inside the capture scripts themselves. */
+    ...visualFixtureUrls(PORT),
+  };
   for (const script of [
     'tests/browser/verify-v104-promotions-visual.mjs',
     'tests/browser/verify-v142-connect-paynow.mjs',

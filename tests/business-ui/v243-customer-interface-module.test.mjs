@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -23,6 +24,142 @@ function section(source, start, end) {
   const to = source.indexOf(end, from + start.length);
   assert.ok(to > from, `missing section end: ${end}`);
   return source.slice(from, to);
+}
+
+/* ------------------------------------------------------------------------------------------
+   V448 (REG-009): a real, EXECUTING CSS-cascade check, plus real function execution, for the
+   claim the ORIGINAL version of 'V243 the phone frame is a real device mock that still fits a
+   390px screen' made by source-regex alone: that the two-column step layout containing the
+   phone preview never causes horizontal overflow, and — per the V325 comment above
+   ciWithPreviewV325 in app.js — that it "collapses to one column" on narrow viewports. A
+   source-regex match on `.split{grid-template-columns:1fr}` inside a @media block proves that
+   TEXT exists somewhere in index.html; it does not prove that rule actually wins the cascade at
+   any width a browser would use, which is exactly how this file stayed green through a real
+   layout bug (REG-003: a second, unconditional `.split{grid-template-columns:1fr 1fr}` rule is
+   declared LATER in the file than the @media(max-width:768px) collapse rule, and for two rules
+   sharing the same selector text — hence the same specificity — the later one wins the cascade
+   at every width, including inside the media query's own range). The walker below is the same
+   brace-depth parser tests/business-ui/v440-profile-menu-stacking.test.mjs uses on the real
+   <style> block, extended to evaluate whether a media-scoped rule fires at a given viewport
+   width (v440 deliberately skips media rules entirely, which is correct for the z-index bug it
+   guards but would hide exactly this bug). ------------------------------------------------- */
+function parseCssRules(cssText) {
+  const text = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = [];
+  let i = 0;
+  const n = text.length;
+  function walk(mediaCtx) {
+    while (i < n) {
+      while (i < n && /\s/.test(text[i])) i++;
+      if (i >= n) return;
+      if (text[i] === '}') { i++; return; }
+      const headerStart = i;
+      while (i < n && text[i] !== '{') {
+        if (text[i] === '}') { i++; return; }
+        i++;
+      }
+      const header = text.slice(headerStart, i).trim();
+      i++; // consume '{'
+      if (/^@media|^@supports/.test(header)) {
+        walk(header);
+      } else if (/^@(-webkit-)?keyframes|^@font-face|^@page/.test(header)) {
+        let depth = 1;
+        while (i < n && depth > 0) {
+          if (text[i] === '{') depth++;
+          else if (text[i] === '}') depth--;
+          i++;
+        }
+      } else if (header) {
+        const declStart = i;
+        let depth = 1;
+        while (i < n && depth > 0) {
+          if (text[i] === '{') depth++;
+          else if (text[i] === '}') depth--;
+          if (depth > 0) i++;
+        }
+        const decl = text.slice(declStart, i);
+        i++; // consume the closing '}'
+        const selectors = header.split(',').map((s) => s.trim()).filter(Boolean);
+        rules.push({ selectors, decl, media: mediaCtx });
+      } else {
+        i++;
+      }
+    }
+  }
+  walk(null);
+  return rules;
+}
+
+/* Supports exactly the forms this stylesheet uses (`@media(max-width:NNNpx)`, optionally
+   combined with a min-width). Not a general media-query engine — a probe for these selectors. */
+function mediaAppliesAtWidth(media, width) {
+  if (!media) return true;
+  const maxMatch = media.match(/max-width:\s*(\d+)/);
+  const minMatch = media.match(/min-width:\s*(\d+)/);
+  if (maxMatch && width > Number(maxMatch[1])) return false;
+  if (minMatch && width < Number(minMatch[1])) return false;
+  return true;
+}
+
+function parseDeclarations(decl) {
+  const props = {};
+  for (const part of decl.split(';')) {
+    const colon = part.indexOf(':');
+    if (colon < 0) continue;
+    const prop = part.slice(0, colon).trim();
+    const value = part.slice(colon + 1).trim();
+    if (prop) props[prop] = value;
+  }
+  return props;
+}
+
+/* The effective declared properties for one EXACT selector TEXT at one viewport width. Rules
+   firing at that width are merged in SOURCE ORDER, later overwriting earlier property-by-
+   property — the correct cascade result for rules that share selector text (and therefore
+   specificity), which is the case for every selector this file probes below. */
+function effectiveDeclarations(rules, selectorText, width) {
+  const props = {};
+  for (const rule of rules) {
+    if (!rule.selectors.includes(selectorText)) continue;
+    if (!mediaAppliesAtWidth(rule.media, width)) continue;
+    Object.assign(props, parseDeclarations(rule.decl));
+  }
+  return props;
+}
+
+const indexStyleBlock = section(indexHtml, '<style>', '</style>');
+const cssRules = parseCssRules(indexStyleBlock);
+
+/* A top-level `function NAME(){...}` whose closing brace sits alone at column 0 — the same
+   extraction convention tests/business-ui/v439-add-staff-single-surface.test.mjs documents and
+   relies on for this codebase. */
+function extractFunction(src, name) {
+  const startRe = new RegExp(`^function ${name}\\(`, 'm');
+  const m = startRe.exec(src);
+  assert.ok(m, `extractFunction: missing function ${name}`);
+  const rest = src.slice(m.index);
+  const lines = rest.split('\n');
+  const acc = [];
+  for (const line of lines) {
+    acc.push(line);
+    if (line === '}') return acc.join('\n');
+  }
+  throw new Error(`extractFunction: no column-0 closing brace found for ${name}`);
+}
+
+/* An indented `const NAME=...;` arrow-function assignment (ciWithPreviewV325 lives inside
+   customerInterfacePageV243, not at column 0). Same "read lines until one trims to end with
+   ';'" rule v439's extractConst uses for its top-level consts, tolerant of leading indentation. */
+function extractIndentedConst(src, name) {
+  const lines = src.split('\n');
+  const startIdx = lines.findIndex((l) => l.trim().startsWith(`const ${name}=`));
+  assert.ok(startIdx >= 0, `extractIndentedConst: missing const ${name}`);
+  const acc = [];
+  for (let i = startIdx; i < lines.length; i++) {
+    acc.push(lines[i]);
+    if (lines[i].trim().endsWith(';')) return acc.join('\n');
+  }
+  throw new Error(`extractIndentedConst: unterminated const ${name}`);
 }
 
 const settings = section(app, 'async function settingsPage()', '/* ---------- billing (read-only) ---------- */');
@@ -238,6 +375,80 @@ test('V243 the phone frame is a real device mock that still fits a 390px screen'
   // The workspace page must never scroll sideways because of it.
   assert.match(indexHtml, /\.settings-page,\.settings-page \.split,\.settings-page \.card\{[^}]*min-width:0[^}]*max-width:100%/s);
   assert.match(page, /<div class="settings-page" data-workspace-i18n>/);
+});
+
+/* --------------------------------------------------------------------------------------------
+   V448 (REG-009): the same claim as the test just above, EXECUTED. The three tests below replace
+   what used to be regex string-matches with (1) a real cascade resolution of the actual <style>
+   block, at the widths a phone or a narrow browser window would report, and (2) real execution of
+   ciWithPreviewV325 / customerInterfacePreviewSideCardHtmlV325 (extracted from app.js, run in a
+   vm sandbox — nothing under test is stubbed except the wallet-content renderer these functions
+   call into, which the nesting claim does not depend on). This is "no scope growth": it covers
+   exactly what the test above already claims (the phone frame fits, the page never scrolls
+   sideways) — it just proves the claim by running the code instead of grepping its source. ---- */
+
+test('sanity: the CSS cascade walker actually resolves values already known to be true, at a representative width', () => {
+  // Guards against the walker silently matching nothing and every test below passing vacuously
+  // because effectiveDeclarations() always returns {}.
+  const desktopSplit = effectiveDeclarations(cssRules, '.split', 1200);
+  assert.equal(desktopSplit.display, 'grid');
+  assert.ok(desktopSplit['grid-template-columns'], 'expected the walker to find a grid-template-columns declaration for .split');
+});
+
+test('V243/V325 EXECUTING: at a narrow width, the two-column step layout actually collapses to one column', () => {
+  // The V325 comment directly above ciWithPreviewV325 in app.js claims: `.split`, "the grid this
+  // business console already collapses to one column at <=900px". 600px sits inside every
+  // candidate breakpoint named anywhere near this code (768 in the actual @media rule, 900 in
+  // that comment, 960 in the unrelated V295 comment about .c360-summary-card-v294) — so if the
+  // collapse works at all, it must be in effect here.
+  const narrow = effectiveDeclarations(cssRules, '.split', 600);
+  assert.equal(narrow['grid-template-columns'], '1fr',
+    'REG-003: a later, UNCONDITIONAL `.split{grid-template-columns:1fr 1fr}` rule is declared '
+    + 'after the `@media(max-width:768px){.split{grid-template-columns:1fr}}` collapse rule. Both '
+    + 'share the selector text `.split`, so they share specificity, and the later one wins the '
+    + 'cascade at every width — including inside the media query\'s own range. The two-column '
+    + 'step layout (form beside the 390px-wide phone preview) never actually stacks, which is the '
+    + 'measured REG-003 symptom (a preview phone rendering far narrower than 390px). A prior '
+    + 'source-regex version of this test could not see this: the collapsing declaration IS '
+    + 'present in the file, just permanently overridden.');
+});
+
+test('V243/V325 EXECUTING: the settings-page containment rules really do win the cascade (no sideways scroll), at every width', () => {
+  for (const width of [390, 600, 1440]) {
+    const settingsSplit = effectiveDeclarations(cssRules, '.settings-page .split', width);
+    assert.equal(settingsSplit['min-width'], '0', `.settings-page .split min-width at ${width}px`);
+    assert.equal(settingsSplit['max-width'], '100%', `.settings-page .split max-width at ${width}px`);
+    const phone = effectiveDeclarations(cssRules, '.customer-preview-phone-v243', width);
+    assert.equal(phone['max-width'], '100%', `.customer-preview-phone-v243 max-width at ${width}px`);
+  }
+});
+
+test('V243/V325 EXECUTING: ciWithPreviewV325 really nests the form and the phone-preview frame inside ONE .split', () => {
+  const previewSideCardSrc = extractFunction(app, 'customerInterfacePreviewSideCardHtmlV325');
+  const ciWithPreviewSrc = extractIndentedConst(app, 'ciWithPreviewV325');
+  // Only the wallet-content renderer is stubbed: the nesting under test (which div wraps which)
+  // does not depend on what customer data is inside the phone screen.
+  // `const` bindings from a vm-executed script are NOT exposed as properties on the sandbox
+  // object afterward (a vm/eval scoping quirk, unlike `var`/`function`), so the call has to
+  // happen inside the SAME script — its return value is what runInNewContext hands back.
+  const sandbox = { customerInterfaceLivePreviewMarkupV326: () => '<div id="stubWalletMarkup"></div>' };
+  const html = vm.runInNewContext(
+    `${previewSideCardSrc}\n${ciWithPreviewSrc}\nciWithPreviewV325('<form id="stubStepForm"></form>');`,
+    sandbox
+  );
+  assert.equal(typeof html, 'string', 'extraction must have produced a callable ciWithPreviewV325 returning a string');
+
+  assert.match(html, /^<div class="split ci-step-layout-v325">/,
+    'the wrapper the CSS cascade tests above measure (.split) must be the outermost element');
+  const mainIdx = html.indexOf('class="ci-step-main-v325"');
+  const previewColIdx = html.indexOf('class="ci-step-preview-v325"');
+  assert.ok(mainIdx >= 0 && previewColIdx > mainIdx, 'the form column must precede the preview column');
+  const phoneIdx = html.indexOf('class="customer-preview-phone-v243"');
+  const screenIdx = html.indexOf('class="customer-preview-screen-v243');
+  assert.ok(phoneIdx > previewColIdx, 'the 390px phone frame must be nested inside .ci-step-preview-v325');
+  assert.ok(screenIdx > phoneIdx, 'the scrollable screen must be nested inside the phone frame');
+  assert.match(html, /stubStepForm/, 'the caller\'s form markup must actually be rendered, not replaced');
+  assert.match(html, /stubWalletMarkup/, 'the live-preview content renderer must actually be called, not skipped');
 });
 
 /* ---------------------------------------------------------- (e) access gating matches Settings */
