@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="be1909d8438effa0cc2f9b57c8bc36a1fa103e6aad2de53a01347b97643d74ce"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="8624732060346ad225503dc196da57fd5943504941baf7dfc59d656d9ab40bca"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4106,7 +4106,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · be1909d8438effa0cc2f9b57c8bc36a1fa103e6aad2de53a01347b97643d74ce</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 8624732060346ad225503dc196da57fd5943504941baf7dfc59d656d9ab40bca</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6050,6 +6050,39 @@ function programmeSpineOnV314(kind){
   const rows=programmeSpineRowsV314();
   return rows?rows.some(row=>row&&row.kind===kind&&row.active===true):null;
 }
+/* nestly_v461 — WHICH POT IS LIVE. The client mirror of app.live_balance_programme_v381, whose
+   body reads (copied from production 2026-08-22, not paraphrased):
+     select bp.id from public.business_programmes bp
+      where bp.business_id = p_business and bp.active and bp.kind in ('points','stamps')
+      order by case bp.kind when 'stamps' then 0 else 1 end, bp.id
+      limit 1
+   Points and stamps are mutually exclusive (R2), so at most one is ever active; the ordering only
+   decides a tenant caught mid-switch, and STAMPS WINS, then lowest id.
+   NULL is a real answer — "nothing is accruing" — and callers must treat it as such rather than
+   falling back to reading every pot, which is the bug this exists to stop: a retired points pot's
+   history rendered under the live stamp unit.
+   THERE IS ONE DEFINITION OF THIS RULE. Do not add a second. If the server's changes, change this
+   to match it and say so here. */
+function liveBalanceProgrammeIdV461(){
+  const rows=programmeSpineRowsV314();
+  if(!rows)return null;
+  const stampsFirst=row=>row.kind==='stamps'?0:1;
+  const live=rows
+    .filter(row=>row&&row.active===true&&(row.kind==='points'||row.kind==='stamps'))
+    .sort((a,b)=>stampsFirst(a)-stampsFirst(b)||String(a.id||'').localeCompare(String(b.id||'')));
+  return live.length?(live[0].id||null):null;
+}
+/* nestly_v461 — WHICH WORD. v460 adds `loyalty_unit` ('points'|'stamps'|null) to the dashboard and
+   reports payloads, read from the live pot's own kind, so the heading can follow the figure the
+   server actually scoped. An older server — or the moment between this deploy and that migration —
+   sends no such field, so the answer falls back to the spine through liveBalanceUnitV378(), which
+   is the same rule by a different road. Never a hardcoded 'points': that is what told a stamps
+   merchant their 53 stamps were points. */
+function loyaltyUnitFromPayloadV461(unit){
+  const named=String(unit||'').toLowerCase();
+  return (named==='stamps'||named==='points')?named:liveBalanceUnitV378();
+}
+function loyaltyUnitNounV461(unit){return loyaltyUnitFromPayloadV461(unit)==='stamps'?'Stamps':'Points'}
 /* "Is this firm's loyalty programme running at all?" — the question the owner's Live/Paused pill
    is asking. Accruing AND tiers, because a tier ladder is a programme a customer can be inside. */
 function programmeSpineRunningV314(){
@@ -13214,7 +13247,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'be1909d8438effa0cc2f9b57c8bc36a1fa103e6aad2de53a01347b97643d74ce',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'8624732060346ad225503dc196da57fd5943504941baf7dfc59d656d9ab40bca',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

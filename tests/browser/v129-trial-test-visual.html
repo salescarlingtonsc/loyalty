@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="93691f4f1b634a18157a9c4a1526890ea89521305951ff25c5b06d18086fca82"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d565d1b25af890f330b312cfd04a9d730f180d8e133970d2fd20b8b637fe2fce"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4107,7 +4107,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 93691f4f1b634a18157a9c4a1526890ea89521305951ff25c5b06d18086fca82</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d565d1b25af890f330b312cfd04a9d730f180d8e133970d2fd20b8b637fe2fce</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -5271,11 +5271,22 @@ async function clientsPage(){
      no new privilege is taken. Rebuilt on every load — never merged into a previous customer's
      map — and left EMPTY if the read fails, which shows no earning rather than a wrong one. */
   activityEarnedBySaleV375=new Map();
-  activityEarnUnitV375=String(loyaltyProjection?.program?.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
-  if(canReadLoyalty){
+  /* nestly_v461. This read summed EVERY pot the firm has ever had, and activityEarnedCellV378 then
+     labelled each row with the LIVE unit — so on Cubbly SPA, whose retired points pot v384 already
+     converted INTO stamps, a historical points earn rendered as "+3 stamps". Two wrongs: the rows
+     are not the live pot's, and the word is not theirs.
+     Scoped to the live pot, by the one rule (liveBalanceProgrammeIdV461, mirroring
+     app.live_balance_programme_v381). points_ledger.programme_id is NOT NULL in production and
+     every row carries one, so an equality filter loses no history that belongs here.
+     NULL — nothing accruing, or a spine this render never read — skips the query entirely and
+     leaves the column empty. An empty Earned column is honest; a retired pot's history under the
+     wrong unit is not, and that is the failure mode being removed. */
+  const activityEarnProgrammeV461=liveBalanceProgrammeIdV461();
+  if(canReadLoyalty&&activityEarnProgrammeV461){
     const earnLedgerV375=await fetchAllRowsResult(()=>sb.from('points_ledger')
       .select('sale_id,points',{count:'exact'})
       .eq('business_id',S.biz.id).eq('client_id',id).eq('entry_type','earn')
+      .eq('programme_id',activityEarnProgrammeV461)
       .not('sale_id','is',null).order('id'));
     if(!isClientDetailCurrent())return;
     if(!earnLedgerV375.error)(earnLedgerV375.data||[]).forEach(row=>{
@@ -6312,8 +6323,12 @@ function bindActivityRowControlsV267(redraw){
    because renderHistPage is a top-level function the customer page calls twice (first paint and
    "show more"); it is rebuilt on every customer load, so one customer's earnings can never
    appear under another's. */
+/* nestly_v461: activityEarnUnitV375 stood here. It was assigned on every Customer 360 load from
+   loyaltyProjection.program.unit and READ BY NOTHING — the unit word on an activity row has come
+   from activityEarnedCellV378 -> liveBalanceUnitV378() since v378. A second, unused derivation of
+   "which unit" is exactly how two answers to one question start, so it is deleted rather than
+   wired up. */
 let activityEarnedBySaleV375=new Map();
-let activityEarnUnitV375='points';
 function renderHistPage(history,n){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
@@ -26536,6 +26551,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'93691f4f1b634a18157a9c4a1526890ea89521305951ff25c5b06d18086fca82',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'d565d1b25af890f330b312cfd04a9d730f180d8e133970d2fd20b8b637fe2fce',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
