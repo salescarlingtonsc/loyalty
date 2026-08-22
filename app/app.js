@@ -41493,7 +41493,7 @@ function enhanceStaffMembersTabsV164(teamPanel){
   if(!card)return;
   const introRow=card.querySelector(':scope > .row');
   const introCopy=introRow?.nextElementSibling;
-  const originalAdd=introRow?.querySelector('button,a');
+  const importControl=introRow?.querySelector('button,a');
   if(introRow)introRow.hidden=true;
   if(introCopy&&introCopy.tagName==='P')introCopy.hidden=true;
   const teamNode=card.querySelector('#team');
@@ -41503,16 +41503,22 @@ function enhanceStaffMembersTabsV164(teamPanel){
   toolbar.innerHTML=`<div class="staff-members-tabs" role="tablist" aria-label="Staff members sections">
     <button type="button" class="staff-members-tab active" id="staffMembersTabList" role="tab" aria-selected="true" aria-controls="staffMembersListPanel" data-staff-tab="list">Staff list</button>
     <button type="button" class="staff-members-tab" id="staffMembersTabInvite" role="tab" aria-selected="false" aria-controls="staffMembersInvitePanel" tabindex="-1" data-staff-tab="invite">Invites &amp; access</button>
-  </div>`;
-  if(originalAdd){
-    originalAdd.classList.add('staff-members-add-top');
-    originalAdd.textContent='Add staff';
-    originalAdd.removeAttribute('style');
-    toolbar.appendChild(originalAdd);
-  }else{
-    toolbar.insertAdjacentHTML('beforeend',`<button type="button" class="btn sm staff-members-add-top" id="staffMembersAddTop">Add staff</button>`);
-    /* V190: this fallback button was created with NO handler at all — a dead control. Both it
-       and the real toolbar button now open the manual add form below. */
+  </div>
+  <button type="button" class="btn sm staff-members-add-top" id="staffMembersAddTop">Add staff</button>`;
+  /* V439 (owner: "delete this pop-up when I click Add member"). "Add staff" used to BE the CSV
+     import button wearing a new label: this code grabbed introRow's only button — which is the
+     importBtn('staff',...) control built into the settings-team-card markup, inline
+     onclick="openImport('staff',...)" and all — relabelled it "Add staff", moved it into the
+     toolbar, then ALSO addEventListener'd openManualAdd onto it below. The inline onclick
+     survived the relabel, so one click fired both the import popup and the manual add card
+     stacked on top of it. One control, one surface: "Add staff" is now always a fresh button
+     wired only to openManualAdd, never to the import handler. The import feature is not gone —
+     it keeps its own honestly-labelled control in this same toolbar, inline onclick intact. */
+  if(importControl){
+    importControl.classList.add('staff-members-import-top');
+    importControl.textContent='Import from Excel';
+    importControl.removeAttribute('style');
+    toolbar.appendChild(importControl);
   }
   card.before(toolbar);
   const listPanel=document.createElement('section');
