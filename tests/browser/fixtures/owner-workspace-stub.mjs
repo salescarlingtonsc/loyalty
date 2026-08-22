@@ -8,9 +8,14 @@
  *
  * MODULES deliberately includes `appointments`, so the app bar renders BOTH "Record sale" and
  * "New appointment" — the crowded header the V451 band measures.
+ * `extraStaffWorkspaces` (V452) adds further staff personas so the profile menu renders the
+ * workspace switcher, which only appears when the signed-in user can reach a SECOND workspace.
+ * It defaults to none, so every existing caller's fixture is byte-identical to before.
  */
-export function ownerWorkspaceStub({biz='b1111111-1111-4111-8111-111111111111',slug='testco'}={}){
+export function ownerWorkspaceStub({biz='b1111111-1111-4111-8111-111111111111',slug='testco',
+  extraStaffWorkspaces=[]}={}){
   const BIZ=biz,SLUG=slug;
+  const EXTRA=JSON.stringify(extraStaffWorkspaces);
   return `(()=>{
   const BIZ='${BIZ}';
   const MODULES=['loyalty','retention','referrals','memberships','clients','sales','services','till',
@@ -72,7 +77,7 @@ export function ownerWorkspaceStub({biz='b1111111-1111-4111-8111-111111111111',s
   const rpcData=name=>{
     switch(name){
       case 'get_my_personas':return {staff:[{business_id:BIZ,business_slug:'${SLUG}',
-        business_name:'Test Co',role:'owner',modules:MODULES}],customer:[],
+        business_name:'Test Co',role:'owner',modules:MODULES},...${EXTRA}],customer:[],
         default_route:'#/workspace/${SLUG}/dashboard'};
       case 'platform_get_business_control_v94':return {workspace_access:true,quick_earn_catalogue_enabled:true};
       case 'get_my_modules':return {role:'owner',is_super_admin:false,modules:MODULES,

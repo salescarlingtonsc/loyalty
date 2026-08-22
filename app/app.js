@@ -3096,6 +3096,14 @@ async function route(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   globalThis.document?.documentElement?.removeAttribute('data-customer-surface');
   disposeCurrentRoute();
+  /* V452: navigation closes every popover. Without this the account menu (and the workspace
+     switcher nested inside it, whose own links are what navigated) reappeared open on the next
+     page — the owner saw exactly that. It sits AFTER disposeCurrentRoute() deliberately: seven
+     tests pin `disposeCurrentRoute()` to within 320 characters of `async function route(){`,
+     and inserting a commented call above it pushed dispose out of that window. The shell is
+     about to be rebuilt, so only the STATE has to change here; see resetPopoverStateV452 for
+     why route() must not reach a renderer. */
+  resetPopoverStateV452();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
      read to the owner as "pressing refresh does nothing." Now it's recoverable in-place. */
@@ -14207,9 +14215,13 @@ function wireMobileSearchShell(){
   const show=()=>{sheet.setAttribute('open','');requestAnimationFrame(()=>input.focus({preventScroll:true}))};
   const hide=()=>sheet.removeAttribute('open');
   const run=()=>{if(runWorkspaceCustomerLookup(input.value)){input.value='';hide()}};
-  open.onclick=show;close&&(close.onclick=hide);go&&(go.onclick=run);
+  /* V452: the sheet is its own full-viewport backdrop, so "click outside" can never fire for it
+     and the backdrop test below stays. Escape moves to the shared controller, which fires
+     wherever focus is rather than only inside this input, and closes the sheet on navigation. */
+  wirePopoverDismissV452();
+  open.onclick=()=>{closeAllPopoversV452('mobile-search');show()};close&&(close.onclick=hide);go&&(go.onclick=run);
   sheet.addEventListener('click',event=>{if(event.target===sheet)hide()});
-  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();run()}else if(e.key==='Escape'){e.preventDefault();hide()}};
+  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();run()}};
 }
 function wireGlobalActions(){
   const input=$('globalSearch');
@@ -14356,12 +14368,143 @@ function profileHtml(){
       </div>`:''}
     </div>`;
 }
+/* ---------- V452: ONE dismiss discipline for every popover in the app ----------------------
+   Before this each popover invented its own, and no two agreed:
+     .profile .menu     JS flag + a ONE-SHOT document click listener re-armed on every render;
+                        Escape only when focus happened to be inside the panel.
+     .notif-menu        same one-shot listener; no Escape at all.
+     .business-workspace-switch   a bare <details>. No outside click, no Escape, nothing.
+     mobile search sheet          closed on its own backdrop only.
+     .grow-row-menu-v351          bare <details>, three per row set, all openable at once.
+   And NOTHING closed on navigation. That is the owner-reported bug: the workspace switcher's
+   links live INSIDE #profwrap, so the outside-click listener can never fire for them, they carry
+   no onclick, and route() never touched the flags — so the account menu survived a workspace
+   switch and the route change that followed it, and reappeared open on the next page.
+
+   The registry is SELECTOR-DRIVEN and re-queried on every event, deliberately: this app rewrites
+   #profwrap/#bellwrap outerHTML on each toggle and re-renders whole pages, so any registry that
+   held element references would hold corpses.
+
+   NOT REGISTERED, on purpose: the ~20 disclosure <details> (appointment-more, staff-mobile-more,
+   loyalty-optional-v235, till-who-v373, studio-advanced, card sections …). Those are expandable
+   sections, not popovers — they are MEANT to stay open while you work elsewhere on the page. */
+/* The ONE list of what counts as a popover. Both the interactive controller below and the
+   core-safe reset used by route() read these, so "which elements dismiss" has a single source
+   of truth even though the two paths differ in whether they repaint. */
+const POPOVER_SWITCH_SEL_V452='details.business-workspace-switch';
+const POPOVER_ROWMENU_SEL_V452='details.grow-row-menu-v351';
+const POPOVER_DETAILS_SEL_V452=POPOVER_SWITCH_SEL_V452+','+POPOVER_ROWMENU_SEL_V452;
+const POPOVER_SHEET_ID_V452='mobileSearchSheet';
+/* Called from route(). It deliberately does NOT reach renderProfile/renderBell, for two reasons:
+   the shell is about to be rebuilt so repainting the outgoing header is wasted work, and — the
+   load-bearing one — scripts/quality/split-app-bundle.mjs severs route's edges to the SURFACE
+   ENTRY POINTS only. A route -> renderProfile edge is not severed, so it drags the entire
+   business surface into the always-loaded core chunk (measured: core 472KB -> 2824KB, business
+   2368KB -> 21KB). Keep this function free of business-surface names. */
+function resetPopoverStateV452(){
+  profileOpen=false;
+  bellOpen=false;
+  const doc=globalThis.document;
+  if(!doc)return;
+  for(const node of doc.querySelectorAll(POPOVER_DETAILS_SEL_V452))node.open=false;
+  doc.getElementById(POPOVER_SHEET_ID_V452)?.removeAttribute('open');
+}
+let popoverPageV452='';
+let popoverDismissWiredV452=false;
+const popoverKindsV452=()=>[
+  {name:'profile',
+   roots:()=>[$('profwrap')].filter(Boolean),
+   isOpen:()=>profileOpen,
+   close:(root,quiet)=>{if(!profileOpen)return false;profileOpen=false;if(!quiet)renderProfile(popoverPageV452);return true},
+   triggerId:'profWho'},
+  {name:'notifications',
+   roots:()=>[$('bellwrap')].filter(Boolean),
+   isOpen:()=>bellOpen,
+   close:(root,quiet)=>{if(!bellOpen)return false;bellOpen=false;if(!quiet)renderBell(popoverPageV452);return true},
+   triggerId:'bellBtn'},
+  {name:'workspace-switch',
+   roots:()=>[...document.querySelectorAll(POPOVER_SWITCH_SEL_V452)],
+   isOpen:root=>!!root.open,
+   close:root=>{if(!root.open)return false;root.open=false;return true},
+   closeOnInnerActivate:true},
+  {name:'mobile-search',
+   /* The sheet IS its own full-viewport backdrop, so "click outside the root" can never fire for
+      it; its existing backdrop handler stays. What it gains here is Escape from anywhere and
+      closing on navigation. */
+   roots:()=>[$(POPOVER_SHEET_ID_V452)].filter(Boolean),
+   isOpen:root=>root.hasAttribute('open'),
+   close:root=>{if(!root.hasAttribute('open'))return false;root.removeAttribute('open');return true},
+   triggerId:'mobileSearchOpen'},
+  {name:'grow-row-menu',
+   roots:()=>[...document.querySelectorAll(POPOVER_ROWMENU_SEL_V452)],
+   isOpen:root=>!!root.open,
+   close:root=>{if(!root.open)return false;root.open=false;return true},
+   closeOnInnerActivate:true},
+];
+/* quiet=true skips the re-render: on navigation the shell is about to be rebuilt anyway, so
+   repainting the outgoing header first is wasted work. */
+function closeAllPopoversV452(exceptName,quiet){
+  let closed=0;
+  for(const kind of popoverKindsV452()){
+    if(exceptName&&kind.name===exceptName)continue;
+    for(const root of kind.roots()){
+      try{if(kind.close(root,quiet))closed++}catch(error){console.error(error)}
+    }
+  }
+  return closed;
+}
+function wirePopoverDismissV452(page){
+  if(page!==undefined)popoverPageV452=page;
+  if(popoverDismissWiredV452)return;
+  popoverDismissWiredV452=true;
+  /* Bubble phase, and nothing here calls stopPropagation: an item's own handler must run
+     untouched. The grow row menus' buttons in particular do NOT stopPropagation, so a capture-
+     phase closer or a synchronous one could pull the ground out from under them. */
+  document.addEventListener('click',event=>{
+    for(const kind of popoverKindsV452()){
+      /* The trigger is not always inside the popover it opens: the mobile search sheet's button
+         sits in the app bar while the sheet is a separate full-screen node, so without this the
+         very click that opened it would immediately close it again. (The profile and bell
+         triggers happen to stopPropagation, so they never reached here — a difference this
+         controller should not depend on.) */
+      if(kind.triggerId&&event.target.closest?.('#'+kind.triggerId))continue;
+      for(const root of kind.roots()){
+        if(!kind.isOpen(root))continue;
+        if(!root.contains(event.target)){kind.close(root);continue}
+        /* A menu whose items act or navigate must close when one is chosen. Deferred one tick so
+           the item's handler runs first, against a DOM that is still the one it was rendered
+           into. */
+        if(kind.closeOnInnerActivate
+          &&event.target.closest?.('a[href],button,[role="button"]')
+          &&!event.target.closest?.('summary'))setTimeout(()=>kind.close(root),0);
+      }
+    }
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape')return;
+    for(const kind of popoverKindsV452()){
+      for(const root of kind.roots()){
+        if(!kind.isOpen(root))continue;
+        event.preventDefault();
+        /* Escape must not strand the keyboard: focus goes back to whatever opened the thing. */
+        const trigger=kind.triggerId?$(kind.triggerId):root.querySelector('summary');
+        kind.close(root);
+        (kind.triggerId?$(kind.triggerId):trigger)?.focus?.();
+        return;
+      }
+    }
+  });
+}
+
 /* Opening/closing the profile menu must NOT touch #main or #navwrap — it used to call
    renderShell(page), which also re-invokes the current page's render function (full
    Supabase refetch, chart re-animation, any custom date range reset). This widget now
    re-renders only itself. */
 function wireProfile(page){
-  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen){bellOpen=false;renderBell(page);}renderProfile(page);};
+  wirePopoverDismissV452(page);
+  /* V452: opening one popover closes every other, through the shared controller, instead of
+     this widget knowing the bell exists. */
+  $('profWho').onclick=(e)=>{e.stopPropagation();profileOpen=!profileOpen;if(profileOpen)closeAllPopoversV452('profile');renderProfile(page);};
   /* V219. Owner: "i need a drop down in the header to select which branch they want to view now".
      V210 moved this selector OUT of the profile menu and into the top bar, but left its
      hydration inside `if(profileOpen)`. The mount div was rendered on every page and filled on
@@ -14369,8 +14512,8 @@ function wireProfile(page){
      shell is wired, which is what the top-bar position always meant. */
   hydrateProfileBranchSelectorV158(page);
   if(profileOpen){
-    const menu=$('profmenu');
-    menu.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();profileOpen=false;renderProfile(page);$('profWho')?.focus()}};
+    /* V452: Escape (and the focus return to the account chip) is the shared controller's job now.
+       It used to be bound to the panel, so it only fired when focus was already inside it. */
     const profileNameForm=$('profileNameFormV158');
     if(profileNameForm)profileNameForm.onsubmit=async(e)=>{
       e.preventDefault();
@@ -14409,14 +14552,8 @@ function wireProfile(page){
     /* v188: the profile menu links to the data-request page instead of opening a self-service
        deletion dialog; closing an account goes through Peekaa. */
     const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=()=>{profileOpen=false};
-    /* click-away to dismiss — expected of a native popover, and without it the menu
-       could only be closed by re-clicking the chip. One-shot listener, re-armed on
-       each open, so it can't stack up across renders. */
-    setTimeout(()=>document.addEventListener('click',function away(ev){
-      const w=$('profwrap');
-      if(w&&!w.contains(ev.target)){profileOpen=false;document.removeEventListener('click',away);renderProfile(page);}
-      else if(!w){document.removeEventListener('click',away);}
-    }),0);
+    /* V452: click-away is the shared controller's, installed once at boot rather than re-armed
+       on every render of this menu. */
   }
 }
 function renderProfile(page){
@@ -14485,7 +14622,8 @@ function notifMenuHtml(){
     </div>`;
 }
 function wireBell(page){
-  $('bellBtn').onclick=(e)=>{e.stopPropagation();bellOpen=!bellOpen;if(bellOpen){profileOpen=false;renderProfile(page);}renderBell(page);};
+  wirePopoverDismissV452(page);
+  $('bellBtn').onclick=(e)=>{e.stopPropagation();bellOpen=!bellOpen;if(bellOpen)closeAllPopoversV452('notifications');renderBell(page);};
   if(!bellOpen) return;
   const markAll=$('markAll');
   if(markAll) markAll.onclick=async(e)=>{
@@ -14527,12 +14665,7 @@ function wireBell(page){
     }
     renderBell(page);
   };
-  /* click-away, same one-shot pattern as the profile menu */
-  setTimeout(()=>document.addEventListener('click',function away(ev){
-    const w=$('bellwrap');
-    if(w&&!w.contains(ev.target)){bellOpen=false;document.removeEventListener('click',away);renderBell(page);}
-    else if(!w){document.removeEventListener('click',away);}
-  }),0);
+  /* V452: click-away and Escape come from the shared controller. */
 }
 function renderBell(page){
   const wrap=$('bellwrap');

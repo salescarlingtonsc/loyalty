@@ -71,6 +71,10 @@ test('a missing platform module renders a recoverable error instead of falling t
       beginRouteInvocation:()=>()=>true,
       dashboardRenderEpoch:0,customerWalletRenderEpoch:0,portalRenderEpoch:0,
       destroyMountedTurnstiles(){},disposeCurrentRoute(){},killCharts(){},
+      /* V452: route() now closes any open popover on navigation. This harness stubs everything
+       that is not a routing decision (see renderPortal/nav/root above); the real function is
+       exercised end-to-end in tests/browser/verify-v452-popover-dismiss.mjs step 8. */
+      resetPopoverStateV452(){},
       passwordRecoveryError:false,passwordRecoveryActive:false,
       renderRecoveryInvalid(){},renderPasswordUpdate(){},
       entryRouteForLocation:()=>routeHash,
