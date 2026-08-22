@@ -1866,7 +1866,19 @@ function profileHtml(){
         <span class="chev" aria-hidden="true">${profileOpen?'−':'+'}</span>
       </button>
       ${profileOpen?`<div class="menu" id="profmenu" aria-label="Account links">
-        <div class="profile-menu-section" style="overflow-wrap:anywhere"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
+        <!-- V443 (owner sketch, annotated screenshot): "Switch workspace" moved here from the
+             header, beside the current workspace name. It calls the exact same
+             businessWorkspaceSwitchHtml() the header used — same staff list, same
+             #/workspace/<slug>/dashboard links, same identity-verified route() handling — with
+             hasCustomerPersona forced false because this menu already carries its own Customer
+             view row (pmWallet, below); the shared function's own customer-view fallback would
+             otherwise be a second, duplicate door to the same place. -->
+        <div class="profile-menu-section" style="overflow-wrap:anywhere">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="min-width:0"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
+            ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,false)}
+          </div>
+        </div>
         <div class="profile-menu-section small muted" style="overflow-wrap:anywhere">Signed in as<br><b style="color:var(--ink)">${esc(displayName||S.user?.email||'User')}</b>${displayName&&S.user?.email?`<br><span>${esc(S.user.email)}</span>`:''}</div>
         <!-- V225 (owner: "put inside here" pointing from the top-bar language select to the
              profile menu). Language is a personal preference set once, not a per-task control,
@@ -2563,7 +2575,10 @@ function renderShell(page){
         ${mobileSearchShellHtml()}
         <div class="topbar-branch-scope-v210" id="profileBranchScopeV158" aria-live="polite"></div>
 
-        ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,S.hasCustomerPersona)}
+        <!-- V443 (owner sketch): "Switch workspace" moved out of the header into the profile
+             menu's top workspace section (see profileHtml), reachable at every width — the
+             narrow-header media query used to hide this control entirely rather than relocate
+             it, so this also closes that gap. -->
         ${canReadModule('bookings')?bookingRequestsBadgeWrapHtml():''}
         ${bellHtml()}
         ${profileHtml()}
@@ -4819,6 +4834,29 @@ async function clientDetail(id){
     }catch(branchError){console.error(branchError);birthdayBranchesV287=[]}
     if(!isClientDetailCurrent())return;
   }
+  /* V442 (owner circled the right column, "Package Detail"). Every figure below is derived
+     from cpRows and allSl, which this page has already read — the card adds no query of its
+     own. The branch roster is the one exception, loaded only when the Use-a-session control
+     would actually render, and it comes from the same cached role-scoped reader the birthday
+     picker above just used. */
+  const packageModelV442=canReadPackages?packageDetailModelV442({packages:cpRows||[],sales:allSl||[]}):[];
+  const canUsePackageSessionV442=canReadPackages&&packageModelV442.length>0
+    &&canWriteModule('packages')&&packageModelV442.some(entry=>!entry.exhausted);
+  let packageBranchesV442=[],packageBranchErrorV442=false;
+  if(canUsePackageSessionV442){
+    const scope=await packageUseBranchesV442();
+    if(!isClientDetailCurrent())return;
+    packageBranchesV442=scope.branches;packageBranchErrorV442=scope.error;
+  }
+  const packageBranchNameV442=Object.fromEntries(packageBranchesV442.map(branch=>[branch.id,branch.name]));
+  const packageDetailMarkupV442=canReadPackages
+    ?packageDetailCardHtmlV442(packageModelV442,{
+      canUse:canReadPackages&&canWriteModule('packages'),
+      branches:packageBranchesV442,branchError:packageBranchErrorV442,
+      staffName,branchName:packageBranchNameV442})
+    /* A role that cannot read the packages module gets no card at all — never a card that
+       reports zero packages it was not allowed to count. */
+    :'';
   let birthdayCardMarkup='';
   if(birthdayBenefitsEnabled&&birthdayError){
     birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit temporarily unavailable</b><p class="muted small" style="margin-top:7px">The rest of this customer profile remains current. No birthday status is inferred.</p><button class="btn ghost sm" id="c360BirthdayRetry" style="margin-top:10px">Reload profile</button></div>`;
@@ -5152,7 +5190,16 @@ async function clientDetail(id){
       ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
            cell now instead of a flex sibling that dictated the height of an empty left column.
            Contents are untouched: visits, lifetime spend, points (+ paused note and expiry line),
-           spendable credit, PDPA. */''}${summaryCardV294}
+           spendable credit, PDPA. */''}
+      ${/* V442: the owner circled the RIGHT column, under this summary card, and wrote
+           "Package Detail". The cells of .c360-content-split-v295 are auto-placed in DOM order,
+           so a card inserted straight after the summary card lands in the LEFT column on the
+           next row — not under it. The two share one grid cell instead: the summary card keeps
+           the top-right slot it has been signed off in twice (V294, V295), and the package card
+           sits directly beneath it, in the column the owner marked. */''}
+      ${packageDetailMarkupV442
+        ?`<div class="c360-summary-stack-v442">${summaryCardV294}${packageDetailMarkupV442}</div>`
+        :summaryCardV294}
       ${/* V319: the offers box is placed AFTER the summary card, not between it and the
            programmes card. These cells are auto-placed in DOM order, so inserting it earlier
            pushed the summary card out of the upper-right slot V294 put it in and V295 kept it
@@ -5171,6 +5218,29 @@ async function clientDetail(id){
     ${activityMarkup}
     ${eraseCardV291}`;
   routeMain.querySelector('.cui-page-title h1')?.setAttribute('data-merchant-content','');
+  /* V442: the same write the Packages page performs, from the profile the counter is already
+     looking at. One idempotency key per (package, branch) attempt survives a retry; a
+     completed use reloads the profile so the counter, the chip and the history agree again. */
+  const packageUseIdemV442=new Map();
+  routeMain.querySelectorAll('[data-use-package-v442]').forEach(button=>{
+    button.onclick=async()=>{
+      const entry=packageModelV442.find(item=>item.id===button.dataset.usePackageV442);
+      if(!entry)return;
+      const branchId=$('c360PackageBranchV442')?.value||'';
+      if(!branchId)return toast('Choose the branch using this session');
+      if(!await confirmActionV386(
+        `Use one ${entry.planName} session for ${c.full_name}? ${entry.remaining-1} of ${entry.sessions} will be left. No payment is taken, and only Packages can undo it.`,
+        {confirmLabel:'Use a session',danger:false}))return;
+      if(!isClientDetailCurrent())return;
+      CUI.setButtonBusy(button,{busy:true,label:'Using…'});
+      const {result,error}=await usePackageSessionV442({
+        businessId:S.biz.id,clientPackageId:entry.id,branchId,attempts:packageUseIdemV442});
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      if(error)return fail(error);
+      toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
+      if(isClientDetailCurrent())clientDetail(id);
+    };
+  });
   const eraseButtonV291=$('c360EraseV291');
   if(eraseButtonV291)eraseButtonV291.onclick=()=>openEraseClientDialogV291({
     clientId:id,clientName:c.full_name,
@@ -5718,6 +5788,176 @@ function giftCardAbilitiesV102({
     canIssue:authority&&businessEnabled===true,
     canRedeem:authority
   };
+}
+/* ===== V442: PACKAGE DETAIL ON THE CUSTOMER 360 ==========================================
+   The profile carried a "Package · 5 left" chip and nothing at all behind it — no plan name,
+   no price, no purchase date, no record of the sessions already used, and no way to use one
+   without leaving for Packages and finding the customer again.
+
+   USED / REMAINING COME FROM THE CHIP'S OWN SOURCE. `remaining` and `sessions_snapshot` are
+   the two public.client_packages columns clientDetail already reads for the chip, so
+   "5 left" on the chip and "5 of 10 used · 5 left" on the card are the same two numbers by
+   construction. There is deliberately no second definition that could drift from it.
+
+   SESSION HISTORY HAS NO BROWSER-READABLE SOURCE OF ITS OWN.
+   public.package_session_consumptions is the v34 immutable evidence table and has every
+   privilege revoked from `authenticated` (20260720_frenly_v34_reversal_provenance.sql), and
+   staff_get_reversal_workflows — which can see it — demands the refund_sales permission,
+   caps at 100 rows and returns no client_package_id. What IS readable, and is already fully
+   loaded on this page, is the sale use_package_session_v102 writes for every single use:
+   kind='service', amount_cents=0, note 'package session used: <plan name snapshot>', with
+   branch_id and staff_id on the row. The list is therefore built from sales already in hand
+   — no extra round trip — and where a use cannot be attributed to ONE purchase (the same
+   plan bought twice) the card SAYS SO rather than allocating it to a guess. */
+const PACKAGE_SESSION_NOTE_PREFIX_V442='package session used: ';
+/* Timestamps from two different tables are compared as instants, never as strings: PostgREST is
+   free to render one with fractional seconds and the other without, and '+' sorts before '.'. */
+const packageMomentV442=value=>{const at=Date.parse(value||'');return Number.isFinite(at)?at:null};
+function packageSessionUsesV442(sales=[]){
+  const rows=Array.isArray(sales)?sales:[];
+  /* A reversed use ("Undo session use") is kept and marked, never dropped: the session came
+     back, and hiding the pair would make the counter's own correction invisible. */
+  const reversedIds=new Set(rows.filter(row=>row&&row.reversal_of).map(row=>String(row.reversal_of)));
+  return rows
+    .filter(row=>row&&!row.reversal_of&&Number(row.amount_cents)===0
+      &&String(row.note||'').startsWith(PACKAGE_SESSION_NOTE_PREFIX_V442))
+    .map(row=>({
+      saleId:String(row.id),
+      at:row.occurred_at||null,
+      planName:String(row.note||'').slice(PACKAGE_SESSION_NOTE_PREFIX_V442.length).trim(),
+      staffId:row.staff_id||null,
+      branchId:row.branch_id||null,
+      reversed:reversedIds.has(String(row.id))
+    }))
+    .sort((a,b)=>(packageMomentV442(b.at)??0)-(packageMomentV442(a.at)??0)
+      ||String(b.saleId).localeCompare(String(a.saleId)));
+}
+function packageDetailModelV442({packages=[],sales=[]}={}){
+  const list=(Array.isArray(packages)?packages:[]).filter(Boolean);
+  const uses=packageSessionUsesV442(sales);
+  const nameCounts=list.reduce((counts,pkg)=>{
+    const key=String(pkg.plan_name_snapshot||'');
+    counts[key]=(counts[key]||0)+1;
+    return counts;
+  },{});
+  return list.map(pkg=>{
+    const planName=String(pkg.plan_name_snapshot||'Package');
+    const sessions=Math.max(0,Number(pkg.sessions_snapshot)||0);
+    const remaining=Math.max(0,Number(pkg.remaining)||0);
+    /* Exactly the chip's arithmetic, and nothing else: a reversal restores `remaining`, so
+       this figure is already net of every undone session. */
+    const used=Math.max(0,sessions-remaining);
+    const boughtAt=packageMomentV442(pkg.purchased_at);
+    const own=uses.filter(use=>{
+      if(use.planName!==planName)return false;
+      if(boughtAt===null)return true;
+      const at=packageMomentV442(use.at);
+      return at===null||at>=boughtAt;
+    });
+    return {
+      id:String(pkg.id),planName,
+      planVersion:Math.max(1,Number(pkg.plan_version_snapshot)||1),
+      sessions,remaining,used,
+      status:String(pkg.status||''),
+      exhausted:remaining<=0,
+      purchasedAt:pkg.purchased_at||null,
+      priceCents:Number(pkg.price_cents_snapshot)||0,
+      serviceName:pkg.service_name_snapshot||null,
+      serviceVariant:pkg.service_variant_snapshot||null,
+      serviceDuration:pkg.service_duration_min_snapshot||null,
+      uses:own,
+      /* Two purchases of the same plan are indistinguishable in a sale note. */
+      ambiguous:(nameCounts[planName]||0)>1,
+      /* The counter is authoritative; the list is evidence. They can legitimately disagree —
+         a branch this role cannot see, or a pre-v34 row whose note did not carry the plan name
+         — so when they do, the card says so instead of presenting a short list as the whole
+         story. */
+      unattributed:own.filter(use=>!use.reversed).length!==used
+    };
+  }).sort((a,b)=>(packageMomentV442(b.purchasedAt)??0)-(packageMomentV442(a.purchasedAt)??0)
+    ||String(a.id).localeCompare(String(b.id)));
+}
+function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=false,
+  staffName={},branchName={}}={}){
+  const entries=Array.isArray(model)?model:[];
+  /* Empty is absent, exactly as the visit-feedback strip beside it does it. A customer who
+     never bought a package gets no card, not a card that says nothing. */
+  if(!entries.length)return '';
+  const branchList=Array.isArray(branches)?branches:[];
+  /* Nothing is said about using a session when there is no session left to use — an
+     all-exhausted card must not read as a permissions problem. */
+  const hasUsable=entries.some(entry=>!entry.exhausted);
+  const actionable=hasUsable&&canUse&&!branchError&&branchList.length>0;
+  const whenText=use=>[esc(sgt(use.at)||formatCustomerJoinedDateV141(use.at)),
+    use.staffId&&staffName[use.staffId]?esc(staffName[use.staffId]):'',
+    use.branchId&&branchName[use.branchId]?esc(branchName[use.branchId]):'']
+    .filter(Boolean).join(' · ');
+  const useRow=use=>`<div class="row c360-reward-row-v226"><span class="small">${whenText(use)}</span><span class="spacer"></span>${
+    use.reversed?'<span class="pill ok">Added back · no refund</span>':'<span class="pill new">session used</span>'}</div>`;
+  const packageBlock=entry=>{
+    const bought=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):null;
+    const service=entry.serviceName
+      ?serviceDisplayName({name:entry.serviceName,variant_label:entry.serviceVariant,
+        duration_min:entry.serviceDuration}):'';
+    const caveats=[
+      entry.ambiguous?`This customer holds more than one “${entry.planName}”. A session use is recorded on the sale, not against one purchase, so the list below covers every use of this package name since this one was bought.`:'',
+      entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${entry.uses.filter(use=>!use.reversed).length} matching sale${entry.uses.filter(use=>!use.reversed).length===1?'':'s'} ${entry.uses.filter(use=>!use.reversed).length===1?'is':'are'} visible to you here.`:''
+    ].filter(Boolean);
+    return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
+      <div class="c360-summary-row-v294">
+        <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)} · v${entry.planVersion}</span>
+        <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
+      </div>
+      <p class="small" style="margin-top:6px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
+      <p class="muted small" style="margin-top:3px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
+      ${caveats.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}
+      ${entry.uses.length
+        ?`<details class="c360-reward-adjust" style="margin-top:8px"><summary>Session history · ${entry.uses.length}</summary><div style="margin-top:6px">${entry.uses.map(useRow).join('')}</div></details>`
+        :'<p class="muted small" style="margin-top:6px">No session use has been recorded against this package yet.</p>'}
+      ${actionable&&!entry.exhausted
+        ?`<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-use-package-v442="${esc(entry.id)}">${CUI.icon('packages',{size:16})}<span>Use a session</span></button></div>`
+        :''}
+    </div>`;
+  };
+  return `<section class="card c360-packages-card-v442" id="c360-packages-v442" aria-label="Package detail">
+    <b>Package detail</b>
+    <p class="muted small" style="margin:5px 0 0">Prepaid sessions this customer has bought. Using one deducts a session and records a zero-value visit; it never takes another payment.</p>
+    ${!hasUsable?''
+      :branchError&&canUse
+        ?'<p class="err small" style="margin-top:8px" role="status">The branch list could not be loaded, so a session cannot be used from here yet. Reload the profile and try again.</p>'
+      :!canUse
+        ?'<p class="muted small" style="margin-top:8px">Read only — ask for Packages edit access to use a session.</p>'
+      :!branchList.length
+        ?'<p class="muted small" style="margin-top:8px">No active branch is available to you, so a session cannot be used from here.</p>'
+        /* Visible label, the same words the Packages page uses. CLAUDE.md's low-literacy rule
+           makes an sr-only label the wrong trade here: the person choosing is at the counter. */
+        :`<div style="margin-top:10px"><label for="c360PackageBranchV442">Branch recording used session</label><select id="c360PackageBranchV442">${branchList.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name||'Branch')}</option>`).join('')}</select></div>`}
+    ${entries.map(packageBlock).join('')}
+  </section>`;
+}
+/* Branch scope for the use action. Same role-scoped reader every other branch picker on this
+   surface uses, filtered by the same "an inactive branch can never complete anything" rule;
+   a failure degrades the card to read-only rather than taking the profile down. */
+async function packageUseBranchesV442(){
+  try{
+    const {branches}=await visibleBranchesForCurrentUser();
+    return {branches:activeBranchesForScopeV217(branches),error:false};
+  }catch(error){console.error(error);return {branches:[],error:true}}
+}
+/* The one write this card performs. Same RPC, same idempotency-key discipline and same
+   receipt validation as the Packages page's own "Use session" button — a second definition
+   of "use a session" is exactly what must not exist. */
+async function usePackageSessionV442({businessId,clientPackageId,branchId,attempts}){
+  const store=attempts instanceof Map?attempts:new Map();
+  const attempt=packageUseAttemptKeyV102(store,clientPackageId,branchId);
+  const {data,error}=await sb.rpc('use_package_session_v102',{
+    p_business:businessId,p_client_package:clientPackageId,p_branch:branchId,
+    p_idempotency_key:attempt.key});
+  if(error)return {error};
+  const result=packageUseResultV102(data);
+  if(!result)return {error:new Error('The package-use receipt was incomplete. Retry with the same branch.')};
+  store.delete(attempt.slot);
+  return {result};
 }
 function packageSaleResultV102(data){
   const valid=data?.status==='completed'&&!!data?.sale_id&&!!data?.client_package_id
@@ -27918,7 +28158,7 @@ function enhanceStaffMembersTabsV164(teamPanel){
   if(!card)return;
   const introRow=card.querySelector(':scope > .row');
   const introCopy=introRow?.nextElementSibling;
-  const originalAdd=introRow?.querySelector('button,a');
+  const importControl=introRow?.querySelector('button,a');
   if(introRow)introRow.hidden=true;
   if(introCopy&&introCopy.tagName==='P')introCopy.hidden=true;
   const teamNode=card.querySelector('#team');
@@ -27928,16 +28168,22 @@ function enhanceStaffMembersTabsV164(teamPanel){
   toolbar.innerHTML=`<div class="staff-members-tabs" role="tablist" aria-label="Staff members sections">
     <button type="button" class="staff-members-tab active" id="staffMembersTabList" role="tab" aria-selected="true" aria-controls="staffMembersListPanel" data-staff-tab="list">Staff list</button>
     <button type="button" class="staff-members-tab" id="staffMembersTabInvite" role="tab" aria-selected="false" aria-controls="staffMembersInvitePanel" tabindex="-1" data-staff-tab="invite">Invites &amp; access</button>
-  </div>`;
-  if(originalAdd){
-    originalAdd.classList.add('staff-members-add-top');
-    originalAdd.textContent='Add staff';
-    originalAdd.removeAttribute('style');
-    toolbar.appendChild(originalAdd);
-  }else{
-    toolbar.insertAdjacentHTML('beforeend',`<button type="button" class="btn sm staff-members-add-top" id="staffMembersAddTop">Add staff</button>`);
-    /* V190: this fallback button was created with NO handler at all — a dead control. Both it
-       and the real toolbar button now open the manual add form below. */
+  </div>
+  <button type="button" class="btn sm staff-members-add-top" id="staffMembersAddTop">Add staff</button>`;
+  /* V439 (owner: "delete this pop-up when I click Add member"). "Add staff" used to BE the CSV
+     import button wearing a new label: this code grabbed introRow's only button — which is the
+     importBtn('staff',...) control built into the settings-team-card markup, inline
+     onclick="openImport('staff',...)" and all — relabelled it "Add staff", moved it into the
+     toolbar, then ALSO addEventListener'd openManualAdd onto it below. The inline onclick
+     survived the relabel, so one click fired both the import popup and the manual add card
+     stacked on top of it. One control, one surface: "Add staff" is now always a fresh button
+     wired only to openManualAdd, never to the import handler. The import feature is not gone —
+     it keeps its own honestly-labelled control in this same toolbar, inline onclick intact. */
+  if(importControl){
+    importControl.classList.add('staff-members-import-top');
+    importControl.textContent='Import from Excel';
+    importControl.removeAttribute('style');
+    toolbar.appendChild(importControl);
   }
   card.before(toolbar);
   const listPanel=document.createElement('section');

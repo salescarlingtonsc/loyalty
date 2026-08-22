@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="405ed82d2901f602f3393f26219e507f16b692c5d9d14d4c0f4741515f69e0a3"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="d9812f31f20aa850c2f717428fe9ac1fc6d770f3dce0b98af0ea895df53c7ba5"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -789,7 +789,15 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;flex-shrink:0;
   box-shadow:0 2px 6px rgba(194,65,53,.3)}
 /* menu now drops DOWN from the top-right chip (was: up from the bottom-left rail) */
-.profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;
+/* V440: the account/profile menu is the outermost popover in the .appbar family — it must win
+   paint order against everything else opened from the bar (and against ordinary page content,
+   which is what broke: the menu had no explicit z-index, so the Dashboard Performance card's
+   heading, date range and Minimise button painted through it at 1180px). The bar's popover scale
+   is .appbar(40) < .notif-menu(41) < .business-workspace-switch/.customer-workspace-switch
+   .menu(42); this menu is opened last / sits top-right / and — once the workspace switcher moves
+   inside it — will contain that 42-ranked menu as a descendant, so it is slotted one above at 43,
+   keeping the scale monotonic instead of introducing an unrelated number. */
+.profile .menu{position:absolute;top:calc(100% + 8px);right:0;min-width:212px;z-index:43;
   background:rgba(255,255,255,.86);
   -webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:6px;box-shadow:var(--shadow-lg);
@@ -3837,6 +3845,55 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
 .customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
 
+/* V441 (owner screenshot of Customer Interface -> Business Profile: the customer bottom dock
+   floating loose in the middle of the panel, well to the LEFT of the phone frame it belongs in.
+   Measured on build 1039401 at 1180x724 — phone screen at x 754..1113, y 229..736; the dock at
+   x 591..949, y 793..865. Out of the frame on BOTH axes, with the red scan FAB escaping with it.)
+
+   WHY IT HAPPENS. The Live preview renders the REAL customer wallet markup inline inside a phone
+   frame — deliberately, because the site sends `frame-ancestors 'none'` and an iframe of ourselves
+   can never render (see the V326 note beside customerInterfaceLivePreviewMarkupV326 in app.js).
+   "Real markup" includes the customer surface's viewport-anchored furniture, and that furniture is
+   anchored to the BROWSER viewport, which knows nothing about a phone frame:
+     - `.customer-primary-nav` is position:fixed with left:50%, transform:translateX(-50%) and a
+       100vw-relative width. V326 overrode only `position` (to sticky) and `bottom`, leaving the
+       50%/-50% pair to shove it 179px left of wherever it sat — the 163px the owner ringed.
+     - `.customer-surface{min-height:100dvh}` (below) also applied inside the preview, so the
+       preview's scrollport was 100dvh tall inside a 507px screen: `position:sticky;bottom:0` was
+       sticking to the bottom of a box that itself hung 217px below the frame.
+
+   THE SCOPING RULE — stated once, applied by containing block rather than per element:
+   INSIDE A PREVIEW FRAME, THE PHONE SCREEN IS THE VIEWPORT. `.customer-preview-screen-v243` is
+   made the containing block for fixed-position descendants (contain:layout paint) as well as for
+   absolute ones (position:relative), and it clips them. So ANY customer element that computes to
+   position:fixed — this dock today; a toast, a sheet, a FAB or an offer banner tomorrow — is
+   re-based onto the frame and cannot reach the browser window, with no new rule per element. The
+   dock is then explicitly re-based to the bottom of that screen and every viewport-relative offset
+   it still carries (inset, width, transform, margin) is neutralised, because a containing block
+   alone would re-base left:50%/translateX(-50%) onto the frame rather than cancel it.
+
+   WHY THE REAL WALLET IS UNTOUCHED. Every selector below is prefixed with
+   `.customer-preview-screen-v243` or `.ci-live-preview-inner-v326`. Neither class exists on the
+   customer surface: renderCustomerWallet mounts `wallet-shell customer-shell customer-surface`
+   with no preview class, and both classes appear in app.js only inside the two preview cards
+   (customerInterfacePreviewSideCardHtmlV325 and customerInterfacePreviewCardHtmlV243) — which is
+   also why one rule fixes BOTH preview instances. Nothing here adds a declaration that a customer
+   can match. tests/browser/verify-v441-preview-dock-scope.mjs asserts both halves by measurement:
+   every fixed/sticky descendant inside the frame is inside the frame, and a non-preview customer
+   render still has position:fixed dock anchored to the viewport.
+
+   GRACEFUL DEGRADATION. `contain` is the fixed-position half of the containing block and wants
+   Safari 15.4+. Where it is not understood that one declaration is dropped and position:relative
+   still stands, so the dock — which the third rule makes ABSOLUTE, not fixed — is framed correctly
+   anyway; only the automatic containment of some future fixed element would be lost. */
+.customer-preview-screen-v243{position:relative;display:flex;flex-direction:column;contain:layout paint}
+/* The frame's scrollport is the wallet shell, so it must be exactly as tall as the screen. Left to
+   itself it inherits min-height:100dvh from .customer-surface and overflows the frame instead. */
+.customer-preview-screen-v243>.ci-live-preview-inner-v326{flex:1 1 0%;height:auto;min-height:0;max-height:100%;overscroll-behavior:contain}
+/* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
+   real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
+.customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
+
   .v141-wordmark{font-size:1.35rem;font-weight:750;letter-spacing:-.04em;padding:4px 10px 22px}.v141-profile{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--hair)}
   </style></head><body><div class="shell"><aside class="side"><div class="v141-wordmark">◉◉<br>peekaa</div><nav class="nav"><a class="act" href="#/dashboard"> Dashboard</a><a href="#/clients">Customers</a><button class="navhead"><span>Serve &amp; sell</span><span class="chev">+</span></button><button class="navhead"><span>Grow</span><span class="chev">+</span></button><button class="navhead"><span>Money</span><span class="chev">+</span></button><button class="navhead"><span>Operations setup</span><span class="chev">+</span></button></nav><div class="foot">V141 source-bound candidate</div></aside>
   <div class="col"><header class="appbar"><div class="global-actions"><div class="global-search"><span class="global-search-ic">⌕</span><input aria-label="Find a customer" placeholder="Find a customer  ( / )"><button class="global-search-go" aria-label="Search customers">›</button></div><div class="global-quick"><button class="btn sm global-act">Record sale</button><button class="btn ghost sm global-act">New appointment</button></div></div><span class="dashboard-appbar-branch" id="dashboardBranchWrap"><span class="muted small">Loading branches…</span></span><select aria-label="Language" style="width:auto"><option>English</option></select><button class="v141-profile"><span class="avatar">G</span><b>Glow Atelier</b></button></header><main class="main" id="main"></main></div></div><div id="toast" class="toast"></div><script>
@@ -4946,6 +5003,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'405ed82d2901f602f3393f26219e507f16b692c5d9d14d4c0f4741515f69e0a3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'d9812f31f20aa850c2f717428fe9ac1fc6d770f3dce0b98af0ea895df53c7ba5',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
