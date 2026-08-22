@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="403bf335e191cc0cd02a537a48d5b33584d051e62f4951c5d46f62b7f5c89f4f"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="26a66fb11701f1a541734e0fd8530d881a7bbf362919747c1f72657a06d53c4c"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2221,6 +2221,20 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
    so the figures stack ABOVE the programme list rather than floating between two cards. */
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
+/* V442: Package detail sits UNDER the summary card, in the right column the owner circled.
+   Grid cells are auto-placed in DOM order, so the two share one cell rather than the package
+   card falling into the left column of the next row. The wrapper inherits the summary card's
+   own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
+   card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
+   the separator between packages and the muting of an exhausted one. */
+.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+@media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
+/* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
+   list is also a div, so :first-of-type would match IT and leave a rule above the first
+   package. This way the rule can only ever fall between two packages. */
+.c360-package-v442{margin-top:10px}
+.c360-package-v442+.c360-package-v442{margin-top:12px;padding-top:12px;border-top:1px dashed var(--hair)}
+.c360-package-v442.is-exhausted-v442{opacity:.62}
 /* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
 .c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
 .c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
@@ -3820,55 +3834,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .customer-reward-offer-page-v339 .customer-promotion-card-media{aspect-ratio:1/1;height:auto;max-height:46vh;min-height:0}
 .customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
 .customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
-
-/* V441 (owner screenshot of Customer Interface -> Business Profile: the customer bottom dock
-   floating loose in the middle of the panel, well to the LEFT of the phone frame it belongs in.
-   Measured on build 1039401 at 1180x724 — phone screen at x 754..1113, y 229..736; the dock at
-   x 591..949, y 793..865. Out of the frame on BOTH axes, with the red scan FAB escaping with it.)
-
-   WHY IT HAPPENS. The Live preview renders the REAL customer wallet markup inline inside a phone
-   frame — deliberately, because the site sends `frame-ancestors 'none'` and an iframe of ourselves
-   can never render (see the V326 note beside customerInterfaceLivePreviewMarkupV326 in app.js).
-   "Real markup" includes the customer surface's viewport-anchored furniture, and that furniture is
-   anchored to the BROWSER viewport, which knows nothing about a phone frame:
-     - `.customer-primary-nav` is position:fixed with left:50%, transform:translateX(-50%) and a
-       100vw-relative width. V326 overrode only `position` (to sticky) and `bottom`, leaving the
-       50%/-50% pair to shove it 179px left of wherever it sat — the 163px the owner ringed.
-     - `.customer-surface{min-height:100dvh}` (below) also applied inside the preview, so the
-       preview's scrollport was 100dvh tall inside a 507px screen: `position:sticky;bottom:0` was
-       sticking to the bottom of a box that itself hung 217px below the frame.
-
-   THE SCOPING RULE — stated once, applied by containing block rather than per element:
-   INSIDE A PREVIEW FRAME, THE PHONE SCREEN IS THE VIEWPORT. `.customer-preview-screen-v243` is
-   made the containing block for fixed-position descendants (contain:layout paint) as well as for
-   absolute ones (position:relative), and it clips them. So ANY customer element that computes to
-   position:fixed — this dock today; a toast, a sheet, a FAB or an offer banner tomorrow — is
-   re-based onto the frame and cannot reach the browser window, with no new rule per element. The
-   dock is then explicitly re-based to the bottom of that screen and every viewport-relative offset
-   it still carries (inset, width, transform, margin) is neutralised, because a containing block
-   alone would re-base left:50%/translateX(-50%) onto the frame rather than cancel it.
-
-   WHY THE REAL WALLET IS UNTOUCHED. Every selector below is prefixed with
-   `.customer-preview-screen-v243` or `.ci-live-preview-inner-v326`. Neither class exists on the
-   customer surface: renderCustomerWallet mounts `wallet-shell customer-shell customer-surface`
-   with no preview class, and both classes appear in app.js only inside the two preview cards
-   (customerInterfacePreviewSideCardHtmlV325 and customerInterfacePreviewCardHtmlV243) — which is
-   also why one rule fixes BOTH preview instances. Nothing here adds a declaration that a customer
-   can match. tests/browser/verify-v441-preview-dock-scope.mjs asserts both halves by measurement:
-   every fixed/sticky descendant inside the frame is inside the frame, and a non-preview customer
-   render still has position:fixed dock anchored to the viewport.
-
-   GRACEFUL DEGRADATION. `contain` is the fixed-position half of the containing block and wants
-   Safari 15.4+. Where it is not understood that one declaration is dropped and position:relative
-   still stands, so the dock — which the third rule makes ABSOLUTE, not fixed — is framed correctly
-   anyway; only the automatic containment of some future fixed element would be lost. */
-.customer-preview-screen-v243{position:relative;display:flex;flex-direction:column;contain:layout paint}
-/* The frame's scrollport is the wallet shell, so it must be exactly as tall as the screen. Left to
-   itself it inherits min-height:100dvh from .customer-surface and overflows the frame instead. */
-.customer-preview-screen-v243>.ci-live-preview-inner-v326{flex:1 1 0%;height:auto;min-height:0;max-height:100%;overscroll-behavior:contain}
-/* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
-   real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
-.customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
 body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px;max-width:calc(100vw - 16px);overflow:auto}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v131-nav{position:relative;top:auto;right:auto;padding:8px}.center-wrap{padding:12px}.modal-card{margin:12px;max-height:calc(100dvh - 24px)}}</style></head><body><nav class="v131-nav"><button class="btn" data-view="native">Native</button><button class="btn ghost" data-view="deletion">Profile</button><button class="btn ghost" data-view="persona">Workspaces</button><button class="btn ghost" data-view="customer-unavailable">Customer blocked</button><button class="btn ghost" data-view="customer-error">Customer error</button><button class="btn ghost" data-view="persona-error">Account error</button><button class="btn ghost" data-view="workspace-error">Staff blocked</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

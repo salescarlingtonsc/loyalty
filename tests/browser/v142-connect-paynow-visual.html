@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="3bedecb665ca7d0adb3931fa2789d6573b26f380f081a62aff13d7baee5910ab"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="15087baf771d60686b2525ed36be05b5ae94dbda0f59415e26723c4bbae877bc"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2222,6 +2222,20 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
    so the figures stack ABOVE the programme list rather than floating between two cards. */
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
+/* V442: Package detail sits UNDER the summary card, in the right column the owner circled.
+   Grid cells are auto-placed in DOM order, so the two share one cell rather than the package
+   card falling into the left column of the next row. The wrapper inherits the summary card's
+   own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
+   card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
+   the separator between packages and the muting of an exhausted one. */
+.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+@media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
+/* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
+   list is also a div, so :first-of-type would match IT and leave a rule above the first
+   package. This way the rule can only ever fall between two packages. */
+.c360-package-v442{margin-top:10px}
+.c360-package-v442+.c360-package-v442{margin-top:12px;padding-top:12px;border-top:1px dashed var(--hair)}
+.c360-package-v442.is-exhausted-v442{opacity:.62}
 /* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
 .c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
 .c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
@@ -3822,58 +3836,9 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .customer-reward-offer-page-v339 .customer-promotion-card-media>img{max-width:100%;max-height:100%;width:auto;height:auto;position:relative;z-index:1}
 .customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
 
-/* V441 (owner screenshot of Customer Interface -> Business Profile: the customer bottom dock
-   floating loose in the middle of the panel, well to the LEFT of the phone frame it belongs in.
-   Measured on build 1039401 at 1180x724 — phone screen at x 754..1113, y 229..736; the dock at
-   x 591..949, y 793..865. Out of the frame on BOTH axes, with the red scan FAB escaping with it.)
-
-   WHY IT HAPPENS. The Live preview renders the REAL customer wallet markup inline inside a phone
-   frame — deliberately, because the site sends `frame-ancestors 'none'` and an iframe of ourselves
-   can never render (see the V326 note beside customerInterfaceLivePreviewMarkupV326 in app.js).
-   "Real markup" includes the customer surface's viewport-anchored furniture, and that furniture is
-   anchored to the BROWSER viewport, which knows nothing about a phone frame:
-     - `.customer-primary-nav` is position:fixed with left:50%, transform:translateX(-50%) and a
-       100vw-relative width. V326 overrode only `position` (to sticky) and `bottom`, leaving the
-       50%/-50% pair to shove it 179px left of wherever it sat — the 163px the owner ringed.
-     - `.customer-surface{min-height:100dvh}` (below) also applied inside the preview, so the
-       preview's scrollport was 100dvh tall inside a 507px screen: `position:sticky;bottom:0` was
-       sticking to the bottom of a box that itself hung 217px below the frame.
-
-   THE SCOPING RULE — stated once, applied by containing block rather than per element:
-   INSIDE A PREVIEW FRAME, THE PHONE SCREEN IS THE VIEWPORT. `.customer-preview-screen-v243` is
-   made the containing block for fixed-position descendants (contain:layout paint) as well as for
-   absolute ones (position:relative), and it clips them. So ANY customer element that computes to
-   position:fixed — this dock today; a toast, a sheet, a FAB or an offer banner tomorrow — is
-   re-based onto the frame and cannot reach the browser window, with no new rule per element. The
-   dock is then explicitly re-based to the bottom of that screen and every viewport-relative offset
-   it still carries (inset, width, transform, margin) is neutralised, because a containing block
-   alone would re-base left:50%/translateX(-50%) onto the frame rather than cancel it.
-
-   WHY THE REAL WALLET IS UNTOUCHED. Every selector below is prefixed with
-   `.customer-preview-screen-v243` or `.ci-live-preview-inner-v326`. Neither class exists on the
-   customer surface: renderCustomerWallet mounts `wallet-shell customer-shell customer-surface`
-   with no preview class, and both classes appear in app.js only inside the two preview cards
-   (customerInterfacePreviewSideCardHtmlV325 and customerInterfacePreviewCardHtmlV243) — which is
-   also why one rule fixes BOTH preview instances. Nothing here adds a declaration that a customer
-   can match. tests/browser/verify-v441-preview-dock-scope.mjs asserts both halves by measurement:
-   every fixed/sticky descendant inside the frame is inside the frame, and a non-preview customer
-   render still has position:fixed dock anchored to the viewport.
-
-   GRACEFUL DEGRADATION. `contain` is the fixed-position half of the containing block and wants
-   Safari 15.4+. Where it is not understood that one declaration is dropped and position:relative
-   still stands, so the dock — which the third rule makes ABSOLUTE, not fixed — is framed correctly
-   anyway; only the automatic containment of some future fixed element would be lost. */
-.customer-preview-screen-v243{position:relative;display:flex;flex-direction:column;contain:layout paint}
-/* The frame's scrollport is the wallet shell, so it must be exactly as tall as the screen. Left to
-   itself it inherits min-height:100dvh from .customer-surface and overflows the frame instead. */
-.customer-preview-screen-v243>.ci-live-preview-inner-v326{flex:1 1 0%;height:auto;min-height:0;max-height:100%;overscroll-behavior:contain}
-/* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
-   real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
-.customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
-
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3bedecb665ca7d0adb3931fa2789d6573b26f380f081a62aff13d7baee5910ab</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 15087baf771d60686b2525ed36be05b5ae94dbda0f59415e26723c4bbae877bc</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -4396,6 +4361,176 @@ function giftCardAbilitiesV102({
     canIssue:authority&&businessEnabled===true,
     canRedeem:authority
   };
+}
+/* ===== V442: PACKAGE DETAIL ON THE CUSTOMER 360 ==========================================
+   The profile carried a "Package · 5 left" chip and nothing at all behind it — no plan name,
+   no price, no purchase date, no record of the sessions already used, and no way to use one
+   without leaving for Packages and finding the customer again.
+
+   USED / REMAINING COME FROM THE CHIP'S OWN SOURCE. `remaining` and `sessions_snapshot` are
+   the two public.client_packages columns clientDetail already reads for the chip, so
+   "5 left" on the chip and "5 of 10 used · 5 left" on the card are the same two numbers by
+   construction. There is deliberately no second definition that could drift from it.
+
+   SESSION HISTORY HAS NO BROWSER-READABLE SOURCE OF ITS OWN.
+   public.package_session_consumptions is the v34 immutable evidence table and has every
+   privilege revoked from `authenticated` (20260720_frenly_v34_reversal_provenance.sql), and
+   staff_get_reversal_workflows — which can see it — demands the refund_sales permission,
+   caps at 100 rows and returns no client_package_id. What IS readable, and is already fully
+   loaded on this page, is the sale use_package_session_v102 writes for every single use:
+   kind='service', amount_cents=0, note 'package session used: <plan name snapshot>', with
+   branch_id and staff_id on the row. The list is therefore built from sales already in hand
+   — no extra round trip — and where a use cannot be attributed to ONE purchase (the same
+   plan bought twice) the card SAYS SO rather than allocating it to a guess. */
+const PACKAGE_SESSION_NOTE_PREFIX_V442='package session used: ';
+/* Timestamps from two different tables are compared as instants, never as strings: PostgREST is
+   free to render one with fractional seconds and the other without, and '+' sorts before '.'. */
+const packageMomentV442=value=>{const at=Date.parse(value||'');return Number.isFinite(at)?at:null};
+function packageSessionUsesV442(sales=[]){
+  const rows=Array.isArray(sales)?sales:[];
+  /* A reversed use ("Undo session use") is kept and marked, never dropped: the session came
+     back, and hiding the pair would make the counter's own correction invisible. */
+  const reversedIds=new Set(rows.filter(row=>row&&row.reversal_of).map(row=>String(row.reversal_of)));
+  return rows
+    .filter(row=>row&&!row.reversal_of&&Number(row.amount_cents)===0
+      &&String(row.note||'').startsWith(PACKAGE_SESSION_NOTE_PREFIX_V442))
+    .map(row=>({
+      saleId:String(row.id),
+      at:row.occurred_at||null,
+      planName:String(row.note||'').slice(PACKAGE_SESSION_NOTE_PREFIX_V442.length).trim(),
+      staffId:row.staff_id||null,
+      branchId:row.branch_id||null,
+      reversed:reversedIds.has(String(row.id))
+    }))
+    .sort((a,b)=>(packageMomentV442(b.at)??0)-(packageMomentV442(a.at)??0)
+      ||String(b.saleId).localeCompare(String(a.saleId)));
+}
+function packageDetailModelV442({packages=[],sales=[]}={}){
+  const list=(Array.isArray(packages)?packages:[]).filter(Boolean);
+  const uses=packageSessionUsesV442(sales);
+  const nameCounts=list.reduce((counts,pkg)=>{
+    const key=String(pkg.plan_name_snapshot||'');
+    counts[key]=(counts[key]||0)+1;
+    return counts;
+  },{});
+  return list.map(pkg=>{
+    const planName=String(pkg.plan_name_snapshot||'Package');
+    const sessions=Math.max(0,Number(pkg.sessions_snapshot)||0);
+    const remaining=Math.max(0,Number(pkg.remaining)||0);
+    /* Exactly the chip's arithmetic, and nothing else: a reversal restores `remaining`, so
+       this figure is already net of every undone session. */
+    const used=Math.max(0,sessions-remaining);
+    const boughtAt=packageMomentV442(pkg.purchased_at);
+    const own=uses.filter(use=>{
+      if(use.planName!==planName)return false;
+      if(boughtAt===null)return true;
+      const at=packageMomentV442(use.at);
+      return at===null||at>=boughtAt;
+    });
+    return {
+      id:String(pkg.id),planName,
+      planVersion:Math.max(1,Number(pkg.plan_version_snapshot)||1),
+      sessions,remaining,used,
+      status:String(pkg.status||''),
+      exhausted:remaining<=0,
+      purchasedAt:pkg.purchased_at||null,
+      priceCents:Number(pkg.price_cents_snapshot)||0,
+      serviceName:pkg.service_name_snapshot||null,
+      serviceVariant:pkg.service_variant_snapshot||null,
+      serviceDuration:pkg.service_duration_min_snapshot||null,
+      uses:own,
+      /* Two purchases of the same plan are indistinguishable in a sale note. */
+      ambiguous:(nameCounts[planName]||0)>1,
+      /* The counter is authoritative; the list is evidence. They can legitimately disagree —
+         a branch this role cannot see, or a pre-v34 row whose note did not carry the plan name
+         — so when they do, the card says so instead of presenting a short list as the whole
+         story. */
+      unattributed:own.filter(use=>!use.reversed).length!==used
+    };
+  }).sort((a,b)=>(packageMomentV442(b.purchasedAt)??0)-(packageMomentV442(a.purchasedAt)??0)
+    ||String(a.id).localeCompare(String(b.id)));
+}
+function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=false,
+  staffName={},branchName={}}={}){
+  const entries=Array.isArray(model)?model:[];
+  /* Empty is absent, exactly as the visit-feedback strip beside it does it. A customer who
+     never bought a package gets no card, not a card that says nothing. */
+  if(!entries.length)return '';
+  const branchList=Array.isArray(branches)?branches:[];
+  /* Nothing is said about using a session when there is no session left to use — an
+     all-exhausted card must not read as a permissions problem. */
+  const hasUsable=entries.some(entry=>!entry.exhausted);
+  const actionable=hasUsable&&canUse&&!branchError&&branchList.length>0;
+  const whenText=use=>[esc(sgt(use.at)||formatCustomerJoinedDateV141(use.at)),
+    use.staffId&&staffName[use.staffId]?esc(staffName[use.staffId]):'',
+    use.branchId&&branchName[use.branchId]?esc(branchName[use.branchId]):'']
+    .filter(Boolean).join(' · ');
+  const useRow=use=>`<div class="row c360-reward-row-v226"><span class="small">${whenText(use)}</span><span class="spacer"></span>${
+    use.reversed?'<span class="pill ok">Added back · no refund</span>':'<span class="pill new">session used</span>'}</div>`;
+  const packageBlock=entry=>{
+    const bought=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):null;
+    const service=entry.serviceName
+      ?serviceDisplayName({name:entry.serviceName,variant_label:entry.serviceVariant,
+        duration_min:entry.serviceDuration}):'';
+    const caveats=[
+      entry.ambiguous?`This customer holds more than one “${entry.planName}”. A session use is recorded on the sale, not against one purchase, so the list below covers every use of this package name since this one was bought.`:'',
+      entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${entry.uses.filter(use=>!use.reversed).length} matching sale${entry.uses.filter(use=>!use.reversed).length===1?'':'s'} ${entry.uses.filter(use=>!use.reversed).length===1?'is':'are'} visible to you here.`:''
+    ].filter(Boolean);
+    return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
+      <div class="c360-summary-row-v294">
+        <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)} · v${entry.planVersion}</span>
+        <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
+      </div>
+      <p class="small" style="margin-top:6px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
+      <p class="muted small" style="margin-top:3px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
+      ${caveats.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}
+      ${entry.uses.length
+        ?`<details class="c360-reward-adjust" style="margin-top:8px"><summary>Session history · ${entry.uses.length}</summary><div style="margin-top:6px">${entry.uses.map(useRow).join('')}</div></details>`
+        :'<p class="muted small" style="margin-top:6px">No session use has been recorded against this package yet.</p>'}
+      ${actionable&&!entry.exhausted
+        ?`<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-use-package-v442="${esc(entry.id)}">${CUI.icon('packages',{size:16})}<span>Use a session</span></button></div>`
+        :''}
+    </div>`;
+  };
+  return `<section class="card c360-packages-card-v442" id="c360-packages-v442" aria-label="Package detail">
+    <b>Package detail</b>
+    <p class="muted small" style="margin:5px 0 0">Prepaid sessions this customer has bought. Using one deducts a session and records a zero-value visit; it never takes another payment.</p>
+    ${!hasUsable?''
+      :branchError&&canUse
+        ?'<p class="err small" style="margin-top:8px" role="status">The branch list could not be loaded, so a session cannot be used from here yet. Reload the profile and try again.</p>'
+      :!canUse
+        ?'<p class="muted small" style="margin-top:8px">Read only — ask for Packages edit access to use a session.</p>'
+      :!branchList.length
+        ?'<p class="muted small" style="margin-top:8px">No active branch is available to you, so a session cannot be used from here.</p>'
+        /* Visible label, the same words the Packages page uses. CLAUDE.md's low-literacy rule
+           makes an sr-only label the wrong trade here: the person choosing is at the counter. */
+        :`<div style="margin-top:10px"><label for="c360PackageBranchV442">Branch recording used session</label><select id="c360PackageBranchV442">${branchList.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name||'Branch')}</option>`).join('')}</select></div>`}
+    ${entries.map(packageBlock).join('')}
+  </section>`;
+}
+/* Branch scope for the use action. Same role-scoped reader every other branch picker on this
+   surface uses, filtered by the same "an inactive branch can never complete anything" rule;
+   a failure degrades the card to read-only rather than taking the profile down. */
+async function packageUseBranchesV442(){
+  try{
+    const {branches}=await visibleBranchesForCurrentUser();
+    return {branches:activeBranchesForScopeV217(branches),error:false};
+  }catch(error){console.error(error);return {branches:[],error:true}}
+}
+/* The one write this card performs. Same RPC, same idempotency-key discipline and same
+   receipt validation as the Packages page's own "Use session" button — a second definition
+   of "use a session" is exactly what must not exist. */
+async function usePackageSessionV442({businessId,clientPackageId,branchId,attempts}){
+  const store=attempts instanceof Map?attempts:new Map();
+  const attempt=packageUseAttemptKeyV102(store,clientPackageId,branchId);
+  const {data,error}=await sb.rpc('use_package_session_v102',{
+    p_business:businessId,p_client_package:clientPackageId,p_branch:branchId,
+    p_idempotency_key:attempt.key});
+  if(error)return {error};
+  const result=packageUseResultV102(data);
+  if(!result)return {error:new Error('The package-use receipt was incomplete. Retry with the same branch.')};
+  store.delete(attempt.slot);
+  return {result};
 }
 function packageSaleResultV102(data){
   const valid=data?.status==='completed'&&!!data?.sale_id&&!!data?.client_package_id
@@ -7083,7 +7218,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'3bedecb665ca7d0adb3931fa2789d6573b26f380f081a62aff13d7baee5910ab',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'15087baf771d60686b2525ed36be05b5ae94dbda0f59415e26723c4bbae877bc',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

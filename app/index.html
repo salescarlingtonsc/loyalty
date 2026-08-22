@@ -2261,6 +2261,20 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 /* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
    so the figures stack ABOVE the programme list rather than floating between two cards. */
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
+/* V442: Package detail sits UNDER the summary card, in the right column the owner circled.
+   Grid cells are auto-placed in DOM order, so the two share one cell rather than the package
+   card falling into the left column of the next row. The wrapper inherits the summary card's
+   own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
+   card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
+   the separator between packages and the muting of an exhausted one. */
+.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+@media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
+/* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
+   list is also a div, so :first-of-type would match IT and leave a rule above the first
+   package. This way the rule can only ever fall between two packages. */
+.c360-package-v442{margin-top:10px}
+.c360-package-v442+.c360-package-v442{margin-top:12px;padding-top:12px;border-top:1px dashed var(--hair)}
+.c360-package-v442.is-exhausted-v442{opacity:.62}
 /* V294: Available Customer Programmes — one compact row per programme, honest Live/Paused pill. */
 .c360-programmes-v294{display:flex;flex-direction:column;margin-bottom:6px}
 .c360-programme-row-v294{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
