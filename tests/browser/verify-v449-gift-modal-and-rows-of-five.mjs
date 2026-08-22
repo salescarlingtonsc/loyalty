@@ -263,8 +263,8 @@ try {
   /* NEGATIVE CONTROL — the same page, the pre-fix stylesheet. */
   const show = ref => execFileSync('git', ['show', ref],
     { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  const before = await measureAll(browser, styleOf(show('origin/main:app/index.html')),
-    show('origin/main:app/app.js'));
+  const before = await measureAll(browser, styleOf(show('dcb6a533d42f9328884d684961d42cd51f439636:app/index.html')),
+    show('dcb6a533d42f9328884d684961d42cd51f439636:app/app.js'));
   const seen = [];
   for (const width of WIDTHS) {
     const m = before[width];

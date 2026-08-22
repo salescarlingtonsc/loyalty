@@ -362,7 +362,7 @@ test('v449 the inline gift card keeps the five-track row it was written for', ()
 });
 
 test('v449 NEGATIVE CONTROL: the same resolver reports the bug on origin/main', () => {
-  const before = rules(styleOf(gitShow('origin/main:app/index.html')));
+  const before = rules(styleOf(gitShow('dcb6a533d42f9328884d684961d42cd51f439636:app/index.html')));
   assert.equal(at(CHAIN_DIALOG, 'display', 1440, before), 'grid',
     'the pre-fix dialog must resolve to grid, or this resolver is not seeing what Chrome saw');
   const tracks = at(CHAIN_DIALOG, 'grid-template-columns', 1440, before);

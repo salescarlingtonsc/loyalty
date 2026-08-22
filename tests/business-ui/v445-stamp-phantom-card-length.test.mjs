@@ -312,7 +312,7 @@ test('v445 the stranded-gift chips have a rule to lay them out', () => {
 /* ------------------------------------------------------------------ negative control ---------- */
 
 test('v445 NEGATIVE CONTROL: these assertions fail against the pre-fix source', () => {
-  const before = execFileSync('git', ['show', 'origin/main:app/app.js'],
+  const before = execFileSync('git', ['show', 'dcb6a533d42f9328884d684961d42cd51f439636:app/app.js'],
     { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   assert.match(before,
     /Math\.max\(1,growStampsTargetV416\|\|GROW_STAMPS_DEFAULT_LEN_V416,growStampsHighestGiftV416\)/,
