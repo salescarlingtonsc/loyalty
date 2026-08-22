@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="acfdac59d4c5b93fb879968fd0b3a1a96a6b07c0bb23a0376ce8a7e8810645fa"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="a177ff89813268db98eeabe68d357698625408ba6a4e9c006e970253c8d75a3a"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3823,7 +3823,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .customer-reward-offer-page-v339 .customer-promotion-card-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.9)}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · acfdac59d4c5b93fb879968fd0b3a1a96a6b07c0bb23a0376ce8a7e8810645fa</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · a177ff89813268db98eeabe68d357698625408ba6a4e9c006e970253c8d75a3a</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6643,7 +6643,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const costPerPointCents=()=>writesCostDefault()?1
     :(pairSet?Number(base.reward_credit_cents)/Number(base.redeem_points):1);
   const unitWord=(value,plural)=>`${value} ${Number(value)===1?(plural==='stamps'?'stamp':'point'):(plural==='stamps'?'stamps':'points')}`;
-  const rewardUnit=()=>familyW6I2()==='stamps'?'stamps':'points';
+  /* nestly_v437: the unit follows the chosen SCOPE, not the rail position — at the Go-live and
+     done steps railStepW6I2() falls back to programme:null, which read as 'points' and printed
+     "3 points" under a stamp gift on the confirmation screen. */
+  const rewardUnit=()=>state.switches.stamps===true?'stamps':'points';
   /* V303: an Add reward / Edit reward control on the Programmes drill hands over "open on the
      Reward step with this form armed" (owner: "pressing add rewards - still brings me to this
      page"). Consumed once, here, so a later plain visit to #/grow/setup opens on step 1. It sits
@@ -12806,7 +12809,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'acfdac59d4c5b93fb879968fd0b3a1a96a6b07c0bb23a0376ce8a7e8810645fa',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'a177ff89813268db98eeabe68d357698625408ba6a4e9c006e970253c8d75a3a',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

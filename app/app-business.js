@@ -19220,7 +19220,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const costPerPointCents=()=>writesCostDefault()?1
     :(pairSet?Number(base.reward_credit_cents)/Number(base.redeem_points):1);
   const unitWord=(value,plural)=>`${value} ${Number(value)===1?(plural==='stamps'?'stamp':'point'):(plural==='stamps'?'stamps':'points')}`;
-  const rewardUnit=()=>familyW6I2()==='stamps'?'stamps':'points';
+  /* nestly_v437: the unit follows the chosen SCOPE, not the rail position — at the Go-live and
+     done steps railStepW6I2() falls back to programme:null, which read as 'points' and printed
+     "3 points" under a stamp gift on the confirmation screen. */
+  const rewardUnit=()=>state.switches.stamps===true?'stamps':'points';
   /* V303: an Add reward / Edit reward control on the Programmes drill hands over "open on the
      Reward step with this form armed" (owner: "pressing add rewards - still brings me to this
      page"). Consumed once, here, so a later plain visit to #/grow/setup opens on step 1. It sits

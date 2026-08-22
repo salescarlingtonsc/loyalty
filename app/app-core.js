@@ -1909,7 +1909,7 @@ const CUSTOMER_COPY=Object.freeze({
     /* nestly_v435 — the card's clock and the paused-card promise (owner rules 4/7/15). */
     stampsCardExpires:'Complete your card by {date} — stamps on it lapse after that.',
     stampsCardExpired:'This card has expired. Gifts you already earned are safe to claim; new stamps start a fresh card.',
-    stampsKeptWhilePaused:'Stamp collecting is paused. Your {count} stamps and any earned gifts are kept.',
+    stampsKeptWhilePaused:'Stamp collecting is paused. Your stamps ({count}) and any earned gifts are kept.',
     /* nestly_v435 — the "?" explainer sheets (owner rule 15; templates are the owner's own). */
     expTitle:'How it works',
     expStampSpend:'Spend {amount} to collect 1 stamp.',

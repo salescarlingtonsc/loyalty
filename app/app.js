@@ -4534,7 +4534,7 @@ const CUSTOMER_COPY=Object.freeze({
     /* nestly_v435 — the card's clock and the paused-card promise (owner rules 4/7/15). */
     stampsCardExpires:'Complete your card by {date} — stamps on it lapse after that.',
     stampsCardExpired:'This card has expired. Gifts you already earned are safe to claim; new stamps start a fresh card.',
-    stampsKeptWhilePaused:'Stamp collecting is paused. Your {count} stamps and any earned gifts are kept.',
+    stampsKeptWhilePaused:'Stamp collecting is paused. Your stamps ({count}) and any earned gifts are kept.',
     /* nestly_v435 — the "?" explainer sheets (owner rule 15; templates are the owner's own). */
     expTitle:'How it works',
     expStampSpend:'Spend {amount} to collect 1 stamp.',
@@ -11500,6 +11500,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           actionsV422.insertAdjacentHTML('afterbegin',
             '<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>');
           wireCustomerClaimRewardV395(actionsV422);
+        }else if(!quest.ready&&actionsV422){
+          /* nestly_v437: authoritative BOTH ways. The wallet bootstrap judges stamp readiness by
+             the raw pot, which drifts from the card the moment a cycle closes (pot keeps every
+             stamp ever earned; the card starts over). A pre-painted Claim button must go when
+             the card itself says nothing is ready — the counter would refuse the claim. */
+          actionsV422.querySelector('[data-claim-reward-scroll-v337]')?.remove();
         }
       }
     }
@@ -32461,7 +32467,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   const costPerPointCents=()=>writesCostDefault()?1
     :(pairSet?Number(base.reward_credit_cents)/Number(base.redeem_points):1);
   const unitWord=(value,plural)=>`${value} ${Number(value)===1?(plural==='stamps'?'stamp':'point'):(plural==='stamps'?'stamps':'points')}`;
-  const rewardUnit=()=>familyW6I2()==='stamps'?'stamps':'points';
+  /* nestly_v437: the unit follows the chosen SCOPE, not the rail position — at the Go-live and
+     done steps railStepW6I2() falls back to programme:null, which read as 'points' and printed
+     "3 points" under a stamp gift on the confirmation screen. */
+  const rewardUnit=()=>state.switches.stamps===true?'stamps':'points';
   /* V303: an Add reward / Edit reward control on the Programmes drill hands over "open on the
      Reward step with this form armed" (owner: "pressing add rewards - still brings me to this
      page"). Consumed once, here, so a later plain visit to #/grow/setup opens on step 1. It sits

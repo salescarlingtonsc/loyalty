@@ -5510,6 +5510,12 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           actionsV422.insertAdjacentHTML('afterbegin',
             '<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>');
           wireCustomerClaimRewardV395(actionsV422);
+        }else if(!quest.ready&&actionsV422){
+          /* nestly_v437: authoritative BOTH ways. The wallet bootstrap judges stamp readiness by
+             the raw pot, which drifts from the card the moment a cycle closes (pot keeps every
+             stamp ever earned; the card starts over). A pre-painted Claim button must go when
+             the card itself says nothing is ready — the counter would refuse the claim. */
+          actionsV422.querySelector('[data-claim-reward-scroll-v337]')?.remove();
         }
       }
     }
