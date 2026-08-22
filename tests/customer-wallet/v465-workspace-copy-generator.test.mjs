@@ -27,6 +27,14 @@ const table = JSON.parse(locateTable(appSource).literal);
 
 const STAMP_ROWS = ['Stamps earned', 'Stamps redeemed', 'Stamps expired'];
 const POINT_ROWS = ['Points earned', 'Points redeemed', 'Points expired'];
+/* The 2026-08-23 邮票→印花 corrections: four v97-era machine translations rendered a loyalty
+   stamp as a POSTAGE stamp. They ride the same ledger, so the register check below names them. */
+const COPY_FIXES_20260823 = [
+  'Stamps',
+  'Give bonus stamps',
+  'Spend per stamp',
+  'Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.',
+];
 
 test('the three stamps rows are translated in both locales', () => {
   for (const locale of ['zh-CN', 'ms']) {
@@ -56,7 +64,7 @@ test('they are the twins of the points rows the app already translated, not new 
 
 test('the strings came from the reviewed ledger, and the ledger demands a reason', () => {
   const entries = readAdditions(additionsSource);
-  assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS].sort());
+  assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);

@@ -30,6 +30,30 @@
       "reason": "Same row group as 'Stamps earned'.",
       "zh-CN": "印花已过期",
       "ms": "Setem tamat tempoh"
+    },
+    {
+      "source": "Stamps",
+      "zh-CN": "印花",
+      "ms": "Setem",
+      "reason": "2026-08-23 correction flagged during the v462-v466 ruling wave: the v97 machine pass rendered loyalty 'stamp' as 邮票 (a POSTAGE stamp) in four entries, while every string translated since (v437/v461: 赚取印花, 印花已过期) correctly uses 印花. zh-CN merchants read a mixed vocabulary for one concept. Minimal fix: the same string with 邮票 replaced by 印花; the ms strings were already correct (setem) and are restated unchanged because an entry must carry both locales."
+    },
+    {
+      "source": "Give bonus stamps",
+      "zh-CN": "赠送奖励印花",
+      "ms": "Berikan setem bonus",
+      "reason": "2026-08-23 correction flagged during the v462-v466 ruling wave: the v97 machine pass rendered loyalty 'stamp' as 邮票 (a POSTAGE stamp) in four entries, while every string translated since (v437/v461: 赚取印花, 印花已过期) correctly uses 印花. zh-CN merchants read a mixed vocabulary for one concept. Minimal fix: the same string with 邮票 replaced by 印花; the ms strings were already correct (setem) and are restated unchanged because an entry must carry both locales."
+    },
+    {
+      "source": "Spend per stamp",
+      "zh-CN": "每张印花的花费",
+      "ms": "Belanja setiap setem",
+      "reason": "2026-08-23 correction flagged during the v462-v466 ruling wave: the v97 machine pass rendered loyalty 'stamp' as 邮票 (a POSTAGE stamp) in four entries, while every string translated since (v437/v461: 赚取印花, 印花已过期) correctly uses 印花. zh-CN merchants read a mixed vocabulary for one concept. Minimal fix: the same string with 邮票 replaced by 印花; the ms strings were already correct (setem) and are restated unchanged because an entry must carry both locales."
+    },
+    {
+      "source": "Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.",
+      "zh-CN": "客户在消费时自动收集印花。定义每个里程碑的价值 - 一件免费物品可供移交，或存储积分。",
+      "ms": "Pelanggan mengumpul setem secara automatik semasa mereka berbelanja. Tentukan nilai setiap peristiwa penting — item percuma untuk diserahkan atau simpan kredit.",
+      "reason": "2026-08-23 correction flagged during the v462-v466 ruling wave: the v97 machine pass rendered loyalty 'stamp' as 邮票 (a POSTAGE stamp) in four entries, while every string translated since (v437/v461: 赚取印花, 印花已过期) correctly uses 印花. zh-CN merchants read a mixed vocabulary for one concept. Minimal fix: the same string with 邮票 replaced by 印花; the ms strings were already correct (setem) and are restated unchanged because an entry must carry both locales."
     }
   ]
 }
