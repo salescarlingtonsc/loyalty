@@ -28,6 +28,18 @@ export const customerFixtureSource=({
   /* A stamps programme puts the "Stamp card" tile on the profile, which is the tile whose shortcut
      page is titled "Rewards" — the exact doubling REG-002 reported. */
   withStamps=false,
+  /* nestly_v463 (owner ruling R3c): the card's LENGTH is now a question the geometry has to ask,
+     because both customer stamp displays wrap at exactly five per row. 6 is 5+1, 12 is 5/5/2 and
+     15 is three full rows — the three shapes that prove a fixed five-track grid rather than a
+     count that follows the container. Defaults to the 10 v446 has always used, so every existing
+     caller renders byte-identically. */
+  stampSlots=10,
+  stampFilled=7,
+  /* customerBusinessHeroModeV386 prefers POINTS whenever the points programme is live, so the red
+     hero's stamp card (customerHeroStampCardV422) is unreachable while both run. Pausing points
+     is what a real stamps-only merchant looks like — the v308 tripwire refuses points.active AND
+     stamps.active on one business anyway — and it is the only way to render the hero at all. */
+  pointsActive=true,
   /* Names that must not be clipped on the merchant's own header: a long Latin one and a
      non-Latin one, because the fix must not depend on English label widths. */
   businessName=BUSINESS_NAME,
@@ -84,8 +96,8 @@ export const customerFixtureSource=({
   const CAPS={wallet:true,rewards:true,tiers:true,points_mode:'both',activity:true,
     appointments:true,booking_request:${bookingEnabled?'true':'false'},packages:false,membership:false,
     programmes_contract:'v391',
-    programmes:[{kind:'points',active:true,customer_visible:true,running_since:'2026-02-01T00:00:00Z',
-        paused_since:null,balance_scope:'business_pot'},
+    programmes:[{kind:'points',active:${pointsActive?'true':'false'},customer_visible:true,running_since:'2026-02-01T00:00:00Z',
+        paused_since:${pointsActive?'null':"'2026-06-01T00:00:00Z'"},balance_scope:'business_pot'},
       ${withStamps?`{kind:'stamps',active:true,customer_visible:true,running_since:'2026-02-01T00:00:00Z',
         paused_since:null,balance_scope:'business_pot'},`:''}
       {kind:'tiers',active:true,customer_visible:true,running_since:'2026-02-01T00:00:00Z',
@@ -147,13 +159,13 @@ export const customerFixtureSource=({
       case 'customer_get_referral_card_v300':return {enabled:false};
       case 'customer_get_growth_offers_v108':return {offers:[]};
       case 'customer_get_home_offers_v167':return {offers:[]};
-      case 'customer_get_stamp_card_v323':return ${withStamps?`{enabled:true,contract:'v323',slots:10,filled:7,
+      case 'customer_get_stamp_card_v323':return ${withStamps?`{enabled:true,contract:'v323',slots:${stampSlots},filled:${stampFilled},
         cycle_index:2,running:true,validity_days:90,expires_at:'2026-12-31T00:00:00Z',expired:false,
         spend_per_stamp_cents:500,ready:false,pot_migrated:false,
-        milestones:[{slot:5,name:'Free kaya toast',claimed_this_cycle:true,availability:'claimed',
-            is_final:false,stamps_to_go:0},
-          {slot:10,name:${JSON.stringify(LONG_REWARD_NAME)},claimed_this_cycle:false,
-            availability:'in_progress',is_final:true,stamps_to_go:3}]}`:'null'};
+        milestones:[{slot:${Math.min(5, stampSlots)},name:'Free kaya toast',claimed_this_cycle:true,availability:'claimed',
+            is_final:${stampSlots <= 5},stamps_to_go:0},
+          {slot:${stampSlots},name:${JSON.stringify(LONG_REWARD_NAME)},claimed_this_cycle:false,
+            availability:'in_progress',is_final:true,stamps_to_go:${Math.max(0, stampSlots - stampFilled)}}]}`:'null'};
       case 'customer_get_transaction_history_v81':
       case 'customer_get_transaction_history_v167':return {items:[]};
       case 'customer_get_loyalty_details':return {loyalty:{balance:920,unit:'points'},activity:[],

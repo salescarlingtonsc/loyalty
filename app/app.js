@@ -28955,7 +28955,26 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      ------------------------------------------------------------------------------------------- */
   const GROW_STAMPS_DEFAULT_LEN_V416=15;
   const GROW_STAMPS_DEFAULT_EVERY_V416=5;
-  const GROW_STAMPS_MAX_LEN_V416=100;   /* the server's own bound in business_set_stamp_card_length_v414 */
+  /* nestly_v463 (owner ruling R3a, 2026-08-23): the longest card a firm may SET is 15 stamps.
+     The bound was 100, matching business_set_stamp_card_length_v414's own guard, which v463 lowers
+     to 15 for new writes in the same wave. Two numbers, not one, and they do different jobs:
+       * GROW_STAMPS_MAX_LEN_V463 is the WRITE bound — the input's max, both steppers, the grid's
+         trailing "+", the v445 one-tap stranded fix, and the typed field's commit guard. Nothing
+         on this screen may propose a length above it, because the server will refuse it.
+       * GROW_STAMPS_RENDER_CAP_V463 is a DRAWING rail only. Existing stamp_target values are NOT
+         migrated (owner ruling), so a card longer than 15 could in principle already be stored;
+         drawing it as 15 would be the REG-001 phantom-length defect with the sign flipped — the
+         owner would see 15, the server would hold 40, and one tap would silently shorten the card
+         and strand every gift past 15. The card is therefore drawn at its REAL length, and only
+         the controls are bounded. The rail stays at the OLD server bound because no stored value
+         can exceed it: v414 has refused anything above 100 since the day it shipped.
+     Production scan 2026-08-23 (read-only, gadpooereceldfpfxsod): NO business has a live
+     loyalty_programs.stamp_target above 15 — the maximum in force is 15 (qa-kaya-toast). Three
+     superseded loyalty_program_versions rows on kopi-tiam-tyeh hold 16/17, but that firm's active
+     version and spine both read 10, so the over-max branch below is unreachable on today's data
+     and exists to keep it that way. */
+  const GROW_STAMPS_MAX_LEN_V463=15;    /* the server's own bound in business_set_stamp_card_length_v414 */
+  const GROW_STAMPS_RENDER_CAP_V463=100;
   /* The length the ENGINE enforces: loyalty_programs.stamp_target, which app.stamp_progress_v323
      reports as the card's slots and app.redeem_reward_core refuses claims past. */
   const growStampsTargetV416=Math.max(0,Math.round(Number(snapshot.loyalty?.stamp_target)||0));
@@ -28975,8 +28994,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      gift is a VALIDATION fault, not a length, and it is reported as one — named individually in
      the warning band below (v363/v445) and still listed in the summary. Moving or removing it
      stays the owner's decision; nothing here mutates their data. */
-  const growStampsCardLenV416=Math.min(GROW_STAMPS_MAX_LEN_V416,
+  /* nestly_v463: the cap here is the RENDER rail, not the write bound. See the two constants at the
+     top of this block for why clamping the drawn card to 15 would be REG-001 in reverse. */
+  const growStampsCardLenV416=Math.min(GROW_STAMPS_RENDER_CAP_V463,
     Math.max(1,growStampsTargetV416||GROW_STAMPS_DEFAULT_LEN_V416));
+  /* True only for a card stored longer than a firm may now set. Unreachable on production data
+     today (see the scan above); when it does hold, the card is drawn honestly and every control
+     that could make it LONGER is refused, while shortening is offered straight to the new maximum
+     because that is the only shorter length the server will accept. */
+  const growStampsOverMaxV463=growStampsCardLenV416>GROW_STAMPS_MAX_LEN_V463;
   const growStampsStrandedV416=growStampsTargetV416>0&&growStampsHighestGiftV416>growStampsTargetV416;
   /* nestly_v445: the gifts that sit past the end of the card, each one named. The old warning
      mentioned only the highest, which on a card with several stranded gifts under-reports. */
@@ -29003,7 +29029,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      on it, so "already one stamp long" is the true reason and naming a gift there would send the
      owner to move something that would not help. */
   const growStampsShorterOffV453=growStampsCardLenV416<=growStampsShortestLenV445;
-  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416;
+  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V463;
+  /* nestly_v463: what "one stamp shorter" writes. Ordinarily it is exactly one stamp shorter and
+     this expression is len-1, byte-for-byte what v416 shipped. On a card stored above the new
+     maximum, len-1 is still above it and the server would refuse the request, so the step goes to
+     the maximum instead — the nearest shorter length that can actually be saved. The label says so
+     rather than claiming a single step it is not taking. */
+  const growStampsShorterToV463=growStampsOverMaxV463
+    ?GROW_STAMPS_MAX_LEN_V463:growStampsCardLenV416-1;
+  const growStampsShorterLabelV463=growStampsOverMaxV463
+    ?`Shorten to ${GROW_STAMPS_MAX_LEN_V463} stamps`:'One stamp shorter';
   /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
      rather than looked up through a variable: the workspace audit
      (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
@@ -29024,9 +29059,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?workspaceTemplateTextV97('stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
       :'';
   const growStampsLongerTitleV453=growStampsLongerOffV453
-    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V463}):'';
   const growStampsLongerTextV453=growStampsLongerOffV453
-    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V463}):'';
   /* The sentence is rendered as TEXT in the bar, not only as a title. A disabled button is not
      focusable and several screen readers drop it from the tree entirely, so a tooltip on it is
      reachable by neither keyboard nor assistive tech; the visible line is the only version every
@@ -29049,7 +29084,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Both routes end in the SAME write: data-grow-stamps-len-v416 for the steppers, and the field's
      own commit handler calling business_set_stamp_card_length_v414 with what was typed. The
      server keeps its veto — it refuses a length that would strand a live gift and names it — so
-     the field never enforces a rule of its own beyond the 1..100 the input itself declares. */
+     the field never enforces a rule of its own beyond the 1..15 the input itself declares (v463). */
   const growStampsCardLengthBarV416=`<div class="grow-stamps-lenbar-v416">
     <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
@@ -29060,9 +29095,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          button beside the title rather than as the left half of a stepper. The three controls are
          one nowrap unit now: the LABEL may stack above them at 390, which is fine and is what the
          owner's own photo shows working elsewhere on this page, but the stepper cannot split. */''}
-    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} aria-label="One stamp shorter">−</button>`:''}
+    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsShorterToV463}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} data-workspace-i18n aria-label="${esc(growStampsShorterLabelV463)}">−</button>`:''}
     ${canSetupGrow
-      ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
+      ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V463}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
       :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
     ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsLongerOffV453?` disabled ${growStampsLongerTitleV453} aria-describedby="growStampsLenLongerWhyV453"`:''} aria-label="One stamp longer">+</button>`:''}</span>${growStampsWhyLinesV453}
   </div>`;
@@ -29086,7 +29121,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          gift the firm wrote, so the workspace localiser must not rewrite it. */
       return `<button type="button" role="listitem" class="${cls}" data-grow-stamps-cell-v416="${stamp}" data-merchant-content aria-label="${esc(label)}">${reward?`<span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span>`:''}<span class="grow-stamps-editcell-num-v416">${stamp}</span></button>`;
     }).join('')}
-    ${canSetupGrow&&growStampsCardLenV416<GROW_STAMPS_MAX_LEN_V416
+    ${/* nestly_v463: withheld once the card is at the 15-stamp maximum — a "+" that can only be
+         refused is the same defect as a stepper that gives no reason. The refusal is SAID by the
+         bar's own "+" (disabled, with the "15 stamps is the longest a card can be." line beside
+         it); repeating it as a second dead circle at the end of the grid would say nothing more.
+         Written as a comment INSIDE the expression, not as its own ${''} line: this card is byte-
+         pinned against the v445 commit, and an extra interpolation slot leaves a blank line the
+         pin would report as a change to markup nobody changed. */
+      canSetupGrow&&growStampsCardLenV416<GROW_STAMPS_MAX_LEN_V463
       ?`<button type="button" class="grow-stamps-editcell-v416 is-add-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}" aria-label="Make the card one stamp longer">+</button>`:''}
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
@@ -29114,7 +29156,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
     <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
     ${growStampsStrandedChipsV445}
-    ${canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V416?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+    ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
+         tap from being reachable; it no longer is, because no card may be 20 stamps long, so the
+         button is withheld and the paragraph's other way out — move the gift onto a stamp inside
+         the card — is the whole offer. Offering a button that can only fail is the defect this
+         guard was written for in the first place; only the number it guards has changed.
+         Comment inside the expression, not its own ${''} slot: see the grid's "+" above. */
+      canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
 
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
@@ -29169,8 +29217,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <p class="muted small" style="margin:2px 0 0">${esc(earningOverviewCopy)}</p></span>
         <span class="spacer"></span>
         <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+          ${/* nestly_v463 (owner ruling R3b, 2026-08-23): "+ Add level" is RETIRED. It opened the
+               gift form with NO stamp chosen (growStampsPickedV416 stays null), so the number field
+               was free text and the owner could type any stamp — including one past the end of the
+               card, which is how qa-kaya-toast ended up with gifts stranded at 80 and 1000 that the
+               counter refuses. The card itself is the placement surface: tap the stamp you mean.
+               The only two ways to a gift form on this page are now the grid's own cells and the
+               v445 stranded-gift chips, and both fix the stamp before the form opens. Nothing is
+               lost — every gift the button could create can be created by tapping its slot. */''}
           ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-edit-v326="1">Edit settings</button>
-          <button type="button" class="btn ghost sm" data-grow-points-add-v326="1">+ Add level</button>
           <button type="button" class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}" role="switch" aria-checked="${growPointsOnV326}" data-grow-switchtoggle-v322="${growPointsSpineKindV326}">${statusOnOff(growPointsOnV326)}</button>`
           :`<span class="pill-toggle-v334 ${growPointsOnV326?'on':'off'}">${statusOnOff(growPointsOnV326)}</span>`}
         </span>
@@ -30763,13 +30818,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growStampsSetLengthV422(Math.round(Number(button.dataset.growStampsLenV416)||0)));
   /* nestly_v422: the typed field. It commits on Enter and on blur, never on every keystroke — a
      write per digit would fire "1", "4" on the way to "14" and the server would refuse the first
-     of them against a live gift. A value that is unchanged, blank or outside 1..100 restores the
-     field to the length actually in force rather than sending a request that must fail. */
+     of them against a live gift. A value that is unchanged, blank or outside 1..15 restores the
+     field to the length actually in force rather than sending a request that must fail.
+     nestly_v463: that range is 1..15 now, matching the input's own max and the server's guard. */
   const growStampsLenFieldV422=outerMain.querySelector('[data-grow-stamps-lenfield-v422]');
   if(growStampsLenFieldV422){
     const commitV422=()=>{
       const typed=Math.round(Number(growStampsLenFieldV422.value));
-      if(!Number.isFinite(typed)||typed<1||typed>GROW_STAMPS_MAX_LEN_V416||typed===growStampsCardLenV416){
+      if(!Number.isFinite(typed)||typed<1||typed>GROW_STAMPS_MAX_LEN_V463||typed===growStampsCardLenV416){
         growStampsLenFieldV422.value=String(growStampsCardLenV416);
         return;
       }
@@ -30827,6 +30883,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddDraftV326={name,points:pointsField?.value||'',description};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
+    /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
+       the one remaining way into this form with a FREE stamp number — and their whole job is to
+       move a gift back onto the card. A number above the maximum card length can never be reached
+       by any customer on any card, so it is refused here in plain words rather than saved and then
+       reported as a warning the owner has to come back and fix.
+       Scoped to stamps only: on the POINTS page this same form sets a redemption COST, where 50,
+       100 and 500 are ordinary values and a 15 ceiling would be nonsense. A number that is inside
+       the maximum but past THIS card's current length is still allowed and still raises the v445
+       stranded warning — the owner may legitimately place a gift at 12 and then lengthen the card
+       to 12, which is exactly what the warning band's one-tap fix offers. */
+    if(growPointsIsStampsV326&&points>GROW_STAMPS_MAX_LEN_V463){
+      growPointsErrorV326=`A stamp card is at most ${GROW_STAMPS_MAX_LEN_V463} stamps long, so a gift cannot sit on stamp ${points}. Choose a stamp between 1 and ${GROW_STAMPS_MAX_LEN_V463}.`;
+      return growRerenderV322({quiet:true});
+    }
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
     /* V343: upload a newly-chosen photo before the RPC call, same storage path grammar the deep
        editor's own reward-photo control already uses (uploadRewardPhotoV326 below). */

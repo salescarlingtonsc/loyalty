@@ -72,7 +72,14 @@ test('v416 a firm with no card length yet gets 15 stamps, drawn in order', () =>
   assert.equal(g.growStampsCardLenV416, 15, 'the owner drew fifteen');
   assert.deepEqual(cells(g.growStampsGridV416),
     [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 'every stamp, in order, each one tappable');
-  assert.match(g.growStampsGridV416, /is-add-v416/, 'and a "+" to carry on');
+  /* nestly_v463 (owner ruling R3a): 15 IS the maximum now, so the grid's trailing "+" — which
+     only ever offered len+1 — is withheld at the default length. The refusal is said once, by the
+     length bar's own disabled "+" and its reason line; a second dead circle at the end of the
+     grid would add nothing. A card below the maximum still gets it, asserted just below. */
+  assert.doesNotMatch(g.growStampsGridV416, /is-add-v416/,
+    'a 15-stamp card is already the longest a card may be, so nothing offers to lengthen it');
+  assert.match(grid({ stampTarget: 12, gifts: [] }).growStampsGridV416, /is-add-v416/,
+    'but a 12-stamp card still has a "+" to carry on');
   assert.match(g.growStampsGridV416, /one every 5 stamps/,
     'an empty card says where to start rather than showing a bare row of circles');
 });
@@ -175,8 +182,8 @@ test('v422 the card length is a typed field, with the steppers kept beside it', 
   const g = grid({ stampTarget: 12, gifts: [GIFT('Free Lotion', 10)] });
   assert.match(g.growStampsCardLengthBarV416, /data-grow-stamps-lenfield-v422/,
     'owner photo 2: "do as a field, so can edit number"');
-  assert.match(g.growStampsCardLengthBarV416, /type="number"[^>]*min="1"[^>]*max="100"/,
-    'the field declares the same 1..100 bound the server enforces');
+  assert.match(g.growStampsCardLengthBarV416, /type="number"[^>]*min="1"[^>]*max="15"/,
+    'the field declares the same 1..15 bound the server enforces (nestly_v463)');
   assert.match(g.growStampsCardLengthBarV416, /value="12"/, 'pre-filled with the length in force');
   assert.match(g.growStampsCardLengthBarV416, /data-grow-stamps-len-v416="11"/, 'the − stepper stays');
   assert.match(g.growStampsCardLengthBarV416, /data-grow-stamps-len-v416="13"/, 'and the + stepper stays');
@@ -205,7 +212,7 @@ test('v422 the typed field commits on Enter and blur, never per keystroke', () =
   assert.doesNotMatch(wiring, /oninput/,
     'a write per digit would send "1" then "4" on the way to 14, and the server would refuse the first');
   /* Out of range, blank, or unchanged: put the real length back rather than send a doomed write. */
-  assert.match(wiring, /typed<1\|\|typed>GROW_STAMPS_MAX_LEN_V416\|\|typed===growStampsCardLenV416/);
+  assert.match(wiring, /typed<1\|\|typed>GROW_STAMPS_MAX_LEN_V463\|\|typed===growStampsCardLenV416/);
   assert.match(wiring, /growStampsLenFieldV422\.value=String\(growStampsCardLenV416\)/);
 });
 

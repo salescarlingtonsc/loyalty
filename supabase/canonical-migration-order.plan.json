@@ -2336,8 +2336,8 @@
     {
       "kind": "pending",
       "version": "20260823000001",
-      "name": "nestly_v465_home_ready_count",
-      "sourcePath": "db/migrations/20260823_nestly_v465_home_ready_count.sql"
+      "name": "nestly_v463_stamp_card_max_length",
+      "sourcePath": "db/migrations/20260823_nestly_v463_stamp_card_max_length.sql"
     }
   ]
 }

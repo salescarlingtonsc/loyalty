@@ -170,8 +170,18 @@ test('photo 8: a long card gets smaller circles, never a truncated card', () => 
   assert.doesNotMatch(long, /Showing the first/, 'nothing is hidden, so nothing has to be excused');
   const short = harness.customerHeroStampCardV422(quest(10, 3, []));
   assert.doesNotMatch(short, /is-compact-v422/);
-  assert.match(indexHtml, /\.customer-hero-stamp-grid-v422\{display:grid;grid-template-columns:repeat\(auto-fit,28px\)/,
-    'the grid auto-fits rather than pinning a fixed count per row');
+  /* nestly_v463 (owner ruling R3c, 2026-08-23) REVERSED the auto-fit this line used to pin. The
+     row wraps at exactly five now, matching the workspace stamp editor (five fixed tracks since
+     v449) and the v386 rings beside it, so the merchant and the customer see the same card in the
+     same shape. Nothing about "draw all of them, never truncate" changed — the assertions above
+     still require all 40 slots and the compact step-down; only where the row breaks has moved. */
+  assert.match(indexHtml, /\.customer-hero-stamp-grid-v422\{display:grid;grid-template-columns:repeat\(5,28px\)/,
+    'five per row, the same as the editor — not a count that follows the container width');
+  assert.match(indexHtml,
+    /\.customer-hero-stampcard-v422\.is-compact-v422 \.customer-hero-stamp-grid-v422\{grid-template-columns:repeat\(5,22px\)/,
+    'and the compact variant wraps at five too, or a long card would change shape halfway');
+  assert.doesNotMatch(indexHtml, /customer-hero-stamp-grid-v422\{[^}]*auto-fit/,
+    'no auto-fit track list may survive on this grid');
 });
 
 test('photo 8: a card with no slots draws nothing rather than an empty frame', () => {

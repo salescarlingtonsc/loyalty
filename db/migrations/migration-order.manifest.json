@@ -3678,10 +3678,10 @@
     {
       "order": 388,
       "kind": "executable",
-      "path": "db/migrations/20260823_nestly_v465_home_ready_count.sql",
-      "semanticVersion": "v465",
+      "path": "db/migrations/20260823_nestly_v463_stamp_card_max_length.sql",
+      "semanticVersion": "v463",
       "proposedDeployVersion": "20260823000001",
-      "sha256": "de6cb2ce7c50e132a9d92e12f2f898f1091516c8e53c113df0af4b3fa832b1e9"
+      "sha256": "177b0cda34b34b5fe278f2b833f4e4cc9085b0ee7b1ed87ee32245d6b733af9a"
     }
   ]
 }

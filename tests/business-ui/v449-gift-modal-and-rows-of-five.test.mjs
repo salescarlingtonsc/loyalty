@@ -446,9 +446,26 @@ test('v449 rows of five is a layout change ONLY — the grid markup and every ha
      including one that still holds it byte-identical to efeceb0 whenever no stepper is refused. */
   const appNow = readFileSync(join(root, 'app', 'app.js'), 'utf8');
   const appV445 = gitShow('efeceb0:app/app.js');
-  const args = { target: 15, gifts: KAYA_GIFTS, pick: ['grid', 'note'] };
+  /* nestly_v463 narrowed this pin from a 15-stamp card to a 12-stamp one. 15 is the MAXIMUM now,
+     and at the maximum the grid's trailing "+" is deliberately withheld — that is the one byte of
+     this card v463 changes, and it is asserted on its own directly below. Everything else about
+     the drawing is still held byte-identical to the v445 commit: at 12 stamps the grid, the "+",
+     the stranded chips for the gifts at 15 and 1000, and the warning note are unchanged. */
+  const args = { target: 12, gifts: KAYA_GIFTS, pick: ['grid', 'note'] };
   assert.equal(drawFrom(appNow, args), drawFrom(appV445, args),
-    'v449/v453 must not have changed a single byte of the stamp card the editor draws');
+    'v449/v453/v463 must not have changed a single byte of the stamp card the editor draws '
+    + 'below the maximum length');
+  const atMax = drawFrom(appNow, { target: 15, gifts: KAYA_GIFTS, pick: ['grid', 'note'] });
+  const atMaxBefore = drawFrom(appV445, { target: 15, gifts: KAYA_GIFTS, pick: ['grid', 'note'] });
+  assert.doesNotMatch(atMax, /is-add-v416/, 'v463: nothing offers to lengthen a card at 15');
+  assert.match(atMaxBefore, /is-add-v416/, 'and v445 did offer it — this pin sees the change');
+  /* Deleting the ELEMENT and nothing around it: the "+" sits in an interpolation slot whose own
+     newline and indentation stay in the string when the slot renders empty, so removing the
+     surrounding whitespace here would be comparing against markup neither revision produces. */
+  assert.equal(atMax,
+    atMaxBefore.replace(
+      /<button type="button" class="grow-stamps-editcell-v416 is-add-v416"[^>]*>\+<\/button>/, ''),
+    'the withheld "+" is the ONLY difference between the two cards at the maximum');
   /* and the one write this screen makes is still the one write it made */
   assert.equal((appNow.match(/sb\.rpc\('business_set_stamp_card_length_v414'/g) || []).length, 1);
   assert.equal(appNow.indexOf('business_create_reward_v326') >= 0
@@ -490,9 +507,12 @@ test('v453 "−" refused by a gift on the last slot names the gift\'s stamp and 
     + 'reaches neither the keyboard nor a screen reader');
   /* the stamp named is the blocking gift, not the highest gift anywhere (1000 is off the card) */
   assert.doesNotMatch(markup, /stamp 1000/);
-  /* "+" is fine here and says nothing */
-  assert.doesNotMatch(stepper(markup, 'longer'), /disabled|title=/);
-  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), null);
+  /* nestly_v463: 15 is also the MAXIMUM now, so "+" is refused here too — for its own reason,
+     with its own sentence, exactly as the two-refusals test below requires. Before v463 the
+     maximum was 100 and "+" said nothing at 15. */
+  assert.match(stepper(markup, 'longer'), /disabled/);
+  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'),
+    '15 stamps is the longest a card can be.');
 });
 
 test('v453 "−" refused at one stamp names the minimum, not a gift', () => {
@@ -509,25 +529,29 @@ test('v453 "−" refused at one stamp names the minimum, not a gift', () => {
 });
 
 test('v453 "+" refused at the maximum says how long a card may be', () => {
-  const markup = bar({ target: 100, gifts: [{ id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 }] });
+  /* nestly_v463 moved the maximum from 100 to 15 (owner ruling R3a). The sentence interpolates
+     the constant, so it follows on its own — this asserts that it really did. */
+  const markup = bar({ target: 15, gifts: [{ id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 }] });
   const plus = stepper(markup, 'longer');
-  assert.match(plus, /disabled/, 'the 100 bound is the server\'s; v453 only explains it');
-  assert.match(plus, /title="100 stamps is the longest a card can be\."/);
+  assert.match(plus, /disabled/, 'the bound is the server\'s; v453 only explains it');
+  assert.match(plus, /title="15 stamps is the longest a card can be\."/);
   assert.match(plus, /aria-describedby="growStampsLenLongerWhyV453"/);
-  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), '100 stamps is the longest a card can be.');
-  /* "−" is free at 100 with the highest gift on stamp 6 */
+  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), '15 stamps is the longest a card can be.');
+  assert.doesNotMatch(markup, /100 stamps is the longest/, 'the old bound must not survive anywhere');
+  /* "−" is free at 15 with the highest gift on stamp 6 */
   assert.doesNotMatch(stepper(markup, 'shorter'), /disabled/);
 });
 
 test('v453 both refusals can be shown at once, each with its own reason', () => {
-  /* A 100-stamp card with a gift on stamp 100: neither stepper may move, for two different
-     reasons, and each must get its own sentence rather than one of them being swallowed. */
-  const markup = bar({ target: 100, gifts: [{ id: 'r-100', customer_name: 'Century Set', cost_points: 100 }] });
+  /* A card at the maximum with a gift on its last stamp: neither stepper may move, for two
+     different reasons, and each must get its own sentence rather than one of them being
+     swallowed. nestly_v463 makes this qa-kaya-toast's own shape rather than a 100-stamp card. */
+  const markup = bar({ target: 15, gifts: [{ id: 'r-15', customer_name: 'Century Set', cost_points: 15 }] });
   assert.match(stepper(markup, 'shorter'), /disabled/);
   assert.match(stepper(markup, 'longer'), /disabled/);
   assert.equal(whyLine(markup, 'growStampsLenShorterWhyV453'),
-    'A gift sits on stamp 100. Move or remove it to make the card shorter.');
-  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), '100 stamps is the longest a card can be.');
+    'A gift sits on stamp 15. Move or remove it to make the card shorter.');
+  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), '15 stamps is the longest a card can be.');
 });
 
 test('v453 says nothing when neither stepper is refused', () => {
@@ -541,11 +565,13 @@ test('v453 says nothing when neither stepper is refused', () => {
      origin/main's markup AND stylesheet together. The card itself is still byte-pinned above. */
   const gifts = [{ id: 'r-4', customer_name: 'Kaya Butter Supreme', cost_points: 4 },
     { id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 }];
-  const now = bar({ target: 20, gifts });
+  /* nestly_v463: 10, not 20 — 20 is past the new maximum, where "+" is refused and therefore
+     explains itself. The point of this test is the case where NOTHING is refused. */
+  const now = bar({ target: 10, gifts });
   assert.doesNotMatch(now, /grow-stamps-lenwhy-v453/);
   assert.doesNotMatch(now, /disabled/);
   assert.doesNotMatch(now, /data-workspace-title-template/);
-  assert.deepEqual(lenWrites(now), [19, 21], 'still one stamp either side of 20');
+  assert.deepEqual(lenWrites(now), [9, 11], 'still one stamp either side of 10');
   /* the three controls are one element deep, in order, inside the group that keeps them together */
   const group = /<span class="grow-stamps-lensteps-v453">([\s\S]*?)<\/span>\s*<\/div>/.exec(now);
   assert.ok(group, 'the stepper group must wrap the controls');

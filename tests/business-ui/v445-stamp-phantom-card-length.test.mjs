@@ -123,8 +123,11 @@ test('v445 a 15-stamp card with a gift at 1000 draws 15 slots and reads 15', () 
   assert.equal(g.growStampsTargetV416, 15, 'server truth, unchanged');
   assert.equal(g.growStampsHighestGiftV416, 1000, 'the out-of-range gift is still seen…');
   assert.equal(g.growStampsCardLenV416, 15, '…but it is not what the card is drawn from');
-  /* The grid's own trailing "+" is a length write too, and it must offer 16, not 101. */
-  assert.deepEqual(lenWrites(g.growStampsGridV416), [16]);
+  /* The grid's own trailing "+" was a length write too, and pre-v445 it offered 101. nestly_v463
+     withdraws it entirely at the maximum: 15 is now the longest a card may be, so there is no
+     len+1 to offer. Below the maximum it is still there and still offers exactly len+1. */
+  assert.deepEqual(lenWrites(g.growStampsGridV416), []);
+  assert.deepEqual(lenWrites(render({ stampTarget: 12, gifts: KAYA }).growStampsGridV416), [13]);
 });
 
 test('v445 the out-of-range gifts get a warning, are named, and are not grid slots', () => {
@@ -147,14 +150,19 @@ test('v445 the out-of-range gifts get a warning, are named, and are not grid slo
 });
 
 test('v445 the one-tap "make the card N stamps" fix is withheld when N exceeds the server bound', () => {
-  /* business_set_stamp_card_length_v414 caps at 100. Offering "Make the card 1000 stamps" is
-     offering a button that can only fail. */
+  /* business_set_stamp_card_length_v414 caps at 15 since nestly_v463 (it was 100). Offering
+     "Make the card 1000 stamps" is offering a button that can only fail — and so, now, is
+     offering "Make the card 20 stamps". */
   const far = render({ stampTarget: 15, gifts: KAYA });
   assert.deepEqual(lenWrites(far.growStampsStrandedNoteV416), [],
     'no length button at all when the only reachable fix is out of the server\'s range');
-  const near = render({ stampTarget: 15, gifts: [GIFT('Free Lotion', 20)] });
-  assert.deepEqual(lenWrites(near.growStampsStrandedNoteV416), [20],
-    'but a gift at stamp 20 is still one tap away from being reachable');
+  const past = render({ stampTarget: 10, gifts: [GIFT('Free Lotion', 20)] });
+  assert.deepEqual(lenWrites(past.growStampsStrandedNoteV416), [],
+    'nestly_v463: a gift at stamp 20 can no longer be reached by lengthening — 15 is the '
+    + 'maximum — so the only honest way out is the one the paragraph names, moving the gift');
+  const near = render({ stampTarget: 10, gifts: [GIFT('Free Lotion', 12)] });
+  assert.deepEqual(lenWrites(near.growStampsStrandedNoteV416), [12],
+    'but a gift at stamp 12 is still one tap away from being reachable');
 });
 
 test('v445 the − stepper is not disabled by a gift that is off the card', () => {
@@ -240,12 +248,12 @@ const wireUp = ({ stampTarget = 15, gifts = KAYA } = {}) => {
   const snapshot = { loyalty: { stamp_target: stampTarget } };
   new Function('outerMain', 'sb', 'snapshot', 'S', 'toast', 'growRerenderV322', 'isGrowCurrent',
     'ownerErrorText', 'workspaceTemplateTextV97', 'growStampsCardLenV416',
-    'GROW_STAMPS_MAX_LEN_V416', `
+    'GROW_STAMPS_MAX_LEN_V463', `
     let growPointsBusyV326=false, growPointsErrorV326='';
     ${wiringSrc()}
     return {growStampsSetLengthV422};`)(
     outerMain, sb, snapshot, { biz: { id: 'biz-1' } }, () => {}, () => {}, () => true,
-    e => String(e), () => 'saved', g.growStampsCardLenV416, 100);
+    e => String(e), () => 'saved', g.growStampsCardLenV416, 15);
   return { g, outerMain, calls, snapshot };
 };
 
@@ -253,12 +261,16 @@ test('v445 the steppers write the length the owner stepped to, never the derived
   const { outerMain, calls } = wireUp();
   /* Buttons, in the order the real markup produced them: −(14), +(16) from the bar, +(16) from
      the grid. The stranded note contributes none here, its fix button being withheld at 1000. */
-  assert.deepEqual(outerMain.buttons.map(b => Number(b.dataset.growStampsLenV416)), [14, 16, 16]);
+  /* nestly_v463: two buttons, not three. The bar's −(14) and its +(16, now rendered disabled at
+     the maximum); the grid's trailing "+" is withheld entirely at 15, and the stranded note's fix
+     button is withheld at 1000. The click assertions below still fire the bar's pair, because a
+     disabled attribute in a string of markup is not a disabled DOM node in this shim — what is
+     being proved here is which LENGTH each control carries, not which are clickable. */
+  assert.deepEqual(outerMain.buttons.map(b => Number(b.dataset.growStampsLenV416)), [14, 16]);
   for (const button of outerMain.buttons) await button.onclick();
   assert.deepEqual(calls.map(c => c.name),
-    ['business_set_stamp_card_length_v414', 'business_set_stamp_card_length_v414',
-      'business_set_stamp_card_length_v414']);
-  assert.deepEqual(calls.map(c => c.payload.p_stamps), [14, 16, 16],
+    ['business_set_stamp_card_length_v414', 'business_set_stamp_card_length_v414']);
+  assert.deepEqual(calls.map(c => c.payload.p_stamps), [14, 16],
     'a 15-stamp card steps to 14 and 16 — not to 99 and 101 off a phantom 100');
 });
 
@@ -270,14 +282,17 @@ test('v445 the typed field commits what was typed, and stays silent when unchang
      stray step would have sent 99/101. */
   outerMain.field.onblur();
   assert.deepEqual(calls, []);
-  outerMain.field.value = '20';
+  outerMain.field.value = '12';
   outerMain.field.onblur();
-  assert.deepEqual(calls.map(c => c.payload.p_stamps), [20]);
-  /* Out of the server's range: restored, not sent. */
-  outerMain.field.value = '400';
-  outerMain.field.onblur();
-  assert.equal(calls.length, 1);
-  assert.equal(outerMain.field.value, '15');
+  assert.deepEqual(calls.map(c => c.payload.p_stamps), [12]);
+  /* Out of the server's range: restored, not sent. nestly_v463 moved that range to 1..15, so 20
+     — which the pre-v463 field would have sent — is now restored along with 400. */
+  for (const outOfRange of ['20', '400']) {
+    outerMain.field.value = outOfRange;
+    outerMain.field.onblur();
+    assert.equal(calls.length, 1, `${outOfRange} must not be sent`);
+    assert.equal(outerMain.field.value, '15');
+  }
 });
 
 test('v445 the gift form is the ONLY other writer on this screen, and it sends no length', () => {
