@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="40f5cb64dea62168faf1767ff18597581e3a3238e9f97b0b2dd1ad40dac0c5d2"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1bde64f7c821d64dc365544c19d673cdcad71dfb937b25f01e2cea00e6ca95d8"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1838,6 +1838,14 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* nestly_v453: the three controls of the stepper are ONE unit. The bar wraps at narrow widths and
+   used to wrap between them, leaving "−" beside the heading and "15 stamps +" on the line below.
+   The label may stack above this group; the group itself never splits. */
+.grow-stamps-lensteps-v453{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:nowrap}
+/* nestly_v453: why a stepper is refused, on its own line at the foot of the bar. flex-basis:100%
+   rather than a separate block so it belongs to the bar it explains, and stays put when the bar
+   wraps on a phone. */
+.grow-stamps-lenwhy-v453{flex:0 0 100%;margin-top:2px;font-size:.86rem;color:var(--muted)}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
 /* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
    stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar

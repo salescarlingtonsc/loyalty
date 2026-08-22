@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="82c340a6f9f4e6c4584b1f40c82f276431530b23131ae58f75a8c86a8f33f245"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="5d6c386c81fc317225921ff57863e4329557132b643e66bf5eb95c86eaa9aa19"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1839,6 +1839,14 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* nestly_v453: the three controls of the stepper are ONE unit. The bar wraps at narrow widths and
+   used to wrap between them, leaving "−" beside the heading and "15 stamps +" on the line below.
+   The label may stack above this group; the group itself never splits. */
+.grow-stamps-lensteps-v453{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:nowrap}
+/* nestly_v453: why a stepper is refused, on its own line at the foot of the bar. flex-basis:100%
+   rather than a separate block so it belongs to the bar it explains, and stays put when the bar
+   wraps on a phone. */
+.grow-stamps-lenwhy-v453{flex:0 0 100%;margin-top:2px;font-size:.86rem;color:var(--muted)}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
 /* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
    stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar
@@ -3936,7 +3944,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 82c340a6f9f4e6c4584b1f40c82f276431530b23131ae58f75a8c86a8f33f245</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 5d6c386c81fc317225921ff57863e4329557132b643e66bf5eb95c86eaa9aa19</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7316,7 +7324,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'82c340a6f9f4e6c4584b1f40c82f276431530b23131ae58f75a8c86a8f33f245',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'5d6c386c81fc317225921ff57863e4329557132b643e66bf5eb95c86eaa9aa19',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

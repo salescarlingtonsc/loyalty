@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="6cf1eba15d902e74550b0ba4efe6bafc074f07f76f8ebc492ec973a16b91879d">
+<meta name="v104-production-source-sha256" content="f151a60bfe2b30f8e11d7a43dfca33caed633e235bbfab4064166206c997bf6a">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1846,6 +1846,14 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* nestly_v453: the three controls of the stepper are ONE unit. The bar wraps at narrow widths and
+   used to wrap between them, leaving "−" beside the heading and "15 stamps +" on the line below.
+   The label may stack above this group; the group itself never splits. */
+.grow-stamps-lensteps-v453{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:nowrap}
+/* nestly_v453: why a stepper is refused, on its own line at the foot of the bar. flex-basis:100%
+   rather than a separate block so it belongs to the bar it explains, and stays put when the bar
+   wraps on a phone. */
+.grow-stamps-lenwhy-v453{flex:0 0 100%;margin-top:2px;font-size:.86rem;color:var(--muted)}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
 /* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
    stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar
@@ -3947,7 +3955,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 6cf1eba15d902e74550b0ba4efe6bafc074f07f76f8ebc492ec973a16b91879d</p>
+  <p class="v104-provenance">Local production-render harness · source f151a60bfe2b30f8e11d7a43dfca33caed633e235bbfab4064166206c997bf6a</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -3959,7 +3967,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="6cf1eba15d902e74550b0ba4efe6bafc074f07f76f8ebc492ec973a16b91879d";
+const PRODUCTION_SOURCE_SHA256="f151a60bfe2b30f8e11d7a43dfca33caed633e235bbfab4064166206c997bf6a";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

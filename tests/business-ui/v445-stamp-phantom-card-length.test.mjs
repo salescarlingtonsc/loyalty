@@ -45,15 +45,27 @@ const slice = (source, start, end) => {
 /* The whole v416/v422/v445 stamp-editor block, from the first constant to the end of the stranded
    note, evaluated verbatim. Its inputs — the saved card length and the gifts — are injected,
    because they are the entire question. */
+/* nestly_v453: the stamp editor now renders two of its strings through the workspace copy
+   machinery (the disabled length steppers explain their refusal, and that sentence is reviewed,
+   localised copy). The REAL machinery is extracted with the block under test rather than stubbed —
+   a stub would happily return text for a key nobody registered, which is the one thing the
+   workspace audit exists to prevent. */
+const workspaceRigV453 = source => {
+  const from = source.indexOf('const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({');
+  const to = source.indexOf('const workspaceTemplateInnerHtmlV97=', from);
+  assert.ok(from >= 0 && to > from, 'workspace template machinery not found in this revision');
+  return source.slice(from, to);
+};
 const renderBlock = source =>
-  slice(source, '  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';");
+  `${workspaceRigV453(source)}\n`
+  + slice(source, '  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';");
 
 const render = ({ stampTarget = 0, gifts = [], canSetupGrow = true, busy = false,
                   snapshot } = {}) => {
   const snap = snapshot || { loyalty: { stamp_target: stampTarget } };
   return new Function(
     'snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410', 'canSetupGrow',
-    'growPointsBusyV326', 'CUI', 'esc', `
+    'growPointsBusyV326', 'CUI', 'esc', 'workspaceLocale', `
     ${renderBlock(appJs)}
     return {growStampsCardLenV416, growStampsTargetV416, growStampsHighestGiftV416,
       growStampsStrandedV416, growStampsCardLengthBarV416, growStampsGridV416,
@@ -61,7 +73,7 @@ const render = ({ stampTarget = 0, gifts = [], canSetupGrow = true, busy = false
     snap,
     gifts.slice().sort((a, b) => Number(a.cost_points || 0) - Number(b.cost_points || 0)),
     new Map(gifts.map(g => [Math.max(0, Number(g.cost_points) || 0), g]).filter(([n]) => n > 0)),
-    canSetupGrow, busy, CUI, esc);
+    canSetupGrow, busy, CUI, esc, 'en');
 };
 
 const GIFT = (name, stamps) => ({ id: `r-${stamps}`, customer_name: name, cost_points: stamps });
@@ -89,12 +101,13 @@ const assertHonestLength = source => {
     const snap = { loyalty: { stamp_target: opts.stampTarget } };
     return new Function(
       'snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410', 'canSetupGrow',
-      'growPointsBusyV326', 'CUI', 'esc', `
-      ${renderBlock(source)}
+      'growPointsBusyV326', 'CUI', 'esc', 'workspaceLocale', `
+      ${`${workspaceRigV453(source)}\n`
+        + slice(source, '  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';")}
       return {growStampsCardLenV416, growStampsCardLengthBarV416, growStampsGridV416,
         growStampsStrandedNoteV416};`)(
       snap, opts.gifts.slice().sort((a, b) => a.cost_points - b.cost_points),
-      new Map(opts.gifts.map(g => [g.cost_points, g])), true, false, CUI, esc);
+      new Map(opts.gifts.map(g => [g.cost_points, g])), true, false, CUI, esc, 'en');
   };
   const g = build({ stampTarget: 15, gifts: KAYA });
   assert.equal(g.growStampsCardLenV416, 15);

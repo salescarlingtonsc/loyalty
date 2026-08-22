@@ -33,9 +33,21 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g,
 
 /* The v416 block, evaluated exactly as it ships. Its inputs — the saved card length, the gifts,
    and whether this user may edit — are injected, because those are the whole question. */
+/* nestly_v453: the stamp editor now renders two of its strings through the workspace copy
+   machinery (the disabled length steppers explain their refusal, and that sentence is reviewed,
+   localised copy). The REAL machinery is extracted with the block under test rather than stubbed —
+   a stub would happily return text for a key nobody registered, which is the one thing the
+   workspace audit exists to prevent. */
+const workspaceRigV453 = source => {
+  const from = source.indexOf('const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({');
+  const to = source.indexOf('const workspaceTemplateInnerHtmlV97=', from);
+  assert.ok(from >= 0 && to > from, 'workspace template machinery not found in this revision');
+  return source.slice(from, to);
+};
 const grid = ({ stampTarget = 0, gifts = [], canSetupGrow = true, busy = false } = {}) => new Function(
   'snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410', 'canSetupGrow',
-  'growPointsBusyV326', 'CUI', 'esc', `
+  'growPointsBusyV326', 'CUI', 'esc', 'workspaceLocale', `
+  ${workspaceRigV453(appJs)}
   ${statement('  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';")}
   return {growStampsCardLenV416, growStampsTargetV416, growStampsHighestGiftV416,
     growStampsStrandedV416, growStampsCardLengthBarV416, growStampsGridV416,
@@ -49,7 +61,8 @@ const grid = ({ stampTarget = 0, gifts = [], canSetupGrow = true, busy = false }
      whole block throw ReferenceError, which is what these four tests caught. */
   busy,
   { icon: name => `<svg data-icon="${name}"></svg>` },
-  esc);
+  esc,
+  'en');
 
 const GIFT = (name, stamps) => ({ id: `r-${stamps}`, customer_name: name, cost_points: stamps });
 const cells = markup => [...markup.matchAll(/data-grow-stamps-cell-v416="(\d+)"/g)].map(m => Number(m[1]));

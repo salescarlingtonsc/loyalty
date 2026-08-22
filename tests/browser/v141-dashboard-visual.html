@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="04e369ecf4c9989b369927aef24fc1c5e3ac28a06217e832e7c582848fed40d3"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="647d1f80eae0f90a5826f9b6e1883ce1216c0b77063cf057177b005f8b0e1e9a"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1840,6 +1840,14 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-stamps-lenbar-v416{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;
   padding:10px 12px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .grow-stamps-lenbar-label-v416{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* nestly_v453: the three controls of the stepper are ONE unit. The bar wraps at narrow widths and
+   used to wrap between them, leaving "−" beside the heading and "15 stamps +" on the line below.
+   The label may stack above this group; the group itself never splits. */
+.grow-stamps-lensteps-v453{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;flex-wrap:nowrap}
+/* nestly_v453: why a stepper is refused, on its own line at the foot of the bar. flex-basis:100%
+   rather than a separate block so it belongs to the bar it explains, and stays put when the bar
+   wraps on a phone. */
+.grow-stamps-lenwhy-v453{flex:0 0 100%;margin-top:2px;font-size:.86rem;color:var(--muted)}
 .grow-stamps-lenvalue-v416{font-size:16px;white-space:nowrap}
 /* nestly_v422 (owner photo 2: "do as a field, so can edit number"). The length is typed, not
    stepped thirty times. Sized to its longest legal value (100) rather than stretched, so the bar
@@ -5044,6 +5052,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'04e369ecf4c9989b369927aef24fc1c5e3ac28a06217e832e7c582848fed40d3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'647d1f80eae0f90a5826f9b6e1883ce1216c0b77063cf057177b005f8b0e1e9a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -400,36 +400,211 @@ test('v449 a long card scrolls inside its own box instead of running the page aw
   assert.equal(at(CHAIN_GRID, 'gap'), '24px 10px');
 });
 
+/* The stamp editor block from an arbitrary revision of app.js, executed. Used to hold later work
+   against the bytes an earlier commit produced. */
+const escLocal = v => String(v ?? '').replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* The REAL workspace-copy machinery from the revision under test — the copy table, both
+   inventories, and the two template functions — evaluated as one contiguous region. Nothing is
+   stubbed: workspaceTemplateAttributeV97 returns '' for a key that is not in the attribute
+   inventory, so a sentence that was written but never registered renders as a missing attribute
+   here and the v453 assertions fail. Revisions before v453 have no such keys and simply return ''
+   for them, which is what the byte pins below want. */
+const workspaceRig = source => {
+  const from = source.indexOf('const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({');
+  const to = source.indexOf('const workspaceTemplateInnerHtmlV97=', from);
+  assert.ok(from >= 0 && to > from, 'workspace template machinery not found in this revision');
+  return source.slice(from, to);
+};
+const drawFrom = (source, { target, gifts, pick, locale = 'en' }) => {
+  const from = source.indexOf('  const GROW_STAMPS_DEFAULT_LEN_V416=15;');
+  const to = source.indexOf("</div>`:'';", from);
+  assert.ok(from >= 0 && to > from, 'stamp editor block not found in this revision');
+  return new Function('snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410',
+    'canSetupGrow', 'growPointsBusyV326', 'CUI', 'esc', 'workspaceLocale', `
+    ${workspaceRig(source)}
+    ${source.slice(from, to + "</div>`:'';".length)}
+    return (${JSON.stringify(pick)}).map(k=>({bar:growStampsCardLengthBarV416,
+      grid:growStampsGridV416,note:growStampsStrandedNoteV416}[k])).join('');`)(
+    { loyalty: { stamp_target: target } },
+    gifts.slice().sort((a, b) => a.cost_points - b.cost_points),
+    new Map(gifts.map(g => [g.cost_points, g])), true, false,
+    { icon: n => `<svg data-icon="${n}"></svg>` }, escLocal, locale);
+};
+const KAYA_GIFTS = [{ id: 'r-4', customer_name: 'Kaya Butter Supreme', cost_points: 4 },
+  { id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 },
+  { id: 'r-15', customer_name: 'Triple-Shot Gula Melaka Kaya', cost_points: 15 },
+  { id: 'r-1000', customer_name: 'Free Facial Cream Ultra Hydrating', cost_points: 1000 }];
+
 test('v449 rows of five is a layout change ONLY — the grid markup and every handler are untouched', () => {
-  /* The strongest available statement: the markup the renderer produces for a 15-stamp card is
+  /* The strongest available statement: the CARD the renderer draws for a 15-stamp programme is
      byte-identical to the v445 commit that preceded this work. If a save path, a data attribute,
-     an aria-label or the trailing "+" had moved, these bytes would differ. */
+     an aria-label or the trailing "+" had moved, these bytes would differ.
+     nestly_v453 narrowed this from "everything the editor renders" to "the grid and the stranded
+     note": v453 deliberately adds copy to the LENGTH BAR, and that bar has its own pins below —
+     including one that still holds it byte-identical to efeceb0 whenever no stepper is refused. */
   const appNow = readFileSync(join(root, 'app', 'app.js'), 'utf8');
   const appV445 = gitShow('efeceb0:app/app.js');
-  const esc = v => String(v ?? '').replace(/[&<>"']/g,
-    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const gifts = [{ id: 'r-4', customer_name: 'Kaya Butter Supreme', cost_points: 4 },
-    { id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 },
-    { id: 'r-15', customer_name: 'Triple-Shot Gula Melaka Kaya', cost_points: 15 },
-    { id: 'r-1000', customer_name: 'Free Facial Cream Ultra Hydrating', cost_points: 1000 }];
-  const draw = source => {
-    const from = source.indexOf('  const GROW_STAMPS_DEFAULT_LEN_V416=15;');
-    const to = source.indexOf("</div>`:'';", from);
-    assert.ok(from >= 0 && to > from);
-    return new Function('snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410',
-      'canSetupGrow', 'growPointsBusyV326', 'CUI', 'esc', `
-      ${source.slice(from, to + "</div>`:'';".length)}
-      return growStampsCardLengthBarV416+growStampsGridV416+growStampsStrandedNoteV416;`)(
-      { loyalty: { stamp_target: 15 } }, gifts,
-      new Map(gifts.map(g => [g.cost_points, g])), true, false,
-      { icon: n => `<svg data-icon="${n}"></svg>` }, esc);
-  };
-  assert.equal(draw(appNow), draw(appV445),
-    'v449 must not have changed a single byte of what the stamp editor renders');
+  const args = { target: 15, gifts: KAYA_GIFTS, pick: ['grid', 'note'] };
+  assert.equal(drawFrom(appNow, args), drawFrom(appV445, args),
+    'v449/v453 must not have changed a single byte of the stamp card the editor draws');
   /* and the one write this screen makes is still the one write it made */
   assert.equal((appNow.match(/sb\.rpc\('business_set_stamp_card_length_v414'/g) || []).length, 1);
   assert.equal(appNow.indexOf('business_create_reward_v326') >= 0
     && appNow.indexOf('business_update_reward_v326') >= 0, true);
+});
+
+/* ------------------------------------- nestly_v453: a refusal that says why it refused --------- */
+
+/* The owner reported "I can't press − or +" for a state where the guard was working exactly as
+   designed — a gift sat on the last slot of the card. A disabled control that gives no reason is
+   the same experience as a broken one, and it will be re-reported. Each refusal now names its own
+   reason. The GUARDS are untouched: every assertion below checks the button is still disabled. */
+
+const bar = ({ target, gifts = [] }) =>
+  drawFrom(readFileSync(join(root, 'app', 'app.js'), 'utf8'),
+    { target, gifts, pick: ['bar'] });
+const lenWrites = markup =>
+  [...markup.matchAll(/data-grow-stamps-len-v416="(-?\d+)"/g)].map(m => Number(m[1]));
+const stepper = (markup, which) => {
+  const m = new RegExp(`<button[^>]*aria-label="One stamp ${which}"[^>]*>`).exec(markup);
+  assert.ok(m, `no "one stamp ${which}" stepper in this bar`);
+  return m[0];
+};
+const whyLine = (markup, id) => {
+  const m = new RegExp(`<span class="grow-stamps-lenwhy-v453" id="${id}"[^>]*>([^<]*)</span>`).exec(markup);
+  return m ? m[1] : null;
+};
+
+test('v453 "−" refused by a gift on the last slot names the gift\'s stamp and the way out', () => {
+  /* qa-kaya-toast exactly: a 15-stamp card with a gift on stamp 15. */
+  const markup = bar({ target: 15, gifts: KAYA_GIFTS });
+  const minus = stepper(markup, 'shorter');
+  assert.match(minus, /disabled/, 'v453 explains the refusal; it must not lift it');
+  assert.match(minus, /title="A gift sits on stamp 15\. Move or remove it to make the card shorter\."/);
+  assert.match(minus, /aria-describedby="growStampsLenShorterWhyV453"/);
+  assert.equal(whyLine(markup, 'growStampsLenShorterWhyV453'),
+    'A gift sits on stamp 15. Move or remove it to make the card shorter.',
+    'the sentence is TEXT in the bar — a disabled button is not focusable, so a title alone '
+    + 'reaches neither the keyboard nor a screen reader');
+  /* the stamp named is the blocking gift, not the highest gift anywhere (1000 is off the card) */
+  assert.doesNotMatch(markup, /stamp 1000/);
+  /* "+" is fine here and says nothing */
+  assert.doesNotMatch(stepper(markup, 'longer'), /disabled|title=/);
+  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), null);
+});
+
+test('v453 "−" refused at one stamp names the minimum, not a gift', () => {
+  /* Not "a gift sits on stamp 1", even when one does: at length 1 the card cannot be shorter
+     whatever is on it, and naming a gift would send the owner to move something that would not
+     help. */
+  for (const gifts of [[], [{ id: 'r-1', customer_name: 'Free Kopi', cost_points: 1 }]]) {
+    const markup = bar({ target: 1, gifts });
+    assert.match(stepper(markup, 'shorter'), /disabled/);
+    assert.match(stepper(markup, 'shorter'), /title="1 stamp is the shortest a card can be\."/);
+    assert.equal(whyLine(markup, 'growStampsLenShorterWhyV453'), '1 stamp is the shortest a card can be.');
+    assert.doesNotMatch(markup, /A gift sits on stamp/);
+  }
+});
+
+test('v453 "+" refused at the maximum says how long a card may be', () => {
+  const markup = bar({ target: 100, gifts: [{ id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 }] });
+  const plus = stepper(markup, 'longer');
+  assert.match(plus, /disabled/, 'the 100 bound is the server\'s; v453 only explains it');
+  assert.match(plus, /title="100 stamps is the longest a card can be\."/);
+  assert.match(plus, /aria-describedby="growStampsLenLongerWhyV453"/);
+  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), '100 stamps is the longest a card can be.');
+  /* "−" is free at 100 with the highest gift on stamp 6 */
+  assert.doesNotMatch(stepper(markup, 'shorter'), /disabled/);
+});
+
+test('v453 both refusals can be shown at once, each with its own reason', () => {
+  /* A 100-stamp card with a gift on stamp 100: neither stepper may move, for two different
+     reasons, and each must get its own sentence rather than one of them being swallowed. */
+  const markup = bar({ target: 100, gifts: [{ id: 'r-100', customer_name: 'Century Set', cost_points: 100 }] });
+  assert.match(stepper(markup, 'shorter'), /disabled/);
+  assert.match(stepper(markup, 'longer'), /disabled/);
+  assert.equal(whyLine(markup, 'growStampsLenShorterWhyV453'),
+    'A gift sits on stamp 100. Move or remove it to make the card shorter.');
+  assert.equal(whyLine(markup, 'growStampsLenLongerWhyV453'), '100 stamps is the longest a card can be.');
+});
+
+test('v453 says nothing when neither stepper is refused', () => {
+  /* A refusal explains itself; a working control says nothing at all. Both steppers still offer
+     exactly the length either side of the current one — v453 adds copy to a refusal, it does not
+     change what the controls do.
+     This deliberately no longer asserts byte-identity with efeceb0's bar: v453 also wraps the
+     three controls in one nowrap group, because at 390 the bar was wrapping BETWEEN them (owner
+     photo: "−" beside the heading, "15 stamps +" on the line below). That grouping is measured in
+     Chrome by tests/browser/verify-v449-…, whose negative control reproduces the split against
+     origin/main's markup AND stylesheet together. The card itself is still byte-pinned above. */
+  const gifts = [{ id: 'r-4', customer_name: 'Kaya Butter Supreme', cost_points: 4 },
+    { id: 'r-6', customer_name: 'Free Kopi Set', cost_points: 6 }];
+  const now = bar({ target: 20, gifts });
+  assert.doesNotMatch(now, /grow-stamps-lenwhy-v453/);
+  assert.doesNotMatch(now, /disabled/);
+  assert.doesNotMatch(now, /data-workspace-title-template/);
+  assert.deepEqual(lenWrites(now), [19, 21], 'still one stamp either side of 20');
+  /* the three controls are one element deep, in order, inside the group that keeps them together */
+  const group = /<span class="grow-stamps-lensteps-v453">([\s\S]*?)<\/span>\s*<\/div>/.exec(now);
+  assert.ok(group, 'the stepper group must wrap the controls');
+  assert.ok(group[1].indexOf('One stamp shorter') < group[1].indexOf('growStampsLenFieldV422'));
+  assert.ok(group[1].indexOf('growStampsLenFieldV422') < group[1].indexOf('One stamp longer'));
+});
+
+test('v453 a user who may not edit is offered no steppers and told nothing about them', () => {
+  const source = readFileSync(join(root, 'app', 'app.js'), 'utf8');
+  const from = source.indexOf('  const GROW_STAMPS_DEFAULT_LEN_V416=15;');
+  const to = source.indexOf("</div>`:'';", from);
+  const readOnly = new Function('snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410',
+    'canSetupGrow', 'growPointsBusyV326', 'CUI', 'esc', 'workspaceLocale', `
+    ${workspaceRig(source)}
+    ${source.slice(from, to + "</div>`:'';".length)}
+    return growStampsCardLengthBarV416;`)(
+    { loyalty: { stamp_target: 15 } }, KAYA_GIFTS,
+    new Map(KAYA_GIFTS.map(g => [g.cost_points, g])), false, false,
+    { icon: n => `<svg data-icon="${n}"></svg>` }, escLocal, 'en');
+  assert.doesNotMatch(readOnly, /grow-stamps-lenstep-v416/);
+  assert.doesNotMatch(readOnly, /grow-stamps-lenwhy-v453/,
+    'explaining a control that is not offered is noise');
+  assert.match(readOnly, /15 stamps/);
+});
+
+test('v453 the title and the visible line are the same sentence, in every locale', () => {
+  /* Two halves of one message: a title for the mouse, text for the keyboard and the screen reader.
+     They come from one workspace template, so they cannot drift apart — including in the two
+     locales an owner may actually be reading the console in. */
+  const source = readFileSync(join(root, 'app', 'app.js'), 'utf8');
+  for (const locale of ['en', 'zh-CN', 'ms']) {
+    const markup = drawFrom(source, { target: 15, gifts: KAYA_GIFTS, pick: ['bar'], locale });
+    const title = /title="([^"]*)"/.exec(stepper(markup, 'shorter'));
+    assert.ok(title, `no title on the refused stepper in ${locale}`);
+    const line = whyLine(markup, 'growStampsLenShorterWhyV453');
+    assert.equal(title[1], line, `title and visible line disagree in ${locale}`);
+    assert.ok(line.includes('15'), `${locale} must still name stamp 15`);
+    /* the localiser needs the template and its values on the element to re-render on a switch */
+    assert.match(stepper(markup, 'shorter'),
+      /data-workspace-title-template="stampLengthGiftBlocksShorter"/);
+    assert.match(stepper(markup, 'shorter'), /data-workspace-title-values="%7B%22stamp%22%3A15%7D"/);
+  }
+  /* and the three keys really are registered — workspaceTemplateAttributeV97 returns '' for a key
+     that is not in the attribute inventory, so an unregistered sentence has no title at all */
+  for (const key of ['stampLengthGiftBlocksShorter', 'stampLengthAtMinimum', 'stampLengthAtMaximum']) {
+    assert.ok(source.includes(`'${key}'`), `${key} must be registered, not just written`);
+  }
+});
+
+test('v453 the reason line has a rule of its own and sits on the bar it explains', () => {
+  const html = readIndex();
+  const rule = /\.grow-stamps-lenwhy-v453\{([^}]*)\}/.exec(html);
+  assert.ok(rule, 'the reason line must be laid out, not left to inherit');
+  assert.match(rule[1], /flex:0 0 100%/, 'its own line inside the wrapping length bar');
+  /* and it resolves as such through the real cascade */
+  const chain = [CHAIN_DIALOG[0],
+    { tag: 'div', classes: ['grow-stamps-lenbar-v416'], attrs: {} },
+    { tag: 'span', classes: ['grow-stamps-lenwhy-v453'], attrs: {} }];
+  assert.equal(at(chain, 'flex'), '0 0 100%');
 });
 
 test('v449 the browser geometry harness exists and covers the widths it claims', () => {

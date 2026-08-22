@@ -50,34 +50,45 @@ const styleOf = html => {
 
 /* ---- the real renderers, evaluated ---- */
 
-const slice = (start, end) => {
-  const from = appJs.indexOf(start), to = appJs.indexOf(end, from + start.length);
+const slice = (start, end, source = appJs) => {
+  const from = source.indexOf(start), to = source.indexOf(end, from + start.length);
   if (from < 0 || to <= from) throw new Error(`missing region ${start}`);
-  return appJs.slice(from, to + end.length);
+  return source.slice(from, to + end.length);
 };
 
 /* The shipped Add/Edit gift dialog template, with an existing gift on stamp 5 — the state the
    owner and the coordinator both photographed. */
-const dialogMarkup = () => new Function(
+const dialogMarkup = (source = appJs) => new Function(
   'growPointsAddOpenV326', 'growPointsEditingV326', 'growStampsPickedV416', 'growPointsIsStampsV326',
   'growPointsAddDraftV326', 'growPointsPhotoFileV343', 'growPointsCurrentPhotoUrlV343',
   'growPointsErrorV326', 'growPointsBusyV326', 'growPointsDeletePendingV326', 'canSetupGrow',
   'growPointsPhotoPreviewUrlForV349', 'esc', `
-  ${slice('  const growPointsAddFormV326=growPointsAddOpenV326===', "</li>`:'';")}
+  ${slice('  const growPointsAddFormV326=growPointsAddOpenV326===', "</li>`:'';", source)}
   return growPointsAddFormV326;`)(
   'form', 'r-5', 5, true,
   { name: 'Free Kopi Set', points: '5', description: 'One kopi and one kaya toast set, on us.' },
   null, '', '', false, '', true, () => '', esc);
 
+/* nestly_v453: the disabled steppers explain themselves through the workspace copy machinery, so
+   the REAL machinery is pulled in with the block rather than stubbed — the sentences this harness
+   measures are the sentences the app renders, from the registered copy table. */
+const workspaceRig = (source = appJs) => {
+  const from = source.indexOf('const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({');
+  const to = source.indexOf('const workspaceTemplateInnerHtmlV97=', from);
+  if (from < 0 || to <= from) throw new Error('workspace template machinery not found');
+  return source.slice(from, to);
+};
+
 /* The shipped stamp grid, 15 stamps with gifts on 4, 6 and 15. */
-const gridMarkup = (target, gifts) => new Function(
+const gridMarkup = (target, gifts, source = appJs) => new Function(
   'snapshot', 'growStampsLevelsSortedV350', 'growStampsRewardAtV410', 'canSetupGrow',
-  'growPointsBusyV326', 'CUI', 'esc', `
-  ${slice('  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';")}
+  'growPointsBusyV326', 'CUI', 'esc', 'workspaceLocale', `
+  ${workspaceRig(source)}
+  ${slice('  const GROW_STAMPS_DEFAULT_LEN_V416=15;', "</div>`:'';", source)}
   return growStampsCardLengthBarV416+growStampsGridV416+growStampsStrandedNoteV416;`)(
   { loyalty: { stamp_target: target } },
   gifts.slice().sort((a, b) => a.cost_points - b.cost_points),
-  new Map(gifts.map(g => [g.cost_points, g])), true, false, CUI, esc);
+  new Map(gifts.map(g => [g.cost_points, g])), true, false, CUI, esc, 'en');
 
 const GIFT = (name, stamps) => ({ id: `r-${stamps}`, customer_name: name, cost_points: stamps });
 const CARD15 = [GIFT('Kaya Butter Supreme', 4), GIFT('Free Kopi Set', 6),
@@ -85,14 +96,17 @@ const CARD15 = [GIFT('Kaya Butter Supreme', 4), GIFT('Free Kopi Set', 6),
 const CARD12 = [GIFT('Free Kopi Set', 6), GIFT('Kaya Set', 12)];
 const CARD100 = [GIFT('Free Kopi Set', 6), GIFT('Century Set', 100)];
 
-const page = (css) => `<!doctype html><html><head><meta charset="utf-8">
+/* The page is built from a stylesheet AND a revision of app.js together. The negative control
+   below needs BOTH halves of origin/main — v453's stepper defect is caused by markup grouping, so
+   a "before" that kept the new markup could not reproduce it. */
+const page = (css, source = appJs) => `<!doctype html><html><head><meta charset="utf-8">
 <style>${css}</style></head><body>
 <div class="wrap" style="padding:16px">
   <div class="grow-overview" data-programme-view="points">
-    <div id="card15">${gridMarkup(15, CARD15)}</div>
-    <div id="card12" hidden>${gridMarkup(12, CARD12)}</div>
-    <div id="card100" hidden>${gridMarkup(100, CARD100)}</div>
-    <ul class="grow-setup-rewardlist-v301">${dialogMarkup()}</ul>
+    <div id="card15">${gridMarkup(15, CARD15, source)}</div>
+    <div id="card12" hidden>${gridMarkup(12, CARD12, source)}</div>
+    <div id="card100" hidden>${gridMarkup(100, CARD100, source)}</div>
+    <ul class="grow-setup-rewardlist-v301">${dialogMarkup(source)}</ul>
   </div>
 </div></body></html>`;
 
@@ -134,7 +148,24 @@ const MEASURE = () => {
     host.hidden = was;
     return out;
   };
+  /* nestly_v453: the length stepper is three controls that must read as one. Measured, not
+     assumed: the vertical centres of −, the field and + and their left-to-right order. */
+  const lenbar = (() => {
+    const host = document.getElementById('card15');
+    const was = host.hidden; host.hidden = false;
+    const bar = host.querySelector('.grow-stamps-lenbar-v416');
+    const minus = bar.querySelector('[aria-label="One stamp shorter"]');
+    const field = bar.querySelector('.grow-stamps-lenfield-v422, .grow-stamps-lenvalue-v416');
+    const plus = bar.querySelector('[aria-label="One stamp longer"]');
+    const mid = el => { const r = el.getBoundingClientRect(); return { c: r.top + r.height / 2, l: r.left, r: r.right }; };
+    const out = { minus: mid(minus), field: mid(field), plus: mid(plus),
+      barBottom: bar.getBoundingClientRect().bottom,
+      why: [...bar.querySelectorAll('.grow-stamps-lenwhy-v453')].map(n => n.textContent.trim()) };
+    host.hidden = was;
+    return out;
+  })();
   return {
+    lenbar,
     innerWidth: window.innerWidth,
     dialog: {
       ...d, display: cs.display, tracks: cs.gridTemplateColumns, contentRight,
@@ -147,13 +178,13 @@ const MEASURE = () => {
   };
 };
 
-const measureAll = async (browser, css) => {
+const measureAll = async (browser, css, source = appJs) => {
   const ctx = await browser.newContext();
   const p = await ctx.newPage();
   const out = {};
   for (const width of WIDTHS) {
     await p.setViewportSize({ width, height: 900 });
-    await p.setContent(page(css), { waitUntil: 'load' });
+    await p.setContent(page(css, source), { waitUntil: 'load' });
     out[width] = await p.evaluate(MEASURE);
   }
   await ctx.close();
@@ -202,6 +233,20 @@ const assertFixed = all => {
     check(m.card100.perRow.every(n => n <= 5), at('100-card row overflowed five'));
     check(m.card100.clientH <= 460, at(`100-card grid is ${m.card100.clientH}px tall — the page runs away`));
     check(m.card100.scrollH > m.card100.clientH, at('100-card grid should scroll internally'));
+    /* nestly_v453 — the stepper is one unit at every width. The owner's 390px photo had "−"
+       riding up onto the heading's line while "15 stamps +" sat below it. */
+    const { minus, field, plus } = m.lenbar;
+    check(Math.abs(minus.c - field.c) <= 3,
+      at(`"−" centre ${minus.c} vs field ${field.c} — the stepper split across lines`));
+    check(Math.abs(plus.c - field.c) <= 3,
+      at(`"+" centre ${plus.c} vs field ${field.c} — the stepper split across lines`));
+    check(minus.r <= field.l + EPS, at('"−" must sit immediately left of the value it decrements'));
+    check(field.r <= plus.l + EPS, at('"+" must sit to the right of the value it increments'));
+    /* qa-kaya-toast has a gift on the last stamp, so "−" is refused and must say why */
+    check(m.lenbar.why.length === 1,
+      at(`expected exactly one refusal sentence, got ${JSON.stringify(m.lenbar.why)}`));
+    check(m.lenbar.why[0] === 'A gift sits on stamp 15. Move or remove it to make the card shorter.',
+      at(`refusal sentence reads "${m.lenbar.why[0]}"`));
     /* and the page itself never scrolls sideways */
     check(m.docScrollW <= m.docClientW + EPS,
       at(`page scrolls horizontally (${m.docScrollW} > ${m.docClientW})`));
@@ -216,14 +261,18 @@ try {
   assertFixed(after);
 
   /* NEGATIVE CONTROL — the same page, the pre-fix stylesheet. */
-  const beforeCss = styleOf(execFileSync('git', ['show', 'origin/main:app/index.html'],
-    { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
-  const before = await measureAll(browser, beforeCss);
+  const show = ref => execFileSync('git', ['show', ref],
+    { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const before = await measureAll(browser, styleOf(show('origin/main:app/index.html')),
+    show('origin/main:app/app.js'));
   const seen = [];
   for (const width of WIDTHS) {
     const m = before[width];
     if (m.dialog.display === 'grid' && m.children.some(c => c.w > m.dialog.w + EPS)) seen.push(`${width}:dialog`);
     if (m.card15.perRow.some(n => n > 5)) seen.push(`${width}:rows`);
+    if (Math.abs(m.lenbar.minus.c - m.lenbar.field.c) > 3
+      || Math.abs(m.lenbar.plus.c - m.lenbar.field.c) > 3) seen.push(`${width}:stepper`);
+    if (!m.lenbar.why.length) seen.push(`${width}:noreason`);
   }
   if (!seen.length) fails.push('NEGATIVE CONTROL: the pre-fix stylesheet showed neither defect — the harness is blind');
 
@@ -233,6 +282,8 @@ try {
     inputRightOverflow: Math.round(Math.max(...after[w].inputs.map(i => i.r - after[w].dialog.contentRight))),
     inputTextAlign: after[w].inputs[0].textAlign,
     rows15: after[w].card15.perRow.join('/'), rows12: after[w].card12.perRow.join('/'),
+    stepperOneLine: Math.abs(after[w].lenbar.minus.c - after[w].lenbar.field.c) <= 3
+      && Math.abs(after[w].lenbar.plus.c - after[w].lenbar.field.c) <= 3,
     card100Height: Math.round(after[w].card100.clientH),
     before: {
       dialogDisplay: before[w].dialog.display, tracks: before[w].dialog.tracks,
@@ -240,6 +291,8 @@ try {
       inputRightOverflow: Math.round(Math.max(...before[w].inputs.map(i => i.r - before[w].dialog.contentRight))),
       inputTextAlign: before[w].inputs[0].textAlign,
       rows15: before[w].card15.perRow.join('/'),
+      stepperOneLine: Math.abs(before[w].lenbar.minus.c - before[w].lenbar.field.c) <= 3
+        && Math.abs(before[w].lenbar.plus.c - before[w].lenbar.field.c) <= 3,
     },
   });
   console.log(JSON.stringify({

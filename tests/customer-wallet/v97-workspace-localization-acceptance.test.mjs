@@ -333,7 +333,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      owner knows which of the eight fields to fix. */
   /* 139 -> 140: nestly_v420 adds referralGiftGiven, the counter's confirmation when a referral
      gift is handed over — the same shape as bringbackVoucherGiven beside it. */
-  assert.equal(keys.length,140,'mixed-interface interpolation inventory changed without review');
+  /* 140 -> 143: nestly_v453 adds the three reasons a stamp-card length stepper can refuse —
+     stampLengthGiftBlocksShorter, stampLengthAtMinimum and stampLengthAtMaximum. The owner
+     reported "I can't press − or +" for a card whose last stamp carried a gift, i.e. the guard
+     working exactly as designed but saying nothing, which from their chair is the same experience
+     as a broken button. Each refusal is now a sentence an owner reads, so each is reviewed copy in
+     all three locales. The two bounds interpolate the constants themselves ({stamps} = 1 and 100)
+     so the sentence cannot drift away from the rule it describes. */
+  assert.equal(keys.length,143,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -414,6 +421,11 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
     /* V385: the "?" help affordance (owner, photo 4) — its label names the thing it explains,
        so it interpolates and goes through the named template like every other one here. */
     'explainHelpDotV385',
+    /* nestly_v453: the two length steppers on the stamp card explain their refusal in a title.
+       The same three sentences are also rendered as visible text beside the buttons — a disabled
+       button is not focusable, so a title alone reaches neither keyboard nor screen reader — and
+       both halves read this one template so they cannot disagree in any locale. */
+    'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum',
   ];
   assert.deepEqual([...interpolatedAttributeInventory].sort(),expected.sort());
   assert.equal(new Set(interpolatedAttributeInventory).size,interpolatedAttributeInventory.length);

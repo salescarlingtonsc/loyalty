@@ -15369,6 +15369,14 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   savedNotLive:Object.freeze({en:'Saved, but not yet live — {reason}','zh-CN':'已保存，但尚未上线 — {reason}',ms:'Disimpan, tetapi belum disiarkan — {reason}'}),
   /* nestly_v416: the stamp card's length, confirmed after business_set_stamp_card_length_v414. */
   stampCardLength:Object.freeze({en:'Card is now {stamps} stamps','zh-CN':'集章卡现在是 {stamps} 个印章',ms:'Kad kini {stamps} setem'}),
+  /* nestly_v453: why a length stepper is refusing. The owner reported "I can't press − or +" for
+     a card whose last stamp carried a gift — the guard doing exactly its job, silently, which
+     from their chair is indistinguishable from a broken button. Each refusal names its reason, so
+     each is runtime copy an owner reads, and therefore reviewed copy in all three locales. The
+     two bounds interpolate the constants themselves so the sentence cannot drift from the rule. */
+  stampLengthGiftBlocksShorter:Object.freeze({en:'A gift sits on stamp {stamp}. Move or remove it to make the card shorter.','zh-CN':'印章 {stamp} 上有一份礼物。请移走或删除它，才能缩短集章卡。',ms:'Sebuah hadiah terletak pada setem {stamp}. Alihkan atau buang ia untuk memendekkan kad.'}),
+  stampLengthAtMinimum:Object.freeze({en:'{stamps} stamp is the shortest a card can be.','zh-CN':'集章卡最短为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpendek yang dibenarkan.'}),
+  stampLengthAtMaximum:Object.freeze({en:'{stamps} stamps is the longest a card can be.','zh-CN':'集章卡最长为 {stamps} 个印章。',ms:'{stamps} setem ialah kad terpanjang yang dibenarkan.'}),
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
   /* nestly_v420: the referral gift handed over at the counter. */
   referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
@@ -15532,6 +15540,10 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
   'savedNotLive','stampCardLength','linkNeedsHttps','referralGiftGiven',
+  /* nestly_v453: the three reasons a length stepper can refuse. Each is shown twice — as the
+     disabled button's title and as the line of text under the bar — from this one source, so the
+     two can never disagree in any locale. */
+  'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
   'customerRecordsExported','customersShown','importBooking','importBookings',
@@ -15581,7 +15593,11 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer','removeItem','deleteItem',
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
-  'explainHelpDotV385'
+  'explainHelpDotV385',
+  /* nestly_v453: the disabled length steppers carry their reason as a title. A disabled button is
+     not focusable, so the title is the mouse half only — the same sentence is rendered as visible
+     text beside it, and aria-describedby ties the two together. */
+  'stampLengthGiftBlocksShorter','stampLengthAtMinimum','stampLengthAtMaximum'
 ]);
 const workspaceTemplateTextV97=(key,values={},locale=workspaceLocale)=>{
   const copy=WORKSPACE_TEMPLATE_COPY_V97[key],template=copy?.[locale]??copy?.en??'';
@@ -28581,6 +28597,56 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const stamp=Math.max(0,Number(reward.cost_points)||0);
       return stamp>0&&stamp<=growStampsCardLenV416?Math.max(most,stamp):most;
     },1);
+  /* nestly_v453: a disabled stepper that gives no reason is, from the owner's chair, the same
+     experience as a broken one — the last report of "I can't press − or +" was this guard working
+     as designed. Each refusal now names ITS OWN reason, and the way out where there is one.
+     The two conditions below are the v445 and v416 guards copied verbatim, named so the markup
+     can ask them twice (once to disable, once to explain); nothing about when a stepper is
+     refused has changed, and no new way to shorten a card is offered. Moving a gift remains the
+     v445 stranded chips and the ordinary tap-a-stamp edit flow.
+     Order matters in the shorter case: at one stamp the card cannot be shorter whatever gifts are
+     on it, so "already one stamp long" is the true reason and naming a gift there would send the
+     owner to move something that would not help. */
+  const growStampsShorterOffV453=growStampsCardLenV416<=growStampsShortestLenV445;
+  const growStampsLongerOffV453=growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416;
+  /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
+     rather than looked up through a variable: the workspace audit
+     (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
+     interpolated accessibility attribute is registered, reviewed copy, and a key hidden behind a
+     variable is a key nobody can review. The key and its values therefore appear twice per case,
+     once for the title and once for the visible line — and a v453 test asserts the two render the
+     SAME sentence in all three locales, so they cannot drift apart unnoticed. */
+  const growStampsShorterMinV453=growStampsShorterOffV453&&growStampsCardLenV416<=1;
+  const growStampsShorterGiftV453=growStampsShorterOffV453&&growStampsCardLenV416>1;
+  const growStampsShorterTitleV453=growStampsShorterMinV453
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMinimum',{stamps:1})
+    :growStampsShorterGiftV453
+      ?workspaceTemplateAttributeV97('title','stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
+      :'';
+  const growStampsShorterTextV453=growStampsShorterMinV453
+    ?workspaceTemplateTextV97('stampLengthAtMinimum',{stamps:1})
+    :growStampsShorterGiftV453
+      ?workspaceTemplateTextV97('stampLengthGiftBlocksShorter',{stamp:growStampsShortestLenV445})
+      :'';
+  const growStampsLongerTitleV453=growStampsLongerOffV453
+    ?workspaceTemplateAttributeV97('title','stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+  const growStampsLongerTextV453=growStampsLongerOffV453
+    ?workspaceTemplateTextV97('stampLengthAtMaximum',{stamps:GROW_STAMPS_MAX_LEN_V416}):'';
+  /* The sentence is rendered as TEXT in the bar, not only as a title. A disabled button is not
+     focusable and several screen readers drop it from the tree entirely, so a tooltip on it is
+     reachable by neither keyboard nor assistive tech; the visible line is the only version every
+     owner gets. title + aria-describedby point at it for the mouse and for the readers that do
+     announce disabled controls. Both halves read the SAME workspace template, so they cannot
+     disagree — including in Chinese and Malay.
+     Built as ONE string appended to the bar rather than two interpolations inside it, so that a
+     bar with nothing to explain is byte-for-byte the bar v445 shipped — two empty `${}` slots
+     would have left two blank lines behind, which is the kind of drift a byte pin exists to
+     catch and a reader would waste time on. */
+  const growStampsWhyLinesV453=!canSetupGrow?'':[
+    ['growStampsLenShorterWhyV453',growStampsShorterTextV453],
+    ['growStampsLenLongerWhyV453',growStampsLongerTextV453],
+  ].filter(([,text])=>text).map(([id,text])=>
+    `\n    <span class="grow-stamps-lenwhy-v453" id="${id}" data-grow-stamps-lenwhy-v453>${esc(text)}</span>`).join('');
   /* nestly_v422 (owner photo 2, the value ringed: "do as a field, so can edit number"). Getting
      from 10 stamps to 40 was thirty taps on the "+", because the length was a READ-ONLY <b>
      between two steppers. It is a real number input now — type 40, press Enter or tab away, done
@@ -28593,11 +28659,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <span class="grow-stamps-lenbar-label-v416"><b><label for="growStampsLenFieldV422">Card length</label></b>
       <span class="muted small">How many stamps fill one card.</span></span>
     <span class="spacer"></span>
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsCardLenV416<=growStampsShortestLenV445?' disabled':''} aria-label="One stamp shorter">−</button>`:''}
+    ${/* nestly_v453 (owner photo at 390): the bar is a wrapping flex row, and at a phone width it
+         was wrapping BETWEEN the three controls — the "−" rode up onto the heading's line at the
+         far right while "15 stamps +" dropped to a second line, so the minus read as an unrelated
+         button beside the title rather than as the left half of a stepper. The three controls are
+         one nowrap unit now: the LABEL may stack above them at 390, which is fine and is what the
+         owner's own photo shows working elsewhere on this page, but the stepper cannot split. */''}
+    <span class="grow-stamps-lensteps-v453">${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416-1}"${growStampsShorterOffV453?` disabled ${growStampsShorterTitleV453} aria-describedby="growStampsLenShorterWhyV453"`:''} aria-label="One stamp shorter">−</button>`:''}
     ${canSetupGrow
       ?`<span class="grow-stamps-lenfield-v422"><input id="growStampsLenFieldV422" class="grow-stamps-leninput-v422" type="number" inputmode="numeric" min="1" max="${GROW_STAMPS_MAX_LEN_V416}" step="1" value="${growStampsCardLenV416}" data-grow-stamps-lenfield-v422 aria-label="Card length in stamps"${growPointsBusyV326?' disabled':''}><span class="muted small">stamps</span></span>`
       :`<b class="grow-stamps-lenvalue-v416" data-merchant-content>${growStampsCardLenV416} stamps</b>`}
-    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsCardLenV416>=GROW_STAMPS_MAX_LEN_V416?' disabled':''} aria-label="One stamp longer">+</button>`:''}
+    ${canSetupGrow?`<button type="button" class="grow-stamps-lenstep-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}"${growStampsLongerOffV453?` disabled ${growStampsLongerTitleV453} aria-describedby="growStampsLenLongerWhyV453"`:''} aria-label="One stamp longer">+</button>`:''}</span>${growStampsWhyLinesV453}
   </div>`;
   /* The grid. One cell per stamp, in order, with a gift marked on the stamps that pay out — the
      owner's drawing exactly. A cell is a BUTTON when the owner may edit, plain text otherwise, so
