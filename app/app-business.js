@@ -518,6 +518,39 @@ function programmeSpineOnV314(kind){
   const rows=programmeSpineRowsV314();
   return rows?rows.some(row=>row&&row.kind===kind&&row.active===true):null;
 }
+/* nestly_v461 — WHICH POT IS LIVE. The client mirror of app.live_balance_programme_v381, whose
+   body reads (copied from production 2026-08-22, not paraphrased):
+     select bp.id from public.business_programmes bp
+      where bp.business_id = p_business and bp.active and bp.kind in ('points','stamps')
+      order by case bp.kind when 'stamps' then 0 else 1 end, bp.id
+      limit 1
+   Points and stamps are mutually exclusive (R2), so at most one is ever active; the ordering only
+   decides a tenant caught mid-switch, and STAMPS WINS, then lowest id.
+   NULL is a real answer — "nothing is accruing" — and callers must treat it as such rather than
+   falling back to reading every pot, which is the bug this exists to stop: a retired points pot's
+   history rendered under the live stamp unit.
+   THERE IS ONE DEFINITION OF THIS RULE. Do not add a second. If the server's changes, change this
+   to match it and say so here. */
+function liveBalanceProgrammeIdV461(){
+  const rows=programmeSpineRowsV314();
+  if(!rows)return null;
+  const stampsFirst=row=>row.kind==='stamps'?0:1;
+  const live=rows
+    .filter(row=>row&&row.active===true&&(row.kind==='points'||row.kind==='stamps'))
+    .sort((a,b)=>stampsFirst(a)-stampsFirst(b)||String(a.id||'').localeCompare(String(b.id||'')));
+  return live.length?(live[0].id||null):null;
+}
+/* nestly_v461 — WHICH WORD. v460 adds `loyalty_unit` ('points'|'stamps'|null) to the dashboard and
+   reports payloads, read from the live pot's own kind, so the heading can follow the figure the
+   server actually scoped. An older server — or the moment between this deploy and that migration —
+   sends no such field, so the answer falls back to the spine through liveBalanceUnitV378(), which
+   is the same rule by a different road. Never a hardcoded 'points': that is what told a stamps
+   merchant their 53 stamps were points. */
+function loyaltyUnitFromPayloadV461(unit){
+  const named=String(unit||'').toLowerCase();
+  return (named==='stamps'||named==='points')?named:liveBalanceUnitV378();
+}
+function loyaltyUnitNounV461(unit){return loyaltyUnitFromPayloadV461(unit)==='stamps'?'Stamps':'Points'}
 /* "Is this firm's loyalty programme running at all?" — the question the owner's Live/Paused pill
    is asking. Accruing AND tiers, because a tier ladder is a programme a customer can be inside. */
 function programmeSpineRunningV314(){
@@ -3946,7 +3979,9 @@ async function dashboard(){
           {label:'Members joined',
             value:customerMetricsAvailable?Number(d.new_customers||0).toLocaleString('en-SG'):'Unavailable',
             hint:customerMetricsAvailable?`Customer records created ${dashboardRangeLabelV170(from,to)} · business-wide`:'Customer access is not complete for this reporting scope.'},
-          {label:'Points earned',
+          /* nestly_v461: the heading follows the unit the server scoped this figure to. Cubbly SPA
+             runs stamps and this tile said "Points earned" over a stamp count. */
+          {label:`${loyaltyUnitNounV461(d.loyalty_unit)} earned`,
             value:pointsEarned===null?'Unavailable':pointsEarned.toLocaleString('en-SG'),
             hint:pointsEarned===null?'Loyalty access is not complete for this reporting scope.':`Sale-linked earn · ${scopeLabel}`},
           {label:'Rewards redeemed',
@@ -4683,11 +4718,22 @@ async function clientDetail(id){
      no new privilege is taken. Rebuilt on every load — never merged into a previous customer's
      map — and left EMPTY if the read fails, which shows no earning rather than a wrong one. */
   activityEarnedBySaleV375=new Map();
-  activityEarnUnitV375=String(loyaltyProjection?.program?.unit||'points').toLowerCase()==='stamps'?'stamps':'points';
-  if(canReadLoyalty){
+  /* nestly_v461. This read summed EVERY pot the firm has ever had, and activityEarnedCellV378 then
+     labelled each row with the LIVE unit — so on Cubbly SPA, whose retired points pot v384 already
+     converted INTO stamps, a historical points earn rendered as "+3 stamps". Two wrongs: the rows
+     are not the live pot's, and the word is not theirs.
+     Scoped to the live pot, by the one rule (liveBalanceProgrammeIdV461, mirroring
+     app.live_balance_programme_v381). points_ledger.programme_id is NOT NULL in production and
+     every row carries one, so an equality filter loses no history that belongs here.
+     NULL — nothing accruing, or a spine this render never read — skips the query entirely and
+     leaves the column empty. An empty Earned column is honest; a retired pot's history under the
+     wrong unit is not, and that is the failure mode being removed. */
+  const activityEarnProgrammeV461=liveBalanceProgrammeIdV461();
+  if(canReadLoyalty&&activityEarnProgrammeV461){
     const earnLedgerV375=await fetchAllRowsResult(()=>sb.from('points_ledger')
       .select('sale_id,points',{count:'exact'})
       .eq('business_id',S.biz.id).eq('client_id',id).eq('entry_type','earn')
+      .eq('programme_id',activityEarnProgrammeV461)
       .not('sale_id','is',null).order('id'));
     if(!isClientDetailCurrent())return;
     if(!earnLedgerV375.error)(earnLedgerV375.data||[]).forEach(row=>{
@@ -5724,8 +5770,12 @@ function bindActivityRowControlsV267(redraw){
    because renderHistPage is a top-level function the customer page calls twice (first paint and
    "show more"); it is rebuilt on every customer load, so one customer's earnings can never
    appear under another's. */
+/* nestly_v461: activityEarnUnitV375 stood here. It was assigned on every Customer 360 load from
+   loyaltyProjection.program.unit and READ BY NOTHING — the unit word on an activity row has come
+   from activityEarnedCellV378 -> liveBalanceUnitV378() since v378. A second, unused derivation of
+   "which unit" is exactly how two answers to one question start, so it is deleted rather than
+   wired up. */
 let activityEarnedBySaleV375=new Map();
-let activityEarnUnitV375='points';
 function renderHistPage(history,n){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
@@ -27656,9 +27706,13 @@ async function reportsPage(){
         <p class="muted small" style="margin-top:8px">In plain words: a compensating row is a correction that cancels an earlier sale instead of deleting it, so the money comes back out of the total. That is why the net is lower than the gross.</p>
         <p class="muted small" style="margin-top:8px">Originals remain on record. Negative reversal rows link back to them and reduce the net.</p></div>
       ${loyaltyAvailable?`<div class="card"><b>Loyalty flow (business-wide, selected period)</b><table style="margin-top:8px">
-        <tr><td>Points earned</td><td class="num"><b>${pt.earn||0}</b></td></tr>
-        <tr><td>Points redeemed</td><td class="num"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
-        <tr><td>Points expired</td><td class="num"><b>${Math.abs(pt.expire||0)}</b></td></tr>
+        ${/* nestly_v461: three of these four rows NAME the unit, and named it wrongly for every
+             stamps merchant. The word follows d.loyalty_unit, which v460 scopes to the live pot —
+             the same pot the figures beside it are now summed from. "Manual adjustments" is left
+             alone deliberately: it names an action, not a unit, so it has nothing to correct. */''}
+        <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} earned</td><td class="num"><b>${pt.earn||0}</b></td></tr>
+        <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} redeemed</td><td class="num"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
+        <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} expired</td><td class="num"><b>${Math.abs(pt.expire||0)}</b></td></tr>
         <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr></table>
         ${/* V297: 78,232 points earned means nothing without knowing which way each row points. */''}
         <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
