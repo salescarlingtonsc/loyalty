@@ -28,6 +28,11 @@ const section = (start, end) => {
   assert.ok(from >= 0 && to > from, `missing section ${start} … ${end}`);
   return app.slice(from, to);
 };
+const statement = (start, end, source = app) => {
+  const from = source.indexOf(start), to = source.indexOf(end, from + start.length);
+  assert.ok(from >= 0 && to > from, `missing statement ${start} … ${end}`);
+  return source.slice(from, to + end.length);
+};
 /* Comments are stripped wherever a test asserts that copy or an identifier is GONE: several of the
    removed strings survive inside the comments recording why they were removed. */
 const code = source => source.replace(/\/\*[\s\S]*?\*\//g, ' ');
@@ -43,6 +48,11 @@ const harness = new Function('esc', 'CUI', `
   ${section('function ct(key,vars={}){', 'function customerMediaUrlV95')}
   ${section('function customerPointTotalV103(', 'const CUSTOMER_SEEN_OFFERS_KEY_V167')}
   ${section('function stampQuestNormaliseV323(', 'function customerStampQuestRingsV323')}
+  ${/* nestly_v475 gave the stamp hero a photo column fed by the milestone's own image_ref, so the
+       shipped function now calls the media resolver. Pulled from source rather than stubbed, for
+       the same reason every other helper here is. */''}
+  const SB_URL='https://example.supabase.co';
+  ${statement('function customerMediaUrlV95(', '\n}')}
   ${section('const HERO_STAMP_COMPACT_FROM_V422=', 'function customerBusinessRelationshipSummaryV346(')}
   ${section('const PROGRAMME_STACK_MIN_CONTRACT_V395=', '/* Fixed, regardless of which are on.')}
   ${section('const PROGRAMME_STACK_ORDER_V310=', 'function programmeStackCardVisibleV310')}

@@ -4379,10 +4379,28 @@ function customerHeroStampCardV422(quest){
   const nextLine=next
     ? `Next available Reward: ${next.name||ct('rewardsTab')}`
     : 'Next available Reward: all claimed on this card';
-  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}" data-hero-stampcard-v422="${filled}/${total}">
-    <div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>
-    <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
-    ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+  /* nestly_v475 (owner, photo 2: a ring drawn round the empty right-hand third of the red card,
+     "The photo must also be shown in the empty space I circled").
+     MEASURED: .wallet-inner is min(100%,390px) with 16px padding, the card adds 16px of its own,
+     and the stamp grid is a fixed 5x28 + 4x8 = 172px justified to the start — so roughly 154px of
+     the card is empty by construction. That is the space the owner ringed, and a 92px photo plus
+     its 12px gap fits inside it without touching the grid's fixed tracks, so v416/v449's guarantee
+     that the customer's card wraps exactly where the editor's does is untouched.
+     Deliberately the SAME shape, class vocabulary and onerror bargain as the reward hero page's
+     photo (customer-hero-reward-photo-v468): one visual idea, two surfaces, so a gift photographed
+     for the swipe and the same gift named on the card cannot look like two different products.
+     A milestone with no photo renders one column and the card is byte-identical to before. */
+  const photoV475=customerMediaUrlV95(next?.imageRef);
+  const gridV475=`<div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
+  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoV475?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
+    <div class="customer-hero-stamp-body-v475">
+      <div class="customer-hero-stamp-copy-v475">
+        ${gridV475}
+        <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
+        ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+      </div>
+      ${photoV475?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`:''}
+    </div>
   </div>`;
 }
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){

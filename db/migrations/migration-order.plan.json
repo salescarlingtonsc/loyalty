@@ -2397,6 +2397,12 @@
       "path": "db/migrations/20260823_nestly_v474_staff_reads_the_stamp_card.sql",
       "semanticVersion": "v474",
       "proposedDeployVersion": "20260823000010"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v475_stamp_card_hides_switched_off_gifts.sql",
+      "semanticVersion": "v475",
+      "proposedDeployVersion": "20260823000011"
     }
   ]
 }

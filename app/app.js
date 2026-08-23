@@ -9238,7 +9238,12 @@ function stampQuestNormaliseV323(card){
       /* nestly_v464: the server's date for an earned reward's own deadline. Null for every reward
          whose card was started under a version that set none, which is every card today. */
       expiresAt:rung?.expires_at||null,
-      isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go)}))
+      isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go),
+      /* nestly_v475 (owner: "it should show the exact rewards first with its image tagged to it
+         ... The photo must also be shown in the empty space I circled"). customer_get_stamp_card_v323
+         has emitted image_ref per milestone all along; this normaliser simply never carried it, so
+         the stamp hero had no photo to draw even when the gift had one. */
+      imageRef:String(rung?.image_ref||'').trim()}))
     .filter(rung=>rung.slot>0)
     .sort((a,b)=>a.slot-b.slot);
   return {slots,filled,
@@ -9720,10 +9725,28 @@ function customerHeroStampCardV422(quest){
   const nextLine=next
     ? `Next available Reward: ${next.name||ct('rewardsTab')}`
     : 'Next available Reward: all claimed on this card';
-  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}" data-hero-stampcard-v422="${filled}/${total}">
-    <div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>
-    <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
-    ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+  /* nestly_v475 (owner, photo 2: a ring drawn round the empty right-hand third of the red card,
+     "The photo must also be shown in the empty space I circled").
+     MEASURED: .wallet-inner is min(100%,390px) with 16px padding, the card adds 16px of its own,
+     and the stamp grid is a fixed 5x28 + 4x8 = 172px justified to the start — so roughly 154px of
+     the card is empty by construction. That is the space the owner ringed, and a 92px photo plus
+     its 12px gap fits inside it without touching the grid's fixed tracks, so v416/v449's guarantee
+     that the customer's card wraps exactly where the editor's does is untouched.
+     Deliberately the SAME shape, class vocabulary and onerror bargain as the reward hero page's
+     photo (customer-hero-reward-photo-v468): one visual idea, two surfaces, so a gift photographed
+     for the swipe and the same gift named on the card cannot look like two different products.
+     A milestone with no photo renders one column and the card is byte-identical to before. */
+  const photoV475=customerMediaUrlV95(next?.imageRef);
+  const gridV475=`<div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
+  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoV475?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
+    <div class="customer-hero-stamp-body-v475">
+      <div class="customer-hero-stamp-copy-v475">
+        ${gridV475}
+        <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
+        ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+      </div>
+      ${photoV475?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`:''}
+    </div>
   </div>`;
 }
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
@@ -12482,6 +12505,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const heroCardV422=customerHeroStampCardV422(quest);
       if(heroCardV422){
         heroSlotV422.innerHTML=heroCardV422;
+        /* nestly_v475: the same bargain the reward hero's photo strikes — a storage object that
+           has since been deleted drops the image AND its column, so the card collapses back to
+           one column instead of leaving a hole. Wired here rather than inline because the app
+           runs under a CSP with no inline handlers. */
+        heroSlotV422.querySelectorAll('[data-hero-stamp-photo-v475]').forEach(image=>{
+          image.onerror=()=>{
+            image.closest('.customer-hero-stampcard-v422')?.classList.remove('customer-hero-stamp-has-photo-v475');
+            image.remove();
+          };
+        });
         /* The card is authoritative about readiness, so a hero painted before it arrived can gain
            the Claim reward button it should always have had. It is the SAME contract the banner
            and the painted button use, wired by the same function — never a second claim path. */
@@ -12669,7 +12702,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     customerHeroRewardPagesV395(rewards,{
       balance:actionableCard?.loyalty?.balance,
       unit:actionableCard?.loyalty?.unit,
-      currentRewardName:actionableCard?.next_eligible_reward?.name,
+      /* nestly_v475 (owner: "why the stamp card portion is not scrollable? i need to scroll and
+         view rewards"). This dedupe exists because on a POINTS hero, page 1 already IS the next
+         reward's card — name, cost and a Redeem button — so repeating it as a swipe page would
+         show the same thing twice. On a STAMPS hero page 1 is the v422 stamp grid: it has no
+         cost, no photo and no Redeem button, and names the reward only in a sentence. Deduping
+         there suppressed a page that duplicated nothing — and for a firm whose customer can reach
+         exactly one reward, suppressing that one page left a single-page track with no dots and
+         nothing to swipe, which is precisely what the owner photographed. */
+      currentRewardName:heroRootV397.querySelector('[data-hero-stamp-slot-host-v422]')
+        ?'':actionableCard?.next_eligible_reward?.name,
       /* nestly_v399: page 1's reward is deduped on name AND cost. next_eligible_reward carries no
          id, and this firm runs two different rewards both called "Free Lotion", so the name alone
          would have hidden the second one. */

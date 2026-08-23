@@ -106,10 +106,13 @@ test('v471 "not counted here" is not the same claim as "the server could not ans
 
 /* ------------------------------------------------- photo 1: a collected slot wears a crown -- */
 
-const heroCard=new Function('esc','ct','CUI',`
+/* nestly_v475 gave the stamp hero a photo column fed by the milestone's own image_ref, so the
+   harness supplies the media resolver the shipped function now calls. Identity, because the URL is
+   not what these assertions are about. */
+const heroCard=new Function('esc','ct','CUI','customerMediaUrlV95',`
   ${statement('const HERO_STAMP_COMPACT_FROM_V422=','\n}')}
   return customerHeroStampCardV422;
-`)(esc,()=>'progress',{icon:()=>'<svg data-gift></svg>'});
+`)(esc,()=>'progress',{icon:()=>'<svg data-gift></svg>'},value=>String(value||''));
 
 test('v471 a collected stamp is marked with a crown, an empty one still shows its number',()=>{
   const markup=heroCard({slots:6,shown:2,carried:0,

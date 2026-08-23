@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="34a57a04369a76f092a27cf3ba7db6ba12e09c221f42a2190d42111aebdad5bc"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="96b8efbddf428b407c00f8e2860d4b9418b315ff67e5b9b2642bf9a1adfdbb27"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3734,6 +3734,21 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    5x28 + 4x8 = 172px, and the compact variant is 5x22 + 4x6 = 134px; both sit well inside the
    390px the customer shell caps .wallet-inner at, so no width can make this row overflow. */
 .customer-hero-stampcard-v422{position:relative;z-index:1}
+/* nestly_v475 (owner photo 2: the empty right of the red card ringed, "The photo must also be
+   shown in the empty space I circled"). Cloned from the reward hero's own photo column
+   (.customer-hero-reward-photo-v468) so the two surfaces show a gift the same way. The grid keeps
+   its fixed repeat(5,28px) tracks, so the card still wraps exactly where the workspace editor's
+   grid does — the photo takes the ~154px that were empty beside it, not space from the stamps. */
+.customer-hero-stamp-body-v475{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 92px}
+.customer-hero-stamp-copy-v475{min-width:0}
+.customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
+  border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
+  box-shadow:0 10px 20px rgba(83,26,21,.22);margin-top:15px}
+@media(max-width:340px){
+  .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
+  .customer-hero-stamp-photo-v475{width:72px}
+}
 /* The top margin is clearance for the raised gift glyph on a first-row milestone — without it a
    gift on stamp 1..5 sits on top of the STAMPS pill above. */
 .customer-hero-stamp-grid-v422{display:grid;grid-template-columns:repeat(5,28px);gap:15px 8px;
@@ -5498,6 +5513,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'34a57a04369a76f092a27cf3ba7db6ba12e09c221f42a2190d42111aebdad5bc',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'96b8efbddf428b407c00f8e2860d4b9418b315ff67e5b9b2642bf9a1adfdbb27',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

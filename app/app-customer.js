@@ -3773,7 +3773,12 @@ function stampQuestNormaliseV323(card){
       /* nestly_v464: the server's date for an earned reward's own deadline. Null for every reward
          whose card was started under a version that set none, which is every card today. */
       expiresAt:rung?.expires_at||null,
-      isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go)}))
+      isFinal:rung?.is_final===true,toGo:whole(rung?.stamps_to_go),
+      /* nestly_v475 (owner: "it should show the exact rewards first with its image tagged to it
+         ... The photo must also be shown in the empty space I circled"). customer_get_stamp_card_v323
+         has emitted image_ref per milestone all along; this normaliser simply never carried it, so
+         the stamp hero had no photo to draw even when the gift had one. */
+      imageRef:String(rung?.image_ref||'').trim()}))
     .filter(rung=>rung.slot>0)
     .sort((a,b)=>a.slot-b.slot);
   return {slots,filled,
@@ -5997,6 +6002,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const heroCardV422=customerHeroStampCardV422(quest);
       if(heroCardV422){
         heroSlotV422.innerHTML=heroCardV422;
+        /* nestly_v475: the same bargain the reward hero's photo strikes — a storage object that
+           has since been deleted drops the image AND its column, so the card collapses back to
+           one column instead of leaving a hole. Wired here rather than inline because the app
+           runs under a CSP with no inline handlers. */
+        heroSlotV422.querySelectorAll('[data-hero-stamp-photo-v475]').forEach(image=>{
+          image.onerror=()=>{
+            image.closest('.customer-hero-stampcard-v422')?.classList.remove('customer-hero-stamp-has-photo-v475');
+            image.remove();
+          };
+        });
         /* The card is authoritative about readiness, so a hero painted before it arrived can gain
            the Claim reward button it should always have had. It is the SAME contract the banner
            and the painted button use, wired by the same function — never a second claim path. */
@@ -6184,7 +6199,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     customerHeroRewardPagesV395(rewards,{
       balance:actionableCard?.loyalty?.balance,
       unit:actionableCard?.loyalty?.unit,
-      currentRewardName:actionableCard?.next_eligible_reward?.name,
+      /* nestly_v475 (owner: "why the stamp card portion is not scrollable? i need to scroll and
+         view rewards"). This dedupe exists because on a POINTS hero, page 1 already IS the next
+         reward's card — name, cost and a Redeem button — so repeating it as a swipe page would
+         show the same thing twice. On a STAMPS hero page 1 is the v422 stamp grid: it has no
+         cost, no photo and no Redeem button, and names the reward only in a sentence. Deduping
+         there suppressed a page that duplicated nothing — and for a firm whose customer can reach
+         exactly one reward, suppressing that one page left a single-page track with no dots and
+         nothing to swipe, which is precisely what the owner photographed. */
+      currentRewardName:heroRootV397.querySelector('[data-hero-stamp-slot-host-v422]')
+        ?'':actionableCard?.next_eligible_reward?.name,
       /* nestly_v399: page 1's reward is deduped on name AND cost. next_eligible_reward carries no
          id, and this firm runs two different rewards both called "Free Lotion", so the name alone
          would have hidden the second one. */
