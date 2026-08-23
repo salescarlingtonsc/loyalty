@@ -4308,6 +4308,74 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   .customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-reward-photo-v468{width:72px}
 }
+
+/* V468-E1 (owner photo 16: the Activity screen). The section is unchanged on the PROFILE, where
+   Activity is one collapsed group among five; these rules apply only while it is standing on its
+   own shortcut page, which is what data-customer-activity-feed-v468 marks. Three things:
+   the two history disclosures lose their summaries (JS forces them open there, so a summary
+   would be a control that does nothing); the three-row "Recent activity" preview is dropped
+   because the full list is right underneath it and printing both shows every recent event twice;
+   and the type steps down, which is the owner's own instruction — "the font can be smaller, as
+   it's just for admin purpose". Per-row line-item <details> keep their summary and stay closed. */
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] .wallet-history-disclosure>summary{display:none}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletTransactions>.wallet-history{display:none}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletTransactions h2,
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletActivity h2{font-size:15px}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletTransactions b,
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletActivity b{font-size:13px;line-height:1.35}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletTransactions .small,
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletActivity .small{font-size:11.5px;line-height:1.4}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletTransactions .wallet-line,
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] #walletActivity .wallet-line{padding-top:9px;padding-bottom:9px}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] .wallet-history-disclosure{padding-top:6px;padding-bottom:6px}
+.customer-business-shortcut-page-v348[data-customer-activity-feed-v468] .wallet-history-disclosure-body{margin-top:0}
+
+/* V468-E2(b): the celebration. Fixed, above the content and OUT of the tap path —
+   pointer-events:none on the host means it can never intercept a press on whatever is beneath
+   it, which is the "must not block or cover the primary content" rule. It sits under the safe
+   area at the top so it does not land on the nav bar at the bottom of the customer surface. */
+.customer-celebration-host-v468{position:fixed;left:50%;transform:translateX(-50%);
+  /* Below the header band, MEASURED at 390px: the business page's back chevron and name occupy
+     roughly y 20–60 and the Activity page's "‹ Back / Activity" row the same, so 70px clears both
+     controls rather than sitting on the one the customer needs to leave the screen. */
+  top:calc(70px + env(safe-area-inset-top,0px));z-index:80;width:min(420px,calc(100vw - 24px));
+  display:grid;justify-items:center;pointer-events:none}
+.customer-celebration-v468{display:flex;align-items:center;gap:12px;max-width:100%;
+  padding:12px 18px 12px 14px;border-radius:999px;
+  background:var(--card,#fff);color:var(--ink,#161616);
+  border:1px solid var(--line,#e6e6e6);box-shadow:0 14px 34px rgba(20,20,20,.22);
+  animation:customerCelebrationInV468 .34s cubic-bezier(.2,.9,.3,1.4) both}
+.customer-celebration-icon-v468{display:grid;place-items:center;flex:0 0 auto;
+  width:40px;height:40px;border-radius:50%;background:#fde68a;color:#7c2d12}
+.customer-celebration-copy-v468{display:grid;min-width:0}
+.customer-celebration-copy-v468 b{font-size:17px;line-height:1.2}
+.customer-celebration-copy-v468 small{font-size:12px;opacity:.72;margin-top:2px}
+@keyframes customerCelebrationInV468{from{opacity:0;transform:translateY(-14px) scale(.94)}
+  to{opacity:1;transform:none}}
+/* Reduced motion still gets the message — it just does not move. Belt and braces: the JS also
+   checks the query and drops the animation class, so a browser that ignores one still honours
+   the other. */
+.customer-celebration-still-v468{animation:none}
+@media(prefers-reduced-motion:reduce){.customer-celebration-v468{animation:none}}
+/* The banner is appended to <body>, outside .customer-surface, so — exactly like the offer and
+   company sheets above — it has to join the dark token scope by name or it would paint a white
+   pill on a black wallet. */
+html[data-customer-theme="dark"] .customer-celebration-host-v468{
+  --card:#191C22;--ink:#F7F4EF;--line:#343841}
+html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3410;color:#FDE68A}
+
+/* V468-E4: the "?" affordance. Same 26px circle on a reward card and on a granted gift, sitting
+   beside the status pill in the card head, with a 44px hit area behind it for a thumb. */
+.customer-reward-help-v468{flex:0 0 auto;display:grid;place-items:center;width:26px;height:26px;
+  padding:0;border-radius:50%;border:1px solid var(--line,#e6e6e6);
+  background:var(--card,#fff);color:var(--muted,#666);
+  font:600 14px/1 inherit;cursor:pointer;position:relative}
+.customer-reward-help-v468::after{content:"";position:absolute;inset:-9px}
+.customer-reward-help-v468:hover,.customer-reward-help-v468:focus-visible{color:var(--ink,#161616);border-color:var(--ink,#161616)}
+.customer-reward-rules-v468{display:grid;gap:12px;margin-top:14px}
+.customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+  opacity:.6}
+.customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -4355,7 +4423,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=f21408fe9ee9","business":"/app-business.js?b=a0c4d2a55f1c","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=ed455b7c9600","business":"/app-business.js?b=a0c4d2a55f1c","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

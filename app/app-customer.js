@@ -410,6 +410,11 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
       status.setAttribute('aria-live','assertive');
       status.textContent=`Redeemed!${points?` ${points} points were used for`:''} ${rewardName||'your reward'} at ${businessName||'this business'}.`;
       customerSuccessCue();
+      /* V468-E2(a): the server has just told us the intent completed, which is the earliest
+         honest moment the balance behind this modal is stale. Start the wallet re-read now — the
+         v333 silent paint stands down while a modal is up, so this one primes the read and the
+         close below is what lands it, instead of the customer waiting out a 20s tick. */
+      void customerCounterMomentV468();
     }else{
       pill.className='pill off';pill.textContent=state==='cancelled'?'Cancelled':'Expired';
       status.textContent=state==='cancelled'
@@ -527,6 +532,9 @@ function showGrowthOfferQr({intent,businessName,offerLabel,onClose=()=>{}}={}){
     else overlay.remove();
     if(activeCustomerRedemptionCleanup===close)activeCustomerRedemptionCleanup=()=>{};
     onClose();
+    /* V468-E2(a): an offer QR is a counter moment too — the shop scans it and the wallet behind
+       this overlay is immediately out of date. */
+    void customerCounterMomentV468();
   };
   activeCustomerRedemptionCleanup=close;
   deactivateDialog=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#growthOfferQrDone'});
@@ -3103,6 +3111,73 @@ function wireCustomerSheetNavV183(overlay,deactivate){
     });
   });
 }
+/* V468-E4 (owner, business Point-system page: "For all rewards, ensure that customer view have a
+   '?' — to view the rules of the rewards").
+   Every line below is a field the SERVER sent for THIS reward. There is no default rule, no
+   inferred rule and no arithmetic: an absent field prints nothing at all, because a wrong promise
+   here is settled at the counter, in front of the customer. In particular `requires_purchase`
+   keeps its three-state reading from v340 — false prints the clause, true prints nothing (the app
+   enforces no purchase condition), and undefined, which is every server older than that
+   migration, also prints nothing.
+   Both card kinds go through one function: a catalogue reward and a granted entitlement answer
+   different subsets of these keys and the sheet simply shows whichever it was given. */
+function customerRewardRulesRowsV468(reward={},{unit='points',currency='SGD'}={}){
+  const rows=[];
+  const costV468=Math.max(0,Number(reward.cost_points)||0);
+  if(costV468>0)rows.push(['What it costs',
+    `${customerPointTotalV103(costV468)} ${customerUnitNounV429(unit==='stamps'?'stamps':'points',costV468)}`]);
+  if(reward.requires_purchase===false)rows.push(['How to claim it','No purchase required']);
+  const minSpendV468=Number(reward.min_spend_cents)||0;
+  if(minSpendV468>0)rows.push(['Minimum spend',
+    `${customerReferralMoneyV300(minSpendV468,currency)} on the visit you use it`]);
+  if(reward.granted_at)rows.push(['Given to you',walletDate(reward.granted_at)]);
+  if(reward.claim_available_until)rows.push(['Claim it by',walletDate(reward.claim_available_until)]);
+  if(reward.expires_at)rows.push(['Use it by',walletDate(reward.expires_at)]);
+  const claimDaysV468=Math.max(0,Math.round(Number(reward.entitlement_expiry_days)||0));
+  if(claimDaysV468)rows.push(['After you claim it',`Use within ${claimDaysV468} day${claimDaysV468===1?'':'s'}`]);
+  /* The same eligibility sentence the card prints, in the same words — scope 'restricted' is the
+     server saying "not everywhere", and the count is its own. */
+  if(reward.eligibility){
+    const scopedV468=[['branches','locations'],['services','services'],['products','products']]
+      .filter(([key])=>reward.eligibility[key]?.scope==='restricted')
+      .map(([key,label])=>`${Number(reward.eligibility[key].count||0)} eligible ${label}`).join(' · ');
+    rows.push(['Where it works',scopedV468||'Valid across all eligible services and locations.']);
+  }
+  const descriptionV468=customerRewardDescriptionV183(reward.description);
+  if(descriptionV468)rows.push(['What you get',descriptionV468]);
+  const instructionsV468=String(reward.instructions||'').trim();
+  if(instructionsV468)rows.push(['How to use it',instructionsV468]);
+  const termsV468=String(reward.terms||'').trim();
+  if(termsV468)rows.push(['Terms',termsV468]);
+  return rows;
+}
+function showCustomerRewardRulesV468(reward={},{unit='points',currency='SGD',title=''}={}){
+  const rowsV468=customerRewardRulesRowsV468(reward,{unit,currency});
+  const nameV468=String(title||reward.customer_name||reward.name||reward.label||'').trim()||'Reward';
+  const overlay=document.createElement('div');
+  overlay.className='modal customer-surface customer-reward-rules-modal-v468';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-labelledby','customerRewardRulesTitleV468');
+  overlay.innerHTML=`<section class="modal-card customer-offer-detail">
+    <div class="row"><p class="customer-quest-kicker">Reward rules</p><span class="spacer"></span><button class="btn ghost sm" data-reward-rules-close-v468 type="button" aria-label="Close reward rules">${CUI.icon('close',{size:20})}</button></div>
+    <h2 id="customerRewardRulesTitleV468">${esc(nameV468)}</h2>
+    ${rowsV468.length
+      ?`<dl class="customer-reward-rules-v468">${rowsV468.map(([term,value])=>
+          `<div><dt>${esc(term)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`
+      :`<p class="muted small" style="margin-top:12px">This business has not published any extra rules for this reward. Show it at the counter and the team will apply it.</p>`}
+  </section>`;
+  document.body.appendChild(overlay);
+  /* This sheet never navigates on close, so it needs no dialogHandOffNavV468 hand-off — it only
+     ever hands focus back to the "?" that opened it. */
+  const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'[data-reward-rules-close-v468]'});
+  overlay.querySelector('[data-reward-rules-close-v468]').onclick=()=>deactivate({restoreFocus:true});
+}
+/* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
+   control in the same corner. Text "?" rather than the info glyph — it is what the owner drew,
+   and a question mark reads at a glance for a customer who does not read English well. */
+function customerRewardHelpButtonV468(attribute,value,label){
+  return `<button class="customer-reward-help-v468" type="button" ${attribute}="${esc(String(value||''))}" aria-label="${esc(`Rules for ${label||'this reward'}`)}" title="Reward rules"><span aria-hidden="true">?</span></button>`;
+}
 function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
   const name=String(business?.name||'').trim()||'Your business',
     industry=String(business?.industry||'').trim();
@@ -4263,9 +4338,30 @@ function openCustomerBusinessShortcutPageV348({action='',title='Details',target=
     node.hidden=true;
     hiddenByShortcutV386.push(node);
   });
+  /* V468-E1 (owner photo 16: the Activity screen "is nearly empty" — one card reading
+     "History — Transactions and loyalty activity" and nothing under it).
+     Nothing was missing from the data. customer_get_transaction_history_v167 already returns the
+     exact feed the owner described — sales UNION standalone points-ledger rows, ordered
+     `event_at desc`, each row carrying its own money, its own earned/redeemed/removed figures and
+     its own pot (loyalty_unit) — and loadTransactions already renders it. It was simply buried
+     under two stacked <details>: this group's "History" disclosure, and the "Full history"
+     disclosure inside the section, of which only three rows escaped.
+     A disclosure earns its keep on the PROFILE, where Activity is one group among five. On its
+     own page it is the page, so both history disclosures are forced open here and restored on
+     close, exactly like the v386/v446 hidden nodes beside them. Line-item <details> inside a row
+     are deliberately untouched — those are per-transaction detail, not the feed. */
+  const activityFeedV468=action==='activity';
+  const activityDisclosuresV468=[];
+  if(activityFeedV468){
+    page.dataset.customerActivityFeedV468='1';
+    openCustomerActivityDisclosuresV468(target,activityDisclosuresV468);
+  }else delete page.dataset.customerActivityFeedV468;
   page._customerBusinessShortcutRestoreV348=()=>{
     hiddenByShortcutV386.forEach(node=>{node.hidden=false});
     hiddenByShortcutV386.length=0;
+    activityDisclosuresV468.forEach(entry=>{entry.node.open=entry.open});
+    activityDisclosuresV468.length=0;
+    delete page.dataset.customerActivityFeedV468;
     if(placeholder.parentNode)placeholder.parentNode.insertBefore(target,placeholder);
     placeholder.remove();
   };
@@ -4279,6 +4375,23 @@ function openCustomerBusinessShortcutPageV348({action='',title='Details',target=
     focusTarget?.focus?.({preventScroll:true});
   });
 }
+/* V468-E1: the two history disclosures, and only those two. `record` collects the pre-open state
+   so the profile page underneath is handed back exactly as the customer left it. */
+function openCustomerActivityDisclosuresV468(root,record=null){
+  if(!root)return;
+  root.querySelectorAll('details.wallet-history-disclosure').forEach(node=>{
+    if(record&&!record.some(entry=>entry.node===node))record.push({node,open:node.open});
+    node.open=true;
+  });
+}
+/* V468-E1: the sections under this page are filled asynchronously (loadTransactions /
+   loadActivity land after the page has already opened), so each of them re-runs the open pass
+   for whatever it just painted. No-op unless the Activity page is the thing on screen. */
+function syncCustomerActivityFeedV468(){
+  const page=$('customerBusinessShortcutPageV348');
+  if(!page||page.hidden||page.dataset.customerActivityFeedV468!=='1')return;
+  openCustomerActivityDisclosuresV468(page);
+}
 function closeCustomerBusinessShortcutPageV348(){
   const page=$('customerBusinessShortcutPageV348'),main=$('customerBusinessMainV348'),content=$('customerBusinessShortcutContentV348');
   if(!page||!main||!content)return;
@@ -4289,6 +4402,14 @@ function closeCustomerBusinessShortcutPageV348(){
   content.replaceChildren();
   page.hidden=true;
   main.hidden=false;
+}
+/* V468-E2(a): see CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468. Opening the member code, or reaching
+   for a reward's redeem control, is the customer saying "I am at the till". */
+function wireCustomerCounterMomentV468(root){
+  if(!root||typeof root.addEventListener!=='function')return;
+  root.addEventListener('click',event=>{
+    if(event.target?.closest?.('[data-member-code-w6i2],[data-customer-redeem]'))void customerCounterMomentV468();
+  });
 }
 function wireCustomerBusinessShortcutPageV348(root=document){
   root.querySelector('#customerBusinessShortcutBackV348')?.addEventListener('click',()=>{
@@ -4372,6 +4493,60 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
   </article>`;
 }
 let customerHomeOverview={walletCards:[],activeRequestCount:0,activeRequestsTruncated:false,bookingsAvailable:false,messageCount:null,messagesAvailable:false,claimsAvailable:false};
+/* V468-E2(b) (owner photos 10 + 12: "ensure customer view shows a celebratory rewards received…
+   based on the set rules" and "please use celebratory rewards redeemed at customer view").
+   One banner, two callers, and both of them are driven by a SERVER row — never by the browser
+   diffing a balance it happens to be holding. It is deliberately not a modal and not a toast
+   replacement: pointer-events are off, so it can never swallow a tap on the content underneath,
+   and it clears itself. Under prefers-reduced-motion it still appears — a customer who suppresses
+   animation must still be told what happened — it simply does not move, and lingers longer to
+   make up for the missing entrance cue. Pictogram plus a number, per the low-literacy rule. */
+const CUSTOMER_CELEBRATION_MS_V468=5000;
+const CUSTOMER_CELEBRATION_STILL_MS_V468=7000;
+let customerCelebrationTimerV468=0;
+function customerCelebrationHostV468(){
+  const existing=document.getElementById('customerCelebrationHostV468');
+  if(existing)return existing;
+  const host=document.createElement('div');
+  host.id='customerCelebrationHostV468';
+  host.className='customer-celebration-host-v468';
+  host.setAttribute('role','status');
+  host.setAttribute('aria-live','polite');
+  document.body.appendChild(host);
+  return host;
+}
+function customerCelebrateV468({icon='star',headline='',detail=''}={}){
+  const headlineV468=String(headline||'').trim();
+  if(!headlineV468||typeof document==='undefined')return false;
+  const host=customerCelebrationHostV468();
+  const reducedV468=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
+  host.innerHTML=`<div class="customer-celebration-v468${reducedV468?' customer-celebration-still-v468':''}">
+    <span class="customer-celebration-icon-v468" aria-hidden="true">${CUI.icon(icon,{size:26})}</span>
+    <span class="customer-celebration-copy-v468"><b>${esc(headlineV468)}</b>${detail?`<small>${esc(String(detail))}</small>`:''}</span>
+  </div>`;
+  if(customerCelebrationTimerV468)clearTimeout(customerCelebrationTimerV468);
+  customerCelebrationTimerV468=setTimeout(()=>{
+    host.replaceChildren();customerCelebrationTimerV468=0;
+  },reducedV468?CUSTOMER_CELEBRATION_STILL_MS_V468:CUSTOMER_CELEBRATION_MS_V468);
+  return true;
+}
+/* V468-E2(b): the "has the customer already seen this one?" gate, seed-then-fire, exactly the
+   discipline the v91 earn toast already used. An empty slot means this is the first read of the
+   session — record and stay silent, so a plain reload never celebrates history. sessionStorage,
+   not localStorage: the customer surface is barred from localStorage, and a celebration is not
+   worth persisting across sessions anyway. */
+function customerCelebrationNewV468(channel,businessId,fingerprint){
+  const fingerprintV468=String(fingerprint||'');
+  if(!fingerprintV468)return false;
+  const key=`nestly.customer.celebrate.${channel}.${S.user?.id||'anonymous'}.${businessId||'none'}`;
+  let previous='';
+  try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprintV468)}catch{}
+  return !!previous&&previous!==fingerprintV468;
+}
+/* V468-E3: which engine handed the reward over. Same vocabulary as entitlementSourceChipV429,
+   which labels the same five sources on the reward-history card; 'reward' is an ordinary
+   points/stamps redemption and needs no qualifier. */
+const CUSTOMER_CELEBRATION_SOURCE_V468={welcome:'Welcome gift',bringback:'We miss you',referral:'Referral gift'};
 function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   const latest=items.find(item=>item?.event_type==='earn'&&Number(item?.points_delta||0)>0);
   if(!latest)return;
@@ -4382,7 +4557,20 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprint)}catch{}
   if(!previous||previous===fingerprint)return;
   const increase=Number(latest.points_delta);
-  toast('+'+increase+' '+safeUnit+' earned!');
+  /* V468-E2(b): the same server event, said where the customer is actually looking. The noun comes
+     from the v429 unit plumbing rather than a second copy of the stamp/point spelling rules, and
+     `unit` here is the server's own answer (customer_get_loyalty_details.unit falling back to the
+     wallet's), so a stamp card says "stamps" and a points programme says "points" without the
+     browser deciding which one this firm runs.
+     The v91 toast becomes the FALLBACK rather than a second copy: printing "+30 points earned!"
+     at the bottom of the screen while a banner says "+30 points" at the top is the same fact
+     twice, which reads as a bug. It still fires whenever the banner cannot render. */
+  const celebratedV468=customerCelebrateV468({
+    icon:safeUnit==='stamps'?'giftcard':'star',
+    headline:`+${customerPointTotalV103(increase)} ${customerUnitNounV429(safeUnit,increase)}`,
+    detail:'Added to your balance'
+  });
+  if(!celebratedV468)toast('+'+increase+' '+safeUnit+' earned!');
   customerSuccessCue();
 }
 function customerSuccessCue(){
@@ -4935,6 +5123,16 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
    one — the same discipline every other async path on this surface uses. */
 const CUSTOMER_WALLET_POLL_MS_V295=20000;
 const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, then quiet
+/* V468-E2(a): the counter-moment cadence. 4s × 60s = at most 15 pulses, each ONE rpc (v370's
+   pulse reader), opened only by an explicit customer action at the till. */
+const CUSTOMER_WALLET_COUNTER_POLL_MS_V468=4000;
+const CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468=60000;
+let activeCustomerWalletCounterMomentV468=async()=>{};
+/* The one entry point the rest of the surface calls. A no-op when no wallet is being watched
+   (Home before its first render, a signed-out shell), never an error. */
+function customerCounterMomentV468(){
+  try{return Promise.resolve(activeCustomerWalletCounterMomentV468())}catch{return Promise.resolve()}
+}
 /* V370 (load audit 2026-08-17). The behaviour contract above is unchanged — the wallet still
    re-reads on foreground and still watches for ~3 minutes — but the COST of a tick is not.
 
@@ -5009,17 +5207,32 @@ function customerWalletHomePulseReaderV370(){
 }
 function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
   activeCustomerWalletLiveCleanupV295();
-  let ticks=0,timer=0,stopped=false;
+  let ticks=0,timer=0,stopped=false,counterUntilV468=0;
   const stop=()=>{
     if(stopped)return;stopped=true;
     if(timer)clearTimeout(timer);timer=0;
     document.removeEventListener('visibilitychange',onVisibility);
     if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
+    if(activeCustomerWalletCounterMomentV468===counterMomentV468)activeCustomerWalletCounterMomentV468=async()=>{};
   };
   const alive=()=>!stopped&&isCurrent()&&!!$('walletBody')?.isConnected;
+  /* V468-E2(a) (owner photo 12: "customer portal did not immediately reduce the points … it takes
+     awhile before reflected"). The v295/v370 watcher is right for a wallet sitting idle in a
+     pocket — one cheap pulse every 20s, nine of them, then quiet — and wrong for the ten seconds
+     either side of a counter transaction, which is the only moment the customer is actually
+     staring at the balance waiting for it to move. Worse, the allowance is a per-page budget
+     (v370, deliberately), so a customer who had the page open for four minutes before the staff
+     rang the sale had NO ticks left and would never have seen it without navigating.
+     A "counter moment" is an explicit customer action that means "I am at the till right now":
+     showing the member code, tapping a reward's redeem control, and the moment a redemption QR
+     settles or is dismissed. It refreshes at once, restores the tick budget, and drops the
+     interval to 4s for one minute — at most ~15 extra single-RPC pulses, and only after the
+     customer did something. It is not a tighter poll: the idle cadence is untouched. */
   const arm=()=>{
     if(timer)clearTimeout(timer);
     if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
+    const delayV468=Date.now()<counterUntilV468
+      ?CUSTOMER_WALLET_COUNTER_POLL_MS_V468:CUSTOMER_WALLET_POLL_MS_V295;
     timer=setTimeout(async()=>{
       timer=0;
       if(!alive()||document.visibilityState!=='visible')return;
@@ -5040,8 +5253,18 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
         await refresh();
       }catch{}
       arm();
-    },CUSTOMER_WALLET_POLL_MS_V295);
+    },delayV468);
   };
+  /* V468-E2(a): read NOW, then watch closely for a minute. The tick budget is restored because a
+     counter transaction is precisely what the budget exists to catch. */
+  const counterMomentV468=async()=>{
+    if(stopped)return;
+    ticks=0;
+    counterUntilV468=Date.now()+CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468;
+    try{await refresh()}catch{}
+    arm();
+  };
+  activeCustomerWalletCounterMomentV468=counterMomentV468;
   async function onVisibility(){
     if(!alive())return stop();
     if(document.visibilityState!=='visible'){if(timer)clearTimeout(timer);timer=0;return}
@@ -5457,6 +5680,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   /* nestly_v418: the gallery's photos open full size. Wired with the page's other controls so a
      re-render rebinds them together. */
   wireCustomerGalleryV418($('walletBody'));
+  /* V468-E2(a): showing the member code IS the counter moment — it is the thing the customer does
+     immediately before the staff rings the sale or applies a reward. Delegated on the body, which
+     is replaced wholesale by every paint, so the listener never accumulates. */
+  wireCustomerCounterMomentV468($('walletBody'));
   /* v194: the header identity opens the same company sheet the offer sheet uses. */
   $('walletBody').querySelectorAll('[data-company-detail]').forEach(button=>button.onclick=()=>
     showCustomerBusinessDetailV178({...b,id:businessId||b.id,slug:businessSlug}));
@@ -6020,7 +6247,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       return `<article class="wallet-reward customer-reward-card-v339">
       <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
-        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span></div>
+        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       ${cost>0?`<p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>`:''}
       ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}
@@ -6056,7 +6283,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const instructions=String(grant?.instructions||'').trim();
       return `<article class="wallet-reward customer-reward-card-v339" data-customer-entitlement-v429="${esc(String(grant?.source||''))}">
       <div class="customer-reward-photo-v340 customer-reward-photo-empty-v340">${CUI.icon('loyalty',{size:24})}</div>
-      <div class="customer-reward-card-head-v339"><span class="pill ok">${esc(chip)}</span></div>
+      <div class="customer-reward-card-head-v339"><span class="pill ok">${esc(chip)}</span>${customerRewardHelpButtonV468('data-entitlement-rules-v468',grant?.id,label)}</div>
       <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(label)}</b>
       ${granted?`<p class="muted small" style="margin-top:5px">Given to you on ${esc(granted)}</p>`:''}
       ${expires?`<p class="muted small" style="margin-top:5px">Use it by ${esc(expires)}</p>`:''}
@@ -6108,6 +6335,18 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       </div>
       <div data-rewards-panel-v422="history" role="tabpanel" hidden></div>`;
     if($('walletRewardsRedemptionRetry'))$('walletRewardsRedemptionRetry').onclick=loadRewards;
+    /* V468-E4: the "?" on every reward card and every granted gift. Both look their subject up in
+       the list that painted them, so the sheet can only ever show the payload this render used —
+       there is no second fetch and nothing to go stale between the card and its rules. */
+    host.querySelectorAll('[data-reward-rules-v468]').forEach(button=>button.onclick=()=>{
+      const match=rewards.find(item=>item.action_key===String(button.dataset.rewardRulesV468||''));
+      if(match)showCustomerRewardRulesV468(match,{unit:rewardUnit,currency});
+    });
+    host.querySelectorAll('[data-entitlement-rules-v468]').forEach(button=>button.onclick=()=>{
+      const match=entitlementsV429.find(item=>String(item?.id||'')===String(button.dataset.entitlementRulesV468||''));
+      if(match)showCustomerRewardRulesV468(match,{unit:rewardUnit,currency:entitlementCurrencyV429,
+        title:String(match.label||'').trim()});
+    });
     /* nestly_v422 — the Available / History tabs (owner photo 6). One panel is visible at a time;
        History loads once, on first open, from customer_get_reward_history_v422.
        Every failure leaves the tab usable and says what happened rather than showing an empty
@@ -6263,12 +6502,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         return;
       }
       if(intent?.status==='completed'||intent?.status==='redeemed'){
-        redemptionAttempt=null;toast('This reward is already redeemed');loadRewards();loadTransactions(null);return;
+        redemptionAttempt=null;toast('This reward is already redeemed');loadRewards();loadTransactions(null);void customerCounterMomentV468();return;
       }
       if(intent?.status!=='pending'||!intent?.qr_token){
         toast(CUSTOMER_REDEMPTION_STATUS_COPY[String(intent?.status||'')]||'This reward can’t be used right now.');return;
       }
-      showPendingRedemptionQr({intent,businessName:b.name,rewardName:reward.customer_name||reward.name,onClose:()=>loadRewards()});
+      /* V468-E2(a): closing the QR is the customer turning back to their own balance. loadRewards
+         alone re-read the catalogue and left the balance, the hero and the history exactly as
+         stale as they were — the "takes awhile" the owner reported. */
+      showPendingRedemptionQr({intent,businessName:b.name,rewardName:reward.customer_name||reward.name,
+        onClose:()=>{loadRewards();void customerCounterMomentV468()}});
     });
   };
   const activityState={items:[],nextCursor:null};
@@ -6287,6 +6530,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       <div>${activityState.items.map(item=>{const delta=Number(item.points_delta||0),campaign=campaignEntitlementDisplayV99(item);return `<div class="wallet-line"><div><b>${esc(campaign.title||ct('Loyalty activity'))}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${campaign.status?' · '+esc(campaign.status.replaceAll('_',' ')):''}</p>${campaign.detail?`<p class="muted small" style="margin-top:3px">${esc(campaign.detail)}</p>`:''}</div><span class="spacer"></span>${campaign.pending?`<span class="pill off">${esc(ct('Pending with business'))}</span>`:`<span class="wallet-delta ${delta>0?'plus':delta<0?'minus':''}">${delta>0?'+':delta<0?'−':''}${esc(customerPointTotalV103(Math.abs(delta)))} ${unit}</span>`}</div>`}).join('')}</div>
       ${activityState.nextCursor?`<button class="btn ghost sm" id="walletActivityMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;
     if($('walletActivityMore'))$('walletActivityMore').onclick=()=>{ $('walletActivityMore').disabled=true;loadActivity(activityState.nextCursor) };
+    syncCustomerActivityFeedV468();
   };
   const transactionState={items:[],nextCursor:null};
   const loadTransactions=async(cursor=null)=>{
@@ -6375,6 +6619,42 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ${transactionState.nextCursor?'<button class="btn ghost sm" id="walletTransactionsMore" style="margin-top:12px">Load more history</button>':''}`;
     const more=$('walletTransactionsMore');
     if(more)more.onclick=()=>{more.disabled=true;more.textContent='Loading…';loadTransactions(transactionState.nextCursor)};
+    syncCustomerActivityFeedV468();
+  };
+  /* V468-E2(b) + E3 (owner photo 11: "Welcome rewards redeemed — should also reflect in customer
+     portal and shows a celebratory rewards redeemed").
+     The redemption celebration cannot be driven from the transaction feed: a granted entitlement
+     is handed over as a $0 sale whose only description is 'Retail purchase', because
+     customer_get_transaction_history_v81 does not expose sales.note (where
+     staff_redeem_welcome_offer_v215 writes "welcome offer redeemed: <label>"). The one customer
+     read that NAMES what was handed over is customer_get_reward_history_v422 — v427 merged the
+     welcome, bring-back and referral grants into it beside ordinary points redemptions, newest
+     first, each row carrying source + reward_name + redeemed_at.
+     Three rows are enough to identify the newest event, so this is a small read; it rides in the
+     same Promise.all as the rest of the page rather than adding a round trip of its own, and it
+     never repaints anything — the sole output is the banner. An error is silence, not an error
+     card: a missed celebration is not worth a red box, and a bundle older than v427 answers
+     42883/PGRST202 here. */
+  const loadRedemptionCelebrationV468=async()=>{
+    if(!businessId)return;
+    const {data,error}=await customerRpc('customer_get_reward_history_v422',
+      {p_business_slug:businessSlug,p_limit:3});
+    if(error||!isWalletCurrent())return;
+    const latestV468=(Array.isArray(data?.items)?data.items:[])[0];
+    if(!latestV468)return;
+    const sourceV468=String(latestV468.source||'reward');
+    const fingerprintV468=`${sourceV468}:${latestV468.id||''}:${latestV468.redeemed_at||''}`;
+    if(!customerCelebrationNewV468('redeemed',businessId,fingerprintV468))return;
+    /* nestly_v464 puts LAPSED rewards on this same list under source 'expired'. Losing a reward
+       to its deadline is not a thing to celebrate. It is still recorded above, so the next real
+       redemption after one still fires. */
+    if(sourceV468==='expired')return;
+    customerCelebrateV468({
+      icon:'giftcard',
+      headline:`${String(latestV468.reward_name||'').trim()||'Your reward'} redeemed`,
+      detail:CUSTOMER_CELEBRATION_SOURCE_V468[sourceV468]||'Enjoy it'
+    });
+    customerSuccessCue();
   };
   /* Gift cards (v68c). Balance VISIBILITY only — never redemption, and the RPC deliberately never
      returns the card code (it is a bearer instrument), so this section can only ever show a 4-char
@@ -6529,7 +6809,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:16})}<span>Leave a public review</span></a>`;
   };
-  await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadStampCardV323(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275()]);
+  await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadStampCardV323(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275(),loadRedemptionCelebrationV468()]);
   if(!isWalletCurrent())return;
 }
 
