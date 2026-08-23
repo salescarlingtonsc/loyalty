@@ -3608,6 +3608,13 @@ async function route(){
 }
 
 /* ---------- customer wallet ---------- */
+/* V468 HELD, deliberately not shipped: the owner bracketed Agreements and wrote "default = tick
+   the box". Pre-ticking these two reverses an explicit earlier ruling of theirs (v263/v265,
+   2026-08-09) whose stated reason was that "a pre-ticked box is not a choice", and
+   tests/customer-modules/v265-marketing-consent-scope.test.mjs exists to stop exactly that
+   reversal happening by accident. ⚖️ Pre-ticking a marketing consent is PDPA territory and is a
+   decision for the owner with counsel, not a cosmetic default — so the flags stay false and the
+   owner has been asked to confirm. The long consent copy IS collapsed (that mark was safe). */
 let customerRegistrationState={
   phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
 };
@@ -4108,7 +4115,10 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
       <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>.</span></label>
-      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates.</b> Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners may send me marketing by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. My name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. I can turn this off any time in Profile → Communications. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days. <span class="muted">(Optional)</span></span></label>
+      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates.</b> <span class="muted">(Optional)</span></span></label>
+      <details class="signup-consent-detail-v468"><summary>Click to read what “offers and updates” means</summary>
+        <p class="muted small">Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners may send me marketing by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. My name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. I can turn this off any time in Profile → Communications. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days.</p>
+      </details>
     </fieldset>`}
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
