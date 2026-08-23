@@ -83,8 +83,14 @@ test('the hero reward page offers Redeem only when the SERVER says the counter w
   assert.doesNotMatch(hero,/remaining===0\?'READY'/,'the pill must not be driven by arithmetic');
   assert.match(hero,/readyV397\?'READY':'NEXT REWARD'/);
   assert.match(hero,/data-customer-redeem="\$\{esc\(reward\.action_key\)\}" data-hero-redeem-v397/);
-  /* The meter and the distance line survive only on a reward still being earned. */
-  assert.match(hero,/\$\{readyV397\?'':`<div class="customer-reward-progress/);
+  /* The meter and the distance line survive only on a reward still being earned.
+     V468-C4 (owner photo 7: "for stamps, don't need this meter bar, remove!") narrows that to a
+     POINTS reward still being earned — a stamp card counts in whole stamps, which the counter
+     above now states outright, so the bar was a second and vaguer telling of it. */
+  assert.match(hero,/const rewardUnitV468=customerRewardUnitV429\(reward,unit\)/,
+    'the unit comes from the existing v429 plumbing, not a second stamp test');
+  assert.match(hero,/const stampsV468=rewardUnitV468==='stamps'/);
+  assert.match(hero,/const meterV468=readyV397\|\|stampsV468\?''\s*\n\s*:`<div class="customer-reward-progress/);
 });
 
 test('promotion cards surface the offer facts hook and never render a broken media area',()=>{

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="c6e2ff6c10c6d17cd525cbcf2b28e765257ac44459188d7be89a564e8facbeae"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="b7731027cbb58e9ed6f5e56e18f2e168d1c70fac7ae247ae2d92804c860e7b5d"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4212,8 +4212,74 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .calendar-agenda-pending-v468>.calendar-agenda-item{flex:1 1 200px}
 .calendar-agenda-pending-v468>.btn{min-height:44px}
 
+/* V468-C1 (owner photo 1, customer business page → Gallery). Three marks: the heading is
+   "Gallery" not the firm's own name, only two photos with a `See all ›` on the heading row, and
+   the social links move out of a bare pill row into a captioned "Follow us here" block.
+   The overflow cells are rendered and hidden so openCustomerGalleryAllV468 can read them back out
+   of the DOM; `hidden` alone is not enough here because .customer-business-gallery-cell-v418
+   declares its own display. */
+.customer-business-gallery-cell-v418[hidden]{display:none!important}
+.customer-gallery-seeall-v468{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;
+  min-height:32px;padding:0 2px;border:0;background:none;color:var(--peekaa-red,#C24135);
+  font-size:14px;font-weight:750;line-height:1;cursor:pointer}
+.customer-gallery-seeall-v468:hover,.customer-gallery-seeall-v468:focus-visible{text-decoration:underline}
+.customer-business-gallery-all-v468{margin-top:12px;max-height:64vh;overflow-y:auto}
+/* The links block: a titled box of labelled rows, one per platform the firm has configured. The
+   v418 pill shape is deliberately replaced rather than extended — a row that names the platform
+   and points right is what the owner drew, and it reads the same with one link or with six. */
+.customer-business-links-v418{display:block;margin-top:12px;padding:4px 12px;
+  border:1px solid var(--peekaa-border,#E4DED7);border-radius:14px;
+  background:var(--peekaa-card,#fff)}
+.customer-business-links-head-v468{margin:10px 0 2px;font-size:12px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--peekaa-text-secondary,var(--muted))}
+.customer-business-link-v418{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;min-height:46px;padding:0;border:0;border-radius:0;background:none;
+  color:var(--peekaa-text,#17161A);font-size:15px;font-weight:650;text-decoration:none}
+.customer-business-link-v418+.customer-business-link-v418{border-top:1px solid var(--peekaa-border,#E4DED7)}
+.customer-business-link-label-v468{min-width:0;overflow-wrap:anywhere}
+.customer-business-link-go-v468{flex:0 0 auto;display:inline-flex;color:var(--peekaa-red,#C24135)}
+.customer-business-link-v418:hover,.customer-business-link-v418:focus-visible{
+  border-color:var(--peekaa-border,#E4DED7);color:var(--peekaa-red,#C24135)}
+
+/* V468-C2 (owner photo 2, Rewards → Your rewards → History). The Claimed pill was the first row
+   of the copy column, pushing the reward name and its date to the bottom of a 64px thumbnail and
+   leaving the card's whole top-right blank; the owner redrew the pill in that corner and wrote
+   "shift up" beside the name and date. The copy column becomes a row — text first, pills in their
+   own right-hand box — so the name starts at the top and a long one wraps beside the pill instead
+   of under it. Layout only. */
+.customer-rewards-carousel-v337 .customer-reward-card-claimed-v422 .customer-reward-claimed-copy-v468{
+  grid-area:copy;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-width:0}
+.customer-reward-claimed-text-v468{flex:1 1 auto;min-width:0}
+.customer-rewards-carousel-v337 .customer-reward-card-claimed-v422 .customer-reward-card-head-v339{
+  flex:0 0 auto;justify-content:flex-end;max-width:46%;margin:0}
+
+/* V468-C3 (owner photo 6, Home → Limited offers): "name shift down". nestly_v395 pinned the
+   avatar+name row to the avatar's box at top:-30px so the coin overlaps the artwork — but the
+   NAME rides in the same 46px row, so on every card its text sat on the photo and was unreadable
+   against it (MEASURED at 430px on 8c2ff5a: media 1942..2116, row 2086..2132 — 30 of the row's
+   46 pixels were over the picture). The coin keeps a deliberate overlap; the row drops far enough
+   that the text clears the artwork's edge, and the copy's top padding follows it so the title is
+   not pushed into it. Card height is unchanged. */
+.customer-home-offer-business{top:-13px!important}
+.customer-home-offer-copy{padding-top:32px}
+
+/* V468-C4 (owner photo 7, the red reward hero). Two of the four marks are markup (see
+   customerHeroRewardPagesV395); these are the other two. The gift photo is a grid COLUMN, so a
+   reward without one leaves no hole — the body is simply one column, exactly as before. */
+.customer-hero-reward-body-v468{position:relative;z-index:1;display:grid;
+  grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 92px}
+.customer-hero-reward-copy-v468{min-width:0}
+.customer-hero-reward-photo-v468{display:block;width:92px;aspect-ratio:1;object-fit:cover;
+  border-radius:16px;background:rgba(255,255,255,.16);
+  border:2px solid rgba(255,255,255,.5);box-shadow:0 10px 20px rgba(83,26,21,.22)}
+@media(max-width:340px){
+  .customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 72px}
+  .customer-hero-reward-photo-v468{width:72px}
+}
+
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c6e2ff6c10c6d17cd525cbcf2b28e765257ac44459188d7be89a564e8facbeae</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b7731027cbb58e9ed6f5e56e18f2e168d1c70fac7ae247ae2d92804c860e7b5d</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -13541,7 +13607,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'c6e2ff6c10c6d17cd525cbcf2b28e765257ac44459188d7be89a564e8facbeae',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'b7731027cbb58e9ed6f5e56e18f2e168d1c70fac7ae247ae2d92804c860e7b5d',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

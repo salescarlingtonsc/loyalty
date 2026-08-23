@@ -9774,9 +9774,18 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
      for something that is gone. */
   reward_expired:'This reward has expired'
 };
-function customerRewardAvailabilityLineV399(reward){
+/* V468-C4 (owner, photo 7: "for stamp portion, it's called stamps, not points"). One of these
+   sentences names a unit — insufficient_balance — and it named the WRONG one on every stamp card
+   in the product: a customer three stamps short read "More points needed" under a stamp meter.
+   The noun comes from the existing v429 plumbing (customerUnitNounV429), not a second copy of
+   "is this a stamp card?", and it is substituted rather than duplicated into the table so a
+   future availability copy cannot forget to have a stamps twin. `unit` is optional: every caller
+   that does not know the unit keeps today's words exactly. */
+function customerRewardAvailabilityLineV399(reward,unit){
   const key=String(reward?.availability||'').trim();
-  return CUSTOMER_REWARD_AVAILABILITY_COPY_V399[key]||'Not available right now';
+  const copy=CUSTOMER_REWARD_AVAILABILITY_COPY_V399[key]||'Not available right now';
+  const noun=unit?customerUnitNounV429(unit,2):'points';
+  return noun==='points'?copy:copy.replace(/\bpoints\b/g,noun);
 }
 /* nestly_v399 (owner batch: "customer can keep swiping through all rewards available from that
    business"). Three defects kept legitimate rewards off this swipe, all of them client-side
@@ -9834,35 +9843,72 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
        that list can never disagree about what is claimable. The points arithmetic stays ONLY for
        the not-ready distance line, which is a display fact, not permission. */
     const readyV397=!!(reward?.action_key&&customerRewardCanRedeem(reward,redemptionEnabled));
+    /* V468-C4 (owner, photo 7, four marks on this one card). The unit is the reward's OWN unit
+       through the existing v429 plumbing, not a second "is this a stamp card?" test — a reward
+       that declares `unit` outranks the caller's, which is exactly what customerRewardUnitV429
+       is for, and the noun below it is that helper's, so "1 stamp" is never "1 stamps". */
+    const rewardUnitV468=customerRewardUnitV429(reward,unit);
+    const stampsV468=rewardUnitV468==='stamps';
+    /* Mark 2, an arrow at the counter: "show how many stamps left to claim this gift". The counter
+       stated the PRICE, which a customer holding some of it cannot subtract in their head. On a
+       stamp card it states the distance instead — but only where the distance is a true thing to
+       say. At zero it would read "0 more stamps to go", which asserts a readiness the server may
+       refuse; and where the server HAS said ready, the arithmetic can still be short (readiness is
+       the server's answer, never subtraction — v145/v397), and "3 more stamps to go" beside a
+       READY pill contradicts it. Both cases fall back to the price. Points keeps the price at all
+       times, which is what "counter as before" means for that model: the
+       points hero carries the meter and its own "N points to go" line, and this counter is the one
+       place the cost is written down. */
+    const needV468=!readyV397&&remaining>0
+      ?`${customerPointTotalV103(remaining)} more ${customerUnitNounV429(rewardUnitV468,remaining)} to go`:'';
+    const counterV468=stampsV468&&needV468?needV468:`${customerPointTotalV103(cost)} ${unitWord}`;
+    /* Mark 4, an arrow into the empty right of the card: "show gift photo" — the same image_ref
+       the reward list and the business-side reward rows render. It is a GRID COLUMN, not an
+       overlay: with no photo the body is one column and the card is byte-identical to v399's, so
+       a gift without a picture leaves no hole and nothing collapses. */
+    const photoV468=customerMediaUrlV95(reward?.image_ref);
+    /* Mark 3, "for stamps, don't need this meter bar, remove!". A stamp card's distance is counted
+       in whole stamps and the number is now in the counter above; the bar was a second, vaguer
+       telling of it. Points keeps the bar — there the balance is a large number and the bar is the
+       only glanceable cue. */
+    const meterV468=readyV397||stampsV468?''
+      :`<div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>`;
+    /* nestly_v399. "N to go" is only true when the customer is genuinely SHORT of the cost. A
+       reward that is not ready for any other reason the server gave — ended, claim limit reached,
+       redemption switched off, not started — used to print "0 points to go" under a full meter,
+       which reads as "ready" and is the opposite of what the counter will do. Those states say
+       what the server said, in the same words the reward list below this hero uses.
+       V468-C4: on a stamp card the distance has moved up into the counter, so this line is left
+       with only the job it cannot delegate — reporting a refusal the arithmetic cannot see. */
+    const lineTextV468=remaining>0
+      ?(stampsV468?'':`${customerPointTotalV103(remaining)} ${unitWord} to go`)
+      :customerRewardAvailabilityLineV399(reward,rewardUnitV468);
     /* Owner struck out the meter and the sentence under a READY reward: at 100% the meter says
        nothing and "Ready to redeem on your next visit" repeats the pill above it. A reward still
        being earned keeps both — that is the one state where the distance is the point. */
     return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
-      <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
+      <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}${photoV468?' customer-hero-has-photo-v468':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(readyV397?'READY':'NEXT REWARD')}</span></span>
-          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(`${customerPointTotalV103(cost)} ${unitWord}`)}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(counterV468)}</span></span>
         </div>
-        <b class="customer-business-reward-name-v395">${esc(name)}</b>
-        ${readyV397?'':`<div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
-        ${/* nestly_v399. "N to go" is only true when the customer is genuinely SHORT of the cost.
-             A reward that is not ready for any other reason the server gave — ended, claim limit
-             reached, redemption switched off, not started — used to print "0 points to go" under a
-             full meter, which reads as "ready" and is the opposite of what the counter will do.
-             Those states now say what the server said, using the same words the reward list below
-             this hero uses for the same availability value. */''}
-        <p class="customer-business-summary-line-v362">${esc(remaining>0
-          ?`${customerPointTotalV103(remaining)} ${unitWord} to go`
-          :customerRewardAvailabilityLineV399(reward))}</p>`}
-        ${readyV397?`<div class="customer-business-summary-actions-v349">
-          ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show QR
-               to redeem"). It carries the SAME data-customer-redeem action_key contract the
-               reward list's own "Show QR at counter" button carries, and loadRewards wires both
-               with one handler — so this opens the existing intent + QR path and does not invent
-               a second way to redeem. */''}
-          <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
-          ${bookAction}
-        </div>`:''}
+        <div class="customer-hero-reward-body-v468">
+          <div class="customer-hero-reward-copy-v468">
+            <b class="customer-business-reward-name-v395">${esc(name)}</b>
+            ${meterV468}
+            ${readyV397||!lineTextV468?'':`<p class="customer-business-summary-line-v362">${esc(lineTextV468)}</p>`}
+            ${readyV397?`<div class="customer-business-summary-actions-v349">
+              ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show
+                   QR to redeem"). It carries the SAME data-customer-redeem action_key contract the
+                   reward list's own "Show QR at counter" button carries, and loadRewards wires
+                   both with one handler — so this opens the existing intent + QR path and does not
+                   invent a second way to redeem. */''}
+              <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
+              ${bookAction}
+            </div>`:''}
+          </div>
+          ${photoV468?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV468)}" alt="" loading="lazy" decoding="async" data-hero-reward-photo-v468>`:''}
+        </div>
       </section>
     </div>`;
   }).filter(Boolean);
@@ -9891,6 +9937,13 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
     </div>`);
   }
   if(pages.length)track.insertAdjacentHTML('beforeend',pages.join(''));
+  /* V468-C4: never a broken image on the hero. Same bargain v340 struck for the reward list — a
+     stored object that has since been deleted drops the picture AND the column that reserved room
+     for it, so the card falls back to exactly the one-column layout a photoless gift renders. */
+  track.querySelectorAll('[data-hero-reward-photo-v468]').forEach(image=>{image.onerror=()=>{
+    image.closest('.customer-business-summary-v346')?.classList.remove('customer-hero-has-photo-v468');
+    image.remove();
+  }});
   const total=track.querySelectorAll('.customer-business-hero-page-v395').length;
   dots.hidden=total<2;
   dots.innerHTML=total<2?'':Array.from({length:total},(_,index)=>
@@ -10444,11 +10497,44 @@ function openCustomerGalleryPhotoV418(url,caption){
   deactivate=CUI.activateDialog(dialog,{onClose:()=>dialog.remove(),initialFocus:'#customerGalleryPhotoCloseV418'});
   document.getElementById('customerGalleryPhotoCloseV418').onclick=close;
 }
+/* V468-C1 (owner, photo 1: the second row of photos circled — "just show two, more in 'see all'",
+   with a `See all ›` drawn onto the heading row). The grid printed every photo a business had
+   uploaded, so a merchant with eight turned the profile into a contact sheet and pushed Rewards
+   below the fold. The page keeps two; this sheet is the rest of them.
+   It is deliberately NOT a second image viewer: it is the same cells, re-emitted into a dialog and
+   wired with the same wireCustomerGalleryV418, so tapping one still opens openCustomerGalleryPhotoV418.
+   It reads the cells out of the DOM rather than carrying a copy of the payload, which is why the
+   overflow cells are rendered-and-hidden instead of dropped. */
+function openCustomerGalleryAllV468(section){
+  const cells=[...(section?.querySelectorAll('[data-customer-gallery-v418]')||[])]
+    .map(cell=>cell.querySelector('img'))
+    .map(image=>({url:image?.getAttribute('src')||'',caption:image?.getAttribute('alt')||''}))
+    .filter(item=>item.url);
+  if(!cells.length)return;
+  document.getElementById('customerGalleryAllV468')?.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerGalleryAllV468" role="dialog" aria-modal="true" aria-labelledby="customerGalleryAllTitleV468" tabindex="-1">
+    <div class="modal-card" style="max-width:min(94vw,560px)">
+      <div class="row"><h2 id="customerGalleryAllTitleV468">Gallery</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerGalleryAllCloseV468" aria-label="Close gallery">${CUI.icon('close',{size:20})}</button></div>
+      <div class="customer-business-gallery-grid-v418 customer-business-gallery-all-v468" role="list">${cells.map((item,index)=>`
+        <button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}" data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
+          <img src="${esc(item.url)}" alt="${esc(item.caption)}" loading="lazy" decoding="async">
+          ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
+        </button>`).join('')}</div>
+    </div></div>`);
+  const dialog=document.getElementById('customerGalleryAllV468');
+  let deactivate;
+  const close=()=>deactivate?deactivate():dialog.remove();
+  deactivate=CUI.activateDialog(dialog,{onClose:()=>dialog.remove(),initialFocus:'#customerGalleryAllCloseV468'});
+  document.getElementById('customerGalleryAllCloseV468').onclick=close;
+  wireCustomerGalleryV418(dialog);
+}
 function wireCustomerGalleryV418(root){
   (root||document).querySelectorAll('[data-customer-gallery-v418]').forEach(cell=>cell.onclick=()=>{
     const image=cell.querySelector('img');
     openCustomerGalleryPhotoV418(image?.getAttribute('src')||'',image?.getAttribute('alt')||'');
   });
+  (root||document).querySelectorAll('[data-gallery-see-all-v468]').forEach(button=>button.onclick=()=>
+    openCustomerGalleryAllV468(button.closest('.customer-business-gallery-v418')));
 }
 function customerBusinessGalleryMarkupV418(business={}){
   const photos=(Array.isArray(business.gallery)?business.gallery:[])
@@ -10460,17 +10546,42 @@ function customerBusinessGalleryMarkupV418(business={}){
        rendered as a tappable link on a customer's phone. */
     .filter(item=>CUSTOMER_SOCIAL_LABELS_V418[item.platform]&&/^https:\/\/\S+$/i.test(item.url));
   if(!photos.length&&!links.length)return '';
-  return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
-    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(business.name||'This business')}</h2>
-      <p class="muted small">Photos and where to find them.</p></div>
-    ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
-      ${photos.map((item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}" data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
+  /* V468-C1, three marks on the owner's photo 1.
+     (a) THE HEADING. It printed the business NAME — "Cubbly SPA" — on a customer's own page for
+         Cubbly SPA, under a header that already says so twice. Struck out and rewritten "Gallery".
+         With no photos at all the section is the links block alone, so the heading is that block's
+         instead of a Gallery with nothing in it.
+     (b) THE SUB-LINE. "Photos and where to find them." is deleted rather than reworded: the
+         surface has hidden every .customer-business-group-head-v346 p since v345
+         (index.html "display:none"), so it has never reached a customer, and the head row is now
+         where "See all" lives.
+     (c) TWO PHOTOS. The rest are rendered but hidden, because the See all sheet reads its cells
+         out of this DOM — see openCustomerGalleryAllV468. So there is no second copy of the
+         payload and no second image viewer, and a business with two or fewer photos gets no
+         control at all rather than one that opens a sheet identical to the page. */
+  const shownV468=photos.slice(0,2);
+  const overflowV468=photos.slice(2);
+  const headingV468=photos.length?'Gallery':'Follow us here';
+  const cellV468=(item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}"${index>1?' hidden':''} data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
         <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
         ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
-      </button>`).join('')}
+      </button>`;
+  return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(headingV468)}</h2>
+      ${overflowV468.length?`<button type="button" class="customer-gallery-seeall-v468" data-gallery-see-all-v468>See all<span aria-hidden="true">${CUI.icon('forward',{size:15})}</span></button>`:''}</div>
+    ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
+      ${[...shownV468,...overflowV468].map(cellV468).join('')}
     </div>`:''}
+    ${/* V468-C1: the links were a bare row of pills, which on a business with one link read as a
+         stray "› Website" chip under the photos. The owner drew a captioned box listing the
+         platforms by name, so they get their own titled block — one labelled row per platform the
+         business has actually configured, nothing for the ones it has not, and no block at all
+         when there are none. The https-only filter above is untouched: it mirrors the table's own
+         CHECK, and a payload that carried anything else is still not tappable on a phone.
+         The caption is omitted when it would repeat the section heading directly above it. */''}
     ${links.length?`<div class="customer-business-links-v418">
-      ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${CUI.icon('forward',{size:16})}<span>${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span></a>`).join('')}
+      ${photos.length?'<p class="customer-business-links-head-v468">Follow us here</p>':''}
+      ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer"><span class="customer-business-link-label-v468">${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span><span class="customer-business-link-go-v468" aria-hidden="true">${CUI.icon('forward',{size:16})}</span></a>`).join('')}
     </div>`:''}
   </section>`;
 }
@@ -12188,14 +12299,27 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            Everything else about the card is the same, deliberately: this is the same reward, in
            the same list, with an honest account of what happened to it. */
         const lapsedV464=String(item?.source||'')==='expired';
+        /* V468-C2 (owner, photo 2: the Claimed pill circled, an arrow to the card's top-right and
+           "shift up" written beside the name and the date on both cards). The pill was the FIRST
+           row of the copy column, so it pushed the name and the date down past the middle of a
+           64px thumbnail and left the whole top-right of the card blank. It is a status, not a
+           heading: it belongs in the corner and the reward's name belongs at the top.
+           The copy column becomes a row — text, then the pills — which is a layout change and
+           nothing else: same rewards, same wording, same date format, same thumbnail and same
+           generic-gift fallback. The pills keep their own box so a long name wraps beside them
+           instead of under them, and two pills (Claimed + a source chip) stack in that box. */
         return `<article class="wallet-reward customer-reward-card-v339 customer-reward-card-claimed-v422${lapsedV464?' customer-reward-card-expired-v464':''}"${lapsedV464?' data-reward-expired-v464="1"':''}>
           <div class="customer-reward-photo-v340${photo?'':' customer-reward-photo-empty-v340'}">${photo
             ?`<img src="${esc(photo)}" alt="" loading="lazy" data-reward-photo-v340>`
             :CUI.icon('loyalty',{size:24})}</div>
-          <div class="customer-reward-card-head-v339"><span class="pill">${lapsedV464?'Expired':'Claimed'}</span>${lapsedV464||!sourceChipV429?'':`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`}</div>
-          <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
-          ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
-          ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}
+          <div class="customer-reward-claimed-copy-v468">
+            <div class="customer-reward-claimed-text-v468">
+              <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(name)}</b>
+              ${when?`<p class="muted small" style="margin-top:5px">${esc(when)}</p>`:''}
+              ${spent>0?`<p class="muted small" style="margin-top:5px">${esc(customerPointTotalV103(spent))} ${esc(rewardUnit)}</p>`:''}
+            </div>
+            <div class="customer-reward-card-head-v339"><span class="pill">${lapsedV464?'Expired':'Claimed'}</span>${lapsedV464||!sourceChipV429?'':`<span class="pill" data-reward-source-v429="${esc(String(item.source))}">${esc(sourceChipV429)}</span>`}</div>
+          </div>
         </article>`;
       }).join('')}</div>`;
       panel.querySelectorAll('[data-reward-photo-v340]').forEach(image=>{image.onerror=()=>{

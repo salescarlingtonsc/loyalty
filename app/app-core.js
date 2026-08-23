@@ -4667,17 +4667,42 @@ function customerBusinessGalleryMarkupV418(business={}){
        rendered as a tappable link on a customer's phone. */
     .filter(item=>CUSTOMER_SOCIAL_LABELS_V418[item.platform]&&/^https:\/\/\S+$/i.test(item.url));
   if(!photos.length&&!links.length)return '';
-  return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
-    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(business.name||'This business')}</h2>
-      <p class="muted small">Photos and where to find them.</p></div>
-    ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
-      ${photos.map((item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}" data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
+  /* V468-C1, three marks on the owner's photo 1.
+     (a) THE HEADING. It printed the business NAME — "Cubbly SPA" — on a customer's own page for
+         Cubbly SPA, under a header that already says so twice. Struck out and rewritten "Gallery".
+         With no photos at all the section is the links block alone, so the heading is that block's
+         instead of a Gallery with nothing in it.
+     (b) THE SUB-LINE. "Photos and where to find them." is deleted rather than reworded: the
+         surface has hidden every .customer-business-group-head-v346 p since v345
+         (index.html "display:none"), so it has never reached a customer, and the head row is now
+         where "See all" lives.
+     (c) TWO PHOTOS. The rest are rendered but hidden, because the See all sheet reads its cells
+         out of this DOM — see openCustomerGalleryAllV468. So there is no second copy of the
+         payload and no second image viewer, and a business with two or fewer photos gets no
+         control at all rather than one that opens a sheet identical to the page. */
+  const shownV468=photos.slice(0,2);
+  const overflowV468=photos.slice(2);
+  const headingV468=photos.length?'Gallery':'Follow us here';
+  const cellV468=(item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="${index}"${index>1?' hidden':''} data-merchant-content aria-label="${esc(item.caption||`Photo ${index+1}`)}. Open full size.">
         <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
         ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
-      </button>`).join('')}
+      </button>`;
+  return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(headingV468)}</h2>
+      ${overflowV468.length?`<button type="button" class="customer-gallery-seeall-v468" data-gallery-see-all-v468>See all<span aria-hidden="true">${CUI.icon('forward',{size:15})}</span></button>`:''}</div>
+    ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
+      ${[...shownV468,...overflowV468].map(cellV468).join('')}
     </div>`:''}
+    ${/* V468-C1: the links were a bare row of pills, which on a business with one link read as a
+         stray "› Website" chip under the photos. The owner drew a captioned box listing the
+         platforms by name, so they get their own titled block — one labelled row per platform the
+         business has actually configured, nothing for the ones it has not, and no block at all
+         when there are none. The https-only filter above is untouched: it mirrors the table's own
+         CHECK, and a payload that carried anything else is still not tappable on a phone.
+         The caption is omitted when it would repeat the section heading directly above it. */''}
     ${links.length?`<div class="customer-business-links-v418">
-      ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${CUI.icon('forward',{size:16})}<span>${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span></a>`).join('')}
+      ${photos.length?'<p class="customer-business-links-head-v468">Follow us here</p>':''}
+      ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer"><span class="customer-business-link-label-v468">${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span><span class="customer-business-link-go-v468" aria-hidden="true">${CUI.icon('forward',{size:16})}</span></a>`).join('')}
     </div>`:''}
   </section>`;
 }

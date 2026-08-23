@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="ecf353206986f712bcd580047933263f147507e1f93895885c2f77faca2d9611">
+<meta name="v104-production-source-sha256" content="8b68abbd72b4ebf63cae4b989cf861d75e52a347aa96f63ccb2e19e77f849f26">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -4219,13 +4219,79 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .calendar-agenda-pending-v468>.calendar-agenda-item{flex:1 1 200px}
 .calendar-agenda-pending-v468>.btn{min-height:44px}
 
+/* V468-C1 (owner photo 1, customer business page → Gallery). Three marks: the heading is
+   "Gallery" not the firm's own name, only two photos with a `See all ›` on the heading row, and
+   the social links move out of a bare pill row into a captioned "Follow us here" block.
+   The overflow cells are rendered and hidden so openCustomerGalleryAllV468 can read them back out
+   of the DOM; `hidden` alone is not enough here because .customer-business-gallery-cell-v418
+   declares its own display. */
+.customer-business-gallery-cell-v418[hidden]{display:none!important}
+.customer-gallery-seeall-v468{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;
+  min-height:32px;padding:0 2px;border:0;background:none;color:var(--peekaa-red,#C24135);
+  font-size:14px;font-weight:750;line-height:1;cursor:pointer}
+.customer-gallery-seeall-v468:hover,.customer-gallery-seeall-v468:focus-visible{text-decoration:underline}
+.customer-business-gallery-all-v468{margin-top:12px;max-height:64vh;overflow-y:auto}
+/* The links block: a titled box of labelled rows, one per platform the firm has configured. The
+   v418 pill shape is deliberately replaced rather than extended — a row that names the platform
+   and points right is what the owner drew, and it reads the same with one link or with six. */
+.customer-business-links-v418{display:block;margin-top:12px;padding:4px 12px;
+  border:1px solid var(--peekaa-border,#E4DED7);border-radius:14px;
+  background:var(--peekaa-card,#fff)}
+.customer-business-links-head-v468{margin:10px 0 2px;font-size:12px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--peekaa-text-secondary,var(--muted))}
+.customer-business-link-v418{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;min-height:46px;padding:0;border:0;border-radius:0;background:none;
+  color:var(--peekaa-text,#17161A);font-size:15px;font-weight:650;text-decoration:none}
+.customer-business-link-v418+.customer-business-link-v418{border-top:1px solid var(--peekaa-border,#E4DED7)}
+.customer-business-link-label-v468{min-width:0;overflow-wrap:anywhere}
+.customer-business-link-go-v468{flex:0 0 auto;display:inline-flex;color:var(--peekaa-red,#C24135)}
+.customer-business-link-v418:hover,.customer-business-link-v418:focus-visible{
+  border-color:var(--peekaa-border,#E4DED7);color:var(--peekaa-red,#C24135)}
+
+/* V468-C2 (owner photo 2, Rewards → Your rewards → History). The Claimed pill was the first row
+   of the copy column, pushing the reward name and its date to the bottom of a 64px thumbnail and
+   leaving the card's whole top-right blank; the owner redrew the pill in that corner and wrote
+   "shift up" beside the name and date. The copy column becomes a row — text first, pills in their
+   own right-hand box — so the name starts at the top and a long one wraps beside the pill instead
+   of under it. Layout only. */
+.customer-rewards-carousel-v337 .customer-reward-card-claimed-v422 .customer-reward-claimed-copy-v468{
+  grid-area:copy;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-width:0}
+.customer-reward-claimed-text-v468{flex:1 1 auto;min-width:0}
+.customer-rewards-carousel-v337 .customer-reward-card-claimed-v422 .customer-reward-card-head-v339{
+  flex:0 0 auto;justify-content:flex-end;max-width:46%;margin:0}
+
+/* V468-C3 (owner photo 6, Home → Limited offers): "name shift down". nestly_v395 pinned the
+   avatar+name row to the avatar's box at top:-30px so the coin overlaps the artwork — but the
+   NAME rides in the same 46px row, so on every card its text sat on the photo and was unreadable
+   against it (MEASURED at 430px on 8c2ff5a: media 1942..2116, row 2086..2132 — 30 of the row's
+   46 pixels were over the picture). The coin keeps a deliberate overlap; the row drops far enough
+   that the text clears the artwork's edge, and the copy's top padding follows it so the title is
+   not pushed into it. Card height is unchanged. */
+.customer-home-offer-business{top:-13px!important}
+.customer-home-offer-copy{padding-top:32px}
+
+/* V468-C4 (owner photo 7, the red reward hero). Two of the four marks are markup (see
+   customerHeroRewardPagesV395); these are the other two. The gift photo is a grid COLUMN, so a
+   reward without one leaves no hole — the body is simply one column, exactly as before. */
+.customer-hero-reward-body-v468{position:relative;z-index:1;display:grid;
+  grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 92px}
+.customer-hero-reward-copy-v468{min-width:0}
+.customer-hero-reward-photo-v468{display:block;width:92px;aspect-ratio:1;object-fit:cover;
+  border-radius:16px;background:rgba(255,255,255,.16);
+  border:2px solid rgba(255,255,255,.5);box-shadow:0 10px 20px rgba(83,26,21,.22)}
+@media(max-width:340px){
+  .customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 72px}
+  .customer-hero-reward-photo-v468{width:72px}
+}
+
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source ecf353206986f712bcd580047933263f147507e1f93895885c2f77faca2d9611</p>
+  <p class="v104-provenance">Local production-render harness · source 8b68abbd72b4ebf63cae4b989cf861d75e52a347aa96f63ccb2e19e77f849f26</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4237,7 +4303,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="ecf353206986f712bcd580047933263f147507e1f93895885c2f77faca2d9611";
+const PRODUCTION_SOURCE_SHA256="8b68abbd72b4ebf63cae4b989cf861d75e52a347aa96f63ccb2e19e77f849f26";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -6132,9 +6198,18 @@ const CUSTOMER_REWARD_AVAILABILITY_COPY_V399={
      for something that is gone. */
   reward_expired:'This reward has expired'
 };
-function customerRewardAvailabilityLineV399(reward){
+/* V468-C4 (owner, photo 7: "for stamp portion, it's called stamps, not points"). One of these
+   sentences names a unit — insufficient_balance — and it named the WRONG one on every stamp card
+   in the product: a customer three stamps short read "More points needed" under a stamp meter.
+   The noun comes from the existing v429 plumbing (customerUnitNounV429), not a second copy of
+   "is this a stamp card?", and it is substituted rather than duplicated into the table so a
+   future availability copy cannot forget to have a stamps twin. `unit` is optional: every caller
+   that does not know the unit keeps today's words exactly. */
+function customerRewardAvailabilityLineV399(reward,unit){
   const key=String(reward?.availability||'').trim();
-  return CUSTOMER_REWARD_AVAILABILITY_COPY_V399[key]||'Not available right now';
+  const copy=CUSTOMER_REWARD_AVAILABILITY_COPY_V399[key]||'Not available right now';
+  const noun=unit?customerUnitNounV429(unit,2):'points';
+  return noun==='points'?copy:copy.replace(/\bpoints\b/g,noun);
 }
 /* nestly_v399 (owner batch: "customer can keep swiping through all rewards available from that
    business"). Three defects kept legitimate rewards off this swipe, all of them client-side
@@ -6192,35 +6267,72 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
        that list can never disagree about what is claimable. The points arithmetic stays ONLY for
        the not-ready distance line, which is a display fact, not permission. */
     const readyV397=!!(reward?.action_key&&customerRewardCanRedeem(reward,redemptionEnabled));
+    /* V468-C4 (owner, photo 7, four marks on this one card). The unit is the reward's OWN unit
+       through the existing v429 plumbing, not a second "is this a stamp card?" test — a reward
+       that declares `unit` outranks the caller's, which is exactly what customerRewardUnitV429
+       is for, and the noun below it is that helper's, so "1 stamp" is never "1 stamps". */
+    const rewardUnitV468=customerRewardUnitV429(reward,unit);
+    const stampsV468=rewardUnitV468==='stamps';
+    /* Mark 2, an arrow at the counter: "show how many stamps left to claim this gift". The counter
+       stated the PRICE, which a customer holding some of it cannot subtract in their head. On a
+       stamp card it states the distance instead — but only where the distance is a true thing to
+       say. At zero it would read "0 more stamps to go", which asserts a readiness the server may
+       refuse; and where the server HAS said ready, the arithmetic can still be short (readiness is
+       the server's answer, never subtraction — v145/v397), and "3 more stamps to go" beside a
+       READY pill contradicts it. Both cases fall back to the price. Points keeps the price at all
+       times, which is what "counter as before" means for that model: the
+       points hero carries the meter and its own "N points to go" line, and this counter is the one
+       place the cost is written down. */
+    const needV468=!readyV397&&remaining>0
+      ?`${customerPointTotalV103(remaining)} more ${customerUnitNounV429(rewardUnitV468,remaining)} to go`:'';
+    const counterV468=stampsV468&&needV468?needV468:`${customerPointTotalV103(cost)} ${unitWord}`;
+    /* Mark 4, an arrow into the empty right of the card: "show gift photo" — the same image_ref
+       the reward list and the business-side reward rows render. It is a GRID COLUMN, not an
+       overlay: with no photo the body is one column and the card is byte-identical to v399's, so
+       a gift without a picture leaves no hole and nothing collapses. */
+    const photoV468=customerMediaUrlV95(reward?.image_ref);
+    /* Mark 3, "for stamps, don't need this meter bar, remove!". A stamp card's distance is counted
+       in whole stamps and the number is now in the counter above; the bar was a second, vaguer
+       telling of it. Points keeps the bar — there the balance is a large number and the bar is the
+       only glanceable cue. */
+    const meterV468=readyV397||stampsV468?''
+      :`<div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>`;
+    /* nestly_v399. "N to go" is only true when the customer is genuinely SHORT of the cost. A
+       reward that is not ready for any other reason the server gave — ended, claim limit reached,
+       redemption switched off, not started — used to print "0 points to go" under a full meter,
+       which reads as "ready" and is the opposite of what the counter will do. Those states say
+       what the server said, in the same words the reward list below this hero uses.
+       V468-C4: on a stamp card the distance has moved up into the counter, so this line is left
+       with only the job it cannot delegate — reporting a refusal the arithmetic cannot see. */
+    const lineTextV468=remaining>0
+      ?(stampsV468?'':`${customerPointTotalV103(remaining)} ${unitWord} to go`)
+      :customerRewardAvailabilityLineV399(reward,rewardUnitV468);
     /* Owner struck out the meter and the sentence under a READY reward: at 100% the meter says
        nothing and "Ready to redeem on your next visit" repeats the pill above it. A reward still
        being earned keeps both — that is the one state where the distance is the point. */
     return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
-      <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
+      <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}${photoV468?' customer-hero-has-photo-v468':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(readyV397?'READY':'NEXT REWARD')}</span></span>
-          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(`${customerPointTotalV103(cost)} ${unitWord}`)}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(counterV468)}</span></span>
         </div>
-        <b class="customer-business-reward-name-v395">${esc(name)}</b>
-        ${readyV397?'':`<div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" aria-label="${esc(`${name} progress`)}" style="--reward-progress:${progress}%"><span></span></div>
-        ${/* nestly_v399. "N to go" is only true when the customer is genuinely SHORT of the cost.
-             A reward that is not ready for any other reason the server gave — ended, claim limit
-             reached, redemption switched off, not started — used to print "0 points to go" under a
-             full meter, which reads as "ready" and is the opposite of what the counter will do.
-             Those states now say what the server said, using the same words the reward list below
-             this hero uses for the same availability value. */''}
-        <p class="customer-business-summary-line-v362">${esc(remaining>0
-          ?`${customerPointTotalV103(remaining)} ${unitWord} to go`
-          :customerRewardAvailabilityLineV399(reward))}</p>`}
-        ${readyV397?`<div class="customer-business-summary-actions-v349">
-          ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show QR
-               to redeem"). It carries the SAME data-customer-redeem action_key contract the
-               reward list's own "Show QR at counter" button carries, and loadRewards wires both
-               with one handler — so this opens the existing intent + QR path and does not invent
-               a second way to redeem. */''}
-          <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
-          ${bookAction}
-        </div>`:''}
+        <div class="customer-hero-reward-body-v468">
+          <div class="customer-hero-reward-copy-v468">
+            <b class="customer-business-reward-name-v395">${esc(name)}</b>
+            ${meterV468}
+            ${readyV397||!lineTextV468?'':`<p class="customer-business-summary-line-v362">${esc(lineTextV468)}</p>`}
+            ${readyV397?`<div class="customer-business-summary-actions-v349">
+              ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show
+                   QR to redeem"). It carries the SAME data-customer-redeem action_key contract the
+                   reward list's own "Show QR at counter" button carries, and loadRewards wires
+                   both with one handler — so this opens the existing intent + QR path and does not
+                   invent a second way to redeem. */''}
+              <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
+              ${bookAction}
+            </div>`:''}
+          </div>
+          ${photoV468?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV468)}" alt="" loading="lazy" decoding="async" data-hero-reward-photo-v468>`:''}
+        </div>
       </section>
     </div>`;
   }).filter(Boolean);
@@ -6249,6 +6361,13 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
     </div>`);
   }
   if(pages.length)track.insertAdjacentHTML('beforeend',pages.join(''));
+  /* V468-C4: never a broken image on the hero. Same bargain v340 struck for the reward list — a
+     stored object that has since been deleted drops the picture AND the column that reserved room
+     for it, so the card falls back to exactly the one-column layout a photoless gift renders. */
+  track.querySelectorAll('[data-hero-reward-photo-v468]').forEach(image=>{image.onerror=()=>{
+    image.closest('.customer-business-summary-v346')?.classList.remove('customer-hero-has-photo-v468');
+    image.remove();
+  }});
   const total=track.querySelectorAll('.customer-business-hero-page-v395').length;
   dots.hidden=total<2;
   dots.innerHTML=total<2?'':Array.from({length:total},(_,index)=>
