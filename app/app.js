@@ -5688,9 +5688,28 @@ function customerPasskeyErrorMessage(error,{action='setup'}={}){
   if(code==='webauthn_credential_not_found')return 'This passkey no longer works here. Add it again.';
   if(code==='webauthn_verification_failed')return 'This passkey could not be verified for the current Peekaa domain. Sign in with your password and add a new passkey.';
   if(code==='phone_not_confirmed'||code==='email_not_confirmed')return 'Finish account verification before using Face ID or Touch ID.';
-  return action==='sign-in'
+  /* V468 (owner, photo B8: "Enable now" circled, "not working"). Everything above is a code we
+     recognise; everything else fell into one generic sentence with no reason in it, which is what
+     the owner was looking at — the button HAD run, the ceremony HAD failed, and the screen could
+     not say why. Two things change.
+     First, the commonest outcome by far is not a fault at all: the browser throws NotAllowedError
+     when the person dismisses the Face ID sheet, or when the ceremony times out, or when the page
+     is not focused. Telling someone "setup was not completed" when they simply tapped Cancel
+     invites them to press it again forever. That case now says so and invites a retry.
+     Second, anything still unrecognised carries its own code/message. It is not pretty, but a
+     dead end that cannot be reported is worse than an ugly string — this is the only channel we
+     have back from a customer's own device, and the last report cost a round trip to learn
+     nothing. */
+  const nameV468=String(error?.name||'');
+  if(nameV468==='NotAllowedError'||nameV468==='AbortError')
+    return action==='sign-in'
+      ?'Face ID was cancelled or timed out. Try again, or use your password.'
+      :'Face ID was cancelled or timed out. Tap Enable now to try again.';
+  const detailV468=String(error?.message||code||'').trim();
+  const baseV468=action==='sign-in'
     ?'Passkey sign-in was not completed. Try again, or use your password.'
     :'Passkey setup was not completed. You can add it later from Profile.';
+  return detailV468?`${baseV468} (${detailV468})`:baseV468;
 }
 async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
   const userId=S.user?.id||'';
@@ -5729,7 +5748,12 @@ async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
       const button=overlay.querySelector('#customerPasskeyPromptAdd');
       const status=overlay.querySelector('#customerPasskeyPromptStatus');
       button.disabled=true;status.textContent='Follow your device prompt to enable Face ID or Touch ID.';
-      const {error}=await sb.auth.registerPasskey();
+      /* V468: registerPasskey resolves {error} for a server refusal but THROWS for a browser-side
+         WebAuthn rejection. An unhandled throw here left the button disabled and the status stuck
+         on "Follow your device prompt…" forever — a genuinely dead dialog, and silent, because an
+         async onclick's rejection reaches no error handler. Both outcomes now land in one place. */
+      let error=null;
+      try{({error}=await sb.auth.registerPasskey()||{})}catch(thrown){error=thrown}
       if(!isCurrent()||!overlay.isConnected)return close('stale');
       if(error){
         button.disabled=false;status.textContent=customerPasskeyErrorMessage(error,{action:'setup'});
@@ -6920,7 +6944,10 @@ async function renderCustomerProfile(){
   passkeyAdd.onclick=async()=>{
     if(!passkeySupported)return;
     passkeyAdd.disabled=true;passkeyStatus.textContent='Follow your device prompt to add a passkey…';
-    const {error}=await sb.auth.registerPasskey();
+    /* V468: see the prompt above — a browser-side WebAuthn rejection THROWS rather than resolving
+       {error}, and an unhandled throw here left the button disabled with no explanation. */
+    let error=null;
+    try{({error}=await sb.auth.registerPasskey()||{})}catch(thrown){error=thrown}
     if(!isCurrent()||!passkeyAdd.isConnected)return;
     passkeyAdd.disabled=false;
     if(error){
