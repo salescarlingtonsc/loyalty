@@ -2404,6 +2404,12 @@
       "version": "20260823000012",
       "name": "nestly_v477_per_gift_where_it_works",
       "sourcePath": "db/migrations/20260823_nestly_v477_per_gift_where_it_works.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000001",
+      "name": "nestly_v478_earned_stamp_gifts_survive_a_claimed_card",
+      "sourcePath": "db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql"
     }
   ]
 }

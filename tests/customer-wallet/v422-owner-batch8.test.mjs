@@ -53,6 +53,9 @@ const harness = new Function('esc', 'CUI', `
        the same reason every other helper here is. */''}
   const SB_URL='https://example.supabase.co';
   ${statement('function customerMediaUrlV95(', '\n}')}
+  ${/* nestly_v478 put the shared "?" on the stamp card too (owner photo 3), so the shipped
+       function now calls the help-button factory. Pulled from source, like everything else here. */''}
+  ${statement('function customerRewardHelpButtonV468(', '\n}')}
   ${section('const HERO_STAMP_COMPACT_FROM_V422=', 'function customerBusinessRelationshipSummaryV346(')}
   ${section('const PROGRAMME_STACK_MIN_CONTRACT_V395=', '/* Fixed, regardless of which are on.')}
   ${section('const PROGRAMME_STACK_ORDER_V310=', 'function programmeStackCardVisibleV310')}

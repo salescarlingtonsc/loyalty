@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="73846e3d9fe68d17a92290a5454327a85438efacb32a0d2c126652d1ddcfee1f">
+<meta name="v105-production-component-sha256" content="e3c22b41ea95d2130e41f842e9bf6d4a95c28631ac8a6aeb3f9fc8ac16d45c5d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3751,12 +3751,27 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    (.customer-hero-reward-photo-v468) so the two surfaces show a gift the same way. The grid keeps
    its fixed repeat(5,28px) tracks, so the card still wraps exactly where the workspace editor's
    grid does — the photo takes the ~154px that were empty beside it, not space from the stamps. */
+/* nestly_v478 (owner photo 3: a "?" drawn in the card's top-right). Positioned rather than placed
+   in the flow: the STAMPS pill and the counter own that row on the reward pages, and the stamp
+   page has neither — so the control takes the corner the owner drew it in without pushing the grid
+   down. z-index clears the card's decorative watermark. */
+.customer-hero-stamp-help-v478{position:absolute;top:0;right:0;z-index:2}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468{
+  background:rgba(120,21,16,.24);border-color:rgba(255,255,255,.55);color:#fff}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:hover,
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:focus-visible{
+  color:#fff;border-color:#fff;background:rgba(120,21,16,.4)}
 .customer-hero-stamp-body-v475{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-stamp-copy-v475{min-width:0}
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
-  box-shadow:0 10px 20px rgba(83,26,21,.22);margin-top:15px}
+  box-shadow:0 10px 20px rgba(83,26,21,.22);
+  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
+     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
+     condition, so the two always appear together and this needs no conditional rule. Measured: at
+     15px the control overlapped the image by 11px. */
+  margin-top:34px}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}
@@ -5224,7 +5239,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 73846e3d9fe6</span>
+<span class="v105-provenance">v105 production-component harness · e3c22b41ea95</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5349,7 +5364,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'73846e3d9fe68d17a92290a5454327a85438efacb32a0d2c126652d1ddcfee1f',
+  sourceHash:'e3c22b41ea95d2130e41f842e9bf6d4a95c28631ac8a6aeb3f9fc8ac16d45c5d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

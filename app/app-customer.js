@@ -3185,12 +3185,6 @@ function customerRewardEndsLineV471(reward={}){
   return `<p class="customer-reward-ends-v471" data-customer-reward-ends-v471>${
     esc(`Expires on ${walletDate(raw)} — redeem before then to enjoy this gift!`)}</p>`;
 }
-/* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
-   control in the same corner. Text "?" rather than the info glyph — it is what the owner drew,
-   and a question mark reads at a glance for a customer who does not read English well. */
-function customerRewardHelpButtonV468(attribute,value,label){
-  return `<button class="customer-reward-help-v468" type="button" ${attribute}="${esc(String(value||''))}" aria-label="${esc(`Rules for ${label||'this reward'}`)}" title="Reward rules"><span aria-hidden="true">?</span></button>`;
-}
 function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
   const name=String(business?.name||'').trim()||'Your business',
     industry=String(business?.industry||'').trim();
@@ -3772,7 +3766,16 @@ function stampQuestNormaliseV323(card){
          ... The photo must also be shown in the empty space I circled"). customer_get_stamp_card_v323
          has emitted image_ref per milestone all along; this normaliser simply never carried it, so
          the stamp hero had no photo to draw even when the gift had one. */
-      imageRef:String(rung?.image_ref||'').trim()}))
+      imageRef:String(rung?.image_ref||'').trim(),
+      /* nestly_v478 (owner, photo 3: a "?" drawn onto the stamp card page — "i need the '?' to
+         appear here as well"). customer_get_stamp_card_v323 has always sent the whole gift with
+         each milestone; the normaliser kept only what the grid drew. These are the fields
+         showCustomerRewardRulesV468 reads, so the stamp page's "?" opens the SAME sheet the
+         reward pages' "?" opens, built from the milestone rather than from a second lookup. */
+      rewardId:String(rung?.reward_id||''),
+      description:String(rung?.description||''),
+      terms:String(rung?.terms||''),
+      instructions:String(rung?.instructions||'')}))
     .filter(rung=>rung.slot>0)
     .sort((a,b)=>a.slot-b.slot);
   return {slots,filled,
@@ -4065,7 +4068,23 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
   const seen=new Set();
   const unitWord=ct(unit==='stamps'?'stamps':unit||'points');
   customerHeroRewardRowsV471=[];
-  const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{
+  /* nestly_v478 (owner, photo 2: "first swipe should reflect the 'next rewards' - in this case is
+     'have a cup of milk tea' not 'free kopi set'. sequence must be correct").
+     The pages were emitted in whatever order the catalogue returned, which is the firm's own sort
+     — so a customer two stamps into a ten-stamp card was shown the gift they are furthest from
+     first. The swipe now runs NEAREST FIRST: the gift they will reach soonest, then the next,
+     then the far one, which is the order they will actually earn them in and the order the owner
+     asked for.
+     Sorted by COST, not by "how many more do I need", because the two only differ for a gift the
+     customer can already claim — and a claimable gift is not a thing they are working toward, so
+     letting it jump the queue would reorder the swipe every time a stamp lands. Cost is stable.
+     A tie keeps the firm's own sort, so two gifts at the same price stay in the order the owner
+     arranged them. .slice() because sort mutates, and this array belongs to the caller. */
+  const orderedRewardsV478=(Array.isArray(rewards)?rewards:[]).slice().sort((a,b)=>{
+    const costOf=item=>{const value=Number(item?.cost_points??item?.cost_units);return Number.isFinite(value)?value:Number.POSITIVE_INFINITY};
+    return costOf(a)-costOf(b);
+  });
+  const pages=orderedRewardsV478.map(reward=>{
     const name=String(reward?.customer_name||reward?.name||'').trim();
     const cost=Number(reward?.cost_points??reward?.cost_units);
     /* A cost of 0 is a real, immediately-claimable reward. Only an unreadable or negative cost
@@ -6000,6 +6019,20 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            has since been deleted drops the image AND its column, so the card collapses back to
            one column instead of leaving a hole. Wired here rather than inline because the app
            runs under a CSP with no inline handlers. */
+        /* nestly_v478: the stamp page's "?" opens the shared rules sheet, built from the
+           milestone beside it. `unit` is stamps by definition on this card, and the slot IS the
+           price, so the sheet's "What it costs" row reads in the card's own units. */
+        heroSlotV422.querySelectorAll('[data-hero-stamp-rules-v478]').forEach(button=>{
+          button.onclick=()=>{
+            const rung=quest?.next;
+            if(!rung)return;
+            showCustomerRewardRulesV468({
+              customer_name:rung.name,cost_points:rung.slot,
+              description:rung.description,terms:rung.terms,instructions:rung.instructions,
+              expires_at:rung.expiresAt||null
+            },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
+          };
+        });
         heroSlotV422.querySelectorAll('[data-hero-stamp-photo-v475]').forEach(image=>{
           image.onerror=()=>{
             image.closest('.customer-hero-stampcard-v422')?.classList.remove('customer-hero-stamp-has-photo-v475');

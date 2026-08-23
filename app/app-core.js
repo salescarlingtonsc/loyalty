@@ -3351,6 +3351,12 @@ function cssUrlValueV421(url){
    editor are the SAME sentence. Two copies would have drifted the first time either was touched,
    and the owner's whole point is that they can see the default before overriding it. */
 const CUSTOMER_REWARD_WHERE_DEFAULT_V477='Valid across all eligible services and locations.';
+/* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
+   control in the same corner. Text "?" rather than the info glyph — it is what the owner drew,
+   and a question mark reads at a glance for a customer who does not read English well. */
+function customerRewardHelpButtonV468(attribute,value,label){
+  return `<button class="customer-reward-help-v468" type="button" ${attribute}="${esc(String(value||''))}" aria-label="${esc(`Rules for ${label||'this reward'}`)}" title="Reward rules"><span aria-hidden="true">?</span></button>`;
+}
 /* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
    for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
    read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
@@ -4405,8 +4411,14 @@ function customerHeroStampCardV422(quest){
      for the swipe and the same gift named on the card cannot look like two different products.
      A milestone with no photo renders one column and the card is byte-identical to before. */
   const photoV475=customerMediaUrlV95(next?.imageRef);
+  /* nestly_v478: the same control the reward pages carry, over the gift this card is working
+     toward. A card with every milestone claimed has no `next` and so draws no "?" — a rules sheet
+     about nothing is a button that lies. Keyed by nothing: the sheet is built from the milestone
+     the button sits beside, so there is no id to look up and nothing to go stale. */
+  const helpV478=next?customerRewardHelpButtonV468('data-hero-stamp-rules-v478','1',next.name||'this reward'):'';
   const gridV475=`<div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
   return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoV475?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
+    ${helpV478?`<div class="customer-hero-stamp-help-v478">${helpV478}</div>`:''}
     <div class="customer-hero-stamp-body-v475">
       <div class="customer-hero-stamp-copy-v475">
         ${gridV475}

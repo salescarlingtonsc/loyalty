@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="a9eeda0ded7232c3b30b853351f5880459bb60dacfae264112fbdbfd1c4cbaef"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0bd542de88f8d2aa0adca29e584215d9bbfa07566a9891832b19189253d03979"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3744,12 +3744,27 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    (.customer-hero-reward-photo-v468) so the two surfaces show a gift the same way. The grid keeps
    its fixed repeat(5,28px) tracks, so the card still wraps exactly where the workspace editor's
    grid does — the photo takes the ~154px that were empty beside it, not space from the stamps. */
+/* nestly_v478 (owner photo 3: a "?" drawn in the card's top-right). Positioned rather than placed
+   in the flow: the STAMPS pill and the counter own that row on the reward pages, and the stamp
+   page has neither — so the control takes the corner the owner drew it in without pushing the grid
+   down. z-index clears the card's decorative watermark. */
+.customer-hero-stamp-help-v478{position:absolute;top:0;right:0;z-index:2}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468{
+  background:rgba(120,21,16,.24);border-color:rgba(255,255,255,.55);color:#fff}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:hover,
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:focus-visible{
+  color:#fff;border-color:#fff;background:rgba(120,21,16,.4)}
 .customer-hero-stamp-body-v475{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-stamp-copy-v475{min-width:0}
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
-  box-shadow:0 10px 20px rgba(83,26,21,.22);margin-top:15px}
+  box-shadow:0 10px 20px rgba(83,26,21,.22);
+  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
+     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
+     condition, so the two always appear together and this needs no conditional rule. Measured: at
+     15px the control overlapped the image by 11px. */
+  margin-top:34px}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}

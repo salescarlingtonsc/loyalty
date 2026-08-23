@@ -110,6 +110,9 @@ test('v471 "not counted here" is not the same claim as "the server could not ans
    harness supplies the media resolver the shipped function now calls. Identity, because the URL is
    not what these assertions are about. */
 const heroCard=new Function('esc','ct','CUI','customerMediaUrlV95',`
+  ${/* nestly_v478 put the shared "?" on the stamp card too (owner photo 3), so the harness needs
+       the real factory — stubbing the control under test would prove nothing about it. */''}
+  ${statement('function customerRewardHelpButtonV468(','\n}')}
   ${statement('const HERO_STAMP_COMPACT_FROM_V422=','\n}')}
   return customerHeroStampCardV422;
 `)(esc,()=>'progress',{icon:()=>'<svg data-gift></svg>'},value=>String(value||''));
@@ -289,4 +292,75 @@ test('v472 the watch is bounded — it never polls for the rest of the afternoon
     'seed then fire: opening the sheet must not replay the last thing that happened');
   const window = statement('const CUSTOMER_TILL_WATCH_WINDOW_MS_V472=', ';');
   assert.match(window, /=90000;/);
+});
+
+/* ------------------------------------------------- v478: sequence, and the "?" on the card --- */
+/* Owner, photo 2: "first swipe should reflect the 'next rewards' - in this case is 'have a cup of
+   milk tea' not 'free kopi set'. sequence must be correct".
+   Owner, photo 3: a "?" drawn on the stamp card page — "i need the '?' to appear here as well". */
+
+const orderPagesV478 = new Function('rewards', `
+  ${statement('  const orderedRewardsV478=', '\n  });')}
+  return orderedRewardsV478.map(r=>r.customer_name);
+`);
+
+test('v478 the swipe runs nearest-first, so the gift they reach soonest leads', () => {
+  /* The owner's own card: gifts on 2, 4 and 10, returned by the catalogue in the firm's sort. */
+  const catalogue = [
+    {customer_name: 'Free Kopi Set', cost_points: 10},
+    {customer_name: 'Lattee', cost_points: 2},
+    {customer_name: 'Hava a cup of Milk Tea!', cost_points: 4},
+  ];
+  assert.deepEqual(orderPagesV478(catalogue),
+    ['Lattee', 'Hava a cup of Milk Tea!', 'Free Kopi Set'],
+    'Free Kopi Set led the swipe on a card the customer was 8 stamps away from finishing');
+});
+
+test('v478 the ordering is by cost, not by distance, so a stamp landing cannot reshuffle it', () => {
+  /* Distance would reorder the swipe every time a stamp lands — a claimable gift has distance 0
+     and would jump the queue. Cost is stable, which is why it is what the sort reads. */
+  const catalogue = [
+    {customer_name: 'far', cost_points: 10},
+    {customer_name: 'near', cost_points: 2},
+  ];
+  assert.deepEqual(orderPagesV478(catalogue), ['near', 'far']);
+  assert.deepEqual(orderPagesV478(catalogue), ['near', 'far'], 'and it does not depend on balance');
+});
+
+test('v478 a tie keeps the firm\'s own arrangement, and an unreadable cost sinks', () => {
+  assert.deepEqual(orderPagesV478([
+    {customer_name: 'b', cost_points: 5},
+    {customer_name: 'a', cost_points: 5},
+  ]), ['b', 'a'], 'two gifts at one price stay in the order the owner arranged them');
+  assert.deepEqual(orderPagesV478([
+    {customer_name: 'broken'},
+    {customer_name: 'real', cost_points: 3},
+  ]), ['real', 'broken'], 'a row with no readable cost must not lead the swipe');
+});
+
+test('v478 the sort does not mutate the caller\'s array', () => {
+  const catalogue = [{customer_name: 'far', cost_points: 9}, {customer_name: 'near', cost_points: 1}];
+  orderPagesV478(catalogue);
+  assert.equal(catalogue[0].customer_name, 'far', 'loadRewards still owns this array');
+});
+
+test('v478 the stamp card carries the same "?", and only when there is a gift to explain', () => {
+  const withNext = heroCard({slots: 10, shown: 2, carried: 0,
+    milestones: [{slot: 4, name: 'Hava a cup of Milk Tea!'}],
+    next: {slot: 4, name: 'Hava a cup of Milk Tea!'}});
+  assert.match(withNext, /data-hero-stamp-rules-v478/, 'the control the owner drew in the corner');
+  assert.match(withNext, /Rules for Hava a cup of Milk Tea!/, 'and it names what it explains');
+  /* A card whose milestones are all claimed has no `next`. A rules sheet about nothing is a
+     button that lies, so it is not drawn at all. */
+  const allClaimed = heroCard({slots: 10, shown: 10, carried: 0, milestones: [], next: null});
+  assert.doesNotMatch(allClaimed, /data-hero-stamp-rules-v478/);
+});
+
+test('v478 the milestone carries what the rules sheet reads, so there is no second lookup', () => {
+  const src = statement('function stampQuestNormaliseV323(', '\n}');
+  for (const field of ['rewardId', 'description', 'terms', 'instructions', 'imageRef']) {
+    assert.match(src, new RegExp(`${field}:`), `${field} must survive the normaliser`);
+  }
+  /* customer_get_stamp_card_v323 has always sent these; the normaliser kept only what the grid
+     drew, which is why the stamp page could never open a rules sheet. */
 });

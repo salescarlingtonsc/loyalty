@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 399,
-  "executableCount": 385,
+  "itemCount": 400,
+  "executableCount": 386,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -3788,6 +3788,14 @@
       "semanticVersion": "v477",
       "proposedDeployVersion": "20260823000012",
       "sha256": "2cf401de057aa384c9e768c0ce5541f8841f2e50b5cf1ca488a25df1dae7e3e3"
+    },
+    {
+      "order": 400,
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql",
+      "semanticVersion": "v478",
+      "proposedDeployVersion": "20260824000001",
+      "sha256": "b9097ab6d0f37e8f1baf6500a19192352cc3b41f586e8a22002b0038e31a553f"
     }
   ]
 }

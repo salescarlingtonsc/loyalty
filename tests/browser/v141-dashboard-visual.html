@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="690d784fe8178f9f2216581bf1208a47a537b4707a63421da8e38d218c10395e"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="492e51c45dc1685222e1d0b2648723f69c5d788b385ac07538d412000560b294"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3746,12 +3746,27 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    (.customer-hero-reward-photo-v468) so the two surfaces show a gift the same way. The grid keeps
    its fixed repeat(5,28px) tracks, so the card still wraps exactly where the workspace editor's
    grid does — the photo takes the ~154px that were empty beside it, not space from the stamps. */
+/* nestly_v478 (owner photo 3: a "?" drawn in the card's top-right). Positioned rather than placed
+   in the flow: the STAMPS pill and the counter own that row on the reward pages, and the stamp
+   page has neither — so the control takes the corner the owner drew it in without pushing the grid
+   down. z-index clears the card's decorative watermark. */
+.customer-hero-stamp-help-v478{position:absolute;top:0;right:0;z-index:2}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468{
+  background:rgba(120,21,16,.24);border-color:rgba(255,255,255,.55);color:#fff}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:hover,
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:focus-visible{
+  color:#fff;border-color:#fff;background:rgba(120,21,16,.4)}
 .customer-hero-stamp-body-v475{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-stamp-copy-v475{min-width:0}
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
-  box-shadow:0 10px 20px rgba(83,26,21,.22);margin-top:15px}
+  box-shadow:0 10px 20px rgba(83,26,21,.22);
+  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
+     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
+     condition, so the two always appear together and this needs no conditional rule. Measured: at
+     15px the control overlapped the image by 11px. */
+  margin-top:34px}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}
@@ -5520,6 +5535,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'690d784fe8178f9f2216581bf1208a47a537b4707a63421da8e38d218c10395e',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'492e51c45dc1685222e1d0b2648723f69c5d788b385ac07538d412000560b294',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

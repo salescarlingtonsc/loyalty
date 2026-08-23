@@ -252,7 +252,10 @@ test('C3 · the avatar/name row drops clear of the artwork, and the copy follows
 
 const heroPagesSrc = sliceBetween(
   app,
-  '  const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{',
+  /* nestly_v478 sorts the catalogue nearest-first before mapping it to pages (owner: "sequence
+     must be correct"), so the map now runs over orderedRewardsV478. The slice starts at the map
+     itself — the ordering is asserted in the v478 suite, not here. */
+  '  const pages=orderedRewardsV478.map(reward=>{',
   '\n  }).filter(Boolean);\n',
   'hero reward pages',
 );
@@ -275,6 +278,11 @@ const buildHeroPages = new Function('CUI', 'rewards', 'held', 'unit', 'redemptio
   const unitWord=unit==='stamps'?'stamps':(unit||'points');
   const seen=new Set();
   const heroName='',heroCost=NaN,bookAction='';
+  /* nestly_v478: the shipped function maps over the nearest-first ordering rather than the raw
+     catalogue. C4 feeds one reward at a time, so the ordering is a no-op here — it is bound to the
+     input so the slice below runs unchanged, and the ordering itself is asserted in the v478
+     suite where a multi-reward fixture can actually tell the difference. */
+  const orderedRewardsV478=Array.isArray(rewards)?rewards:[];
   ${heroPagesSrc}
   return pages;`);
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="38aa067d75c78d5b4c51414e6e7b6b134b2462bd7d762618e021e3be7f0a7286"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="a9fe62c8705832f13e14d2247436fe6bf81b1026f6a9cd890ab8a85560460685"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3745,12 +3745,27 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    (.customer-hero-reward-photo-v468) so the two surfaces show a gift the same way. The grid keeps
    its fixed repeat(5,28px) tracks, so the card still wraps exactly where the workspace editor's
    grid does — the photo takes the ~154px that were empty beside it, not space from the stamps. */
+/* nestly_v478 (owner photo 3: a "?" drawn in the card's top-right). Positioned rather than placed
+   in the flow: the STAMPS pill and the counter own that row on the reward pages, and the stamp
+   page has neither — so the control takes the corner the owner drew it in without pushing the grid
+   down. z-index clears the card's decorative watermark. */
+.customer-hero-stamp-help-v478{position:absolute;top:0;right:0;z-index:2}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468{
+  background:rgba(120,21,16,.24);border-color:rgba(255,255,255,.55);color:#fff}
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:hover,
+.customer-hero-stamp-help-v478 .customer-reward-help-v468:focus-visible{
+  color:#fff;border-color:#fff;background:rgba(120,21,16,.4)}
 .customer-hero-stamp-body-v475{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-stamp-copy-v475{min-width:0}
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
-  box-shadow:0 10px 20px rgba(83,26,21,.22);margin-top:15px}
+  box-shadow:0 10px 20px rgba(83,26,21,.22);
+  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
+     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
+     condition, so the two always appear together and this needs no conditional rule. Measured: at
+     15px the control overlapped the image by 11px. */
+  margin-top:34px}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}
@@ -4410,7 +4425,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 38aa067d75c78d5b4c51414e6e7b6b134b2462bd7d762618e021e3be7f0a7286</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · a9fe62c8705832f13e14d2247436fe6bf81b1026f6a9cd890ab8a85560460685</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -27527,6 +27542,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'38aa067d75c78d5b4c51414e6e7b6b134b2462bd7d762618e021e3be7f0a7286',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'a9fe62c8705832f13e14d2247436fe6bf81b1026f6a9cd890ab8a85560460685',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
