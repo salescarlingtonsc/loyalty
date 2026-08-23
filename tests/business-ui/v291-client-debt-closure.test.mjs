@@ -180,7 +180,11 @@ test('V291 blocked time is visible in the List view and the mobile week agenda',
   assert.match(code,/id="appointmentBlockSeg"/);
   // Week agenda (the 390px week view) carries the rows plus their controls.
   assert.match(code,/const blockedAgendaV291=canWrite\?calendarBlocks\.map\(block=>\{/);
-  assert.match(code,/<div class="calendar-agenda">\$\{agenda\|\|\(blockedAgendaV291\?''/);
+  /* V468 widened this guard: the week agenda now also carries pending booking-request rows, so
+     the "No appointments this week" empty state is suppressed when EITHER kind of row exists. The
+     V291 guarantee — blocked rows are never hidden behind that empty state — is unchanged. */
+  assert.match(code,/<div class="calendar-agenda">\$\{agenda\|\|\(blockedAgendaV291\|\|pendingAgendaV468\?''/);
+  assert.match(code,/\}\)\.join\(''\);\s*\n\s*const blockedAgendaV291=/);
 });
 
 test('V291 a table type can be renamed and re-counted, not only switched off',()=>{

@@ -2530,7 +2530,10 @@ function openBookingRequestPopupV329(row){
     </div>
   </div></div>`);
   let deactivate;
-  const close=()=>{if(deactivate)deactivate();else $('bookingRequestPopupV329')?.remove();};
+  /* V468: close() now FORWARDS its options. It swallowed them, so dialogHandOffNavV468's
+     {handOffHistory:true} would have been dropped and the hand-off below silently reverted to the
+     broken back()-races-nav() shape it exists to prevent. */
+  const close=options=>{if(deactivate)deactivate(options);else $('bookingRequestPopupV329')?.remove();};
   deactivate=CUI.activateDialog($('bookingRequestPopupV329'),{onClose:close,initialFocus:'#bookingRequestPopupConfirmV329'});
   $('bookingRequestPopupCloseV329').onclick=close;
   $('bookingRequestPopupConfirmV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'confirm',{
@@ -2538,14 +2541,19 @@ function openBookingRequestPopupV329(row){
     startsAt:row.preferred_at,location:row.branches?.address
   });};
   $('bookingRequestPopupDeclineV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'decline');};
+  /* V468 (owner ringed "Check availability": "bring me to the appointment module (calendar
+     view)"). It already built the right destination — the request's date, its team member and a
+     highlight — and then threw it away: close() unwinds the dialog's history entry with an
+     ASYNCHRONOUS history.back(), so the queued pop landed after nav() had set the hash and put the
+     page straight back. Nothing moved. The same defect, and the same established fix, as the three
+     dashboard tiles earlier in this batch. */
   $('bookingRequestPopupAvailV329').onclick=()=>{
-    close();
     const params=new URLSearchParams();
     const date=String(row.preferred_at||'').slice(0,10);
     if(date)params.set('date',date);
     if(row.staff_id)params.set('staff',row.staff_id);
     params.set('highlight',row.id);
-    nav('#/appointments?'+params.toString());
+    dialogHandOffNavV468(close,'#/appointments?'+params.toString());
   };
 }
 async function initNotifications(){
@@ -24074,14 +24082,47 @@ async function appointmentsPage(){
       start:minuteClock(eventParts(editingBlockV291.starts_at).minutes),
       end:minuteClock(eventParts(editingBlockV291.ends_at).minutes)
     }:null;
+    /* V468 (owner: "I also need to be able to block whole day in case of mc or leave. Or off
+       days."). Recurring weekly off days are NOT built here — Operations Setup → Staff Members →
+       Working hours already expresses "every Wed off" per weekday, and a second place to say the
+       same thing is a second place for the two to disagree (owner ruling). This is the one-off
+       half: a whole day, and a run of whole days.
+
+       WHY 00:00–23:59 AND NOT THE BRANCH'S OPENING HOURS. The slot generator
+       (public.internal_public_booking_availability, as re-defined by v383) builds each person's
+       window as `coalesce(staff_hours.starts_at, branch_hours.opens_at)` — the branch row is only
+       LEFT JOINed when that teammate has NO staff_hours at all. A teammate whose own hours run
+       past the branch's therefore gets offered slots OUTSIDE branch opening hours, so branch hours
+       are not an upper bound on what a customer can be shown and a block sized to them would leave
+       bookable slots on a day marked MC. Midnight to 23:59 local is the only span that provably
+       covers every slot the engine can generate, which is what this app's fail-closed availability
+       rule demands. Both readers refuse an overlapping slot — the public availability list
+       (`staff_blocked_times` NOT EXISTS clause) and app.staff_free_for_appointment_v120_base, which
+       every internal booking path reaches — so one whole-day row closes the day on both sides.
+
+       WHY ONE ROW PER DAY. create_staff_blocked_time_v120 refuses a block whose start and end fall
+       on different branch-local dates ('blocked time must stay within one active branch day'), so
+       a week of leave cannot be one row. The existing writer is reused unchanged, once per day,
+       each with its own idempotency key derived from the one attempt key — a retry of the same
+       range replays rather than duplicating. */
+    const ALL_DAY_START_V468='00:00',ALL_DAY_END_V468='23:59';
+    const MAX_BLOCK_DAYS_V468=92;
+    const editingAllDayV468=!!editParts&&editParts.start===ALL_DAY_START_V468&&editParts.end===ALL_DAY_END_V468;
     const dialog=document.createElement('div');
     dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
     dialog.setAttribute('aria-labelledby','blockTimeTitle');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)"><div class="row"><div><h2 id="blockTimeTitle">${editingBlockV291?'Edit blocked time':'Block time'}</h2><p class="muted small" style="margin-top:4px">Mark one team member unavailable in this branch. Customers never see the reason.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="blockTimeClose" aria-label="Close blocked time">Close</button></div>
       ${people.length?`<form id="blockTimeForm" style="margin-top:16px">
         <label for="blockTimeStaff">Team member</label><select id="blockTimeStaff" required>${people.map(person=>`<option value="${person.id}" ${editingBlockV291&&editingBlockV291.staff_id===person.id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select>
-        <label for="blockTimeDate">Date</label><input id="blockTimeDate" type="date" required value="${esc(editParts?editParts.date:date)}">
-        <div class="split"><div><label for="blockTimeStart">Start</label><input id="blockTimeStart" type="time" step="900" required value="${esc(editParts?editParts.start:'14:00')}"></div><div><label for="blockTimeEnd">End</label><input id="blockTimeEnd" type="time" step="900" required value="${esc(editParts?editParts.end:'15:00')}"></div></div>
+        ${editingBlockV291
+          ?`<label for="blockTimeDate">Date</label><input id="blockTimeDate" type="date" required value="${esc(editParts.date)}">`
+          :`<div class="split"><div><label for="blockTimeDate">First day</label><input id="blockTimeDate" type="date" required value="${esc(date)}"></div><div><label for="blockTimeDateEnd">Last day (optional)</label><input id="blockTimeDateEnd" type="date" min="${esc(date)}" value=""></div></div>
+        <p class="muted small" style="margin-top:6px">Leave the last day empty for a single day. A run of days is saved as one blocked day at a time.</p>`}
+        <label class="checkrow" for="blockTimeAllDay">
+          <input id="blockTimeAllDay" type="checkbox" ${editingAllDayV468?'checked':''}>
+          <span><b>All day</b><br><span class="muted small">For MC, leave or a day off. Nothing can be booked with them on the days you pick.</span></span>
+        </label>
+        <div class="split" id="blockTimeHoursV468" ${editingAllDayV468?'hidden':''}><div><label for="blockTimeStart">Start</label><input id="blockTimeStart" type="time" step="900" required value="${esc(editParts&&!editingAllDayV468?editParts.start:'14:00')}"></div><div><label for="blockTimeEnd">End</label><input id="blockTimeEnd" type="time" step="900" required value="${esc(editParts&&!editingAllDayV468?editParts.end:'15:00')}"></div></div>
         <label for="blockTimeReason">Reason (optional)</label><input id="blockTimeReason" maxlength="160" autocomplete="off" placeholder="e.g. Supplier training" value="${esc(editingBlockV291?.reason||'')}">
         ${editingBlockV291?'<p class="muted small" style="margin-top:8px">Saving removes this blocked time and writes the corrected one. If the new time is refused, the original is put back.</p>':''}
         <div id="blockTimeError" role="alert"></div><div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="blockTimeCancel">Cancel</button><button type="submit" class="btn" id="blockTimeSave">${editingBlockV291?'Save changes':'Save block'}</button></div>
@@ -24093,17 +24134,46 @@ async function appointmentsPage(){
     $('blockTimeClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     if(!people.length)return;
     $('blockTimeCancel').onclick=close;
+    /* V468: ticking All day does not just ignore the hour inputs, it hides them. Leaving two live
+       time fields on screen that no longer decide anything is how an owner ends up believing a
+       whole-day MC runs 14:00–15:00. */
+    const allDayToggleV468=$('blockTimeAllDay');
+    if(allDayToggleV468)allDayToggleV468.onchange=()=>{
+      const hours=$('blockTimeHoursV468');
+      if(hours)hours.hidden=allDayToggleV468.checked;
+    };
+    /* V468: the last day can never precede the first, so the picker itself says so rather than
+       waiting for the submit to refuse. The submit still checks — a date input's min is a hint on
+       some platforms, not a guarantee. */
+    const firstDayInputV468=$('blockTimeDate'),lastDayInputV468=$('blockTimeDateEnd');
+    if(firstDayInputV468&&lastDayInputV468)firstDayInputV468.onchange=()=>{
+      lastDayInputV468.min=firstDayInputV468.value||'';
+      if(lastDayInputV468.value&&lastDayInputV468.value<firstDayInputV468.value)lastDayInputV468.value='';
+    };
     $('blockTimeForm').onsubmit=async event=>{
       event.preventDefault();
-      const dateValue=$('blockTimeDate').value,startValue=$('blockTimeStart').value,endValue=$('blockTimeEnd').value;
-      const starts=sgIso(`${dateValue}T${startValue}`),ends=sgIso(`${dateValue}T${endValue}`);
       const errorHost=$('blockTimeError'),save=$('blockTimeSave');
-      if(!starts||!ends||new Date(ends)<=new Date(starts)){
+      const allDayV468=!!$('blockTimeAllDay')?.checked;
+      const dateValue=$('blockTimeDate').value;
+      const lastDayV468=(editingBlockV291?'':$('blockTimeDateEnd')?.value||'')||dateValue;
+      const startValue=allDayV468?ALL_DAY_START_V468:$('blockTimeStart').value;
+      const endValue=allDayV468?ALL_DAY_END_V468:$('blockTimeEnd').value;
+      if(!dateValue){errorHost.innerHTML='<div class="err">Pick a date.</div>';return}
+      if(lastDayV468<dateValue){
+        errorHost.innerHTML='<div class="err">The last day cannot be before the first day.</div>';return;
+      }
+      const daysV468=[];
+      for(let cursor=dateValue;cursor<=lastDayV468&&daysV468.length<=MAX_BLOCK_DAYS_V468;cursor=addDays(cursor,1))daysV468.push(cursor);
+      if(daysV468.length>MAX_BLOCK_DAYS_V468){
+        errorHost.innerHTML=`<div class="err">Block at most ${MAX_BLOCK_DAYS_V468} days at a time. Split a longer absence into two.</div>`;return;
+      }
+      const spansV468=daysV468.map(day=>({day,starts:sgIso(`${day}T${startValue}`),ends:sgIso(`${day}T${endValue}`)}));
+      if(spansV468.some(span=>!span.starts||!span.ends||new Date(span.ends)<=new Date(span.starts))){
         errorHost.innerHTML='<div class="err">End time must be later than start time on the same day.</div>';return;
       }
-      const request={p_business:S.biz.id,p_branch:branchId,p_staff:$('blockTimeStaff').value,
-        p_starts:starts,p_ends:ends,p_reason:$('blockTimeReason').value.trim()||null};
-      const fingerprint=JSON.stringify(request);
+      const staffValueV468=$('blockTimeStaff').value,reasonValueV468=$('blockTimeReason').value.trim()||null;
+      const fingerprint=JSON.stringify({business:S.biz.id,branch:branchId,staff:staffValueV468,
+        reason:reasonValueV468,spans:spansV468});
       if(!blockCreateAttempt||blockCreateAttempt.fingerprint!==fingerprint){
         blockCreateAttempt={fingerprint,key:crypto.randomUUID()};
       }
@@ -24117,12 +24187,23 @@ async function appointmentsPage(){
           errorHost.innerHTML=`<div class="err">${esc(removal.error.message||'This blocked time could not be changed. Nothing was altered.')}</div>`;return;
         }
       }
-      const {data,error}=await sb.rpc('create_staff_blocked_time_v120',{
-        ...request,p_idempotency_key:blockCreateAttempt.key
-      });
-      if(!isCurrent()||!dialog.isConnected)return;
+      /* V468: one write per day, because the v120 writer refuses a block that crosses a branch-
+         local date boundary. Each day carries its own key derived from the single attempt key, so
+         pressing Save twice on the same range replays every day instead of doubling it. */
+      const failedV468=[];
+      let savedV468=0,lastDataV468=null;
+      for(const span of spansV468){
+        const {data,error}=await sb.rpc('create_staff_blocked_time_v120',{
+          p_business:S.biz.id,p_branch:branchId,p_staff:staffValueV468,
+          p_starts:span.starts,p_ends:span.ends,p_reason:reasonValueV468,
+          p_idempotency_key:`${blockCreateAttempt.key}:${span.day}`
+        });
+        if(!isCurrent()||!dialog.isConnected)return;
+        if(error)failedV468.push(`${span.day} \u2014 ${error.message||'refused'}`);
+        else{savedV468++;lastDataV468=data}
+      }
       save.disabled=false;
-      if(error){
+      if(failedV468.length){
         let restoredV291=true;
         if(editingBlockV291){
           const restore=await sb.rpc('create_staff_blocked_time_v120',{
@@ -24132,12 +24213,18 @@ async function appointmentsPage(){
           restoredV291=!restore.error;
           if(!isCurrent()||!dialog.isConnected)return;
         }
-        errorHost.innerHTML=`<div class="err">${esc(error.message||'Blocked time could not be saved. Retry keeps the same request.')}</div>${editingBlockV291?`<div class="${restoredV291?'muted small':'err'}" style="margin-top:6px">${restoredV291?'The original blocked time was put back.':'The original blocked time could NOT be put back \u2014 check the calendar before leaving this page.'}</div>`:''}`;
-        if(editingBlockV291)loadCalendar().catch(fail);
+        /* V468: a run of days is refused one day at a time — an appointment already sitting on the
+           Thursday refuses only the Thursday. The days that saved are kept and the refused ones are
+           named, because the writer offers no transaction across days and silently discarding four
+           saved days to punish the fifth would be the worse answer. */
+        errorHost.innerHTML=`<div class="err">${savedV468?`${savedV468} day${savedV468===1?'':'s'} blocked. `:''}${failedV468.length} day${failedV468.length===1?'':'s'} could not be blocked: ${esc(failedV468.join('; '))}</div>${editingBlockV291?`<div class="${restoredV291?'muted small':'err'}" style="margin-top:6px">${restoredV291?'The original blocked time was put back.':'The original blocked time could NOT be put back \u2014 check the calendar before leaving this page.'}</div>`:''}`;
+        if(savedV468||editingBlockV291)loadCalendar().catch(fail);
         return;
       }
       blockCreateAttempt=null;close();
-      toast(editingBlockV291?'Blocked time changed':(data?.replayed?'Blocked time was already saved':'Time blocked'));
+      toast(editingBlockV291?'Blocked time changed'
+        :spansV468.length>1?`${savedV468} days blocked`
+        :lastDataV468?.replayed?'Blocked time was already saved':'Time blocked');
       loadCalendar().catch(fail);
     };
   }
@@ -24721,11 +24808,22 @@ async function appointmentsPage(){
         .eq('business_id',S.biz.id).eq('branch_id',branchId).gte('starts_at',sgDateBoundary(start)).lt('starts_at',sgDateBoundary(end)).order('starts_at').order('id'))),
       fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
         p_from:sgDateBoundary(start),p_to:sgDateBoundary(end)}).order('starts_at').order('staff_id')),
-      /* V375 (owner, photo 19: the awaiting-confirmation card ringed, "move it into List"). The
-         requests are read by loadList now, over the list's own From/To window rather than the one
-         day the timeline is showing — so a request for next Tuesday is answerable without first
-         finding next Tuesday on the calendar. */
-      Promise.resolve({data:[],error:null})
+      /* V468 (owner: an arrow from the Appointments badge to a grey block in a teammate's column,
+         "should reflect in the calendar view as pending to confirm or reject ... different colour
+         coding for pending and confirmed"). V330 already drew those tiles; V375, moving the
+         awaiting-confirmation CARDS into the List tab, replaced this read with a literal empty
+         result — and the tiles are fed from the same `pendingRequests`, so they went dark with the
+         cards. The cards stay in List (V375 is not undone); the tiles come back, read over the
+         VISIBLE window so each request can be placed at its requested time in its requested
+         teammate's column. A single-branch business always has branch_id=null on its requests
+         (v327), so the filter is "this branch OR none on file" — the same one loadList uses. A
+         failed read costs the tiles only: `error` below still ignores it. */
+      canReadModule('bookings')
+        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min)',{count:'exact'})
+            .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
+            .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
+            .gte('preferred_at',sgDateBoundary(start)).lt('preferred_at',sgDateBoundary(end)).order('preferred_at'))
+        :Promise.resolve({data:[],error:null})
     ]);
     if(!stillCurrent())return;
     const error=appointmentResult.error||blockResult.error;
@@ -24734,7 +24832,11 @@ async function appointmentsPage(){
     }
     calendarItems=appointmentResult.data||[];
     calendarBlocks=(blockResult.data||[]).filter(block=>staffFilter==='all'||block.staff_id===staffFilter);
-    pendingRequests=pendingResult.error?[]:(pendingResult.data||[]);
+    /* V468: filtered exactly like calendarBlocks above — a staff filter hides that person's
+       pending requests too, and an unassigned request ("Anyone available") only survives the
+       "Everyone" view, where renderDay has an Unassigned column to put it in. */
+    pendingRequests=(pendingResult.error?[]:(pendingResult.data||[]))
+      .filter(request=>staffFilter==='all'||request.staff_id===staffFilter);
     if(view==='day')renderDay(start);else renderWeek(start);
   }
   async function loadList(){
@@ -25082,7 +25184,29 @@ async function appointmentsPage(){
       const row=pendingRequests.find(r=>r.id===button.dataset.pendingTile);
       if(row)openPendingRequestTileModalV330(row);
     });
+    /* V468: Confirm and Reject straight off the block. Same two calls the tile modal makes, so
+       there is still exactly one confirm path and one decline path — reading the contact details
+       from pendingRequestContactDetailsV330 means a confirm from here still offers the WhatsApp
+       hand-off V330 built, rather than quietly being a lesser confirm. */
+    routeMain.querySelectorAll('[data-pending-tile-confirm]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      const id=button.dataset.pendingTileConfirm;
+      await decideBookingRequestGlobalV329(id,'confirm',pendingRequestContactDetailsV330(id));
+      if(isCurrent())loadAppointmentsGuardedV288();
+    });
+    routeMain.querySelectorAll('[data-pending-tile-reject]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      await decideBookingRequestGlobalV329(button.dataset.pendingTileReject,'decline');
+      if(isCurrent())loadAppointmentsGuardedV288();
+    });
   }
+  /* V468: an all-day block (00:00–23:59, what the new All day tick writes) must not drag the
+     timeline's auto-range out to a full 24 hours — that turned a one-line "on leave" into a
+     4,000-pixel scroll on every other day the person is working. It is excluded from the range
+     maths and then CLAMPED into whatever range the real appointments produced, so it still covers
+     the whole visible track. Clamping is applied to every block, not only these: a block that
+     merely starts before the first appointment used to be drawn at a negative offset. */
+  const isAllDayBlockV468=block=>eventParts(block.starts_at).minutes<=0&&eventParts(block.ends_at).minutes>=1439;
   function renderDay(day){
     const selectedTiming=selectedCalendarServiceTiming();
     const people=branchStaff(branchId);
@@ -25099,7 +25223,13 @@ async function appointmentsPage(){
     }));
     if(staffFilter==='all'){
       const unassigned=calendarItems.filter(item=>!item.staff_id||!knownStaffIds.has(item.staff_id));
-      if(unassigned.length)columns.push({id:'',label:'Unassigned',color:'#8B8791',items:unassigned,blocks:[],schedule:{state:'unknown',label:'No assigned team member',breaks:[]}});
+      /* V468: a request that named nobody ("Anyone available") has no column to sit in, and the
+         Unassigned column V330 shipped carried no `pending` key at all — so the moment this data
+         came back (see loadCalendar) every read of column.pending below would have thrown on it.
+         Both are fixed by giving the column its own bucket and creating it when EITHER kind of row
+         needs it: an unnamed request is still a decision the owner has to make. */
+      const unassignedPendingV468=pendingRequests.filter(item=>!item.staff_id||!knownStaffIds.has(item.staff_id));
+      if(unassigned.length||unassignedPendingV468.length)columns.push({id:'',label:'Unassigned',color:'#8B8791',items:unassigned,blocks:[],pending:unassignedPendingV468,schedule:{state:'unknown',label:'No assigned team member',breaks:[]}});
     }
     const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(`${day}T12:00:00+08:00`));
     if(!columns.length){
@@ -25108,7 +25238,7 @@ async function appointmentsPage(){
     }
     const eventMinutes=columns.flatMap(column=>column.items.flatMap(item=>[eventParts(item.starts_at).minutes,eventParts(item.ends_at).minutes]));
     const scheduleMinutes=columns.filter(column=>column.schedule.state==='working').flatMap(column=>[column.schedule.start,column.schedule.end]);
-    const blockMinutes=columns.flatMap(column=>column.blocks.flatMap(block=>[eventParts(block.starts_at).minutes,eventParts(block.ends_at).minutes]));
+    const blockMinutes=columns.flatMap(column=>column.blocks.filter(block=>!isAllDayBlockV468(block)).flatMap(block=>[eventParts(block.starts_at).minutes,eventParts(block.ends_at).minutes]));
     const pendingMinutes=columns.flatMap(column=>column.pending.flatMap(item=>{
       const from=eventParts(item.preferred_at).minutes;
       return [from,from+(item.services?.duration_min||60)];
@@ -25135,6 +25265,14 @@ async function appointmentsPage(){
         const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
         const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
         return {sort:from.minutes,html:`<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</b></span><span><b>Blocked time</b><br><span class="muted small"><span data-merchant-content>${esc(column.label)}</span> · ${esc(reason)}</span></span></span>${canWrite&&block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:''}</div>`};
+      }),
+      /* V468: below 900px the pixel timeline is hidden and THIS agenda is the Day view, so a
+         pending request that only existed as a grid tile would be invisible on the phone the
+         owner actually carries — the same hole V291 closed for blocked time. Same tile modal,
+         same two inline decisions. */
+      ...column.pending.map(r=>{
+        const from=eventParts(r.preferred_at).minutes;
+        return {sort:from,html:`<div class="calendar-agenda-row calendar-agenda-pending-v468"><button type="button" class="calendar-agenda-item" data-pending-tile="${esc(r.id)}" style="width:100%;background:transparent;text-align:left"><span class="calendar-agenda-time"><b>${esc(minuteClock(from))}</b><br><span class="muted small">Pending</span></span><span><b>${esc(r.name||'Customer')}</b><br><span class="muted small">${esc(r.services?.name||'General visit')} · <span data-merchant-content>${esc(column.label)}</span></span></span></button>${canWrite?`<button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}">Reject</button>`:''}</div>`};
       })
     ]).sort((a,b)=>a.sort-b.sort);
     const dayAgendaV291=dayAgendaRowsV291.length
@@ -25165,7 +25303,8 @@ async function appointmentsPage(){
           }).join('');
           const breaks=schedule.breaks.map(row=>`<div class="day-break-window" style="top:${(row.start-rangeStart)/60*hourHeight}px;height:${(row.end-row.start)/60*hourHeight}px"><span>Branch break</span></div>`).join('');
           const blocks=column.blocks.map(block=>{
-            const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;
+            const rawFromV468=eventParts(block.starts_at).minutes,rawToV468=eventParts(block.ends_at).minutes;
+            const from=Math.max(rangeStart,rawFromV468),to=Math.min(rangeEnd,rawToV468);
             const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
             return `<div class="day-blocked-window" style="top:${(from-rangeStart)/60*hourHeight}px;height:${Math.max(44,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span>${canWrite&&block.id?`<button type="button" data-edit-block="${block.id}">Edit</button><button type="button" data-delete-block="${block.id}" ${workspaceTemplateAttributeV97('aria-label','deleteItem',{item:reason})}>Delete</button>`:''}</div>`;
           }).join('');
@@ -25186,10 +25325,25 @@ async function appointmentsPage(){
              two customers can be asked for the same slot at once, which that algorithm has no
              concept of, so a pending tile always takes the full column width and may legitimately
              overlap a sibling. */
+          /* V468 (same owner photo, which sketches Confirm and Reject ON the block: "easier for
+             them to check against the schedule"). The tile keeps its V330 identity — same dashed
+             red stripes against a confirmed event's solid staff colour, and the word Pending in
+             the body, because colour must never be the only signal — and gains the two decisions
+             inline. They are wired to the SAME decideBookingRequestGlobalV329 confirm/decline the
+             tile modal, the List cards and the realtime pop-up all use; "rejected just delete
+             away" is that decline's existing semantics (the row leaves STAFF_BOOKING_DECISION_
+             STATUSES, so the next read simply does not return it), not a new deletion.
+             The wrapper takes a floor of 88px when the actions are drawn so the two controls stay
+             tappable on a 15-minute request. A pending tile already declares itself free to
+             overlap a sibling (it is deliberately outside layoutCalendarDay's lane maths), so
+             borrowing a few pixels here misstates nothing the grid was promising. */
           const pendingTiles=column.pending.map(r=>{
             const from=eventParts(r.preferred_at).minutes,to=from+(r.services?.duration_min||60);
-            const top=(from-rangeStart)/60*hourHeight,height=Math.max(44,(to-from)/60*hourHeight);
-            return `<button type="button" class="day-timeline-pending-v330" data-pending-tile="${esc(r.id)}" style="top:${top}px;height:${height}px" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:r.services?.name||'—',customer:r.name||'—',time:bookingRequestBigWhenV330(r.preferred_at),staff:column.label})}><span>${esc(bookingRequestBigWhenV330(r.preferred_at))}</span><b>${esc(r.name||'Customer')}</b><small>${esc(r.services?.name||'General visit')} · Awaiting confirmation</small></button>`;
+            const top=(from-rangeStart)/60*hourHeight,height=Math.max(canWrite?88:44,(to-from)/60*hourHeight);
+            return `<div class="day-pending-wrap-v468" id="pendingTileV468-${esc(r.id)}" style="top:${top}px;height:${height}px">
+              <button type="button" class="day-timeline-pending-v330" data-pending-tile="${esc(r.id)}" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:r.services?.name||'—',customer:r.name||'—',time:bookingRequestBigWhenV330(r.preferred_at),staff:column.label})}><span>${esc(bookingRequestBigWhenV330(r.preferred_at))}</span><b>${esc(r.name||'Customer')}</b><small>Pending · ${esc(r.services?.name||'General visit')}</small></button>
+              ${canWrite?`<div class="day-pending-actions-v468"><button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}" aria-label="Confirm booking request from ${esc(r.name||'this customer')}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}" aria-label="Reject booking request from ${esc(r.name||'this customer')}">Reject</button></div>`:''}
+            </div>`;
           }).join('');
           return `<div class="day-team-track" style="height:${bodyHeight}px">${working}${slots}${breaks}${blocks}${now}${state}${events}${pendingTiles}</div>`;
         }).join('')}
@@ -25219,7 +25373,10 @@ async function appointmentsPage(){
        not keep re-pulsing on every subsequent reload of this same page instance (a decline/
        confirm elsewhere, the realtime refresh, etc). */
     if(highlightRequestId&&!highlightRequestConsumedV329){
-      const card=$('pendingRequestCardV329-'+highlightRequestId);
+      /* V468: V375 moved the banner CARD to the List tab, so on the Day view the only thing left
+         to scroll to is the grid tile. Card first (List), tile second (Day/Week) — whichever this
+         render actually produced. */
+      const card=$('pendingRequestCardV329-'+highlightRequestId)||$('pendingTileV468-'+highlightRequestId);
       if(card){
         highlightRequestConsumedV329=true;
         requestAnimationFrame(()=>card.scrollIntoView({behavior:'smooth',block:'center'}));
@@ -25242,11 +25399,24 @@ async function appointmentsPage(){
        as the calendar being out of sync. Blocked windows are drawn behind events, using the
        same day-blocked-window treatment the Day view uses. */
     const dayBlocks=days.map(day=>calendarBlocks.filter(block=>eventParts(block.starts_at).date===day));
+    /* V468: the week grid had the same blind spot V185 fixed for blocked time — a request awaiting
+       a decision was drawn in the Day view and nowhere here, so the two views disagreed about the
+       same hour. Same source rows, same V330 pending treatment, and clicking one opens the same
+       modal (Confirm / Change time / Decline). The inline Confirm/Reject pair is deliberately NOT
+       repeated in a week cell: a seventh of the width is not a place for two buttons — the tap
+       goes to the modal, which carries both. */
+    const dayPendingV468=days.map(day=>pendingRequests.filter(request=>eventParts(request.preferred_at).date===day));
     const agenda=calendarItems.map(a=>`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentAgenda',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',day:calendarDayLabel(a.starts_at),time:appointmentTimeRange(a),duration:appointmentDuration(a)})}><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>${a.status==='booked'&&canWrite?`<button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}</div>`).join('');
     /* V291 (audit A2 leftover): below 900px the week grid is hidden and .calendar-agenda IS the
        week view, so blocked time — drawn in the grid since V185 — was invisible on a phone. The
        same rows now appear in the agenda, with the same Edit and Remove controls the Day view
        carries, so a phone can correct a block without finding a desktop. */
+    /* V468: below 900px the week grid is hidden and this agenda IS the week, so pending requests
+       need a row here for exactly the reason V291 gave blocked time one. */
+    const pendingAgendaV468=pendingRequests.map(request=>{
+      const at=eventParts(request.preferred_at);
+      return `<div class="calendar-agenda-row calendar-agenda-pending-v468"><button type="button" class="calendar-agenda-item" data-pending-tile="${esc(request.id)}" style="width:100%;background:transparent;text-align:left"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(request.preferred_at))}</b><br><span>${esc(minuteClock(at.minutes))}</span><br><span class="muted small">Pending</span></span><span><b>${esc(request.name||'Customer')}</b><br><span class="muted small">${esc(request.services?.name||'General visit')} · <span data-merchant-content>${esc(request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available')}</span></span></span></button>${canWrite?`<button type="button" class="btn sm" data-pending-tile-confirm="${esc(request.id)}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(request.id)}">Reject</button>`:''}</div>`;
+    }).join('');
     const blockedAgendaV291=canWrite?calendarBlocks.map(block=>{
       const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
       const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
@@ -25255,10 +25425,11 @@ async function appointmentsPage(){
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
       <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>
-      ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayBlocks[index].map(block=>{const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');return `<div class="day-blocked-window week-blocked-window" style="top:${Math.max(0,(from-startHour*60)/60*hourHeight)}px;height:${Math.max(24,(to-from)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span></div>`;}).join('')}${dayEvents[index].map(({item:a,from,to,lane,laneCount,inactiveV288})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',time:appointmentTimeRange(a),duration:appointmentDuration(a),staff:staffName[a.staff_id]||'—'})}><b>${esc(a.services?.name||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
-      <div class="calendar-agenda">${agenda||(blockedAgendaV291?'':`<div class="cui-empty">${CUI.icon('appointments',{size:32})}<h2>No appointments this week</h2></div>`)}${blockedAgendaV291}</div>`;
+      ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayPendingV468[index].map(request=>{const from=eventParts(request.preferred_at).minutes,to=from+(request.services?.duration_min||60);return `<button type="button" class="day-timeline-pending-v330 week-pending-v468" data-pending-tile="${esc(request.id)}" style="top:${Math.max(0,(from-startHour*60)/60*hourHeight)}px;height:${Math.max(28,(to-from)/60*hourHeight)}px" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:request.services?.name||'—',customer:request.name||'—',time:bookingRequestBigWhenV330(request.preferred_at),staff:request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available'})}><span>${esc(minuteClock(from))}</span><b>${esc(request.name||'Customer')}</b><small>Pending</small></button>`}).join('')}${dayBlocks[index].map(block=>{const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');const clampedFromV468=Math.max(startHour*60,from),clampedToV468=Math.min(endHour*60,to);return `<div class="day-blocked-window week-blocked-window" style="top:${(clampedFromV468-startHour*60)/60*hourHeight}px;height:${Math.max(24,(clampedToV468-clampedFromV468)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span></div>`;}).join('')}${dayEvents[index].map(({item:a,from,to,lane,laneCount,inactiveV288})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',time:appointmentTimeRange(a),duration:appointmentDuration(a),staff:staffName[a.staff_id]||'—'})}><b>${esc(a.services?.name||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
+      <div class="calendar-agenda">${agenda||(blockedAgendaV291||pendingAgendaV468?'':`<div class="cui-empty">${CUI.icon('appointments',{size:32})}<h2>No appointments this week</h2></div>`)}${pendingAgendaV468}${blockedAgendaV291}</div>`;
     wireAppointmentActions();
     wireBlockedTimeActions();
+    wirePendingTileActionsV330();
   }
   /* V288 (audit A2, HIGH 4): '#/appointments?view=list&preset=today' — the link the Dashboard
      schedule strip has been publishing all along — now lands on the List view for today rather

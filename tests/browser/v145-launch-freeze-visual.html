@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="911bbdad0998b9ff43047f57f9b1224744499545f188ebcc35483c984a27afa6"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="151086054814eb2f9a6201ad7409ec0da75a2ba145f48c064e7d598b5c8f36d7"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4178,10 +4178,37 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-D — Appointments: booking requests drawn on the calendar, and whole-day blocks.
+   The tile itself keeps its V330 identity (dashed red + diagonal stripes, against a confirmed
+   event's solid staff colour) and now says "Pending" in words as well, because colour is never
+   allowed to be the only signal. This wrapper exists for one reason: the owner asked for Confirm
+   and Reject ON the block, and a button cannot legally be nested inside a button — so the tile
+   and its two decisions become siblings inside one absolutely-positioned box. The 44px floor and
+   40px controls keep both reachable on a 15-minute request; a pending tile is already outside the
+   lane maths and free to overlap a neighbour, so the few borrowed pixels claim nothing false. */
+.day-pending-wrap-v468{position:absolute;left:5px;right:5px;z-index:5;display:flex;min-height:44px;flex-direction:column;gap:3px}
+.day-pending-wrap-v468:hover,.day-pending-wrap-v468:focus-within{z-index:9}
+.day-pending-wrap-v468>.day-timeline-pending-v330{position:relative;top:auto;right:auto;bottom:auto;left:auto;min-height:38px;flex:1 1 auto}
+.day-pending-actions-v468{display:flex;flex:0 0 auto;gap:4px}
+.day-pending-actions-v468>.btn{min-width:0;min-height:40px;padding:0 6px;flex:1 1 0;font-size:11.5px}
+/* V468-D — Block time. The Start/End pair lives in a .split, whose display:grid outranks the UA
+   stylesheet's [hidden]{display:none} on specificity, so ticking All day would have hidden nothing
+   at all — the same trap .pill[hidden] above already documents. */
+#blockTimeHoursV468[hidden]{display:none!important}
+/* A week cell is a seventh of the grid: the tile is the whole control there and opens the modal,
+   which carries the same two decisions. */
+.week-pending-v468{padding:3px 5px;font-size:10px}
+.week-pending-v468 span,.week-pending-v468 small{font-size:10px}
+/* Below 900px both grids are hidden and .calendar-agenda IS the calendar. The default agenda row
+   is a two-column grid, which would drop a third child onto its own line; a pending row carries
+   three, so it lays out as a wrapping flex line instead. */
+.calendar-agenda-pending-v468{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.calendar-agenda-pending-v468>.calendar-agenda-item{flex:1 1 200px}
+.calendar-agenda-pending-v468>.btn{min-height:44px}
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 911bbdad0998b9ff43047f57f9b1224744499545f188ebcc35483c984a27afa6</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 151086054814eb2f9a6201ad7409ec0da75a2ba145f48c064e7d598b5c8f36d7</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7768,7 +7795,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'911bbdad0998b9ff43047f57f9b1224744499545f188ebcc35483c984a27afa6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'151086054814eb2f9a6201ad7409ec0da75a2ba145f48c064e7d598b5c8f36d7',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

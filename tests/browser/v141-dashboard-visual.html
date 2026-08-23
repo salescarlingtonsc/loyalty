@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7cd586cd26da9f31adafc822d6f52d78ad8e6a68d1a019c4c060cfe85f137d31"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="6fd3221d5174a460b828f5cc466fb82c1ccbdaca15b20c17323d02d95cc3e4d3"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -4179,6 +4179,33 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-D — Appointments: booking requests drawn on the calendar, and whole-day blocks.
+   The tile itself keeps its V330 identity (dashed red + diagonal stripes, against a confirmed
+   event's solid staff colour) and now says "Pending" in words as well, because colour is never
+   allowed to be the only signal. This wrapper exists for one reason: the owner asked for Confirm
+   and Reject ON the block, and a button cannot legally be nested inside a button — so the tile
+   and its two decisions become siblings inside one absolutely-positioned box. The 44px floor and
+   40px controls keep both reachable on a 15-minute request; a pending tile is already outside the
+   lane maths and free to overlap a neighbour, so the few borrowed pixels claim nothing false. */
+.day-pending-wrap-v468{position:absolute;left:5px;right:5px;z-index:5;display:flex;min-height:44px;flex-direction:column;gap:3px}
+.day-pending-wrap-v468:hover,.day-pending-wrap-v468:focus-within{z-index:9}
+.day-pending-wrap-v468>.day-timeline-pending-v330{position:relative;top:auto;right:auto;bottom:auto;left:auto;min-height:38px;flex:1 1 auto}
+.day-pending-actions-v468{display:flex;flex:0 0 auto;gap:4px}
+.day-pending-actions-v468>.btn{min-width:0;min-height:40px;padding:0 6px;flex:1 1 0;font-size:11.5px}
+/* V468-D — Block time. The Start/End pair lives in a .split, whose display:grid outranks the UA
+   stylesheet's [hidden]{display:none} on specificity, so ticking All day would have hidden nothing
+   at all — the same trap .pill[hidden] above already documents. */
+#blockTimeHoursV468[hidden]{display:none!important}
+/* A week cell is a seventh of the grid: the tile is the whole control there and opens the modal,
+   which carries the same two decisions. */
+.week-pending-v468{padding:3px 5px;font-size:10px}
+.week-pending-v468 span,.week-pending-v468 small{font-size:10px}
+/* Below 900px both grids are hidden and .calendar-agenda IS the calendar. The default agenda row
+   is a two-column grid, which would drop a third child onto its own line; a pending row carries
+   three, so it lays out as a wrapping flex line instead. */
+.calendar-agenda-pending-v468{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.calendar-agenda-pending-v468>.calendar-agenda-item{flex:1 1 200px}
+.calendar-agenda-pending-v468>.btn{min-height:44px}
 
   .v141-wordmark{font-size:1.35rem;font-weight:750;letter-spacing:-.04em;padding:4px 10px 22px}.v141-profile{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--hair)}
   </style></head><body><div class="shell"><aside class="side"><div class="v141-wordmark">◉◉<br>peekaa</div><nav class="nav"><a class="act" href="#/dashboard"> Dashboard</a><a href="#/clients">Customers</a><button class="navhead"><span>Serve &amp; sell</span><span class="chev">+</span></button><button class="navhead"><span>Grow</span><span class="chev">+</span></button><button class="navhead"><span>Money</span><span class="chev">+</span></button><button class="navhead"><span>Operations setup</span><span class="chev">+</span></button></nav><div class="foot">V141 source-bound candidate</div></aside>
@@ -5291,6 +5318,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'7cd586cd26da9f31adafc822d6f52d78ad8e6a68d1a019c4c060cfe85f137d31',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'6fd3221d5174a460b828f5cc466fb82c1ccbdaca15b20c17323d02d95cc3e4d3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
