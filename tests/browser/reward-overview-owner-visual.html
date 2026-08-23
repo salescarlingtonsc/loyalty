@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="6856a37d7eaa557ad55ad01e81e05640bd751cd180cac79382a9589bbbab69bf"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="c6e2ff6c10c6d17cd525cbcf2b28e765257ac44459188d7be89a564e8facbeae"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4213,7 +4213,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .calendar-agenda-pending-v468>.btn{min-height:44px}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 6856a37d7eaa557ad55ad01e81e05640bd751cd180cac79382a9589bbbab69bf</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c6e2ff6c10c6d17cd525cbcf2b28e765257ac44459188d7be89a564e8facbeae</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -9860,8 +9860,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      content_v95 — and nothing records a customer redeeming one), gift-card usage (the stored
      purchaser is the BUYER, usually buying for someone else), and the welcome offer's start date
      (business_welcome_offers_v215 keeps updated_at, which is the last edit, not the launch). */
+  /* V468: these carry 'uses' now, like everything else that reads this payload. The Overview
+     column that used to print the figure is gone (owner photo 5), so today the field is read only
+     by the suites that pin each entry's scope — kept because the scope it proves is the thing that
+     decides which number the owner sees in the analytics block. */
   const growUsageMapV271=(list,idKey)=>new Map((Array.isArray(list)?list:[])
-    .map(row=>[String(row?.[idKey]),row?.customers==null?null:Number(row.customers)]));
+    .map(row=>[String(row?.[idKey]),row?.uses==null?null:Number(row.uses)]));
   const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
   const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
   const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
@@ -9915,7 +9919,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       spineKindV388:growEarningSpineKindV388,openV388:{topic:growEarningSpineKindV388},
       started:growFirstPublishedV271,ended:null,
       state:growEarningLiveV388?'live':'paused',
-      customers:growUsageV271?(growUsageV271[growEarningScopeV413]?.customers??null):null,
+      uses:growUsageV271?(growUsageV271[growEarningScopeV413]?.uses??null):null,
       detail:growEarnRateTextV271(rewardJourney.earning)});
     (snapshot.rewards||[]).forEach(reward=>{
       const milestone=milestoneById.get(String(reward.id));
@@ -9933,7 +9937,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         openV388:{topic:'gift',id:reward.id,kind:growRewardParentKindV385(reward)},
         parent:growRewardParentNameV375(reward),parentKind:growRewardParentKindV385(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
-        customers:growRewardUsageV271.get(String(reward.id))??null,
+        uses:growRewardUsageV271.get(String(reward.id))??null,
         detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
     });
     (snapshot.retention||[]).forEach(program=>{
@@ -9942,7 +9946,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         usageScopeV386:'retention',usageIdV386:program.id,openV388:{topic:'bringback'},
         started:program.starts_on||program.created_at||null,ended:null,
         state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
-        customers:growRetentionUsageV271.get(String(program.id))??null,
+        uses:growRetentionUsageV271.get(String(program.id))??null,
         /* nestly_v429 (F): these rows are bringback_campaigns_v361 now, which have no goal_visits
            and no period_days — the old sentence would have printed "0 visits within 0 days" under
            every campaign. A bring-back is defined by the absence it reacts to. */
@@ -9998,7 +10002,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
-      customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
+      uses:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
     /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards left the
        Programmes surface with V294 (moved to Serve & sell — sold at the counter, not configured
        as a programme) and V296 (its enable switch retargeted to Customer Interface). Neither
@@ -13537,7 +13541,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'6856a37d7eaa557ad55ad01e81e05640bd751cd180cac79382a9589bbbab69bf',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'c6e2ff6c10c6d17cd525cbcf2b28e765257ac44459188d7be89a564e8facbeae',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

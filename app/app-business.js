@@ -14782,8 +14782,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      content_v95 — and nothing records a customer redeeming one), gift-card usage (the stored
      purchaser is the BUYER, usually buying for someone else), and the welcome offer's start date
      (business_welcome_offers_v215 keeps updated_at, which is the last edit, not the launch). */
+  /* V468: these carry 'uses' now, like everything else that reads this payload. The Overview
+     column that used to print the figure is gone (owner photo 5), so today the field is read only
+     by the suites that pin each entry's scope — kept because the scope it proves is the thing that
+     decides which number the owner sees in the analytics block. */
   const growUsageMapV271=(list,idKey)=>new Map((Array.isArray(list)?list:[])
-    .map(row=>[String(row?.[idKey]),row?.customers==null?null:Number(row.customers)]));
+    .map(row=>[String(row?.[idKey]),row?.uses==null?null:Number(row.uses)]));
   const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
   const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
   const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
@@ -14837,7 +14841,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       spineKindV388:growEarningSpineKindV388,openV388:{topic:growEarningSpineKindV388},
       started:growFirstPublishedV271,ended:null,
       state:growEarningLiveV388?'live':'paused',
-      customers:growUsageV271?(growUsageV271[growEarningScopeV413]?.customers??null):null,
+      uses:growUsageV271?(growUsageV271[growEarningScopeV413]?.uses??null):null,
       detail:growEarnRateTextV271(rewardJourney.earning)});
     (snapshot.rewards||[]).forEach(reward=>{
       const milestone=milestoneById.get(String(reward.id));
@@ -14855,7 +14859,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         openV388:{topic:'gift',id:reward.id,kind:growRewardParentKindV385(reward)},
         parent:growRewardParentNameV375(reward),parentKind:growRewardParentKindV385(reward),
         started:reward.created_at||null,ended:state==='ended'?reward.claim_available_until:null,state,
-        customers:growRewardUsageV271.get(String(reward.id))??null,
+        uses:growRewardUsageV271.get(String(reward.id))??null,
         detail:`${Math.max(0,Number(reward.cost_points)||0)} ${rewardJourney.unit}`});
     });
     (snapshot.retention||[]).forEach(program=>{
@@ -14864,7 +14868,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         usageScopeV386:'retention',usageIdV386:program.id,openV388:{topic:'bringback'},
         started:program.starts_on||program.created_at||null,ended:null,
         state:program.active===false?'retired':overview.status==='Live'?'live':'scheduled',
-        customers:growRetentionUsageV271.get(String(program.id))??null,
+        uses:growRetentionUsageV271.get(String(program.id))??null,
         /* nestly_v429 (F): these rows are bringback_campaigns_v361 now, which have no goal_visits
            and no period_days — the old sentence would have printed "0 visits within 0 days" under
            every campaign. A bring-back is defined by the absence it reacts to. */
@@ -14920,7 +14924,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
       type:'Membership',started:plan?.created_at||null,ended:null,
       state:plan?.active===false?'retired':'live',
-      customers:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
+      uses:growPlanUsageV271.get(String(plan?.id))??null,detail:''}));
     /* V301 (owner: "i already removed gift card - but it keeps appearing"): gift cards left the
        Programmes surface with V294 (moved to Serve & sell — sold at the counter, not configured
        as a programme) and V296 (its enable switch retargeted to Customer Interface). Neither
@@ -25378,7 +25382,7 @@ async function appointmentsPage(){
             const top=(from-rangeStart)/60*hourHeight,height=Math.max(canWrite?88:44,(to-from)/60*hourHeight);
             return `<div class="day-pending-wrap-v468" id="pendingTileV468-${esc(r.id)}" style="top:${top}px;height:${height}px">
               <button type="button" class="day-timeline-pending-v330" data-pending-tile="${esc(r.id)}" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:r.services?.name||'—',customer:r.name||'—',time:bookingRequestBigWhenV330(r.preferred_at),staff:column.label})}><span>${esc(bookingRequestBigWhenV330(r.preferred_at))}</span><b>${esc(r.name||'Customer')}</b><small>Pending · ${esc(r.services?.name||'General visit')}</small></button>
-              ${canWrite?`<div class="day-pending-actions-v468"><button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}" aria-label="Confirm booking request from ${esc(r.name||'this customer')}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}" aria-label="Reject booking request from ${esc(r.name||'this customer')}">Reject</button></div>`:''}
+              ${canWrite?`<div class="day-pending-actions-v468"><button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}" data-merchant-content aria-label="Confirm booking request from ${esc(r.name||'this customer')}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}" data-merchant-content aria-label="Reject booking request from ${esc(r.name||'this customer')}">Reject</button></div>`:''}
             </div>`;
           }).join('');
           return `<div class="day-team-track" style="height:${bodyHeight}px">${working}${slots}${breaks}${blocks}${now}${state}${events}${pendingTiles}</div>`;

@@ -54,7 +54,11 @@ const entriesHarness = ({ model, spineOn, usage, rewards = [] }) => new Function
   new Map(), new Map(), () => ({ status: 'Live' }), null, () => ({ state: 'live' }),
   n => `${n} points`, new Map());
 
-const USAGE = { point_system: { customers: 3 }, stamp_card: { customers: 11 }, rewards: [] };
+/* V468 (owner photo 4: "It should be number of times, not how many customers used"). The server
+   publishes 'uses' beside 'customers' and this block reads uses. These fixtures carry BOTH, with
+   uses deliberately different from customers, so a silent fall-back to the distinct-customer
+   count would change every number below instead of passing unnoticed. */
+const USAGE = { point_system: { customers: 2, uses: 3 }, stamp_card: { customers: 7, uses: 11 }, rewards: [] };
 
 test('v413 the earning row is named for the engine the firm actually runs', () => {
   const stamps = entriesHarness({ model: 'stamps', spineOn: { stamps: true, points: false }, usage: USAGE });
@@ -68,18 +72,18 @@ test('v413 the earning row is named for the engine the firm actually runs', () =
 test('v413 the earning row reports its OWN engine\'s customer count', () => {
   const stamps = entriesHarness({ model: 'stamps', spineOn: { stamps: true, points: false }, usage: USAGE });
   assert.equal(stamps[0].usageScopeV386, 'stamp_card');
-  assert.equal(stamps[0].customers, 11, 'it was printing 3 — whoever had ever touched POINTS');
+  assert.equal(stamps[0].uses, 11, 'it was printing 3 — whoever had ever touched POINTS');
   const points = entriesHarness({ model: 'points', spineOn: { points: true }, usage: USAGE });
   assert.equal(points[0].usageScopeV386, 'point_system');
-  assert.equal(points[0].customers, 3);
+  assert.equal(points[0].uses, 3);
 });
 
 test('v413 a scope the server did not answer stays Not tracked, never zero', () => {
   /* The V271 honesty rule, re-proved through the new indirection: business_programme_usage_v271
      deliberately returns a null stamp_card for a firm not running stamps. */
   const rows = entriesHarness({ model: 'stamps', spineOn: { stamps: true },
-    usage: { point_system: { customers: 3 }, stamp_card: { customers: null } } });
-  assert.equal(rows[0].customers, null, 'a null must not be laundered into a 0');
+    usage: { point_system: { customers: 2, uses: 3 }, stamp_card: { customers: null, uses: null } } });
+  assert.equal(rows[0].uses, null, 'a null must not be laundered into a 0');
 });
 
 /* ---------------------------------------------------- 2. the usage table (photo 1) ---------- */
@@ -100,10 +104,10 @@ const usageHarness = () => new Function('esc', `
     return {rows,markup};
   };`)(esc);
 
-const GIFT = (name, spineKind, customers) => ({
+const GIFT = (name, spineKind, uses) => ({
   name, type: 'Reward', usageScopeV386: 'reward', usageIdV386: name,
   parent: { points: 'Point system', stamps: 'Stamp card' }[spineKind], parentKind: spineKind,
-  customers, state: 'live'
+  uses, state: 'live'
 });
 /* The owner's own table: a stamps firm still carrying ten gifts from its points era, plus the two
    that hang off the stamp card, plus the birthday gift the second brace was drawn on. */
@@ -116,8 +120,8 @@ const OWNER_ENTRIES = [
   { name: 'Birthday treat', type: 'Birthday benefit', usageScopeV386: 'birthday' },
   { ...GIFT('Free lotion', 'points', 0), parent: 'Birthday benefit' }
 ];
-const OWNER_USAGE = { stamp_card: { customers: 11 }, point_system: { customers: 3 },
-  birthday: { customers: 0 }, rewards: [{ reward_id: 'Free Massage Oil', customers: 1 }] };
+const OWNER_USAGE = { stamp_card: { customers: 7, uses: 11 }, point_system: { customers: 2, uses: 3 },
+  birthday: { customers: 0, uses: 0 }, rewards: [{ reward_id: 'Free Massage Oil', customers: 1, uses: 1 }] };
 
 test('v413 every gift sits in a group, and every group starts minimised', () => {
   const build = usageHarness();
@@ -141,7 +145,7 @@ test('v413 a gift whose programme has no row of its own still gets a header', ()
   assert.ok(header, 'the ten points gifts must have somewhere to sit');
   assert.equal(header.synthV413, true);
   assert.equal(header.childCountV413, 10);
-  assert.equal(header.customers, null,
+  assert.equal(header.uses, null,
     'a synthesised header was never measured — summing its gifts would count one customer twice');
   const kids = rows.filter(row => row.groupV413 === header.groupV413 && row.childV410);
   assert.equal(kids.length, 10);
@@ -155,7 +159,7 @@ test('v413 a real engine row keeps its own count and adopts its own gifts', () =
   const { rows } = build(OWNER_ENTRIES, OWNER_USAGE, new Set());
   const card = rows.find(row => row.category === 'Stamp card');
   assert.equal(card.synthV413, undefined, 'this one IS a measured programme');
-  assert.equal(card.customers, 11);
+  assert.equal(card.uses, 11);
   assert.equal(card.childCountV413, 1);
   const birthday = rows.find(row => row.category === 'Birthday benefit');
   assert.equal(birthday.childCountV413, 1, 'the second brace in photo 1');
@@ -175,7 +179,7 @@ test('v413 opening one group reveals only that group', () => {
 test('v413 a group with no gifts is plain text, not a button that opens onto nothing', () => {
   const build = usageHarness();
   const { markup } = build([{ name: 'Referrals', type: 'Referrals', usageScopeV386: 'referrals' }],
-    { referrals: { customers: 0 } }, new Set());
+    { referrals: { customers: 0, uses: 0 } }, new Set());
   assert.doesNotMatch(markup, /grow-usage-disclosure-v413/);
   assert.match(markup, /<b data-merchant-content>Referrals<\/b>/);
 });
