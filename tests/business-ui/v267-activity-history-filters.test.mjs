@@ -289,9 +289,9 @@ test('B8 the filter controls exist, are labelled, and every one of them redraws 
   /* V270: six, not five — the ITEM search the owner circled was missing from the V267 pass. */
   assert.ok(clientDetail.includes("['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{"),
     'all six controls are wired to the one redraw');
-  assert.ok(clientDetail.includes('control.onchange=()=>{histShown=50;redrawActivityV267()}'),
+  assert.ok(clientDetail.includes('control.onchange=()=>{histPageV468=0;redrawActivityV267()}'),
     'changing a filter returns to the first page');
-  assert.ok(clientDetail.includes("clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()}"));
+  assert.ok(clientDetail.includes("clearActivity.onclick=()=>{clearActivityFiltersV267();histPageV468=0;redrawActivityV267()}"));
   // Existing repo patterns, not new ones: the app's own filter bar, label/select, and buttons.
   assert.ok(clientDetail.includes('class="v150-filterbar c360-activity-filters-v267"'));
   assert.ok(shell.includes('.v150-filterbar{display:flex'), 'that bar already wraps on a narrow screen');
@@ -309,12 +309,39 @@ test('B9 filtering is applied before paging, so a filter never reports a false "
   assert.ok(visibleText(html).includes('Gel manicure'));
 });
 
-test('B10 the Show earlier control counts the filtered rows, not the whole feed', () => {
-  assert.ok(clientDetail.includes("moreWrap.style.display=activityFilteredRowsV267(history).length>histShown?'':'none'"),
+test('B10 the pager counts the filtered rows, not the whole feed', () => {
+  /* V468 (owner photo 19) turned "Show earlier" into Previous/Next over five-row pages. B10's
+     rule is unchanged and is what still matters: the count the pager reports and the rows the
+     table paints come from ONE call to activityFilteredRowsV267, so a filter can never leave the
+     pager describing a different result than the body. The clamp is new and belongs to the same
+     rule — a filter that shrinks the feed must not strand the owner on a page past the end. */
+  assert.ok(clientDetail.includes('const totalV468=activityFilteredRowsV267(history).length;'),
     'paging and filtering read one shared result');
-  assert.ok(clientDetail.includes("$('histBody').innerHTML=renderHistPage(history,histShown)"),
+  assert.ok(clientDetail.includes("$('histBody').innerHTML=renderHistPage(history,C360_ACTIVITY_PAGE_V468,histPageV468*C360_ACTIVITY_PAGE_V468)"),
     'the same renderer still drives the body');
-  assert.ok(clientDetail.includes('if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()}'));
+  assert.ok(clientDetail.includes('if(histPageV468>lastPageV468)histPageV468=lastPageV468;'),
+    'a shrinking filter cannot leave the owner on a blank page');
+});
+
+test('B12 (V468) a page is five rows, and the offset moves the window rather than growing it', () => {
+  /* Owner photo 19, the whole list bracketed: "I cannot allow the list to run forever - maximum 5
+     transactions and will be next page". Executed, not grepped: the renderer is called the way
+     the pager calls it and the ROWS that come back are counted. */
+  setFilters({});
+  /* Body rows only — the <thead> row is a <tr> too, and counting it would make five read as six. */
+  const rowsIn = html => ((html.slice(html.indexOf('<tbody>')).match(/<tr[ >]/g)) || []).length;
+  const all = fixture();
+  const page1 = A.renderHistPage(all, 5, 0);
+  assert.equal(rowsIn(page1), 5, 'the first page shows exactly five');
+  const page2 = A.renderHistPage(all, 5, 5);
+  assert.equal(rowsIn(page2), Math.min(5, all.length - 5), 'the second page shows what is left, up to five');
+  /* The window MOVES. A cumulative "show more" would have made page 2 a superset of page 1, and
+     that is precisely the behaviour the owner asked us to stop. */
+  const firstRowOf = html => {const b=html.slice(html.indexOf('<tbody>'));return b.slice(b.indexOf('<tr'), b.indexOf('</tr>'))};
+  assert.notEqual(firstRowOf(page1), firstRowOf(page2), 'page two starts somewhere page one did not');
+  assert.ok(!page2.includes(firstRowOf(page1)), 'page two does not re-show page one');
+  // Past the end is empty, not a wrap-around or a repeat of the last page.
+  assert.equal(rowsIn(A.renderHistPage(all, 5, all.length + 5)), 0);
 });
 
 test('B11 the whole history is in memory, so client-side filtering cannot hide a server page', () => {

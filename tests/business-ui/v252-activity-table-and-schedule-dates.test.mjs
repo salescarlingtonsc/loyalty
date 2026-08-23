@@ -14,7 +14,7 @@ const app = readFileSync(resolve(repoRoot, 'app/app.js'), 'utf8');
 const css = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
 
 const historyTable = (() => {
-  const i = app.indexOf('function renderHistPage(history,n){');
+  const i = app.indexOf('function renderHistPage(history,n,offsetV468=0){');
   assert.ok(i > 0, 'renderHistPage must still exist');
   const j = app.indexOf('/* ---------- quick earn', i);
   return app.slice(i, j > i ? j : i + 9000);
@@ -80,8 +80,13 @@ test('the per-row Reverse control and its provenance notes survive the table', (
 });
 
 test('the paging control still drives the same renderer', () => {
-  assert.ok(app.includes("$('histBody').innerHTML=renderHistPage(history,histShown)"));
-  assert.ok(app.includes("id=\"histMore\""), 'Show earlier must survive');
+  /* V468 (owner photo 19: "maximum 5 transactions and will be next page") replaced the cumulative
+     "Show earlier" with a real pager, so the renderer now takes an OFFSET as well as a count and
+     the control that drives it is Previous/Next rather than a grow-by-50 button. */
+  assert.ok(app.includes("$('histBody').innerHTML=renderHistPage(history,C360_ACTIVITY_PAGE_V468,histPageV468*C360_ACTIVITY_PAGE_V468)"));
+  assert.ok(app.includes('id="histPrevV468"') && app.includes('id="histNextV468"'), 'both directions exist');
+  assert.ok(!app.includes('id="histMore"'), 'the grow-by-50 control is gone');
+  assert.ok(app.includes('const C360_ACTIVITY_PAGE_V468=5;'), 'the owner asked for five');
 });
 
 test('the dashboard schedule card drops its subtitle and its second appointments button', () => {

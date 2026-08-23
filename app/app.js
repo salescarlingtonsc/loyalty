@@ -18311,7 +18311,12 @@ async function clientDetail(id){
     listUnitCents:k.list_unit_cents_snapshot,listValueCents:k.list_value_cents_snapshot}));
   const history=[...histSales,...histAppts,...histRedemptions,...histGrants,...histMemberships,...histPackages]
     .sort((a,b)=>(b.t||'').localeCompare(a.t||''));
-  let histShown=50;
+  /* V468 (owner photo 19, the whole activity list bracketed: "I cannot allow the list to run
+     forever - maximum 5 transactions and will be next page"). It used to paint 50 rows and grow
+     by 50 on "Show earlier", so a long-standing customer's profile was an endless scroll. Five
+     rows, and a real pager. The page INDEX is what is held, not a running total, so Previous is
+     possible at all — a cumulative count can only ever go one way. */
+  let histPageV468=0;
   const loyaltyFacts=loyaltyFactsAvailable?loyaltyProjection:null;
   const pts=Number(loyaltyFacts?.points_balance)||0;
   /* V320 (owner, 2026-08-14, on the V319 hide-at-zero rule: "i do not want spendable credits to
@@ -18785,8 +18790,8 @@ async function clientDetail(id){
   </div>`;
   const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
     ${activityFiltersV267}
-    <div id="histBody">${renderHistPage(history,histShown)}</div>
-    <div id="histMoreWrap" style="text-align:center;margin-top:10px${history.length>histShown?'':';display:none'}"><button class="btn ghost sm" id="histMore">Show earlier</button></div>
+    <div id="histBody">${renderHistPage(history,C360_ACTIVITY_PAGE_V468,0)}</div>
+    <div id="histPagerV468" class="c360-act-pager-v468">${activityPagerMarkupV468(activityFilteredRowsV267(history).length,0)}</div>
     </div>`:'';
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
@@ -19115,23 +19120,32 @@ async function clientDetail(id){
   const redrawActivityV267=()=>{
     const body=$('histBody');
     if(!body)return;
-    $('histBody').innerHTML=renderHistPage(history,histShown);
-    const moreWrap=$('histMoreWrap');
-    if(moreWrap)moreWrap.style.display=activityFilteredRowsV267(history).length>histShown?'':'none';
+    const totalV468=activityFilteredRowsV267(history).length;
+    /* Clamp before painting: a filter that shrinks the result while the owner is on page 6 must
+       land them on the last page that exists, never on a blank one. */
+    const lastPageV468=Math.max(0,Math.ceil(totalV468/C360_ACTIVITY_PAGE_V468)-1);
+    if(histPageV468>lastPageV468)histPageV468=lastPageV468;
+    $('histBody').innerHTML=renderHistPage(history,C360_ACTIVITY_PAGE_V468,histPageV468*C360_ACTIVITY_PAGE_V468);
+    const pagerV468=$('histPagerV468');
+    if(pagerV468){
+      pagerV468.innerHTML=activityPagerMarkupV468(totalV468,histPageV468);
+      const prev=$('histPrevV468'),next=$('histNextV468');
+      if(prev)prev.onclick=()=>{if(histPageV468>0){histPageV468--;redrawActivityV267()}};
+      if(next)next.onclick=()=>{if(histPageV468<lastPageV468){histPageV468++;redrawActivityV267()}};
+    }
     bindReversalButtons(()=>clientDetail(id));
     bindActivityRowControlsV267(redrawActivityV267);
   };
   bindActivityRowControlsV267(redrawActivityV267);
-  const histMore=$('histMore');
-  if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
+  redrawActivityV267();
   /* Changing a filter returns to the first page: keeping an offset from the previous filter
      would show an owner the middle of a result set and hide its first rows. */
   ['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
     const control=$(controlId);
-    if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
+    if(control)control.onchange=()=>{histPageV468=0;redrawActivityV267()};
   });
   const clearActivity=$('actClear');
-  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()};
+  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histPageV468=0;redrawActivityV267()};
   if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
 }
@@ -19289,7 +19303,22 @@ function bindActivityRowControlsV267(redraw){
    "which unit" is exactly how two answers to one question start, so it is deleted rather than
    wired up. */
 let activityEarnedBySaleV375=new Map();
-function renderHistPage(history,n){
+/* V468 (owner photo 19). Five is the owner's number, named once and read by the renderer, the
+   pager and the reset — three places that would otherwise each carry their own literal. */
+const C360_ACTIVITY_PAGE_V468=5;
+/* Page X of Y, with both ends disabled at the ends rather than hidden: a control that vanishes
+   moves the two beside it under the thumb that was aiming for them. One page of results renders
+   no pager at all — there is nothing to page. */
+function activityPagerMarkupV468(total,page){
+  const pages=Math.max(1,Math.ceil(total/C360_ACTIVITY_PAGE_V468));
+  if(pages<2)return '';
+  const first=total?page*C360_ACTIVITY_PAGE_V468+1:0;
+  const last=Math.min(total,(page+1)*C360_ACTIVITY_PAGE_V468);
+  return `<button type="button" class="btn ghost sm" id="histPrevV468"${page<=0?' disabled':''} data-workspace-i18n aria-label="Previous page of activity">‹ Previous</button>
+    <span class="muted small" aria-live="polite">${first}–${last} of ${total}</span>
+    <button type="button" class="btn ghost sm" id="histNextV468"${page>=pages-1?' disabled':''} data-workspace-i18n aria-label="Next page of activity">Next ›</button>`;
+}
+function renderHistPage(history,n,offsetV468=0){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
      rows sat one page below. An empty result is two different facts and says which. */
@@ -19299,7 +19328,7 @@ function renderHistPage(history,n){
   if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
     body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
     actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
-  const rows=filteredV267.slice(0,n);
+  const rows=filteredV267.slice(offsetV468,offsetV468+n);
   /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
      reference can be described even when its partner row is not currently painted. */
   const saleRowsByIdV267=new Map();

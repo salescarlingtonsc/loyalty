@@ -28,7 +28,7 @@ function section(start, end) {
   return app.slice(from, to);
 }
 
-const clientDetail = section('async function clientDetail(id){', 'function renderHistPage(history,n){');
+const clientDetail = section('async function clientDetail(id){', 'function renderHistPage(history,n,offsetV468=0){');
 const settings = section('async function settingsPage(){', '/* ---------- billing (read-only) ---------- */');
 const brandPanel = section('function workspaceBrandPanelHtmlV259(){', 'function wireWorkspaceBrandV259(){');
 const brandWiring = section('function wireWorkspaceBrandV259(){', '/* The public page a customer meets before joining.');
