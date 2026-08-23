@@ -29034,8 +29034,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ${/* V399 (owner, photo 4: the whole "Compare with" segment struck through — "don't need
          compare" — and the PERIOD BEFORE column crossed out). Both are gone, and with them the
          only readers of growUsageCompareV392. The chart below keeps working: passing no previous
-         series makes growUsageComparisonChartV386 render its single-series "Customers used, by
-         category" form, which is the shape it already had before comparison was added. */''}
+         series makes growUsageComparisonChartV386 render its single-series "Times used, by
+         category" form (V468 renamed it from "Customers used"), which is the shape it already had before comparison was added. */''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
       ?`Counting how many times each programme was used between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
