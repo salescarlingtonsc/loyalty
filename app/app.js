@@ -9524,12 +9524,19 @@ function customerHeroStampCardV422(quest){
       if(!held||(held.claimed&&!rung.claimed))marks.set(rung.slot,rung);
     });
   const compact=total>HERO_STAMP_COMPACT_FROM_V422;
-  const star='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.6l-3.9 2.1.8-4.4L1.7 6.2l4.4-.6z" fill="currentColor"/></svg>';
+  /* nestly_v471 (owner, photo 1: "1 stamp given = the first empty stamp box should be added with
+     a crown icon"). v422 marked a collected slot with a star. A crown is already this product's
+     mark for "you have earned something" — customerTierRungIconV195 uses it on the tier ladder —
+     so the two surfaces now say it the same way. Drawn as a filled path rather than reusing
+     CUI.icon('crown'), which is a stroked 24px glyph: at 11px inside a 26px circle its strokes
+     merge into a blob. Same viewBox, same size and same currentColor as the star it replaces, so
+     nothing about the cell's layout or the compact (22px) variant changes. */
+  const crownV471='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M2 5.4l3.1 2.2L8 3l2.9 4.6L14 5.4l-1 7.6H3L2 5.4Z" fill="currentColor"/></svg>';
   const cells=Array.from({length:total},(unused,index)=>{
     const slot=index+1,rung=marks.get(slot),collected=index<filled;
     return `<span class="customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${
       rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
-    }${collected?star:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
+    }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
   }).join('');
   /* The one sentence the drawing puts under the grid. quest.next is the server's own first
      unclaimed milestone, so this can never name a gift the counter would refuse. With every
@@ -10750,6 +10757,34 @@ function wireCustomerGalleryV418(root){
   });
   (root||document).querySelectorAll('[data-gallery-see-all-v468]').forEach(button=>button.onclick=()=>
     openCustomerGalleryAllV468(button.closest('.customer-business-gallery-v418')));
+  wireCustomerBusinessLinksV471(root||document);
+}
+/* nestly_v471 (owner, photo 3: "clicking these links in customer view should link to the external
+   app / website" — reported as "it brings me to a non-exist page IN the app, not the external
+   site"). v418 shipped these as plain <a target="_blank">, which is right in a browser tab and
+   wrong everywhere the customer actually is: inside the installed PWA and inside the Capacitor
+   shell a same-origin _blank navigates the app's OWN window, so the customer is thrown out of
+   their wallet and left on a page with no way back — which is exactly what "a non-exist page in
+   the app" describes. NestlyNativeBridge.openExternal is the one path that already knows the
+   difference: Capacitor Browser on native, window.open on web, https-only in both.
+   The anchor keeps its href and target, so this is an upgrade and not a replacement — with the
+   script broken, or the bridge absent, the browser still follows the link exactly as it does
+   today. Only a plain primary click is intercepted: ctrl/cmd/middle-click still open a tab the
+   way the customer asked for, and a failed bridge call falls through to the anchor. */
+function wireCustomerBusinessLinksV471(root){
+  (root||document).querySelectorAll('.customer-business-link-v418').forEach(link=>{
+    if(link.dataset.externalWiredV471==='1')return;
+    link.dataset.externalWiredV471='1';
+    link.addEventListener('click',event=>{
+      if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+      const url=link.getAttribute('href')||'';
+      const open=globalThis.NestlyNativeBridge?.openExternal;
+      if(!url||typeof open!=='function')return;
+      event.preventDefault();
+      Promise.resolve(open.call(globalThis.NestlyNativeBridge,url))
+        .catch(()=>{globalThis.open?.(url,'_blank','noopener,noreferrer')});
+    });
+  });
 }
 function customerBusinessGalleryMarkupV418(business={}){
   const photos=(Array.isArray(business.gallery)?business.gallery:[])
@@ -29219,6 +29254,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     reward:'redeemed',retention:'redeemed',birthday:'redeemed',
     welcome:'redeemed',referrals:'qualified',membership:'joined'
   });
+  /* nestly_v471 (owner, photo 4: "i don't need to know how many times customer added points to
+     the point system — remove Point system, don't need to track").
+     V470 answered the same photo by LABELLING the engine's figure 'earned' so it could not be
+     read as a subtotal of the gifts under it. The owner's answer to that is that the figure is
+     not wanted at all: an earn count says how often the till rang, which the sales reports
+     already say, while this card exists to answer "did giving something away bring anyone back".
+     So the engine scopes stop being measured here — the ROW stays, because it is the header the
+     gifts below it hang off (v410's indent, v413's disclosure), but it carries no number and it
+     is not charted. growUsageComparisonChartV386 already drops any row whose uses is null, so
+     the 26-tall bar that was flattening every gift beside it goes with the figure.
+     Stamp card is in the set for the same reason and by the same argument — it is the identical
+     row on a firm running stamps, and leaving it in would reintroduce the bar on exactly the
+     businesses the owner is piloting. Nothing else changes: the server still publishes the
+     figures, the gift/bring-back/welcome/referral rows are untouched, and a firm that never set
+     a programme up still says "Not tracked" rather than zero. */
+  const GROW_USAGE_UNTRACKED_SCOPES_V471=Object.freeze(['point_system','stamp_card']);
+  const growUsageUntrackedScopeV471=scope=>GROW_USAGE_UNTRACKED_SCOPES_V471.includes(String(scope||''));
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
@@ -29262,9 +29314,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            the engine, which is an invitation to read them as a sum. They are not a sum and making
            them one would be a lie — a shop earns far more often than it gives away. So each row
            now says which event it counted, and the column stops implying arithmetic between them. */
-        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used'};
+        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used',
+        /* nestly_v471: see GROW_USAGE_UNTRACKED_SCOPES_V471. Carried on the bucket rather than
+           re-derived at render time, because the cell has no scope to look at — only a row. */
+        untrackedV471:growUsageUntrackedScopeV471(entry.usageScopeV386)};
       current.programmes+=1;
-      const usesV468=growUsageForEntryV386(usage,entry);
+      if(growUsageUntrackedScopeV471(entry.usageScopeV386)){current.untrackedV471=true;current.uses=null}
+      const usesV468=current.untrackedV471?null:growUsageForEntryV386(usage,entry);
       if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
       buckets.set(category,current);
     });
@@ -29395,7 +29451,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses,row.verbV470)}</td></tr>`;
+          /* nestly_v471: an engine row is now deliberately unmeasured, which is NOT the same
+             claim as "Not tracked" — that sentence means the server could not answer. A dash
+             says the column has nothing to say about this row, and the screen-reader text says
+             why, so the honesty rule is kept from both sides. */
+          const usesCellV471=row.untrackedV471
+            ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Earning is not counted here</span>'
+            :growCountCellV271(row.uses,row.verbV470);
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${usesCellV471}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`

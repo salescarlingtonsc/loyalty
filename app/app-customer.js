@@ -3932,12 +3932,19 @@ function customerHeroStampCardV422(quest){
       if(!held||(held.claimed&&!rung.claimed))marks.set(rung.slot,rung);
     });
   const compact=total>HERO_STAMP_COMPACT_FROM_V422;
-  const star='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.6l-3.9 2.1.8-4.4L1.7 6.2l4.4-.6z" fill="currentColor"/></svg>';
+  /* nestly_v471 (owner, photo 1: "1 stamp given = the first empty stamp box should be added with
+     a crown icon"). v422 marked a collected slot with a star. A crown is already this product's
+     mark for "you have earned something" — customerTierRungIconV195 uses it on the tier ladder —
+     so the two surfaces now say it the same way. Drawn as a filled path rather than reusing
+     CUI.icon('crown'), which is a stroked 24px glyph: at 11px inside a 26px circle its strokes
+     merge into a blob. Same viewBox, same size and same currentColor as the star it replaces, so
+     nothing about the cell's layout or the compact (22px) variant changes. */
+  const crownV471='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M2 5.4l3.1 2.2L8 3l2.9 4.6L14 5.4l-1 7.6H3L2 5.4Z" fill="currentColor"/></svg>';
   const cells=Array.from({length:total},(unused,index)=>{
     const slot=index+1,rung=marks.get(slot),collected=index<filled;
     return `<span class="customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${
       rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
-    }${collected?star:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
+    }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
   }).join('');
   /* The one sentence the drawing puts under the grid. quest.next is the server's own first
      unclaimed milestone, so this can never name a gift the counter would refuse. With every
@@ -4692,6 +4699,34 @@ function wireCustomerGalleryV418(root){
   });
   (root||document).querySelectorAll('[data-gallery-see-all-v468]').forEach(button=>button.onclick=()=>
     openCustomerGalleryAllV468(button.closest('.customer-business-gallery-v418')));
+  wireCustomerBusinessLinksV471(root||document);
+}
+/* nestly_v471 (owner, photo 3: "clicking these links in customer view should link to the external
+   app / website" — reported as "it brings me to a non-exist page IN the app, not the external
+   site"). v418 shipped these as plain <a target="_blank">, which is right in a browser tab and
+   wrong everywhere the customer actually is: inside the installed PWA and inside the Capacitor
+   shell a same-origin _blank navigates the app's OWN window, so the customer is thrown out of
+   their wallet and left on a page with no way back — which is exactly what "a non-exist page in
+   the app" describes. NestlyNativeBridge.openExternal is the one path that already knows the
+   difference: Capacitor Browser on native, window.open on web, https-only in both.
+   The anchor keeps its href and target, so this is an upgrade and not a replacement — with the
+   script broken, or the bridge absent, the browser still follows the link exactly as it does
+   today. Only a plain primary click is intercepted: ctrl/cmd/middle-click still open a tab the
+   way the customer asked for, and a failed bridge call falls through to the anchor. */
+function wireCustomerBusinessLinksV471(root){
+  (root||document).querySelectorAll('.customer-business-link-v418').forEach(link=>{
+    if(link.dataset.externalWiredV471==='1')return;
+    link.dataset.externalWiredV471='1';
+    link.addEventListener('click',event=>{
+      if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+      const url=link.getAttribute('href')||'';
+      const open=globalThis.NestlyNativeBridge?.openExternal;
+      if(!url||typeof open!=='function')return;
+      event.preventDefault();
+      Promise.resolve(open.call(globalThis.NestlyNativeBridge,url))
+        .catch(()=>{globalThis.open?.(url,'_blank','noopener,noreferrer')});
+    });
+  });
 }
 /* nestly_v428 (item 9) — WHICH UNIT IS THIS BALANCE COUNTED IN.
    The kind resolver above answers a slightly different question: which PROGRAMME shape the card

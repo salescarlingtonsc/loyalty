@@ -15214,6 +15214,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     reward:'redeemed',retention:'redeemed',birthday:'redeemed',
     welcome:'redeemed',referrals:'qualified',membership:'joined'
   });
+  /* nestly_v471 (owner, photo 4: "i don't need to know how many times customer added points to
+     the point system — remove Point system, don't need to track").
+     V470 answered the same photo by LABELLING the engine's figure 'earned' so it could not be
+     read as a subtotal of the gifts under it. The owner's answer to that is that the figure is
+     not wanted at all: an earn count says how often the till rang, which the sales reports
+     already say, while this card exists to answer "did giving something away bring anyone back".
+     So the engine scopes stop being measured here — the ROW stays, because it is the header the
+     gifts below it hang off (v410's indent, v413's disclosure), but it carries no number and it
+     is not charted. growUsageComparisonChartV386 already drops any row whose uses is null, so
+     the 26-tall bar that was flattening every gift beside it goes with the figure.
+     Stamp card is in the set for the same reason and by the same argument — it is the identical
+     row on a firm running stamps, and leaving it in would reintroduce the bar on exactly the
+     businesses the owner is piloting. Nothing else changes: the server still publishes the
+     figures, the gift/bring-back/welcome/referral rows are untouched, and a firm that never set
+     a programme up still says "Not tracked" rather than zero. */
+  const GROW_USAGE_UNTRACKED_SCOPES_V471=Object.freeze(['point_system','stamp_card']);
+  const growUsageUntrackedScopeV471=scope=>GROW_USAGE_UNTRACKED_SCOPES_V471.includes(String(scope||''));
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
@@ -15257,9 +15274,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            the engine, which is an invitation to read them as a sum. They are not a sum and making
            them one would be a lie — a shop earns far more often than it gives away. So each row
            now says which event it counted, and the column stops implying arithmetic between them. */
-        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used'};
+        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used',
+        /* nestly_v471: see GROW_USAGE_UNTRACKED_SCOPES_V471. Carried on the bucket rather than
+           re-derived at render time, because the cell has no scope to look at — only a row. */
+        untrackedV471:growUsageUntrackedScopeV471(entry.usageScopeV386)};
       current.programmes+=1;
-      const usesV468=growUsageForEntryV386(usage,entry);
+      if(growUsageUntrackedScopeV471(entry.usageScopeV386)){current.untrackedV471=true;current.uses=null}
+      const usesV468=current.untrackedV471?null:growUsageForEntryV386(usage,entry);
       if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
       buckets.set(category,current);
     });
@@ -15390,7 +15411,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses,row.verbV470)}</td></tr>`;
+          /* nestly_v471: an engine row is now deliberately unmeasured, which is NOT the same
+             claim as "Not tracked" — that sentence means the server could not answer. A dash
+             says the column has nothing to say about this row, and the screen-reader text says
+             why, so the honesty rule is kept from both sides. */
+          const usesCellV471=row.untrackedV471
+            ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Earning is not counted here</span>'
+            :growCountCellV271(row.uses,row.verbV470);
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${usesCellV471}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`

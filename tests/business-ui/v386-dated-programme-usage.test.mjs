@@ -67,7 +67,11 @@ test('V386 a windowed payload is read through each entry\'s own scope, not its l
   const {rowsFrom}=usageHarness(ENTRIES);
   const rows=rowsFrom(USAGE_NOW);
   const by=Object.fromEntries(rows.map(row=>[row.category,row]));
-  assert.equal(by['Point system'].uses,5);
+  /* nestly_v471 (owner, photo 4): the engine's own earn count leaves this card. The row stays —
+     it is the header the two gifts below hang off — and it is still counted as one programme;
+     what goes is the figure, and with it the chart bar that was dwarfing every gift beside it. */
+  assert.equal(by['Point system'].uses,null,'v386/v468 printed 5 earns here; the owner asked for none');
+  assert.equal(by['Point system'].untrackedV471,true);
   assert.equal(by['Point system'].programmes,1);
   /* V385 took the gifts out of the engine's own count; V392 takes each gift out separately
      (owner, photo 6: "take out each gift out"), because "Point system gifts · 11" still could not
@@ -82,10 +86,14 @@ test('V386 a windowed payload is read through each entry\'s own scope, not its l
   assert.equal(by['Referrals'].uses,2);
 });
 
+/* The invariant is unchanged — a figure is fetched by the entry's own usageScopeV386, never by
+   its label — but nestly_v471 stopped measuring point_system, so proving it there would now pass
+   for the wrong reason (null equals null however the lookup is keyed). Referrals is a scope that
+   is still measured, so renaming it is a real test of the same rule. */
 test('V386 renaming a programme cannot detach it from its own figures',()=>{
-  const renamed=ENTRIES.map(entry=>entry.usageScopeV386==='point_system'?{...entry,name:'Cub Points',type:'Point system'}:entry);
+  const renamed=ENTRIES.map(entry=>entry.usageScopeV386==='referrals'?{...entry,name:'Bring a kaki',type:'Referrals'}:entry);
   const {rowsFrom}=usageHarness(renamed);
-  assert.equal(rowsFrom(USAGE_NOW).find(row=>row.category==='Point system').uses,5);
+  assert.equal(rowsFrom(USAGE_NOW).find(row=>row.category==='Referrals').uses,2);
 });
 
 test('V386 a payload that never arrived reads as Not tracked, never as zero',()=>{

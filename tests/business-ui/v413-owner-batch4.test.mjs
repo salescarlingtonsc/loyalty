@@ -95,6 +95,10 @@ const usageHarness = () => new Function('esc', `
      earns, the gifts count redemptions — so the harness needs the map, pulled from source rather
      than restated here. */
   ${statement('const GROW_USAGE_VERBS_V470=Object.freeze({', '});')}
+  /* nestly_v471: the engine scopes this card deliberately stops measuring. Pulled from source for
+     the same reason the verb map is — the harness must not restate the set it is testing. */
+  ${statement('const GROW_USAGE_UNTRACKED_SCOPES_V471=Object.freeze([', ']);')}
+  ${statement('const growUsageUntrackedScopeV471=', ');')}
   ${statement('const growUsageForEntryV386=', '\n  };')}
   ${statement('const growUsageGroupKeyV413=', "||'group';")}
   const growCountCellV271=(value,verbV470)=>value==null
@@ -159,12 +163,17 @@ test('v413 a gift whose programme has no row of its own still gets a header', ()
   assert.match(markup, /Not counted as a programme of its own/);
 });
 
-test('v413 a real engine row keeps its own count and adopts its own gifts', () => {
+/* nestly_v471 reversed half of what this test pinned. The owner's ruling on photo 4 is that an
+   engine's earn count is not wanted on this card at all, so a REAL engine row now carries no
+   figure — but it is still a real row, not a synthesised header, and it still adopts its own
+   gifts. Both of those are what this test is actually here to protect, and both still hold. */
+test('v471 a real engine row is unmeasured but still adopts its own gifts', () => {
   const build = usageHarness();
   const { rows } = build(OWNER_ENTRIES, OWNER_USAGE, new Set());
   const card = rows.find(row => row.category === 'Stamp card');
-  assert.equal(card.synthV413, undefined, 'this one IS a measured programme');
-  assert.equal(card.uses, 11);
+  assert.equal(card.synthV413, undefined, 'this one IS a real programme row, not a synthesised header');
+  assert.equal(card.untrackedV471, true, 'the engine is deliberately not counted here any more');
+  assert.equal(card.uses, null, 'v470 printed 11 earns; the owner asked for no figure at all');
   assert.equal(card.childCountV413, 1);
   const birthday = rows.find(row => row.category === 'Birthday benefit');
   assert.equal(birthday.childCountV413, 1, 'the second brace in photo 1');
