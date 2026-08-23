@@ -2427,6 +2427,12 @@
       "path": "db/migrations/20260824_nestly_v480_loyalty_value_integrity_fence.sql",
       "semanticVersion": "v480",
       "proposedDeployVersion": "20260824000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v481_legacy_referral_credit_fail_closed.sql",
+      "semanticVersion": "v481",
+      "proposedDeployVersion": "20260824000004"
     }
   ]
 }

@@ -2422,6 +2422,12 @@
       "version": "20260824000003",
       "name": "nestly_v480_loyalty_value_integrity_fence",
       "sourcePath": "db/migrations/20260824_nestly_v480_loyalty_value_integrity_fence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000004",
+      "name": "nestly_v481_legacy_referral_credit_fail_closed",
+      "sourcePath": "db/migrations/20260824_nestly_v481_legacy_referral_credit_fail_closed.sql"
     }
   ]
 }

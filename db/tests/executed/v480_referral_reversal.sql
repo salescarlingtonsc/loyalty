@@ -165,6 +165,33 @@ begin
     raise exception 'legacy credit referral reversal replay duplicated compensation';
   end if;
 
+  -- LEGACY CREDIT, missing immutable payout child: a mutable referral row is
+  -- not authority to manufacture a negative customer balance. The sale and
+  -- referral remain untouched until an explicit reconciliation supplies proof.
+  insert into public.clients(business_id,full_name) values(v_pbiz,'C2 referrer') returning id into v_referrer;
+  insert into public.clients(business_id,full_name) values(v_pbiz,'C2 friend') returning id into v_friend;
+  insert into public.sales(business_id,client_id,kind,amount_cents,branch_id,staff_id)
+  values(v_pbiz,v_friend,'service',10000,v_pbranch,v_pstaff) returning id into v_sale;
+  insert into public.referrals(business_id,referrer_client_id,referred_client_id,status,
+    qualified_at,qualified_sale_id,reward_cents,reward_points)
+  values(v_pbiz,v_referrer,v_friend,'rewarded',now(),v_sale,700,0) returning id into v_ref;
+  begin
+    perform public.reverse_sale(v_pbiz,v_sale,'missing credit proof reversal',
+      'v481-missing-credit-proof','proof','none');
+    raise exception 'missing historical credit provenance did not fail closed';
+  exception when sqlstate '55000' then
+    if position('historical referral credit provenance requires reconciliation' in sqlerrm)=0 then
+      raise;
+    end if;
+  end;
+  if exists(select 1 from public.sales where reversal_of=v_sale)
+     or not exists(select 1 from public.referrals where id=v_ref and status='rewarded'
+       and qualified_sale_id=v_sale and reward_cents=700)
+     or exists(select 1 from public.credit_ledger where business_id=v_pbiz
+       and client_id=v_referrer and sale_id=v_sale and amount_cents<0) then
+    raise exception 'missing-credit fail-closed probe changed accounting state';
+  end if;
+
   -- STAMPS, unspent: ordinary reversal claws both sides and the sale earn.
   insert into public.clients(business_id,full_name) values(v_sbiz,'S referrer') returning id into v_referrer;
   insert into public.clients(business_id,full_name) values(v_sbiz,'S friend') returning id into v_friend;
