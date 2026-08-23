@@ -4159,6 +4159,19 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 /* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
    real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
 .customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
+/* V468-G (owner: "click to read" and "can hide" drawn on the marketing paragraph). The consent
+   detail is a real <details>, not display:none — the customer must still be able to read what
+   they are agreeing to, so the text stays in the accessibility tree and one tap away. Only the
+   nine-line paragraph stops being the tallest thing on the sign-up form. */
+.signup-consent-detail-v468{margin:6px 0 0 30px}
+.signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
+  list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
+.signup-consent-detail-v468>summary::-webkit-details-marker{display:none}
+.signup-consent-detail-v468>summary::after{content:'\203A';margin-left:6px;transform:rotate(90deg);
+  display:inline-block;transition:transform .15s ease}
+.signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
+.signup-consent-detail-v468>p{margin-top:4px}
+@media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
 </style>
 </head>
 <body>
@@ -4206,7 +4219,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=6418d8e9c607","business":"/app-business.js?b=e2fa6e351bc5","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=96a58bd59731","business":"/app-business.js?b=e2fa6e351bc5","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
