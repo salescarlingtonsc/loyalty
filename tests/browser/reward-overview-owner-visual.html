@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="ce900acb6dc606f13e56c88d91a53fd33df1607c4c7e7429f2d7747a6b0380ff"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="15e4e073c0e8b6de735bdd20da376c4ce5c28e626f3815619726e24f44cbcbef"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4128,9 +4128,59 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 /* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
    real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
 .customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
+/* V468-A (owner photo 20: an arrow drawn from every Daily report figure, "It needs to be
+   clickable to view what is inside"). The four figures are buttons now. They borrow
+   .dashboard-metric wholesale so the affordance reads exactly like the Dashboard's; only the
+   per-tile tint is restated, because the Dashboard keys that off its own data attribute. */
+.daily-metric-v468[data-daily-metric-v468="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.daily-metric-v468[data-daily-metric-v468="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.daily-metric-v468[data-daily-metric-v468="customers"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.daily-metric-v468[data-daily-metric-v468="giftcards"]{background:var(--shell);border-left-color:var(--muted)}
+
+/* V468-B (owner photo, Record sale): "Change branch or teammate" was a 12.5px muted text link
+   under a separate read-only line — too easy to miss at a busy counter. This turns the same
+   <details>/<summary> disclosure (ids, candidate rules and onchange handlers untouched — see
+   tillCustomerHeadV373/bindTillControlsV373 in app.js) into a visible chip that both shows the
+   current branch/teammate and opens the picker in one tap. Rules below share specificity with
+   the base .till-who-v373 rules two blocks up but come later in source order, so they win. */
+.till-who-v468{border-top:none;margin-top:12px;padding-top:0}
+.till-who-v468>summary{list-style:none;min-height:48px;padding:11px 14px;display:flex;align-items:center;gap:9px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--brand-red-soft);color:var(--brand-red-on-soft);
+  font-size:14.5px;font-weight:750}
+.till-who-v468>summary::-webkit-details-marker{display:none}
+.till-who-v468>summary::marker{content:''}
+.till-who-summary-text-v468{flex:1;min-width:0;overflow-wrap:anywhere}
+.till-who-sep-v468{opacity:.65;margin:0 2px}
+.till-who-summary-change-v468{font-weight:750;text-decoration:underline;white-space:nowrap;flex-shrink:0}
+.till-who-v468[open]>summary{border-radius:var(--r-sm) var(--r-sm) 0 0;margin-bottom:2px}
+
+/* V468-B (owner photo, Record sale items step): "I need to be able to deduct the quantity or
+   remove entirely in this page." Adds a compact −/count/+/× row on an already-selected tile,
+   reusing the SAME qty/remove handlers the Confirm step's cart lines use (data-qty/data-remove —
+   see bindTillControlsV373 in app.js). It sits as a sibling of the tile button, not nested inside
+   it, so the tile stays a plain <button> (no interactive-in-interactive HTML) and its own tap
+   target is untouched. */
+.till-choice-tile-wrap-v468{position:relative}
+.till-choice-qtyctl-v468{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.till-choice-qtyctl-v468 button{min-width:40px;min-height:40px;padding:0;font-size:17px;font-weight:750;line-height:1;border-radius:var(--r-sm)}
+.till-choice-qtyctl-v468 output{min-width:22px;text-align:center;font-weight:750;font-size:15px}
+.till-choice-qtyctl-v468 .till-choice-qtyctl-remove-v468{color:var(--brand-red)}
+/* V468-G (owner: "click to read" and "can hide" drawn on the marketing paragraph). The consent
+   detail is a real <details>, not display:none — the customer must still be able to read what
+   they are agreeing to, so the text stays in the accessibility tree and one tap away. Only the
+   nine-line paragraph stops being the tallest thing on the sign-up form. */
+.signup-consent-detail-v468{margin:6px 0 0 30px}
+.signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
+  list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
+.signup-consent-detail-v468>summary::-webkit-details-marker{display:none}
+.signup-consent-detail-v468>summary::after{content:'\203A';margin-left:6px;transform:rotate(90deg);
+  display:inline-block;transition:transform .15s ease}
+.signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
+.signup-consent-detail-v468>p{margin-top:4px}
+@media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ce900acb6dc606f13e56c88d91a53fd33df1607c4c7e7429f2d7747a6b0380ff</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 15e4e073c0e8b6de735bdd20da376c4ce5c28e626f3815619726e24f44cbcbef</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -8927,10 +8977,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :Promise.resolve([]);
   /* Already a Promise.all, but it was CREATED after the five awaits above had each finished, so
      it could never overlap them. Creating it here is the whole of its change. */
-  /* V386: the windowed reads for the analytics card, and ONLY that card. The Overview table's
-     "Customers used" column keeps the unbounded v271 read below — the owner drew the filter on
-     the analytics table, so narrowing a column they did not touch would be a change nobody asked
-     for. With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
+  /* V386: the windowed reads for the analytics card, and ONLY that card. (V468 removed the
+     Overview table's "Customers used" column the rest of this note referred to; the unbounded
+     v271 read stays because the analytics block still needs it.)
+     With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
      contract (db/tests/v386 check 03), so the card reads the figures already on their way.
      The previous-equal-window read is what makes the chart a COMPARISON rather than a snapshot;
      it uses previousEquivalentRangeV153, the same derivation the dashboard's delta chips use. */
@@ -10045,7 +10095,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
     columns:[growOverviewNameColumnV324(growOverviewRewardRowsV319,'Programme'),
       ['Started',row=>growDateCellV271(row.started)],
-      ['Customers used',row=>growCountCellV271(row.customers)],
+      /* V468 (owner photo 5: the whole "Customers used" column struck out). It answered a question
+         the analytics block below already answers better — per category and per gift — and a
+         distinct-customer tally on a programme row invited exactly the misreading the owner called
+         out on that block: one regular redeeming five times read as "1". The count is not lost, it
+         moved to where it is explained. */
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
   /* No "Customers used" column here. Nothing in the schema records a customer redeeming a
      promotion (see the V271 honesty note above), so the cell was "Not tracked" on every row of
@@ -13443,7 +13497,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'ce900acb6dc606f13e56c88d91a53fd33df1607c4c7e7429f2d7747a6b0380ff',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'15e4e073c0e8b6de735bdd20da376c4ce5c28e626f3815619726e24f44cbcbef',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

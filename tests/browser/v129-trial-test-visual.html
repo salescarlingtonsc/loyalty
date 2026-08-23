@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="910a4ab9a698a4a0a4bc072002f0235bfc24d2d79fa71e9ea6b0dc7b6bd9dd3e"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="5eb6594300a2f07cabadec83a42f97bef5a4c70a3bdfa3a26569be2ec774399b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4128,10 +4128,60 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 /* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
    real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
 .customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
+/* V468-A (owner photo 20: an arrow drawn from every Daily report figure, "It needs to be
+   clickable to view what is inside"). The four figures are buttons now. They borrow
+   .dashboard-metric wholesale so the affordance reads exactly like the Dashboard's; only the
+   per-tile tint is restated, because the Dashboard keys that off its own data attribute. */
+.daily-metric-v468[data-daily-metric-v468="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.daily-metric-v468[data-daily-metric-v468="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.daily-metric-v468[data-daily-metric-v468="customers"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.daily-metric-v468[data-daily-metric-v468="giftcards"]{background:var(--shell);border-left-color:var(--muted)}
+
+/* V468-B (owner photo, Record sale): "Change branch or teammate" was a 12.5px muted text link
+   under a separate read-only line — too easy to miss at a busy counter. This turns the same
+   <details>/<summary> disclosure (ids, candidate rules and onchange handlers untouched — see
+   tillCustomerHeadV373/bindTillControlsV373 in app.js) into a visible chip that both shows the
+   current branch/teammate and opens the picker in one tap. Rules below share specificity with
+   the base .till-who-v373 rules two blocks up but come later in source order, so they win. */
+.till-who-v468{border-top:none;margin-top:12px;padding-top:0}
+.till-who-v468>summary{list-style:none;min-height:48px;padding:11px 14px;display:flex;align-items:center;gap:9px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--brand-red-soft);color:var(--brand-red-on-soft);
+  font-size:14.5px;font-weight:750}
+.till-who-v468>summary::-webkit-details-marker{display:none}
+.till-who-v468>summary::marker{content:''}
+.till-who-summary-text-v468{flex:1;min-width:0;overflow-wrap:anywhere}
+.till-who-sep-v468{opacity:.65;margin:0 2px}
+.till-who-summary-change-v468{font-weight:750;text-decoration:underline;white-space:nowrap;flex-shrink:0}
+.till-who-v468[open]>summary{border-radius:var(--r-sm) var(--r-sm) 0 0;margin-bottom:2px}
+
+/* V468-B (owner photo, Record sale items step): "I need to be able to deduct the quantity or
+   remove entirely in this page." Adds a compact −/count/+/× row on an already-selected tile,
+   reusing the SAME qty/remove handlers the Confirm step's cart lines use (data-qty/data-remove —
+   see bindTillControlsV373 in app.js). It sits as a sibling of the tile button, not nested inside
+   it, so the tile stays a plain <button> (no interactive-in-interactive HTML) and its own tap
+   target is untouched. */
+.till-choice-tile-wrap-v468{position:relative}
+.till-choice-qtyctl-v468{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.till-choice-qtyctl-v468 button{min-width:40px;min-height:40px;padding:0;font-size:17px;font-weight:750;line-height:1;border-radius:var(--r-sm)}
+.till-choice-qtyctl-v468 output{min-width:22px;text-align:center;font-weight:750;font-size:15px}
+.till-choice-qtyctl-v468 .till-choice-qtyctl-remove-v468{color:var(--brand-red)}
+/* V468-G (owner: "click to read" and "can hide" drawn on the marketing paragraph). The consent
+   detail is a real <details>, not display:none — the customer must still be able to read what
+   they are agreeing to, so the text stays in the accessibility tree and one tap away. Only the
+   nine-line paragraph stops being the tallest thing on the sign-up form. */
+.signup-consent-detail-v468{margin:6px 0 0 30px}
+.signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
+  list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
+.signup-consent-detail-v468>summary::-webkit-details-marker{display:none}
+.signup-consent-detail-v468>summary::after{content:'\203A';margin-left:6px;transform:rotate(90deg);
+  display:inline-block;transition:transform .15s ease}
+.signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
+.signup-consent-detail-v468>p{margin-top:4px}
+@media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 910a4ab9a698a4a0a4bc072002f0235bfc24d2d79fa71e9ea6b0dc7b6bd9dd3e</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 5eb6594300a2f07cabadec83a42f97bef5a4c70a3bdfa3a26569be2ec774399b</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -4845,18 +4895,16 @@ async function clientsPage(){
     <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
-    <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
+    <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
     ${/* V368 (owner ruling: move the importer here rather than delete it). Collapsed, because it
          is an occasional job and the list is the page. Same markup and wiring as the Customer
          Interface page had — only the home changed. */''}
-    ${canWrite?`<div data-subtab="Customers">${customerCsvImportCardHtmlV368()}</div>`:''}
-    <div class="card" id="fbQueueCard" data-subtab="Visit feedback"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
-      <div class="fb-chips" id="fbChips" role="group" aria-label="Filter feedback by status"></div>
-      <div id="fbQueue">${CUI.tableSkeleton({rows:3,columns:4})}</div></div></section>`;
-  /* V200: the feedback queue is its own job, not the bottom of the customer list. Everything the
-     two share — the inactive shortcuts, reporting scope, and the Add-customer form, which opens
-     from the actions bar — stays pinned above the strip so it works from either tab. */
-  sectionTabsV200($('customersView'),{key:'customers',label:'Customer sections'});
+    ${canWrite?customerCsvImportCardHtmlV368():''}
+</section>`;
+  /* V468 (owner photo 18, the "Visit feedback" pill circled and marked "Remove"). With the queue
+     gone the page is one section again, so the V200 sub-tab strip has nothing to switch between —
+     sectionTabsV200 would render no strip anyway, and the tagging that fed it is dropped with it.
+     The per-customer feedback card on the 360 profile is a different thing and stays. */
   if(canWrite)wireCustomerCsvImportV368();
   const customersView=$('customersView');
   const isCustomersCurrent=()=>routeMain.isConnected&&M()===routeMain&&customersView.isConnected&&$('customersView')===customersView;
@@ -5089,84 +5137,6 @@ async function clientsPage(){
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
     $('list').querySelectorAll('[data-sort]').forEach(btn=>btn.onclick=()=>{$('clientSort').value=btn.dataset.sort;clientPage=0;load()});
   }
-  /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
-     can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
-     admin gate the v40 reversal workflow uses), so only they get Acknowledge/Resolve; frontdesk,
-     staff and bookkeeper see the queue read-only, and a 42501 from a stale role shows a polite denial. */
-  const canResolveFeedback=S.myRole==='owner'||S.myRole==='manager';
-  const feedbackResolveKeys=new Map();
-  const FB_FILTERS=[['open','Open'],['acknowledged','Acknowledged'],['resolved','Resolved'],['closed','Closed'],['','All']];
-  const FEEDBACK_PAGE_SIZE=100;
-  let feedbackFilter='open';
-  let feedbackPage=0;
-  const feedbackLoadGate=createLatestRequestGate(isCustomersCurrent);
-  const fbStars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
-  const fbStatusLabel={open:'Open case',acknowledged:'Acknowledged',resolved:'Resolved',closed:'Positive'};
-  const fbStatusTone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'};
-  function renderFeedbackChips(){
-    const chips=$('fbChips');if(!chips)return;
-    chips.innerHTML=FB_FILTERS.map(([value,label])=>`<button type="button" class="fb-chip" data-fb-filter="${value}" aria-pressed="${feedbackFilter===value}">${label}</button>`).join('');
-    chips.querySelectorAll('[data-fb-filter]').forEach(btn=>btn.onclick=()=>{feedbackFilter=btn.dataset.fbFilter;feedbackPage=0;renderFeedbackChips();loadFeedbackQueue()});
-  }
-  async function loadFeedbackQueue(){
-    const host=$('fbQueue');if(!host||!isCustomersCurrent())return;
-    const isLatest=feedbackLoadGate.begin();
-    host.innerHTML='<div class="empty">Loading feedback…</div>';
-    const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
-      p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
-    if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
-    if(error){host.innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
-    const rows=Array.isArray(data?.feedback)?data.feedback:[];
-    const total=Math.max(0,Number(data?.total||0));
-    const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
-    if(feedbackPage>=pages&&feedbackPage>0){feedbackPage=pages-1;loadFeedbackQueue();return}
-    if(!rows.length){host.innerHTML=CUI.emptyState({iconName:'check',title:feedbackFilter==='open'?'No open cases':'Nothing here',body:feedbackFilter==='open'?'Every service-recovery case has been handled.':'No feedback matches this filter yet.'});return}
-    host.innerHTML=rows.map(f=>{
-      const openCase=f.recovery_status==='open'||f.recovery_status==='acknowledged';
-      const prov=(f.recovery_status==='resolved')?`<p class="fb-prov">Resolved${f.resolved_at?' · '+esc(sgt(f.resolved_at)||''):''}${f.resolution_note?' · '+esc(f.resolution_note):''}</p>`:'';
-      const actions=(openCase&&canResolveFeedback)?`<div class="fb-actions">${f.recovery_status==='open'?`<button class="btn ghost sm fbAck" data-id="${esc(f.id)}">Acknowledge</button>`:''}<button class="btn sm fbResolve" data-id="${esc(f.id)}">Resolve</button></div>`:'';
-      return `<div class="fb-row ${openCase?'open':''}"><div class="row"><span class="fb-rating" aria-hidden="true">${fbStars(f.rating)}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${fbStatusTone[f.recovery_status]||''}">${esc(fbStatusLabel[f.recovery_status]||f.recovery_status)}</span></div>
-        <p class="muted small" style="margin-top:5px"><b>${esc(f.customer_name||'Customer')}</b> · ${esc(sgt(f.created_at)||'')} · ${esc(timeAgo(f.created_at))}</p>
-        ${f.comment?`<p style="margin-top:6px">${esc(f.comment)}</p>`:'<p class="muted small" style="margin-top:6px">No written comment.</p>'}
-        ${prov}${actions}</div>`;
-    }).join('')+`<div class="row" style="margin-top:14px"><span class="muted small">${total} feedback record${total===1?'':'s'} · page ${feedbackPage+1} of ${pages}</span><span class="spacer"></span>
-      <button class="btn ghost sm" id="fbPrev" ${feedbackPage===0?'disabled':''}>Previous</button>
-      <button class="btn ghost sm" id="fbNext" ${feedbackPage+1>=pages?'disabled':''}>Next</button></div>`;
-    host.querySelectorAll('.fbAck').forEach(btn=>btn.onclick=()=>submitFeedbackResolution(btn.dataset.id,'acknowledged',null));
-    host.querySelectorAll('.fbResolve').forEach(btn=>btn.onclick=()=>openFeedbackResolveDialog(btn.dataset.id));
-    $('fbPrev').onclick=()=>{if(feedbackPage>0){feedbackPage--;loadFeedbackQueue()}};
-    $('fbNext').onclick=()=>{if(feedbackPage+1<pages){feedbackPage++;loadFeedbackQueue()}};
-  }
-  async function submitFeedbackResolution(fbId,newStatus,note){
-    if(!feedbackResolveKeys.has(fbId))feedbackResolveKeys.set(fbId,crypto.randomUUID());
-    const {error}=await sb.rpc('staff_resolve_feedback',{p_business:S.biz.id,p_feedback:fbId,p_new_status:newStatus,p_note:note||null,p_idempotency_key:feedbackResolveKeys.get(fbId)});
-    if(!isCustomersCurrent())return;
-    if(error){
-      if(error.code==='42501')return toast('You do not have permission to resolve feedback');
-      return fail(error);
-    }
-    feedbackResolveKeys.delete(fbId);
-    toast(newStatus==='resolved'?'Case resolved':'Case acknowledged');
-    loadFeedbackQueue();
-  }
-  function openFeedbackResolveDialog(fbId){
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="fbResolveModal" role="dialog" aria-modal="true" aria-labelledby="fbResolveTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
-      <h2 id="fbResolveTitle" style="margin-bottom:6px">Resolve this case</h2>
-      <p class="muted small">Add an optional note about how you made it right. This closes the service-recovery case.</p>
-      <label for="fbResolveNote" class="small" style="display:block;margin-top:12px">Resolution note (optional)</label>
-      <textarea id="fbResolveNote" rows="3" maxlength="2000" placeholder="e.g. Called the customer and offered a redo"></textarea>
-      <div class="row" style="margin-top:16px"><button class="btn" id="fbResolveConfirm">Confirm resolve</button><button class="btn ghost sm" id="fbResolveCancel">Cancel</button></div></div></div>`);
-    const dialog=$('fbResolveModal');
-    const close=CUI.activateDialog(dialog,{onClose:()=>close(),initialFocus:'#fbResolveNote'});
-    $('fbResolveCancel').onclick=()=>close();
-    $('fbResolveConfirm').onclick=async()=>{
-      const note=($('fbResolveNote')?.value||'').trim();
-      $('fbResolveConfirm').disabled=true;close();
-      await submitFeedbackResolution(fbId,'resolved',note||null);
-    };
-  }
-  renderFeedbackChips();
-  loadFeedbackQueue();
   /* V287: same orphan as the Dashboard — #clientReportingScopeWrap no longer exists, so this
      call's immediate onChange ran refreshInactiveCards() and load() a second time on every
      open. The two explicit calls below are the real ones. */
@@ -7133,7 +7103,7 @@ async function tillPage(){
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
         ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale (no customer)</button>
+        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>
         <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
@@ -7846,14 +7816,31 @@ async function tillPage(){
     const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'';
     const staffName=(tillAttributableStaff.find(person=>person.id===tillSaleStaffId)
       ||tillRoster.find(person=>person.id===tillSaleStaffId))?.full_name||'';
-    const contextLine=[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
     /* Only offered where there is a genuine choice to make. With one branch and one teammate the
        line above already says which, and a disclosure hiding two read-only facts is furniture. */
-    const pickers=(accessibleTillBranches.length>1||tillAttributableStaff.length>1)
-      ?`<details class="till-who-v373" id="tillWhoV373"${tillWhoOpenV373?' open':''}><summary>Change branch or teammate</summary>
+    const branchSwitchableV468=accessibleTillBranches.length>1;
+    const staffSwitchableV468=tillAttributableStaff.length>1;
+    const hasPickersV468=branchSwitchableV468||staffSwitchableV468;
+    /* V468-B (owner photo, Record sale items step): "Change branch or teammate" used to be a
+       muted 12.5px text link sitting under a separate read-only line — "the control is too
+       hidden" per the owner's ruling ("one staff per sale is fine, tag it + commission, but I
+       need to see and change who without hunting"). The <details>/<summary>/<select> pair is
+       otherwise UNCHANGED — same ids, same tillAttributableStaffFor/branch candidate rules, same
+       onchange handlers bound in bindTillControlsV373 further down. Only the summary's content
+       and styling change: it now shows the CURRENT branch/teammate (legible at a glance) inside a
+       visible chip button that opens the same picker in one tap, instead of a generic link that
+       said nothing about who the sale is tagged to. */
+    const whoChipTextV468=[branchSwitchableV468?`<b data-merchant-content>${esc(branchName)}</b>`:'',
+      staffSwitchableV468?`<b data-merchant-content>${esc(staffName||'Choose teammate')}</b>`:'']
+      .filter(Boolean).join(' <span class="till-who-sep-v468">·</span> ');
+    const pickers=hasPickersV468
+      ?`<details class="till-who-v373 till-who-v468" id="tillWhoV373"${tillWhoOpenV373?' open':''}>
+        <summary class="till-who-summary-v468">${CUI.icon('staff',{size:18})}<span class="till-who-summary-text-v468">${whoChipTextV468}</span><span class="till-who-summary-change-v468">Change</span></summary>
         ${branchPicker}
         ${staffPickerV287}</details>`
       :'';
+    // Nothing switchable here (one branch, one teammate) — the old plain read-only line stands.
+    const contextLine=hasPickersV468?'':[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
     if(walkin){
       return `<div class="till-head-v373">
         <div class="till-head-id-v373"><b class="till-head-name-v373">Walk-in customer</b>
@@ -7885,12 +7872,41 @@ async function tillPage(){
     const selectedCatalogQty=(type,id)=>saleLines.reduce((sum,line)=>sum+(line.type===type&&String(line.ref)===String(id)?Number(line.qty||0):0),0);
     return selectedCatalogQty;
   }
+  /* V468-B: the ONE cart line a tile's type+ref maps to (addCatalogLine/addBundleLines always
+     merge into an existing line rather than pushing a second one for the same item), so a tile
+     needing to show/adjust "its" line just needs this line's id. */
+  function tillLineForTileV468(type,id){
+    return cart.find(line=>line.type===type&&String(line.ref)===String(id))||null;
+  }
+  /* V468-B (owner photo, Record sale items step: "I need to be able to deduct the quantity or
+     remove entirely in this page"). Reuses the Confirm step's OWN handlers verbatim — data-qty/
+     data-remove/data-line are the exact attributes tillCartLinesHtmlV373's row uses, and both are
+     wired by the single delegated binder in bindTillControlsV373 (already runs after every draw,
+     no new listener needed). The only new decision made here, not a new mutation: at qty 1 the
+     "−" tap is wired to data-remove instead of data-qty="-1", because changeQty on its own clamps
+     at a floor of 1 (by design, for the Confirm step's separate always-visible × button) — on a
+     tile there is no second remove affordance, so decrementing at 1 IS the remove gesture and
+     drops the tile back to its untouched, unselected look. */
+  function tillTileQtyCtlV468(type,id,qty,itemLabel){
+    if(!qty)return '';
+    const line=tillLineForTileV468(type,id);
+    if(!line)return '';
+    const minus=qty>1
+      ?`<button type="button" data-qty="-1" data-line="${esc(line.lineId)}" data-merchant-content aria-label="Reduce ${esc(itemLabel)} quantity">−</button>`
+      :`<button type="button" class="till-choice-qtyctl-remove-v468" data-remove="${esc(line.lineId)}" data-merchant-content aria-label="Remove ${esc(itemLabel)}">−</button>`;
+    return `<div class="till-choice-qtyctl-v468" role="group" aria-label="${esc(itemLabel)} quantity" data-merchant-content>
+      ${minus}<output aria-label="Quantity">${qty}</output>
+      <button type="button" data-qty="1" data-line="${esc(line.lineId)}" data-merchant-content aria-label="Increase ${esc(itemLabel)} quantity">+</button>
+    </div>`;
+  }
   function tillCatalogueTilesV373(entries){
     const selectedCatalogQty=tillSelectedQtyV373();
     return entries.map(({type,item})=>{
       const qty=selectedCatalogQty(type,item.id);
       const image=catalogueImageUrlV158(item);
-      return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      const tile=`<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      // Untouched tiles are unwrapped, unchanged markup — the qty row only ever appears once the item is in the cart.
+      return qty?`<div class="till-choice-tile-wrap-v468">${tile}${tillTileQtyCtlV468(type,item.id,qty,item.name)}</div>`:tile;
     }).join('');
   }
   /* v187: a bundle is several services at one price. It keeps the service tile's badge — it is a
@@ -7900,7 +7916,8 @@ async function tillPage(){
     const selectedCatalogQty=tillSelectedQtyV373();
     return bundles.map(bundle=>{
       const qty=selectedCatalogQty('bundle',bundle.id);
-      return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      const tile=`<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      return qty?`<div class="till-choice-tile-wrap-v468">${tile}${tillTileQtyCtlV468('bundle',bundle.id,qty,bundle.name)}</div>`:tile;
     }).join('');
   }
   /* V216 (owner: "i need a product modules - instead of just services (because products have no
@@ -8511,6 +8528,10 @@ async function tillPage(){
     const pointsNote=(!walkin&&hasSale)
       ?`<p class="muted small" style="margin-top:8px">Points are worked out when the sale is recorded — the receipt shows exactly how many were earned.</p>`
       :'';
+    /* V468-B: owner struck "Different number" on the Confirm sale step (photo) — no
+       ${tillLeaveRowV373()} here any more. The route it served still exists one tap away via
+       "Add more items" -> the items stage, which keeps its own tillLeaveRowV373() back-to-keypad
+       button, so removing it here does not strand the cashier. */
     return `<b class="small till-review-head-v373">Confirm sale</b>
       ${tillCartLinesHtmlV373()}
       ${checkoutPanelHtml()}
@@ -8522,8 +8543,7 @@ async function tillPage(){
       ${paynowHtml}
       ${partialHtml}
       ${actionHtml}
-      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}
-      ${tillLeaveRowV373()}`;
+      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}`;
   }
   // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
   // figures live in the checkout panel (evaluation-authoritative).
@@ -14476,10 +14496,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :Promise.resolve([]);
   /* Already a Promise.all, but it was CREATED after the five awaits above had each finished, so
      it could never overlap them. Creating it here is the whole of its change. */
-  /* V386: the windowed reads for the analytics card, and ONLY that card. The Overview table's
-     "Customers used" column keeps the unbounded v271 read below — the owner drew the filter on
-     the analytics table, so narrowing a column they did not touch would be a change nobody asked
-     for. With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
+  /* V386: the windowed reads for the analytics card, and ONLY that card. (V468 removed the
+     Overview table's "Customers used" column the rest of this note referred to; the unbounded
+     v271 read stays because the analytics block still needs it.)
+     With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
      contract (db/tests/v386 check 03), so the card reads the figures already on their way.
      The previous-equal-window read is what makes the chart a COMPARISON rather than a snapshot;
      it uses previousEquivalentRangeV153, the same derivation the dashboard's delta chips use. */
@@ -15594,7 +15614,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
     columns:[growOverviewNameColumnV324(growOverviewRewardRowsV319,'Programme'),
       ['Started',row=>growDateCellV271(row.started)],
-      ['Customers used',row=>growCountCellV271(row.customers)],
+      /* V468 (owner photo 5: the whole "Customers used" column struck out). It answered a question
+         the analytics block below already answers better — per category and per gift — and a
+         distinct-customer tally on a programme row invited exactly the misreading the owner called
+         out on that block: one regular redeeming five times read as "1". The count is not lost, it
+         moved to where it is explained. */
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
   /* No "Customers used" column here. Nothing in the schema records a customer redeeming a
      promotion (see the V271 honesty note above), so the cell was "Not tracked" on every row of
@@ -24499,7 +24523,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
         ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale (no customer)</button>
+        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>
         <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
@@ -25212,14 +25236,31 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'';
     const staffName=(tillAttributableStaff.find(person=>person.id===tillSaleStaffId)
       ||tillRoster.find(person=>person.id===tillSaleStaffId))?.full_name||'';
-    const contextLine=[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
     /* Only offered where there is a genuine choice to make. With one branch and one teammate the
        line above already says which, and a disclosure hiding two read-only facts is furniture. */
-    const pickers=(accessibleTillBranches.length>1||tillAttributableStaff.length>1)
-      ?`<details class="till-who-v373" id="tillWhoV373"${tillWhoOpenV373?' open':''}><summary>Change branch or teammate</summary>
+    const branchSwitchableV468=accessibleTillBranches.length>1;
+    const staffSwitchableV468=tillAttributableStaff.length>1;
+    const hasPickersV468=branchSwitchableV468||staffSwitchableV468;
+    /* V468-B (owner photo, Record sale items step): "Change branch or teammate" used to be a
+       muted 12.5px text link sitting under a separate read-only line — "the control is too
+       hidden" per the owner's ruling ("one staff per sale is fine, tag it + commission, but I
+       need to see and change who without hunting"). The <details>/<summary>/<select> pair is
+       otherwise UNCHANGED — same ids, same tillAttributableStaffFor/branch candidate rules, same
+       onchange handlers bound in bindTillControlsV373 further down. Only the summary's content
+       and styling change: it now shows the CURRENT branch/teammate (legible at a glance) inside a
+       visible chip button that opens the same picker in one tap, instead of a generic link that
+       said nothing about who the sale is tagged to. */
+    const whoChipTextV468=[branchSwitchableV468?`<b data-merchant-content>${esc(branchName)}</b>`:'',
+      staffSwitchableV468?`<b data-merchant-content>${esc(staffName||'Choose teammate')}</b>`:'']
+      .filter(Boolean).join(' <span class="till-who-sep-v468">·</span> ');
+    const pickers=hasPickersV468
+      ?`<details class="till-who-v373 till-who-v468" id="tillWhoV373"${tillWhoOpenV373?' open':''}>
+        <summary class="till-who-summary-v468">${CUI.icon('staff',{size:18})}<span class="till-who-summary-text-v468">${whoChipTextV468}</span><span class="till-who-summary-change-v468">Change</span></summary>
         ${branchPicker}
         ${staffPickerV287}</details>`
       :'';
+    // Nothing switchable here (one branch, one teammate) — the old plain read-only line stands.
+    const contextLine=hasPickersV468?'':[branchName?esc(branchName):'',staffName?`Staff: ${esc(staffName)}`:''].filter(Boolean).join(' · ');
     if(walkin){
       return `<div class="till-head-v373">
         <div class="till-head-id-v373"><b class="till-head-name-v373">Walk-in customer</b>
@@ -25251,12 +25292,41 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const selectedCatalogQty=(type,id)=>saleLines.reduce((sum,line)=>sum+(line.type===type&&String(line.ref)===String(id)?Number(line.qty||0):0),0);
     return selectedCatalogQty;
   }
+  /* V468-B: the ONE cart line a tile's type+ref maps to (addCatalogLine/addBundleLines always
+     merge into an existing line rather than pushing a second one for the same item), so a tile
+     needing to show/adjust "its" line just needs this line's id. */
+  function tillLineForTileV468(type,id){
+    return cart.find(line=>line.type===type&&String(line.ref)===String(id))||null;
+  }
+  /* V468-B (owner photo, Record sale items step: "I need to be able to deduct the quantity or
+     remove entirely in this page"). Reuses the Confirm step's OWN handlers verbatim — data-qty/
+     data-remove/data-line are the exact attributes tillCartLinesHtmlV373's row uses, and both are
+     wired by the single delegated binder in bindTillControlsV373 (already runs after every draw,
+     no new listener needed). The only new decision made here, not a new mutation: at qty 1 the
+     "−" tap is wired to data-remove instead of data-qty="-1", because changeQty on its own clamps
+     at a floor of 1 (by design, for the Confirm step's separate always-visible × button) — on a
+     tile there is no second remove affordance, so decrementing at 1 IS the remove gesture and
+     drops the tile back to its untouched, unselected look. */
+  function tillTileQtyCtlV468(type,id,qty,itemLabel){
+    if(!qty)return '';
+    const line=tillLineForTileV468(type,id);
+    if(!line)return '';
+    const minus=qty>1
+      ?`<button type="button" data-qty="-1" data-line="${esc(line.lineId)}" data-merchant-content aria-label="Reduce ${esc(itemLabel)} quantity">−</button>`
+      :`<button type="button" class="till-choice-qtyctl-remove-v468" data-remove="${esc(line.lineId)}" data-merchant-content aria-label="Remove ${esc(itemLabel)}">−</button>`;
+    return `<div class="till-choice-qtyctl-v468" role="group" aria-label="${esc(itemLabel)} quantity" data-merchant-content>
+      ${minus}<output aria-label="Quantity">${qty}</output>
+      <button type="button" data-qty="1" data-line="${esc(line.lineId)}" data-merchant-content aria-label="Increase ${esc(itemLabel)} quantity">+</button>
+    </div>`;
+  }
   function tillCatalogueTilesV373(entries){
     const selectedCatalogQty=tillSelectedQtyV373();
     return entries.map(({type,item})=>{
       const qty=selectedCatalogQty(type,item.id);
       const image=catalogueImageUrlV158(item);
-      return `<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      const tile=`<button type="button" class="choice-button ${image?'has-image':''} ${qty?'is-selected':''}" data-add="${type}" data-id="${esc(item.id)}">${image?`<img class="till-choice-image" src="${esc(image)}" alt="" loading="lazy">`:''}<span class="till-choice-text"><b>${esc(item.name)}</b><span class="till-cart-price">${money(item.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      // Untouched tiles are unwrapped, unchanged markup — the qty row only ever appears once the item is in the cart.
+      return qty?`<div class="till-choice-tile-wrap-v468">${tile}${tillTileQtyCtlV468(type,item.id,qty,item.name)}</div>`:tile;
     }).join('');
   }
   /* v187: a bundle is several services at one price. It keeps the service tile's badge — it is a
@@ -25266,7 +25336,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const selectedCatalogQty=tillSelectedQtyV373();
     return bundles.map(bundle=>{
       const qty=selectedCatalogQty('bundle',bundle.id);
-      return `<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      const tile=`<button type="button" class="choice-button ${qty?'is-selected':''}" data-add-bundle="${esc(bundle.id)}"><span class="till-choice-text"><b>${esc(bundle.name)}</b><span class="muted small">${esc(bundle.items.map(item=>item.name).join(' + '))}</span><span class="till-cart-price">${money(bundle.unit_cents)}</span></span>${qty?`<span class="till-choice-qty" data-workspace-i18n aria-label="${qty} selected">${qty}</span>`:''}</button>`;
+      return qty?`<div class="till-choice-tile-wrap-v468">${tile}${tillTileQtyCtlV468('bundle',bundle.id,qty,bundle.name)}</div>`:tile;
     }).join('');
   }
   /* V216 (owner: "i need a product modules - instead of just services (because products have no
@@ -25877,6 +25948,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const pointsNote=(!walkin&&hasSale)
       ?`<p class="muted small" style="margin-top:8px">Points are worked out when the sale is recorded — the receipt shows exactly how many were earned.</p>`
       :'';
+    /* V468-B: owner struck "Different number" on the Confirm sale step (photo) — no
+       ${tillLeaveRowV373()} here any more. The route it served still exists one tap away via
+       "Add more items" -> the items stage, which keeps its own tillLeaveRowV373() back-to-keypad
+       button, so removing it here does not strand the cashier. */
     return `<b class="small till-review-head-v373">Confirm sale</b>
       ${tillCartLinesHtmlV373()}
       ${checkoutPanelHtml()}
@@ -25888,8 +25963,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       ${paynowHtml}
       ${partialHtml}
       ${actionHtml}
-      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}
-      ${tillLeaveRowV373()}`;
+      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}`;
   }
   // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
   // figures live in the checkout panel (evaluation-authoritative).
@@ -26946,6 +27020,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'910a4ab9a698a4a0a4bc072002f0235bfc24d2d79fa71e9ea6b0dc7b6bd9dd3e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'5eb6594300a2f07cabadec83a42f97bef5a4c70a3bdfa3a26569be2ec774399b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

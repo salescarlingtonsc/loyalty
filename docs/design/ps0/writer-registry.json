@@ -2837,10 +2837,6 @@
       "reason": "browser RPC 'staff_list_visit_feedback_v145' is a read-only, customer-filtered visit-feedback projection and performs no value write"
     },
     {
-      "id": "browser.rpc:app/app.js:staff_resolve_feedback",
-      "reason": "browser RPC 'staff_resolve_feedback' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
       "id": "browser.rpc:app/app.js:staff_set_marketing_consent",
       "reason": "browser RPC 'staff_set_marketing_consent' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },

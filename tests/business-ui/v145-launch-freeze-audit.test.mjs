@@ -195,7 +195,12 @@ test('valid visit helper removes reversal rows and their original visits everywh
 });
 
 test('daily report reuses the canonical dashboard visit projection instead of counting transaction rows', () => {
-  const daily = section('async function dailyReportPage()', '/* ---------- expenses ---------- */');
+  /* V468 (owner photo 20, "It needs to be clickable to view what is inside") moved the four
+     figures' labels and definitions into DAILY_REPORT_METRIC_DEFINITIONS_V468, which sits
+     immediately above the page function so the tiles and the drill-down cannot describe the same
+     number differently. The slice therefore starts at the map, not at the function — everything
+     this test guards is still one contiguous region of the daily report. */
+  const daily = section('const DAILY_REPORT_METRIC_DEFINITIONS_V468=', '/* ---------- expenses ---------- */');
   assert.match(daily, /sb\.rpc\('get_dashboard_summary'/);
   assert.match(daily, /require_module_scope_v145[\s\S]*p_module:'dailyreport'/);
   assert.match(daily, /require_module_scope_v145[\s\S]*p_module:'clients'/);

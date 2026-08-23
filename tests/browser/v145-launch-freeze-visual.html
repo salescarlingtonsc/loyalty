@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="dc8fc5a0acb8513965034f47c4b05b26eaa8c91b72f4b2614ac2bc138b8f5cc1"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="911bbdad0998b9ff43047f57f9b1224744499545f188ebcc35483c984a27afa6"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4128,10 +4128,60 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 /* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
    real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
 .customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
+/* V468-A (owner photo 20: an arrow drawn from every Daily report figure, "It needs to be
+   clickable to view what is inside"). The four figures are buttons now. They borrow
+   .dashboard-metric wholesale so the affordance reads exactly like the Dashboard's; only the
+   per-tile tint is restated, because the Dashboard keys that off its own data attribute. */
+.daily-metric-v468[data-daily-metric-v468="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.daily-metric-v468[data-daily-metric-v468="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.daily-metric-v468[data-daily-metric-v468="customers"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.daily-metric-v468[data-daily-metric-v468="giftcards"]{background:var(--shell);border-left-color:var(--muted)}
+
+/* V468-B (owner photo, Record sale): "Change branch or teammate" was a 12.5px muted text link
+   under a separate read-only line — too easy to miss at a busy counter. This turns the same
+   <details>/<summary> disclosure (ids, candidate rules and onchange handlers untouched — see
+   tillCustomerHeadV373/bindTillControlsV373 in app.js) into a visible chip that both shows the
+   current branch/teammate and opens the picker in one tap. Rules below share specificity with
+   the base .till-who-v373 rules two blocks up but come later in source order, so they win. */
+.till-who-v468{border-top:none;margin-top:12px;padding-top:0}
+.till-who-v468>summary{list-style:none;min-height:48px;padding:11px 14px;display:flex;align-items:center;gap:9px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--brand-red-soft);color:var(--brand-red-on-soft);
+  font-size:14.5px;font-weight:750}
+.till-who-v468>summary::-webkit-details-marker{display:none}
+.till-who-v468>summary::marker{content:''}
+.till-who-summary-text-v468{flex:1;min-width:0;overflow-wrap:anywhere}
+.till-who-sep-v468{opacity:.65;margin:0 2px}
+.till-who-summary-change-v468{font-weight:750;text-decoration:underline;white-space:nowrap;flex-shrink:0}
+.till-who-v468[open]>summary{border-radius:var(--r-sm) var(--r-sm) 0 0;margin-bottom:2px}
+
+/* V468-B (owner photo, Record sale items step): "I need to be able to deduct the quantity or
+   remove entirely in this page." Adds a compact −/count/+/× row on an already-selected tile,
+   reusing the SAME qty/remove handlers the Confirm step's cart lines use (data-qty/data-remove —
+   see bindTillControlsV373 in app.js). It sits as a sibling of the tile button, not nested inside
+   it, so the tile stays a plain <button> (no interactive-in-interactive HTML) and its own tap
+   target is untouched. */
+.till-choice-tile-wrap-v468{position:relative}
+.till-choice-qtyctl-v468{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.till-choice-qtyctl-v468 button{min-width:40px;min-height:40px;padding:0;font-size:17px;font-weight:750;line-height:1;border-radius:var(--r-sm)}
+.till-choice-qtyctl-v468 output{min-width:22px;text-align:center;font-weight:750;font-size:15px}
+.till-choice-qtyctl-v468 .till-choice-qtyctl-remove-v468{color:var(--brand-red)}
+/* V468-G (owner: "click to read" and "can hide" drawn on the marketing paragraph). The consent
+   detail is a real <details>, not display:none — the customer must still be able to read what
+   they are agreeing to, so the text stays in the accessibility tree and one tap away. Only the
+   nine-line paragraph stops being the tallest thing on the sign-up form. */
+.signup-consent-detail-v468{margin:6px 0 0 30px}
+.signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
+  list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
+.signup-consent-detail-v468>summary::-webkit-details-marker{display:none}
+.signup-consent-detail-v468>summary::after{content:'\203A';margin-left:6px;transform:rotate(90deg);
+  display:inline-block;transition:transform .15s ease}
+.signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
+.signup-consent-detail-v468>p{margin-top:4px}
+@media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · dc8fc5a0acb8513965034f47c4b05b26eaa8c91b72f4b2614ac2bc138b8f5cc1</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 911bbdad0998b9ff43047f57f9b1224744499545f188ebcc35483c984a27afa6</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7094,11 +7144,19 @@ function renderHistPage(history,n){
     const visits=Number(summary.visits||0);
     const uniqueCustomerRecords=Number(summary.unique_customers||0);
     const giftCash=rows.filter(r=>r.kind==='gift_card').reduce((a,r)=>a+r.amount_cents,0);
+    /* V468 (owner photo 20, an arrow drawn from every one of the four figures: "It needs to be
+       clickable to view what is inside"). The tiles were inert text. They now open the SAME
+       drill-down dialog the Dashboard tiles use — no second dialog, no second table renderer.
+       Each list is derived from `rows`, the day's own sale records, already fetched and already
+       branch-scoped, so the figure and its list are one set by construction rather than two
+       reads that have to be trusted to agree. */
+    const dailyMetricValuesV468={revenue:money(revenue),visits:String(visits),
+      customers:String(uniqueCustomerRecords),giftcards:money(giftCash)};
     $('drBody').innerHTML=`<div class="kpis">
-        <div class="card kpi"><div class="l">Revenue</div><div class="v">${money(revenue)}</div></div>
-        <div class="card kpi"><div class="l">Visits</div><div class="v">${visits}</div></div>
-        <div class="card kpi"><div class="l">Customer records with valid visits</div><div class="v">${uniqueCustomerRecords}</div></div>
-        <div class="card kpi"><div class="l">Gift-card issuance amount recorded</div><div class="v">${money(giftCash)}</div></div>
+        ${dailyMetricTileV468('revenue',dailyMetricValuesV468.revenue)}
+        ${dailyMetricTileV468('visits',dailyMetricValuesV468.visits)}
+        ${dailyMetricTileV468('customers',dailyMetricValuesV468.customers)}
+        ${dailyMetricTileV468('giftcards',dailyMetricValuesV468.giftcards)}
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
@@ -7107,6 +7165,49 @@ function renderHistPage(history,n){
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total</b></td><td class="num"><b>${money(revenue)}</b></td></tr></table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
+    /* reverse_sale stamps its row with occurred_at=now(), so a sale reversed on a LATER day is
+       not in this day's rows and validVisitSales() over them alone would over-count against the
+       server's valid_visits CTE, which looks across all time. The reversals pointing INTO this
+       day are read once, on the first visit-shaped drill-down, and cached for the second. */
+    let dayReversedIdsV468=null;
+    const dayValidVisitsV468=async()=>{
+      if(!dayReversedIdsV468){
+        try{
+          const found=await fetchRowsByIds('sales','id,reversal_of',rows.filter(r=>!r.reversal_of).map(r=>r.id),'reversal_of');
+          dayReversedIdsV468=new Set((found||[]).map(r=>r.reversal_of).filter(Boolean));
+        }catch(error){return {error}}
+      }
+      return {rows:rows.filter(r=>r.counts_as_visit&&r.reversal_of==null&&!dayReversedIdsV468.has(r.id))};
+    };
+    const dayTimeV468=row=>(sgt(row.occurred_at)||'').slice(11);
+    $('drBody').querySelectorAll('[data-daily-metric-v468]').forEach(tile=>tile.onclick=()=>{
+      const key=tile.dataset.dailyMetricV468;
+      openDashboardMetricRowsV388({key,value:dailyMetricValuesV468[key]||'',
+        def:DAILY_REPORT_METRIC_DEFINITIONS_V468[key],subtitle:promotionDateShortV324(day),
+        loadRows:async({customerCell})=>{
+          if(key==='revenue'||key==='giftcards'){
+            const kept=key==='revenue'?rows.filter(r=>r.counts_as_revenue):rows.filter(r=>r.kind==='gift_card');
+            return {head:['Time','Customer','Item','Amount'],
+              note:DAILY_REPORT_METRIC_DEFINITIONS_V468[key].definition,
+              rows:kept.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Amount">${esc(money(r.amount_cents||0))}</td></tr>`)};
+          }
+          const valid=await dayValidVisitsV468();
+          if(valid.error)return {error:valid.error};
+          if(key==='visits')return {head:['Time','Customer','Item','Kind'],
+            note:DAILY_REPORT_METRIC_DEFINITIONS_V468.visits.definition,
+            rows:valid.rows.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Kind">${esc(String(r.kind||'').replace('_',' '))}</td></tr>`)};
+          /* One line per customer RECORD, which is what the tile counts — a customer with three
+             valid visits today is one row here, and the visit count is stated on it. */
+          const perCustomer=new Map();
+          valid.rows.filter(r=>r.client_id).forEach(r=>{
+            const entry=perCustomer.get(r.client_id)||{row:r,visits:0};
+            entry.visits+=1;perCustomer.set(r.client_id,entry);
+          });
+          return {head:['Customer','Valid visits today'],
+            note:DAILY_REPORT_METRIC_DEFINITIONS_V468.customers.definition,
+            rows:[...perCustomer.values()].map(entry=>`<tr><td data-label="Customer">${customerCell(entry.row.client_id,entry.row.custName,entry.row.custPhone)}</td><td data-label="Valid visits today">${entry.visits}</td></tr>`)};
+        }});
+    });
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
     if(!isLatest())return;
@@ -7667,7 +7768,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'dc8fc5a0acb8513965034f47c4b05b26eaa8c91b72f4b2614ac2bc138b8f5cc1',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'911bbdad0998b9ff43047f57f9b1224744499545f188ebcc35483c984a27afa6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

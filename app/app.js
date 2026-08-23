@@ -20858,11 +20858,11 @@ async function tillPage(){
     const line=tillLineForTileV468(type,id);
     if(!line)return '';
     const minus=qty>1
-      ?`<button type="button" data-qty="-1" data-line="${esc(line.lineId)}" aria-label="Reduce ${esc(itemLabel)} quantity">−</button>`
-      :`<button type="button" class="till-choice-qtyctl-remove-v468" data-remove="${esc(line.lineId)}" aria-label="Remove ${esc(itemLabel)}">−</button>`;
+      ?`<button type="button" data-qty="-1" data-line="${esc(line.lineId)}" data-merchant-content aria-label="Reduce ${esc(itemLabel)} quantity">−</button>`
+      :`<button type="button" class="till-choice-qtyctl-remove-v468" data-remove="${esc(line.lineId)}" data-merchant-content aria-label="Remove ${esc(itemLabel)}">−</button>`;
     return `<div class="till-choice-qtyctl-v468" role="group" aria-label="${esc(itemLabel)} quantity" data-merchant-content>
       ${minus}<output aria-label="Quantity">${qty}</output>
-      <button type="button" data-qty="1" data-line="${esc(line.lineId)}" aria-label="Increase ${esc(itemLabel)} quantity">+</button>
+      <button type="button" data-qty="1" data-line="${esc(line.lineId)}" data-merchant-content aria-label="Increase ${esc(itemLabel)} quantity">+</button>
     </div>`;
   }
   function tillCatalogueTilesV373(entries){
@@ -42986,7 +42986,7 @@ const DAILY_REPORT_METRIC_DEFINITIONS_V468={
 };
 function dailyMetricTileV468(key,value){
   const def=DAILY_REPORT_METRIC_DEFINITIONS_V468[key]||{};
-  return `<button type="button" class="dashboard-metric kpi daily-metric-v468" data-daily-metric-v468="${esc(key)}" aria-label="${esc(`Open the records behind ${def.label||key}`)}"><span class="metric-top"><span class="l">${esc(def.label||key)}</span><span class="metric-arrow" aria-hidden="true">\u2192</span></span><span class="metric-value-row"><span class="v">${esc(value)}</span></span><span class="metric-action-label">${esc(def.action||'View records')}</span></button>`;
+  return `<button type="button" class="dashboard-metric kpi daily-metric-v468" data-daily-metric-v468="${esc(key)}" data-workspace-i18n aria-label="${esc(`Open the records behind ${def.label||key}`)}"><span class="metric-top"><span class="l">${esc(def.label||key)}</span><span class="metric-arrow" aria-hidden="true">\u2192</span></span><span class="metric-value-row"><span class="v">${esc(value)}</span></span><span class="metric-action-label">${esc(def.action||'View records')}</span></button>`;
 }
 async function dailyReportPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
