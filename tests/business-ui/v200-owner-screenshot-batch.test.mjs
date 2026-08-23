@@ -125,7 +125,11 @@ test('the strip scrolls rather than wraps', () => {
 
 const CONVERSIONS = [
   { key: 'storedvalue', root: 'routeMain', tabs: ['Authority', 'Top-ups', 'Reconciliation', 'Pause &amp; safety', 'Cutover'] },
-  { key: 'customers', root: "$('customersView')", tabs: ['Customers', 'Visit feedback'] },
+  /* V468 removed the Customers conversion: the owner struck the "Visit feedback" pill out
+     (photo 18) and that queue was one of its only two tabs. One section left means no strip —
+     sectionTabsV200 returns null below two groups — so the page no longer opts in at all, and the
+     data-subtab tagging that fed it went with it. The ratings themselves survive on each
+     customer's own 360 profile. */
   { key: 'giftcards', root: 'routeMain', tabs: ['Issue &amp; redeem', 'Cards on the books'] },
 ];
 

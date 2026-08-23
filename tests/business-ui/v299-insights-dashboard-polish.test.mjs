@@ -79,8 +79,12 @@ test('V405 the KPI drill-down can actually see its own definitions map',()=>{
     'an indented declaration means it has been pushed back inside a function');
   assert.match(app,/^async function openDashboardMetricRowsV388\(/m,
     'the drill-down is top-level, which is why the map must be too');
-  assert.match(app,/const def=DASHBOARD_METRIC_DEFINITIONS_V405\[key\]\|\|\{\};/,
-    'the dialog reads the module-scope map');
+  /* V468 let a caller pass its own definition (the Daily report's tiles do), so the dialog now
+     falls back to the map rather than reading it outright. The scope assertion is unchanged in
+     substance: this reader still names the module-scope map, and the caller override cannot
+     shadow it. */
+  assert.match(app,/const def=options\.def\|\|DASHBOARD_METRIC_DEFINITIONS_V405\[key\]\|\|\{\};/,
+    'the dialog still falls back to the module-scope map');
   assert.match(app,/const def=DASHBOARD_METRIC_DEFINITIONS_V405\[metric\.key\];/,
     'the tile painter reads the same module-scope map');
   // Nothing may reference the old function-scoped name outside a comment.
@@ -143,7 +147,13 @@ test('V408 a KPI drill-down row opens the customer behind it',()=>{
   assert.match(app,/return clientId\s*\n\s*\? `<button/,'no customer means no control');
   // Delegated once, so every branch's own innerHTML write keeps working.
   assert.match(app,/body\.addEventListener\('click',event=>\{/);
-  assert.match(app,/nav\(`#\/client\/\$\{hit\.dataset\.metricClientV408\}`\);/);
+  /* V468: this used to assert a bare `nav(...)` immediately after `close()`. That pairing is the
+     history race — activateDialog's teardown pops its entry with an ASYNCHRONOUS history.back(),
+     which lands after the synchronous hash write and cancels it, so the row click closed the
+     dialog and went nowhere. Both navigating exits now go through dialogHandOffNavV468, so the
+     assertion is on the helper, not on the shape that was broken. */
+  assert.match(app,/dialogHandOffNavV468\(close,`#\/client\/\$\{hit\.dataset\.metricClientV408\}`\);/);
+  assert.doesNotMatch(app,/close\(\);\s*nav\(`#\/client\//,'close() then nav() is the v183 history race');
   /* THREE call sites, not four: visits and revenue share one row builder, so the four tiles are
      served by new / inactive / sales. */
   const drill=app.slice(app.indexOf('async function openDashboardMetricRowsV388('),

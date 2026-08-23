@@ -67,8 +67,15 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
      test guards is intact; only what the first press does changed. */
   assert.match(dashboard,/openDashboardMetricRowsV388\(\{key,from,to,scopePayload,/);
   assert.match(app,/const go=document\.getElementById\('metricRowsGoV388'\);/);
-  /* V388: the hand-off to the report moved into the dialog's own footer control. */
-  assert.match(app,/if\(go\)go\.onclick=event=>\{event\.preventDefault\(\);close\(\);nav\(def\.route\)\};/);
+  /* V388: the hand-off to the report moved into the dialog's own footer control.
+     V468 (owner photos 3, 8 and 9 — "View visits" / "See new customers" / "See inactive
+     customers" all did nothing): this assertion used to pin `close();nav(def.route)`, which is
+     precisely the defect. activateDialog's teardown pops its history entry with an ASYNCHRONOUS
+     history.back(); the pop lands after the synchronous hash write and cancels it, so the dialog
+     closed and the page never moved. Both navigating exits now go through dialogHandOffNavV468,
+     the same hand-off wireCustomerSheetNavV183 has used since v183. */
+  assert.match(app,/if\(go\)go\.onclick=event=>\{event\.preventDefault\(\);dialogHandOffNavV468\(close,def\.route\)\};/);
+  assert.doesNotMatch(app,/close\(\);nav\(def\.route\)/,'close() then nav() is the v183 history race');
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
   assert.match(metricDefs,/business-current/); // V405: scope tag lives in the module-scope map

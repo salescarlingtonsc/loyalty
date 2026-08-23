@@ -4159,6 +4159,14 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 /* The dock: pinned to the bottom of the phone screen, inset like the real one is inset from the
    real viewport. `top:auto` matters — the base rule at ~line 2563 sets top:10px for sticky. */
 .customer-preview-screen-v243 .ci-live-preview-inner-v326 .customer-primary-nav{position:absolute;top:auto;right:12px;bottom:12px;left:12px;width:auto;min-width:0;max-width:none;height:auto;margin:0;transform:none;z-index:9}
+/* V468-A (owner photo 20: an arrow drawn from every Daily report figure, "It needs to be
+   clickable to view what is inside"). The four figures are buttons now. They borrow
+   .dashboard-metric wholesale so the affordance reads exactly like the Dashboard's; only the
+   per-tile tint is restated, because the Dashboard keys that off its own data attribute. */
+.daily-metric-v468[data-daily-metric-v468="revenue"]{background:color-mix(in srgb,var(--brand-red) 5%,#fff);border-left-color:var(--coral)}
+.daily-metric-v468[data-daily-metric-v468="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
+.daily-metric-v468[data-daily-metric-v468="customers"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
+.daily-metric-v468[data-daily-metric-v468="giftcards"]{background:var(--shell);border-left-color:var(--muted)}
 </style>
 </head>
 <body>
@@ -4206,7 +4214,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=6418d8e9c607","business":"/app-business.js?b=e2fa6e351bc5","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=6418d8e9c607","business":"/app-business.js?b=77e659ed156a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

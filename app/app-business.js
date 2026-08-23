@@ -2150,8 +2150,10 @@ function timeAgo(iso){
    an accident. */
 /* V171: '#/home' and '#/customers' were never real routes (the router keys are 'dashboard'
    and 'clients'), so these two notification kinds silently dumped the owner on the Dashboard.
-   Payment-due now opens Settings (billing lives in Modules & plan); feedback opens Customers,
-   where the Visit feedback queue actually renders. */
+   Payment-due now opens Settings (billing lives in Modules & plan); feedback opens Customers.
+   V468 removed the Visit feedback QUEUE from that page (owner photo 18), but Customers is still
+   the right landing place: the ratings themselves survive on each customer's own 360 profile, so
+   the trip is now "find the customer, open them, read it there" rather than a shared inbox. */
 const NOTIF_ROUTE={booking_new:'#/bookings',booking_waitlisted:'#/bookings',change_request:'#/bookings',
   booking_expired:'#/bookings',waitlist_ready:'#/bookings',subscription_payment_due:'#/settings',
   feedback_new:'#/clients'};
@@ -3414,23 +3416,58 @@ const DASHBOARD_METRIC_DEFINITIONS_V405={
   inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
 };
 
-async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
-  const def=DASHBOARD_METRIC_DEFINITIONS_V405[key]||{};
+/* V468 (owner photos 3, 8 and 9: "View visits", "See new customers" and "See inactive customers"
+   all did nothing). CUI.activateDialog's teardown unwinds the dialog's pushed history entry with
+   history.back(), which is ASYNCHRONOUS — nav() set the hash synchronously and the queued pop
+   then undid it, so the dialog shut and the page never moved. This is exactly the v183 sheet
+   defect in a second place, and the established fix is reused rather than reinvented: hand the
+   dialog's own entry to the destination with replaceState, then route by hand. Every navigating
+   exit of a business dialog goes through here, so the footer report link and the per-row customer
+   buttons can never drift apart again. */
+function dialogHandOffNavV468(close,href){
+  const target=String(href||'');
+  if(!target){close();return}
+  const handOff=(CUI.currentDialogHistoryId?.()||0)>0;
+  close({restoreFocus:false,handOffHistory:handOff});
+  if(!handOff){nav(target);return}
+  try{history.replaceState(null,'',target)}catch{location.hash=target;return}
+  route();
+}
+
+/* V468 (owner photo 20, arrows from all four Daily report figures: "It needs to be clickable to
+   view what is inside"). Two seams were added rather than a second dialog: `def` lets a caller
+   bring its own label/definition/route, and `loadRows` lets it supply the rows it can prove match
+   its own tile. Everything else — the history hand-off, the customer-cell buttons, the table
+   chrome, the error wording — stays in one place. `subtitle` replaces the hardcoded date range
+   for a caller whose figure covers a single day. */
+async function openDashboardMetricRowsV388(options){
+  /* V468: bound with `const`, not as a renamed destructuring target (`{def:defV468}`) and not as a
+     bare V-suffixed parameter. The repo's undeclared-identifiers gate is regex-based and sees
+     neither form as a declaration, so either one turns a correct edit into a red gate. Keeping the
+     gate honest is worth more than the shorter signature — see [[undeclared-identifier-ships-silently]]. */
+  const {key,from,to,scopePayload,value,loadRows}=options;
+  const subtitleV468=options.subtitle;
+  const def=options.def||DASHBOARD_METRIC_DEFINITIONS_V405[key]||{};
+  const periodTextV468=subtitleV468!==undefined
+    ?String(subtitleV468||'')
+    :(key==='inactive'?'':`${promotionDateShortV324(from)} – ${promotionDateShortV324(to)}`);
   document.getElementById('metricRowsModalV388')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="metricRowsModalV388" role="dialog" aria-modal="true" aria-labelledby="metricRowsTitleV388" tabindex="-1"><div class="modal-card" style="max-width:640px">
-    <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:16px">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${key==='inactive'?'':` · ${esc(promotionDateShortV324(from))} – ${esc(promotionDateShortV324(to))}`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
+    <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:16px">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${periodTextV468?` · ${esc(periodTextV468)}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
     <div id="metricRowsBodyV388" style="margin-top:14px" aria-live="polite">${CUI.loadingState({title:'Loading',iconName:'reports'})}</div>
     ${def.route?`<div class="row" style="margin-top:14px"><a class="btn ghost sm" href="${esc(def.route)}" id="metricRowsGoV388">${esc(def.buttonLabel||'View details')}</a></div>`:''}
   </div></div>`);
   const modal=document.getElementById('metricRowsModalV388');
   let deactivate;
-  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
+  /* V468: `close` now forwards its options to the deactivator. The plain Close button still calls
+     it bare and keeps today's behaviour; only the two navigating exits pass the hand-off. */
+  const close=options=>{if(deactivate)deactivate(options);else modal?.remove()};
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#metricRowsCloseV388'});
-  document.getElementById('metricRowsCloseV388').onclick=close;
+  document.getElementById('metricRowsCloseV388').onclick=()=>close();
   /* The report link is the destination the tile used to jump to; closing first stops the dialog
      outliving the page it was opened from. */
   const go=document.getElementById('metricRowsGoV388');
-  if(go)go.onclick=event=>{event.preventDefault();close();nav(def.route)};
+  if(go)go.onclick=event=>{event.preventDefault();dialogHandOffNavV468(close,def.route)};
   const body=document.getElementById('metricRowsBodyV388');
   const stillOpen=()=>body.isConnected;
   /* V408 (owner, photo 3: "now that the boxes are clickable — I need to be able to click into the
@@ -3453,10 +3490,19 @@ async function openDashboardMetricRowsV388({key,from,to,scopePayload,value}){
   body.addEventListener('click',event=>{
     const hit=event.target.closest('[data-metric-client-v408]');
     if(!hit)return;
-    close();
-    nav(`#/client/${hit.dataset.metricClientV408}`);
+    dialogHandOffNavV468(close,`#/client/${hit.dataset.metricClientV408}`);
   });
   try{
+    /* A caller that already holds the rows behind its own figure renders them here. It is given
+       the customer-cell builder so its rows keep the same click-into-the-customer behaviour. */
+    if(loadRows){
+      const supplied=await loadRows({customerCell:customerCellV408});
+      if(!stillOpen())return;
+      if(supplied?.error)return failed(ownerErrorText(supplied.error));
+      body.innerHTML=table(supplied?.head||[],supplied?.rows||[]);
+      if(supplied?.note)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">${esc(supplied.note)}</p>`);
+      return;
+    }
     if(key==='new'){
       const {data,error}=await sb.from('clients').select('id,full_name,phone,created_at')
         .eq('business_id',S.biz.id)
@@ -4280,18 +4326,16 @@ async function clientsPage(){
     <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
-    <div class="card" id="list" data-subtab="Customers">${CUI.tableSkeleton({rows:5,columns:7})}</div>
+    <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
     ${/* V368 (owner ruling: move the importer here rather than delete it). Collapsed, because it
          is an occasional job and the list is the page. Same markup and wiring as the Customer
          Interface page had — only the home changed. */''}
-    ${canWrite?`<div data-subtab="Customers">${customerCsvImportCardHtmlV368()}</div>`:''}
-    <div class="card" id="fbQueueCard" data-subtab="Visit feedback"><div class="cui-card-head"><h2>Visit feedback</h2><p>Ratings of 3 or below open a service-recovery case. 4 and 5 star ratings are logged and auto-closed.</p></div>
-      <div class="fb-chips" id="fbChips" role="group" aria-label="Filter feedback by status"></div>
-      <div id="fbQueue">${CUI.tableSkeleton({rows:3,columns:4})}</div></div></section>`;
-  /* V200: the feedback queue is its own job, not the bottom of the customer list. Everything the
-     two share — the inactive shortcuts, reporting scope, and the Add-customer form, which opens
-     from the actions bar — stays pinned above the strip so it works from either tab. */
-  sectionTabsV200($('customersView'),{key:'customers',label:'Customer sections'});
+    ${canWrite?customerCsvImportCardHtmlV368():''}
+</section>`;
+  /* V468 (owner photo 18, the "Visit feedback" pill circled and marked "Remove"). With the queue
+     gone the page is one section again, so the V200 sub-tab strip has nothing to switch between —
+     sectionTabsV200 would render no strip anyway, and the tagging that fed it is dropped with it.
+     The per-customer feedback card on the 360 profile is a different thing and stays. */
   if(canWrite)wireCustomerCsvImportV368();
   const customersView=$('customersView');
   const isCustomersCurrent=()=>routeMain.isConnected&&M()===routeMain&&customersView.isConnected&&$('customersView')===customersView;
@@ -4524,84 +4568,6 @@ async function clientsPage(){
     $('clNext').onclick=()=>{if(clientPage+1<pages){clientPage++;load()}};
     $('list').querySelectorAll('[data-sort]').forEach(btn=>btn.onclick=()=>{$('clientSort').value=btn.dataset.sort;clientPage=0;load()});
   }
-  /* v53 service-recovery queue — rides the clients module (staff_list_visit_feedback gates on
-     can_module_read('clients'), so no new MODULES key). Owner/manager hold refund_sales (the same
-     admin gate the v40 reversal workflow uses), so only they get Acknowledge/Resolve; frontdesk,
-     staff and bookkeeper see the queue read-only, and a 42501 from a stale role shows a polite denial. */
-  const canResolveFeedback=S.myRole==='owner'||S.myRole==='manager';
-  const feedbackResolveKeys=new Map();
-  const FB_FILTERS=[['open','Open'],['acknowledged','Acknowledged'],['resolved','Resolved'],['closed','Closed'],['','All']];
-  const FEEDBACK_PAGE_SIZE=100;
-  let feedbackFilter='open';
-  let feedbackPage=0;
-  const feedbackLoadGate=createLatestRequestGate(isCustomersCurrent);
-  const fbStars=n=>'★'.repeat(Number(n)||0)+'☆'.repeat(Math.max(0,5-(Number(n)||0)));
-  const fbStatusLabel={open:'Open case',acknowledged:'Acknowledged',resolved:'Resolved',closed:'Positive'};
-  const fbStatusTone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'};
-  function renderFeedbackChips(){
-    const chips=$('fbChips');if(!chips)return;
-    chips.innerHTML=FB_FILTERS.map(([value,label])=>`<button type="button" class="fb-chip" data-fb-filter="${value}" aria-pressed="${feedbackFilter===value}">${label}</button>`).join('');
-    chips.querySelectorAll('[data-fb-filter]').forEach(btn=>btn.onclick=()=>{feedbackFilter=btn.dataset.fbFilter;feedbackPage=0;renderFeedbackChips();loadFeedbackQueue()});
-  }
-  async function loadFeedbackQueue(){
-    const host=$('fbQueue');if(!host||!isCustomersCurrent())return;
-    const isLatest=feedbackLoadGate.begin();
-    host.innerHTML='<div class="empty">Loading feedback…</div>';
-    const {data,error}=await sb.rpc('staff_list_visit_feedback_v145',{p_business:S.biz.id,p_status:feedbackFilter||null,
-      p_limit:FEEDBACK_PAGE_SIZE,p_offset:feedbackPage*FEEDBACK_PAGE_SIZE});
-    if(!isLatest()||!isCustomersCurrent()||$('fbQueue')!==host)return;
-    if(error){host.innerHTML=`<div class="err" role="alert">${esc(ownerErrorText(error)||'Feedback could not be loaded.')}</div><button class="btn ghost sm" id="fbQueueRetry" style="margin-top:12px">Try again</button>`;$('fbQueueRetry').onclick=loadFeedbackQueue;return}
-    const rows=Array.isArray(data?.feedback)?data.feedback:[];
-    const total=Math.max(0,Number(data?.total||0));
-    const pages=Math.max(1,Math.ceil(total/FEEDBACK_PAGE_SIZE));
-    if(feedbackPage>=pages&&feedbackPage>0){feedbackPage=pages-1;loadFeedbackQueue();return}
-    if(!rows.length){host.innerHTML=CUI.emptyState({iconName:'check',title:feedbackFilter==='open'?'No open cases':'Nothing here',body:feedbackFilter==='open'?'Every service-recovery case has been handled.':'No feedback matches this filter yet.'});return}
-    host.innerHTML=rows.map(f=>{
-      const openCase=f.recovery_status==='open'||f.recovery_status==='acknowledged';
-      const prov=(f.recovery_status==='resolved')?`<p class="fb-prov">Resolved${f.resolved_at?' · '+esc(sgt(f.resolved_at)||''):''}${f.resolution_note?' · '+esc(f.resolution_note):''}</p>`:'';
-      const actions=(openCase&&canResolveFeedback)?`<div class="fb-actions">${f.recovery_status==='open'?`<button class="btn ghost sm fbAck" data-id="${esc(f.id)}">Acknowledge</button>`:''}<button class="btn sm fbResolve" data-id="${esc(f.id)}">Resolve</button></div>`:'';
-      return `<div class="fb-row ${openCase?'open':''}"><div class="row"><span class="fb-rating" aria-hidden="true">${fbStars(f.rating)}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${fbStatusTone[f.recovery_status]||''}">${esc(fbStatusLabel[f.recovery_status]||f.recovery_status)}</span></div>
-        <p class="muted small" style="margin-top:5px"><b>${esc(f.customer_name||'Customer')}</b> · ${esc(sgt(f.created_at)||'')} · ${esc(timeAgo(f.created_at))}</p>
-        ${f.comment?`<p style="margin-top:6px">${esc(f.comment)}</p>`:'<p class="muted small" style="margin-top:6px">No written comment.</p>'}
-        ${prov}${actions}</div>`;
-    }).join('')+`<div class="row" style="margin-top:14px"><span class="muted small">${total} feedback record${total===1?'':'s'} · page ${feedbackPage+1} of ${pages}</span><span class="spacer"></span>
-      <button class="btn ghost sm" id="fbPrev" ${feedbackPage===0?'disabled':''}>Previous</button>
-      <button class="btn ghost sm" id="fbNext" ${feedbackPage+1>=pages?'disabled':''}>Next</button></div>`;
-    host.querySelectorAll('.fbAck').forEach(btn=>btn.onclick=()=>submitFeedbackResolution(btn.dataset.id,'acknowledged',null));
-    host.querySelectorAll('.fbResolve').forEach(btn=>btn.onclick=()=>openFeedbackResolveDialog(btn.dataset.id));
-    $('fbPrev').onclick=()=>{if(feedbackPage>0){feedbackPage--;loadFeedbackQueue()}};
-    $('fbNext').onclick=()=>{if(feedbackPage+1<pages){feedbackPage++;loadFeedbackQueue()}};
-  }
-  async function submitFeedbackResolution(fbId,newStatus,note){
-    if(!feedbackResolveKeys.has(fbId))feedbackResolveKeys.set(fbId,crypto.randomUUID());
-    const {error}=await sb.rpc('staff_resolve_feedback',{p_business:S.biz.id,p_feedback:fbId,p_new_status:newStatus,p_note:note||null,p_idempotency_key:feedbackResolveKeys.get(fbId)});
-    if(!isCustomersCurrent())return;
-    if(error){
-      if(error.code==='42501')return toast('You do not have permission to resolve feedback');
-      return fail(error);
-    }
-    feedbackResolveKeys.delete(fbId);
-    toast(newStatus==='resolved'?'Case resolved':'Case acknowledged');
-    loadFeedbackQueue();
-  }
-  function openFeedbackResolveDialog(fbId){
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="fbResolveModal" role="dialog" aria-modal="true" aria-labelledby="fbResolveTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
-      <h2 id="fbResolveTitle" style="margin-bottom:6px">Resolve this case</h2>
-      <p class="muted small">Add an optional note about how you made it right. This closes the service-recovery case.</p>
-      <label for="fbResolveNote" class="small" style="display:block;margin-top:12px">Resolution note (optional)</label>
-      <textarea id="fbResolveNote" rows="3" maxlength="2000" placeholder="e.g. Called the customer and offered a redo"></textarea>
-      <div class="row" style="margin-top:16px"><button class="btn" id="fbResolveConfirm">Confirm resolve</button><button class="btn ghost sm" id="fbResolveCancel">Cancel</button></div></div></div>`);
-    const dialog=$('fbResolveModal');
-    const close=CUI.activateDialog(dialog,{onClose:()=>close(),initialFocus:'#fbResolveNote'});
-    $('fbResolveCancel').onclick=()=>close();
-    $('fbResolveConfirm').onclick=async()=>{
-      const note=($('fbResolveNote')?.value||'').trim();
-      $('fbResolveConfirm').disabled=true;close();
-      await submitFeedbackResolution(fbId,'resolved',note||null);
-    };
-  }
-  renderFeedbackChips();
-  loadFeedbackQueue();
   /* V287: same orphan as the Dashboard — #clientReportingScopeWrap no longer exists, so this
      call's immediate onChange ran refreshInactiveCards() and load() a second time on every
      open. The two explicit calls below are the real ones. */
@@ -29018,6 +28984,25 @@ async function staffMembersPage(){
 }
 
 /* ---------- daily report ---------- */
+/* V468: the Daily report's own metric definitions. Kept separate from
+   DASHBOARD_METRIC_DEFINITIONS_V405 because these figures cover ONE Singapore day inside the
+   selected branch scope, and three of the four are not the dashboard's question at all.
+   `giftcards` deliberately carries no route: V303 removed gift cards from the business UI and
+   the router refuses #/giftcards, so a footer link there would be a door to a refusal. */
+const DAILY_REPORT_METRIC_DEFINITIONS_V468={
+  revenue:{label:'Revenue',route:'#/sales',action:'View records',buttonLabel:'View sales',
+    definition:'Every sale record for this day, in this branch scope, whose immutable sale policy counts it as revenue. Reversal records are listed with their negative amount.'},
+  visits:{label:'Visits',route:'#/sales',action:'View records',buttonLabel:'View sales',
+    definition:'Original visit sales recorded on this day that have not been reversed, including reversals recorded on a later day. Reversal records are never counted as visits.'},
+  customers:{label:'Customer records with valid visits',route:'#/clients',action:'View records',buttonLabel:'View customers',
+    definition:'One line per customer record behind this day\u2019s valid visits. Walk-in sales carry no customer record and are not counted.'},
+  giftcards:{label:'Gift-card issuance amount recorded',action:'View records',
+    definition:'Gift cards issued on this day. This is cash collected, not revenue \u2014 the value becomes revenue when the credit is spent.'}
+};
+function dailyMetricTileV468(key,value){
+  const def=DAILY_REPORT_METRIC_DEFINITIONS_V468[key]||{};
+  return `<button type="button" class="dashboard-metric kpi daily-metric-v468" data-daily-metric-v468="${esc(key)}" aria-label="${esc(`Open the records behind ${def.label||key}`)}"><span class="metric-top"><span class="l">${esc(def.label||key)}</span><span class="metric-arrow" aria-hidden="true">\u2192</span></span><span class="metric-value-row"><span class="v">${esc(value)}</span></span><span class="metric-action-label">${esc(def.action||'View records')}</span></button>`;
+}
 async function dailyReportPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createReportRequestGate(isCurrent,()=>isCurrent()?$('drGo'):null);
@@ -29117,11 +29102,19 @@ async function dailyReportPage(){
     const visits=Number(summary.visits||0);
     const uniqueCustomerRecords=Number(summary.unique_customers||0);
     const giftCash=rows.filter(r=>r.kind==='gift_card').reduce((a,r)=>a+r.amount_cents,0);
+    /* V468 (owner photo 20, an arrow drawn from every one of the four figures: "It needs to be
+       clickable to view what is inside"). The tiles were inert text. They now open the SAME
+       drill-down dialog the Dashboard tiles use — no second dialog, no second table renderer.
+       Each list is derived from `rows`, the day's own sale records, already fetched and already
+       branch-scoped, so the figure and its list are one set by construction rather than two
+       reads that have to be trusted to agree. */
+    const dailyMetricValuesV468={revenue:money(revenue),visits:String(visits),
+      customers:String(uniqueCustomerRecords),giftcards:money(giftCash)};
     $('drBody').innerHTML=`<div class="kpis">
-        <div class="card kpi"><div class="l">Revenue</div><div class="v">${money(revenue)}</div></div>
-        <div class="card kpi"><div class="l">Visits</div><div class="v">${visits}</div></div>
-        <div class="card kpi"><div class="l">Customer records with valid visits</div><div class="v">${uniqueCustomerRecords}</div></div>
-        <div class="card kpi"><div class="l">Gift-card issuance amount recorded</div><div class="v">${money(giftCash)}</div></div>
+        ${dailyMetricTileV468('revenue',dailyMetricValuesV468.revenue)}
+        ${dailyMetricTileV468('visits',dailyMetricValuesV468.visits)}
+        ${dailyMetricTileV468('customers',dailyMetricValuesV468.customers)}
+        ${dailyMetricTileV468('giftcards',dailyMetricValuesV468.giftcards)}
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
@@ -29130,6 +29123,49 @@ async function dailyReportPage(){
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total</b></td><td class="num"><b>${money(revenue)}</b></td></tr></table></div>`
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
+    /* reverse_sale stamps its row with occurred_at=now(), so a sale reversed on a LATER day is
+       not in this day's rows and validVisitSales() over them alone would over-count against the
+       server's valid_visits CTE, which looks across all time. The reversals pointing INTO this
+       day are read once, on the first visit-shaped drill-down, and cached for the second. */
+    let dayReversedIdsV468=null;
+    const dayValidVisitsV468=async()=>{
+      if(!dayReversedIdsV468){
+        try{
+          const found=await fetchRowsByIds('sales','id,reversal_of',rows.filter(r=>!r.reversal_of).map(r=>r.id),'reversal_of');
+          dayReversedIdsV468=new Set((found||[]).map(r=>r.reversal_of).filter(Boolean));
+        }catch(error){return {error}}
+      }
+      return {rows:rows.filter(r=>r.counts_as_visit&&r.reversal_of==null&&!dayReversedIdsV468.has(r.id))};
+    };
+    const dayTimeV468=row=>(sgt(row.occurred_at)||'').slice(11);
+    $('drBody').querySelectorAll('[data-daily-metric-v468]').forEach(tile=>tile.onclick=()=>{
+      const key=tile.dataset.dailyMetricV468;
+      openDashboardMetricRowsV388({key,value:dailyMetricValuesV468[key]||'',
+        def:DAILY_REPORT_METRIC_DEFINITIONS_V468[key],subtitle:promotionDateShortV324(day),
+        loadRows:async({customerCell})=>{
+          if(key==='revenue'||key==='giftcards'){
+            const kept=key==='revenue'?rows.filter(r=>r.counts_as_revenue):rows.filter(r=>r.kind==='gift_card');
+            return {head:['Time','Customer','Item','Amount'],
+              note:DAILY_REPORT_METRIC_DEFINITIONS_V468[key].definition,
+              rows:kept.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Amount">${esc(money(r.amount_cents||0))}</td></tr>`)};
+          }
+          const valid=await dayValidVisitsV468();
+          if(valid.error)return {error:valid.error};
+          if(key==='visits')return {head:['Time','Customer','Item','Kind'],
+            note:DAILY_REPORT_METRIC_DEFINITIONS_V468.visits.definition,
+            rows:valid.rows.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Kind">${esc(String(r.kind||'').replace('_',' '))}</td></tr>`)};
+          /* One line per customer RECORD, which is what the tile counts — a customer with three
+             valid visits today is one row here, and the visit count is stated on it. */
+          const perCustomer=new Map();
+          valid.rows.filter(r=>r.client_id).forEach(r=>{
+            const entry=perCustomer.get(r.client_id)||{row:r,visits:0};
+            entry.visits+=1;perCustomer.set(r.client_id,entry);
+          });
+          return {head:['Customer','Valid visits today'],
+            note:DAILY_REPORT_METRIC_DEFINITIONS_V468.customers.definition,
+            rows:[...perCustomer.values()].map(entry=>`<tr><td data-label="Customer">${customerCell(entry.row.client_id,entry.row.custName,entry.row.custPhone)}</td><td data-label="Valid visits today">${entry.visits}</td></tr>`)};
+        }});
+    });
     if(!rows.length) return;
     try{await loadChartLibrary()}catch{if(isLatest())$('drBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified report totals and rows remain available.</div>');return}
     if(!isLatest())return;
