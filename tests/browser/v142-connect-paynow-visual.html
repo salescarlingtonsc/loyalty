@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="ab08380ebc2bb93f05140179036a3f169a6b7013c67681078b2b3a5b4377ae3f"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="c513b50454c56087cdc49a5b17dadb61dd3c48ffb36cd4f1fc61d9f31c3f0f40"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4388,7 +4388,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · ab08380ebc2bb93f05140179036a3f169a6b7013c67681078b2b3a5b4377ae3f</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · c513b50454c56087cdc49a5b17dadb61dd3c48ffb36cd4f1fc61d9f31c3f0f40</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5257,6 +5257,30 @@ function printPosReceiptV385(){
 function tillUnitNounV430(catalogRef,short){
   const stampsV430=catalogRef?.customerGiftsV392?.program?.unit==='stamps';
   return stampsV430?'stamps':(short?'pts':'points');
+}
+/* nestly_v474 (owner: "why it shows 15 stamps in record sale but customer view shows 5 out of 10
+   stamps? it is way too messy. I need it to standardise").
+   Both figures were true and neither was a bug — they are different QUANTITIES wearing the same
+   word. The till printed the programme POT (every stamp ever earned minus redemptions); the
+   customer's phone prints their position on THE CARD IN THEIR HAND. On the owner's own customer:
+   pot 15, ten already consumed by a completed card, so five on a ten-slot card.
+   The standard the owner asked for is the customer's card, because staff and customer talk across
+   a counter and the number staff quote has to be the number on the phone being held up at them.
+   v474 taught both staff reads to carry `stamp_card` beside the balance; this is the one place
+   that turns it into words, so the till and the customer profile cannot word it differently.
+   A points firm has no stamp_card and falls straight through to the balance it always printed —
+   for points the pot IS what the customer sees, so there was never a discrepancy to fix. */
+function stampCardStandingV474(card,balance,unitNoun){
+  const slots=Math.max(0,Math.floor(Number(card?.slots)||0));
+  if(!slots)return Number.isFinite(Number(balance))
+    ?`${Number(balance).toLocaleString('en-SG')} ${unitNoun}`:'';
+  const filled=Math.max(0,Math.min(slots,Math.floor(Number(card?.filled)||0)));
+  /* The overflow is said out loud rather than dropped. A customer holding more than one card's
+     worth is a real state — it is what their own app calls "N already counted toward your next
+     card" — and staff who could not see it would be looking at a different truth again, which is
+     the whole complaint. */
+  const carried=Math.max(0,Math.floor(Number(card?.carried)||0));
+  return `${filled} of ${slots} stamps${carried>0?` · ${carried.toLocaleString('en-SG')} toward the next card`:''}`;
 }
 /* nestly_v432 — the redeem-now list is grouped by WHERE each reward's eligibility comes from
    (owner ruling 2026-08-22: no hidden counter-only gifts; staff and Customer View read the same
@@ -6287,7 +6311,12 @@ async function tillPage(){
     }
     const tierLabel=catalog?.customerTierBenefits?.tier?.label||'';
     const pointsValue=Number(cust?.points);
-    const standing=[tierLabel?esc(tierLabel):'',Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} ${tillUnitNounV430(catalog,true)}`:'']
+    /* nestly_v474: on a stamps firm this is the customer's own card, not the pot. See
+       stampCardStandingV474 — the till and the customer profile share that one formatter. */
+    const standingFigureV474=cust?.stamp_card
+      ?stampCardStandingV474(cust.stamp_card,pointsValue,tillUnitNounV430(catalog,true))
+      :(Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} ${tillUnitNounV430(catalog,true)}`:'');
+    const standing=[tierLabel?esc(tierLabel):'',standingFigureV474?esc(standingFigureV474):'']
       .filter(Boolean).join(' · ');
     return `<div class="till-head-v373">
       <div class="till-head-id-v373"><b class="till-head-name-v373" data-merchant-content>${esc(cust.full_name)}</b>
@@ -7820,7 +7849,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'ab08380ebc2bb93f05140179036a3f169a6b7013c67681078b2b3a5b4377ae3f',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'c513b50454c56087cdc49a5b17dadb61dd3c48ffb36cd4f1fc61d9f31c3f0f40',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

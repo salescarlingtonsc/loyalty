@@ -5155,7 +5155,11 @@ async function clientDetail(id){
   /* One definition of the points-history control, so exactly one element carries this id whichever
      card ends up hosting it — the V259 handler binds by id and would otherwise wire the first of
      two. */
-  const pointsHistoryButtonV319=`<button type="button" id="c360PointsHistoryV259" class="customer360-points-open-v259" aria-haspopup="dialog" aria-label="View points history" style="background:none;border:0;padding:0;margin:0;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px">${pts}</button>`;
+  /* nestly_v474: the same control, over whichever figure the row leads with. The id and every
+     style are unchanged, so the existing c360PointsHistoryV259 handler still finds it — only the
+     number inside it moves from the pot to the customer's card position on a stamps firm. */
+  const pointsHistoryButtonV319Of=value=>`<button type="button" id="c360PointsHistoryV259" class="customer360-points-open-v259" aria-haspopup="dialog" aria-label="View points history" style="background:none;border:0;padding:0;margin:0;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px">${esc(String(value))}</button>`;
+  const pointsHistoryButtonV319=pointsHistoryButtonV319Of(pts);
   const summaryCardV294=`<aside class="card c360-summary-card-v294" id="c360SummaryV294" aria-label="Customer summary">
     ${canReadSales?summaryRowV294(isProfileAdmin?'Visits':'Visible visits',`<b>${netVisits}</b>${esc(summaryVisitsSuffixV294)}`)
       +summaryRowV294(isProfileAdmin?'Lifetime spend':'Visible sales',`<b>${money(lifetimeSpendCents)}</b>`):''}
@@ -5219,8 +5223,27 @@ async function clientDetail(id){
        balance that is showing 0 because the programme is off, so it travels with the number. */
     const balanceLeadHtmlV319=(unitWord,tail)=>`${pointsHistoryButtonV319} ${esc(unitWord)}${esc(pointsExpiryPhraseV319)}${esc(tail)}`;
     if((prog.unit==='stamps'?'stamps':'points')==='stamps'){
+      /* nestly_v474 (owner: "why it shows 15 stamps in record sale but customer view shows 5 out
+         of 10 stamps ... I need it to standardise"). This row printed the POT — every stamp ever
+         earned — while the customer's own app printed their position on the card in their hand.
+         v474 taught staff_get_customer_actionable_loyalty_v145 to carry the card, and this row now
+         leads with it, worded by the same stampCardStandingV474 the till uses so the two staff
+         surfaces cannot drift from each other either.
+         The number stays the clickable points-history control: the LEDGER is still what the
+         history opens onto, and the pot is still reachable there — what changes is which figure
+         the counter reads aloud. A payload with no card (an older server) falls straight back to
+         the pot, so this is additive and never blank. */
+      const stampCardV474=loyaltyFacts?.stamp_card||null;
+      const stampSlotsV474=Math.max(0,Math.floor(Number(stampCardV474?.slots)||0));
+      const stampFilledV474=stampSlotsV474
+        ?Math.max(0,Math.min(stampSlotsV474,Math.floor(Number(stampCardV474?.filled)||0))):null;
+      const stampCarriedV474=Math.max(0,Math.floor(Number(stampCardV474?.carried)||0));
+      const stampLeadV474=stampSlotsV474
+        ?`${pointsHistoryButtonV319Of(stampFilledV474)} of ${stampSlotsV474} ${stampSlotsV474===1?'stamp':'stamps'} on this card${
+            stampCarriedV474>0?` · ${stampCarriedV474.toLocaleString('en-SG')} toward the next card`:''}${esc(nextRewardBitV296)}`
+        :balanceLeadHtmlV319(`${pts===1?'stamp':'stamps'} collected`,nextRewardBitV296);
       programmeRowsV294.push(programmeRowHtmlV294('Stamp card','',loyaltyLiveV294,null,
-        balanceLeadHtmlV319(`${pts===1?'stamp':'stamps'} collected`,nextRewardBitV296),pointsPausedNoteV259));
+        stampLeadV474,pointsPausedNoteV259));
       accruingRowAtV392=programmeRowsV294.length;
     }else{
       if(pointsModeV294!=='tiers'){programmeRowsV294.push(programmeRowHtmlV294('Points System','',loyaltyLiveV294,null,
@@ -6323,6 +6346,30 @@ function tillUnitNounV430(catalogRef,short){
   const stampsV430=catalogRef?.customerGiftsV392?.program?.unit==='stamps';
   return stampsV430?'stamps':(short?'pts':'points');
 }
+/* nestly_v474 (owner: "why it shows 15 stamps in record sale but customer view shows 5 out of 10
+   stamps? it is way too messy. I need it to standardise").
+   Both figures were true and neither was a bug — they are different QUANTITIES wearing the same
+   word. The till printed the programme POT (every stamp ever earned minus redemptions); the
+   customer's phone prints their position on THE CARD IN THEIR HAND. On the owner's own customer:
+   pot 15, ten already consumed by a completed card, so five on a ten-slot card.
+   The standard the owner asked for is the customer's card, because staff and customer talk across
+   a counter and the number staff quote has to be the number on the phone being held up at them.
+   v474 taught both staff reads to carry `stamp_card` beside the balance; this is the one place
+   that turns it into words, so the till and the customer profile cannot word it differently.
+   A points firm has no stamp_card and falls straight through to the balance it always printed —
+   for points the pot IS what the customer sees, so there was never a discrepancy to fix. */
+function stampCardStandingV474(card,balance,unitNoun){
+  const slots=Math.max(0,Math.floor(Number(card?.slots)||0));
+  if(!slots)return Number.isFinite(Number(balance))
+    ?`${Number(balance).toLocaleString('en-SG')} ${unitNoun}`:'';
+  const filled=Math.max(0,Math.min(slots,Math.floor(Number(card?.filled)||0)));
+  /* The overflow is said out loud rather than dropped. A customer holding more than one card's
+     worth is a real state — it is what their own app calls "N already counted toward your next
+     card" — and staff who could not see it would be looking at a different truth again, which is
+     the whole complaint. */
+  const carried=Math.max(0,Math.floor(Number(card?.carried)||0));
+  return `${filled} of ${slots} stamps${carried>0?` · ${carried.toLocaleString('en-SG')} toward the next card`:''}`;
+}
 /* nestly_v432 — the redeem-now list is grouped by WHERE each reward's eligibility comes from
    (owner ruling 2026-08-22: no hidden counter-only gifts; staff and Customer View read the same
    canonical availability, which the server now resolves in app.reward_availability_v432). The
@@ -7352,7 +7399,12 @@ async function tillPage(){
     }
     const tierLabel=catalog?.customerTierBenefits?.tier?.label||'';
     const pointsValue=Number(cust?.points);
-    const standing=[tierLabel?esc(tierLabel):'',Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} ${tillUnitNounV430(catalog,true)}`:'']
+    /* nestly_v474: on a stamps firm this is the customer's own card, not the pot. See
+       stampCardStandingV474 — the till and the customer profile share that one formatter. */
+    const standingFigureV474=cust?.stamp_card
+      ?stampCardStandingV474(cust.stamp_card,pointsValue,tillUnitNounV430(catalog,true))
+      :(Number.isFinite(pointsValue)?`${pointsValue.toLocaleString('en-SG')} ${tillUnitNounV430(catalog,true)}`:'');
+    const standing=[tierLabel?esc(tierLabel):'',standingFigureV474?esc(standingFigureV474):'']
       .filter(Boolean).join(' · ');
     return `<div class="till-head-v373">
       <div class="till-head-id-v373"><b class="till-head-name-v373" data-merchant-content>${esc(cust.full_name)}</b>

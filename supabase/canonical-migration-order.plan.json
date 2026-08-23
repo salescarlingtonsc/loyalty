@@ -2386,6 +2386,12 @@
       "version": "20260823000009",
       "name": "nestly_v473_erasure_unlinks_the_customer",
       "sourcePath": "db/migrations/20260823_nestly_v473_erasure_unlinks_the_customer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000010",
+      "name": "nestly_v474_staff_reads_the_stamp_card",
+      "sourcePath": "db/migrations/20260823_nestly_v474_staff_reads_the_stamp_card.sql"
     }
   ]
 }

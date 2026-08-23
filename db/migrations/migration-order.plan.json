@@ -2391,6 +2391,12 @@
       "path": "db/migrations/20260823_nestly_v473_erasure_unlinks_the_customer.sql",
       "semanticVersion": "v473",
       "proposedDeployVersion": "20260823000009"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v474_staff_reads_the_stamp_card.sql",
+      "semanticVersion": "v474",
+      "proposedDeployVersion": "20260823000010"
     }
   ]
 }

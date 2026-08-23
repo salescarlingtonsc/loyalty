@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="cdffab0fdb52122132f9dbc54e14682b4dd5c2bbde4e66435f055df427b6f142"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="a14e842bddf77e5430c8704240a23cc04a1d90ab6890f5caae9cd535c0888546"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4388,7 +4388,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · cdffab0fdb52122132f9dbc54e14682b4dd5c2bbde4e66435f055df427b6f142</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · a14e842bddf77e5430c8704240a23cc04a1d90ab6890f5caae9cd535c0888546</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5977,7 +5977,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   /* One definition of the points-history control, so exactly one element carries this id whichever
      card ends up hosting it — the V259 handler binds by id and would otherwise wire the first of
      two. */
-  const pointsHistoryButtonV319=`<button type="button" id="c360PointsHistoryV259" class="customer360-points-open-v259" aria-haspopup="dialog" aria-label="View points history" style="background:none;border:0;padding:0;margin:0;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px">${pts}</button>`;
+  /* nestly_v474: the same control, over whichever figure the row leads with. The id and every
+     style are unchanged, so the existing c360PointsHistoryV259 handler still finds it — only the
+     number inside it moves from the pot to the customer's card position on a stamps firm. */
+  const pointsHistoryButtonV319Of=value=>`<button type="button" id="c360PointsHistoryV259" class="customer360-points-open-v259" aria-haspopup="dialog" aria-label="View points history" style="background:none;border:0;padding:0;margin:0;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px">${esc(String(value))}</button>`;
+  const pointsHistoryButtonV319=pointsHistoryButtonV319Of(pts);
   const summaryCardV294=`<aside class="card c360-summary-card-v294" id="c360SummaryV294" aria-label="Customer summary">
     ${canReadSales?summaryRowV294(isProfileAdmin?'Visits':'Visible visits',`<b>${netVisits}</b>${esc(summaryVisitsSuffixV294)}`)
       +summaryRowV294(isProfileAdmin?'Lifetime spend':'Visible sales',`<b>${money(lifetimeSpendCents)}</b>`):''}
@@ -6041,8 +6045,27 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        balance that is showing 0 because the programme is off, so it travels with the number. */
     const balanceLeadHtmlV319=(unitWord,tail)=>`${pointsHistoryButtonV319} ${esc(unitWord)}${esc(pointsExpiryPhraseV319)}${esc(tail)}`;
     if((prog.unit==='stamps'?'stamps':'points')==='stamps'){
+      /* nestly_v474 (owner: "why it shows 15 stamps in record sale but customer view shows 5 out
+         of 10 stamps ... I need it to standardise"). This row printed the POT — every stamp ever
+         earned — while the customer's own app printed their position on the card in their hand.
+         v474 taught staff_get_customer_actionable_loyalty_v145 to carry the card, and this row now
+         leads with it, worded by the same stampCardStandingV474 the till uses so the two staff
+         surfaces cannot drift from each other either.
+         The number stays the clickable points-history control: the LEDGER is still what the
+         history opens onto, and the pot is still reachable there — what changes is which figure
+         the counter reads aloud. A payload with no card (an older server) falls straight back to
+         the pot, so this is additive and never blank. */
+      const stampCardV474=loyaltyFacts?.stamp_card||null;
+      const stampSlotsV474=Math.max(0,Math.floor(Number(stampCardV474?.slots)||0));
+      const stampFilledV474=stampSlotsV474
+        ?Math.max(0,Math.min(stampSlotsV474,Math.floor(Number(stampCardV474?.filled)||0))):null;
+      const stampCarriedV474=Math.max(0,Math.floor(Number(stampCardV474?.carried)||0));
+      const stampLeadV474=stampSlotsV474
+        ?`${pointsHistoryButtonV319Of(stampFilledV474)} of ${stampSlotsV474} ${stampSlotsV474===1?'stamp':'stamps'} on this card${
+            stampCarriedV474>0?` · ${stampCarriedV474.toLocaleString('en-SG')} toward the next card`:''}${esc(nextRewardBitV296)}`
+        :balanceLeadHtmlV319(`${pts===1?'stamp':'stamps'} collected`,nextRewardBitV296);
       programmeRowsV294.push(programmeRowHtmlV294('Stamp card','',loyaltyLiveV294,null,
-        balanceLeadHtmlV319(`${pts===1?'stamp':'stamps'} collected`,nextRewardBitV296),pointsPausedNoteV259));
+        stampLeadV474,pointsPausedNoteV259));
       accruingRowAtV392=programmeRowsV294.length;
     }else{
       if(pointsModeV294!=='tiers'){programmeRowsV294.push(programmeRowHtmlV294('Points System','',loyaltyLiveV294,null,
@@ -8004,7 +8027,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'cdffab0fdb52122132f9dbc54e14682b4dd5c2bbde4e66435f055df427b6f142',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'a14e842bddf77e5430c8704240a23cc04a1d90ab6890f5caae9cd535c0888546',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

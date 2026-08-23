@@ -53,7 +53,12 @@ const customerHarness=({pts,cred,nextExp,prog,loyaltyFactsAvailable=true,pointsM
   const pointsUnit=prog?.unit==='stamps'?'stamps':'points';
   ${statement('const balanceProgrammeRowV319=','\'points\');')}
   ${statement('const pointsExpiryPhraseV319=(()=>{','})();')}
-  ${statement('const pointsHistoryButtonV319=','</button>\`;')}
+  ${/* nestly_v474 made the history control a FUNCTION of whichever figure the row leads with, so
+       a stamps row can lead with the customer's card position instead of the pot. The id, the
+       styles and the handler are unchanged; the harness pulls both the factory and the `pts`
+       binding it is applied to. */''}
+  ${statement('const pointsHistoryButtonV319Of=','</button>\`;')}
+  const pointsHistoryButtonV319=pointsHistoryButtonV319Of(pts);
   ${statement('const programmeRowHtmlV294=','</span></div>\`;')}
   const balanceLeadHtmlV319=(unitWord,tail)=>\`\${pointsHistoryButtonV319} \${esc(unitWord)}\${esc(pointsExpiryPhraseV319)}\${esc(tail)}\`;
   return {balanceProgrammeRowV319,pointsExpiryPhraseV319,pointsHistoryButtonV319,

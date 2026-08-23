@@ -40,8 +40,16 @@ test('V259 the POINTS number is a button that opens a dialog, not inert text', (
   assert.match(clientDetail, /<button type="button" id="c360PointsHistoryV259"[^>]*aria-haspopup="dialog"/);
   assert.match(clientDetail, /aria-label="View points history"/);
   assert.match(clientDetail, /\$\('c360PointsHistoryV259'\)\.onclick=\(\)=>openPointsHistoryV259\(\)/);
-  // the value it renders is still the ONE balance the KPI always showed — no second source
-  assert.match(clientDetail, /id="c360PointsHistoryV259"[^>]*>\$\{pts\}<\/button>/);
+  /* nestly_v474: the control is now a factory over whichever figure the row leads with, because
+     a stamps firm leads with the customer's position on their CARD rather than the lifetime pot —
+     that mismatch is what the owner reported ("15 stamps in record sale but 5 out of 10 in
+     customer view"). The invariant this line protects is unchanged and still asserted: there is
+     ONE source, `pts`, and the stamps row derives its figure from the server's stamp_card rather
+     than inventing a second balance. */
+  assert.match(clientDetail, /const pointsHistoryButtonV319Of=value=>`<button type="button" id="c360PointsHistoryV259"/);
+  assert.match(clientDetail, /const pointsHistoryButtonV319=pointsHistoryButtonV319Of\(pts\);/);
+  assert.match(clientDetail, /const stampCardV474=loyaltyFacts\?\.stamp_card\|\|null;/,
+    'the card comes from the server read, never from browser arithmetic over the pot');
 });
 
 test('V259 the dialog uses the shared modal + CUI.activateDialog pattern', () => {
