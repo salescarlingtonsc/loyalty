@@ -2937,7 +2937,26 @@ function openReversalDialog(kind,item,onDone){
     const {data,error}=await sb.rpc(kind==='sale'?'reverse_sale_fast_v84':'reverse_loyalty_redemption',args);
     if(error){
       const conflict=error.code==='23505'||/conflict|another immutable request|already reversed/i.test(error.message||'');
-      $('revOutcome').innerHTML=`<div class="err"><b>${conflict?'Changed-request conflict':'Reversal refused'}.</b> ${esc(error.message||'The database could not prove a safe compensation.')}</div>`;
+      const loyaltyShortfall=kind==='sale'&&/loyalty_already_spent/i.test(error.message||'');
+      $('revOutcome').innerHTML=loyaltyShortfall
+        ?`<div class="err"><b>Some points from this sale are no longer available.</b> The refund was not created. ${S.myRole==='owner'?'An owner can explicitly accept the recorded loyalty shortfall; the customer keeps any reward already issued.':'Ask an owner to review and explicitly accept the loyalty shortfall.'}</div>${S.myRole==='owner'?'<button class="btn danger sm" id="revAcceptLoyaltyShortfall" type="button">Accept shortfall and reverse sale</button>':''}`
+        :`<div class="err"><b>${conflict?'Changed-request conflict':'Reversal refused'}.</b> ${esc(error.message||'The database could not prove a safe compensation.')}</div>`;
+      const acceptShortfall=$('revAcceptLoyaltyShortfall');
+      if(acceptShortfall)acceptShortfall.onclick=async()=>{
+        const accepted=await confirmDeliberateV288({
+          title:'Accept the loyalty shortfall?',
+          body:'Some points earned by this sale have already been used or expired.',
+          summaryHtml:'<b>The sale will be reversed.</b><p class="small" style="margin-top:5px">Available points from this sale will be removed. Unavailable points will be recorded as an immutable shortfall, and any reward already issued will stay with the customer.</p>',
+          acknowledgement:'I accept the recorded loyalty shortfall and understand the issued reward stays valid.',
+          confirmLabel:'Accept and reverse sale',danger:true});
+        if(!accepted)return;
+        acceptShortfall.disabled=true;
+        const {data:overrideData,error:overrideError}=await sb.rpc('reverse_sale_fast_accept_loyalty_shortfall_v480',args);
+        if(overrideError){acceptShortfall.disabled=false;$('revOutcome').insertAdjacentHTML('beforeend',`<div class="err">${esc(overrideError.message||'The owner override could not be completed.')}</div>`);return}
+        $('revOutcome').innerHTML=reversalResultHtml(kind,overrideData||{});
+        btn.disabled=true;btn.textContent='Completed';$('revCancel').textContent='Done';
+        toast('Reversal completed with recorded loyalty shortfall');
+      };
       btn.disabled=false;btn.textContent='Retry same request';return;
     }
     $('revOutcome').innerHTML=reversalResultHtml(kind,data||{});
@@ -4672,6 +4691,7 @@ async function clientDetail(id){
   const loyaltyProjectionBranch=isProfileAdmin?null:(profileScopeBranchIds[0]||null);
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
+  let adjustmentIdem=crypto.randomUUID();
   const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
@@ -5637,10 +5657,13 @@ async function clientDetail(id){
   if(aj) aj.onclick=async()=>{
     const v=parseInt($('adjV').value||'0');
     if(!v) return toast('Enter +/- points');
-    const {data,error}=await sb.rpc('adjust_points',{p_business:S.biz.id,p_client:id,
-      p_points:v,p_reason:$('adjR').value||null});
+    aj.disabled=true;
+    const {data,error}=await sb.rpc('adjust_points_v480',{p_business:S.biz.id,p_client:id,
+      p_points:v,p_reason:$('adjR').value||null,p_idempotency_key:adjustmentIdem});
+    aj.disabled=false;
     if(error) return fail(error);
-    toast(workspaceTemplateTextV97('adjustedBalance',{balance:data}));clientDetail(id);
+    adjustmentIdem=crypto.randomUUID();
+    toast(workspaceTemplateTextV97('adjustedBalance',{balance:data?.balance}));clientDetail(id);
   };
   const copyRefButton=$('copyRef');
   if(copyRefButton)copyRefButton.onclick=async()=>copyTextToClipboard(c.referral_code||'',{button:copyRefButton,success:'Code copied'});

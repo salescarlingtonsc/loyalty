@@ -87,7 +87,8 @@ begin
   ) into v_definition;
   if v_definition not ilike '%SECURITY DEFINER%'
      or v_definition not ilike '%pg_catalog%public%app%pg_temp%'
-     or v_definition not ilike '%public.reverse_sale(%'
+     or v_definition not ilike '%public.reverse_sale_v480_base(%'
+     or v_definition ilike '%public.reverse_sale(%'
      or v_definition not ilike '%public.record_quick_sale(%' then
     raise exception 'v84 correction boundary does not compose the proven writers safely';
   end if;

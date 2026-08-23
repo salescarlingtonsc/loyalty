@@ -1,5 +1,6 @@
--- Rollback-only acceptance for v403 — the stamp-card switch can write its own ledger rows.
---   supabase db query --linked -f db/tests/v403_stamp_conversion_ledger_token.sql
+-- Executed rollback-only P0 acceptance for v480 conversion conservation,
+-- atomic failure, and immutable idempotency receipts. The original v403 guard
+-- regression remains in db/tests/v403_stamp_conversion_ledger_token.sql.
 -- Any row whose result starts with FAIL is a failure. Nothing is committed.
 --
 -- Owner, 2026-08-21 (photo 3): "set up stamp does not work". The page showed

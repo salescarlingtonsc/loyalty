@@ -392,8 +392,18 @@ begin
   end if;
 
   -- the grants the product depends on are untouched
-  if not has_function_privilege('authenticated',
-       'public.business_update_reward_v326(uuid,uuid,text,integer,text,integer,text,boolean)'::regprocedure, 'EXECUTE') then
+  -- Later migrations extend this RPC with defaulted parameters and retire the
+  -- original eight-argument identity.  Calls with eight arguments remain part
+  -- of the public contract, but the privilege belongs to the current function
+  -- OID rather than to the retired signature.
+  if not exists (
+    select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'business_update_reward_v326'
+       and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+  ) then
     raise exception '18 FAIL authenticated lost EXECUTE on the edit RPC';
   end if;
   -- v423 fix at integration: the original assertion pinned authenticated UPDATE on

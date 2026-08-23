@@ -292,11 +292,12 @@
       "kernel": "SETTLEMENT-SAFE - writes only sv_lot_movements, independent of credit/points expiry. Expiry cannot reach value a v67 checkout settlement already spent: spent cents are excluded from a lot's remaining, so a settled sale's stored value can never be expired out from under it."
     },
     {
-      "id": "browser.rpc:app/app.js:adjust_points",
+      "id": "browser.rpc:app/app.js:adjust_points_v480",
       "surface": "browser_rpc_binding",
-      "rpc": "adjust_points",
-      "resolves_to": "adjust_points/4 (no idem key)",
-      "call_site_finding": "MEDIUM \u2014 manual points adjustment has no idempotency"
+      "rpc": "adjust_points_v480",
+      "resolves_to": "adjust_points_v480/5 (v480 idempotency operation wrapper around the fenced legacy writer)",
+      "call_site_finding": "closed by v480 \u2014 one UUID is retained across retries and rotated only after a completed response",
+      "kernel_migratability": "INDEPENDENT evidence-bearing manual adjustment entrypoint; delegates value movement to the fenced points writer."
     },
     {
       "id": "browser.rpc:app/app.js:attest_campaign_exposure_v99",
@@ -546,10 +547,10 @@
       "surface": "db_trigger_function",
       "latest_file": "20260822000013_nestly_v436_stamp_earn_pinned_and_lazy_close.sql",
       "rows_written": "points_batches:INSERT, points_ledger:INSERT",
-      "detected_signals": "idem-signal, config-version, sale-policy, effective-branch-module",
+      "detected_signals": "idem-signal, config-version, sale-policy, effective-branch-module, v480 shared transaction fence",
       "loyalty_boundary": "V121 permits a new points/stamps earn only when app.effective_platform_module_mode_v94(sale.business_id,sale.branch_id,'loyalty') resolves exactly rw. Disabled or read-only Loyalty preserves the sale, visit/retention processing and existing balances but creates no new points_ledger or points_batches earn.",
       "programme_scope": "V311 W5a replaced the if/elsif engine picker with a LOOP over the business's active accruing spine rows (public.business_programmes, kinds points and stamps, in sort order): one earn row and one batch PER PROGRAMME per sale, each carrying programme_id resolved inside the trigger and never supplied by a caller. Idempotency comes from get diagnostics row_count on an insert whose ON CONFLICT arbiter NAMES points_earn_once_per_sale_per_programme (the v2 points_earn_once_per_sale index was dropped in the same transaction), and the batch insert is gated on that row_count. A post-loop assertion compares the sale's earn rows against its batch rows and raises XX001 rather than leaving a silent desync. The tier multiplier now applies in the points branch only (owner decision D1); stamp batches are written with expires_at NULL (D8).",
-      "idempotency": " nestly_v421: the referral block now pays BOTH sides, and each side's guard is the same one that protected the single payout - the friend's gift is written under a unique (referral_id, beneficiary) key, and the friend's points sit inside the same `if found` that proves the referral was still pending when this sale claimed it, so a replayed sale pays neither side twice."
+      "idempotency": "nestly_v421 pays both referral sides under unique (referral_id, beneficiary) keys. V480 keeps the final installed function body, acquires the per-business SHARED transaction fence before value reads, and records the qualifying referral id/side on each exact ledger and batch child; voucher, points and stamps provenance are therefore reversible without guessing."
     },
     {
       "id": "db.fn:app.on_sale_stock_deduct/0",
@@ -1223,20 +1224,20 @@
     },
     {
       "id": "db.fn:public.reverse_sale/6",
-      "surface": "db_function",
-      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
-      "rows_written": "benefit_fulfilments:INSERT (compensating negative discount fulfilment), budget_commitment_releases:INSERT, budget_periods:UPDATE (committed_cents \u2212= amount); delegates the money/package/sale reversal to public.reverse_sale_v40_base",
-      "detected_signals": "idem-signal, for-update",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260824000003_nestly_v480_loyalty_value_integrity_fence.sql",
+      "rows_written": "via app.reverse_sale_with_loyalty_v480: points_batches:UPDATE, points_ledger:INSERT; all sale/payment/package/discount compensation remains behind that core",
+      "detected_signals": "delegating SQL boundary",
       "delegates_to": [
-        "public.reverse_sale_v40_base"
+        "app.reverse_sale_with_loyalty_v480"
       ],
-      "entry_point": "reverse_sale(p_business,p_sale,p_reason,p_idempotency_key,p_reference,p_restock_policy)  [v58 public boundary; extends the v40 boundary with PS-1C discount compensation]",
+      "entry_point": "reverse_sale(p_business,p_sale,p_reason,p_idempotency_key,p_reference,p_restock_policy) [v480 public fail-closed loyalty-aware boundary]",
       "callers": "browser reversal workflows (staff_get_reversal_workflows surfaces; reverse_customer_birthday_benefit_for_client etc.); refund_sale alias",
       "reads": "checkout_discount_lines (of the original sale), budget_reservations, budget_periods (FOR UPDATE)",
-      "idempotency": "the base chain is idem-keyed (financial_operations + package reversal); the compensation is idempotent by the reversal fulfilment canonical key + budget_commitment_releases UNIQUE(reservation_id), so a replayed reversal is a strict no-op",
-      "locking": "for-update (base sale/staff locks) + budget_periods FOR UPDATE for the release",
+      "idempotency": "app.sale_loyalty_reversal_operations_v480 binds actor and the complete request hash; exact replay returns its completed result and changed-request reuse raises 23505",
+      "locking": "delegates first to the per-business shared transaction fence, then deterministic sale/source-batch row locks",
       "payment": "delegates to reverse_sale_v40_base \u2192 v34 \u2192 v20 money core: append-only reversing sales row + reversing payments + sale_reversal_audits + sale_reversal_payment_links; credit_ledger compensation",
-      "loyalty": "compensates earned points/credit via the reversing sale (single-count preserved)",
+      "loyalty": "automatically claws back available source-sale points; refuses an unavailable shortfall unless an active owner uses the explicit evidence-bearing override",
       "package_membership": "restores package sessions (client_packages UPDATE + package_session_reversals) for $0 package sales",
       "reversal": "THE reversal engine; append-only compensation, never UPDATE/DELETE of the original; PS-1C adds exact budget release + a signed compensating discount fulfilment (committed = \u03a3reservations \u2212 \u03a3releases >= 0)",
       "ui": "Reversal workflows",
@@ -2310,7 +2311,7 @@
       "surface": "db_function",
       "latest_file": "20260816000010_nestly_v361_bringback_module.sql",
       "rows_written": "bringback_grants_v361:UPDATE (status/redeemed_at/redeemed_sale_id/redeemed_by), sales:INSERT (amount_cents=0), audit_log:INSERT",
-      "detected_signals": "sales_insert",
+      "detected_signals": "sales_insert, v480 shared transaction fence, client-before-grant FOR UPDATE",
       "entry_point": "staff_redeem_bringback_v361(business, client, branch, grant) \u2014 called from the till's own bring-back banner after a staff member hands the item over.",
       "idempotency": "The grant row is the key: it is SELECT ... FOR UPDATE'd and refused unless status='granted', so a double-tap raises bringback_already_redeemed rather than writing a second $0 sale. Issuing is separately unique on (campaign_id, client_id, cycle_key).",
       "value": "NO LEDGER WRITE. The free item is recorded as ONE public.sales row at amount_cents=0 \u2014 a real visit worth nothing \u2014 exactly as staff_redeem_welcome_offer_v215 and use_package_session_v102 do. It never touches points_ledger or credit_ledger, so it can neither mint nor move customer value; it only records that a promised gift was handed over.",
@@ -2325,7 +2326,7 @@
       "rows_written": "referral_grants_v420:UPDATE (status/redeemed_at/redeemed_sale_id/redeemed_by), sales:INSERT (amount_cents=0), audit_log:INSERT",
       "detected_signals": "sales_insert",
       "entry_point": "staff_redeem_referral_v420(business, client, branch, grant) \u2014 called from the till's own referral-gift banner after a staff member hands the item over. Shaped on staff_redeem_bringback_v361 because it is the same act.",
-      "idempotency": "The grant row is the key: SELECT ... FOR UPDATE'd and refused unless status='granted', so a double-tap raises referral_already_redeemed rather than writing a second $0 sale. Issuing is separately unique on referral_id, so one introduction owes exactly one gift however many times app.on_sale_recorded re-processes the qualifying sale.",
+      "idempotency": "The grant row is the key: V480 first holds the business SHARED fence, then locks the customer and grant in the same order as reversal. A double-tap is refused unless status='granted'; issuance remains unique per referral side.",
       "value": "NO LEDGER WRITE. The free item is recorded as ONE public.sales row at amount_cents=0 \u2014 a real visit worth nothing \u2014 exactly as staff_redeem_bringback_v361 and staff_redeem_welcome_offer_v215 do. It never touches points_ledger or credit_ledger.",
       "authority": "SECURITY DEFINER, canonical search_path, EXECUTE revoked from PUBLIC/anon and granted only to authenticated. Re-checks owner-or-till/referrals module write, grant ownership, status, expiry and branch visibility via app.can_see_branch, so the till's entitlements read is a hint and never the authority.",
       "kernel": "NOT SETTLEMENT-BEARING. The $0 sale is the visit record the retention and loyalty engines already read; no money and no points change hands.",
@@ -2417,6 +2418,66 @@
       "rows_written": "at most one row in public.business_featured_offer_v462 - an insert or an on-conflict update - or one delete of that row when p_promotion_id is null. Nothing else, in any branch.",
       "call_site_finding": "OK. The browser supplies its own business id and an offer id and nothing else. app.is_salon_owner(p_business) gates the write, so a manager is refused 42501 and a caller with no session 28000; the offer id is validated against app.v462_featured_offer_candidates(p_business), so a draft, an ended offer or another firm's offer is refused 23514 featured_offer_must_be_live and cannot cross a tenant boundary. The table carries no anon/authenticated privileges at all, so this RPC is the only door. All of it proven as the real roles in db/tests/v462_featured_offer_and_live_cap.sql, checks 06, 07 and 13. A super admin is deliberately NOT admitted: v14 scopes super admins to reading tenants and writing platform tables, and which offer a merchant shows is the merchant's decision.",
       "kernel_migratability": "non-value - the row is a display preference naming which offer appears on a feed. It touches no credit_ledger, points_ledger, sales, stock or stored-value row, grants a customer nothing and changes no price, so it can never reach the value kernel."
+    },
+    {
+      "id": "db.fn:app.reverse_sale_with_loyalty_v480/7",
+      "surface": "db_function",
+      "latest_file": "20260824000003_nestly_v480_loyalty_value_integrity_fence.sql",
+      "rows_written": "points_batches:UPDATE, points_ledger:INSERT, referral_grants_v420:UPDATE; operation/evidence and exact two-sided referral provenance record replay and accepted point/stamp/voucher shortfalls; via public.reverse_sale_v480_base: benefit_fulfilments:INSERT, budget_commitment_releases:INSERT, budget_periods:UPDATE and the older sale/payment/package compensation chain",
+      "detected_signals": "idem-signal, shared transaction advisory fence, FOR UPDATE row-lock",
+      "entry_point": "Single v480 reversal coordinator used by ordinary and explicit owner-override boundaries.",
+      "idempotency": "Unique (business,idempotency_key), actor and full request hash; exact replay returns the completed result and a changed request raises 23505.",
+      "locking": "Per-business SHARED xact fence, live staff, sale, rewarded referral, all affected customers in UUID order, referral provenance/grants, then FEFO source batches. Conversion and immediate semantic configuration use EXCLUSIVE mode of the same key.",
+      "loyalty": "Claws back direct-sale and exact two-sided referral points/stamps, reverses unclaimed referral vouchers, fails ordinary reversal if any value was spent/redeemed, and records the precise owner-accepted shortfall without rescinding an already-issued benefit. Historical referral points/stamps lacking exact provenance fail closed for reconciliation.",
+      "kernel_migratability": "CORE-CANDIDATE for sale reversal because it coordinates money/package/discount compensation with loyalty-source clawback atomically."
+    },
+    {
+      "id": "db.fn:public.reverse_sale_v480_base/6",
+      "surface": "db_function",
+      "latest_file": "20260724170000_frenly_v58_ps1c_checkout_kernel.sql",
+      "rows_written": "benefit_fulfilments:INSERT, budget_commitment_releases:INSERT, budget_periods:UPDATE; delegates the older sale/payment/package compensation chain to public.reverse_sale_v40_base",
+      "detected_signals": "idem-signal, FOR UPDATE row-lock",
+      "entry_point": "The v58 discount-compensation implementation renamed by v480 and callable only through app.reverse_sale_with_loyalty_v480.",
+      "idempotency": "Canonical reversal fulfilment key plus budget release uniqueness; the enclosing v480 operation adds whole-request replay evidence.",
+      "kernel_migratability": "MERGE-INTO-CORE; retained as a compatibility layer during the bounded P0 change."
+    },
+    {
+      "id": "db.fn:public.adjust_points_v480/5",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260824000003_nestly_v480_loyalty_value_integrity_fence.sql",
+      "rows_written": "via public.adjust_points: points_batches:INSERT/UPDATE, points_ledger:INSERT",
+      "detected_signals": "idem-signal, shared transaction advisory fence, FOR UPDATE operation row",
+      "entry_point": "Idempotent owner adjustment boundary used by the shipped workspace.",
+      "idempotency": "Unique (business,idempotency_key), actor and request hash; exact replay returns the completed balance.",
+      "kernel_migratability": "INDEPENDENT wrapper; the legacy four-argument function remains temporarily for stale clients but is fenced and conserving."
+    },
+    {
+      "id": "db.fn:public.reverse_sale_accept_loyalty_shortfall_v480/6",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260824000003_nestly_v480_loyalty_value_integrity_fence.sql",
+      "rows_written": "via app.reverse_sale_with_loyalty_v480: points_batches:UPDATE, points_ledger:INSERT",
+      "detected_signals": "explicit owner-only delegation",
+      "entry_point": "Full-signature owner override for administrative clients.",
+      "idempotency": "Delegates to the v480 operation ledger.",
+      "kernel_migratability": "CORE boundary for an explicitly accepted loyalty shortfall."
+    },
+    {
+      "id": "db.fn:public.reverse_sale_fast_accept_loyalty_shortfall_v480/4",
+      "surface": "db_delegating_entrypoint",
+      "latest_file": "20260824000003_nestly_v480_loyalty_value_integrity_fence.sql",
+      "rows_written": "via app.reverse_sale_with_loyalty_v480: points_batches:UPDATE, points_ledger:INSERT",
+      "detected_signals": "idem-signal, explicit owner-only delegation",
+      "entry_point": "Workspace quick-reversal owner override after the ordinary path returns loyalty_already_spent.",
+      "idempotency": "Delegates the browser's retained key to the v480 operation ledger.",
+      "kernel_migratability": "UI convenience boundary over the same reversal core."
+    },
+    {
+      "id": "browser.rpc:app/app.js:reverse_sale_fast_accept_loyalty_shortfall_v480",
+      "surface": "browser_rpc_binding",
+      "rpc": "reverse_sale_fast_accept_loyalty_shortfall_v480",
+      "resolves_to": "public.reverse_sale_fast_accept_loyalty_shortfall_v480/4",
+      "call_site_finding": "Shown only after the ordinary reversal fails with loyalty_already_spent and only to an owner; a second deliberate confirmation explains that the issued reward remains valid and an immutable shortfall is recorded.",
+      "kernel_migratability": "follows app.reverse_sale_with_loyalty_v480; no alternate value path."
     }
   ],
   "allowlist": [
@@ -3511,6 +3572,14 @@
     {
       "id": "db.backfill:20260814000300_nestly_v322_owner_programme_rulings.sql:credit_ledger",
       "reason": "NOT a backfill and NOT a migration-time write: the scanner matched credit_ledger inside the pre-image of the credit insert the needle REMOVES, preserved verbatim as the needle old_text so the rollback is in the file. V322 executes no DML against any VALUE_TABLE \u2014 its only data write is public.referral_programs.reward_points, converted from each firm's own published points price. The runtime writer these strings install is app.on_sale_recorded, which is already curated in writers[]."
+    },
+    {
+      "id": "db.backfill:20260824000003_nestly_v480_loyalty_value_integrity_fence.sql:points_ledger",
+      "reason": "NOT a migration-time backfill. V480 contains points_ledger INSERT text inside CREATE FUNCTION bodies and count-checked pg_get_functiondef splice strings. The runtime routes are curated individually (app.on_sale_recorded, adjust_points_v480, conversion, redemption and reverse_sale_with_loyalty_v480); the migration itself performs no DML against points_ledger."
+    },
+    {
+      "id": "db.backfill:20260824000003_nestly_v480_loyalty_value_integrity_fence.sql:points_batches",
+      "reason": "NOT a migration-time backfill. V480 contains points_batches UPDATE/INSERT text inside CREATE FUNCTION bodies and fail-closed dynamic writer patches. The migration adds nullable referral provenance columns and guards but moves no existing earned or remaining value; runtime writers are curated under their own identities."
     },
     {
       "id": "browser.rpc:app/app.js:customer_get_stamp_card_v323",

@@ -2416,6 +2416,12 @@
       "version": "20260824000002",
       "name": "nestly_v479_customer_wallet_realtime_signal",
       "sourcePath": "db/migrations/20260824_nestly_v479_customer_wallet_realtime_signal.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000003",
+      "name": "nestly_v480_loyalty_value_integrity_fence",
+      "sourcePath": "db/migrations/20260824_nestly_v480_loyalty_value_integrity_fence.sql"
     }
   ]
 }

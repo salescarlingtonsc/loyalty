@@ -135,28 +135,34 @@
 
 begin;
 
-/* public.points_ledger is append-only through named routes only (app.loyalty_ledger_write_guard):
-   an insert must carry the row's own id in app.points_ledger_insert_id and a scope the guard
-   recognises. This fixture needs earn and adjust rows that belong to no sale, so it borrows the
-   two routes whose shape matches exactly what it writes — referral_reward_points (earn, positive,
-   no sale, tagged with a programme) and programme_pot_transfer (adjust, non-zero, no sale, no
-   actor, tagged with a programme). Same discipline as db/tests/v310_programme_read_path.sql. */
+/* public.points_ledger is append-only through named routes only. Earn fixtures use a zero-value
+   gift-card sale, whose immutable policy is revenue=false / visit=false / earn=false, solely as
+   the required sale provenance for the sale_trigger route. It therefore cannot perturb the
+   visit metrics this file proves. Adjust fixtures use programme_pot_transfer. */
 create or replace function pg_temp.v426_ledger(
   p_business uuid, p_client uuid, p_entry text, p_points integer, p_programme uuid,
   p_reference text, p_at timestamptz default null
 ) returns uuid language plpgsql as $fn$
 declare
   v_id uuid := gen_random_uuid();
-  v_scope text := case when p_entry = 'earn'
-                    then 'referral_reward_points' else 'programme_pot_transfer' end;
+  v_scope text := case when p_entry='earn' then 'sale_trigger' else 'programme_pot_transfer' end;
+  v_sale uuid;
 begin
+  if to_regprocedure('app.acquire_loyalty_shared_v480(uuid)') is not null then
+    execute 'select app.acquire_loyalty_shared_v480($1)' using p_business;
+  end if;
+  if p_entry='earn' then
+    insert into public.sales(id,business_id,client_id,kind,amount_cents)
+    values(gen_random_uuid(),p_business,p_client,'gift_card',0)
+    returning id into v_sale;
+  end if;
   perform set_config('app.points_ledger_insert_id', v_id::text, true);
   perform set_config('app.points_ledger_write_scope', v_scope, true);
   insert into public.points_ledger(
     id, business_id, client_id, entry_type, points, sale_id, reference, actor, programme_id,
     created_at
   ) values (
-    v_id, p_business, p_client, p_entry, p_points, null, p_reference, null, p_programme,
+    v_id, p_business, p_client, p_entry, p_points, v_sale, p_reference, null, p_programme,
     coalesce(p_at, now())
   );
   perform set_config('app.points_ledger_insert_id', '', true);

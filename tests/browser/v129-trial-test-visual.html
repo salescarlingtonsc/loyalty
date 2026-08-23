@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="a9fe62c8705832f13e14d2247436fe6bf81b1026f6a9cd890ab8a85560460685"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c556cce3a291fb66d5246548a825f00c821dfb907f44ca59a5cb4f6821c247a6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4425,7 +4425,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · a9fe62c8705832f13e14d2247436fe6bf81b1026f6a9cd890ab8a85560460685</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c556cce3a291fb66d5246548a825f00c821dfb907f44ca59a5cb4f6821c247a6</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -5444,6 +5444,7 @@ async function clientsPage(){
   const loyaltyProjectionBranch=isProfileAdmin?null:(profileScopeBranchIds[0]||null);
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
+  let adjustmentIdem=crypto.randomUUID();
   const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
@@ -6409,10 +6410,13 @@ async function clientsPage(){
   if(aj) aj.onclick=async()=>{
     const v=parseInt($('adjV').value||'0');
     if(!v) return toast('Enter +/- points');
-    const {data,error}=await sb.rpc('adjust_points',{p_business:S.biz.id,p_client:id,
-      p_points:v,p_reason:$('adjR').value||null});
+    aj.disabled=true;
+    const {data,error}=await sb.rpc('adjust_points_v480',{p_business:S.biz.id,p_client:id,
+      p_points:v,p_reason:$('adjR').value||null,p_idempotency_key:adjustmentIdem});
+    aj.disabled=false;
     if(error) return fail(error);
-    toast(workspaceTemplateTextV97('adjustedBalance',{balance:data}));clientDetail(id);
+    adjustmentIdem=crypto.randomUUID();
+    toast(workspaceTemplateTextV97('adjustedBalance',{balance:data?.balance}));clientDetail(id);
   };
   const copyRefButton=$('copyRef');
   if(copyRefButton)copyRefButton.onclick=async()=>copyTextToClipboard(c.referral_code||'',{button:copyRefButton,success:'Code copied'});
@@ -27542,6 +27546,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'a9fe62c8705832f13e14d2247436fe6bf81b1026f6a9cd890ab8a85560460685',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'c556cce3a291fb66d5246548a825f00c821dfb907f44ca59a5cb4f6821c247a6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

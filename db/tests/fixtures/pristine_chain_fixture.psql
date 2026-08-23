@@ -112,6 +112,13 @@ begin
   select id into v_client_b from public.clients
    where business_id=v_business_b and email='pristine-b@example.test';
 
+  -- v480: this rollback fixture deliberately combines sale seeds and a later
+  -- semantic loyalty publish in one transaction. Real requests do not. Take
+  -- the exclusive per-business fence first so the fixture follows the only
+  -- deadlock-safe ordering; all later shared value writes are satisfied by it.
+  perform app.acquire_loyalty_exclusive_v480(v_business_a);
+  perform app.acquire_loyalty_exclusive_v480(v_business_b);
+
   insert into public.sales(business_id,client_id,kind,amount_cents,occurred_at,note)
   values
     (v_business_a,v_client_a,'quick_sale',100,statement_timestamp(),'pristine RLS control A'),
@@ -136,6 +143,11 @@ begin
     'expiry_mode','none'
   ),null);
   perform public.publish_loyalty_config(v_draft);
+  perform public.set_programmes_v314(
+    v_business_a,
+    jsonb_build_object('points',true,'stamps',false,'tiers',false),
+    gen_random_uuid()
+  );
 
   reset role;
   perform set_config('request.jwt.claim.sub','',true);

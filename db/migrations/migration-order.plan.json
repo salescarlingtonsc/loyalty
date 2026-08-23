@@ -2421,6 +2421,12 @@
       "path": "db/migrations/20260824_nestly_v479_customer_wallet_realtime_signal.sql",
       "semanticVersion": "v479",
       "proposedDeployVersion": "20260824000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v480_loyalty_value_integrity_fence.sql",
+      "semanticVersion": "v480",
+      "proposedDeployVersion": "20260824000003"
     }
   ]
 }

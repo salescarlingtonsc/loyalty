@@ -50,6 +50,7 @@
  */
 import { mkdirSync, existsSync, rmSync , readFileSync} from 'node:fs';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import {
   SNAPSHOT_PATH, SNAPSHOT_WATERMARK_VERSION, ScratchCluster, applyBootstrap,
   discoverPendingMigrations, discoverExecutedTests, requirePostgresBinaries,
@@ -208,6 +209,35 @@ async function main() {
         }
       }
       await runExecutedSuite(cluster, 'MIGRATED', MIGRATED_DB, tests);
+
+      /* v480's invariant is cross-session, so a single psql file cannot prove it.
+         Run the real two-session writer/conversion lane against its own clone of
+         the migrated template. The clone is dropped even when the lane fails. */
+      const runV480Concurrency = !filter || filter.includes('v480')
+        || 'v480_loyalty_fence_concurrency.sh'.includes(filter);
+      if (runV480Concurrency && !failures.some((f) => f.phase === 'MIGRATION')) {
+        const db = 'peekaa_v480_concurrency';
+        head('── v480 actual-writer concurrency ────────────────────');
+        cluster.createDatabase(db, { template: MIGRATED_DB });
+        try {
+          execFileSync('bash', [join(process.cwd(), 'db/tests/v480_loyalty_fence_concurrency.sh')], {
+            cwd: process.cwd(),
+            env: {
+              ...process.env,
+              DATABASE_URL: `postgresql://postgres@127.0.0.1:${PORT}/${db}`,
+            },
+            stdio: 'inherit',
+          });
+        } catch (e) {
+          failures.push({
+            phase: 'MIGRATED-CONCURRENCY',
+            file: 'db/tests/v480_loyalty_fence_concurrency.sh',
+            error: `actual-writer concurrency lane exited ${e.status ?? 'non-zero'}`,
+          });
+        } finally {
+          cluster.dropDatabase(db);
+        }
+      }
     }
   } finally {
     if (has('--keep')) {
