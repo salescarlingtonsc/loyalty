@@ -270,6 +270,11 @@ const attemptSave = async ({ isStamps, points }) => {
     let growPointsBusyV326=false, growPointsErrorV326='', growPointsAddDraftV326={};
     let growPointsEditingV326=null, growPointsPhotoFileV343=null, growPointsRemovePhotoV343=false;
     let growStampsPickedV416=null;
+    /* nestly_v472: the save handler now sends a gift end date. The harness supplies the real
+       helper's contract — blank field -> null -> "leave whatever is stored alone" — so this
+       suite keeps measuring the stamp ceiling and nothing else. */
+    const growPointsEndDateInstantV472=v=>(/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))
+      ? new Date(String(v)+'T23:59:59.999+08:00').toISOString() : null);
     const growRerenderV322=()=>{state.error=growPointsErrorV326};
     ${saveHandlerSrc}
     return growPointsAddSave.onclick;`)(

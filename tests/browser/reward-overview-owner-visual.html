@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="7ccf77165f92ce7b04823cfb9467b015aca2c0160b09d4ceabd773c3f34102a7"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="71286c8884752cd622aca9cc32132dd69cc491b90b7c4b1cbc3b5851c624e07e"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4376,7 +4376,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 7ccf77165f92ce7b04823cfb9467b015aca2c0160b09d4ceabd773c3f34102a7</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 71286c8884752cd622aca9cc32132dd69cc491b90b7c4b1cbc3b5851c624e07e</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6131,7 +6131,7 @@ let growPointsDeletePendingV326='';
    the number there would give one decision two controls that can disagree. */
 let growStampsPickedV416=null;
 let growPointsAddOpenV326='';
-let growPointsAddDraftV326={name:'',points:'',description:''};
+let growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
 /* V343 (owner mockup, photo 4): which gift's Edit form is open, null when it is the "Add a new
@@ -10783,6 +10783,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?`On stamp ${growStampsPickedV416}`
       :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
+    ${/* nestly_v472 (owner, batch 11: "Allow to add expiry date for each rewards and display in
+         customer view"). The OFFERING window — after this date the gift is no longer offered.
+         A date input, not a datetime: an owner thinks in days, and the value is resolved to the
+         END of the chosen day in SGT so a gift dated "21 September" is claimable all of the 21st.
+         Blank means no deadline, which is what every existing gift already has. */''}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddEndsV472">Last day to redeem <span class="muted">(optional)</span></label><br><input id="growPointsAddEndsV472" class="grow-setup-input-v301" type="date" min="${esc(growPointsEndDateMinV472())}" value="${esc(growPointsAddDraftV326.endsOn||'')}"><br><span class="muted small">Customers see &ldquo;Expires on this date &mdash; redeem before then&rdquo;. Leave blank and it never expires.</span></p>
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -12797,7 +12803,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the whole snapshot — same local-echo the tier-basis handler uses. */
     const modelAfterV354=growPointsIsStampsV326?'stamps':'classic';
     if(snapshot.loyalty)snapshot.loyalty.loyalty_model=modelAfterV354;else snapshot.loyalty={loyalty_model:modelAfterV354};
-    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]').forEach(button=>button.onclick=()=>{
@@ -12927,7 +12933,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      them (querySelectorAll, not the single-match querySelector it used to be). */
   outerMain.querySelectorAll('[data-grow-points-add-v326]').forEach(el=>{
     const openAddForm=()=>{
-      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
       growRerenderV322({quiet:true});
     };
@@ -12942,7 +12948,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!reward)return;
     growPointsEditingV326=id;
     growPointsAddOpenV326='form';
-    growPointsAddDraftV326={name:reward.customer_name||reward.name||'',points:String(reward.cost_points||''),description:reward.description||''};
+    growPointsAddDraftV326={name:reward.customer_name||reward.name||'',points:String(reward.cost_points||''),description:reward.description||'',
+      /* nestly_v472: the stored instant, rendered as the <input type="date"> value the field
+         expects. growPointsEndDateInputV472 anchors to SGT rather than the browser's zone — the
+         same +08:00 discipline sgt()/sgIso() imposed on every other date this app round-trips. */
+      endsOn:growPointsEndDateInputV472(reward.claim_available_until)};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -13040,7 +13050,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddDraftV326={
       name:String(nameField?.value??growPointsAddDraftV326.name??''),
       points:pointsField?.value??growPointsAddDraftV326.points??'',
-      description:String(descField?.value??growPointsAddDraftV326.description??'')
+      description:String(descField?.value??growPointsAddDraftV326.description??''),
+      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??'')
     };
   };
   const growPointsPhotoInput=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoInputV343');
@@ -13064,7 +13075,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    growPointsAddDraftV326={name,points:pointsField?.value||'',description};
+    const endsOnV472=String($('growPointsAddEndsV472')?.value||'').trim();
+    growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
     /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
@@ -13099,13 +13111,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ({data:saveResV433,error}=await sb.rpc('business_update_reward_v326',{
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
-        p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef}));
+        p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
+        /* nestly_v472: p_clear_end_date is the ONLY way to remove a date. Sending null for
+           p_claim_available_until means "say nothing" — the writer keeps whatever is stored — so
+           an empty field has to be an EXPLICIT clear, not an absent value. */
+        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
+        p_clear_end_date:!endsOnV472}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
       ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
-        p_description:description||null,p_image_ref:imageRef||null}));
+        p_description:description||null,p_image_ref:imageRef||null,
+        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472)}));
     }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
@@ -13746,7 +13764,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'7ccf77165f92ce7b04823cfb9467b015aca2c0160b09d4ceabd773c3f34102a7',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'71286c8884752cd622aca9cc32132dd69cc491b90b7c4b1cbc3b5851c624e07e',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

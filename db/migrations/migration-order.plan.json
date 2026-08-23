@@ -2373,6 +2373,18 @@
       "path": "db/migrations/20260823_nestly_v469_grant_sales_name_themselves.sql",
       "semanticVersion": "v469",
       "proposedDeployVersion": "20260823000006"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v472_reward_end_date_and_menu_gallery.sql",
+      "semanticVersion": "v472",
+      "proposedDeployVersion": "20260823000007"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v472a_profile_extras_menu.sql",
+      "semanticVersion": "v472a",
+      "proposedDeployVersion": "20260823000008"
     }
   ]
 }

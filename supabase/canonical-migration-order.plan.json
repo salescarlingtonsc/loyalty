@@ -2368,6 +2368,18 @@
       "version": "20260823000006",
       "name": "nestly_v469_grant_sales_name_themselves",
       "sourcePath": "db/migrations/20260823_nestly_v469_grant_sales_name_themselves.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000007",
+      "name": "nestly_v472_reward_end_date_and_menu_gallery",
+      "sourcePath": "db/migrations/20260823_nestly_v472_reward_end_date_and_menu_gallery.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000008",
+      "name": "nestly_v472a_profile_extras_menu",
+      "sourcePath": "db/migrations/20260823_nestly_v472a_profile_extras_menu.sql"
     }
   ]
 }

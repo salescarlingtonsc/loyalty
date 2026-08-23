@@ -337,7 +337,7 @@ let growPointsViewKindV350=null;
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
-let growPointsAddDraftV326={name:'',points:'',description:''};
+let growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
 /* V343 (owner mockup, photo 4): which gift's Edit form is open, null when it is the "Add a new
@@ -718,7 +718,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -4576,6 +4576,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
+    ${customerBusinessMenuMarkupV472(business)}
     ${customerBusinessGalleryMarkupV418(business)}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
@@ -4657,6 +4658,31 @@ const CUSTOMER_SOCIAL_LABELS_V418=Object.freeze({
   website:'Website',instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',
   whatsapp:'WhatsApp',youtube:'YouTube',telegram:'Telegram',xiaohongshu:'Xiaohongshu'
 });
+/* nestly_v472 (owner, batch 11: "add another segment to add menu photos", confirmed as its own
+   segment in the customer app). The menu is a SEPARATE section above the gallery, not a second
+   row inside it: a customer opening a café's profile is usually looking for what to order, and a
+   menu filed under "Gallery" reads as decoration.
+   It reuses the gallery's own cells, grid and full-size viewer wholesale — same class names, same
+   [data-customer-gallery-v418] hook, so wireCustomerGalleryV418 picks these up with no change and
+   there is no second image viewer to keep in step. What differs is the heading and the fact that
+   a menu is not trimmed to two: an owner who uploaded four pages of a menu meant all four to be
+   readable, and hiding half of it behind "See all" would be hiding the thing the customer came
+   for. A business with no menu photos draws nothing at all. */
+function customerBusinessMenuMarkupV472(business={}){
+  const photos=(Array.isArray(business.menu)?business.menu:[])
+    .map(item=>({url:customerMediaUrlV95(item?.image_ref),caption:String(item?.caption||'').trim()}))
+    .filter(item=>item.url);
+  if(!photos.length)return '';
+  return `<section class="customer-business-group-v346 customer-business-gallery-v418 customer-business-menu-v472" aria-labelledby="customerBusinessMenuTitleV472">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessMenuTitleV472">Menu</h2></div>
+    <div class="customer-business-gallery-grid-v418" role="list">
+      ${photos.map((item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="menu-${index}" data-merchant-content aria-label="${esc(item.caption||`Menu photo ${index+1}`)}. Open full size.">
+        <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
+        ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
+      </button>`).join('')}
+    </div>
+  </section>`;
+}
 function customerBusinessGalleryMarkupV418(business={}){
   const photos=(Array.isArray(business.gallery)?business.gallery:[])
     .map(item=>({url:customerMediaUrlV95(item?.image_ref),caption:String(item?.caption||'').trim()}))

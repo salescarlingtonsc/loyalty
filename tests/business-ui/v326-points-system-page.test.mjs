@@ -157,6 +157,11 @@ function harness() {
   const PROGRAMME_ACCRUAL_EXCLUSIVE_V322_src = statementTo('const PROGRAMME_ACCRUAL_EXCLUSIVE_V322=');
   const programmeExclusionsV322_src = slice('function programmeExclusionsV322(', '\n}');
   const promotionDateShortV324_src = slice('function promotionDateShortV324(', '\n}');
+  /* nestly_v472: the gift form now renders a "Last day to redeem" date field whose min and
+     pre-fill come from the shipped SGT helpers. Pulled from source rather than stubbed, so the
+     harness cannot disagree with the product about which day is the earliest one on offer. */
+  const growPointsEndDateMinV472_src = slice('const growPointsEndDateMinV472=', 'slice(0,10);');
+  const growPointsEndDateInputV472_src = slice('const growPointsEndDateInputV472=', '\n};');
   const pageBlockSrc = slice(
     "  /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3",
     '      </ul>`;'
@@ -189,7 +194,12 @@ function harness() {
       STATUS_PRELUDE_SRC,
       PROGRAMME_SWITCHES_V314_src, PROGRAMME_KINDS_W6I2_src, programmeSwitchSetV314_src, programmeSpineRowsV314_src,
       programmeSpineOnV314_src, PROGRAMME_ACCRUAL_EXCLUSIVE_V322_src, programmeExclusionsV322_src,
-      promotionDateShortV324_src, pageBlockSrc,
+      promotionDateShortV324_src,
+      /* nestly_v472: the gift form now renders a "Last day to redeem" date field, whose min comes
+         from the shipped SGT helper. Pulled from source rather than stubbed, so the harness cannot
+         disagree with the product about which day is the earliest one on offer. */
+      growPointsEndDateMinV472_src, growPointsEndDateInputV472_src,
+      pageBlockSrc,
       'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326,growPointsIsStampsV326,growPointsSpineKindV326,growPointsPageTitleV326,growPointsRowLabelV326};',
     ].join('\n');
     const fn = new Function(
@@ -426,8 +436,11 @@ test('V326 the three new RPCs are called with the exact parameter names the migr
   assert.match(app, /sb\.rpc\('business_delete_reward_v326',\{p_business:S\.biz\.id,p_reward:id\}\);/);
   /* V343: business_create_reward_v326 gained p_description/p_image_ref (photo 4 — description
      and photo on the add form); business_update_reward_v326 is the same page's new Edit RPC. */
-  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null\}\)\);/);
-  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef\}\)\);/);
+  /* nestly_v472 added the gift end date to both payloads (owner batch 11: "Allow to add expiry
+     date for each rewards"). p_claim_available_until rides create; update carries it plus
+     p_clear_end_date, because a null there means "leave it alone" and clearing has to be said. */
+  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\)\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_clear_end_date:!endsOnV472\}\)\);/);
 });
 
 test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {

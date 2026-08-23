@@ -835,7 +835,7 @@ let growPointsDeletePendingV326='';
    the number there would give one decision two controls that can disagree. */
 let growStampsPickedV416=null;
 let growPointsAddOpenV326='';
-let growPointsAddDraftV326={name:'',points:'',description:''};
+let growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
 /* V343 (owner mockup, photo 4): which gift's Edit form is open, null when it is the "Add a new
@@ -1662,7 +1662,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -2564,6 +2564,35 @@ const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*
    UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
    the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
 const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
+/* nestly_v472 — the gift end date the Point system page sets, and its two directions.
+   It is a DATE the owner picks and an INSTANT the server stores, and the conversion has to be
+   anchored to SGT for the same reason sgt()/sgIso() above exist: an owner in Singapore typing
+   "21 September" means all of the 21st in Singapore, and a browser reporting some other zone must
+   not turn that into the 20th or the 22nd.
+   The instant is the END of the chosen day (23:59:59.999 +08:00), never the start. A gift dated
+   the 21st that stopped being claimable at midnight ON the 21st would contradict the sentence the
+   customer is shown — "Expires on 21 September, redeem before then" — and would take the gift away
+   a full day early. This is the one decision in the pair that a reader is most likely to get
+   backwards, which is why it is stated here rather than inline. */
+const growPointsEndDateInstantV472=value=>{
+  const day=String(value||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+  const at=new Date(`${day}T23:59:59.999+08:00`);
+  return Number.isFinite(at.getTime())?at.toISOString():null;
+};
+/* The reverse, for pre-filling the field when the owner reopens a gift. Reads the stored instant
+   back as the SGT calendar day it belongs to — so a date saved as 21 Sep 23:59 +08 shows as
+   "2026-09-21" and not as the 21st or 22nd depending on where the owner happens to be. */
+const growPointsEndDateInputV472=value=>{
+  if(!value)return '';
+  const at=new Date(value);
+  if(!Number.isFinite(at.getTime()))return '';
+  return new Date(at.getTime()+8*3600000).toISOString().slice(0,10);
+};
+/* The earliest day the field will accept. Today in SGT, not tomorrow: the writer refuses only a
+   date that is already PAST, and today still has hours left in it — an owner running a one-day
+   promotion must be able to say so. */
+const growPointsEndDateMinV472=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 /* reporting-scale:start — keep raw exports complete despite the Data API row cap. */
 const DATA_API_PAGE_SIZE=1000;
 const sgDateBoundary=(date,dayOffset=0)=>{
@@ -10440,6 +10469,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
+    ${customerBusinessMenuMarkupV472(business)}
     ${customerBusinessGalleryMarkupV418(business)}
     <section class="customer-business-group-v346 customer-business-rewards-v346" id="customerBusinessRewardsDetailV347" aria-labelledby="customerBusinessRewardsTitle">
       <div class="customer-business-group-head-v346"><h2 id="customerBusinessRewardsTitle">Rewards</h2><p class="muted small">Ready rewards, catalogue and ways to earn.</p></div>
@@ -10824,6 +10854,31 @@ function wireCustomerBusinessLinksV471(root){
         .catch(()=>{globalThis.open?.(url,'_blank','noopener,noreferrer')});
     });
   });
+}
+/* nestly_v472 (owner, batch 11: "add another segment to add menu photos", confirmed as its own
+   segment in the customer app). The menu is a SEPARATE section above the gallery, not a second
+   row inside it: a customer opening a café's profile is usually looking for what to order, and a
+   menu filed under "Gallery" reads as decoration.
+   It reuses the gallery's own cells, grid and full-size viewer wholesale — same class names, same
+   [data-customer-gallery-v418] hook, so wireCustomerGalleryV418 picks these up with no change and
+   there is no second image viewer to keep in step. What differs is the heading and the fact that
+   a menu is not trimmed to two: an owner who uploaded four pages of a menu meant all four to be
+   readable, and hiding half of it behind "See all" would be hiding the thing the customer came
+   for. A business with no menu photos draws nothing at all. */
+function customerBusinessMenuMarkupV472(business={}){
+  const photos=(Array.isArray(business.menu)?business.menu:[])
+    .map(item=>({url:customerMediaUrlV95(item?.image_ref),caption:String(item?.caption||'').trim()}))
+    .filter(item=>item.url);
+  if(!photos.length)return '';
+  return `<section class="customer-business-group-v346 customer-business-gallery-v418 customer-business-menu-v472" aria-labelledby="customerBusinessMenuTitleV472">
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessMenuTitleV472">Menu</h2></div>
+    <div class="customer-business-gallery-grid-v418" role="list">
+      ${photos.map((item,index)=>`<button type="button" role="listitem" class="customer-business-gallery-cell-v418" data-customer-gallery-v418="menu-${index}" data-merchant-content aria-label="${esc(item.caption||`Menu photo ${index+1}`)}. Open full size.">
+        <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
+        ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
+      </button>`).join('')}
+    </div>
+  </section>`;
 }
 function customerBusinessGalleryMarkupV418(business={}){
   const photos=(Array.isArray(business.gallery)?business.gallery:[])
@@ -29660,6 +29715,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?`On stamp ${growStampsPickedV416}`
       :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
+    ${/* nestly_v472 (owner, batch 11: "Allow to add expiry date for each rewards and display in
+         customer view"). The OFFERING window — after this date the gift is no longer offered.
+         A date input, not a datetime: an owner thinks in days, and the value is resolved to the
+         END of the chosen day in SGT so a gift dated "21 September" is claimable all of the 21st.
+         Blank means no deadline, which is what every existing gift already has. */''}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddEndsV472">Last day to redeem <span class="muted">(optional)</span></label><br><input id="growPointsAddEndsV472" class="grow-setup-input-v301" type="date" min="${esc(growPointsEndDateMinV472())}" value="${esc(growPointsAddDraftV326.endsOn||'')}"><br><span class="muted small">Customers see &ldquo;Expires on this date &mdash; redeem before then&rdquo;. Leave blank and it never expires.</span></p>
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -31674,7 +31735,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the whole snapshot — same local-echo the tier-basis handler uses. */
     const modelAfterV354=growPointsIsStampsV326?'stamps':'classic';
     if(snapshot.loyalty)snapshot.loyalty.loyalty_model=modelAfterV354;else snapshot.loyalty={loyalty_model:modelAfterV354};
-    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]').forEach(button=>button.onclick=()=>{
@@ -31804,7 +31865,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      them (querySelectorAll, not the single-match querySelector it used to be). */
   outerMain.querySelectorAll('[data-grow-points-add-v326]').forEach(el=>{
     const openAddForm=()=>{
-      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:''};
+      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
       growRerenderV322({quiet:true});
     };
@@ -31819,7 +31880,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!reward)return;
     growPointsEditingV326=id;
     growPointsAddOpenV326='form';
-    growPointsAddDraftV326={name:reward.customer_name||reward.name||'',points:String(reward.cost_points||''),description:reward.description||''};
+    growPointsAddDraftV326={name:reward.customer_name||reward.name||'',points:String(reward.cost_points||''),description:reward.description||'',
+      /* nestly_v472: the stored instant, rendered as the <input type="date"> value the field
+         expects. growPointsEndDateInputV472 anchors to SGT rather than the browser's zone — the
+         same +08:00 discipline sgt()/sgIso() imposed on every other date this app round-trips. */
+      endsOn:growPointsEndDateInputV472(reward.claim_available_until)};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -31917,7 +31982,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddDraftV326={
       name:String(nameField?.value??growPointsAddDraftV326.name??''),
       points:pointsField?.value??growPointsAddDraftV326.points??'',
-      description:String(descField?.value??growPointsAddDraftV326.description??'')
+      description:String(descField?.value??growPointsAddDraftV326.description??''),
+      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??'')
     };
   };
   const growPointsPhotoInput=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoInputV343');
@@ -31941,7 +32007,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    growPointsAddDraftV326={name,points:pointsField?.value||'',description};
+    const endsOnV472=String($('growPointsAddEndsV472')?.value||'').trim();
+    growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
     /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
@@ -31976,13 +32043,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ({data:saveResV433,error}=await sb.rpc('business_update_reward_v326',{
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
-        p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef}));
+        p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
+        /* nestly_v472: p_clear_end_date is the ONLY way to remove a date. Sending null for
+           p_claim_available_until means "say nothing" — the writer keeps whatever is stored — so
+           an empty field has to be an EXPLICIT clear, not an absent value. */
+        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
+        p_clear_end_date:!endsOnV472}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
       ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
-        p_description:description||null,p_image_ref:imageRef||null}));
+        p_description:description||null,p_image_ref:imageRef||null,
+        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472)}));
     }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
@@ -46163,29 +46236,57 @@ function businessProfileExtrasCardHtmlV418(){
     <div id="ciProfileExtrasV418">${CUI.loadingState({title:'Loading photos and links',iconName:'settings'})}</div>
   </div>`;
 }
+/* nestly_v472 (owner, batch 11: "add another segment to add menu photos", confirmed as a separate
+   menu gallery with its own segment in the customer app). The card now renders the SAME segment
+   twice from one function rather than a second copy of forty lines that would drift the first time
+   either is touched. Everything that differs is a parameter: the kind, the heading, and the words
+   an empty state uses.
+   Each segment keeps its own 12-photo allowance, because they answer different questions — a
+   café with a nine-page menu should not be left two slots for photos of the room. */
+const BUSINESS_GALLERY_SEGMENTS_V472=Object.freeze([
+  Object.freeze({kind:'gallery',heading:'Gallery',
+    hint:'Your room, your work, your shopfront.',
+    empty:'No photos yet.'}),
+  Object.freeze({kind:'menu',heading:'Menu',
+    hint:'What customers are choosing from — a menu board, a price list, a treatment card.',
+    empty:'No menu photos yet.'})
+]);
+function businessProfileExtrasListV472(kind){
+  const list=businessProfileExtrasV418?.[kind];
+  return Array.isArray(list)?list:[];
+}
+function businessProfileGallerySegmentHtmlV472(segment){
+  const items=businessProfileExtrasListV472(segment.kind);
+  const busy=businessProfileExtrasBusyV418?' disabled':'';
+  /* The data-* hooks carry the KIND as well as the index. Before v472 an index alone identified a
+     photo, because there was only one list; with two on the page an index-only hook would move or
+     delete the wrong segment's photo the moment both had rows. */
+  return `<p class="muted small" style="margin:0 0 4px"><b>${esc(segment.heading)}</b> — up to ${GROW_GALLERY_MAX_V418} photos${items.length?` · ${items.length} added`:''}</p>
+    <p class="muted small" style="margin:0 0 8px">${esc(segment.hint)}</p>
+    ${items.length?`<div class="profile-gallery-grid-v418">
+      ${items.map((item,index)=>{
+        const url=customerMediaUrlV95(item.image_ref);
+        return `<div class="profile-gallery-item-v418">
+          ${url?`<img src="${esc(url)}" alt="${esc(item.caption||'')}" loading="lazy">`:'<span class="muted small">Photo unavailable</span>'}
+          <input class="profile-gallery-caption-v418" data-gallery-caption-v418="${index}" data-gallery-kind-v472="${esc(segment.kind)}" value="${esc(item.caption||'')}" maxlength="140" placeholder="Caption (optional)"${busy}>
+          <div class="profile-gallery-actions-v418">
+            <button type="button" class="btn ghost sm" data-gallery-move-v418="${index}" data-gallery-kind-v472="${esc(segment.kind)}" data-gallery-dir-v418="-1" data-workspace-i18n aria-label="Move ${esc(segment.heading)} photo ${index+1} earlier"${index===0?' disabled':''}${busy}>↑</button>
+            <button type="button" class="btn ghost sm" data-gallery-move-v418="${index}" data-gallery-kind-v472="${esc(segment.kind)}" data-gallery-dir-v418="1" data-workspace-i18n aria-label="Move ${esc(segment.heading)} photo ${index+1} later"${index===items.length-1?' disabled':''}${busy}>↓</button>
+            <span class="spacer"></span>
+            <button type="button" class="btn ghost sm" data-gallery-remove-v418="${index}" data-gallery-kind-v472="${esc(segment.kind)}" data-workspace-i18n aria-label="Remove ${esc(segment.heading)} photo ${index+1}"${busy}>Remove</button>
+          </div>
+        </div>`;}).join('')}
+    </div>`:`<p class="muted small" style="margin:0 0 10px">${esc(segment.empty)}</p>`}
+    ${items.length<GROW_GALLERY_MAX_V418?`<label class="btn ghost sm service-photo-uploader-v158" style="margin-top:8px">Add photo<input type="file" accept="image/png,image/jpeg,image/webp" data-gallery-add-v472="${esc(segment.kind)}" data-workspace-i18n aria-label="Add a ${esc(segment.heading)} photo"${busy}></label>`
+      :`<p class="muted small" style="margin-top:8px">That is the maximum of ${GROW_GALLERY_MAX_V418} photos. Remove one to add another.</p>`}`;
+}
 function businessProfileExtrasBodyHtmlV418(){
-  const gallery=Array.isArray(businessProfileExtrasV418?.gallery)?businessProfileExtrasV418.gallery:[];
   const links=Array.isArray(businessProfileExtrasV418?.social_links)?businessProfileExtrasV418.social_links:[];
   const linkFor=platform=>links.find(item=>String(item.platform)===platform)?.url||'';
   const busy=businessProfileExtrasBusyV418?' disabled':'';
   return `${businessProfileExtrasErrorV418?`<p class="notice warn small" style="margin-bottom:10px">${esc(businessProfileExtrasErrorV418)}</p>`:''}
-    <p class="muted small" style="margin:0 0 8px"><b>Gallery</b> — up to ${GROW_GALLERY_MAX_V418} photos${gallery.length?` · ${gallery.length} added`:''}</p>
-    ${gallery.length?`<div class="profile-gallery-grid-v418">
-      ${gallery.map((item,index)=>{
-        const url=customerMediaUrlV95(item.image_ref);
-        return `<div class="profile-gallery-item-v418">
-          ${url?`<img src="${esc(url)}" alt="${esc(item.caption||'')}" loading="lazy">`:'<span class="muted small">Photo unavailable</span>'}
-          <input class="profile-gallery-caption-v418" data-gallery-caption-v418="${index}" value="${esc(item.caption||'')}" maxlength="140" placeholder="Caption (optional)"${busy}>
-          <div class="profile-gallery-actions-v418">
-            <button type="button" class="btn ghost sm" data-gallery-move-v418="${index}" data-gallery-dir-v418="-1" data-workspace-i18n aria-label="Move photo ${index+1} earlier"${index===0?' disabled':''}${busy}>↑</button>
-            <button type="button" class="btn ghost sm" data-gallery-move-v418="${index}" data-gallery-dir-v418="1" data-workspace-i18n aria-label="Move photo ${index+1} later"${index===gallery.length-1?' disabled':''}${busy}>↓</button>
-            <span class="spacer"></span>
-            <button type="button" class="btn ghost sm" data-gallery-remove-v418="${index}" data-workspace-i18n aria-label="Remove photo ${index+1}"${busy}>Remove</button>
-          </div>
-        </div>`;}).join('')}
-    </div>`:'<p class="muted small" style="margin:0 0 10px">No photos yet.</p>'}
-    ${gallery.length<GROW_GALLERY_MAX_V418?`<label class="btn ghost sm service-photo-uploader-v158" style="margin-top:8px">Add photo<input type="file" accept="image/png,image/jpeg,image/webp" id="ciGalleryAddV418" aria-label="Add a gallery photo"${busy}></label>`
-      :`<p class="muted small" style="margin-top:8px">That is the maximum of ${GROW_GALLERY_MAX_V418} photos. Remove one to add another.</p>`}
+    ${BUSINESS_GALLERY_SEGMENTS_V472.map((segment,index)=>
+      `<div${index?' style="margin-top:20px"':''}>${businessProfileGallerySegmentHtmlV472(segment)}</div>`).join('')}
     <p class="muted small" style="margin:16px 0 8px"><b>Links</b> — leave a field blank to remove it</p>
     <div class="profile-links-grid-v418">
       ${BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform,label])=>`<div>
@@ -46207,7 +46308,11 @@ async function loadBusinessProfileExtrasV418(){
   const {data,error}=await sb.rpc('business_get_profile_extras_v418',{p_business:S.biz.id});
   if(!host.isConnected)return;
   if(error){host.innerHTML=`<p class="err small">${esc(ownerErrorText(error))}</p>`;return}
-  businessProfileExtrasV418={gallery:data?.gallery||[],social_links:data?.social_links||[]};
+  /* nestly_v472: menu rides the same read (v472a scoped both lists by kind). An older server that
+     does not answer 'menu' yields an empty segment rather than undefined, so the editor renders an
+     empty Menu instead of throwing — and, critically, saves an empty menu rather than saving the
+     gallery's photos into it. */
+  businessProfileExtrasV418={gallery:data?.gallery||[],menu:data?.menu||[],social_links:data?.social_links||[]};
   renderBusinessProfileExtrasV418();
 }
 /* Captions and urls are read from the DOM at save time rather than mirrored into state on every
@@ -46216,10 +46321,15 @@ async function loadBusinessProfileExtrasV418(){
 function readBusinessProfileExtrasFormV418(){
   const host=$('ciProfileExtrasV418');
   if(!host)return null;
-  const gallery=(businessProfileExtrasV418?.gallery||[]).map((item,index)=>({
-    image_ref:item.image_ref,
-    caption:String(host.querySelector(`[data-gallery-caption-v418="${index}"]`)?.value||'').trim()
-  }));
+  /* nestly_v472: one captured list per segment, each scoped by kind. The caption selector MUST
+     carry the kind — with two segments on the page, index alone matches the other segment's input
+     as well and the two lists would take each other's captions. */
+  const segmentsV472=Object.fromEntries(BUSINESS_GALLERY_SEGMENTS_V472.map(segment=>[segment.kind,
+    businessProfileExtrasListV472(segment.kind).map((item,index)=>({
+      image_ref:item.image_ref,
+      caption:String(host.querySelector(`[data-gallery-caption-v418="${index}"][data-gallery-kind-v472="${segment.kind}"]`)?.value||'').trim()
+    }))]));
+  const gallery=segmentsV472.gallery;
   /* nestly_v471: normalised HERE rather than at the save button, so the value that is validated,
      the value that is written and the value the field shows after the reload are the same string.
      `null` marks a field that cannot be made into a link; the save handler is what reports it,
@@ -46229,20 +46339,34 @@ function readBusinessProfileExtrasFormV418(){
     const typed=String(host.querySelector(`[data-social-link-v418="${platform}"]`)?.value||'').trim();
     return {platform,typed,url:businessLinkNormaliseV471(typed)};
   }).filter(item=>item.typed);
-  return {gallery,links};
+  return {gallery,segments:segmentsV472,links};
 }
 function wireBusinessProfileExtrasV418(){
   const host=$('ciProfileExtrasV418');
   if(!host)return;
+  /* nestly_v472: capture, move, remove and add are all per-KIND now. Each control names the
+     segment it belongs to, and every one of these handlers acts on that segment's own list —
+     before v472 they all reached for `.gallery` unconditionally, which with two segments on the
+     page would have moved and deleted the wrong photos. */
   const capture=()=>{
     const form=readBusinessProfileExtrasFormV418();
-    if(form&&businessProfileExtrasV418)businessProfileExtrasV418.gallery=
-      (businessProfileExtrasV418.gallery||[]).map((item,index)=>({...item,caption:form.gallery[index]?.caption||''}));
+    if(!form||!businessProfileExtrasV418)return;
+    BUSINESS_GALLERY_SEGMENTS_V472.forEach(segment=>{
+      const captured=form.segments?.[segment.kind]||[];
+      businessProfileExtrasV418[segment.kind]=businessProfileExtrasListV472(segment.kind)
+        .map((item,index)=>({...item,caption:captured[index]?.caption||''}));
+    });
+  };
+  const listForV472=node=>{
+    const kind=String(node?.dataset?.galleryKindV472||'gallery');
+    if(!businessProfileExtrasV418)return [];
+    if(!Array.isArray(businessProfileExtrasV418[kind]))businessProfileExtrasV418[kind]=[];
+    return businessProfileExtrasV418[kind];
   };
   host.querySelectorAll('[data-gallery-move-v418]').forEach(button=>button.onclick=()=>{
     capture();
     const index=Number(button.dataset.galleryMoveV418),dir=Number(button.dataset.galleryDirV418);
-    const list=businessProfileExtrasV418?.gallery||[];
+    const list=listForV472(button);
     const next=index+dir;
     if(next<0||next>=list.length)return;
     [list[index],list[next]]=[list[next],list[index]];
@@ -46250,22 +46374,24 @@ function wireBusinessProfileExtrasV418(){
   });
   host.querySelectorAll('[data-gallery-remove-v418]').forEach(button=>button.onclick=()=>{
     capture();
-    const index=Number(button.dataset.galleryRemoveV418);
-    (businessProfileExtrasV418?.gallery||[]).splice(index,1);
+    listForV472(button).splice(Number(button.dataset.galleryRemoveV418),1);
     renderBusinessProfileExtrasV418();
   });
-  const add=$('ciGalleryAddV418');
-  if(add)add.onchange=async()=>{
-    const file=add.files?.[0];
+  host.querySelectorAll('[data-gallery-add-v472]').forEach(input=>input.onchange=async()=>{
+    const file=input.files?.[0];
     if(!file||businessProfileExtrasBusyV418)return;
+    const kind=String(input.dataset.galleryAddV472||'gallery');
     capture();
     businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();
     try{
+      /* Same storage prefix for both segments — the v418 path CHECK in the writer governs both,
+         and minting a second storage kind would mean a second policy to keep in step. */
       const imageRef=await uploadGalleryPhotoV418(file);
-      (businessProfileExtrasV418.gallery=businessProfileExtrasV418.gallery||[]).push({image_ref:imageRef,caption:''});
+      if(!Array.isArray(businessProfileExtrasV418[kind]))businessProfileExtrasV418[kind]=[];
+      businessProfileExtrasV418[kind].push({image_ref:imageRef,caption:''});
     }catch(error){businessProfileExtrasErrorV418=error?.message||'The photo could not be uploaded.';}
     businessProfileExtrasBusyV418=false;renderBusinessProfileExtrasV418();
-  };
+  });
   const save=$('ciExtrasSaveV418');
   if(save)save.onclick=async()=>{
     if(businessProfileExtrasBusyV418)return;
@@ -46282,12 +46408,16 @@ function wireBusinessProfileExtrasV418(){
     /* Two writers, awaited together: they are independent tables and neither depends on the
        other's result, so one round trip's latency instead of two. A failure in either is reported
        and neither is retried silently. */
-    const [galleryResult,linkResult]=await Promise.all([
-      sb.rpc('business_set_gallery_v418',{p_business:S.biz.id,p_items:form.gallery}),
+    /* nestly_v472: one write per segment. The writer's contract is "these are now all of this
+       business's <kind> photos", so the two calls cannot be merged into one — and each must be
+       sent even when its list is empty, because emptying a segment is how an owner clears it. */
+    const [galleryResult,menuResult,linkResult]=await Promise.all([
+      sb.rpc('business_set_gallery_v418',{p_business:S.biz.id,p_items:form.segments.gallery,p_kind:'gallery'}),
+      sb.rpc('business_set_gallery_v418',{p_business:S.biz.id,p_items:form.segments.menu,p_kind:'menu'}),
       sb.rpc('business_set_social_links_v418',{p_business:S.biz.id,p_links:linksToSaveV471})
     ]);
     businessProfileExtrasBusyV418=false;
-    const failure=galleryResult.error||linkResult.error;
+    const failure=galleryResult.error||menuResult.error||linkResult.error;
     if(failure){businessProfileExtrasErrorV418=ownerErrorText(failure);return renderBusinessProfileExtrasV418();}
     toast('Photos and links saved');
     loadBusinessProfileExtrasV418();
