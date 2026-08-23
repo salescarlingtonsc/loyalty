@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="51392feb7cafafc3b4301a8dfc926dedd87b80614451dd652a3ac7c0a281c69b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f57b6b4f2238457a57c7fa3070025753c2832663ccd1b0289cba0d4577474044"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4280,7 +4280,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 51392feb7cafafc3b4301a8dfc926dedd87b80614451dd652a3ac7c0a281c69b</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · f57b6b4f2238457a57c7fa3070025753c2832663ccd1b0289cba0d4577474044</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -11856,6 +11856,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     editorReward=reward;
     const r=reward||{};
     const stableRewardId=rewardId(r);
+    /* V468: what the collapsed "More options" is hiding on THIS reward, so its summary can admit
+       it. Declared here because `r` is this function's local — an earlier draft put these at
+       loyaltyPage scope where `r` is not bound at all, which node --check and the repo's
+       regex-based identifier scan both wave through. See [[undeclared-identifier-ships-silently]]. */
+    const expirySetV468=r.claim_available_until||r.entitlement_expiry_days;
+    const expirySummaryV468=[
+      r.claim_available_until?`ends ${walletDate(r.claim_available_until,true)}`:'',
+      r.entitlement_expiry_days?`use within ${Number(r.entitlement_expiry_days)} days`:''
+    ].filter(Boolean).join(' · ');
     rewardPurchaseFieldAvailableV340=('requires_purchase' in r)
       ||rewards.some(item=>item&&typeof item==='object'&&'requires_purchase' in item);
     const selected={
@@ -11877,7 +11886,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <div><label for="rwCost">${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
         ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
       </div>
-      <details><summary>More options</summary>
+      ${/* V468 (owner, photo B5, written beside two gift rows: "Allow to add expiry date for each
+            rewards and display in customer view"). Both halves already existed and both already
+            worked — "Ends at" writes claim_available_until, "Reward expires after (days)" writes
+            entitlement_expiry_days, and v339 shows both to the customer. They were simply invisible:
+            a bare "More options" disclosure names nothing, so an owner looking for an expiry date
+            has no reason to open it and concludes the product cannot do it.
+            The summary now says what is inside, and — when this reward already has any of it set —
+            says so, because "More options" on a reward that HAS an end date reads as if it has none.
+            No new field, no new column: the feature was here, it just could not be found. */''}
+      <details${expirySetV468||r.usage_limit||r.min_tier_id||r.claim_available_from?' open':''}><summary>More options<span class="muted small"> — expiry date, limits, tier, photo${expirySummaryV468?` · ${esc(expirySummaryV468)}`:''}</span></summary>
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
           <div class="full"><label for="rwDescription">What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
@@ -27159,6 +27177,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'51392feb7cafafc3b4301a8dfc926dedd87b80614451dd652a3ac7c0a281c69b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'f57b6b4f2238457a57c7fa3070025753c2832663ccd1b0289cba0d4577474044',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
