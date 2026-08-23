@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5eb6594300a2f07cabadec83a42f97bef5a4c70a3bdfa3a26569be2ec774399b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="7657b12757d626999d4fa19443e530509455da9d2f3a84507b8d7a224bc3da8f"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4178,10 +4178,16 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-C360 (owner photo 19: the activity list bracketed, "maximum 5 transactions and will be
+   next page"). A centred pager rather than a full-width bar — it sits under a table that already
+   scrolls horizontally on a phone, and a stretched control there reads as part of the table. */
+.c360-act-pager-v468{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.c360-act-pager-v468:empty{display:none}
+.c360-act-pager-v468 button[disabled]{opacity:.45;cursor:default}
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 5eb6594300a2f07cabadec83a42f97bef5a4c70a3bdfa3a26569be2ec774399b</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7657b12757d626999d4fa19443e530509455da9d2f3a84507b8d7a224bc3da8f</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -5345,7 +5351,12 @@ async function clientsPage(){
     listUnitCents:k.list_unit_cents_snapshot,listValueCents:k.list_value_cents_snapshot}));
   const history=[...histSales,...histAppts,...histRedemptions,...histGrants,...histMemberships,...histPackages]
     .sort((a,b)=>(b.t||'').localeCompare(a.t||''));
-  let histShown=50;
+  /* V468 (owner photo 19, the whole activity list bracketed: "I cannot allow the list to run
+     forever - maximum 5 transactions and will be next page"). It used to paint 50 rows and grow
+     by 50 on "Show earlier", so a long-standing customer's profile was an endless scroll. Five
+     rows, and a real pager. The page INDEX is what is held, not a running total, so Previous is
+     possible at all — a cumulative count can only ever go one way. */
+  let histPageV468=0;
   const loyaltyFacts=loyaltyFactsAvailable?loyaltyProjection:null;
   const pts=Number(loyaltyFacts?.points_balance)||0;
   /* V320 (owner, 2026-08-14, on the V319 hide-at-zero rule: "i do not want spendable credits to
@@ -5819,8 +5830,8 @@ async function clientsPage(){
   </div>`;
   const activityMarkup=activitySources.length?`<div class="card" style="margin-top:16px"><b>Activity history</b>
     ${activityFiltersV267}
-    <div id="histBody">${renderHistPage(history,histShown)}</div>
-    <div id="histMoreWrap" style="text-align:center;margin-top:10px${history.length>histShown?'':';display:none'}"><button class="btn ghost sm" id="histMore">Show earlier</button></div>
+    <div id="histBody">${renderHistPage(history,C360_ACTIVITY_PAGE_V468,0)}</div>
+    <div id="histPagerV468" class="c360-act-pager-v468">${activityPagerMarkupV468(activityFilteredRowsV267(history).length,0)}</div>
     </div>`:'';
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
@@ -6149,23 +6160,32 @@ async function clientsPage(){
   const redrawActivityV267=()=>{
     const body=$('histBody');
     if(!body)return;
-    $('histBody').innerHTML=renderHistPage(history,histShown);
-    const moreWrap=$('histMoreWrap');
-    if(moreWrap)moreWrap.style.display=activityFilteredRowsV267(history).length>histShown?'':'none';
+    const totalV468=activityFilteredRowsV267(history).length;
+    /* Clamp before painting: a filter that shrinks the result while the owner is on page 6 must
+       land them on the last page that exists, never on a blank one. */
+    const lastPageV468=Math.max(0,Math.ceil(totalV468/C360_ACTIVITY_PAGE_V468)-1);
+    if(histPageV468>lastPageV468)histPageV468=lastPageV468;
+    $('histBody').innerHTML=renderHistPage(history,C360_ACTIVITY_PAGE_V468,histPageV468*C360_ACTIVITY_PAGE_V468);
+    const pagerV468=$('histPagerV468');
+    if(pagerV468){
+      pagerV468.innerHTML=activityPagerMarkupV468(totalV468,histPageV468);
+      const prev=$('histPrevV468'),next=$('histNextV468');
+      if(prev)prev.onclick=()=>{if(histPageV468>0){histPageV468--;redrawActivityV267()}};
+      if(next)next.onclick=()=>{if(histPageV468<lastPageV468){histPageV468++;redrawActivityV267()}};
+    }
     bindReversalButtons(()=>clientDetail(id));
     bindActivityRowControlsV267(redrawActivityV267);
   };
   bindActivityRowControlsV267(redrawActivityV267);
-  const histMore=$('histMore');
-  if(histMore) histMore.onclick=()=>{histShown+=50;redrawActivityV267()};
+  redrawActivityV267();
   /* Changing a filter returns to the first page: keeping an offset from the previous filter
      would show an owner the middle of a result set and hide its first rows. */
   ['actItem','actType','actStaff','actFrom','actTo','actSort'].forEach(controlId=>{
     const control=$(controlId);
-    if(control)control.onchange=()=>{histShown=50;redrawActivityV267()};
+    if(control)control.onchange=()=>{histPageV468=0;redrawActivityV267()};
   });
   const clearActivity=$('actClear');
-  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histShown=50;redrawActivityV267()};
+  if(clearActivity)clearActivity.onclick=()=>{clearActivityFiltersV267();histPageV468=0;redrawActivityV267()};
   if($('c360ExpiryRetry'))$('c360ExpiryRetry').onclick=()=>clientDetail(id);
   bindReversalButtons(()=>clientDetail(id));
 }
@@ -6323,7 +6343,22 @@ function bindActivityRowControlsV267(redraw){
    "which unit" is exactly how two answers to one question start, so it is deleted rather than
    wired up. */
 let activityEarnedBySaleV375=new Map();
-function renderHistPage(history,n){
+/* V468 (owner photo 19). Five is the owner's number, named once and read by the renderer, the
+   pager and the reset — three places that would otherwise each carry their own literal. */
+const C360_ACTIVITY_PAGE_V468=5;
+/* Page X of Y, with both ends disabled at the ends rather than hidden: a control that vanishes
+   moves the two beside it under the thumb that was aiming for them. One page of results renders
+   no pager at all — there is nothing to page. */
+function activityPagerMarkupV468(total,page){
+  const pages=Math.max(1,Math.ceil(total/C360_ACTIVITY_PAGE_V468));
+  if(pages<2)return '';
+  const first=total?page*C360_ACTIVITY_PAGE_V468+1:0;
+  const last=Math.min(total,(page+1)*C360_ACTIVITY_PAGE_V468);
+  return `<button type="button" class="btn ghost sm" id="histPrevV468"${page<=0?' disabled':''} data-workspace-i18n aria-label="Previous page of activity">‹ Previous</button>
+    <span class="muted small" aria-live="polite">${first}–${last} of ${total}</span>
+    <button type="button" class="btn ghost sm" id="histNextV468"${page>=pages-1?' disabled':''} data-workspace-i18n aria-label="Next page of activity">Next ›</button>`;
+}
+function renderHistPage(history,n,offsetV468=0){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
      rows sat one page below. An empty result is two different facts and says which. */
@@ -6333,7 +6368,7 @@ function renderHistPage(history,n){
   if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
     body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
     actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
-  const rows=filteredV267.slice(0,n);
+  const rows=filteredV267.slice(offsetV468,offsetV468+n);
   /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
      reference can be described even when its partner row is not currently painted. */
   const saleRowsByIdV267=new Map();
@@ -15739,23 +15774,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      being re-derived from its label, so a firm that renames a programme cannot silently detach
      its own figures. An entry with no scope, or a scope this schema does not measure, resolves
      to null and stays "Not tracked" — the V271 honesty rule, unchanged by the window. */
+  /* V468 (owner photo 4, "Customers used, by category" circled): "It should be number of times,
+     not how many customers used. It can be same customer but multiple times used." A regular who
+     redeemed the same gift five times read as 1 — the chart flattened exactly the behaviour these
+     programmes exist to produce. The server now publishes 'uses' (count of the events) beside
+     'customers' (count of the people) from ONE scan of one predicate, so the two can never
+     describe different event sets. Everything below reads uses; the honesty rule is untouched —
+     a programme the firm never set up still answers null for both and still says "Not tracked". */
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
       const row=(Array.isArray(list)?list:[]).find(item=>String(item?.[idKey])===String(entry.usageIdV386));
-      return row?.customers==null?null:Number(row.customers);
+      return row?.uses==null?null:Number(row.uses);
     };
     switch(entry.usageScopeV386){
       case 'reward':return listed(usage.rewards,'reward_id');
       case 'retention':return listed(usage.retention,'program_id');
       case 'membership':return listed(usage.memberships,'plan_id');
-      case 'point_system':return usage.point_system?.customers??null;
+      case 'point_system':return usage.point_system?.uses??null;
       /* nestly_v413: the stamps engine's own scope. The server returns null here for a firm that
          is not running stamps, which is exactly the "Not tracked" the honesty rule wants. */
-      case 'stamp_card':return usage.stamp_card?.customers??null;
-      case 'birthday':return usage.birthday?.customers??null;
-      case 'welcome':return usage.welcome?.customers??null;
-      case 'referrals':return usage.referrals?.customers??null;
+      case 'stamp_card':return usage.stamp_card?.uses??null;
+      case 'birthday':return usage.birthday?.uses??null;
+      case 'welcome':return usage.welcome?.uses??null;
+      case 'referrals':return usage.referrals?.uses??null;
       default:return null;
     }
   };
@@ -15768,7 +15810,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const buckets=new Map();
     growProgrammeEntriesV271.forEach(entry=>{
       const category=growAnalyticsCategoryV385(entry);
-      const current=buckets.get(category)||{category,customers:null,programmes:0,
+      const current=buckets.get(category)||{category,uses:null,programmes:0,
         /* nestly_v410 (owner photo 2: "put arrow under point system if it's under point system",
            with a hand-drawn arrow against each gift row). A gift row already knows its parent —
            growRewardParentNameV375 resolved it off the spine when the entry was built — the usage
@@ -15777,8 +15819,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            reusing the same class names so the two tables cannot drift apart. */
         childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null};
       current.programmes+=1;
-      const customers=growUsageForEntryV386(usage,entry);
-      if(customers!=null)current.customers=(current.customers||0)+Number(customers);
+      const usesV468=growUsageForEntryV386(usage,entry);
+      if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
       buckets.set(category,current);
     });
     /* Parents keep the old ordering — most-used first. Each child then follows its OWN parent,
@@ -15786,7 +15828,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        A gift whose parent is not in the table (its programme was never read, or it hangs off
        nothing on the spine) stays a top-level row: it is never re-parented onto a guess. */
     const rows=[...buckets.values()];
-    const byUsage=(a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
+    const byUsage=(a,b)=>(Number(b.uses)||0)-(Number(a.uses)||0)
       ||String(a.category).localeCompare(String(b.category));
     /* nestly_v413. A gift names its own programme (parentV410, resolved off the spine when the
        entry was built), but only ONE engine row is ever pushed into this table — the model the
@@ -15809,7 +15851,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const headers=rows.filter(row=>!grouped(row));
     childrenOf.forEach((_kids,parent)=>{
       if(parentRows.has(parent))return;
-      const header={category:parent,customers:null,programmes:null,
+      const header={category:parent,uses:null,programmes:null,
         childV410:false,parentV410:null,synthV413:true};
       parentRows.set(parent,header);
       headers.push(header);
@@ -15854,7 +15896,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          series makes growUsageComparisonChartV386 render its single-series "Customers used, by
          category" form, which is the shape it already had before comparison was added. */''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
-      ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
+      ?`Counting how many times each programme was used between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
   </div>`;
   /* The windowed read failing is not the same as nobody having used anything. Saying so beats
@@ -15879,11 +15921,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <img class="grow-illus-v401 grow-illus-retention-v401" data-peekaa-illus="retention" src="/brand/illustrations/retention.svg" alt="" aria-hidden="true" width="96" height="96" loading="lazy" decoding="async">
     </div>
     <div id="comebackHost" style="margin-top:14px"></div>
-    <div style="margin-top:16px"><b class="small">Customers who used each programme</b>
+    <div style="margin-top:16px"><b class="small">Times each programme was used</b>
       ${growUsageFilterBarV386}
       ${growUsageWindowFailedV386
         ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
-        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true" data-grow-usage-table-v410><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
+        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Times each programme was used" style="margin-top:8px"><table class="cui-table" data-responsive="true" data-grow-usage-table-v410><thead><tr><th>Category</th><th>Programmes</th><th>Times used</th></tr></thead><tbody>
         ${growAnalyticsRowsV375.map(row=>{
           /* nestly_v413. A parent that has gifts becomes a disclosure: the gifts are HIDDEN until
              the owner opens it, which is the "minimise" both braces in photo 1 asked for. The
@@ -15908,7 +15950,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`;
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses)}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
@@ -24144,7 +24186,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
   render();
 }
-  function renderHistPage(history,n){
+  function renderHistPage(history,n,offsetV468=0){
   /* V267: the owner's filter and sort are applied to the whole feed FIRST, then `n` pages what
      survived. Doing it the other way round would let a filter report "nothing" while matching
      rows sat one page below. An empty result is two different facts and says which. */
@@ -24154,7 +24196,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
   if(!filteredV267.length) return CUI.emptyState({iconName:'search',title:'No activity matches these filters',
     body:'This customer does have history — the filters above are hiding all of it. Clear them to see the full record.',
     actionHtml:'<button class="btn ghost sm" id="actClearEmpty">Clear filters</button>'});
-  const rows=filteredV267.slice(0,n);
+  const rows=filteredV267.slice(offsetV468,offsetV468+n);
   /* The counterpart of a reversal is looked up across the WHOLE feed, not just this page, so a
      reference can be described even when its partner row is not currently painted. */
   const saleRowsByIdV267=new Map();
@@ -27020,6 +27062,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'5eb6594300a2f07cabadec83a42f97bef5a4c70a3bdfa3a26569be2ec774399b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'7657b12757d626999d4fa19443e530509455da9d2f3a84507b8d7a224bc3da8f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

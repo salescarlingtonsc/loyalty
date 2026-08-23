@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="38026d580e870b2e0435b6085d29905f2f6c9ff908d64c74ee4488cbcd84eb92">
+<meta name="v105-production-component-sha256" content="bd933603334d5bab063be8b4527cca3322a6b40adce26af465b84bf44e9c613a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -4184,6 +4184,12 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-C360 (owner photo 19: the activity list bracketed, "maximum 5 transactions and will be
+   next page"). A centred pager rather than a full-width bar — it sits under a table that already
+   scrolls horizontally on a phone, and a stretched control there reads as part of the table. */
+.c360-act-pager-v468{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.c360-act-pager-v468:empty{display:none}
+.c360-act-pager-v468 button[disabled]{opacity:.45;cursor:default}
 
 .platform-console{
   min-height:100dvh;background:var(--bg);color:var(--ink);
@@ -4995,7 +5001,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 38026d580e87</span>
+<span class="v105-provenance">v105 production-component harness · bd933603334d</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5120,7 +5126,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'38026d580e870b2e0435b6085d29905f2f6c9ff908d64c74ee4488cbcd84eb92',
+  sourceHash:'bd933603334d5bab063be8b4527cca3322a6b40adce26af465b84bf44e9c613a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

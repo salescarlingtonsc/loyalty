@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7cd586cd26da9f31adafc822d6f52d78ad8e6a68d1a019c4c060cfe85f137d31"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="73a8fd79741b700bbb8d441a25b33b59e63d23fae183e87a0ed1a8656b2b4ca6"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -4179,6 +4179,12 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-C360 (owner photo 19: the activity list bracketed, "maximum 5 transactions and will be
+   next page"). A centred pager rather than a full-width bar — it sits under a table that already
+   scrolls horizontally on a phone, and a stretched control there reads as part of the table. */
+.c360-act-pager-v468{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.c360-act-pager-v468:empty{display:none}
+.c360-act-pager-v468 button[disabled]{opacity:.45;cursor:default}
 
   .v141-wordmark{font-size:1.35rem;font-weight:750;letter-spacing:-.04em;padding:4px 10px 22px}.v141-profile{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--hair)}
   </style></head><body><div class="shell"><aside class="side"><div class="v141-wordmark">◉◉<br>peekaa</div><nav class="nav"><a class="act" href="#/dashboard"> Dashboard</a><a href="#/clients">Customers</a><button class="navhead"><span>Serve &amp; sell</span><span class="chev">+</span></button><button class="navhead"><span>Grow</span><span class="chev">+</span></button><button class="navhead"><span>Money</span><span class="chev">+</span></button><button class="navhead"><span>Operations setup</span><span class="chev">+</span></button></nav><div class="foot">V141 source-bound candidate</div></aside>
@@ -5291,6 +5297,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'7cd586cd26da9f31adafc822d6f52d78ad8e6a68d1a019c4c060cfe85f137d31',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'73a8fd79741b700bbb8d441a25b33b59e63d23fae183e87a0ed1a8656b2b4ca6',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

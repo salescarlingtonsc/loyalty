@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="615a5223f5e48133af698953cc2343213f8e10602bd4886301c11278c75fd425"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1e38301d83f981adab5b4c68b33aa45a2ab020de2cba22a2d20c69ce75d11220"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4177,6 +4177,12 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-C360 (owner photo 19: the activity list bracketed, "maximum 5 transactions and will be
+   next page"). A centred pager rather than a full-width bar — it sits under a table that already
+   scrolls horizontally on a phone, and a stretched control there reads as part of the table. */
+.c360-act-pager-v468{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.c360-act-pager-v468:empty{display:none}
+.c360-act-pager-v468 button[disabled]{opacity:.45;cursor:default}
 body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px}.v130-nav .btn{padding:8px 12px}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v130-nav{position:relative;top:auto;right:auto;padding:8px;overflow:auto}.center-wrap{padding:12px}.grid2{grid-template-columns:1fr}}</style></head><body><nav class="v130-nav" aria-label="V130 acceptance views"><button class="btn" data-view="signup">Signup</button><button class="btn ghost" data-view="login">Login</button><button class="btn ghost" data-view="setup">Setup</button><button class="btn ghost" data-view="pending">Pending</button><button class="btn ghost" data-view="control">Control</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

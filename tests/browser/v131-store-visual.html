@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="8d93e26aba6b8dc75a371cd62342af4597250d6d29d3a8b91b6248ffbd6287b6"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ddb305a66fdd9c8a46ae1c4c7ea21444b66263cd7d59c17bead584c664efdd30"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4177,6 +4177,12 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-C360 (owner photo 19: the activity list bracketed, "maximum 5 transactions and will be
+   next page"). A centred pager rather than a full-width bar — it sits under a table that already
+   scrolls horizontally on a phone, and a stretched control there reads as part of the table. */
+.c360-act-pager-v468{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.c360-act-pager-v468:empty{display:none}
+.c360-act-pager-v468 button[disabled]{opacity:.45;cursor:default}
 body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px;max-width:calc(100vw - 16px);overflow:auto}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v131-nav{position:relative;top:auto;right:auto;padding:8px}.center-wrap{padding:12px}.modal-card{margin:12px;max-height:calc(100dvh - 24px)}}</style></head><body><nav class="v131-nav"><button class="btn" data-view="native">Native</button><button class="btn ghost" data-view="deletion">Profile</button><button class="btn ghost" data-view="persona">Workspaces</button><button class="btn ghost" data-view="customer-unavailable">Customer blocked</button><button class="btn ghost" data-view="customer-error">Customer error</button><button class="btn ghost" data-view="persona-error">Account error</button><button class="btn ghost" data-view="workspace-error">Staff blocked</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

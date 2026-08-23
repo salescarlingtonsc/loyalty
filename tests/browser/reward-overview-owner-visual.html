@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="15e4e073c0e8b6de735bdd20da376c4ce5c28e626f3815619726e24f44cbcbef"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="012de0b40d25f2ec39148fb0d47ca8316f20e037723a84d94fc7792521d850b3"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4178,9 +4178,15 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .signup-consent-detail-v468[open]>summary::after{transform:rotate(-90deg)}
 .signup-consent-detail-v468>p{margin-top:4px}
 @media (prefers-reduced-motion:reduce){.signup-consent-detail-v468>summary::after{transition:none}}
+/* V468-C360 (owner photo 19: the activity list bracketed, "maximum 5 transactions and will be
+   next page"). A centred pager rather than a full-width bar — it sits under a table that already
+   scrolls horizontally on a phone, and a stretched control there reads as part of the table. */
+.c360-act-pager-v468{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.c360-act-pager-v468:empty{display:none}
+.c360-act-pager-v468 button[disabled]{opacity:.45;cursor:default}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 15e4e073c0e8b6de735bdd20da376c4ce5c28e626f3815619726e24f44cbcbef</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 012de0b40d25f2ec39148fb0d47ca8316f20e037723a84d94fc7792521d850b3</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -4689,12 +4695,12 @@ function growUsageQuickRangesV388(today=sgDateInputValue()){
   ];
 }
 function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
-  const measured=(rows||[]).filter(row=>row.customers!=null);
+  const measured=(rows||[]).filter(row=>row.uses!=null);
   if(measured.length<1)return '';
   const windowed=Boolean(previousByCategory&&previousRange);
   const previousOf=row=>windowed?(previousByCategory.get(row.category)??null):null;
-  const peak=Math.max(1,...measured.map(row=>Math.max(Number(row.customers)||0,Number(previousOf(row))||0)));
-  if(!measured.some(row=>Number(row.customers)>0||Number(previousOf(row))>0))
+  const peak=Math.max(1,...measured.map(row=>Math.max(Number(row.uses)||0,Number(previousOf(row))||0)));
+  if(!measured.some(row=>Number(row.uses)>0||Number(previousOf(row))>0))
     return `<p class="muted small" style="margin-top:12px">Nobody used a programme in this period, so there is nothing to chart yet.</p>`;
   const width=value=>`${Math.max(Number(value)>0?2:0,(Number(value)||0)/peak*100).toFixed(2)}%`;
   const legend=windowed
@@ -4703,21 +4709,21 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
   /* The whole chart is one labelled image to a screen reader: the table above already states
      every figure a row by row reading would repeat. */
   const summary=measured.map(row=>windowed
-    ?`${row.category}: ${row.customers} this period, ${previousOf(row)==null?'not tracked':previousOf(row)} previously`
-    :`${row.category}: ${row.customers}`).join('; ');
+    ?`${row.category}: ${row.uses} this period, ${previousOf(row)==null?'not tracked':previousOf(row)} previously`
+    :`${row.category}: ${row.uses}`).join('; ');
   return `<figure class="grow-usage-chart-v386" data-grow-usage-chart-v386>
-    <figcaption class="small"><b>${windowed?'This period against the one before it':'Customers used, by category'}</b></figcaption>
+    <figcaption class="small"><b>${windowed?'This period against the one before it':'Times used, by category'}</b></figcaption>
     ${legend}
-    <div class="grow-usage-chart-rows-v386" role="img" data-merchant-content aria-label="${esc(`Customers who used each programme. ${summary}`)}">
+    <div class="grow-usage-chart-rows-v386" role="img" data-merchant-content aria-label="${esc(`Times each programme was used. ${summary}`)}">
       ${measured.map(row=>{
         const was=previousOf(row);
         return `<div class="grow-usage-chart-row-v386">
           <span class="grow-usage-chart-label-v386" data-merchant-content>${esc(row.category)}</span>
           <span class="grow-usage-chart-track-v386">
-            <span class="grow-usage-chart-bar-v386 is-now-v386" style="width:${width(row.customers)}"></span>
+            <span class="grow-usage-chart-bar-v386 is-now-v386" style="width:${width(row.uses)}"></span>
             ${windowed?`<span class="grow-usage-chart-bar-v386 is-was-v386" style="width:${was==null?'0%':width(was)}"></span>`:''}
           </span>
-          <span class="grow-usage-chart-value-v386">${esc(String(row.customers))}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
+          <span class="grow-usage-chart-value-v386">${esc(String(row.uses))}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
         </div>`;
       }).join('')}
     </div>
@@ -10220,23 +10226,30 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      being re-derived from its label, so a firm that renames a programme cannot silently detach
      its own figures. An entry with no scope, or a scope this schema does not measure, resolves
      to null and stays "Not tracked" — the V271 honesty rule, unchanged by the window. */
+  /* V468 (owner photo 4, "Customers used, by category" circled): "It should be number of times,
+     not how many customers used. It can be same customer but multiple times used." A regular who
+     redeemed the same gift five times read as 1 — the chart flattened exactly the behaviour these
+     programmes exist to produce. The server now publishes 'uses' (count of the events) beside
+     'customers' (count of the people) from ONE scan of one predicate, so the two can never
+     describe different event sets. Everything below reads uses; the honesty rule is untouched —
+     a programme the firm never set up still answers null for both and still says "Not tracked". */
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
       const row=(Array.isArray(list)?list:[]).find(item=>String(item?.[idKey])===String(entry.usageIdV386));
-      return row?.customers==null?null:Number(row.customers);
+      return row?.uses==null?null:Number(row.uses);
     };
     switch(entry.usageScopeV386){
       case 'reward':return listed(usage.rewards,'reward_id');
       case 'retention':return listed(usage.retention,'program_id');
       case 'membership':return listed(usage.memberships,'plan_id');
-      case 'point_system':return usage.point_system?.customers??null;
+      case 'point_system':return usage.point_system?.uses??null;
       /* nestly_v413: the stamps engine's own scope. The server returns null here for a firm that
          is not running stamps, which is exactly the "Not tracked" the honesty rule wants. */
-      case 'stamp_card':return usage.stamp_card?.customers??null;
-      case 'birthday':return usage.birthday?.customers??null;
-      case 'welcome':return usage.welcome?.customers??null;
-      case 'referrals':return usage.referrals?.customers??null;
+      case 'stamp_card':return usage.stamp_card?.uses??null;
+      case 'birthday':return usage.birthday?.uses??null;
+      case 'welcome':return usage.welcome?.uses??null;
+      case 'referrals':return usage.referrals?.uses??null;
       default:return null;
     }
   };
@@ -10249,7 +10262,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const buckets=new Map();
     growProgrammeEntriesV271.forEach(entry=>{
       const category=growAnalyticsCategoryV385(entry);
-      const current=buckets.get(category)||{category,customers:null,programmes:0,
+      const current=buckets.get(category)||{category,uses:null,programmes:0,
         /* nestly_v410 (owner photo 2: "put arrow under point system if it's under point system",
            with a hand-drawn arrow against each gift row). A gift row already knows its parent —
            growRewardParentNameV375 resolved it off the spine when the entry was built — the usage
@@ -10258,8 +10271,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            reusing the same class names so the two tables cannot drift apart. */
         childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null};
       current.programmes+=1;
-      const customers=growUsageForEntryV386(usage,entry);
-      if(customers!=null)current.customers=(current.customers||0)+Number(customers);
+      const usesV468=growUsageForEntryV386(usage,entry);
+      if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
       buckets.set(category,current);
     });
     /* Parents keep the old ordering — most-used first. Each child then follows its OWN parent,
@@ -10267,7 +10280,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        A gift whose parent is not in the table (its programme was never read, or it hangs off
        nothing on the spine) stays a top-level row: it is never re-parented onto a guess. */
     const rows=[...buckets.values()];
-    const byUsage=(a,b)=>(Number(b.customers)||0)-(Number(a.customers)||0)
+    const byUsage=(a,b)=>(Number(b.uses)||0)-(Number(a.uses)||0)
       ||String(a.category).localeCompare(String(b.category));
     /* nestly_v413. A gift names its own programme (parentV410, resolved off the spine when the
        entry was built), but only ONE engine row is ever pushed into this table — the model the
@@ -10290,7 +10303,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const headers=rows.filter(row=>!grouped(row));
     childrenOf.forEach((_kids,parent)=>{
       if(parentRows.has(parent))return;
-      const header={category:parent,customers:null,programmes:null,
+      const header={category:parent,uses:null,programmes:null,
         childV410:false,parentV410:null,synthV413:true};
       parentRows.set(parent,header);
       headers.push(header);
@@ -10335,7 +10348,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          series makes growUsageComparisonChartV386 render its single-series "Customers used, by
          category" form, which is the shape it already had before comparison was added. */''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
-      ?`Counting customers who used each programme between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
+      ?`Counting how many times each programme was used between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
   </div>`;
   /* The windowed read failing is not the same as nobody having used anything. Saying so beats
@@ -10360,11 +10373,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <img class="grow-illus-v401 grow-illus-retention-v401" data-peekaa-illus="retention" src="/brand/illustrations/retention.svg" alt="" aria-hidden="true" width="96" height="96" loading="lazy" decoding="async">
     </div>
     <div id="comebackHost" style="margin-top:14px"></div>
-    <div style="margin-top:16px"><b class="small">Customers who used each programme</b>
+    <div style="margin-top:16px"><b class="small">Times each programme was used</b>
       ${growUsageFilterBarV386}
       ${growUsageWindowFailedV386
         ?'<div class="err" role="alert" style="margin-top:8px">These figures could not be read for those dates. Nothing is wrong with your programmes — try Apply again, or Clear to go back to all time.</div>'
-        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Customers who used each programme" style="margin-top:8px"><table class="cui-table" data-responsive="true" data-grow-usage-table-v410><thead><tr><th>Category</th><th>Programmes</th><th>Customers used</th></tr></thead><tbody>
+        :growAnalyticsRowsV375.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Times each programme was used" style="margin-top:8px"><table class="cui-table" data-responsive="true" data-grow-usage-table-v410><thead><tr><th>Category</th><th>Programmes</th><th>Times used</th></tr></thead><tbody>
         ${growAnalyticsRowsV375.map(row=>{
           /* nestly_v413. A parent that has gifts becomes a disclosure: the gifts are HIDDEN until
              the owner opens it, which is the "minimise" both braces in photo 1 asked for. The
@@ -10389,7 +10402,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Customers used">${growCountCellV271(row.customers)}</td></tr>`;
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses)}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
@@ -13497,7 +13510,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'15e4e073c0e8b6de735bdd20da376c4ce5c28e626f3815619726e24f44cbcbef',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'012de0b40d25f2ec39148fb0d47ca8316f20e037723a84d94fc7792521d850b3',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
