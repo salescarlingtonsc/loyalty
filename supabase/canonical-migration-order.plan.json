@@ -2428,6 +2428,12 @@
       "version": "20260824000004",
       "name": "nestly_v481_legacy_referral_credit_fail_closed",
       "sourcePath": "db/migrations/20260824_nestly_v481_legacy_referral_credit_fail_closed.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000005",
+      "name": "nestly_v482_loyalty_fence_null_guard",
+      "sourcePath": "db/migrations/20260824_nestly_v482_loyalty_fence_null_guard.sql"
     }
   ]
 }

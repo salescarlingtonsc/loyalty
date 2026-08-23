@@ -118,6 +118,7 @@ begin
   -- 12 stamps in the stamps pot: the card (5 slots) is complete with carry-over, both on-card
   -- gifts claimable — and 12 also exceeds every "cost" below, which is exactly what let the
   -- baseline projection cross-price points gifts against a stamp balance.
+  perform app.acquire_loyalty_shared_v480(v_biz);
   declare v_seed uuid := gen_random_uuid(); begin
     perform set_config('app.points_ledger_insert_id', v_seed::text, true);
     perform set_config('app.points_ledger_write_scope', 'adjust_points', true);

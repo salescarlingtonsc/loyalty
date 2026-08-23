@@ -114,6 +114,7 @@ begin
   end;
 
   -- Client 1: 4 stamps on the open card (Free Coffee @3 earned, Big Gift @5 not yet).
+  perform app.acquire_loyalty_shared_v480(v_biz);
   declare v_seed uuid := gen_random_uuid(); begin
     perform set_config('app.points_ledger_insert_id', v_seed::text, true);
     perform set_config('app.points_ledger_write_scope', 'adjust_points', true);
@@ -523,6 +524,7 @@ begin
     set active=true, loyalty_model='classic', kind='points', expiry_mode='fixed', expiry_days=30;
   insert into public.clients(id, business_id, full_name, phone)
   values (v_pclient, v_pbiz, 'V435 Points Customer', '+65 9435 0001');
+  perform app.acquire_loyalty_exclusive_v480(v_pbiz);
   insert into public.points_batches(id, business_id, client_id, programme_id, earned, remaining, expires_at)
   values (v_pbatch, v_pbiz, v_pclient, v_ppot, 100, 100, v_pexp);
 

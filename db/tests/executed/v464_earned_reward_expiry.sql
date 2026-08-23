@@ -141,6 +141,7 @@ begin
 
   -- Client 1's card: 4 stamps NOW, under version 1 (which sets no reward expiry). This card is
   -- the non-retroactivity control and is never touched again.
+  perform app.acquire_loyalty_shared_v480(v_biz);
   declare v_seed uuid := gen_random_uuid(); begin
     perform set_config('app.points_ledger_insert_id', v_seed::text, true);
     perform set_config('app.points_ledger_write_scope', 'adjust_points', true);
@@ -325,6 +326,7 @@ declare
 begin
   if not v464 then raise notice 'C skipped (baseline)'; return; end if;
   perform set_config('request.jwt.claims', json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
+  perform app.acquire_loyalty_shared_v480(v_biz);
 
   -- TIME MACHINE (2): version 2 is moved back 100 days so a backdated card can pin to it. Version
   -- 1 keeps today's published_at, so client 1's card — started today — still pins to version 1 and

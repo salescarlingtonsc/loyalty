@@ -115,6 +115,7 @@ begin
 
   -- v423 fix at integration: the full-schema harness runs app.loyalty_ledger_write_guard, so the
   -- seed balance goes in through the sanctioned token pattern (scope 'adjust_points').
+  perform app.acquire_loyalty_shared_v480(v_biz);
   declare v_seed uuid := gen_random_uuid(); begin
     perform set_config('app.points_ledger_insert_id', v_seed::text, true);
     perform set_config('app.points_ledger_write_scope', 'adjust_points', true);
