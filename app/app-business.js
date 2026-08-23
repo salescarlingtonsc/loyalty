@@ -11173,6 +11173,15 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     editorReward=reward;
     const r=reward||{};
     const stableRewardId=rewardId(r);
+    /* V468: what the collapsed "More options" is hiding on THIS reward, so its summary can admit
+       it. Declared here because `r` is this function's local — an earlier draft put these at
+       loyaltyPage scope where `r` is not bound at all, which node --check and the repo's
+       regex-based identifier scan both wave through. See [[undeclared-identifier-ships-silently]]. */
+    const expirySetV468=r.claim_available_until||r.entitlement_expiry_days;
+    const expirySummaryV468=[
+      r.claim_available_until?`ends ${walletDate(r.claim_available_until,true)}`:'',
+      r.entitlement_expiry_days?`use within ${Number(r.entitlement_expiry_days)} days`:''
+    ].filter(Boolean).join(' · ');
     rewardPurchaseFieldAvailableV340=('requires_purchase' in r)
       ||rewards.some(item=>item&&typeof item==='object'&&'requires_purchase' in item);
     const selected={
@@ -11194,7 +11203,16 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         <div><label for="rwCost">${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
         ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
       </div>
-      <details><summary>More options</summary>
+      ${/* V468 (owner, photo B5, written beside two gift rows: "Allow to add expiry date for each
+            rewards and display in customer view"). Both halves already existed and both already
+            worked — "Ends at" writes claim_available_until, "Reward expires after (days)" writes
+            entitlement_expiry_days, and v339 shows both to the customer. They were simply invisible:
+            a bare "More options" disclosure names nothing, so an owner looking for an expiry date
+            has no reason to open it and concludes the product cannot do it.
+            The summary now says what is inside, and — when this reward already has any of it set —
+            says so, because "More options" on a reward that HAS an end date reads as if it has none.
+            No new field, no new column: the feature was here, it just could not be found. */''}
+      <details${expirySetV468||r.usage_limit||r.min_tier_id||r.claim_available_from?' open':''}><summary>More options<span class="muted small"> — expiry date, limits, tier, photo${expirySummaryV468?` · ${esc(expirySummaryV468)}`:''}</span></summary>
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
           <div class="full"><label for="rwDescription">What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>

@@ -39,7 +39,16 @@ test('reward editor exposes simple customer-facing fields and progressive disclo
   ]) assert.match(app, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
   assert.match(app,/id="rwCatalogueSource"/);
   assert.match(app,/Choose an existing product or service to fill the reward/);
-  assert.match(app, /<details><summary>More options<\/summary>/i);
+  /* V468 (owner photo B5, beside two gift rows: "Allow to add expiry date for each rewards").
+     Both expiry fields already existed inside this disclosure and already reached the customer —
+     a bare "More options" simply named nothing, so an owner hunting for an expiry date had no
+     reason to open it and concluded the product could not do it. The summary now names what is
+     inside, and the disclosure starts OPEN when this reward already has any of it set.
+     Progressive disclosure is still the rule this test guards: the block is still a <details>,
+     still collapsed by default for a reward that has none of it. */
+  assert.match(app, /<details\$\{expirySetV468\|\|r\.usage_limit\|\|r\.min_tier_id\|\|r\.claim_available_from\?' open':''\}><summary>More options/i);
+  assert.match(app, /More options<span class="muted small"> — expiry date, limits, tier, photo/i,
+    'the summary must say what it is hiding');
   assert.match(app, /data-reward-elig="\$\{key\}"/i);
   for (const key of ['branch', 'service', 'product']) assert.match(app, new RegExp(`'${key}'`));
 });
