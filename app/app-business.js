@@ -16105,6 +16105,58 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const updated=promotionDateShortV324(new Date(Math.max(...times)).toISOString());
     return created?`Created ${esc(created)}${updated&&updated!==created?` · Last level added ${esc(updated)}`:''}`:'';
   })();
+  /* ============ nestly_v472 — THE CUSTOMER'S OWN CARD, ON THE OWNER'S PAGE ====================
+     Owner, batch 11, against a render of the customer stamp card: "should be the same view as
+     customer and business". Asked which direction, the owner chose to KEEP the editable grid and
+     add the customer's card beneath it as a preview.
+
+     This is not a lookalike. It calls customerHeroStampCardV422 — the exact function the
+     customer's phone runs — so the two surfaces cannot drift: change the crown, the gift badge,
+     the compact threshold or the "Next available Reward" line, and both move together. That is
+     the whole point of the mark, and it is why this is worth more than a styled copy.
+
+     WHAT IT SHOWS. A card part-filled to just under the first gift, because an empty card shows
+     nothing about the crowns and a full one shows nothing about the empty slots — the owner needs
+     to see both states to judge their own card. It is deliberately NOT this owner's real
+     progress: an owner is not a customer of their own shop, and a preview that read 0 of 15 on
+     every screen would teach them nothing.
+
+     The owner's second sentence — "if there are new edits for the stampcard at the business end,
+     the next stampcard from customer end will reflect the new card" — is already the shipped
+     rule (v416 pins a customer to the version they started collecting on; v433 carries edits
+     forward to the next card). Nothing here changes it, and the caption says it out loud, because
+     the preview showing the NEW card is exactly what invites the question "so when does my
+     customer see this?". */
+  const growStampsPreviewQuestV472=(()=>{
+    const slots=Math.max(1,Math.floor(Number(growStampsCardLenV416)||0)||1);
+    const milestones=growStampsLevelsSortedV350
+      .map(row=>({slot:Math.max(0,Math.floor(Number(row.cost_points)||0)),
+                  name:row.customer_name||row.name||'Reward',claimed:false}))
+      .filter(rung=>rung.slot>0&&rung.slot<=slots);
+    /* One short of the first gift: the last empty circle is the one that pays out, which is the
+       single most useful thing this preview can show an owner about their own card. With no gift
+       on the card at all, a third of the way along still shows both states. */
+    const firstGift=milestones.reduce((low,rung)=>low?Math.min(low,rung.slot):rung.slot,0);
+    const shown=Math.max(1,Math.min(slots,(firstGift||Math.ceil(slots/3)+1)-1));
+    return {slots,shown,carried:0,milestones,
+      next:milestones.slice().sort((a,b)=>a.slot-b.slot)[0]||null};
+  })();
+  /* Gated on there being a card to preview at all. A firm that has not set a length yet is being
+     asked to set one, and a preview of a card that does not exist would answer a question nobody
+     has reached. */
+  const growStampsCustomerPreviewV472=growStampsCardLenV416>0?`<div class="grow-stamps-preview-v472">
+    <b>What your customer sees</b>
+    <p class="muted small" style="margin-top:2px">The same card, drawn by the customer app itself. Changes here reach a customer when they finish or expire the card they are collecting now — anyone part-way through keeps the card they started.</p>
+    <div class="grow-stamps-preview-card-v472 customer-shell">
+      <section class="card customer-business-summary-v346" data-grow-stamps-preview-card-v472 aria-label="Customer stamp card preview">
+        <div class="customer-business-summary-top-v347">
+          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>STAMPS</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(String(growStampsPreviewQuestV472.shown))} of ${esc(String(growStampsPreviewQuestV472.slots))}</span></span>
+        </div>
+        ${customerHeroStampCardV422(growStampsPreviewQuestV472)}
+      </section>
+    </div>
+  </div>`:'';
   const growStampsSummaryV356=growStampsLevelsSortedV350.length?`<div class="grow-stamps-summary-v356">
     <span class="grow-stamps-summary-icon-v356" aria-hidden="true">${CUI.icon('giftcard',{size:20})}</span>
     <span class="grow-stamps-summary-body-v356">
@@ -16188,6 +16240,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${growStampsCardLengthBarV416}
           ${growStampsGridV416}
           ${growStampsStrandedNoteV416}
+          ${growStampsCustomerPreviewV472}
           ${growPointsAddOpenV326==='form'?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:''}
         </div>
       </div>

@@ -2645,6 +2645,7 @@ const CUSTOMER_COPY=Object.freeze({
 });
 const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
 let customerLocale='en';
+let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
 function ct(key,vars={}){
   let value=CUSTOMER_COPY[customerLocale]?.[key]??CUSTOMER_COPY.en[key]??key;
   for(const [name,replacement] of Object.entries(vars))value=value.replaceAll(`{${name}}`,String(replacement??''));
@@ -2727,6 +2728,115 @@ function customerJoinTokenFromQr(value,currentUrl=location.href){
     return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
   }catch{return ''}
 }
+/* ============ nestly_v472 — THE TILL WATCH (owner batch 11, photo 7) =========================
+   "when transaction completed (be it sales transaction or rewards redemption) > should close the
+   qr code in the customer view > and show the celebratory 'xx points received / xx stamps
+   received / thank you for your visit for tier' - and their rewards card should reflect."
+
+   WHY A POLL AND NOT REALTIME. The customer surface has no Supabase realtime subscription, and
+   that is a standing ruling rather than an oversight: a customer holds no SELECT policy on
+   points_ledger, so postgres_changes would deliver them nothing, and widening that policy would
+   trade the system's most sensitive table for an animation. So the sheet asks.
+
+   WHY THE SHEET OWNS ITS OWN POLL. The wallet's watcher cannot serve this. It is armed per page
+   and may not be running at all when the sheet is opened from the nav FAB, and
+   customerWalletSilentPaintV333 refuses to paint while ANY .modal is on screen — which is
+   exactly the sixty seconds this sheet is up. That guard is right and is left alone: repainting
+   the page under an open sheet would yank the DOM out from under a customer mid-interaction.
+
+   SEED THEN FIRE, the same discipline customerCelebrationNewV468 uses. The first response is the
+   baseline and is never celebrated: opening the sheet must not replay the last thing that
+   happened. Only a change observed while the sheet is OPEN counts, which is the definition of
+   "the counter just served me".
+
+   It watches every business, keyed by id, because this is the GLOBAL member QR — the customer
+   does not tell us which shop they are standing in, and the answer is whichever one moved. */
+const CUSTOMER_TILL_WATCH_POLL_MS_V472=5000;
+const CUSTOMER_TILL_WATCH_WINDOW_MS_V472=90000;
+/* A snapshot small enough to diff and specific enough to name what changed. `ready` is carried
+   because a redemption can leave the balance untouched — a granted welcome gift costs nothing —
+   and would otherwise be invisible. */
+function customerTillWatchSnapshotV472(cards){
+  const map=new Map();
+  (Array.isArray(cards)?cards:[]).forEach(card=>{
+    const id=String(card?.business?.id||card?.business_id||'');
+    if(!id)return;
+    map.set(id,{
+      name:String(card?.business?.name||'').trim(),
+      unit:String(card?.loyalty?.unit||'points'),
+      balance:Math.max(0,Number(card?.loyalty?.balance)||0),
+      ready:card?.next_eligible_reward?.available_now===true,
+      tier:String(card?.loyalty?.tier?.name||'').trim()
+    });
+  });
+  return map;
+}
+/* The first difference that is worth telling the customer about, or null. Earning outranks
+   redeeming: if a single visit both earned points and handed over a gift, "+30 points" is the
+   fact the customer is watching the counter for, and the reward's own named celebration still
+   arrives from loadRedemptionCelebrationV468 once the page behind repaints. */
+function customerTillWatchChangeV472(before,after){
+  let redemption=null;
+  for(const [id,now] of after){
+    const was=before.get(id);
+    if(!was)continue;
+    if(now.balance>was.balance){
+      return {kind:'earn',business:now.name,unit:now.unit,delta:now.balance-was.balance,tier:now.tier};
+    }
+    if(!redemption&&(now.balance<was.balance||(was.ready&&!now.ready))){
+      redemption={kind:'redeem',business:now.name,unit:now.unit,delta:was.balance-now.balance,tier:now.tier};
+    }
+  }
+  return redemption;
+}
+/* The sentence. The unit noun comes from the v429 plumbing rather than a second copy of the
+   stamp/point spelling rules, so a stamp card never says "points" and "1 stamp" is never
+   "1 stamps". A tier the customer holds is thanked by name, which is the third case the owner
+   listed; a customer on no tier simply gets the business's name. */
+function customerTillWatchCelebrateV472(change){
+  if(!change)return;
+  const unit=change.unit==='stamps'?'stamps':'points';
+  const thanks=change.tier
+    ?`Thank you for your visit, ${change.tier} member`
+    :(change.business?`Thank you for visiting ${change.business}`:'Thank you for your visit');
+  const headline=change.kind==='earn'&&change.delta>0
+    ?`+${customerPointTotalV103(change.delta)} ${customerUnitNounV429(unit,change.delta)} received`
+    :'Reward redeemed';
+  if(!customerCelebrateV468({icon:unit==='stamps'?'giftcard':'star',headline,detail:thanks})){
+    toast(headline);
+  }
+  customerSuccessCue();
+}
+function startCustomerTillWatchV472(isOpen,onServed){
+  let timer=0,baseline=null,stopped=false;
+  const stop=()=>{stopped=true;if(timer)clearTimeout(timer);timer=0};
+  const tick=async()=>{
+    if(stopped||!isOpen())return stop();
+    /* A hidden tab is a customer who has put the phone down; the counter has not gone anywhere
+       and neither has the window. Skip the read rather than spend it. */
+    if(typeof document!=='undefined'&&document.visibilityState==='hidden')return arm();
+    let data=null;
+    try{({data}=await sb.rpc('customer_get_actionable_wallet'))}catch{data=null}
+    if(stopped||!isOpen())return stop();
+    const snapshot=data?customerTillWatchSnapshotV472(data.cards):null;
+    if(!snapshot||!snapshot.size)return arm();
+    if(!baseline){baseline=snapshot;return arm()}   /* seed, silently */
+    const change=customerTillWatchChangeV472(baseline,snapshot);
+    baseline=snapshot;
+    if(!change)return arm();
+    stop();
+    onServed(change);
+  };
+  const arm=()=>{
+    if(stopped)return;
+    timer=setTimeout(tick,CUSTOMER_TILL_WATCH_POLL_MS_V472);
+  };
+  /* The window is a hard stop, not a guess at when the customer leaves: a sheet left open on a
+     table must not poll for the rest of the afternoon. */
+  const deadline=setTimeout(stop,CUSTOMER_TILL_WATCH_WINDOW_MS_V472);
+  void tick();
+  return ()=>{clearTimeout(deadline);stop()};
+}
 let activeCustomerJoinScannerCleanup=()=>{};
 /* v329 (owner, screenshot with the Scan QR tab circled): "pressing qrcode > needs to generate
    the static qrcode (that different business able to scan and recognise this customer)". This
@@ -2796,8 +2906,25 @@ function openCustomerJoinScanner(){
   const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
   const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
-  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
+  /* nestly_v472: the till watch dies with the sheet, on EVERY dismissal path — the ✕, the
+     backdrop, Esc, and a successful business-QR scan all funnel through close(). */
+  let stopTillWatchV472=()=>{};
+  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();stopTillWatchV472();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
   activeCustomerJoinScannerCleanup=close;
+  /* nestly_v472 (owner photo 7). Armed only for the customer's OWN QR — the join-a-business
+     camera is a different errand and nothing is being served at a counter. It closes the sheet
+     FIRST and celebrates after: the banner is pointer-events:none but the sheet is not, and a
+     customer told "+30 points received" while still staring at their QR has been told the thing
+     they were waiting for and left holding the reason they were waiting.
+     customerCounterMomentV468 then hands the page behind back to the wallet's own watcher, which
+     can finally paint now that the modal is gone — that is what makes the rewards card reflect
+     the new balance, and it is also what delivers loadRedemptionCelebrationV468's NAMED
+     "<Reward> redeemed" line without this sheet duplicating the naming logic. */
+  stopTillWatchV472=startCustomerTillWatchV472(()=>!closed&&!myQrPanel.hidden,change=>{
+    close({restoreFocus:false});
+    customerTillWatchCelebrateV472(change);
+    void customerCounterMomentV468();
+  });
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
     if(!token){status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
@@ -4191,6 +4318,73 @@ function customerBusinessHeroModeV386(capabilities={},loyalty={}){
   if(live('tiers'))return 'tiers';
   return 'points';
 }
+/* ============ nestly_v422 — THE STAMP CARD IS THE HERO (owner photo 8) ======================
+   The owner drew a cross through the whole red hero and redrew it beside the photo: the word
+   STAMPS, then the WHOLE card as a grid of numbered slots wrapping over three rows, a star on
+   every slot already collected ("if got stamp put star"), a gift sitting on the slots that pay
+   out, one line reading "Next available Reward: xxxx", and the two buttons — Claim Reward and
+   Book now.
+
+   WHY THIS COULD NOT JUST BE THE EXISTING RINGS. customerProgrammeStampRingsV310 draws
+   next_eligible_reward.cost_units slots — ONE reward's price, not the card's length. At Cubbly
+   that is 5, while the card the owner set up in the workspace is longer, so the hero and the
+   editor were drawing two different cards. The card's real length and its real milestones only
+   exist in app.stamp_progress_v323, which loadStampCardV323 already reads on this page. So the
+   hero paints its best guess from the wallet payload (unchanged, and still correct the instant
+   the page opens) and is REPLACED IN PLACE the moment that read answers — the same two-stage
+   contract v323 already uses for the stamps card lower down, and the same safety: an old server
+   never answers, and the hero simply stays as it is today.
+
+   Owner ruling 2026-08-22 on length: draw every slot, wrapping into as many rows as it takes. A
+   long card gets smaller circles rather than a truncated card, because a card that hides half of
+   itself is the defect v414/v416 were spent on.
+
+   NO READY-COUNT PILL. The drawing has none, and the mark next to it — "all claimed, why 1 reward
+   still ready?" — is what it replaces: "Next available Reward: X" names the actual reward instead
+   of counting anonymous ones. Points and tier heroes keep the v397/v399 pill untouched. */
+const HERO_STAMP_COMPACT_FROM_V422=30;
+function customerHeroStampCardV422(quest){
+  const total=Math.max(0,Math.floor(Number(quest?.slots)||0));
+  if(!total)return '';
+  const filled=Math.max(0,Math.min(total,Math.floor(Number(quest.shown)||0)));
+  /* A slot can carry more than one gift — Cubbly has two rewards both sitting on stamp 5 — so the
+     map keeps the FIRST unclaimed one for that slot, falling back to the first of any. One slot,
+     one gift mark; the line below names what is actually next. */
+  const marks=new Map();
+  (Array.isArray(quest.milestones)?quest.milestones:[])
+    .filter(rung=>rung.slot>0&&rung.slot<=total)
+    .forEach(rung=>{
+      const held=marks.get(rung.slot);
+      if(!held||(held.claimed&&!rung.claimed))marks.set(rung.slot,rung);
+    });
+  const compact=total>HERO_STAMP_COMPACT_FROM_V422;
+  /* nestly_v471 (owner, photo 1: "1 stamp given = the first empty stamp box should be added with
+     a crown icon"). v422 marked a collected slot with a star. A crown is already this product's
+     mark for "you have earned something" — customerTierRungIconV195 uses it on the tier ladder —
+     so the two surfaces now say it the same way. Drawn as a filled path rather than reusing
+     CUI.icon('crown'), which is a stroked 24px glyph: at 11px inside a 26px circle its strokes
+     merge into a blob. Same viewBox, same size and same currentColor as the star it replaces, so
+     nothing about the cell's layout or the compact (22px) variant changes. */
+  const crownV471='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M2 5.4l3.1 2.2L8 3l2.9 4.6L14 5.4l-1 7.6H3L2 5.4Z" fill="currentColor"/></svg>';
+  const cells=Array.from({length:total},(unused,index)=>{
+    const slot=index+1,rung=marks.get(slot),collected=index<filled;
+    return `<span class="customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${
+      rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
+    }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
+  }).join('');
+  /* The one sentence the drawing puts under the grid. quest.next is the server's own first
+     unclaimed milestone, so this can never name a gift the counter would refuse. With every
+     milestone on the card already claimed there is nothing to promise, and it says so. */
+  const next=quest.next;
+  const nextLine=next
+    ? `Next available Reward: ${next.name||ct('rewardsTab')}`
+    : 'Next available Reward: all claimed on this card';
+  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}" data-hero-stampcard-v422="${filled}/${total}">
+    <div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>
+    <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
+    ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+  </div>`;
+}
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
@@ -4622,6 +4816,58 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
     ${presentation.products.length||presentation.services.length?`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><div class="customer-rewards-grid">${[...presentation.products.map(item=>({...item,entity_type:item.entity_type||'product'})),...presentation.services.map(item=>({...item,entity_type:item.entity_type||'service'}))].map(customerFeatureCardMarkupV156).join('')}</div>`:`<div class="customer-section-title"><h2>${esc(ct('featured'))}</h2></div><section class="card customer-feature-card"><p class="muted small">Featured services and products will appear here after this business publishes them.</p></section>`}
     ${presentation.benefits.length?`<div class="customer-section-title"><h2>${esc(ct('benefits'))}</h2></div><div class="customer-perks-grid">${presentation.benefits.map(item=>`<article class="customer-perk-card">${cardImage(item)?`<img src="${esc(cardImage(item))}" alt="" loading="lazy">`:''}<b>${esc(item.name||ct('benefits'))}</b>${item.tagline||item.description?`<p class="muted small" style="margin-top:5px">${esc(item.tagline||item.description)}</p>`:''}</article>`).join('')}</div>`:''}`;
 }
+/* V468-E2(b) (owner photos 10 + 12: "ensure customer view shows a celebratory rewards received…
+   based on the set rules" and "please use celebratory rewards redeemed at customer view").
+   One banner, two callers, and both of them are driven by a SERVER row — never by the browser
+   diffing a balance it happens to be holding. It is deliberately not a modal and not a toast
+   replacement: pointer-events are off, so it can never swallow a tap on the content underneath,
+   and it clears itself. Under prefers-reduced-motion it still appears — a customer who suppresses
+   animation must still be told what happened — it simply does not move, and lingers longer to
+   make up for the missing entrance cue. Pictogram plus a number, per the low-literacy rule. */
+const CUSTOMER_CELEBRATION_MS_V468=5000;
+const CUSTOMER_CELEBRATION_STILL_MS_V468=7000;
+let customerCelebrationTimerV468=0;
+function customerCelebrationHostV468(){
+  const existing=document.getElementById('customerCelebrationHostV468');
+  if(existing)return existing;
+  const host=document.createElement('div');
+  host.id='customerCelebrationHostV468';
+  host.className='customer-celebration-host-v468';
+  host.setAttribute('role','status');
+  host.setAttribute('aria-live','polite');
+  document.body.appendChild(host);
+  return host;
+}
+function customerCelebrateV468({icon='star',headline='',detail=''}={}){
+  const headlineV468=String(headline||'').trim();
+  if(!headlineV468||typeof document==='undefined')return false;
+  const host=customerCelebrationHostV468();
+  const reducedV468=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
+  host.innerHTML=`<div class="customer-celebration-v468${reducedV468?' customer-celebration-still-v468':''}">
+    <span class="customer-celebration-icon-v468" aria-hidden="true">${CUI.icon(icon,{size:26})}</span>
+    <span class="customer-celebration-copy-v468"><b>${esc(headlineV468)}</b>${detail?`<small>${esc(String(detail))}</small>`:''}</span>
+  </div>`;
+  if(customerCelebrationTimerV468)clearTimeout(customerCelebrationTimerV468);
+  customerCelebrationTimerV468=setTimeout(()=>{
+    host.replaceChildren();customerCelebrationTimerV468=0;
+  },reducedV468?CUSTOMER_CELEBRATION_STILL_MS_V468:CUSTOMER_CELEBRATION_MS_V468);
+  return true;
+}
+function customerSuccessCue(){
+  if(!customerCelebrationSoundEnabled)return;
+  if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  try{globalThis.navigator?.vibrate?.(35)}catch{}
+  try{
+    const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;
+    if(!AudioContext)return;
+    const audio=new AudioContext(),gain=audio.createGain(),oscillator=audio.createOscillator();
+    oscillator.type='sine';oscillator.frequency.setValueAtTime(660,audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(990,audio.currentTime+.16);
+    gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.12,audio.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.28);
+    oscillator.connect(gain);gain.connect(audio.destination);oscillator.start();oscillator.stop(audio.currentTime+.3);
+    oscillator.onended=()=>audio.close();
+  }catch{}
+}
 /* V385 (owner markup, photo 11: an arrow from the workspace Industry field to this line,
    "show here"). The line printed a hardcoded 'Location details' whenever industry was empty —
    a placeholder that never filled in, which is exactly what the owner was pointing at.
@@ -4802,6 +5048,12 @@ function customerCardProgressV2B(card){
     return `<span class="cui-stamp-dots-v2b" role="img" aria-label="${balance} of ${total} stamps">${Array.from({length:total},(_,i)=>`<i${i<balance?' class="on"':''}></i>`).join('')}</span>`;
   const pct=Math.max(4,Math.min(100,Math.round(balance/total*100)));
   return `<span class="cui-progress-track-v2b" role="img" aria-label="${balance} of ${total} toward the next reward"><i style="width:${pct}%"></i></span>`;
+}
+let activeCustomerWalletCounterMomentV468=async()=>{};
+/* The one entry point the rest of the surface calls. A no-op when no wallet is being watched
+   (Home before its first render, a signed-out shell), never an error. */
+function customerCounterMomentV468(){
+  try{return Promise.resolve(activeCustomerWalletCounterMomentV468())}catch{return Promise.resolve()}
 }
 async function renderCustomerNotificationPreferences(businessSlug,isCurrent=()=>true){
   const host=$('customerNotificationPreferences');if(!walletSectionStillCurrent(host,isCurrent))return;

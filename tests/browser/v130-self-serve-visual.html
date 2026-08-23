@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="57f543780b0992fafffb2c4784c4c4416f0b84c887bd120c894d7516c7795f74"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="2ea9b80cdd7b866544f9b1f4bf841f73af815e4b3629ccf2d510915bd3643057"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3330,6 +3330,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* nestly_v472 (owner photo 5): the Activity subtabs. Same .v150-segment strip the rewards tabs
    above already use, so the two tab rows on this surface read as one control and not two. */
 .customer-activity-tabs-v472{margin:2px 0 12px}
+/* nestly_v472 (owner: "should be the same view as customer and business"). The customer's OWN
+   card, rendered by the customer's own function, sat inside the workspace. It needs the customer
+   shell's two variables — the red gradient card and the crown's colour both resolve through them
+   — and a width close to a phone's, or the five fixed 28px tracks would sit in a 900px field and
+   read as a row of dots rather than a card. */
+.grow-stamps-preview-v472{margin-top:18px}
+.grow-stamps-preview-card-v472{max-width:340px;margin-top:10px}
+.grow-stamps-preview-card-v472 .customer-business-summary-v346{margin:0}
 .customer-rewards-empty-v422{margin:6px 0 2px}
 /* A claimed reward is a record, not an offer: no brand halo, and the picture is dimmed so a
    history card can never be mistaken for something still claimable. */

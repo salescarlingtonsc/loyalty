@@ -5466,6 +5466,115 @@ function customerJoinTokenFromQr(value,currentUrl=location.href){
     return /^[A-Za-z0-9_-]{20,512}$/.test(token)?token:'';
   }catch{return ''}
 }
+/* ============ nestly_v472 — THE TILL WATCH (owner batch 11, photo 7) =========================
+   "when transaction completed (be it sales transaction or rewards redemption) > should close the
+   qr code in the customer view > and show the celebratory 'xx points received / xx stamps
+   received / thank you for your visit for tier' - and their rewards card should reflect."
+
+   WHY A POLL AND NOT REALTIME. The customer surface has no Supabase realtime subscription, and
+   that is a standing ruling rather than an oversight: a customer holds no SELECT policy on
+   points_ledger, so postgres_changes would deliver them nothing, and widening that policy would
+   trade the system's most sensitive table for an animation. So the sheet asks.
+
+   WHY THE SHEET OWNS ITS OWN POLL. The wallet's watcher cannot serve this. It is armed per page
+   and may not be running at all when the sheet is opened from the nav FAB, and
+   customerWalletSilentPaintV333 refuses to paint while ANY .modal is on screen — which is
+   exactly the sixty seconds this sheet is up. That guard is right and is left alone: repainting
+   the page under an open sheet would yank the DOM out from under a customer mid-interaction.
+
+   SEED THEN FIRE, the same discipline customerCelebrationNewV468 uses. The first response is the
+   baseline and is never celebrated: opening the sheet must not replay the last thing that
+   happened. Only a change observed while the sheet is OPEN counts, which is the definition of
+   "the counter just served me".
+
+   It watches every business, keyed by id, because this is the GLOBAL member QR — the customer
+   does not tell us which shop they are standing in, and the answer is whichever one moved. */
+const CUSTOMER_TILL_WATCH_POLL_MS_V472=5000;
+const CUSTOMER_TILL_WATCH_WINDOW_MS_V472=90000;
+/* A snapshot small enough to diff and specific enough to name what changed. `ready` is carried
+   because a redemption can leave the balance untouched — a granted welcome gift costs nothing —
+   and would otherwise be invisible. */
+function customerTillWatchSnapshotV472(cards){
+  const map=new Map();
+  (Array.isArray(cards)?cards:[]).forEach(card=>{
+    const id=String(card?.business?.id||card?.business_id||'');
+    if(!id)return;
+    map.set(id,{
+      name:String(card?.business?.name||'').trim(),
+      unit:String(card?.loyalty?.unit||'points'),
+      balance:Math.max(0,Number(card?.loyalty?.balance)||0),
+      ready:card?.next_eligible_reward?.available_now===true,
+      tier:String(card?.loyalty?.tier?.name||'').trim()
+    });
+  });
+  return map;
+}
+/* The first difference that is worth telling the customer about, or null. Earning outranks
+   redeeming: if a single visit both earned points and handed over a gift, "+30 points" is the
+   fact the customer is watching the counter for, and the reward's own named celebration still
+   arrives from loadRedemptionCelebrationV468 once the page behind repaints. */
+function customerTillWatchChangeV472(before,after){
+  let redemption=null;
+  for(const [id,now] of after){
+    const was=before.get(id);
+    if(!was)continue;
+    if(now.balance>was.balance){
+      return {kind:'earn',business:now.name,unit:now.unit,delta:now.balance-was.balance,tier:now.tier};
+    }
+    if(!redemption&&(now.balance<was.balance||(was.ready&&!now.ready))){
+      redemption={kind:'redeem',business:now.name,unit:now.unit,delta:was.balance-now.balance,tier:now.tier};
+    }
+  }
+  return redemption;
+}
+/* The sentence. The unit noun comes from the v429 plumbing rather than a second copy of the
+   stamp/point spelling rules, so a stamp card never says "points" and "1 stamp" is never
+   "1 stamps". A tier the customer holds is thanked by name, which is the third case the owner
+   listed; a customer on no tier simply gets the business's name. */
+function customerTillWatchCelebrateV472(change){
+  if(!change)return;
+  const unit=change.unit==='stamps'?'stamps':'points';
+  const thanks=change.tier
+    ?`Thank you for your visit, ${change.tier} member`
+    :(change.business?`Thank you for visiting ${change.business}`:'Thank you for your visit');
+  const headline=change.kind==='earn'&&change.delta>0
+    ?`+${customerPointTotalV103(change.delta)} ${customerUnitNounV429(unit,change.delta)} received`
+    :'Reward redeemed';
+  if(!customerCelebrateV468({icon:unit==='stamps'?'giftcard':'star',headline,detail:thanks})){
+    toast(headline);
+  }
+  customerSuccessCue();
+}
+function startCustomerTillWatchV472(isOpen,onServed){
+  let timer=0,baseline=null,stopped=false;
+  const stop=()=>{stopped=true;if(timer)clearTimeout(timer);timer=0};
+  const tick=async()=>{
+    if(stopped||!isOpen())return stop();
+    /* A hidden tab is a customer who has put the phone down; the counter has not gone anywhere
+       and neither has the window. Skip the read rather than spend it. */
+    if(typeof document!=='undefined'&&document.visibilityState==='hidden')return arm();
+    let data=null;
+    try{({data}=await sb.rpc('customer_get_actionable_wallet'))}catch{data=null}
+    if(stopped||!isOpen())return stop();
+    const snapshot=data?customerTillWatchSnapshotV472(data.cards):null;
+    if(!snapshot||!snapshot.size)return arm();
+    if(!baseline){baseline=snapshot;return arm()}   /* seed, silently */
+    const change=customerTillWatchChangeV472(baseline,snapshot);
+    baseline=snapshot;
+    if(!change)return arm();
+    stop();
+    onServed(change);
+  };
+  const arm=()=>{
+    if(stopped)return;
+    timer=setTimeout(tick,CUSTOMER_TILL_WATCH_POLL_MS_V472);
+  };
+  /* The window is a hard stop, not a guess at when the customer leaves: a sheet left open on a
+     table must not poll for the rest of the afternoon. */
+  const deadline=setTimeout(stop,CUSTOMER_TILL_WATCH_WINDOW_MS_V472);
+  void tick();
+  return ()=>{clearTimeout(deadline);stop()};
+}
 let activeCustomerJoinScannerCleanup=()=>{};
 /* v329 (owner, screenshot with the Scan QR tab circled): "pressing qrcode > needs to generate
    the static qrcode (that different business able to scan and recognise this customer)". This
@@ -5535,8 +5644,25 @@ function openCustomerJoinScanner(){
   const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   let stream=null,frameHandle=0,closed=false,dialogCleanup=()=>{};
   const stop=()=>{if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;if(video)video.srcObject=null};
-  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
+  /* nestly_v472: the till watch dies with the sheet, on EVERY dismissal path — the ✕, the
+     backdrop, Esc, and a successful business-QR scan all funnel through close(). */
+  let stopTillWatchV472=()=>{};
+  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();stopTillWatchV472();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
   activeCustomerJoinScannerCleanup=close;
+  /* nestly_v472 (owner photo 7). Armed only for the customer's OWN QR — the join-a-business
+     camera is a different errand and nothing is being served at a counter. It closes the sheet
+     FIRST and celebrates after: the banner is pointer-events:none but the sheet is not, and a
+     customer told "+30 points received" while still staring at their QR has been told the thing
+     they were waiting for and left holding the reason they were waiting.
+     customerCounterMomentV468 then hands the page behind back to the wallet's own watcher, which
+     can finally paint now that the modal is gone — that is what makes the rewards card reflect
+     the new balance, and it is also what delivers loadRedemptionCelebrationV468's NAMED
+     "<Reward> redeemed" line without this sheet duplicating the naming logic. */
+  stopTillWatchV472=startCustomerTillWatchV472(()=>!closed&&!myQrPanel.hidden,change=>{
+    close({restoreFocus:false});
+    customerTillWatchCelebrateV472(change);
+    void customerCounterMomentV468();
+  });
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
     if(!token){status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
@@ -30284,6 +30410,58 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const updated=promotionDateShortV324(new Date(Math.max(...times)).toISOString());
     return created?`Created ${esc(created)}${updated&&updated!==created?` · Last level added ${esc(updated)}`:''}`:'';
   })();
+  /* ============ nestly_v472 — THE CUSTOMER'S OWN CARD, ON THE OWNER'S PAGE ====================
+     Owner, batch 11, against a render of the customer stamp card: "should be the same view as
+     customer and business". Asked which direction, the owner chose to KEEP the editable grid and
+     add the customer's card beneath it as a preview.
+
+     This is not a lookalike. It calls customerHeroStampCardV422 — the exact function the
+     customer's phone runs — so the two surfaces cannot drift: change the crown, the gift badge,
+     the compact threshold or the "Next available Reward" line, and both move together. That is
+     the whole point of the mark, and it is why this is worth more than a styled copy.
+
+     WHAT IT SHOWS. A card part-filled to just under the first gift, because an empty card shows
+     nothing about the crowns and a full one shows nothing about the empty slots — the owner needs
+     to see both states to judge their own card. It is deliberately NOT this owner's real
+     progress: an owner is not a customer of their own shop, and a preview that read 0 of 15 on
+     every screen would teach them nothing.
+
+     The owner's second sentence — "if there are new edits for the stampcard at the business end,
+     the next stampcard from customer end will reflect the new card" — is already the shipped
+     rule (v416 pins a customer to the version they started collecting on; v433 carries edits
+     forward to the next card). Nothing here changes it, and the caption says it out loud, because
+     the preview showing the NEW card is exactly what invites the question "so when does my
+     customer see this?". */
+  const growStampsPreviewQuestV472=(()=>{
+    const slots=Math.max(1,Math.floor(Number(growStampsCardLenV416)||0)||1);
+    const milestones=growStampsLevelsSortedV350
+      .map(row=>({slot:Math.max(0,Math.floor(Number(row.cost_points)||0)),
+                  name:row.customer_name||row.name||'Reward',claimed:false}))
+      .filter(rung=>rung.slot>0&&rung.slot<=slots);
+    /* One short of the first gift: the last empty circle is the one that pays out, which is the
+       single most useful thing this preview can show an owner about their own card. With no gift
+       on the card at all, a third of the way along still shows both states. */
+    const firstGift=milestones.reduce((low,rung)=>low?Math.min(low,rung.slot):rung.slot,0);
+    const shown=Math.max(1,Math.min(slots,(firstGift||Math.ceil(slots/3)+1)-1));
+    return {slots,shown,carried:0,milestones,
+      next:milestones.slice().sort((a,b)=>a.slot-b.slot)[0]||null};
+  })();
+  /* Gated on there being a card to preview at all. A firm that has not set a length yet is being
+     asked to set one, and a preview of a card that does not exist would answer a question nobody
+     has reached. */
+  const growStampsCustomerPreviewV472=growStampsCardLenV416>0?`<div class="grow-stamps-preview-v472">
+    <b>What your customer sees</b>
+    <p class="muted small" style="margin-top:2px">The same card, drawn by the customer app itself. Changes here reach a customer when they finish or expire the card they are collecting now — anyone part-way through keeps the card they started.</p>
+    <div class="grow-stamps-preview-card-v472 customer-shell">
+      <section class="card customer-business-summary-v346" data-grow-stamps-preview-card-v472 aria-label="Customer stamp card preview">
+        <div class="customer-business-summary-top-v347">
+          <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>STAMPS</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(String(growStampsPreviewQuestV472.shown))} of ${esc(String(growStampsPreviewQuestV472.slots))}</span></span>
+        </div>
+        ${customerHeroStampCardV422(growStampsPreviewQuestV472)}
+      </section>
+    </div>
+  </div>`:'';
   const growStampsSummaryV356=growStampsLevelsSortedV350.length?`<div class="grow-stamps-summary-v356">
     <span class="grow-stamps-summary-icon-v356" aria-hidden="true">${CUI.icon('giftcard',{size:20})}</span>
     <span class="grow-stamps-summary-body-v356">
@@ -30367,6 +30545,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${growStampsCardLengthBarV416}
           ${growStampsGridV416}
           ${growStampsStrandedNoteV416}
+          ${growStampsCustomerPreviewV472}
           ${growPointsAddOpenV326==='form'?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:''}
         </div>
       </div>

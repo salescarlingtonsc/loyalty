@@ -1306,7 +1306,6 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
   return renderCustomerPasswordSignIn(isRouteCurrent);
 }
 
-let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
 /* v295: merchant-AUTHORED copy (offer text, promotion names, media alt) is stored per locale by
    the business itself, and the backend contract for those reads is en/zh-CN only — a ms or ta
    wallet correctly falls back to the merchant's English. Every such read must go through this
@@ -3912,73 +3911,6 @@ function wireCustomerClaimRewardV395(root=document){
   }});
   return buttons.length;
 }
-/* ============ nestly_v422 — THE STAMP CARD IS THE HERO (owner photo 8) ======================
-   The owner drew a cross through the whole red hero and redrew it beside the photo: the word
-   STAMPS, then the WHOLE card as a grid of numbered slots wrapping over three rows, a star on
-   every slot already collected ("if got stamp put star"), a gift sitting on the slots that pay
-   out, one line reading "Next available Reward: xxxx", and the two buttons — Claim Reward and
-   Book now.
-
-   WHY THIS COULD NOT JUST BE THE EXISTING RINGS. customerProgrammeStampRingsV310 draws
-   next_eligible_reward.cost_units slots — ONE reward's price, not the card's length. At Cubbly
-   that is 5, while the card the owner set up in the workspace is longer, so the hero and the
-   editor were drawing two different cards. The card's real length and its real milestones only
-   exist in app.stamp_progress_v323, which loadStampCardV323 already reads on this page. So the
-   hero paints its best guess from the wallet payload (unchanged, and still correct the instant
-   the page opens) and is REPLACED IN PLACE the moment that read answers — the same two-stage
-   contract v323 already uses for the stamps card lower down, and the same safety: an old server
-   never answers, and the hero simply stays as it is today.
-
-   Owner ruling 2026-08-22 on length: draw every slot, wrapping into as many rows as it takes. A
-   long card gets smaller circles rather than a truncated card, because a card that hides half of
-   itself is the defect v414/v416 were spent on.
-
-   NO READY-COUNT PILL. The drawing has none, and the mark next to it — "all claimed, why 1 reward
-   still ready?" — is what it replaces: "Next available Reward: X" names the actual reward instead
-   of counting anonymous ones. Points and tier heroes keep the v397/v399 pill untouched. */
-const HERO_STAMP_COMPACT_FROM_V422=30;
-function customerHeroStampCardV422(quest){
-  const total=Math.max(0,Math.floor(Number(quest?.slots)||0));
-  if(!total)return '';
-  const filled=Math.max(0,Math.min(total,Math.floor(Number(quest.shown)||0)));
-  /* A slot can carry more than one gift — Cubbly has two rewards both sitting on stamp 5 — so the
-     map keeps the FIRST unclaimed one for that slot, falling back to the first of any. One slot,
-     one gift mark; the line below names what is actually next. */
-  const marks=new Map();
-  (Array.isArray(quest.milestones)?quest.milestones:[])
-    .filter(rung=>rung.slot>0&&rung.slot<=total)
-    .forEach(rung=>{
-      const held=marks.get(rung.slot);
-      if(!held||(held.claimed&&!rung.claimed))marks.set(rung.slot,rung);
-    });
-  const compact=total>HERO_STAMP_COMPACT_FROM_V422;
-  /* nestly_v471 (owner, photo 1: "1 stamp given = the first empty stamp box should be added with
-     a crown icon"). v422 marked a collected slot with a star. A crown is already this product's
-     mark for "you have earned something" — customerTierRungIconV195 uses it on the tier ladder —
-     so the two surfaces now say it the same way. Drawn as a filled path rather than reusing
-     CUI.icon('crown'), which is a stroked 24px glyph: at 11px inside a 26px circle its strokes
-     merge into a blob. Same viewBox, same size and same currentColor as the star it replaces, so
-     nothing about the cell's layout or the compact (22px) variant changes. */
-  const crownV471='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M2 5.4l3.1 2.2L8 3l2.9 4.6L14 5.4l-1 7.6H3L2 5.4Z" fill="currentColor"/></svg>';
-  const cells=Array.from({length:total},(unused,index)=>{
-    const slot=index+1,rung=marks.get(slot),collected=index<filled;
-    return `<span class="customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${
-      rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
-    }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
-  }).join('');
-  /* The one sentence the drawing puts under the grid. quest.next is the server's own first
-     unclaimed milestone, so this can never name a gift the counter would refuse. With every
-     milestone on the card already claimed there is nothing to promise, and it says so. */
-  const next=quest.next;
-  const nextLine=next
-    ? `Next available Reward: ${next.name||ct('rewardsTab')}`
-    : 'Next available Reward: all claimed on this card';
-  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}" data-hero-stampcard-v422="${filled}/${total}">
-    <div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>
-    <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
-    ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
-  </div>`;
-}
 /* The greeting is the SUM of the numbers printed on the cards below it — the owner's invariant.
    `known` goes false the moment ONE card has no count, because a partial sum printed as a total
    would just be a new way of being wrong. */
@@ -4539,43 +4471,6 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
   </article>`;
 }
 let customerHomeOverview={walletCards:[],activeRequestCount:0,activeRequestsTruncated:false,bookingsAvailable:false,messageCount:null,messagesAvailable:false,claimsAvailable:false};
-/* V468-E2(b) (owner photos 10 + 12: "ensure customer view shows a celebratory rewards received…
-   based on the set rules" and "please use celebratory rewards redeemed at customer view").
-   One banner, two callers, and both of them are driven by a SERVER row — never by the browser
-   diffing a balance it happens to be holding. It is deliberately not a modal and not a toast
-   replacement: pointer-events are off, so it can never swallow a tap on the content underneath,
-   and it clears itself. Under prefers-reduced-motion it still appears — a customer who suppresses
-   animation must still be told what happened — it simply does not move, and lingers longer to
-   make up for the missing entrance cue. Pictogram plus a number, per the low-literacy rule. */
-const CUSTOMER_CELEBRATION_MS_V468=5000;
-const CUSTOMER_CELEBRATION_STILL_MS_V468=7000;
-let customerCelebrationTimerV468=0;
-function customerCelebrationHostV468(){
-  const existing=document.getElementById('customerCelebrationHostV468');
-  if(existing)return existing;
-  const host=document.createElement('div');
-  host.id='customerCelebrationHostV468';
-  host.className='customer-celebration-host-v468';
-  host.setAttribute('role','status');
-  host.setAttribute('aria-live','polite');
-  document.body.appendChild(host);
-  return host;
-}
-function customerCelebrateV468({icon='star',headline='',detail=''}={}){
-  const headlineV468=String(headline||'').trim();
-  if(!headlineV468||typeof document==='undefined')return false;
-  const host=customerCelebrationHostV468();
-  const reducedV468=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
-  host.innerHTML=`<div class="customer-celebration-v468${reducedV468?' customer-celebration-still-v468':''}">
-    <span class="customer-celebration-icon-v468" aria-hidden="true">${CUI.icon(icon,{size:26})}</span>
-    <span class="customer-celebration-copy-v468"><b>${esc(headlineV468)}</b>${detail?`<small>${esc(String(detail))}</small>`:''}</span>
-  </div>`;
-  if(customerCelebrationTimerV468)clearTimeout(customerCelebrationTimerV468);
-  customerCelebrationTimerV468=setTimeout(()=>{
-    host.replaceChildren();customerCelebrationTimerV468=0;
-  },reducedV468?CUSTOMER_CELEBRATION_STILL_MS_V468:CUSTOMER_CELEBRATION_MS_V468);
-  return true;
-}
 /* V468-E2(b): the "has the customer already seen this one?" gate, seed-then-fire, exactly the
    discipline the v91 earn toast already used. An empty slot means this is the first read of the
    session — record and stay silent, so a plain reload never celebrates history. sessionStorage,
@@ -4618,21 +4513,6 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   });
   if(!celebratedV468)toast('+'+increase+' '+safeUnit+' earned!');
   customerSuccessCue();
-}
-function customerSuccessCue(){
-  if(!customerCelebrationSoundEnabled)return;
-  if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
-  try{globalThis.navigator?.vibrate?.(35)}catch{}
-  try{
-    const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;
-    if(!AudioContext)return;
-    const audio=new AudioContext(),gain=audio.createGain(),oscillator=audio.createOscillator();
-    oscillator.type='sine';oscillator.frequency.setValueAtTime(660,audio.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(990,audio.currentTime+.16);
-    gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.12,audio.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.28);
-    oscillator.connect(gain);gain.connect(audio.destination);oscillator.start();oscillator.stop(audio.currentTime+.3);
-    oscillator.onended=()=>audio.close();
-  }catch{}
 }
 function renderCustomerFirstProgrammeQuest(){
   setCustomerSurfaceDocumentV167();
@@ -5237,12 +5117,6 @@ const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, the
    pulse reader), opened only by an explicit customer action at the till. */
 const CUSTOMER_WALLET_COUNTER_POLL_MS_V468=4000;
 const CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468=60000;
-let activeCustomerWalletCounterMomentV468=async()=>{};
-/* The one entry point the rest of the surface calls. A no-op when no wallet is being watched
-   (Home before its first render, a signed-out shell), never an error. */
-function customerCounterMomentV468(){
-  try{return Promise.resolve(activeCustomerWalletCounterMomentV468())}catch{return Promise.resolve()}
-}
 /* V370 (load audit 2026-08-17). The behaviour contract above is unchanged — the wallet still
    re-reads on foreground and still watches for ~3 minutes — but the COST of a tick is not.
 

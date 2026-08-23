@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5bd2ffb74854d90f1df0042d33e942992442f671d0ed915a67b319de310c7667"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="34a57a04369a76f092a27cf3ba7db6ba12e09c221f42a2190d42111aebdad5bc"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3332,6 +3332,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 /* nestly_v472 (owner photo 5): the Activity subtabs. Same .v150-segment strip the rewards tabs
    above already use, so the two tab rows on this surface read as one control and not two. */
 .customer-activity-tabs-v472{margin:2px 0 12px}
+/* nestly_v472 (owner: "should be the same view as customer and business"). The customer's OWN
+   card, rendered by the customer's own function, sat inside the workspace. It needs the customer
+   shell's two variables — the red gradient card and the crown's colour both resolve through them
+   — and a width close to a phone's, or the five fixed 28px tracks would sit in a 900px field and
+   read as a row of dots rather than a card. */
+.grow-stamps-preview-v472{margin-top:18px}
+.grow-stamps-preview-card-v472{max-width:340px;margin-top:10px}
+.grow-stamps-preview-card-v472 .customer-business-summary-v346{margin:0}
 .customer-rewards-empty-v422{margin:6px 0 2px}
 /* A claimed reward is a record, not an offer: no brand halo, and the picture is dimmed so a
    history card can never be mistaken for something still claimable. */
@@ -5490,6 +5498,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'5bd2ffb74854d90f1df0042d33e942992442f671d0ed915a67b319de310c7667',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'34a57a04369a76f092a27cf3ba7db6ba12e09c221f42a2190d42111aebdad5bc',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -190,3 +190,100 @@ test('v471 the anchor keeps working with no bridge and no script',()=>{
   assert.match(appJs,/wireCustomerBusinessLinksV471\(root\|\|document\)/,
     'and it must be wired wherever the gallery is');
 });
+
+/* ------------------------------------------------- photo 7: the till watch ------------------ */
+/* Owner: "when transaction completed (be it sales transaction or rewards redemption) > should
+   close the qr code in the customer view > and show the celebratory 'xx points received / xx
+   stamps received / thank you for your visit for tier' - and their rewards card should reflect."
+   These EXECUTE the shipped diff and snapshot, because the whole feature is a comparison and a
+   comparison is exactly the kind of thing a source pin cannot check. */
+
+const tillWatch = new Function(`
+  ${statement('function customerTillWatchSnapshotV472(', '\n}')}
+  ${statement('function customerTillWatchChangeV472(', '\n}')}
+  return {snap:customerTillWatchSnapshotV472, change:customerTillWatchChangeV472};
+`)();
+
+const card = (id, over = {}) => ({
+  business: {id, name: over.name ?? 'Kopi Tiam'},
+  loyalty: {unit: over.unit ?? 'points', balance: over.balance ?? 0, tier: over.tier ? {name: over.tier} : null},
+  next_eligible_reward: over.ready === undefined ? null : {available_now: over.ready},
+});
+
+test('v472 the till watch says nothing at all when nothing moved', () => {
+  const before = tillWatch.snap([card('b1', {balance: 109})]);
+  const after = tillWatch.snap([card('b1', {balance: 109})]);
+  assert.equal(tillWatch.change(before, after), null,
+    'a quiet poll must not celebrate — the customer is just holding their QR');
+});
+
+test('v472 an earn is reported with its delta, its unit and the business that served it', () => {
+  const before = tillWatch.snap([card('b1', {balance: 109})]);
+  const after = tillWatch.snap([card('b1', {balance: 139})]);
+  assert.deepEqual(tillWatch.change(before, after),
+    {kind: 'earn', business: 'Kopi Tiam', unit: 'points', delta: 30, tier: ''});
+});
+
+test('v472 a stamp card earns stamps, never points', () => {
+  const before = tillWatch.snap([card('b1', {unit: 'stamps', balance: 6})]);
+  const after = tillWatch.snap([card('b1', {unit: 'stamps', balance: 7})]);
+  assert.equal(tillWatch.change(before, after).unit, 'stamps');
+  assert.equal(tillWatch.change(before, after).delta, 1);
+});
+
+test('v472 a redemption that costs nothing is still noticed', () => {
+  /* A granted welcome gift leaves the balance untouched, so readiness is the only thing that
+     moves. Without carrying `ready` the customer would be handed a gift and told nothing. */
+  const before = tillWatch.snap([card('b1', {balance: 50, ready: true})]);
+  const after = tillWatch.snap([card('b1', {balance: 50, ready: false})]);
+  assert.equal(tillWatch.change(before, after).kind, 'redeem');
+});
+
+test('v472 when one visit both earns and redeems, the earn is what the customer is told', () => {
+  const before = tillWatch.snap([card('b1', {balance: 100, ready: true}), card('b2', {name: 'Spa', balance: 40})]);
+  const after = tillWatch.snap([card('b1', {balance: 100, ready: false}), card('b2', {name: 'Spa', balance: 70})]);
+  const change = tillWatch.change(before, after);
+  assert.equal(change.kind, 'earn', 'the +30 is the fact they were waiting at the counter for');
+  assert.equal(change.business, 'Spa');
+});
+
+test('v472 a business the customer only just joined is not a change', () => {
+  /* It has no baseline, so its balance is not an increase from anything. Reporting it would
+     celebrate joining as if it were a purchase. */
+  const before = tillWatch.snap([card('b1', {balance: 10})]);
+  const after = tillWatch.snap([card('b1', {balance: 10}), card('b2', {name: 'New', balance: 5})]);
+  assert.equal(tillWatch.change(before, after), null);
+});
+
+test('v472 the tier the customer holds rides the change, for the thank-you the owner asked for', () => {
+  const before = tillWatch.snap([card('b1', {balance: 10, tier: 'Gold'})]);
+  const after = tillWatch.snap([card('b1', {balance: 40, tier: 'Gold'})]);
+  assert.equal(tillWatch.change(before, after).tier, 'Gold');
+  const sentence = statement('function customerTillWatchCelebrateV472(', '\n}');
+  assert.match(sentence, /Thank you for your visit, \$\{change\.tier\} member/);
+  assert.match(sentence, /received/);
+  assert.match(sentence, /customerUnitNounV429/, 'a stamp card must never say "points"');
+});
+
+test('v472 the sheet closes BEFORE it celebrates, and the watch dies with it', () => {
+  const opener = statement('function openCustomerJoinScanner(', '\n  const accept=value=>{');
+  const armed = opener.slice(opener.indexOf('stopTillWatchV472=startCustomerTillWatchV472'));
+  assert.ok(armed.indexOf('close({restoreFocus:false})') < armed.indexOf('customerTillWatchCelebrateV472'),
+    'a customer told "+30 received" while still staring at their QR has not been let go');
+  assert.match(armed, /customerCounterMomentV468/,
+    'and the page behind must be handed back to its own watcher so the card reflects the balance');
+  assert.match(armed, /\(\)=>!closed&&!myQrPanel\.hidden/,
+    'armed for the member QR only — the join camera is a different errand');
+  assert.match(opener, /closed=true;stop\(\);stopTillWatchV472\(\)/,
+    'every dismissal path funnels through close(), so the poll cannot outlive the sheet');
+});
+
+test('v472 the watch is bounded — it never polls for the rest of the afternoon', () => {
+  const src = statement('function startCustomerTillWatchV472(', '\n}');
+  assert.match(src, /setTimeout\(stop,CUSTOMER_TILL_WATCH_WINDOW_MS_V472\)/);
+  assert.match(src, /document\.visibilityState==='hidden'/, 'a pocketed phone should not spend reads');
+  assert.match(src, /if\(!baseline\)\{baseline=snapshot;return arm\(\)\}/,
+    'seed then fire: opening the sheet must not replay the last thing that happened');
+  const window = statement('const CUSTOMER_TILL_WATCH_WINDOW_MS_V472=', ';');
+  assert.match(window, /=90000;/);
+});
