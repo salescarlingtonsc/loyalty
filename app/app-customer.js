@@ -3110,16 +3110,6 @@ function wireCustomerSheetNavV183(overlay,deactivate){
     });
   });
 }
-/* V468-E4 (owner, business Point-system page: "For all rewards, ensure that customer view have a
-   '?' — to view the rules of the rewards").
-   Every line below is a field the SERVER sent for THIS reward. There is no default rule, no
-   inferred rule and no arithmetic: an absent field prints nothing at all, because a wrong promise
-   here is settled at the counter, in front of the customer. In particular `requires_purchase`
-   keeps its three-state reading from v340 — false prints the clause, true prints nothing (the app
-   enforces no purchase condition), and undefined, which is every server older than that
-   migration, also prints nothing.
-   Both card kinds go through one function: a catalogue reward and a granted entitlement answer
-   different subsets of these keys and the sheet simply shows whichever it was given. */
 function customerRewardRulesRowsV468(reward={},{unit='points',currency='SGD'}={}){
   const rows=[];
   const costV468=Math.max(0,Number(reward.cost_points)||0);
@@ -3140,7 +3130,11 @@ function customerRewardRulesRowsV468(reward={},{unit='points',currency='SGD'}={}
     const scopedV468=[['branches','locations'],['services','services'],['products','products']]
       .filter(([key])=>reward.eligibility[key]?.scope==='restricted')
       .map(([key,label])=>`${Number(reward.eligibility[key].count||0)} eligible ${label}`).join(' · ');
-    rows.push(['Where it works',scopedV468||'Valid across all eligible services and locations.']);
+    /* nestly_v477: the owner's own sentence wins when they have typed one. Everything else is
+       unchanged — the derived count still speaks for a gift whose eligibility IS restricted, and
+       the default sentence still speaks for one that is not. */
+    rows.push(['Where it works',
+      String(reward.where_it_works||'').trim()||scopedV468||CUSTOMER_REWARD_WHERE_DEFAULT_V477]);
   }
   const descriptionV468=customerRewardDescriptionV183(reward.description);
   if(descriptionV468)rows.push(['What you get',descriptionV468]);

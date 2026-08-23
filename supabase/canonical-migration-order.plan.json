@@ -2398,6 +2398,12 @@
       "version": "20260823000011",
       "name": "nestly_v475_stamp_card_hides_switched_off_gifts",
       "sourcePath": "db/migrations/20260823_nestly_v475_stamp_card_hides_switched_off_gifts.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000012",
+      "name": "nestly_v477_per_gift_where_it_works",
+      "sourcePath": "db/migrations/20260823_nestly_v477_per_gift_where_it_works.sql"
     }
   ]
 }

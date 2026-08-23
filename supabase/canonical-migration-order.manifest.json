@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 354,
-  "itemCount": 399,
+  "pendingCount": 355,
+  "itemCount": 400,
   "items": [
     {
       "order": 1,
@@ -3997,6 +3997,16 @@
       "path": "supabase/migrations/20260823000011_nestly_v475_stamp_card_hides_switched_off_gifts.sql",
       "octetLength": 4113,
       "sha256": "58542bf70a222cd025f22c2610f05e0976b05eb88aaeff4636b1c446bbf6fec3",
+      "provenance": "local-source"
+    },
+    {
+      "order": 400,
+      "kind": "pending",
+      "version": "20260823000012",
+      "name": "nestly_v477_per_gift_where_it_works",
+      "path": "supabase/migrations/20260823000012_nestly_v477_per_gift_where_it_works.sql",
+      "octetLength": 10385,
+      "sha256": "2cf401de057aa384c9e768c0ce5541f8841f2e50b5cf1ca488a25df1dae7e3e3",
       "provenance": "local-source"
     }
   ]

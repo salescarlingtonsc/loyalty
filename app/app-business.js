@@ -12297,7 +12297,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
      was missing for the same reason, so the description an owner typed was equally invisible once
      the form closed. Both are now read. */
   const rewardsRequest=canRewards
-    ?sb.from('loyalty_rewards').select('id,active,paused,programme_id,customer_name,name,description,image_ref,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,created_at').eq('business_id',S.biz.id).order('sort')
+    ?sb.from('loyalty_rewards').select('id,active,paused,programme_id,customer_name,name,description,image_ref,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold,estimated_cost_cents,sort,claim_available_from,claim_available_until,where_it_works,created_at').eq('business_id',S.biz.id).order('sort')
     :Promise.resolve(none);
   /* Live reward eligibility, plus the names the diff prints. All four are fail-soft: a failed
      read drops the branch/service rows from the comparison rather than claiming "All branches". */
@@ -15669,7 +15669,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddPointsV326">${growStampsPickedV416
       ?`On stamp ${growStampsPickedV416}`
       :(growPointsIsStampsV326?'Stamps':'Points')}</label><br><input id="growPointsAddPointsV326" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.points)}" placeholder="e.g. 10"${growStampsPickedV416?' readonly aria-readonly="true"':''}></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">Description <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea></p>
+    ${/* nestly_v477 (owner ruling: "what you get ... should be typed in settings", and confirmed
+         it IS this field). The label now says what the customer sees it under, so an owner typing
+         here knows where it lands. The DATA is untouched — same column, same value, same reads. */''}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddDescV343">What you get <span class="muted">(optional)</span></label><br><textarea id="growPointsAddDescV343" class="grow-setup-input-v301" rows="2" placeholder="e.g. Redeem a complimentary lotion.">${esc(growPointsAddDraftV326.description||'')}</textarea><br><span class="muted small">Shown to customers under &ldquo;What you get&rdquo; in the reward rules.</span></p>
+    ${/* nestly_v477: the other half of the same ruling. Until now this line was DERIVED — a count
+         of restricted branches/services, or a fallback sentence — with nowhere to type. The
+         placeholder IS the default, so an owner can see what a customer reads before deciding to
+         change it, and clearing the box puts the default back rather than leaving a blank row. */''}
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddWhereV477">Where it works <span class="muted">(optional)</span></label><br><input id="growPointsAddWhereV477" class="grow-setup-input-v301" data-workspace-i18n maxlength="280" placeholder="${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}" value="${esc(growPointsAddDraftV326.whereItWorks||'')}"><br><span class="muted small">Leave blank and customers see &ldquo;${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}&rdquo;</span></p>
     ${/* nestly_v472 (owner, batch 11: "Allow to add expiry date for each rewards and display in
          customer view"). The OFFERING window — after this date the gift is no longer offered.
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
@@ -17750,7 +17758,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the whole snapshot — same local-echo the tier-basis handler uses. */
     const modelAfterV354=growPointsIsStampsV326?'stamps':'classic';
     if(snapshot.loyalty)snapshot.loyalty.loyalty_model=modelAfterV354;else snapshot.loyalty={loyalty_model:modelAfterV354};
-    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:''};
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]').forEach(button=>button.onclick=()=>{
@@ -17880,7 +17888,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      them (querySelectorAll, not the single-match querySelector it used to be). */
   outerMain.querySelectorAll('[data-grow-points-add-v326]').forEach(el=>{
     const openAddForm=()=>{
-      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
+      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:''};
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
       growRerenderV322({quiet:true});
     };
@@ -17899,7 +17907,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       /* nestly_v472: the stored instant, rendered as the <input type="date"> value the field
          expects. growPointsEndDateInputV472 anchors to SGT rather than the browser's zone — the
          same +08:00 discipline sgt()/sgIso() imposed on every other date this app round-trips. */
-      endsOn:growPointsEndDateInputV472(reward.claim_available_until)};
+      endsOn:growPointsEndDateInputV472(reward.claim_available_until),
+      /* nestly_v477: the owner's own wording, or blank so the placeholder shows the default. */
+      whereItWorks:String(reward.where_it_works||'')};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -17998,7 +18008,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       name:String(nameField?.value??growPointsAddDraftV326.name??''),
       points:pointsField?.value??growPointsAddDraftV326.points??'',
       description:String(descField?.value??growPointsAddDraftV326.description??''),
-      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??'')
+      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??''),
+      whereItWorks:String($('growPointsAddWhereV477')?.value??growPointsAddDraftV326.whereItWorks??'')
     };
   };
   const growPointsPhotoInput=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoInputV343');
@@ -18023,7 +18034,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
     const endsOnV472=String($('growPointsAddEndsV472')?.value||'').trim();
-    growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472};
+    const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
+    growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
     /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
@@ -18063,14 +18075,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            p_claim_available_until means "say nothing" — the writer keeps whatever is stored — so
            an empty field has to be an EXPLICIT clear, not an absent value. */
         p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
-        p_clear_end_date:!endsOnV472}));
+        p_clear_end_date:!endsOnV472,
+        /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
+           stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
+           to be an explicit clear, and '' is what the writer reads as one. */
+        p_where_it_works:whereV477}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
       ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
         p_description:description||null,p_image_ref:imageRef||null,
-        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472)}));
+        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
+        p_where_it_works:whereV477||null}));
     }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;

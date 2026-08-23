@@ -160,6 +160,9 @@ function harness() {
   /* nestly_v472: the gift form now renders a "Last day to redeem" date field whose min and
      pre-fill come from the shipped SGT helpers. Pulled from source rather than stubbed, so the
      harness cannot disagree with the product about which day is the earliest one on offer. */
+  /* nestly_v477: the gift form's "Where it works" placeholder IS the customer-facing default, so
+     the harness pulls the one named constant rather than restating the sentence. */
+  const whereDefaultV477_src = slice("const CUSTOMER_REWARD_WHERE_DEFAULT_V477='", "';");
   const growPointsEndDateMinV472_src = slice('const growPointsEndDateMinV472=', 'slice(0,10);');
   const growPointsEndDateInputV472_src = slice('const growPointsEndDateInputV472=', '\n};');
   const pageBlockSrc = slice(
@@ -198,7 +201,7 @@ function harness() {
       /* nestly_v472: the gift form now renders a "Last day to redeem" date field, whose min comes
          from the shipped SGT helper. Pulled from source rather than stubbed, so the harness cannot
          disagree with the product about which day is the earliest one on offer. */
-      growPointsEndDateMinV472_src, growPointsEndDateInputV472_src,
+      whereDefaultV477_src, growPointsEndDateMinV472_src, growPointsEndDateInputV472_src,
       pageBlockSrc,
       'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326,growPointsIsStampsV326,growPointsSpineKindV326,growPointsPageTitleV326,growPointsRowLabelV326};',
     ].join('\n');
@@ -439,8 +442,8 @@ test('V326 the three new RPCs are called with the exact parameter names the migr
   /* nestly_v472 added the gift end date to both payloads (owner batch 11: "Allow to add expiry
      date for each rewards"). p_claim_available_until rides create; update carries it plus
      p_clear_end_date, because a null there means "leave it alone" and clearing has to be said. */
-  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\)\}\)\);/);
-  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_clear_end_date:!endsOnV472\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_where_it_works:whereV477\|\|null\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_clear_end_date:!endsOnV472,[\s\S]*?p_where_it_works:whereV477\}\)\);/);
 });
 
 test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {

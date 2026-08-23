@@ -247,7 +247,7 @@ test('V271 (b) every Overview number names its source', () => {
   assert.match(entries, /started:program\.starts_on\|\|program\.created_at\|\|null/);
   assert.match(entries, /uses:growRetentionUsageV271\.get\(String\(program\.id\)\)\?\?null/);
   // The reads those columns depend on are actually requested.
-  assert.match(app, /claim_available_until,created_at'\)/);
+  assert.match(app, /claim_available_until,where_it_works,created_at'\)/);
   /* nestly_v429 (F): the bring-back row's own read is bringback_campaigns_v361 now — the engine that issues bring-backs — so the column it names its start date from is that table's created_at. */
   assert.match(app, /sb\.from\('bringback_campaigns_v361'\)\s*\n?\s*\.select\('id,name,reward_label,away_days,expiry_days,active,created_at'\)/);
   assert.match(app, /sb\.from\('membership_plans'\)\.select\('id,name,active,created_at'\)/);

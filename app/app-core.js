@@ -337,7 +337,7 @@ let growPointsViewKindV350=null;
 let growPointsManageTabV326='published';
 let growPointsDeletePendingV326='';
 let growPointsAddOpenV326='';
-let growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};
+let growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:''};
 let growPointsErrorV326='';
 let growPointsBusyV326=false;
 /* V343 (owner mockup, photo 4): which gift's Edit form is open, null when it is the "Add a new
@@ -718,7 +718,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -3337,6 +3337,20 @@ function cssUrlValueV421(url){
      URI, or any path with an escaped space) into one the browser cannot fetch. */
   return String(url||'').replace(/["\\\r\n]/g,ch=>`%${ch.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')}`);
 }
+/* V468-E4 (owner, business Point-system page: "For all rewards, ensure that customer view have a
+   '?' — to view the rules of the rewards").
+   Every line below is a field the SERVER sent for THIS reward. There is no default rule, no
+   inferred rule and no arithmetic: an absent field prints nothing at all, because a wrong promise
+   here is settled at the counter, in front of the customer. In particular `requires_purchase`
+   keeps its three-state reading from v340 — false prints the clause, true prints nothing (the app
+   enforces no purchase condition), and undefined, which is every server older than that
+   migration, also prints nothing.
+   Both card kinds go through one function: a catalogue reward and a granted entitlement answer
+   different subsets of these keys and the sheet simply shows whichever it was given. */
+/* nestly_v477: named once so the customer sheet's fallback and the placeholder in the owner's
+   editor are the SAME sentence. Two copies would have drifted the first time either was touched,
+   and the owner's whole point is that they can see the default before overriding it. */
+const CUSTOMER_REWARD_WHERE_DEFAULT_V477='Valid across all eligible services and locations.';
 /* v194 (owner struck the second line out as "redundant", and asked what the "Terms" toggle was
    for): a tagline that only repeats the offer name is noise, and terms hidden behind a bare word
    read as a control with no purpose. The tagline is dropped when it echoes the title — compared on
