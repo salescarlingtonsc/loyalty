@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="833b1c0b5d5d97a38b2b0096f333e14fbc2ea11720c9c68d86a59cff0a233537"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="9343d1590719ac0e87190c846a63d879b9f302777b0e3c887d394820f3c147be"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3655,7 +3655,19 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .profile-gallery-item-v418{display:grid;gap:6px;padding:10px;border:1px solid var(--hair);border-radius:14px;background:var(--bg)}
 .profile-gallery-item-v418 img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:var(--card)}
 .profile-gallery-caption-v418{font-size:13px}
-.profile-gallery-actions-v418{display:flex;align-items:center;gap:6px}
+/* nestly_v471 (owner, photo 1: the gallery cards ringed, "misalignment" written beside them).
+   MEASURED at the 552px form card, which is the width the owner photographed: the grid resolves
+   to two 187.5px tracks, so a card's content box is 165.5px — and this row's min-content width is
+   185px (44 + 44 + 79 for the three buttons, plus 3x6px gaps). It is a nowrap flex, so it did not
+   shrink; it overflowed its card by 19.5px and painted "Remove" across the card beside it, which
+   is the misalignment in the photo. The same overflow pushed the row under "Add photo".
+   Wrapping drops the row's min-content width to its widest single button (79px), so it fits at
+   every column width the auto-fill grid can produce. The buttons are NOT made smaller: 44px is
+   the tap target the low-literacy-first rule in CLAUDE.md sets, and shrinking them to win one
+   line would trade a real usability guarantee for a cosmetic one. min-width:0 on the card's
+   children stops the same thing happening to a long caption. */
+.profile-gallery-actions-v418{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.profile-gallery-item-v418>*{min-width:0}
 .profile-links-grid-v418{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
 .customer-business-identity-v346 small.customer-business-bio-v417{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.customer-business-actions-v346{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}.customer-business-book-v346{grid-column:1/-1;min-height:42px}.customer-business-summary-v346{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:10px;align-items:center;min-height:92px;padding:14px 16px;border-radius:20px;background:linear-gradient(135deg,var(--peekaa-card),var(--peekaa-red-faint));box-shadow:var(--shadow-warm)}.customer-business-kicker-v346{margin:0 0 5px;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--peekaa-red);font-weight:850}.customer-business-summary-v346 b{font-size:24px;line-height:1.05}.customer-business-summary-icon-v346{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--peekaa-white);color:var(--peekaa-red);box-shadow:var(--shadow-warm)}.customer-business-summary-chips-v346{grid-column:1/-1;display:flex;gap:6px;overflow-x:auto}.customer-business-group-v346{display:grid;gap:10px;margin-top:8px}.customer-business-group-head-v346{display:flex;align-items:end;justify-content:space-between;gap:10px}.customer-business-group-head-v346 h2{font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.1;color:var(--peekaa-text)}.customer-business-group-head-v346 p{max-width:210px;text-align:right}.customer-business-rewards-v346 .customer-programme-stack{gap:9px;margin-bottom:0}.customer-business-rewards-v346 .customer-programme-card-v310,.customer-business-group-v346 .wallet-section,.customer-business-group-v346 .wallet-history-disclosure{border-radius:17px;box-shadow:var(--shadow-warm)}.customer-business-rewards-v346 .customer-programme-card-head-v310,.customer-business-group-v346 .wallet-section-head h2{font-size:15px}.customer-business-rewards-v346 .customer-programme-card-v310{padding:13px}.customer-business-rewards-v346 .customer-points-explainer{margin:0}.customer-secondary-grid-v346{margin-top:0}
 @media(min-width:391px){.customer-shell.customer-surface{padding-inline:0}.customer-shell .wallet-inner{box-sizing:border-box}}
@@ -4342,6 +4354,23 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   font:600 14px/1 inherit;cursor:pointer;position:relative}
 .customer-reward-help-v468::after{content:"";position:absolute;inset:-9px}
 .customer-reward-help-v468:hover,.customer-reward-help-v468:focus-visible{color:var(--ink,#161616);border-color:var(--ink,#161616)}
+/* nestly_v471: the same "?" on the RED hero card. v468 styled it for a white reward card — a
+   white disc with a grey hairline — which on the red gradient reads as a hole punched in the card.
+   It borrows the tier pill's own treatment beside it instead, so the two controls in that row look
+   like one family. Only colour changes: the 26px circle and its 44px hit area are untouched. */
+.customer-business-summary-top-v347 .customer-reward-help-v468{
+  background:rgba(120,21,16,.24);border-color:rgba(255,255,255,.55);color:#fff}
+.customer-business-summary-top-v347 .customer-reward-help-v468:hover,
+.customer-business-summary-top-v347 .customer-reward-help-v468:focus-visible{
+  color:#fff;border-color:#fff;background:rgba(120,21,16,.4)}
+/* nestly_v471 (owner: "they should see the expiry of each gift … redeem before that to enjoy the
+   gift!"). One line, two grounds: muted on the white reward card, white on the red hero. The hero
+   rule needs the extra weight because .customer-shell .card.customer-business-summary-v346 p
+   already claims colour and size for every paragraph inside that card. */
+.customer-reward-ends-v471{margin-top:5px;font-size:12.5px;line-height:1.35;
+  color:var(--peekaa-text-secondary)}
+.customer-shell .card.customer-business-summary-v346 .customer-reward-ends-v471{
+  margin-top:6px;font-size:12.5px;font-weight:650;color:#fff;opacity:.94}
 .customer-reward-rules-v468{display:grid;gap:12px;margin-top:14px}
 .customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
   opacity:.6}
@@ -5458,6 +5487,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'833b1c0b5d5d97a38b2b0096f333e14fbc2ea11720c9c68d86a59cff0a233537',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'9343d1590719ac0e87190c846a63d879b9f302777b0e3c887d394820f3c147be',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

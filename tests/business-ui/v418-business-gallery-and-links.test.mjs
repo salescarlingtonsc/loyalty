@@ -93,11 +93,49 @@ test('v418 both writers are replace-set and owner-gated', () => {
   assert.match(migration, /a profile gallery holds up to 12 photos/);
 });
 
-test('v418 an https-less link is refused before the round trip, naming the field', () => {
+/* nestly_v471 reversed the premise of the v418 test that stood here. The owner's ruling
+   (photo 2, 2026-08-23) is "all link don't need to start with https://" — typing "Instagram.com"
+   used to refuse the whole form. The https RULE is unchanged, because the table CHECK and the
+   customer render both still demand it; what changed is who has to type it.
+   This replaces a source-regex pin ("does the save handler mention linkNeedsHttps") with a test
+   that EXECUTES the shipped normaliser, which is the only way to tell a rule that works from a
+   string that is merely present. */
+const normaliseV471 = new Function(
+  `${statement('function businessLinkNormaliseV471(', '\n}')}\nreturn businessLinkNormaliseV471;`,
+)();
+
+test('v471 a bare domain is given the scheme it obviously meant', () => {
+  assert.equal(normaliseV471('Instagram.com'), 'https://instagram.com/', 'the exact value the owner typed');
+  assert.equal(normaliseV471('www.cubbly.sg'), 'https://www.cubbly.sg/');
+  assert.equal(normaliseV471('  peekaa.asia/app  '), 'https://peekaa.asia/app', 'and it is trimmed');
+});
+
+test('v471 http is upgraded, never refused and never stored as plaintext', () => {
+  assert.equal(normaliseV471('http://cubbly.sg'), 'https://cubbly.sg/');
+  assert.ok(normaliseV471('https://cubbly.sg/x').startsWith('https://'));
+});
+
+test('v471 a scheme we will not publish is still refused, not rewritten', () => {
+  /* Rewriting these into https would invent a destination the owner never typed, and they must
+     never reach an anchor on a customer's phone. */
+  assert.equal(normaliseV471('javascript:alert(1)'), null);
+  assert.equal(normaliseV471('data:text/html,<script>'), null);
+  assert.equal(normaliseV471('mailto:hi@cubbly.sg'), null);
+});
+
+test('v471 a word or a handle is not a link, and says so', () => {
+  assert.equal(normaliseV471('our shop'), null, 'a hostname with no dot is a word');
+  assert.equal(normaliseV471('@cubbly'), null);
+  assert.equal(normaliseV471('localhost'), null, 'a customer phone cannot reach the owner machine');
+  assert.equal(normaliseV471(''), '', 'blank clears the field — that is how a link is removed');
+});
+
+test('v471 the save handler reports the value it cannot use, and writes the normalised one', () => {
   const save = statement("const save=$('ciExtrasSaveV418');", '\n  };');
-  assert.match(save, /linkNeedsHttps/, 'and the message is reviewed, localised copy');
+  assert.match(save, /linkNotAWebAddressV471/, 'reviewed, localised copy — not a raw string');
+  assert.doesNotMatch(save, /linkNeedsHttps/, 'the owner no longer has to type the scheme');
   assert.match(save, /business_set_gallery_v418/);
-  assert.match(save, /business_set_social_links_v418/);
+  assert.match(save, /p_links:linksToSaveV471/, 'the NORMALISED url is what reaches the table');
   assert.match(save, /Promise\.all\(\[/, 'two independent tables, one round trip');
 });
 

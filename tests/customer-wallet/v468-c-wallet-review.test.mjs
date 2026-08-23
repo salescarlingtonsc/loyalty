@@ -66,6 +66,11 @@ const unitNounSrc = extractFunction(app, 'customerUnitNounV429');
 const availCopySrc = extractConst(app, 'CUSTOMER_REWARD_AVAILABILITY_COPY_V399');
 const availLineSrc = extractFunction(app, 'customerRewardAvailabilityLineV399');
 const canRedeemSrc = extractFunction(app, 'customerRewardCanRedeem');
+/* nestly_v471 put a "?" and an expiry line on every hero page, so the slice below now reaches for
+   both. Pulled from source rather than stubbed — a stub of the function under test proves nothing
+   (the v392 lesson), and the C4 assertions still measure only what C4 was written to measure. */
+const helpButtonSrcV471 = extractFunction(app, 'customerRewardHelpButtonV468');
+const endsLineSrcV471 = extractFunction(app, 'customerRewardEndsLineV471');
 const socialLabelsSrc = extractConst(app, 'CUSTOMER_SOCIAL_LABELS_V418');
 const gallerySrc = extractFunction(app, 'customerBusinessGalleryMarkupV418');
 const walletDateSrc = extractFunction(app, 'walletDate');
@@ -263,6 +268,10 @@ const buildHeroPages = new Function('CUI', 'rewards', 'held', 'unit', 'redemptio
   ${MEDIA_STUB}
   /* the two loop-scope values the real function computes above this slice; ct() is identity in
      English, which is the locale every assertion below reads. */
+  ${helpButtonSrcV471}
+  ${endsLineSrcV471}
+  const walletDate=v=>String(v||'');
+  let customerHeroRewardRowsV471=[];
   const unitWord=unit==='stamps'?'stamps':(unit||'points');
   const seen=new Set();
   const heroName='',heroCost=NaN,bookAction='';

@@ -31471,11 +31471,15 @@ function wireWorkspaceBrandV259(){
   $('bsave').onclick=async()=>{
     /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
        review_url rides this existing businesses UPDATE — no new call site is introduced. */
+    /* nestly_v471: same rule as the social links a section below (businessLinkNormaliseV471) —
+       the owner should not have to type the scheme in one link field and not the other. The DB
+       CHECK is unchanged; what is stored is still https and still under 500 characters. */
     const reviewUrlRaw=($('bru').value||'').trim();
-    if(reviewUrlRaw&&(!/^https:\/\//.test(reviewUrlRaw)||reviewUrlRaw.length>500)){
-      $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
+    const reviewUrlNormalisedV471=businessLinkNormaliseV471(reviewUrlRaw);
+    if(reviewUrlRaw&&(reviewUrlNormalisedV471===null||reviewUrlNormalisedV471.length>500)){
+      $('bru').focus();return toast('Public review link is not a web address. Try something like g.page/your-business/review');
     }
-    const reviewUrl=reviewUrlRaw||null;
+    const reviewUrl=reviewUrlNormalisedV471||null;
     /* V188: legal_name and registration_number already existed on businesses but nothing ever
        asked for them, so every receipt in production printed only a workspace nickname. They
        ride this same UPDATE — no new call site. */
@@ -31602,6 +31606,35 @@ const BUSINESS_SOCIAL_PLATFORMS_V418=Object.freeze([
   ['website','Website'],['instagram','Instagram'],['facebook','Facebook'],['tiktok','TikTok'],
   ['whatsapp','WhatsApp'],['youtube','YouTube'],['telegram','Telegram'],['xiaohongshu','Xiaohongshu']
 ]);
+/* nestly_v471 (owner, photo 2: the whole Links block ringed, the toast "The instagram link must
+   start with https://" ringed under it, and "all link don't need to start with https:// "
+   written beside both). The owner typed "Instagram.com" and the form refused to save ANY of the
+   eight fields until they went back and prefixed it by hand.
+   The https rule itself is not negotiable — it is a CHECK on business_social_links_v418 and the
+   customer render filters on it too — so this NORMALISES instead of loosening. A bare host gets
+   the scheme it obviously meant; http:// is upgraded rather than rejected, since the stored value
+   has to be https either way and downgrading a customer to plaintext was never the alternative.
+   Anything carrying a DIFFERENT scheme is still refused: `javascript:` and `data:` must never
+   reach an anchor on a customer's phone, and silently rewriting one into an https URL would
+   invent a destination the owner did not type.
+   The host must contain a dot, which is what separates "Instagram.com" (meant a URL) from
+   "our shop" or "@cubbly" (did not). Those still get told, and the message now says what to do.
+   Returns '' for blank (the field is being cleared, which is how a link is removed) and null for
+   "this cannot be made into a link". */
+function businessLinkNormaliseV471(raw){
+  const value=String(raw??'').trim();
+  if(!value)return '';
+  const scheme=value.match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase();
+  if(scheme&&scheme!=='http'&&scheme!=='https')return null;
+  const candidate=scheme?value.replace(/^http:/i,'https:'):`https://${value}`;
+  let parsed;
+  try{parsed=new URL(candidate)}catch{return null}
+  if(parsed.protocol!=='https:')return null;
+  /* A hostname with no dot is a word, not a domain. 'localhost' is deliberately not special-cased
+     — a customer's phone cannot reach the owner's localhost. */
+  if(!/^[^.\s]+(\.[^.\s]+)+$/.test(parsed.hostname))return null;
+  return parsed.href;
+}
 let businessProfileExtrasV418=null;   /* {gallery:[...], social_links:[...]} once read */
 let businessProfileExtrasBusyV418=false;
 let businessProfileExtrasErrorV418='';
@@ -31682,9 +31715,15 @@ function readBusinessProfileExtrasFormV418(){
     image_ref:item.image_ref,
     caption:String(host.querySelector(`[data-gallery-caption-v418="${index}"]`)?.value||'').trim()
   }));
-  const links=BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform])=>({
-    platform,url:String(host.querySelector(`[data-social-link-v418="${platform}"]`)?.value||'').trim()
-  })).filter(item=>item.url);
+  /* nestly_v471: normalised HERE rather than at the save button, so the value that is validated,
+     the value that is written and the value the field shows after the reload are the same string.
+     `null` marks a field that cannot be made into a link; the save handler is what reports it,
+     because this reader is also called to capture in-progress edits during a re-render and must
+     not raise a toast for a field the owner is still typing into. */
+  const links=BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform])=>{
+    const typed=String(host.querySelector(`[data-social-link-v418="${platform}"]`)?.value||'').trim();
+    return {platform,typed,url:businessLinkNormaliseV471(typed)};
+  }).filter(item=>item.typed);
   return {gallery,links};
 }
 function wireBusinessProfileExtrasV418(){
@@ -31727,15 +31766,20 @@ function wireBusinessProfileExtrasV418(){
     if(businessProfileExtrasBusyV418)return;
     const form=readBusinessProfileExtrasFormV418();
     if(!form)return;
-    const bad=form.links.find(item=>!/^https:\/\/\S{3,}$/i.test(item.url));
-    if(bad)return toast(workspaceTemplateTextV97('linkNeedsHttps',{platform:bad.platform}));
+    /* nestly_v471: the check is now "could this be made into a link at all", not "did the owner
+       type the scheme". businessLinkNormaliseV471 has already added it where it was merely
+       missing; what reaches here as null is a word, a handle, or a scheme we refuse to publish. */
+    const bad=form.links.find(item=>!item.url);
+    if(bad)return toast(workspaceTemplateTextV97('linkNotAWebAddressV471',{platform:bad.platform}));
+    /* Only the normalised url is sent; `typed` exists so the message above can name the field. */
+    const linksToSaveV471=form.links.map(item=>({platform:item.platform,url:item.url}));
     businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();
     /* Two writers, awaited together: they are independent tables and neither depends on the
        other's result, so one round trip's latency instead of two. A failure in either is reported
        and neither is retried silently. */
     const [galleryResult,linkResult]=await Promise.all([
       sb.rpc('business_set_gallery_v418',{p_business:S.biz.id,p_items:form.gallery}),
-      sb.rpc('business_set_social_links_v418',{p_business:S.biz.id,p_links:form.links})
+      sb.rpc('business_set_social_links_v418',{p_business:S.biz.id,p_links:linksToSaveV471})
     ]);
     businessProfileExtrasBusyV418=false;
     const failure=galleryResult.error||linkResult.error;

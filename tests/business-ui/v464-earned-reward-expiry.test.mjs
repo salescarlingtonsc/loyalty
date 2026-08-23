@@ -241,6 +241,16 @@ const rewardHelpSrc = sliceBetween(
   'customerRewardHelpButtonV468',
 );
 
+/* nestly_v471 added the OFFER's own end date to the same card ("Expires on <date> — redeem
+   before then"), which is a different clock from the earned-reward deadline this suite pins. Same
+   reasoning as the "?" above: pulled in whole so the card cannot drift out from under the suite. */
+const rewardEndsSrcV471 = sliceBetween(
+  app,
+  'function customerRewardEndsLineV471(reward={}){',
+  '\n}\n',
+  'customerRewardEndsLineV471',
+);
+
 function renderRewardCard(reward) {
   const scope = {
     rewardUnit: 'stamps',
@@ -248,7 +258,7 @@ function renderRewardCard(reward) {
     CUI: { icon: () => '<svg></svg>' },
   };
   const names = Object.keys(scope);
-  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardHelpSrc}\n${rewardCardSrc}\nreturn rewardCardV422;`;
+  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardHelpSrc}\n${rewardEndsSrcV471}\n${rewardCardSrc}\nreturn rewardCardV422;`;
   // eslint-disable-next-line no-new-func
   return new Function(...names, body)(...names.map(n => scope[n]))(reward);
 }

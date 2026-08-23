@@ -5815,7 +5815,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
   /* nestly_v420: the referral gift handed over at the counter. */
   referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
-  linkNeedsHttps:Object.freeze({en:'The {platform} link must start with https://','zh-CN':'{platform} 链接必须以 https:// 开头',ms:'Pautan {platform} mesti bermula dengan https://'}),
+  /* nestly_v471: the https rule is no longer the owner's problem — a bare domain is given the
+     scheme it meant. What is left to report is a value that is not a web address at all. */
+  linkNotAWebAddressV471:Object.freeze({en:'The {platform} link is not a web address. Try something like instagram.com/yourshop.','zh-CN':'{platform} 链接不是网址。请尝试 instagram.com/yourshop 这样的格式。',ms:'Pautan {platform} bukan alamat web. Cuba sesuatu seperti instagram.com/kedaianda.'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -5978,7 +5980,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength','linkNeedsHttps','referralGiftGiven',
+  'savedNotLive','stampCardLength','linkNotAWebAddressV471','referralGiftGiven',
   /* nestly_v453: the three reasons a length stepper can refuse. Each is shown twice — as the
      disabled button's title and as the line of text under the bar — from this one source, so the
      two can never disagree in any locale. */

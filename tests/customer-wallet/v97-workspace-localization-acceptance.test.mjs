@@ -359,6 +359,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      data ({name}, {max}), so all three are reviewed copy rather than template literals; {max}
      interpolates the entitlement itself so the sentence cannot name a limit the server does not
      enforce. */
+  /* Still 147: nestly_v471 (owner ruling on photo 2, "all link don't need to start with
+     https://") RETIRES linkNeedsHttps and adds linkNotAWebAddressV471 in its place. One out, one
+     in. The old key is deleted rather than left behind because this suite's own rule is that
+     every key must have a render path, and normalising the scheme removed that message's last
+     caller — a reviewed string nothing can print is exactly the drift this inventory exists to
+     catch. Both name an owner's own field ({platform}), so both are reviewed copy. */
   assert.equal(keys.length,147,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);

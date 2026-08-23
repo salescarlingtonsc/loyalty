@@ -3172,6 +3172,26 @@ function showCustomerRewardRulesV468(reward={},{unit='points',currency='SGD',tit
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'[data-reward-rules-close-v468]'});
   overlay.querySelector('[data-reward-rules-close-v468]').onclick=()=>deactivate({restoreFocus:true});
 }
+/* nestly_v471 (owner ruling 2026-08-23, asked what should happen when a gift's end date passes:
+   "in customer view, they should see the expiry of each gift, example free lotion will expire on
+   21 September 2026, redeem before that to enjoy the gift!").
+   So the date is not a footnote inside the rules sheet — it is a line ON the gift, phrased as the
+   nudge the owner wrote rather than as a bare field. The rules sheet keeps its own "Claim it by"
+   row: that sheet is the full contract and drops nothing.
+   claim_available_until is the OFFERING window (this gift leaves the catalogue on that date),
+   which is the clock the owner chose. It is deliberately NOT reward.expires_at — that is the
+   stamps-only earned-reward deadline from v464, already printed as "Use by" on the claimable
+   card, and conflating the two would tell a customer their gift dies when in fact the offer does.
+   A gift with no end date draws nothing: most gifts have none, and "No expiry" on every row is
+   noise. A date already in the past draws nothing either — the server has stopped offering the
+   gift by then, and a line reading "redeem before" a date that has gone is worse than silence. */
+function customerRewardEndsLineV471(reward={}){
+  const raw=reward?.claim_available_until;
+  const at=Date.parse(raw||'');
+  if(!Number.isFinite(at)||at<=Date.now())return '';
+  return `<p class="customer-reward-ends-v471" data-customer-reward-ends-v471>${
+    esc(`Expires on ${walletDate(raw)} — redeem before then to enjoy this gift!`)}</p>`;
+}
 /* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
    control in the same corner. Text "?" rather than the info glyph — it is what the owner drew,
    and a question mark reads at a glance for a customer who does not read English well. */
@@ -4089,6 +4109,19 @@ function customerRewardAvailabilityLineV399(reward,unit){
    a final "View all rewards" page once there are two or more of them, so the swipe always ends
    somewhere deliberate instead of running on. Readiness is untouched and still the server's
    answer via customerRewardCanRedeem — never arithmetic. */
+/* nestly_v471 (owner, photo 4: "For all rewards, ensure that customer view have a '?' — to view
+   the rules of the rewards", and then "i still don't see the ?").
+   The "?" is not new — V468-E4 built the control and the rules sheet behind it. What it was
+   missing is reach: customerRewardHelpButtonV468 is emitted only by rewardCardV422 and
+   entitlementCardV429, and rewardCardV422 is drawn ONLY for rewards the counter would honour
+   right now (claimableRewardsV422, the v422 ruling). So a customer still saving toward a gift —
+   which is most customers, most of the time — saw the whole catalogue on these hero pages and not
+   one "?" anywhere on it. That is the "for ALL rewards" the owner is asking for.
+   Keyed by INDEX into this array rather than by action_key: action_key is minted client-side and
+   degrades to the literal string "catalog:undefined" on the fallback branch where the actions read
+   failed but the catalogue answered — and that branch still renders these hero pages. Keying on it
+   there would open the first reward's sheet for every "?" on the card. The index cannot collide. */
+let customerHeroRewardRowsV471=[];
 function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
@@ -4100,6 +4133,7 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
   const heroCost=Number(currentRewardCost);
   const seen=new Set();
   const unitWord=ct(unit==='stamps'?'stamps':unit||'points');
+  customerHeroRewardRowsV471=[];
   const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{
     const name=String(reward?.customer_name||reward?.name||'').trim();
     const cost=Number(reward?.cost_points??reward?.cost_units);
@@ -4168,15 +4202,20 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
     /* Owner struck out the meter and the sentence under a READY reward: at 100% the meter says
        nothing and "Ready to redeem on your next visit" repeats the pill above it. A reward still
        being earned keeps both — that is the one state where the distance is the point. */
+    /* nestly_v471: the index this reward's "?" will address. Pushed here, after every skip above
+       has had its say, so the array and the pages that survive are the same list. */
+    const helpIndexV471=customerHeroRewardRowsV471.push(reward)-1;
     return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
       <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}${photoV468?' customer-hero-has-photo-v468':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(readyV397?'READY':'NEXT REWARD')}</span></span>
           <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(counterV468)}</span></span>
+          ${customerRewardHelpButtonV468('data-hero-reward-rules-v471',helpIndexV471,name)}
         </div>
         <div class="customer-hero-reward-body-v468">
           <div class="customer-hero-reward-copy-v468">
             <b class="customer-business-reward-name-v395">${esc(name)}</b>
+            ${customerRewardEndsLineV471(reward)}
             ${meterV468}
             ${readyV397||!lineTextV468?'':`<p class="customer-business-summary-line-v362">${esc(lineTextV468)}</p>`}
             ${readyV397?`<div class="customer-business-summary-actions-v349">
@@ -6292,6 +6331,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            pinned to the card this customer is holding and the browser does not know which card
            that is. */''}
       ${r.expires_at?`<p class="muted small customer-reward-useby-v464" data-reward-useby-v464="${esc(String(r.expires_at))}" style="margin-top:5px">Use by ${esc(walletDate(r.expires_at))}</p>`:''}
+      ${/* nestly_v471: the OFFER's own end date, in the owner's words. Distinct from "Use by"
+           directly above it, which is the stamps-only earned-reward deadline — one says when the
+           gift stops being offered, the other when a gift you already hold goes stale. A reward
+           that carries both legitimately prints both. */''}
+      ${customerRewardEndsLineV471(r)}
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -6377,6 +6421,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const match=rewards.find(item=>item.action_key===String(button.dataset.rewardRulesV468||''));
       if(match)showCustomerRewardRulesV468(match,{unit:rewardUnit,currency});
     });
+    /* nestly_v471: the same sheet, from the hero swipe — which is where the customer sees the
+       gifts they are still saving toward, and therefore where "for ALL rewards" actually bites.
+       Wired here beside its sibling rather than in a second handler, exactly as v397 did for the
+       hero's Redeem button, and it queries heroRootV397 because the swipe lives outside #walletRewards.
+       The lookup is by index into customerHeroRewardRowsV471 — see that array's own note for why
+       action_key cannot be trusted on this surface. */
+    (heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-hero-reward-rules-v471]')||[])
+      .forEach(button=>button.onclick=()=>{
+        const match=customerHeroRewardRowsV471[Number(button.dataset.heroRewardRulesV471)];
+        if(match)showCustomerRewardRulesV468(match,{unit:customerRewardUnitV429(match,rewardUnit),currency});
+      });
     host.querySelectorAll('[data-entitlement-rules-v468]').forEach(button=>button.onclick=()=>{
       const match=entitlementsV429.find(item=>String(item?.id||'')===String(button.dataset.entitlementRulesV468||''));
       if(match)showCustomerRewardRulesV468(match,{unit:rewardUnit,currency:entitlementCurrencyV429,

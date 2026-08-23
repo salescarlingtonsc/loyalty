@@ -7783,6 +7783,26 @@ function showCustomerRewardRulesV468(reward={},{unit='points',currency='SGD',tit
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'[data-reward-rules-close-v468]'});
   overlay.querySelector('[data-reward-rules-close-v468]').onclick=()=>deactivate({restoreFocus:true});
 }
+/* nestly_v471 (owner ruling 2026-08-23, asked what should happen when a gift's end date passes:
+   "in customer view, they should see the expiry of each gift, example free lotion will expire on
+   21 September 2026, redeem before that to enjoy the gift!").
+   So the date is not a footnote inside the rules sheet — it is a line ON the gift, phrased as the
+   nudge the owner wrote rather than as a bare field. The rules sheet keeps its own "Claim it by"
+   row: that sheet is the full contract and drops nothing.
+   claim_available_until is the OFFERING window (this gift leaves the catalogue on that date),
+   which is the clock the owner chose. It is deliberately NOT reward.expires_at — that is the
+   stamps-only earned-reward deadline from v464, already printed as "Use by" on the claimable
+   card, and conflating the two would tell a customer their gift dies when in fact the offer does.
+   A gift with no end date draws nothing: most gifts have none, and "No expiry" on every row is
+   noise. A date already in the past draws nothing either — the server has stopped offering the
+   gift by then, and a line reading "redeem before" a date that has gone is worse than silence. */
+function customerRewardEndsLineV471(reward={}){
+  const raw=reward?.claim_available_until;
+  const at=Date.parse(raw||'');
+  if(!Number.isFinite(at)||at<=Date.now())return '';
+  return `<p class="customer-reward-ends-v471" data-customer-reward-ends-v471>${
+    esc(`Expires on ${walletDate(raw)} — redeem before then to enjoy this gift!`)}</p>`;
+}
 /* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
    control in the same corner. Text "?" rather than the info glyph — it is what the owner drew,
    and a question mark reads at a glance for a customer who does not read English well. */
@@ -9916,6 +9936,19 @@ function customerRewardAvailabilityLineV399(reward,unit){
    a final "View all rewards" page once there are two or more of them, so the swipe always ends
    somewhere deliberate instead of running on. Readiness is untouched and still the server's
    answer via customerRewardCanRedeem — never arithmetic. */
+/* nestly_v471 (owner, photo 4: "For all rewards, ensure that customer view have a '?' — to view
+   the rules of the rewards", and then "i still don't see the ?").
+   The "?" is not new — V468-E4 built the control and the rules sheet behind it. What it was
+   missing is reach: customerRewardHelpButtonV468 is emitted only by rewardCardV422 and
+   entitlementCardV429, and rewardCardV422 is drawn ONLY for rewards the counter would honour
+   right now (claimableRewardsV422, the v422 ruling). So a customer still saving toward a gift —
+   which is most customers, most of the time — saw the whole catalogue on these hero pages and not
+   one "?" anywhere on it. That is the "for ALL rewards" the owner is asking for.
+   Keyed by INDEX into this array rather than by action_key: action_key is minted client-side and
+   degrades to the literal string "catalog:undefined" on the fallback branch where the actions read
+   failed but the catalogue answered — and that branch still renders these hero pages. Keying on it
+   there would open the first reward's sheet for every "?" on the card. The index cannot collide. */
+let customerHeroRewardRowsV471=[];
 function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
@@ -9927,6 +9960,7 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
   const heroCost=Number(currentRewardCost);
   const seen=new Set();
   const unitWord=ct(unit==='stamps'?'stamps':unit||'points');
+  customerHeroRewardRowsV471=[];
   const pages=(Array.isArray(rewards)?rewards:[]).map(reward=>{
     const name=String(reward?.customer_name||reward?.name||'').trim();
     const cost=Number(reward?.cost_points??reward?.cost_units);
@@ -9995,15 +10029,20 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
     /* Owner struck out the meter and the sentence under a READY reward: at 100% the meter says
        nothing and "Ready to redeem on your next visit" repeats the pill above it. A reward still
        being earned keeps both — that is the one state where the distance is the point. */
+    /* nestly_v471: the index this reward's "?" will address. Pushed here, after every skip above
+       has had its say, so the array and the pages that survive are the same list. */
+    const helpIndexV471=customerHeroRewardRowsV471.push(reward)-1;
     return `<div class="customer-business-hero-page-v395" data-hero-extra-v395>
       <section class="card customer-business-summary-v346${readyV397?' is-reward-ready-v2b':''}${photoV468?' customer-hero-has-photo-v468':''}" data-hero-mode-v386="reward" aria-label="${esc(name)}">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>${esc(readyV397?'READY':'NEXT REWARD')}</span></span>
           <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(counterV468)}</span></span>
+          ${customerRewardHelpButtonV468('data-hero-reward-rules-v471',helpIndexV471,name)}
         </div>
         <div class="customer-hero-reward-body-v468">
           <div class="customer-hero-reward-copy-v468">
             <b class="customer-business-reward-name-v395">${esc(name)}</b>
+            ${customerRewardEndsLineV471(reward)}
             ${meterV468}
             ${readyV397||!lineTextV468?'':`<p class="customer-business-summary-line-v362">${esc(lineTextV468)}</p>`}
             ${readyV397?`<div class="customer-business-summary-actions-v349">
@@ -12470,6 +12509,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
            pinned to the card this customer is holding and the browser does not know which card
            that is. */''}
       ${r.expires_at?`<p class="muted small customer-reward-useby-v464" data-reward-useby-v464="${esc(String(r.expires_at))}" style="margin-top:5px">Use by ${esc(walletDate(r.expires_at))}</p>`:''}
+      ${/* nestly_v471: the OFFER's own end date, in the owner's words. Distinct from "Use by"
+           directly above it, which is the stamps-only earned-reward deadline — one says when the
+           gift stops being offered, the other when a gift you already hold goes stale. A reward
+           that carries both legitimately prints both. */''}
+      ${customerRewardEndsLineV471(r)}
       ${r.entitlement_expiry_days?`<p class="muted small" style="margin-top:5px">Use within ${Number(r.entitlement_expiry_days)} days after claim.</p>`:''}
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
@@ -12555,6 +12599,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       const match=rewards.find(item=>item.action_key===String(button.dataset.rewardRulesV468||''));
       if(match)showCustomerRewardRulesV468(match,{unit:rewardUnit,currency});
     });
+    /* nestly_v471: the same sheet, from the hero swipe — which is where the customer sees the
+       gifts they are still saving toward, and therefore where "for ALL rewards" actually bites.
+       Wired here beside its sibling rather than in a second handler, exactly as v397 did for the
+       hero's Redeem button, and it queries heroRootV397 because the swipe lives outside #walletRewards.
+       The lookup is by index into customerHeroRewardRowsV471 — see that array's own note for why
+       action_key cannot be trusted on this surface. */
+    (heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-hero-reward-rules-v471]')||[])
+      .forEach(button=>button.onclick=()=>{
+        const match=customerHeroRewardRowsV471[Number(button.dataset.heroRewardRulesV471)];
+        if(match)showCustomerRewardRulesV468(match,{unit:customerRewardUnitV429(match,rewardUnit),currency});
+      });
     host.querySelectorAll('[data-entitlement-rules-v468]').forEach(button=>button.onclick=()=>{
       const match=entitlementsV429.find(item=>String(item?.id||'')===String(button.dataset.entitlementRulesV468||''));
       if(match)showCustomerRewardRulesV468(match,{unit:rewardUnit,currency:entitlementCurrencyV429,
@@ -16321,7 +16376,9 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v418: a profile link that is not https, named so the owner knows which field. */
   /* nestly_v420: the referral gift handed over at the counter. */
   referralGiftGiven:Object.freeze({en:'{item} given — referral gift','zh-CN':'已赠送 {item} — 推荐礼物',ms:'{item} diberikan — hadiah rujukan'}),
-  linkNeedsHttps:Object.freeze({en:'The {platform} link must start with https://','zh-CN':'{platform} 链接必须以 https:// 开头',ms:'Pautan {platform} mesti bermula dengan https://'}),
+  /* nestly_v471: the https rule is no longer the owner's problem — a bare domain is given the
+     scheme it meant. What is left to report is a value that is not a web address at all. */
+  linkNotAWebAddressV471:Object.freeze({en:'The {platform} link is not a web address. Try something like instagram.com/yourshop.','zh-CN':'{platform} 链接不是网址。请尝试 instagram.com/yourshop 这样的格式。',ms:'Pautan {platform} bukan alamat web. Cuba sesuatu seperti instagram.com/kedaianda.'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -16484,7 +16541,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength','linkNeedsHttps','referralGiftGiven',
+  'savedNotLive','stampCardLength','linkNotAWebAddressV471','referralGiftGiven',
   /* nestly_v453: the three reasons a length stepper can refuse. Each is shown twice — as the
      disabled button's title and as the line of text under the bar — from this one source, so the
      two can never disagree in any locale. */
@@ -45919,11 +45976,15 @@ function wireWorkspaceBrandV259(){
   $('bsave').onclick=async()=>{
     /* Client-side mirror of the DB CHECK (review_url is null or length<=500 and ~ '^https://').
        review_url rides this existing businesses UPDATE — no new call site is introduced. */
+    /* nestly_v471: same rule as the social links a section below (businessLinkNormaliseV471) —
+       the owner should not have to type the scheme in one link field and not the other. The DB
+       CHECK is unchanged; what is stored is still https and still under 500 characters. */
     const reviewUrlRaw=($('bru').value||'').trim();
-    if(reviewUrlRaw&&(!/^https:\/\//.test(reviewUrlRaw)||reviewUrlRaw.length>500)){
-      $('bru').focus();return toast('Public review link must start with https:// and be under 500 characters');
+    const reviewUrlNormalisedV471=businessLinkNormaliseV471(reviewUrlRaw);
+    if(reviewUrlRaw&&(reviewUrlNormalisedV471===null||reviewUrlNormalisedV471.length>500)){
+      $('bru').focus();return toast('Public review link is not a web address. Try something like g.page/your-business/review');
     }
-    const reviewUrl=reviewUrlRaw||null;
+    const reviewUrl=reviewUrlNormalisedV471||null;
     /* V188: legal_name and registration_number already existed on businesses but nothing ever
        asked for them, so every receipt in production printed only a workspace nickname. They
        ride this same UPDATE — no new call site. */
@@ -46050,6 +46111,35 @@ const BUSINESS_SOCIAL_PLATFORMS_V418=Object.freeze([
   ['website','Website'],['instagram','Instagram'],['facebook','Facebook'],['tiktok','TikTok'],
   ['whatsapp','WhatsApp'],['youtube','YouTube'],['telegram','Telegram'],['xiaohongshu','Xiaohongshu']
 ]);
+/* nestly_v471 (owner, photo 2: the whole Links block ringed, the toast "The instagram link must
+   start with https://" ringed under it, and "all link don't need to start with https:// "
+   written beside both). The owner typed "Instagram.com" and the form refused to save ANY of the
+   eight fields until they went back and prefixed it by hand.
+   The https rule itself is not negotiable — it is a CHECK on business_social_links_v418 and the
+   customer render filters on it too — so this NORMALISES instead of loosening. A bare host gets
+   the scheme it obviously meant; http:// is upgraded rather than rejected, since the stored value
+   has to be https either way and downgrading a customer to plaintext was never the alternative.
+   Anything carrying a DIFFERENT scheme is still refused: `javascript:` and `data:` must never
+   reach an anchor on a customer's phone, and silently rewriting one into an https URL would
+   invent a destination the owner did not type.
+   The host must contain a dot, which is what separates "Instagram.com" (meant a URL) from
+   "our shop" or "@cubbly" (did not). Those still get told, and the message now says what to do.
+   Returns '' for blank (the field is being cleared, which is how a link is removed) and null for
+   "this cannot be made into a link". */
+function businessLinkNormaliseV471(raw){
+  const value=String(raw??'').trim();
+  if(!value)return '';
+  const scheme=value.match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase();
+  if(scheme&&scheme!=='http'&&scheme!=='https')return null;
+  const candidate=scheme?value.replace(/^http:/i,'https:'):`https://${value}`;
+  let parsed;
+  try{parsed=new URL(candidate)}catch{return null}
+  if(parsed.protocol!=='https:')return null;
+  /* A hostname with no dot is a word, not a domain. 'localhost' is deliberately not special-cased
+     — a customer's phone cannot reach the owner's localhost. */
+  if(!/^[^.\s]+(\.[^.\s]+)+$/.test(parsed.hostname))return null;
+  return parsed.href;
+}
 let businessProfileExtrasV418=null;   /* {gallery:[...], social_links:[...]} once read */
 let businessProfileExtrasBusyV418=false;
 let businessProfileExtrasErrorV418='';
@@ -46130,9 +46220,15 @@ function readBusinessProfileExtrasFormV418(){
     image_ref:item.image_ref,
     caption:String(host.querySelector(`[data-gallery-caption-v418="${index}"]`)?.value||'').trim()
   }));
-  const links=BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform])=>({
-    platform,url:String(host.querySelector(`[data-social-link-v418="${platform}"]`)?.value||'').trim()
-  })).filter(item=>item.url);
+  /* nestly_v471: normalised HERE rather than at the save button, so the value that is validated,
+     the value that is written and the value the field shows after the reload are the same string.
+     `null` marks a field that cannot be made into a link; the save handler is what reports it,
+     because this reader is also called to capture in-progress edits during a re-render and must
+     not raise a toast for a field the owner is still typing into. */
+  const links=BUSINESS_SOCIAL_PLATFORMS_V418.map(([platform])=>{
+    const typed=String(host.querySelector(`[data-social-link-v418="${platform}"]`)?.value||'').trim();
+    return {platform,typed,url:businessLinkNormaliseV471(typed)};
+  }).filter(item=>item.typed);
   return {gallery,links};
 }
 function wireBusinessProfileExtrasV418(){
@@ -46175,15 +46271,20 @@ function wireBusinessProfileExtrasV418(){
     if(businessProfileExtrasBusyV418)return;
     const form=readBusinessProfileExtrasFormV418();
     if(!form)return;
-    const bad=form.links.find(item=>!/^https:\/\/\S{3,}$/i.test(item.url));
-    if(bad)return toast(workspaceTemplateTextV97('linkNeedsHttps',{platform:bad.platform}));
+    /* nestly_v471: the check is now "could this be made into a link at all", not "did the owner
+       type the scheme". businessLinkNormaliseV471 has already added it where it was merely
+       missing; what reaches here as null is a word, a handle, or a scheme we refuse to publish. */
+    const bad=form.links.find(item=>!item.url);
+    if(bad)return toast(workspaceTemplateTextV97('linkNotAWebAddressV471',{platform:bad.platform}));
+    /* Only the normalised url is sent; `typed` exists so the message above can name the field. */
+    const linksToSaveV471=form.links.map(item=>({platform:item.platform,url:item.url}));
     businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();
     /* Two writers, awaited together: they are independent tables and neither depends on the
        other's result, so one round trip's latency instead of two. A failure in either is reported
        and neither is retried silently. */
     const [galleryResult,linkResult]=await Promise.all([
       sb.rpc('business_set_gallery_v418',{p_business:S.biz.id,p_items:form.gallery}),
-      sb.rpc('business_set_social_links_v418',{p_business:S.biz.id,p_links:form.links})
+      sb.rpc('business_set_social_links_v418',{p_business:S.biz.id,p_links:linksToSaveV471})
     ]);
     businessProfileExtrasBusyV418=false;
     const failure=galleryResult.error||linkResult.error;
