@@ -2384,6 +2384,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    height was set by this card, leaving a tall void in the left column. The card is a cell of the
    content grid now, so it keeps the upper right and no column starts empty. */
 .c360-content-split-v295{align-items:start}
+/* nestly_v476 (owner photo 1: "please flush the boxes, no empty gaps"). Each half is now its own
+   flex stack, so a card follows the card above it instead of waiting for the taller card in the
+   other column to finish its grid row. The two columns can still end at different heights — that
+   is a short tail, not a gap between boxes, and it is unavoidable without reflowing by height
+   (which would move the summary card out of the top-right slot v294/v295/v442 built). */
+.c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
+.c360-col-v476:empty{display:none}
 .c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
@@ -4478,7 +4485,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=8fd1ad82d5e7","business":"/app-business.js?b=e20947422a9a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=8fd1ad82d5e7","business":"/app-business.js?b=6defca6243e0","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

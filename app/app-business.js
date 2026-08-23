@@ -5365,37 +5365,48 @@ async function clientDetail(id){
       /* V249's rule survives the V294 restructure: absent numbers must be explained, never
          shown as zero, so a role without sales or loyalty access still gets the sentence. */
       :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
+    ${/* nestly_v476 (owner, photo 1: a large ring drawn in the empty left half under the
+         programmes card — "what is with the empty space - please flush the boxes, no empty gaps").
+         This was a two-column CSS GRID with auto-placed cells, so the cards paired off into rows
+         and every row was as tall as its taller card. The right column carries the summary card
+         AND the package detail stacked under it (v442), which is far taller than the programmes
+         card beside it — so the left column stopped, waited for the row to end, and left exactly
+         the void the owner ringed. align-items:start made each card its natural height, which is
+         what made the void visible rather than stretching a card to fill it.
+         Two REAL columns instead: each is its own flex stack with its own gap, so a card follows
+         the card above it and nothing waits for a neighbour. Column-flow (CSS columns) was the
+         other option and was rejected — it reflows by height, which would have moved the summary
+         card out of the top-right slot the owner has signed off twice (V294, V295) and v442 built
+         the package card underneath.
+         The split is by SUBJECT, not by height: the left column is what this customer has with
+         the business (programmes, the offers they can see, what they have been given back), the
+         right is the ledger facts and the paperwork. Below 768px .split collapses to one column
+         and both stacks flow in order, exactly as before. */''}
     <div class="split c360-content-split-v295" style="margin-top:16px">
+      <div class="c360-col-v476">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:20})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${programmesListV294}${rewardsMarkupTrailingV392}</div>
       </section>`:''}
-      ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
-           cell now instead of a flex sibling that dictated the height of an empty left column.
-           Contents are untouched: visits, lifetime spend, points (+ paused note and expiry line),
-           spendable credit, PDPA. */''}
-      ${/* V442: the owner circled the RIGHT column, under this summary card, and wrote
-           "Package Detail". The cells of .c360-content-split-v295 are auto-placed in DOM order,
-           so a card inserted straight after the summary card lands in the LEFT column on the
-           next row — not under it. The two share one grid cell instead: the summary card keeps
-           the top-right slot it has been signed off in twice (V294, V295), and the package card
-           sits directly beneath it, in the column the owner marked. */''}
+      ${/* V319: the offers box falls directly beneath the programmes card it split from, which is
+           also where it reads. */''}
+      ${canReadLoyalty?limitedOfferCardV319:''}
+      ${retentionMarkup}
+      ${birthdayCardMarkup}${feedbackStripMarkup}
+      </div>
+      <div class="c360-col-v476">
+      ${/* V295: still the upper-right card V294 asked for. V442: the package card sits directly
+           beneath it, in the column the owner marked. Both keep that position — this column is
+           the same two cards in the same order, now in an explicit container. */''}
       ${packageDetailMarkupV442
         ?`<div class="c360-summary-stack-v442">${summaryCardV294}${packageDetailMarkupV442}</div>`
         :summaryCardV294}
-      ${/* V319: the offers box is placed AFTER the summary card, not between it and the
-           programmes card. These cells are auto-placed in DOM order, so inserting it earlier
-           pushed the summary card out of the upper-right slot V294 put it in and V295 kept it
-           in — a layout the owner has now signed off twice. Here it falls directly beneath the
-           programmes card it split from, which is also where it reads. */''}
-      ${canReadLoyalty?limitedOfferCardV319:''}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
         ${referralMarkup}
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
         ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:16})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
       </div>
-      ${retentionMarkup}
-      ${birthdayCardMarkup}${feedbackStripMarkup}</div>
+      </div></div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     ${activityMarkup}
@@ -15572,6 +15583,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      Added <date>" meta, description, then the ON/OFF pill + Edit + Delete on the right. Edit and
      Delete stay two plain buttons rather than a single "..." overflow menu — same two actions,
      no new menu-open/close/outside-click component to get wrong for this pass. */
+  /* nestly_v476 (owner, photo 2: an arrow at both gift rows — "add the expiry date here, so
+     customer knows when will expire"). v472 gave a gift an end date but only the editor could see
+     it: the row said "Gift · 10 points · Added 16/08/2026" whether the gift ran forever or stopped
+     next Tuesday, so an owner scanning the list could not tell which of their gifts were about to
+     go. The date is stated where the rest of the gift's facts already are.
+     A gift whose date has PASSED says so in the past tense rather than reading as a live deadline
+     — that gift has already left the customer's catalogue (app.reward_availability_v432 resolves
+     it to 'ended'), and the row is the only place the owner can still find out why. */
+  const growPointsGiftEndsTextV476=reward=>{
+    const raw=reward?.claim_available_until;
+    const at=Date.parse(raw||'');
+    if(!Number.isFinite(at))return '';
+    const shown=promotionDateShortV324(raw);
+    return at<=Date.now()?` · Ended ${esc(shown)}`:` · Ends ${esc(shown)}`;
+  };
   const growPointsGiftRowV326=(reward,{history=false}={})=>{
     const name=reward.customer_name||reward.name||'Gift';
     const points=Math.max(0,Number(reward.cost_points||0));
@@ -15580,7 +15606,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* V351 (owner: "the $ symbol makes the reward look like money/cash instead of a redeemable
        gift"): swapped for the same gift icon the Welcome offer editor and Stamp Card page use. */
     const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('giftcard',{size:20})}</span>`;
-    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:16})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
+    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:16})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}${growPointsGiftEndsTextV476(reward)}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
     if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}<span class="pill off">In history</span></li>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);

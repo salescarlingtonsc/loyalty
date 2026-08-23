@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="96b8efbddf428b407c00f8e2860d4b9418b315ff67e5b9b2642bf9a1adfdbb27"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="690d784fe8178f9f2216581bf1208a47a537b4707a63421da8e38d218c10395e"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2354,6 +2354,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    height was set by this card, leaving a tall void in the left column. The card is a cell of the
    content grid now, so it keeps the upper right and no column starts empty. */
 .c360-content-split-v295{align-items:start}
+/* nestly_v476 (owner photo 1: "please flush the boxes, no empty gaps"). Each half is now its own
+   flex stack, so a card follows the card above it instead of waiting for the taller card in the
+   other column to finish its grid row. The two columns can still end at different heights — that
+   is a short tail, not a gap between boxes, and it is unavoidable without reflowing by height
+   (which would move the summary card out of the top-right slot v294/v295/v442 built). */
+.c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
+.c360-col-v476:empty{display:none}
 .c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
@@ -5513,6 +5520,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'96b8efbddf428b407c00f8e2860d4b9418b315ff67e5b9b2642bf9a1adfdbb27',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'690d784fe8178f9f2216581bf1208a47a537b4707a63421da8e38d218c10395e',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

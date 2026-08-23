@@ -148,12 +148,24 @@ test('V319 promotions leave the programmes card for a box of their own', () => {
   assert.match(card,/limitedOfferRowsV319\.length/,'absent stays absent — no empty offers card');
   assert.match(card,/id="c360-offers-v319"/);
   assert.match(card,/<b>Limited offers<\/b>/);
-  /* Distinct from, and rendered after, the programmes card the owner kept — and after the
-     summary card, whose upper-right slot two prior owner reviews signed off. These grid cells
-     are auto-placed in DOM order, so inserting the box earlier silently moves the summary. */
-  const layout=section('<div class="split c360-content-split-v295"','${retentionMarkup}');
-  assert.ok(layout.indexOf('Available Customer Programmes')<layout.indexOf('summaryCardV294'));
-  assert.ok(layout.indexOf('summaryCardV294')<layout.indexOf('limitedOfferCardV319'));
+  /* Distinct from the programmes card the owner kept, and directly beneath it; the summary card
+     keeps the upper-right slot two prior owner reviews signed off.
+     nestly_v476 changed HOW that is achieved: the two halves are explicit flex columns now, not
+     auto-placed grid cells, because auto-placement paired the cards into rows and left a 276px
+     void under the programmes card (owner: "please flush the boxes, no empty gaps"). So DOM order
+     no longer decides placement and asserting it would pin the old mechanism rather than the
+     owner's layout. The columns are asserted directly instead, which is what was always meant. */
+  const layout=section('<div class="split c360-content-split-v295"','${activityMarkup}');
+  const columns=layout.split('<div class="c360-col-v476">').slice(1);
+  assert.equal(columns.length,2,'exactly two columns');
+  const [left,right]=columns;
+  assert.ok(left.includes('Available Customer Programmes'),'programmes lead the left column');
+  assert.ok(left.includes('limitedOfferCardV319'),'the offers box falls under the card it split from');
+  assert.ok(left.indexOf('Available Customer Programmes')<left.indexOf('limitedOfferCardV319'));
+  assert.ok(right.includes('summaryCardV294'),'the summary card keeps the right column');
+  assert.ok(right.indexOf('summaryCardV294')<right.indexOf('Referral'),
+    'and it is the FIRST card there — the upper-right slot v294/v295 signed off');
+  assert.ok(!right.includes('limitedOfferCardV319'),'the offers box is not in the summary column');
   assert.match(layout,/canReadLoyalty\?limitedOfferCardV319:''/,
     'the offers box inherits the same loyalty read gate as the card it left');
 });

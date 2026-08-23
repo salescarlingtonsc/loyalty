@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="b62812426150e897f870c45893a60afce5b8438b04554a7f2919860f45dc0295"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="3217983b63432c298deffa3c96204f31cf7f16342b393fcc6e1e3552ccd60186"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2353,6 +2353,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    height was set by this card, leaving a tall void in the left column. The card is a cell of the
    content grid now, so it keeps the upper right and no column starts empty. */
 .c360-content-split-v295{align-items:start}
+/* nestly_v476 (owner photo 1: "please flush the boxes, no empty gaps"). Each half is now its own
+   flex stack, so a card follows the card above it instead of waiting for the taller card in the
+   other column to finish its grid row. The two columns can still end at different heights — that
+   is a short tail, not a gap between boxes, and it is unavoidable without reflowing by height
+   (which would move the summary card out of the top-right slot v294/v295/v442 built). */
+.c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
+.c360-col-v476:empty{display:none}
 .c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
@@ -4403,7 +4410,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b62812426150e897f870c45893a60afce5b8438b04554a7f2919860f45dc0295</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3217983b63432c298deffa3c96204f31cf7f16342b393fcc6e1e3552ccd60186</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7864,7 +7871,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'b62812426150e897f870c45893a60afce5b8438b04554a7f2919860f45dc0295',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'3217983b63432c298deffa3c96204f31cf7f16342b393fcc6e1e3552ccd60186',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

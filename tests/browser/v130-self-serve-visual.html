@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d1b4828a96d1634f9a2517013af4adf29342a1e57936930f297d728706d3679d"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="a9eeda0ded7232c3b30b853351f5880459bb60dacfae264112fbdbfd1c4cbaef"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2352,6 +2352,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    height was set by this card, leaving a tall void in the left column. The card is a cell of the
    content grid now, so it keeps the upper right and no column starts empty. */
 .c360-content-split-v295{align-items:start}
+/* nestly_v476 (owner photo 1: "please flush the boxes, no empty gaps"). Each half is now its own
+   flex stack, so a card follows the card above it instead of waiting for the taller card in the
+   other column to finish its grid row. The two columns can still end at different heights — that
+   is a short tail, not a gap between boxes, and it is unavoidable without reflowing by height
+   (which would move the summary card out of the top-right slot v294/v295/v442 built). */
+.c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
+.c360-col-v476:empty{display:none}
 .c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}

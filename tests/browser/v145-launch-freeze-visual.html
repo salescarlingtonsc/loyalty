@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="6f404a4c9bff91c978271ace87c78233064f0c6623fe6268afe87063faba79b0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="409286c22fcbd3f66e108b4f630bd48b1c934dd31d8fd7695ab361f2a0c6952a"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2353,6 +2353,13 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    height was set by this card, leaving a tall void in the left column. The card is a cell of the
    content grid now, so it keeps the upper right and no column starts empty. */
 .c360-content-split-v295{align-items:start}
+/* nestly_v476 (owner photo 1: "please flush the boxes, no empty gaps"). Each half is now its own
+   flex stack, so a card follows the card above it instead of waiting for the taller card in the
+   other column to finish its grid row. The two columns can still end at different heights — that
+   is a short tail, not a gap between boxes, and it is unavoidable without reflowing by height
+   (which would move the summary card out of the top-right slot v294/v295/v442 built). */
+.c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
+.c360-col-v476:empty{display:none}
 .c360-summary-card-v294{align-self:start;padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
@@ -4403,7 +4410,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 6f404a4c9bff91c978271ace87c78233064f0c6623fe6268afe87063faba79b0</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 409286c22fcbd3f66e108b4f630bd48b1c934dd31d8fd7695ab361f2a0c6952a</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6202,37 +6209,48 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       /* V249's rule survives the V294 restructure: absent numbers must be explained, never
          shown as zero, so a role without sales or loyalty access still gets the sentence. */
       :`<p class="muted small" role="note" style="margin:0 0 16px">Sales and reward figures are hidden because this role does not have access to those modules.</p>`}
+    ${/* nestly_v476 (owner, photo 1: a large ring drawn in the empty left half under the
+         programmes card — "what is with the empty space - please flush the boxes, no empty gaps").
+         This was a two-column CSS GRID with auto-placed cells, so the cards paired off into rows
+         and every row was as tall as its taller card. The right column carries the summary card
+         AND the package detail stacked under it (v442), which is far taller than the programmes
+         card beside it — so the left column stopped, waited for the row to end, and left exactly
+         the void the owner ringed. align-items:start made each card its natural height, which is
+         what made the void visible rather than stretching a card to fill it.
+         Two REAL columns instead: each is its own flex stack with its own gap, so a card follows
+         the card above it and nothing waits for a neighbour. Column-flow (CSS columns) was the
+         other option and was rejected — it reflows by height, which would have moved the summary
+         card out of the top-right slot the owner has signed off twice (V294, V295) and v442 built
+         the package card underneath.
+         The split is by SUBJECT, not by height: the left column is what this customer has with
+         the business (programmes, the offers they can see, what they have been given back), the
+         right is the ledger facts and the paperwork. Below 768px .split collapses to one column
+         and both stacks flow in order, exactly as before. */''}
     <div class="split c360-content-split-v295" style="margin-top:16px">
+      <div class="c360-col-v476">
       ${canReadLoyalty?`<section class="card c360-rewards-card" id="c360-loyalty">
         <header class="c360-rewards-head">${CUI.icon('loyalty',{size:20})}<div><b>Available Customer Programmes</b><span>${wholeBusinessLabels?'':'Business-wide'}</span></div></header>
         <div class="c360-rewards-body">${programmesListV294}${rewardsMarkupTrailingV392}</div>
       </section>`:''}
-      ${/* V295: still the upper-right card V294 asked for — it is simply the grid's top-right
-           cell now instead of a flex sibling that dictated the height of an empty left column.
-           Contents are untouched: visits, lifetime spend, points (+ paused note and expiry line),
-           spendable credit, PDPA. */''}
-      ${/* V442: the owner circled the RIGHT column, under this summary card, and wrote
-           "Package Detail". The cells of .c360-content-split-v295 are auto-placed in DOM order,
-           so a card inserted straight after the summary card lands in the LEFT column on the
-           next row — not under it. The two share one grid cell instead: the summary card keeps
-           the top-right slot it has been signed off in twice (V294, V295), and the package card
-           sits directly beneath it, in the column the owner marked. */''}
+      ${/* V319: the offers box falls directly beneath the programmes card it split from, which is
+           also where it reads. */''}
+      ${canReadLoyalty?limitedOfferCardV319:''}
+      ${retentionMarkup}
+      ${birthdayCardMarkup}${feedbackStripMarkup}
+      </div>
+      <div class="c360-col-v476">
+      ${/* V295: still the upper-right card V294 asked for. V442: the package card sits directly
+           beneath it, in the column the owner marked. Both keep that position — this column is
+           the same two cards in the same order, now in an explicit container. */''}
       ${packageDetailMarkupV442
         ?`<div class="c360-summary-stack-v442">${summaryCardV294}${packageDetailMarkupV442}</div>`
         :summaryCardV294}
-      ${/* V319: the offers box is placed AFTER the summary card, not between it and the
-           programmes card. These cells are auto-placed in DOM order, so inserting it earlier
-           pushed the summary card out of the upper-right slot V294 put it in and V295 kept it
-           in — a layout the owner has now signed off twice. Here it falls directly beneath the
-           programmes card it split from, which is also where it reads. */''}
-      ${canReadLoyalty?limitedOfferCardV319:''}
       <div class="card"><b>${canReadReferrals?'Referral & consent':'Customer consent'}</b>
         ${referralMarkup}
         <p class="muted small" style="margin:14px 0 6px">Marketing consent (PDPA) — every change is recorded:</p>
         ${canWriteClients?`<button class="btn ghost sm" id="consentBtn">${c.marketing_consent?CUI.icon('check',{size:16})+' Consented — withdraw':'Record consent'}</button>`:'<span class="pill off">Read only</span>'}
       </div>
-      ${retentionMarkup}
-      ${birthdayCardMarkup}${feedbackStripMarkup}</div>
+      </div></div>
     ${S.myRole==='owner'&&(cfDefs||[]).length?`<div class="card" style="margin-top:16px"><b>Business-specific details</b><p class="muted small" style="margin:5px 0 10px">Only the owner can view and edit these fields.</p>
       <div class="field-grid">${cfDefs.map(f=>`<div><label>${esc(f.label)}${f.classification==='sensitive'?' · sensitive':''}</label>${customFieldInput(f)}<div class="row" style="margin-top:7px"><button class="btn ghost sm cfvSave" data-id="${f.id}" data-type="${f.value_type}">Save</button>${customValueByField[f.id]?`<button class="btn ghost sm cfvClear" data-id="${f.id}">Clear</button>`:''}</div></div>`).join('')}</div></div>`:''}
     ${activityMarkup}
@@ -8042,7 +8060,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'6f404a4c9bff91c978271ace87c78233064f0c6623fe6268afe87063faba79b0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'409286c22fcbd3f66e108b4f630bd48b1c934dd31d8fd7695ab361f2a0c6952a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
