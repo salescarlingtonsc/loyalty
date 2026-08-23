@@ -30451,12 +30451,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      has reached. */
   const growStampsCustomerPreviewV472=growStampsCardLenV416>0?`<div class="grow-stamps-preview-v472">
     <b>What your customer sees</b>
-    <p class="muted small" style="margin-top:2px">The same card, drawn by the customer app itself. Changes here reach a customer when they finish or expire the card they are collecting now — anyone part-way through keeps the card they started.</p>
+    ${/* nestly_v473 (owner: "is the customer view vs business set up different?", holding this
+         preview's "3 of 15" against a real customer's card showing 6 crowns). The two were
+         legitimately different — that customer was finishing a card started when this shop's card
+         was six stamps long, and rolled onto the current one minutes later — but the preview did
+         not help: it printed a progress figure with no sign that the progress is invented. It now
+         says EXAMPLE on the card and says so in the caption, because the one thing this block must
+         never be read as is a report about somebody. */''}
+    <p class="muted small" style="margin-top:2px">An example card, drawn by the customer app itself — the stamps shown are made up, not anyone's real progress. Changes here reach a customer when they finish or expire the card they are collecting now; anyone part-way through keeps the card they started, so their card can be shorter than this one until it ends.</p>
     <div class="grow-stamps-preview-card-v472 customer-shell">
       <section class="card customer-business-summary-v346" data-grow-stamps-preview-card-v472 aria-label="Customer stamp card preview">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>STAMPS</span></span>
-          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${esc(String(growStampsPreviewQuestV472.shown))} of ${esc(String(growStampsPreviewQuestV472.slots))}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>Example · ${esc(String(growStampsPreviewQuestV472.shown))} of ${esc(String(growStampsPreviewQuestV472.slots))}</span></span>
         </div>
         ${customerHeroStampCardV422(growStampsPreviewQuestV472)}
       </section>

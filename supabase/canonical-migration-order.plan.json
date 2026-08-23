@@ -2380,6 +2380,12 @@
       "version": "20260823000008",
       "name": "nestly_v472a_profile_extras_menu",
       "sourcePath": "db/migrations/20260823_nestly_v472a_profile_extras_menu.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000009",
+      "name": "nestly_v473_erasure_unlinks_the_customer",
+      "sourcePath": "db/migrations/20260823_nestly_v473_erasure_unlinks_the_customer.sql"
     }
   ]
 }

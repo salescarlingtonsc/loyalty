@@ -2385,6 +2385,12 @@
       "path": "db/migrations/20260823_nestly_v472a_profile_extras_menu.sql",
       "semanticVersion": "v472a",
       "proposedDeployVersion": "20260823000008"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260823_nestly_v473_erasure_unlinks_the_customer.sql",
+      "semanticVersion": "v473",
+      "proposedDeployVersion": "20260823000009"
     }
   ]
 }
