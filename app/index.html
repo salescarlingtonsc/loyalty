@@ -4167,6 +4167,35 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .daily-metric-v468[data-daily-metric-v468="visits"]{background:color-mix(in srgb,var(--success) 5%,#fff);border-left-color:var(--green)}
 .daily-metric-v468[data-daily-metric-v468="customers"]{background:color-mix(in srgb,var(--warn) 7%,#fff);border-left-color:var(--amber)}
 .daily-metric-v468[data-daily-metric-v468="giftcards"]{background:var(--shell);border-left-color:var(--muted)}
+
+/* V468-B (owner photo, Record sale): "Change branch or teammate" was a 12.5px muted text link
+   under a separate read-only line — too easy to miss at a busy counter. This turns the same
+   <details>/<summary> disclosure (ids, candidate rules and onchange handlers untouched — see
+   tillCustomerHeadV373/bindTillControlsV373 in app.js) into a visible chip that both shows the
+   current branch/teammate and opens the picker in one tap. Rules below share specificity with
+   the base .till-who-v373 rules two blocks up but come later in source order, so they win. */
+.till-who-v468{border-top:none;margin-top:12px;padding-top:0}
+.till-who-v468>summary{list-style:none;min-height:48px;padding:11px 14px;display:flex;align-items:center;gap:9px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--brand-red-soft);color:var(--brand-red-on-soft);
+  font-size:14.5px;font-weight:750}
+.till-who-v468>summary::-webkit-details-marker{display:none}
+.till-who-v468>summary::marker{content:''}
+.till-who-summary-text-v468{flex:1;min-width:0;overflow-wrap:anywhere}
+.till-who-sep-v468{opacity:.65;margin:0 2px}
+.till-who-summary-change-v468{font-weight:750;text-decoration:underline;white-space:nowrap;flex-shrink:0}
+.till-who-v468[open]>summary{border-radius:var(--r-sm) var(--r-sm) 0 0;margin-bottom:2px}
+
+/* V468-B (owner photo, Record sale items step): "I need to be able to deduct the quantity or
+   remove entirely in this page." Adds a compact −/count/+/× row on an already-selected tile,
+   reusing the SAME qty/remove handlers the Confirm step's cart lines use (data-qty/data-remove —
+   see bindTillControlsV373 in app.js). It sits as a sibling of the tile button, not nested inside
+   it, so the tile stays a plain <button> (no interactive-in-interactive HTML) and its own tap
+   target is untouched. */
+.till-choice-tile-wrap-v468{position:relative}
+.till-choice-qtyctl-v468{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.till-choice-qtyctl-v468 button{min-width:40px;min-height:40px;padding:0;font-size:17px;font-weight:750;line-height:1;border-radius:var(--r-sm)}
+.till-choice-qtyctl-v468 output{min-width:22px;text-align:center;font-weight:750;font-size:15px}
+.till-choice-qtyctl-v468 .till-choice-qtyctl-remove-v468{color:var(--brand-red)}
 </style>
 </head>
 <body>
@@ -4214,7 +4243,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=6418d8e9c607","business":"/app-business.js?b=77e659ed156a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=6418d8e9c607","business":"/app-business.js?b=d752e9af82ba","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
