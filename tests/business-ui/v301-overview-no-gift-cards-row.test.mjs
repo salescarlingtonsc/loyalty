@@ -49,7 +49,12 @@ test('V301 (b) the Overview table keeps the owner-named columns', () => {
      own subject (no synthesized Gift cards row) is untouched by that. */
   assert.doesNotMatch(overviewTable, /\['Type',row=>esc\(row\.type\)\]/);
   assert.match(overviewTable, /\['Started',row=>growDateCellV271\(row\.started\)\]/);
-  assert.match(overviewTable, /\['Customers used',row=>growCountCellV271\(row\.customers\)\]/);
+  /* V468 (owner photo 5, 2026-08-23): "Customers used" is struck out. It is the second column
+     this table has lost to the owner's own pen (Type went in V324) and for the same reason —
+     what it carried is said better elsewhere. The per-category analytics block below answers
+     "how much is this being used" per gift, and does it as a COUNT OF USES rather than a
+     distinct-customer tally, which is the misreading the owner called out on the same page. */
+  assert.doesNotMatch(overviewTable, /\['Customers used'/);
   assert.match(overviewTable, /\['Setting',row=>row\.detail/);
 });
 

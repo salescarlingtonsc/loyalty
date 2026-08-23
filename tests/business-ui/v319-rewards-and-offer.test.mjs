@@ -212,13 +212,16 @@ test('V319 the offers table drops a count nothing records and states when the of
      rule the V319 author wrote this line for: both date columns come from one formatter. */
   assert.match(offersHalf,/31\/08\/2026/,'the end date comes from the house date cell, in the owner\'s format');
   assert.doesNotMatch(offersHalf,/31 August 2026/,'the long form is what the owner struck out');
-  /* The rewards side keeps every column the V271 and V301 owners named, MINUS Type, which the
-     owner struck through on 2026-08-14 — see the V324 child-indent test below for what now
-     carries the relationship that column used to state. */
+  /* The rewards side keeps the columns the V271 and V301 owners named, MINUS the two the owner
+     has since struck through in their own hand: Type on 2026-08-14 (see the V324 child-indent
+     test below for what carries that relationship now) and Customers used on 2026-08-23. Both
+     tables have now shed their people-count, for the same reason the offers half never had one —
+     the honest per-gift figure lives in the analytics block, and it counts uses, not heads. */
   const rewardsHalf=html.slice(html.indexOf('="rewards"'),html.indexOf('="offers"'));
-  for(const column of ['Programme','Started','Customers used','Setting'])
+  for(const column of ['Programme','Started','Setting'])
     assert.match(rewardsHalf,new RegExp(`<th>${column}</th>`));
   assert.doesNotMatch(rewardsHalf,/<th>Type<\/th>/,'the owner struck the Type column');
+  assert.doesNotMatch(rewardsHalf,/<th>Customers used<\/th>/,'the owner struck the count column');
 });
 
 test('V319 an open-ended offer says so rather than borrowing a count\'s "Not tracked"', () => {

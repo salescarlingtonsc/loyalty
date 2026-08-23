@@ -166,7 +166,7 @@ test('V271 (b) Overview and History replace the category list rather than stacki
   assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);
 });
 
-test('V271 (b) Overview is a columnar table with the four columns the owner named', () => {
+test('V271 (b) Overview is a columnar table with the columns the owner still wants', () => {
   /* V319 (owner sketch: "two side view", two named categories) split this into two tables. The
      columns the V271 owner named are the ones the REWARDS table still carries; the offers table
      is checked separately below, because dropping a count nothing records was the point of it. */
@@ -181,7 +181,11 @@ test('V271 (b) Overview is a columnar table with the four columns the owner name
   assert.doesNotMatch(table, /\['Type',row=>esc\(row\.type\)\]/);
   assert.match(table, /growOverviewNameColumnV324\(growOverviewRewardRowsV319,'Programme'\)/);
   assert.match(table, /\['Started',row=>growDateCellV271\(row\.started\)\]/);
-  assert.match(table, /\['Customers used',row=>growCountCellV271\(row\.customers\)\]/);
+  /* V468 (owner photo 5, 2026-08-23) struck "Customers used" out — the second column the owner's
+     own pen has removed from this table, after Type in V324. The count is not lost: the
+     per-category analytics block below carries it per gift, and counts USES rather than distinct
+     customers, which is the reading the owner asked for on that same screenshot. */
+  assert.doesNotMatch(table, /\['Customers used'/);
   // Only what is running is on this table.
   assert.match(app, /const growOverviewRowsV271=growProgrammeEntriesV271\.filter\(entry=>entry\.state==='live'\);/);
   // House table idiom, so 390px is handled by the existing data-label rules.

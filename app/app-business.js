@@ -13895,10 +13895,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :Promise.resolve([]);
   /* Already a Promise.all, but it was CREATED after the five awaits above had each finished, so
      it could never overlap them. Creating it here is the whole of its change. */
-  /* V386: the windowed reads for the analytics card, and ONLY that card. The Overview table's
-     "Customers used" column keeps the unbounded v271 read below — the owner drew the filter on
-     the analytics table, so narrowing a column they did not touch would be a change nobody asked
-     for. With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
+  /* V386: the windowed reads for the analytics card, and ONLY that card. (V468 removed the
+     Overview table's "Customers used" column the rest of this note referred to; the unbounded
+     v271 read stays because the analytics block still needs it.)
+     With no window typed there is nothing extra to fetch: v386 unbounded is v271 by
      contract (db/tests/v386 check 03), so the card reads the figures already on their way.
      The previous-equal-window read is what makes the chart a COMPARISON rather than a snapshot;
      it uses previousEquivalentRangeV153, the same derivation the dashboard's delta chips use. */
@@ -15013,7 +15013,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     empty:'<b>No reward programme is running yet.</b><p class="muted small" style="margin-top:6px">Open <a href="#/grow">Rewards Programme</a> — every programme there comes with a suggested starting point.</p>',
     columns:[growOverviewNameColumnV324(growOverviewRewardRowsV319,'Programme'),
       ['Started',row=>growDateCellV271(row.started)],
-      ['Customers used',row=>growCountCellV271(row.customers)],
+      /* V468 (owner photo 5: the whole "Customers used" column struck out). It answered a question
+         the analytics block below already answers better — per category and per gift — and a
+         distinct-customer tally on a programme row invited exactly the misreading the owner called
+         out on that block: one regular redeeming five times read as "1". The count is not lost, it
+         moved to where it is explained. */
       ['Setting',row=>row.detail?`<span data-merchant-content>${esc(row.detail)}</span>`:'<span class="muted">—</span>']]});
   /* No "Customers used" column here. Nothing in the schema records a customer redeeming a
      promotion (see the V271 honesty note above), so the cell was "Not tracked" on every row of
