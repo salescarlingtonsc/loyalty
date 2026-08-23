@@ -364,3 +364,51 @@ test('v478 the milestone carries what the rules sheet reads, so there is no seco
   /* customer_get_stamp_card_v323 has always sent these; the normaliser kept only what the grid
      drew, which is why the stamp page could never open a rules sheet. */
 });
+
+/* ------------------------------------------------- v479: the push, and its safety net -------- */
+/* Owner: "why we clicked record sale on business view but customer view will take so long to
+   receive the stamps? But customer can book appointment and business will receive the appointment
+   instantly?" — the fix chosen on their own criteria: proven mechanism, exact factual data,
+   no backend load. The DB half is proved by db/tests/v479 (rolled back against prod, 6/6,
+   including the ledger surviving the signal machinery being dropped outright). These pin the
+   browser half. */
+
+const watcherSrcV479 = statement('function watchCustomerWalletV295(', '\n}');
+
+test('v479 the wallet watcher subscribes to the customer\'s own signal row, and only theirs', () => {
+  assert.match(watcherSrcV479, /table:'customer_wallet_signals_v479'/,
+    'the doorbell table the migration put into the realtime publication');
+  assert.match(watcherSrcV479, /filter:`auth_user_id=eq\.\$\{S\.user\.id\}`/,
+    'filtered to the signed-in customer — never a firehose of every tenant\'s signals');
+  assert.match(watcherSrcV479, /S\.user\?\.id&&typeof sb\.channel==='function'/,
+    'no user or no realtime client means no subscription, never a throw');
+});
+
+test('v479 the ping lands on the counter moment, because a push IS a counter moment', () => {
+  const handler = section("table:'customer_wallet_signals_v479'", '.subscribe()', watcherSrcV479);
+  assert.match(handler, /void counterMomentV468\(\)/,
+    'immediate refresh + restored tick budget + the 60s close watch that path already earned');
+  assert.match(handler, /now-lastSignalAtV479<1500/,
+    'a sale that writes several ledger rows rings once, not once per row');
+  assert.match(handler, /if\(stopped\)return/,
+    'a ping arriving after teardown must do nothing');
+});
+
+test('v479 the channel dies with the watcher, and the poll is NOT removed', () => {
+  const stopBlock = section('const stop=()=>{', '};', watcherSrcV479);
+  assert.match(stopBlock, /sb\.removeChannel\(signalChannelV479\)/,
+    'navigating away tears the socket down — the next page arms its own');
+  /* The poll is the fallback for the lift, the train, the dropped socket. Removing it because the
+     push exists would trade a working slow path for a broken fast one. */
+  assert.match(watcherSrcV479, /CUSTOMER_WALLET_POLL_MS_V295/,
+    'the 20s idle cadence survives as the fallback');
+  assert.match(watcherSrcV479, /const arm=\(\)=>\{/, 'and it still self-arms');
+});
+
+test('v479 the push carries no figures — the refresh is what puts numbers on screen', () => {
+  /* The handler must not read anything off the event payload: the doorbell is not a statement.
+     If a payload field were ever consumed, the number on screen could disagree with the ledger. */
+  const handler = section("table:'customer_wallet_signals_v479'", '.subscribe()', watcherSrcV479);
+  assert.doesNotMatch(handler, /payload|\.new\b|\.old\b|record/,
+    'exact factual data means the ledger-backed refresh is the only source of numbers');
+});

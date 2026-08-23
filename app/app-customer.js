@@ -5210,10 +5210,12 @@ function customerWalletHomePulseReaderV370(){
 function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
   activeCustomerWalletLiveCleanupV295();
   let ticks=0,timer=0,stopped=false,counterUntilV468=0;
+  let signalChannelV479=null,lastSignalAtV479=0;
   const stop=()=>{
     if(stopped)return;stopped=true;
     if(timer)clearTimeout(timer);timer=0;
     document.removeEventListener('visibilitychange',onVisibility);
+    if(signalChannelV479){try{sb.removeChannel(signalChannelV479)}catch{}signalChannelV479=null}
     if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
     if(activeCustomerWalletCounterMomentV468===counterMomentV468)activeCustomerWalletCounterMomentV468=async()=>{};
   };
@@ -5275,6 +5277,41 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
        page, not for this glance. */
     try{await refresh()}catch{}
     arm();
+  }
+  /* ============ nestly_v479 — THE PUSH (owner: "why … so long to receive the stamps? But
+     customer can book appointment and business will receive the appointment instantly?").
+     The asymmetry was never the mechanism — the business side has held a realtime channel since
+     v155 — it was the TABLE. A booking is a row staff may read, so they can subscribe to it; a
+     stamp lives in points_ledger, the sales record, which customers deliberately cannot read,
+     and realtime respects that, so subscribing them to the ledger would deliver nothing.
+     v479 gives them a row they MAY hear: customer_wallet_signals_v479, one row per
+     (business, customer), bumped by a trigger on every ledger append, carrying no figures at
+     all. The ping is a doorbell, not a statement — on it, this watcher runs the SAME
+     ledger-backed refresh it has always run, so the number on screen is still the ledger's
+     answer and never the notification's.
+     It lands on counterMomentV468 deliberately: a push IS the counter moment (a sale just
+     happened), so it gets the immediate refresh, the restored tick budget and the 60s close
+     watch that path already earned. The POLL BELOW IS KEPT — sockets drop in lifts and on
+     trains, and when the channel is up the poll's pulse is a cheap no-op signature match; when
+     it is not, the poll is the fallback that keeps the promise. Belt and braces, exactly like
+     the business side.
+     The 1.5s collapse absorbs a sale that writes several ledger rows (earn + retention) without
+     running the 12-read refresh once per row. */
+  if(S.user?.id&&typeof sb.channel==='function'){
+    try{
+      signalChannelV479=sb.channel(`wallet-signal-${S.user.id}`)
+        .on('postgres_changes',
+          {event:'*',schema:'public',table:'customer_wallet_signals_v479',
+           filter:`auth_user_id=eq.${S.user.id}`},
+          ()=>{
+            if(stopped)return;
+            const now=Date.now();
+            if(now-lastSignalAtV479<1500)return;
+            lastSignalAtV479=now;
+            void counterMomentV468();
+          })
+        .subscribe();
+    }catch{signalChannelV479=null}
   }
   document.addEventListener('visibilitychange',onVisibility);
   activeCustomerWalletLiveCleanupV295=stop;

@@ -2415,6 +2415,12 @@
       "path": "db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql",
       "semanticVersion": "v478",
       "proposedDeployVersion": "20260824000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v479_customer_wallet_realtime_signal.sql",
+      "semanticVersion": "v479",
+      "proposedDeployVersion": "20260824000002"
     }
   ]
 }

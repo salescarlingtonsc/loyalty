@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 356,
-  "itemCount": 401,
+  "pendingCount": 357,
+  "itemCount": 402,
   "items": [
     {
       "order": 1,
@@ -4017,6 +4017,16 @@
       "path": "supabase/migrations/20260824000001_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql",
       "octetLength": 6117,
       "sha256": "b9097ab6d0f37e8f1baf6500a19192352cc3b41f586e8a22002b0038e31a553f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 402,
+      "kind": "pending",
+      "version": "20260824000002",
+      "name": "nestly_v479_customer_wallet_realtime_signal",
+      "path": "supabase/migrations/20260824000002_nestly_v479_customer_wallet_realtime_signal.sql",
+      "octetLength": 5279,
+      "sha256": "d57b496ce68d5afeae389449143a97b8c19fadaf586cf309d6fd70825726ea8d",
       "provenance": "local-source"
     }
   ]
