@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="71286c8884752cd622aca9cc32132dd69cc491b90b7c4b1cbc3b5851c624e07e"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="a4494a8b4a9c8f4fc69e58eb7759b06e53b5121b91b74dddc11cc6ff0a992043"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3328,6 +3328,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    Reuses .v150-segment, the segmented control the workspace already uses, so this is a position
    and a little breathing room rather than a second tab style. */
 .customer-rewards-tabs-v422{margin:10px 0 12px}
+/* nestly_v472 (owner photo 5): the Activity subtabs. Same .v150-segment strip the rewards tabs
+   above already use, so the two tab rows on this surface read as one control and not two. */
+.customer-activity-tabs-v472{margin:2px 0 12px}
 .customer-rewards-empty-v422{margin:6px 0 2px}
 /* A claimed reward is a record, not an offer: no brand halo, and the picture is dimmed so a
    history card can never be mistaken for something still claimable. */
@@ -4376,7 +4379,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 71286c8884752cd622aca9cc32132dd69cc491b90b7c4b1cbc3b5851c624e07e</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · a4494a8b4a9c8f4fc69e58eb7759b06e53b5121b91b74dddc11cc6ff0a992043</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -13764,7 +13767,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'71286c8884752cd622aca9cc32132dd69cc491b90b7c4b1cbc3b5851c624e07e',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'a4494a8b4a9c8f4fc69e58eb7759b06e53b5121b91b74dddc11cc6ff0a992043',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

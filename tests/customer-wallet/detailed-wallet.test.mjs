@@ -92,10 +92,14 @@ test('v39 capabilities are module- and data-aware and the SPA loads only relevan
   assert.match(app,/rewardsHost:capabilities\.rewards===true/);
   assert.match(app,/\$\{rewardsHost\?'<div id="walletRewards"/);
   assert.doesNotMatch(app,/capabilities\.rewards\?walletSectionShell/i);
-  assert.match(app,/capabilities\.activity\?walletSectionShell/i);
+  /* nestly_v472 (owner photo 5) put Activity behind three subtabs, so the activity and
+     appointments shells are now gated one level out — the capability guards the PANEL, and the
+     shell sits inside it. The gate itself is unchanged and is what this line is here to protect:
+     no capability, no panel, and (see customerActivityTabsV472) no tab offering to open one. */
+  assert.match(app,/capabilities\.activity\?`<div data-activity-panel-v472="rewards" hidden>/);
+  assert.match(app,/capabilities\.appointments\?`<div data-activity-panel-v472="appointments" hidden>/);
   assert.match(app,/capabilities\.packages\?walletSectionShell/i);
   assert.match(app,/capabilities\.membership\?walletSectionShell/i);
-  assert.match(app,/capabilities\.appointments\?walletSectionShell/i);
   assert.match(app,/wallet-skeleton/i);
   assert.match(app,/walletSectionError/i);
   assert.match(app,/walletSectionEmpty/i);

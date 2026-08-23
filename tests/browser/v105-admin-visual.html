@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="7113c07562ee9b6f66311a1498ed069c818f585b58a4fc678042297db3ed5d81">
+<meta name="v105-production-component-sha256" content="65f31d74a4fccdffb775e6452b66a2669195ecbf8ddc15d2f181b0ec3c14f69c">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3334,6 +3334,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    Reuses .v150-segment, the segmented control the workspace already uses, so this is a position
    and a little breathing room rather than a second tab style. */
 .customer-rewards-tabs-v422{margin:10px 0 12px}
+/* nestly_v472 (owner photo 5): the Activity subtabs. Same .v150-segment strip the rewards tabs
+   above already use, so the two tab rows on this surface read as one control and not two. */
+.customer-activity-tabs-v472{margin:2px 0 12px}
 .customer-rewards-empty-v422{margin:6px 0 2px}
 /* A claimed reward is a record, not an offer: no brand halo, and the picture is dimmed so a
    history card can never be mistaken for something still claimable. */
@@ -5191,7 +5194,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 7113c07562ee</span>
+<span class="v105-provenance">v105 production-component harness · 65f31d74a4fc</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5316,7 +5319,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'7113c07562ee9b6f66311a1498ed069c818f585b58a4fc678042297db3ed5d81',
+  sourceHash:'65f31d74a4fccdffb775e6452b66a2669195ecbf8ddc15d2f181b0ec3c14f69c',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -10880,6 +10880,42 @@ function customerBusinessMenuMarkupV472(business={}){
     </div>
   </section>`;
 }
+/* nestly_v472 — the Activity subtabs (owner photo 5). Three tabs, named by the owner, and only
+   the ones this business can actually fill: a café has no appointments, and a tab that opens onto
+   a permanently empty panel is a tab that lies. The gates are the SAME capability flags the
+   panels' own shells read, so a tab can never outlive the section it reveals.
+   With a single tab there is nothing to switch between and the strip is not drawn at all — one
+   tab is a heading with extra chrome. */
+function customerActivityTabsV472(capabilities={}){
+  return [
+    {key:'activities',label:'Activities'},
+    capabilities.activity?{key:'rewards',label:'Rewards'}:null,
+    capabilities.appointments?{key:'appointments',label:'Appointments'}:null
+  ].filter(Boolean);
+}
+function customerActivityTabsMarkupV472(capabilities={}){
+  const tabs=customerActivityTabsV472(capabilities);
+  if(tabs.length<2)return '';
+  return `<div class="v150-segment customer-activity-tabs-v472" role="tablist" aria-label="Activity">
+    ${tabs.map((tab,index)=>`<button type="button" role="tab" aria-selected="${index===0?'true':'false'}" data-activity-tab-v472="${esc(tab.key)}">${esc(tab.label)}</button>`).join('')}
+  </div>`;
+}
+/* Panels are toggled by `hidden`, never removed: every section loader resolves its host by id and
+   would find nothing if a hidden panel were unmounted, so a customer opening Appointments would
+   get an empty card that never fills. Hidden-but-present also means the reads all still run on
+   first paint, which is what keeps switching tabs instant. */
+function wireCustomerActivityTabsV472(root){
+  const host=root||document;
+  const tabs=[...host.querySelectorAll('[data-activity-tab-v472]')];
+  if(!tabs.length)return;
+  const show=wanted=>{
+    tabs.forEach(tab=>tab.setAttribute('aria-selected',String(tab.dataset.activityTabV472===wanted)));
+    host.querySelectorAll('[data-activity-panel-v472]').forEach(panel=>{
+      panel.hidden=panel.dataset.activityPanelV472!==wanted;
+    });
+  };
+  tabs.forEach(tab=>{tab.onclick=()=>show(String(tab.dataset.activityTabV472||'activities'))});
+}
 function customerBusinessGalleryMarkupV418(business={}){
   const photos=(Array.isArray(business.gallery)?business.gallery:[])
     .map(item=>({url:customerMediaUrlV95(item?.image_ref),caption:String(item?.caption||'').trim()}))
@@ -11958,16 +11994,35 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         ${capabilities.membership?walletSectionShell('walletMemberships','Membership','Current plan and period status.'):''}
         ${customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable'?`<section class="card wallet-section" id="walletBirthdayParticipation" aria-busy="true"><div class="wallet-skeleton"></div></section>`:''}
       </section>`:''}
+      ${/* nestly_v472 (owner, photo 5: "i need a subtab inside activities (in customer view) —
+           because now is a endless scrolling. Subtab like Appointments / Recent Activity /
+           Loyalty Activity"). The owner's own naming, given back: Activities / Rewards /
+           Appointments, and "Appointments (if have, because F&B don't need appointments)".
+           Nothing about the DATA changes. These were already three independently-loaded hosts
+           stacked vertically; this puts them behind three tabs and hides two of them. Each
+           loader still finds its own element by the same id, still on the page, so no read moved
+           and no read became conditional on a tab being open.
+           The OUTER "History" <details> that used to wrap Transactions and Loyalty activity is
+           gone: a tab and a disclosure are two ways of saying the same thing, and stacking them
+           was the endless scroll the owner is complaining about. The v468-E1 force-open machinery
+           stays, because the "Full history" disclosure INSIDE the transactions section is still
+           there and still needs opening on the Activity page — it now has one disclosure to
+           defeat instead of two.
+           A distinct data attribute, NOT data-programme-tab: wireCustomerProgrammeTabsV194 runs
+           over this same walletBody host and would fold these three into one roving group with
+           the tier/points tabs above them. */''}
       <section class="customer-business-group-v346" id="customerBusinessActivityDetailV347" aria-labelledby="customerBusinessActivityTitle">
-        <div class="customer-business-group-head-v346"><h2 id="customerBusinessActivityTitle">Activity</h2><p class="muted small">Appointments, visits and loyalty history.</p></div>
-        ${capabilities.appointments?walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.'):''}
-        <details class="card wallet-history-disclosure" id="walletHistoryDisclosure">
-          <summary><span>History</span><span class="muted small">Transactions and loyalty activity</span></summary>
-          <div class="wallet-history-disclosure-body">
-            ${walletSectionShell('walletTransactions','Transactions & points','Every purchase, reversal, correction, and points event kept in time order.')}
-            ${capabilities.activity?walletSectionShell('walletActivity','Loyalty activity','Your loyalty history with this business.'):''}
-          </div>
-        </details>
+        <div class="customer-business-group-head-v346"><h2 id="customerBusinessActivityTitle">Activity</h2><p class="muted small">Visits, rewards and loyalty history.</p></div>
+        ${customerActivityTabsMarkupV472(capabilities)}
+        <div data-activity-panel-v472="activities">
+          ${walletSectionShell('walletTransactions','Activities','Every purchase, reversal, correction, and points event kept in time order.')}
+        </div>
+        ${capabilities.activity?`<div data-activity-panel-v472="rewards" hidden>
+          ${walletSectionShell('walletActivity','Rewards','Your loyalty history with this business.')}
+        </div>`:''}
+        ${capabilities.appointments?`<div data-activity-panel-v472="appointments" hidden>
+          ${walletSectionShell('walletAppointments','Appointments','Upcoming and recent visits.')}
+        </div>`:''}
       </section>
       <section class="customer-business-group-v346" id="customerBusinessOverviewDetailV347" aria-labelledby="customerBusinessOffersTitle">
         <div class="customer-business-group-head-v346"><h2 id="customerBusinessOffersTitle">Overview</h2><p class="muted small">Current offers and visit feedback.</p></div>
@@ -11987,6 +12042,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   /* nestly_v418: the gallery's photos open full size. Wired with the page's other controls so a
      re-render rebinds them together. */
   wireCustomerGalleryV418($('walletBody'));
+  wireCustomerActivityTabsV472($('walletBody'));
   /* V468-E2(a): showing the member code IS the counter moment — it is the thing the customer does
      immediately before the staff rings the sale or applies a reward. Delegated on the body, which
      is replaced wholesale by every paint, so the listener never accumulates. */

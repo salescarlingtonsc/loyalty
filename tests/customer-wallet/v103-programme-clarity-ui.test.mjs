@@ -54,15 +54,28 @@ test('programme balance is compact, formatted once, and tier progress is truthfu
   assert.doesNotMatch(wallet,/<span class="muted small">\$\{esc\(loyalty\.unit\|\|'points'\)\}/);
 });
 
-test('transactions and loyalty activity start inside one accessible collapsed History disclosure',()=>{
+/* nestly_v472 replaced what this test pinned. The owner's ruling on photo 5 — "i need a subtab
+   inside activities, because now is a endless scrolling" — retires the collapsed History
+   disclosure that used to wrap Transactions and Loyalty activity: a tab and a disclosure are two
+   ways of saying the same thing, and stacking them was the scroll being complained about.
+   What the old test was really protecting survives and is asserted here instead: both sections
+   are still on the page, still under Activity, and neither is on screen at the same time as the
+   other. */
+test('v472 Activity is three subtabs, one open, and every section keeps its own host',()=>{
   const wallet=section('async function renderCustomerWallet','async function renderCustomerInAppInbox');
-  assert.match(wallet,/<details class="card wallet-history-disclosure" id="walletHistoryDisclosure">/);
-  assert.match(wallet,/<summary><span>History<\/span><span class="muted small">Transactions and loyalty activity<\/span><\/summary>/);
-  assert.doesNotMatch(wallet,/<details class="card wallet-history-disclosure"[^>]*\bopen\b/);
-  const historyStart=wallet.indexOf('id="walletHistoryDisclosure"');
-  const historyEnd=wallet.indexOf('</details>',historyStart);
-  assert.ok(wallet.indexOf("walletSectionShell('walletTransactions'",historyStart)<historyEnd);
-  assert.ok(wallet.indexOf("walletSectionShell('walletActivity'",historyStart)<historyEnd);
+  assert.doesNotMatch(wallet,/id="walletHistoryDisclosure"/,'the outer disclosure is gone');
+  for(const [key,host] of [['activities','walletTransactions'],['rewards','walletActivity'],['appointments','walletAppointments']]){
+    const at=wallet.indexOf(`data-activity-panel-v472="${key}"`);
+    assert.ok(at>=0,`${key} panel must exist`);
+    const end=wallet.indexOf('</div>',at);
+    assert.ok(wallet.indexOf(`walletSectionShell('${host}'`,at)<end&&wallet.indexOf(`walletSectionShell('${host}'`,at)>=0,
+      `${host} must live inside the ${key} panel — every loader resolves it by id`);
+  }
+  /* Exactly one panel starts visible. The other two are `hidden`, never unmounted: a loader that
+     could not find its host would leave a card that never fills. */
+  assert.doesNotMatch(wallet,/data-activity-panel-v472="activities" hidden/);
+  assert.match(wallet,/data-activity-panel-v472="rewards" hidden/);
+  assert.match(wallet,/data-activity-panel-v472="appointments" hidden/);
 });
 
 test('each eligible reward says Show QR at counter and opens the existing pending QR flow',()=>{
