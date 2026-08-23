@@ -12783,8 +12783,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         const gross=item.gross_cents===null||item.gross_cents===undefined?null:Number(item.gross_cents);
         const net=item.net_cents===null||item.net_cents===undefined?null:Number(item.net_cents);
         const lines=Array.isArray(item.line_items)?item.line_items:[];
-        const packageLabel=item.is_package_session===true?'Package session used':(item.description||String(item.event_type||'Transaction').replaceAll('_',' '));
-        const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:'';
+        /* V469 (owner photo 11). A welcome offer, bring-back voucher or referral gift is handed
+           over as a $0 sale, so this row used to read "Retail purchase — SGD 0.00" — the customer
+           could see that something happened but not what. grant_label is the gift's own
+           customer-facing name, derived server-side from the grant note; the raw note is never
+           sent, because staff type real remarks into it. */
+        const grantLabelV469=String(item.grant_label||'').trim();
+        const packageLabel=item.is_package_session===true?'Package session used'
+          :grantLabelV469||(item.description||String(item.event_type||'Transaction').replaceAll('_',' '));
+        const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:(grantLabelV469?'Given free':'');
         return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
           ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}

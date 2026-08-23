@@ -2362,6 +2362,12 @@
       "version": "20260823000005",
       "name": "nestly_v468_programme_usage_counts",
       "sourcePath": "db/migrations/20260823_nestly_v468_programme_usage_counts.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260823000006",
+      "name": "nestly_v469_grant_sales_name_themselves",
+      "sourcePath": "db/migrations/20260823_nestly_v469_grant_sales_name_themselves.sql"
     }
   ]
 }

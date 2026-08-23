@@ -317,7 +317,12 @@ test('V275 the customer card exists only when the read returns rows, and fails s
     'finish_bottle_v275', 'set_bottle_fill_v275', 'set_bottle_status_v275']) {
     assert.ok(!loader.includes(rpc), `the customer card must not call ${rpc}`);
   }
-  assert.match(app, /loadFeedback\(\),loadBottlesV275\(\)\]\);/,
+  /* V469: this used to pin loadBottlesV275() as the LAST entry in the Promise.all, so appending
+     any new wallet loader broke a test about bottles. What it is guarding is that the loader is
+     actually awaited alongside the others, not its position in the list. */
+  const walletAllV469=app.match(/await Promise\.all\(\[loadMemberCodeW6I2\(\)[^\]]*\]\)/);
+  assert.ok(walletAllV469, 'the wallet still loads its sections in one Promise.all');
+  assert.match(walletAllV469[0], /\bloadBottlesV275\(\)/,
     'the loader must actually run with the other wallet sections');
 });
 

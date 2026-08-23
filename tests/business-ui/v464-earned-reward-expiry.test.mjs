@@ -230,6 +230,17 @@ const rewardCardSrc = sliceBetween(
   'rewardCardV422',
 );
 
+/* V469: V468-E4 gave every reward card a "?" that opens its rules, so rewardCardV422 now calls
+   customerRewardHelpButtonV468. The harness evaluates the REAL card, so it needs the real helper
+   too — stubbing it would let the card's own markup drift out from under this suite. It is pulled
+   in whole rather than mocked for exactly that reason. */
+const rewardHelpSrc = sliceBetween(
+  app,
+  'function customerRewardHelpButtonV468(attribute,value,label){',
+  '\n}\n',
+  'customerRewardHelpButtonV468',
+);
+
 function renderRewardCard(reward) {
   const scope = {
     rewardUnit: 'stamps',
@@ -237,7 +248,7 @@ function renderRewardCard(reward) {
     CUI: { icon: () => '<svg></svg>' },
   };
   const names = Object.keys(scope);
-  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardCardSrc}\nreturn rewardCardV422;`;
+  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardHelpSrc}\n${rewardCardSrc}\nreturn rewardCardV422;`;
   // eslint-disable-next-line no-new-func
   return new Function(...names, body)(...names.map(n => scope[n]))(reward);
 }
