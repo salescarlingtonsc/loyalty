@@ -310,8 +310,15 @@ test('classic and catalog rewards share the v89 availability enum and produce tr
      counter will honour, so it has no non-available status left to word. The map is still the one
      source of these sentences for the surface that does describe an unclaimable reward: the hero
      swipe pages (v399). Asserted there rather than dropped. */
-  assert.match(app,/return CUSTOMER_REWARD_AVAILABILITY_COPY_V399\[key\]\|\|'Not available right now'/,
+  /* V468-C4 (owner photo 7: "for stamp portion, it's called stamps, not points"). One sentence in
+     that map names a unit, and named the wrong one on every stamp card. The map is still the one
+     source of these sentences — the lookup below is unchanged; the noun is substituted after it,
+     through the existing v429 plumbing, so a stamps merchant reads "More stamps needed" and a
+     points merchant reads exactly what this map says. */
+  assert.match(app,/const copy=CUSTOMER_REWARD_AVAILABILITY_COPY_V399\[key\]\|\|'Not available right now'/,
     'the hero swipe page still reads that one map');
+  assert.match(app,/const noun=unit\?customerUnitNounV429\(unit,2\):'points';\n\s*return noun==='points'\?copy:copy\.replace\(\/\\bpoints\\b\/g,noun\)/,
+    'the unit noun comes from the v429 helper, and a caller that knows no unit keeps the map verbatim');
   assert.doesNotMatch(wallet,/Ask the business to enable QR redemption|QR redemption is not enabled by this business/);
   assert.match(wallet,/actionsResult\.data\?\.redemption\?\.classic/);
   assert.match(wallet,/customerRewardCanRedeem\(item,redemptionEnabled\)/);
