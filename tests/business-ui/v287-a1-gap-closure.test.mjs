@@ -198,8 +198,14 @@ test('V287 the unreachable dashboard metric modal and the duplicate cart binding
   assert.doesNotMatch(app, /openDashboardMetricDetailV141\(key,/);
   assert.doesNotMatch(app, /id="dashboardMetricModal"/);
   for (const key of ['visits', 'revenue', 'new', 'inactive']) {
-    assert.match(metricDefs, new RegExp(`${key}:\\{label:[^}]*route:'#/`),
-      `${key} must still carry the route the tile navigates to`);
+    /* V470 (owner: "remove this button" on the dialog footer). The tile has not navigated
+       anywhere since V388 — it opens the rows behind the figure — and V470 removed the footer
+       link that was the last reader of `route`, so the key is gone rather than left as stale
+       data. What this loop is really guarding is that all four tiles are still DEFINED and still
+       drill down, which is asserted here and executed in v299-insights-dashboard-polish. */
+    assert.match(metricDefs, new RegExp(`${key}:\\{label:`),
+      `${key} must still be a defined drilldown metric`);
+    assert.doesNotMatch(metricDefs, /route:'#\//, 'a route nothing navigates to is stale data');
   }
   // The second, byte-identical [data-use-package] binding is removed; one remains.
   assert.equal((till.match(/document\.querySelectorAll\('\[data-use-package\]'\)/g) || []).length, 1);

@@ -162,7 +162,10 @@ const growHarness=()=>new Function('esc','assertOk','CUI',`
   ${STATUS_PRELUDE_SRC}
   ${statement('function promotionDateTextV104(value){','\n}')}
   ${statement('function promotionDateShortV324(value){','\n}')}
-  ${statement('const growCountCellV271=','esc(String(Number(value)));')}
+  ${/* V470 gave the cell a second argument — the EVENT its figure counted, because the engine rows
+       count earns and the gift rows count redemptions, and one column that implied a sum between
+       them is what the owner queried ("point system there's 4 but why it shows 2?"). */''}
+  ${statement('const growCountCellV271=',"</span>`:''}`;")}
   ${statement('const growDateCellV271=','\'<span class="muted">Not tracked</span>\';')}
   ${statement('const growTableV271=','\`<div class="empty" role="status">\${empty}</div>\`;')}
   const growUsageV271={};

@@ -91,10 +91,15 @@ test('v413 a scope the server did not answer stays Not tracked, never zero', () 
 const usageHarness = () => new Function('esc', `
   ${statement('const growOverviewChildRowV324=', "row.type==='Reward';")}
   ${statement('const growAnalyticsCategoryV385=', "(entry.type||'Programme');")}
+  /* V470: the bucket builder tags each row with the EVENT its figure counted — the engines count
+     earns, the gifts count redemptions — so the harness needs the map, pulled from source rather
+     than restated here. */
+  ${statement('const GROW_USAGE_VERBS_V470=Object.freeze({', '});')}
   ${statement('const growUsageForEntryV386=', '\n  };')}
   ${statement('const growUsageGroupKeyV413=', "||'group';")}
-  const growCountCellV271=value=>value==null
-    ?'<span class="muted">Not tracked</span>':esc(String(Number(value)));
+  const growCountCellV271=(value,verbV470)=>value==null
+    ?'<span class="muted">Not tracked</span>'
+    :esc(String(Number(value)))+(verbV470?' <span class="muted">'+esc(verbV470)+'</span>':'');
   return (entries,usage,openGroups)=>{
     const growProgrammeEntriesV271=entries;
     ${statement('const growAnalyticsRowsFromUsageV386=', '\n    return out;\n  };')}

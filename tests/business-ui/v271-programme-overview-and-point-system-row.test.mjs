@@ -195,8 +195,14 @@ test('V271 (b) Overview is a columnar table with the columns the owner still wan
 });
 
 test('V271 (b) an unsourceable cell says so — it is never a zero', () => {
+  /* V470 gave the cell a second argument — the EVENT its figure counted. The CONTRACT this test
+     guards is untouched and is the whole point: a figure the server did not answer still says
+     "Not tracked" (or "Not available" when the read itself failed) and is NEVER rendered as 0.
+     Only what accompanies a real number changed. */
   assert.match(app,
-    /const growCountCellV271=value=>value==null\s*\r?\n?\s*\?`<span class="muted">\$\{growUsageV271\?'Not tracked':'Not available'\}<\/span>`\s*\r?\n?\s*:esc\(String\(Number\(value\)\)\);/);
+    /const growCountCellV271=\(value,verbV470\)=>value==null\s*\r?\n?\s*\?`<span class="muted">\$\{growUsageV271\?'Not tracked':'Not available'\}<\/span>`/);
+  assert.match(app,/:`\$\{esc\(String\(Number\(value\)\)\)\}\$\{verbV470\?/,
+    'a real number still renders as itself');
   /* V324 (owner: "all date use dd/mm/yyyy format"). The cell's CONTRACT is what this test is
      about and it is unchanged — an unparseable date still says "Not tracked" and never a zero or
      a blank. Only the formatter it delegates to changed, and promotionDateShortV324 resolves the

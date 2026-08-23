@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7dd71aed9e88d51dfacea60048780552493352362947af1cecc0b55efd34dbbc"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="102861c246165dc16c70f62a59e5131f97806023027d6f789eeadcf296753219"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4348,7 +4348,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7dd71aed9e88d51dfacea60048780552493352362947af1cecc0b55efd34dbbc</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 102861c246165dc16c70f62a59e5131f97806023027d6f789eeadcf296753219</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -15569,9 +15569,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
   const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
   const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
-  const growCountCellV271=value=>value==null
+  const growCountCellV271=(value,verbV470)=>value==null
     ?`<span class="muted">${growUsageV271?'Not tracked':'Not available'}</span>`
-    :esc(String(Number(value)));
+    :`${esc(String(Number(value)))}${verbV470?` <span class="muted">${esc(verbV470)}</span>`:''}`;
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
     ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
   const GROW_PROGRAMME_PARENT_NAMES_V375=Object.freeze({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'});
@@ -15964,6 +15964,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      'customers' (count of the people) from ONE scan of one predicate, so the two can never
      describe different event sets. Everything below reads uses; the honesty rule is untouched —
      a programme the firm never set up still answers null for both and still says "Not tracked". */
+  /* V470: the verb each scope's figure is counting. 'earned' for the two engines, because their
+     number is earn entries on the ledger; 'redeemed' for anything a customer claims. */
+  const GROW_USAGE_VERBS_V470=Object.freeze({
+    point_system:'earned',stamp_card:'earned',
+    reward:'redeemed',retention:'redeemed',birthday:'redeemed',
+    welcome:'redeemed',referrals:'qualified',membership:'joined'
+  });
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
@@ -16000,7 +16007,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            table simply never carried it. V401b gave the Rewards & Loyalty table this treatment and
            said in its own comment that it left this table alone; this is that same treatment,
            reusing the same class names so the two tables cannot drift apart. */
-        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null};
+        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null,
+        /* V470 (owner: "point system there's 4 but why it shows 2?"). It never tallied and it
+           never could: the engine row counts times a customer EARNED, its gift rows count times a
+           gift was REDEEMED. Two different events under one heading, with the gifts indented under
+           the engine, which is an invitation to read them as a sum. They are not a sum and making
+           them one would be a lie — a shop earns far more often than it gives away. So each row
+           now says which event it counted, and the column stops implying arithmetic between them. */
+        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used'};
       current.programmes+=1;
       const usesV468=growUsageForEntryV386(usage,entry);
       if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
@@ -16133,7 +16147,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses)}</td></tr>`;
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses,row.verbV470)}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
@@ -27245,6 +27259,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'7dd71aed9e88d51dfacea60048780552493352362947af1cecc0b55efd34dbbc',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'102861c246165dc16c70f62a59e5131f97806023027d6f789eeadcf296753219',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

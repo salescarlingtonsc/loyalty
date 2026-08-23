@@ -3408,9 +3408,9 @@ const DASHBOARD_INACTIVE_PAGE_V406=100;
    It is pure data — labels, definitions, routes, button copy, scope — with no closure dependency,
    so it belongs at module scope where BOTH readers can actually see it. */
 const DASHBOARD_METRIC_DEFINITIONS_V405={
-  visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',route:'#/sales',action:'View sales',buttonLabel:'View visits',scope:'branch'},
-  revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',route:'#/sales',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
-  new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',route:'#/clients',action:'View customers',buttonLabel:'See new customers',scope:'business'},
+  visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',action:'View sales',buttonLabel:'View visits',scope:'branch'},
+  revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
+  new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',action:'View customers',buttonLabel:'See new customers',scope:'business'},
   /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
      only, so the number an owner tapped and the list they landed on could never agree. The
      server's staff_list_customers_v155 accepted exactly four buckets ('30_59','60_89',
@@ -3421,7 +3421,7 @@ const DASHBOARD_METRIC_DEFINITIONS_V405={
      every customer quiet for 30 days or more and lands on exactly that group. The narrowing
      is undone; the rule it enforced — the number and the destination must be the same set of
      people — is what still holds. */
-  inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',route:'#/clients',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
+  inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
 };
 
 /* V468 (owner photos 3, 8 and 9: "View visits", "See new customers" and "See inactive customers"
@@ -3463,7 +3463,11 @@ async function openDashboardMetricRowsV388(options){
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="metricRowsModalV388" role="dialog" aria-modal="true" aria-labelledby="metricRowsTitleV388" tabindex="-1"><div class="modal-card" style="max-width:640px">
     <div class="row"><div><h2 id="metricRowsTitleV388" style="font-size:16px">${esc(def.label||'Details')}</h2><p class="muted small" style="margin-top:4px">${esc(value)}${periodTextV468?` · ${esc(periodTextV468)}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" id="metricRowsCloseV388" type="button">Close</button></div>
     <div id="metricRowsBodyV388" style="margin-top:14px" aria-live="polite">${CUI.loadingState({title:'Loading',iconName:'reports'})}</div>
-    ${def.route?`<div class="row" style="margin-top:14px"><a class="btn ghost sm" href="${esc(def.route)}" id="metricRowsGoV388">${esc(def.buttonLabel||'View details')}</a></div>`:''}
+    ${/* V470 (owner, four photos, "remove this button" on View visits / View revenue / See new
+         customers / See inactive customers). The dialog was built in v388 as a preview that handed
+         off to a report; since v408 every row in it opens the customer directly, so the footer was
+         a second, worse way to reach the same place — and the one the owner kept pressing. The
+         rows are the destination now. Close is the only exit. */''}
   </div></div>`);
   const modal=document.getElementById('metricRowsModalV388');
   let deactivate;
@@ -3472,10 +3476,6 @@ async function openDashboardMetricRowsV388(options){
   const close=options=>{if(deactivate)deactivate(options);else modal?.remove()};
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#metricRowsCloseV388'});
   document.getElementById('metricRowsCloseV388').onclick=()=>close();
-  /* The report link is the destination the tile used to jump to; closing first stops the dialog
-     outliving the page it was opened from. */
-  const go=document.getElementById('metricRowsGoV388');
-  if(go)go.onclick=event=>{event.preventDefault();dialogHandOffNavV468(close,def.route)};
   const body=document.getElementById('metricRowsBodyV388');
   const stillOpen=()=>body.isConnected;
   /* V408 (owner, photo 3: "now that the boxes are clickable — I need to be able to click into the
@@ -3541,7 +3541,10 @@ async function openDashboardMetricRowsV388(options){
          — which carries the same all_inactive bucket — is the way to the rest. */
       const cappedV406=rows.length>=DASHBOARD_INACTIVE_PAGE_V406;
       body.innerHTML=table(['Customer','Last visit'],rows.map(row=>`<tr><td data-label="Customer">${customerCellV408(row.id,row.full_name||'—',row.phone)}</td><td data-label="Last visit">${row.last_visit_at?esc(sgLedgerDateV154(row.last_visit_at).date):'<span class="muted">Never</span>'}</td></tr>`));
-      if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${DASHBOARD_INACTIVE_PAGE_V406}. Open ${esc(def.buttonLabel||'the full list')} below for the rest.</p>`);
+      /* V470: this used to say "Open <button> below for the rest" — the button it pointed at is
+         gone, so it names the page instead. The rule it exists for is unchanged: a list shorter
+         than its own tile must say so rather than quietly contradict the number. */
+      if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${DASHBOARD_INACTIVE_PAGE_V406}. Open Customers for the rest.</p>`);
       return;
     }
     const {data,error}=await fetchAllRowsResult(()=>sb.from('sales')
@@ -14809,9 +14812,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
   const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
   const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
-  const growCountCellV271=value=>value==null
+  const growCountCellV271=(value,verbV470)=>value==null
     ?`<span class="muted">${growUsageV271?'Not tracked':'Not available'}</span>`
-    :esc(String(Number(value)));
+    :`${esc(String(Number(value)))}${verbV470?` <span class="muted">${esc(verbV470)}</span>`:''}`;
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
     ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
   const GROW_PROGRAMME_PARENT_NAMES_V375=Object.freeze({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'});
@@ -15204,6 +15207,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      'customers' (count of the people) from ONE scan of one predicate, so the two can never
      describe different event sets. Everything below reads uses; the honesty rule is untouched —
      a programme the firm never set up still answers null for both and still says "Not tracked". */
+  /* V470: the verb each scope's figure is counting. 'earned' for the two engines, because their
+     number is earn entries on the ledger; 'redeemed' for anything a customer claims. */
+  const GROW_USAGE_VERBS_V470=Object.freeze({
+    point_system:'earned',stamp_card:'earned',
+    reward:'redeemed',retention:'redeemed',birthday:'redeemed',
+    welcome:'redeemed',referrals:'qualified',membership:'joined'
+  });
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
@@ -15240,7 +15250,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            table simply never carried it. V401b gave the Rewards & Loyalty table this treatment and
            said in its own comment that it left this table alone; this is that same treatment,
            reusing the same class names so the two tables cannot drift apart. */
-        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null};
+        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null,
+        /* V470 (owner: "point system there's 4 but why it shows 2?"). It never tallied and it
+           never could: the engine row counts times a customer EARNED, its gift rows count times a
+           gift was REDEEMED. Two different events under one heading, with the gifts indented under
+           the engine, which is an invitation to read them as a sum. They are not a sum and making
+           them one would be a lie — a shop earns far more often than it gives away. So each row
+           now says which event it counted, and the column stops implying arithmetic between them. */
+        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used'};
       current.programmes+=1;
       const usesV468=growUsageForEntryV386(usage,entry);
       if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
@@ -15373,7 +15390,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses)}</td></tr>`;
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses,row.verbV470)}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
@@ -28125,7 +28142,7 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
      every figure a row by row reading would repeat. */
   const summary=measured.map(row=>windowed
     ?`${row.category}: ${row.uses} this period, ${previousOf(row)==null?'not tracked':previousOf(row)} previously`
-    :`${row.category}: ${row.uses}`).join('; ');
+    :`${row.category}: ${row.uses}${row.verbV470?' '+row.verbV470:''}`).join('; ');
   return `<figure class="grow-usage-chart-v386" data-grow-usage-chart-v386>
     <figcaption class="small"><b>${windowed?'This period against the one before it':'Times used, by category'}</b></figcaption>
     ${legend}
@@ -28138,7 +28155,7 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
             <span class="grow-usage-chart-bar-v386 is-now-v386" style="width:${width(row.uses)}"></span>
             ${windowed?`<span class="grow-usage-chart-bar-v386 is-was-v386" style="width:${was==null?'0%':width(was)}"></span>`:''}
           </span>
-          <span class="grow-usage-chart-value-v386">${esc(String(row.uses))}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
+          <span class="grow-usage-chart-value-v386">${esc(String(row.uses))}${row.verbV470?`<small>${esc(row.verbV470)}</small>`:''}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
         </div>`;
       }).join('')}
     </div>
@@ -29273,11 +29290,11 @@ async function staffMembersPage(){
    `giftcards` deliberately carries no route: V303 removed gift cards from the business UI and
    the router refuses #/giftcards, so a footer link there would be a door to a refusal. */
 const DAILY_REPORT_METRIC_DEFINITIONS_V468={
-  revenue:{label:'Revenue',route:'#/sales',action:'View records',buttonLabel:'View sales',
+  revenue:{label:'Revenue',action:'View records',buttonLabel:'View sales',
     definition:'Every sale record for this day, in this branch scope, whose immutable sale policy counts it as revenue. Reversal records are listed with their negative amount.'},
-  visits:{label:'Visits',route:'#/sales',action:'View records',buttonLabel:'View sales',
+  visits:{label:'Visits',action:'View records',buttonLabel:'View sales',
     definition:'Original visit sales recorded on this day that have not been reversed, including reversals recorded on a later day. Reversal records are never counted as visits.'},
-  customers:{label:'Customer records with valid visits',route:'#/clients',action:'View records',buttonLabel:'View customers',
+  customers:{label:'Customer records with valid visits',action:'View records',buttonLabel:'View customers',
     definition:'One line per customer record behind this day\u2019s valid visits. Walk-in sales carry no customer record and are not counted.'},
   giftcards:{label:'Gift-card issuance amount recorded',action:'View records',
     definition:'Gift cards issued on this day. This is cash collected, not revenue \u2014 the value becomes revenue when the credit is spent.'}

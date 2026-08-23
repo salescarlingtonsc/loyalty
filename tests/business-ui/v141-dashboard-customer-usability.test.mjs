@@ -66,7 +66,13 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
      carries its route — the dialog hands off to it at the foot — so the drilldown contract this
      test guards is intact; only what the first press does changed. */
   assert.match(dashboard,/openDashboardMetricRowsV388\(\{key,from,to,scopePayload,/);
-  assert.match(app,/const go=document\.getElementById\('metricRowsGoV388'\);/);
+  /* V470 (owner, four photos: "remove this button" on the dialog's footer link). V388 built this
+     dialog as a preview that handed off to a report at its foot; V408 then made every ROW open its
+     customer directly, leaving the footer a second and worse way to the same place — and the one
+     the owner kept pressing. The footer is gone, and with it the `route` key on every definition,
+     which nothing read any more. The rows ARE the destination now. */
+  assert.doesNotMatch(app,/metricRowsGoV388/,'the footer link is gone, not merely hidden');
+  assert.doesNotMatch(metricDefs,/route:/,'a route nothing navigates to is stale data');
   /* V388: the hand-off to the report moved into the dialog's own footer control.
      V468 (owner photos 3, 8 and 9 — "View visits" / "See new customers" / "See inactive
      customers" all did nothing): this assertion used to pin `close();nav(def.route)`, which is
@@ -74,8 +80,12 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
      history.back(); the pop lands after the synchronous hash write and cancels it, so the dialog
      closed and the page never moved. Both navigating exits now go through dialogHandOffNavV468,
      the same hand-off wireCustomerSheetNavV183 has used since v183. */
-  assert.match(app,/if\(go\)go\.onclick=event=>\{event\.preventDefault\(\);dialogHandOffNavV468\(close,def\.route\)\};/);
-  assert.doesNotMatch(app,/close\(\);nav\(def\.route\)/,'close() then nav() is the v183 history race');
+  /* What the V468 fix protected still holds and still matters, on the row exit that remains:
+     activateDialog's teardown pops its history entry with an ASYNCHRONOUS history.back(), which
+     would otherwise land after the hash write and cancel it. */
+  assert.match(app,/dialogHandOffNavV468\(close,`#\/client\//,
+    'the row exit still hands off its history entry');
+  assert.doesNotMatch(app,/close\(\);nav\(/,'close() then nav() is the v183 history race');
   assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
   assert.match(metricDefs,/business-current/); // V405: scope tag lives in the module-scope map

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="4cf2b577c7f75fff9d5837a141a7763a925efd5957f5db351d6ba3e033db0620"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="41fd325798ffef4ecf5f9daace3fad70cf6aea862495077552127345ceee8516"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4347,7 +4347,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 4cf2b577c7f75fff9d5837a141a7763a925efd5957f5db351d6ba3e033db0620</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 41fd325798ffef4ecf5f9daace3fad70cf6aea862495077552127345ceee8516</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -4871,7 +4871,7 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
      every figure a row by row reading would repeat. */
   const summary=measured.map(row=>windowed
     ?`${row.category}: ${row.uses} this period, ${previousOf(row)==null?'not tracked':previousOf(row)} previously`
-    :`${row.category}: ${row.uses}`).join('; ');
+    :`${row.category}: ${row.uses}${row.verbV470?' '+row.verbV470:''}`).join('; ');
   return `<figure class="grow-usage-chart-v386" data-grow-usage-chart-v386>
     <figcaption class="small"><b>${windowed?'This period against the one before it':'Times used, by category'}</b></figcaption>
     ${legend}
@@ -4884,7 +4884,7 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
             <span class="grow-usage-chart-bar-v386 is-now-v386" style="width:${width(row.uses)}"></span>
             ${windowed?`<span class="grow-usage-chart-bar-v386 is-was-v386" style="width:${was==null?'0%':width(was)}"></span>`:''}
           </span>
-          <span class="grow-usage-chart-value-v386">${esc(String(row.uses))}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
+          <span class="grow-usage-chart-value-v386">${esc(String(row.uses))}${row.verbV470?`<small>${esc(row.verbV470)}</small>`:''}${windowed?`<small>${was==null?'not tracked':`was ${esc(String(was))}`}</small>`:''}</span>
         </div>`;
       }).join('')}
     </div>
@@ -10003,9 +10003,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growRewardUsageV271=growUsageMapV271(growUsageV271?.rewards,'reward_id');
   const growRetentionUsageV271=growUsageMapV271(growUsageV271?.retention,'program_id');
   const growPlanUsageV271=growUsageMapV271(growUsageV271?.memberships,'plan_id');
-  const growCountCellV271=value=>value==null
+  const growCountCellV271=(value,verbV470)=>value==null
     ?`<span class="muted">${growUsageV271?'Not tracked':'Not available'}</span>`
-    :esc(String(Number(value)));
+    :`${esc(String(Number(value)))}${verbV470?` <span class="muted">${esc(verbV470)}</span>`:''}`;
   const growDateCellV271=value=>Number.isFinite(Date.parse(value||''))
     ?esc(promotionDateShortV324(value)):'<span class="muted">Not tracked</span>';
   const GROW_PROGRAMME_PARENT_NAMES_V375=Object.freeze({points:'Point system',stamps:'Stamp card',tiers:'Tier membership'});
@@ -10398,6 +10398,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      'customers' (count of the people) from ONE scan of one predicate, so the two can never
      describe different event sets. Everything below reads uses; the honesty rule is untouched —
      a programme the firm never set up still answers null for both and still says "Not tracked". */
+  /* V470: the verb each scope's figure is counting. 'earned' for the two engines, because their
+     number is earn entries on the ledger; 'redeemed' for anything a customer claims. */
+  const GROW_USAGE_VERBS_V470=Object.freeze({
+    point_system:'earned',stamp_card:'earned',
+    reward:'redeemed',retention:'redeemed',birthday:'redeemed',
+    welcome:'redeemed',referrals:'qualified',membership:'joined'
+  });
   const growUsageForEntryV386=(usage,entry)=>{
     if(!usage||!entry?.usageScopeV386)return null;
     const listed=(list,idKey)=>{
@@ -10434,7 +10441,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            table simply never carried it. V401b gave the Rewards & Loyalty table this treatment and
            said in its own comment that it left this table alone; this is that same treatment,
            reusing the same class names so the two tables cannot drift apart. */
-        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null};
+        childV410:growOverviewChildRowV324(entry),parentV410:entry.parent||null,
+        /* V470 (owner: "point system there's 4 but why it shows 2?"). It never tallied and it
+           never could: the engine row counts times a customer EARNED, its gift rows count times a
+           gift was REDEEMED. Two different events under one heading, with the gifts indented under
+           the engine, which is an invitation to read them as a sum. They are not a sum and making
+           them one would be a lie — a shop earns far more often than it gives away. So each row
+           now says which event it counted, and the column stops implying arithmetic between them. */
+        verbV470:GROW_USAGE_VERBS_V470[entry.usageScopeV386]||'used'};
       current.programmes+=1;
       const usesV468=growUsageForEntryV386(usage,entry);
       if(usesV468!=null)current.uses=(current.uses||0)+Number(usesV468);
@@ -10567,7 +10581,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :row.synthV413
               ?'<span class="muted" aria-hidden="true">—</span><span class="sr-only">Not counted as a programme of its own</span>'
               :row.programmes;
-          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses)}</td></tr>`;
+          return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${growCountCellV271(row.uses,row.verbV470)}</td></tr>`;
         }).join('')}
       </tbody></table></div>
       ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
@@ -13675,7 +13689,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'4cf2b577c7f75fff9d5837a141a7763a925efd5957f5db351d6ba3e033db0620',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'41fd325798ffef4ecf5f9daace3fad70cf6aea862495077552127345ceee8516',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
