@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e2b13d1c80e99e61dba53d39110ade9040ca4d7f7ee7e0bd213acdfa378d20df"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="5b89e745b24d79344d2a292d74320625de6e9d51aaa430cc35a7267dd7df7c6c"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2195,6 +2195,28 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
+/* nestly_v501 (owner, 2026-08-25, photo 1: "i already told you to fix the UI UX - it is still
+   looking very ugly, there's still overlapping").
+   THE DEFECT, MEASURED at 1280px before the fix. Every note/confirm/form block in this list is an
+   <li class="imp-note">, and `.grow-setup-rewardlist-v301>li` above sets
+   display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap — a rule meant
+   for a ROW ITEM (name … pill … Edit … ⋯). So the tier editor's own children became flex items on
+   one line and were pushed apart by space-between: "Edit tier" measured at left 56, "Tier name" at
+   431 and "Required points" at 976, each vertically centred at a different height (top 130 / 74 /
+   70). That is the scattered, mis-aligned form in the owner's photo — not a spacing nicety but a
+   block of form content being laid out as a horizontal row.
+   None of these blocks is a row item, so the rule is generic: an imp-note inside this list stacks.
+   The tier form additionally leaves imp-note's 12px brown NOTE styling behind — it is a form, not
+   a warning — and takes the same card treatment .grow-setup-rewardform-v301 already defines.
+   AFTER, measured: all three left-align at 58 and stack at 58 / 91 / 214. */
+.grow-setup-rewardlist-v301>li.imp-note{display:block}
+.grow-setup-rewardlist-v301>li.grow-tier-form-v501{font-size:inherit;color:inherit;
+  padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
+/* The benefit-template picker sat in a flex row with no floor, so it shrank to 98px and truncated
+   its own label mid-word — the "Discou" in the owner's photo. A floor plus a wrap-friendly basis:
+   it keeps its full 260px where there is room and wraps to the next line where there is not,
+   rather than cutting the words the owner has to read to choose. */
+#growTiersBenefitTemplateV363{flex:0 1 260px;min-width:190px}
 .grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
@@ -4584,7 +4606,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e2b13d1c80e99e61dba53d39110ade9040ca4d7f7ee7e0bd213acdfa378d20df</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5b89e745b24d79344d2a292d74320625de6e9d51aaa430cc35a7267dd7df7c6c</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8266,7 +8288,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'e2b13d1c80e99e61dba53d39110ade9040ca4d7f7ee7e0bd213acdfa378d20df',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'5b89e745b24d79344d2a292d74320625de6e9d51aaa430cc35a7267dd7df7c6c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

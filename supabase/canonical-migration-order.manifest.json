@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 365,
-  "itemCount": 410,
+  "pendingCount": 366,
+  "itemCount": 411,
   "items": [
     {
       "order": 1,
@@ -4107,6 +4107,16 @@
       "path": "supabase/migrations/20260825000001_nestly_v496_full_card_rolls_and_gifts_stack.sql",
       "octetLength": 11805,
       "sha256": "0304ec9afa8e9b54ed16f8567aeb26df0d7452b8d0b2f748cf28479843bef073",
+      "provenance": "local-source"
+    },
+    {
+      "order": 411,
+      "kind": "pending",
+      "version": "20260825000002",
+      "name": "nestly_v501_customer_sees_tier_benefits",
+      "path": "supabase/migrations/20260825000002_nestly_v501_customer_sees_tier_benefits.sql",
+      "octetLength": 8755,
+      "sha256": "d22db2888180b39499f5bd45aa26a7d5709947d1e130f364767def784888864d",
       "provenance": "local-source"
     }
   ]

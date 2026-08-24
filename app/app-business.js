@@ -16548,7 +16548,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      permanently expanded."): the old 'prompt' state ("Tier saved... Add another tier / Done") is
      gone — growTiersAddSave now closes straight back to '' on success (see its handler below), so
      this is a plain open/closed ternary, one management surface, no second confirmation screen. */
-  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note" data-grow-tiers-addform-v331>
+  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>

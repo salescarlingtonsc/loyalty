@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="a041dc84b1aa3a98526fe30abc57e0900f76d911f87f1eaa1e197fbe702483bb"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="90d1431139ca1931c868966f0d79c8a65b8708b4d351616f2d42ba8dfb9721e8"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2195,6 +2195,28 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
+/* nestly_v501 (owner, 2026-08-25, photo 1: "i already told you to fix the UI UX - it is still
+   looking very ugly, there's still overlapping").
+   THE DEFECT, MEASURED at 1280px before the fix. Every note/confirm/form block in this list is an
+   <li class="imp-note">, and `.grow-setup-rewardlist-v301>li` above sets
+   display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap — a rule meant
+   for a ROW ITEM (name … pill … Edit … ⋯). So the tier editor's own children became flex items on
+   one line and were pushed apart by space-between: "Edit tier" measured at left 56, "Tier name" at
+   431 and "Required points" at 976, each vertically centred at a different height (top 130 / 74 /
+   70). That is the scattered, mis-aligned form in the owner's photo — not a spacing nicety but a
+   block of form content being laid out as a horizontal row.
+   None of these blocks is a row item, so the rule is generic: an imp-note inside this list stacks.
+   The tier form additionally leaves imp-note's 12px brown NOTE styling behind — it is a form, not
+   a warning — and takes the same card treatment .grow-setup-rewardform-v301 already defines.
+   AFTER, measured: all three left-align at 58 and stack at 58 / 91 / 214. */
+.grow-setup-rewardlist-v301>li.imp-note{display:block}
+.grow-setup-rewardlist-v301>li.grow-tier-form-v501{font-size:inherit;color:inherit;
+  padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
+/* The benefit-template picker sat in a flex row with no floor, so it shrank to 98px and truncated
+   its own label mid-word — the "Discou" in the owner's photo. A floor plus a wrap-friendly basis:
+   it keeps its full 260px where there is room and wraps to the next line where there is not,
+   rather than cutting the words the owner has to read to choose. */
+#growTiersBenefitTemplateV363{flex:0 1 260px;min-width:190px}
 .grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
@@ -4583,7 +4605,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · a041dc84b1aa3a98526fe30abc57e0900f76d911f87f1eaa1e197fbe702483bb</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 90d1431139ca1931c868966f0d79c8a65b8708b4d351616f2d42ba8dfb9721e8</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -11767,7 +11789,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      permanently expanded."): the old 'prompt' state ("Tier saved... Add another tier / Done") is
      gone — growTiersAddSave now closes straight back to '' on success (see its handler below), so
      this is a plain open/closed ternary, one management surface, no second confirmation screen. */
-  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note" data-grow-tiers-addform-v331>
+  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
@@ -14125,7 +14147,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'a041dc84b1aa3a98526fe30abc57e0900f76d911f87f1eaa1e197fbe702483bb',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'90d1431139ca1931c868966f0d79c8a65b8708b4d351616f2d42ba8dfb9721e8',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

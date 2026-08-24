@@ -333,7 +333,7 @@ test('photo 6: Available and History are tabs, and History is not fetched until 
      v427 entitlements the counter already owes this customer, both of which have been read by the
      time it is printed. A voucher sitting in the panel uncounted would make the number an
      undercount of what the customer can walk in and use. */
-  assert.match(rewards, /Available\$\{readyCountV397\+entitlementsV429\.length\?` \(\$\{readyCountV397\+entitlementsV429\.length\}\)`:''\}/,
+  assert.match(rewards, /Available\$\{readyCountV397\+entitlementsV429\.length\+tierPerksV501\.length\?` \(\$\{readyCountV397\+entitlementsV429\.length\+tierPerksV501\.length\}\)`:''\}/,
     'Available does carry a count, because it has been read');
   assert.match(rewards, /const entitlementsV429=!entitlementsResultV427\?\.error&&Array\.isArray\(entitlementsResultV427\?\.data\?\.active\)/,
     'and it is the server\'s own active list, empty on any refusal');
@@ -494,7 +494,7 @@ test('nestly_v428 item 6: the Available panel says which part of the count the c
   /* nestly_v429 (C): and it now also counts the v427 entitlements painted below the catalogue
      cards — a welcome gift or bring-back voucher the counter already owes them is claimable, so
      leaving it out would make this number an undercount of the same panel. */
-  assert.match(rewards, /data-rewards-tab-v422="available">Available\$\{readyCountV397\+entitlementsV429\.length\?` \(\$\{readyCountV397\+entitlementsV429\.length\}\)`:''\}/);
+  assert.match(rewards, /data-rewards-tab-v422="available">Available\$\{readyCountV397\+entitlementsV429\.length\+tierPerksV501\.length\?` \(\$\{readyCountV397\+entitlementsV429\.length\+tierPerksV501\.length\}\)`:''\}/);
 });
 
 test('nestly_v428 item 9: a stamps balance never prints as points because the unit was missed', () => {

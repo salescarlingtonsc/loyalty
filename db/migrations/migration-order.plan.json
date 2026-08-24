@@ -2469,6 +2469,12 @@
       "path": "db/migrations/20260825_nestly_v496_full_card_rolls_and_gifts_stack.sql",
       "semanticVersion": "v496",
       "proposedDeployVersion": "20260825000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v501_customer_sees_tier_benefits.sql",
+      "semanticVersion": "v501",
+      "proposedDeployVersion": "20260825000002"
     }
   ]
 }

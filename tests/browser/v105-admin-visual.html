@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="4f6468f9a462cba6e8375e7908b2e347bd09ff12d22bec19b9467bf09d295ed9">
+<meta name="v105-production-component-sha256" content="43e9ffd9e066fa5ed4c55289a85141304bd1df6a6af65e9dfa017b15fd5c9248">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2201,6 +2201,28 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .grow-setup-chips-v301{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
 .grow-setup-chip-v301{min-height:44px;padding:8px 14px;border:1px dashed var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 .grow-setup-chip-v301:hover{border-color:var(--coral);background:var(--tint)}
+/* nestly_v501 (owner, 2026-08-25, photo 1: "i already told you to fix the UI UX - it is still
+   looking very ugly, there's still overlapping").
+   THE DEFECT, MEASURED at 1280px before the fix. Every note/confirm/form block in this list is an
+   <li class="imp-note">, and `.grow-setup-rewardlist-v301>li` above sets
+   display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap — a rule meant
+   for a ROW ITEM (name … pill … Edit … ⋯). So the tier editor's own children became flex items on
+   one line and were pushed apart by space-between: "Edit tier" measured at left 56, "Tier name" at
+   431 and "Required points" at 976, each vertically centred at a different height (top 130 / 74 /
+   70). That is the scattered, mis-aligned form in the owner's photo — not a spacing nicety but a
+   block of form content being laid out as a horizontal row.
+   None of these blocks is a row item, so the rule is generic: an imp-note inside this list stacks.
+   The tier form additionally leaves imp-note's 12px brown NOTE styling behind — it is a form, not
+   a warning — and takes the same card treatment .grow-setup-rewardform-v301 already defines.
+   AFTER, measured: all three left-align at 58 and stack at 58 / 91 / 214. */
+.grow-setup-rewardlist-v301>li.imp-note{display:block}
+.grow-setup-rewardlist-v301>li.grow-tier-form-v501{font-size:inherit;color:inherit;
+  padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
+/* The benefit-template picker sat in a flex row with no floor, so it shrank to 98px and truncated
+   its own label mid-word — the "Discou" in the owner's photo. A floor plus a wrap-friendly basis:
+   it keeps its full 260px where there is room and wraps to the next line where there is not,
+   rather than cutting the words the owner has to read to choose. */
+#growTiersBenefitTemplateV363{flex:0 1 260px;min-width:190px}
 .grow-setup-rewardform-v301{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--tint)}
 .grow-setup-rewardform-v301 .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .grow-setup-rewardform-v301 .field-grid .full{grid-column:1/-1}
@@ -5398,7 +5420,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 4f6468f9a462</span>
+<span class="v105-provenance">v105 production-component harness · 43e9ffd9e066</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5523,7 +5545,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'4f6468f9a462cba6e8375e7908b2e347bd09ff12d22bec19b9467bf09d295ed9',
+  sourceHash:'43e9ffd9e066fa5ed4c55289a85141304bd1df6a6af65e9dfa017b15fd5c9248',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

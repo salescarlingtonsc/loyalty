@@ -3192,6 +3192,35 @@ function showCustomerRewardRulesV468(reward={},{unit='points',currency='SGD',tit
    A gift with no end date draws nothing: most gifts have none, and "No expiry" on every row is
    noise. A date already in the past draws nothing either — the server has stopped offering the
    gift by then, and a line reading "redeem before" a date that has gone is worse than silence. */
+/* nestly_v501 — the three sentences a tier perk needs, kept out of the card so they can be
+   tested on their own and so neither is written twice.
+
+   THE OFF-BY-ONE THAT MATTERS. app.v501_period_ends_at returns the instant the window CLOSES,
+   which for August is 1 Sep 00:00 Singapore. Printing that verbatim would tell a customer their
+   monthly perk is good "until 1 September", which is a day longer than the counter will honour —
+   the allowance resets the moment that instant passes. The last day a perk can actually be used
+   is therefore one millisecond before it, and that is what the card prints. */
+function customerTierPerkLastDayV501(endsAt){
+  const at=Date.parse(String(endsAt||''));
+  if(!Number.isFinite(at))return '';
+  return new Date(at-1).toISOString();
+}
+/* The window in the customer's own words. Deliberately NOT derived by string-munging the server's
+   period token: 'month' has to read "this month", not "per month", on a line that already says how
+   many are left. An unrecognised period says nothing rather than guessing. */
+const CUSTOMER_TIER_PERK_WINDOW_V501=Object.freeze({
+  day:'today',week:'this week',month:'this month',year:'this year',
+  birthday_month:'this birthday month',ever:''
+});
+function customerTierPerkWindowNounV501(period){
+  return CUSTOMER_TIER_PERK_WINDOW_V501[String(period||'month')]??'';
+}
+/* "Your Gold perks" when the server named the tier, "Your tier perks" when it did not. The tier
+   name is merchant content and is escaped by the caller. */
+function tierPerkHeadingV501(tierLabel){
+  const label=String(tierLabel||'').trim();
+  return label?`Your ${label} perks`:'Your tier perks';
+}
 function customerRewardEndsLineV471(reward={}){
   const raw=reward?.claim_available_until;
   const at=Date.parse(raw||'');
@@ -6387,9 +6416,18 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        NOTHING. No error card: a customer holding no entitlement and a customer whose read was
        refused should both simply see the catalogue, and inventing a retry for a list they may
        have no rows in would be a worse lie than silence. */
-    const [catalogResult,entitlementsResultV427]=await Promise.all([
+    /* nestly_v501 (owner, photo 1: "it shows 20% discount once per month. but the rewards did not
+       land on customer view - they should see that reward"). The tier perk the owner configured
+       was countable, issuable and completely invisible to the person who earned it: every
+       tier-benefit reader in the codebase was a STAFF reader. This is the customer's own read,
+       fetched with the catalogue rather than after it — one screen, one round trip. It mirrors
+       staff_tier_benefits_for_client_v365 clause for clause on the server, so the card below can
+       never promise a perk the counter would refuse. Fails closed and silently, the same rule the
+       v427 entitlements follow: no rows, no error card. */
+    const [catalogResult,entitlementsResultV427,tierPerkResultV501]=await Promise.all([
       customerRpc('customer_get_reward_catalog',args),
-      customerRpc('customer_get_entitlements_v427',{p_business_slug:businessSlug})
+      customerRpc('customer_get_entitlements_v427',{p_business_slug:businessSlug}),
+      customerRpc('customer_get_tier_benefits_v501',{p_business_slug:businessSlug})
     ]);
     /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
     const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
@@ -6606,10 +6644,46 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       ${instructions?`<p class="muted small" style="margin-top:7px">${esc(instructions)}</p>`:''}
       </article>`;
     };
+    /* nestly_v501: a tier PERK card. Deliberately not an entitlementCardV429 with fields renamed:
+       an entitlement is a one-off gift that is used up, a perk is a standing right that RENEWS —
+       so this card leads with what is left in the current window and when that window closes,
+       which is the owner's "since it is monthly rewards - it will expire by end of month".
+       Every figure comes from the server: `remaining` is counted off tier_benefit_issues_v365 in
+       the same period key the counter enforces, and `period_ends_at` is derived from that same
+       period vocabulary. Nothing here is computed in the browser, so the card cannot drift from
+       what staff_issue_tier_benefit_v365 will accept.
+       There is no QR button, and that is correct rather than missing: a perk is applied by staff
+       once they have the customer on screen, which they get by scanning the member QR this same
+       wallet already shows. The line under the card says exactly that. */
+    const tierPerkCardV501=perk=>{
+      const sentence=String(perk?.sentence||perk?.label||'').trim()||'Tier perk';
+      const tierLabel=String(perk?.tier_label||'').trim();
+      const remaining=perk?.remaining;
+      const endsAt=perk?.period_ends_at||'';
+      return `<article class="wallet-reward customer-reward-card-v339" data-customer-tier-perk-v501="${esc(String(perk?.benefit_id||''))}">
+      <div class="customer-reward-photo-v340 customer-reward-photo-empty-v340">${CUI.icon('diamond',{size:24})}</div>
+      <div class="customer-reward-copy-v492">
+      <div class="customer-reward-card-head-v339"><span class="pill ok">${esc(tierLabel?`${tierLabel} perk`:'Tier perk')}</span></div>
+      <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(sentence)}</b>
+      ${Number.isFinite(Number(remaining))&&remaining!==null
+        ?`<p class="muted small" data-tier-perk-remaining-v501="${esc(String(remaining))}" style="margin-top:5px">${esc(customerPointTotalV103(Number(remaining)))} left ${esc(customerTierPerkWindowNounV501(perk?.limit_period))}</p>`
+        :'<p class="muted small" style="margin-top:5px">No limit — use it whenever you visit.</p>'}
+      ${endsAt?`<p class="muted small customer-reward-useby-v464" data-tier-perk-ends-v501="${esc(String(endsAt))}" style="margin-top:5px">Use by ${esc(walletDate(customerTierPerkLastDayV501(endsAt)))}</p>`:''}
+      <p class="muted small" style="margin-top:7px">Show your member QR at the counter — staff apply it to your bill.</p>
+      </div></article>`;
+    };
     /* The server's own list, in the server's own order (soonest to lapse first). An error or an
        unrecognised payload leaves it empty, which is the fail-closed rule above. */
     const entitlementsV429=!entitlementsResultV427?.error&&Array.isArray(entitlementsResultV427?.data?.active)
       ?entitlementsResultV427.data.active:[];
+    /* nestly_v501: only the perks the customer can actually walk in and use today. A perk whose
+       allowance is spent, or a birthday perk outside their birthday month, is NOT listed — the
+       owner's ruling on photo 6 (v422) applies here for the same reason it applied to rewards:
+       this panel is what the counter will honour, and a card the till refuses is worse than no
+       card. The tier ladder higher up the page is where a customer reads what they have but
+       cannot use yet. */
+    const tierPerksV501=(!tierPerkResultV501?.error&&Array.isArray(tierPerkResultV501?.data?.benefits)
+      ?tierPerkResultV501.data.benefits:[]).filter(perk=>perk&&perk.claimable_now===true);
     /* nestly_v422 (owner photo 6, "Available" and "History" written as tabs over this heading, with
        "once redeemed, rewards go history"). History is NOT fetched here: it is a second server read
        and most customers open this screen to claim, not to reminisce, so it loads the first time
@@ -6622,7 +6696,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         ${/* nestly_v429 (C): the count is what the panel PAINTS — catalogue rewards plus the
              entitlements the counter already owes this customer. A voucher sitting in the panel
              uncounted would make the number an undercount of what they can walk in and use. */''}
-        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${readyCountV397+entitlementsV429.length?` (${readyCountV397+entitlementsV429.length})`:''}</button>
+        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${readyCountV397+entitlementsV429.length+tierPerksV501.length?` (${readyCountV397+entitlementsV429.length+tierPerksV501.length})`:''}</button>
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
@@ -6634,7 +6708,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
           ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick.</p>':''}
             <p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337">${claimableRewardsV422.map(rewardCardV422).join('')}</div>`
-          :entitlementsV429.length?''
+          :(entitlementsV429.length||tierPerksV501.length)?''
           :`<p class="muted small customer-rewards-empty-v422">${esc(redemptionUncheckedV286
               ?'We could not check this business’s redemption settings, so nothing can be claimed right now.'
               :'Nothing to claim yet — keep collecting and your reward will appear here.')}</p>`}
@@ -6646,6 +6720,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
           ?`<div class="customer-rewards-carousel-head-v337" style="margin-top:14px"><h3>Given to you</h3></div>
             <p class="muted small customer-programme-rewards-lede">Nothing to scan — staff apply these at the counter.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337" data-customer-entitlements-v429>${entitlementsV429.map(entitlementCardV429).join('')}</div>`
+          :''}
+        ${/* nestly_v501: LAST, under its own heading. A perk is not a gift the counter owes and not
+             a reward bought with a balance — it is what this customer's tier entitles them to
+             every window, so it reads as its own group rather than being folded into either. */''}
+        ${tierPerksV501.length
+          ?`<div class="customer-rewards-carousel-head-v337" style="margin-top:14px"><h3>${esc(tierPerkHeadingV501(tierPerkResultV501?.data?.tier?.label))}</h3></div>
+            <p class="muted small customer-programme-rewards-lede">Yours for as long as you hold this tier — staff apply them at the counter.</p>
+            <div class="wallet-rewards customer-rewards-carousel-v337" data-customer-tier-perks-v501>${tierPerksV501.map(tierPerkCardV501).join('')}</div>`
           :''}
       </div>
       <div data-rewards-panel-v422="history" role="tabpanel" hidden></div>`;

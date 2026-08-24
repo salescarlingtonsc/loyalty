@@ -3634,6 +3634,14 @@
   {
    "id": "browser.rpc:app/app.js:business_preview_stamp_conversion_v384",
    "reason": "V384 read-only conversion preview. STABLE SECURITY DEFINER, owner-gated by app.c45_owner_loyalty_write; aggregates the business's own points_ledger/points_batches balances at a candidate rate and returns counts (customers, points convertible, stamps to issue, leftover) plus the already-converted flag. Writes nothing; the dialog renders its answer while the owner picks a rate."
+  },
+  {
+   "id": "browser.rpc:app/app.js:customer_get_tier_benefits_v501",
+   "surface": "browser_rpc_binding",
+   "rpc": "customer_get_tier_benefits_v501",
+   "resolves_to": "customer_get_tier_benefits_v501/1 (stable, read-only, SECURITY DEFINER)",
+   "rows_written": "none - the function is `stable` and contains no INSERT, UPDATE or DELETE.",
+   "justification": "A READ, listed here because it is a new browser->RPC identity. The browser supplies a business slug and nothing else; the customer is resolved server-side through app.v32_customer_wallet_context(auth.uid()), which requires an active identity and a verified link, so a caller can only ever read their own tier perks. It mirrors staff_tier_benefits_for_client_v365 clause for clause and issues nothing - handing a perk over remains staff_issue_tier_benefit_v365, which is unchanged."
   }
  ]
 }
