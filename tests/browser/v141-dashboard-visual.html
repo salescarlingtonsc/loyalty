@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="492e51c45dc1685222e1d0b2648723f69c5d788b385ac07538d412000560b294"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="9d3dc1cb292a6737f8ce2273c10a70a8904eb2d105dcb6b6e4bf530e409df3c9"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3762,11 +3762,13 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
   box-shadow:0 10px 20px rgba(83,26,21,.22);
-  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
-     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
-     condition, so the two always appear together and this needs no conditional rule. Measured: at
-     15px the control overlapped the image by 11px. */
-  margin-top:34px}
+  /* nestly_v483 (owner, photos 9 + 10 side by side: "needs to be align … in terms of photo
+     placement"). v478's 34px was clearance for the "?" sitting at the top of THIS block; the "?"
+     has moved up into the card's own top row beside the STAMPS pill, where the reward page has
+     always kept it, so the clearance is now a 34px hole that pushed this photo below its twin.
+     MEASURED against the reward page's photo in the same shell: reward top 52px / right 16px,
+     stamp top 82px / right 16px before, 52 / 16 on both after. */
+  margin-top:0}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}
@@ -5535,6 +5537,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'492e51c45dc1685222e1d0b2648723f69c5d788b385ac07538d412000560b294',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'9d3dc1cb292a6737f8ce2273c10a70a8904eb2d105dcb6b6e4bf530e409df3c9',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0bd542de88f8d2aa0adca29e584215d9bbfa07566a9891832b19189253d03979"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="10ca5b8f44a26482552e295a258b08c572e63cd4e3514147bd3378be408fdbbe"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3760,11 +3760,13 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
   box-shadow:0 10px 20px rgba(83,26,21,.22);
-  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
-     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
-     condition, so the two always appear together and this needs no conditional rule. Measured: at
-     15px the control overlapped the image by 11px. */
-  margin-top:34px}
+  /* nestly_v483 (owner, photos 9 + 10 side by side: "needs to be align … in terms of photo
+     placement"). v478's 34px was clearance for the "?" sitting at the top of THIS block; the "?"
+     has moved up into the card's own top row beside the STAMPS pill, where the reward page has
+     always kept it, so the clearance is now a 34px hole that pushed this photo below its twin.
+     MEASURED against the reward page's photo in the same shell: reward top 52px / right 16px,
+     stamp top 82px / right 16px before, 52 / 16 on both after. */
+  margin-top:0}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}

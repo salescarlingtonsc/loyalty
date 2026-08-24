@@ -12599,6 +12599,31 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
             },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
           };
         });
+        /* nestly_v483 (owner, photos 9 + 10 held side by side: "needs to be align … in terms of
+           photo placement, '?' placement"). PRESENTATION ONLY — the button node, its attributes
+           and the onclick wired immediately above are carried across unchanged; only where it
+           sits in the box model moves.
+           v478 parked the "?" absolutely at the top-left-origin of the stamp GRID block, which
+           begins below the card's top row — so it landed 32px lower than the reward page's "?",
+           which has always sat in that top row beside the pill. Relocating it there rather than
+           dialling in a negative offset is what makes the two agree in BOTH padding profiles:
+           the row's height is driven by the tallest chip in it, so a computed offset would have
+           to know whether the "?" was in the row to know the row's height — circular. In the row,
+           they align by construction, and it picks up the v471 red-hero treatment that the v478
+           block only duplicated.
+           MEASURED, reward vs stamp, same 390px shell: "?" 16/16 vs 48/16 before, 16/16 on both
+           after; photo 52/16 vs 82/16 before, 52/16 on both after.
+           The v478 absolute rules are deliberately LEFT in the stylesheet: they are what draws
+           this control correctly in the frame before the move, and if the top row is ever absent
+           the button stays where v478 put it rather than falling to the top-left of the card. */
+        const stampHelpRowV483=heroSlotV422.closest('.customer-business-summary-v346')
+          ?.querySelector('.customer-business-summary-top-v347');
+        const stampHelpWrapV483=heroSlotV422.querySelector('.customer-hero-stamp-help-v478');
+        const stampHelpBtnV483=stampHelpWrapV483?.querySelector('.customer-reward-help-v468');
+        if(stampHelpRowV483&&stampHelpBtnV483){
+          stampHelpRowV483.appendChild(stampHelpBtnV483);
+          stampHelpWrapV483.remove();
+        }
         heroSlotV422.querySelectorAll('[data-hero-stamp-photo-v475]').forEach(image=>{
           image.onerror=()=>{
             image.closest('.customer-hero-stampcard-v422')?.classList.remove('customer-hero-stamp-has-photo-v475');

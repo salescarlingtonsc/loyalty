@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="e3c22b41ea95d2130e41f842e9bf6d4a95c28631ac8a6aeb3f9fc8ac16d45c5d">
+<meta name="v105-production-component-sha256" content="8a2eb8861e546952420360b4cff0d8097aeb241b61ecb7da3ba0d080d55e3266">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3767,11 +3767,13 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
   box-shadow:0 10px 20px rgba(83,26,21,.22);
-  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
-     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
-     condition, so the two always appear together and this needs no conditional rule. Measured: at
-     15px the control overlapped the image by 11px. */
-  margin-top:34px}
+  /* nestly_v483 (owner, photos 9 + 10 side by side: "needs to be align … in terms of photo
+     placement"). v478's 34px was clearance for the "?" sitting at the top of THIS block; the "?"
+     has moved up into the card's own top row beside the STAMPS pill, where the reward page has
+     always kept it, so the clearance is now a 34px hole that pushed this photo below its twin.
+     MEASURED against the reward page's photo in the same shell: reward top 52px / right 16px,
+     stamp top 82px / right 16px before, 52 / 16 on both after. */
+  margin-top:0}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}
@@ -5239,7 +5241,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · e3c22b41ea95</span>
+<span class="v105-provenance">v105 production-component harness · 8a2eb8861e54</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5364,7 +5366,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'e3c22b41ea95d2130e41f842e9bf6d4a95c28631ac8a6aeb3f9fc8ac16d45c5d',
+  sourceHash:'8a2eb8861e546952420360b4cff0d8097aeb241b61ecb7da3ba0d080d55e3266',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

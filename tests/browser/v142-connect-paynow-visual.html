@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="2d04f35fe02f546e2ac633c53732402d6f031c9397bc13ba6b05cbae576a45b8"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="306952d1d22d7cac55468935469c734df457faa9c9a7fd5a298d61e8234ab13e"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3761,11 +3761,13 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-hero-stamp-photo-v475{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
   box-shadow:0 10px 20px rgba(83,26,21,.22);
-  /* nestly_v478: clears the 26px "?" that now sits in the card's top-right corner. The photo is
-     only ever drawn when there IS a next milestone, and the "?" is drawn under exactly the same
-     condition, so the two always appear together and this needs no conditional rule. Measured: at
-     15px the control overlapped the image by 11px. */
-  margin-top:34px}
+  /* nestly_v483 (owner, photos 9 + 10 side by side: "needs to be align … in terms of photo
+     placement"). v478's 34px was clearance for the "?" sitting at the top of THIS block; the "?"
+     has moved up into the card's own top row beside the STAMPS pill, where the reward page has
+     always kept it, so the clearance is now a 34px hole that pushed this photo below its twin.
+     MEASURED against the reward page's photo in the same shell: reward top 52px / right 16px,
+     stamp top 82px / right 16px before, 52 / 16 on both after. */
+  margin-top:0}
 @media(max-width:340px){
   .customer-hero-stamp-has-photo-v475 .customer-hero-stamp-body-v475{grid-template-columns:minmax(0,1fr) 72px}
   .customer-hero-stamp-photo-v475{width:72px}
@@ -4425,7 +4427,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 2d04f35fe02f546e2ac633c53732402d6f031c9397bc13ba6b05cbae576a45b8</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 306952d1d22d7cac55468935469c734df457faa9c9a7fd5a298d61e8234ab13e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7886,7 +7888,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'2d04f35fe02f546e2ac633c53732402d6f031c9397bc13ba6b05cbae576a45b8',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'306952d1d22d7cac55468935469c734df457faa9c9a7fd5a298d61e8234ab13e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
