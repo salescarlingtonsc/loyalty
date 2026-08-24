@@ -4547,18 +4547,17 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
   </article>`;
 }
 let customerHomeOverview={walletCards:[],activeRequestCount:0,activeRequestsTruncated:false,bookingsAvailable:false,messageCount:null,messagesAvailable:false,claimsAvailable:false};
-/* V468-E2(b): the "has the customer already seen this one?" gate, seed-then-fire, exactly the
-   discipline the v91 earn toast already used. An empty slot means this is the first read of the
-   session — record and stay silent, so a plain reload never celebrates history. sessionStorage,
-   not localStorage: the customer surface is barred from localStorage, and a celebration is not
-   worth persisting across sessions anyway. */
-function customerCelebrationNewV468(channel,businessId,fingerprint){
+function customerCelebrationNewV468(channel,businessId,fingerprint,happenedAtV499=null){
   const fingerprintV468=String(fingerprint||'');
   if(!fingerprintV468)return false;
   const key=`nestly.customer.celebrate.${channel}.${S.user?.id||'anonymous'}.${businessId||'none'}`;
   let previous='';
   try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprintV468)}catch{}
-  return !!previous&&previous!==fingerprintV468;
+  if(previous===fingerprintV468)return false;
+  /* nestly_v499: a first-of-session read speaks only for something that just happened. Callers
+     that pass no timestamp keep the original behaviour exactly. */
+  if(!previous)return customerCelebrationFreshV499(happenedAtV499);
+  return true;
 }
 /* V468-E3: which engine handed the reward over. Same vocabulary as entitlementSourceChipV429,
    which labels the same five sources on the reward-history card; 'reward' is an ordinary
@@ -4572,7 +4571,11 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   const key=`nestly.customer.latestEarn.${S.user?.id||'anonymous'}.${businessId}`;
   let previous='';
   try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprint)}catch{}
-  if(!previous||previous===fingerprint)return;
+  if(previous===fingerprint)return;
+  /* nestly_v499: the same rule as customerCelebrationNewV468 — a first-of-session read speaks
+     only for an earn that just happened, so "pay at the counter, then open the app" finally
+     confirms itself, while a reload still never re-celebrates history. */
+  if(!previous&&!customerCelebrationFreshV499(latest.event_at))return;
   const increase=Number(latest.points_delta);
   /* V468-E2(b): the same server event, said where the customer is actually looking. The noun comes
      from the v429 unit plumbing rather than a second copy of the stamp/point spelling rules, and
@@ -7010,7 +7013,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
     if(!latestV468)return;
     const sourceV468=String(latestV468.source||'reward');
     const fingerprintV468=`${sourceV468}:${latestV468.id||''}:${latestV468.redeemed_at||''}`;
-    if(!customerCelebrationNewV468('redeemed',businessId,fingerprintV468))return;
+    /* nestly_v499: the redemption's own server timestamp, so a reward handed over at the counter
+       still says so when the customer opens their app a moment later. */
+    if(!customerCelebrationNewV468('redeemed',businessId,fingerprintV468,latestV468.redeemed_at))return;
     /* nestly_v464 puts LAPSED rewards on this same list under source 'expired'. Losing a reward
        to its deadline is not a thing to celebrate. It is still recorded above, so the next real
        redemption after one still fires. */

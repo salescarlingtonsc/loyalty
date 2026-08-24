@@ -56,3 +56,98 @@ test('scanner releases its dialog trap and restores focus unless route navigatio
   assert.match(app,/close\(\{restoreFocus:false\}\);[\s\S]{0,300}?if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/);
   assert.match(app,/activeCustomerJoinScannerCleanup\(\{restoreFocus:false\}\)/);
 });
+
+/* ==============================================================================================
+ * nestly_v499 — the confirmation a customer sees for a transaction they just took part in
+ *
+ * Owner, 2026-08-25: "i still do not see the pop up for successful transaction". The banner was
+ * built (V468-E2b) and it worked — but only for a page that was ALREADY OPEN when the sale was
+ * rung up. Seed-then-fire records the first read of a session and stays silent, and it could not
+ * tell an earn from last Tuesday apart from one ten seconds old. So the ordinary case — pay at
+ * the counter, then open the app — showed nothing at all.
+ *
+ * These EXECUTE the shipped functions. A source grep would have stayed green through the whole
+ * defect: every line it would have matched was present and correct.
+ * ============================================================================================ */
+
+const appSrcV499 = await read('app/app.js');
+const blockV499 = (start, end) => {
+  const i = appSrcV499.indexOf(start);
+  assert.ok(i >= 0, `missing block: ${start}`);
+  const j = appSrcV499.indexOf(end, i);
+  assert.ok(j > i, `missing end marker for ${start}`);
+  return appSrcV499.slice(i, j + end.length);
+};
+const celebrationSrcV499 = [
+  blockV499('const CUSTOMER_CELEBRATION_FRESH_MS_V499=', '\n}'),
+  blockV499('function customerCelebrationNewV468(', '\n}'),
+  blockV499('function customerConfirmedEarnFeedback(', '\n}')
+].join('\n');
+
+function celebrationHarnessV499() {
+  const store = {};
+  const fired = [];
+  const scope = {
+    S: { user: { id: 'u1' } },
+    sessionStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } },
+    customerPointTotalV103: v => String(v),
+    customerUnitNounV429: (unit, n) => (unit === 'stamps' ? (n === 1 ? 'stamp' : 'stamps') : 'points'),
+    customerCelebrateV468: o => { fired.push(String(o.headline)); return true; },
+    toast: () => { fired.push('toast'); },
+    customerSuccessCue: () => {}
+  };
+  const names = Object.keys(scope);
+  const api = new Function(...names,
+    `${celebrationSrcV499}\nreturn {earn:customerConfirmedEarnFeedback,gate:customerCelebrationNewV468};`
+  )(...names.map(n => scope[n]));
+  return { ...api, fired, reset: () => { for (const k of Object.keys(store)) delete store[k]; fired.length = 0; } };
+}
+
+const agoV499 = ms => new Date(Date.now() - ms).toISOString();
+const earnV499 = (at, delta = 2) => ({ event_type: 'earn', points_delta: delta, event_at: at });
+
+test('v499 a sale rung up while the page is open still confirms itself (unchanged)', () => {
+  const h = celebrationHarnessV499();
+  h.earn('biz', [earnV499(agoV499(600_000))], 'stamps');   // session opens on older history
+  assert.deepEqual(h.fired, [], 'opening on history must stay silent');
+  h.earn('biz', [earnV499(agoV499(5_000)), earnV499(agoV499(600_000))], 'stamps');
+  assert.deepEqual(h.fired, ['+2 stamps'], 'the earn that just landed is announced');
+});
+
+test('v499 opening the app AFTER the sale confirms it — the case the owner photographed', () => {
+  const h = celebrationHarnessV499();
+  /* No prior session: the customer paid at the counter and then opened their app. Before v499
+     this recorded the earn as "history" and said nothing. */
+  h.earn('biz', [earnV499(agoV499(20_000)), earnV499(agoV499(600_000))], 'stamps');
+  assert.deepEqual(h.fired, ['+2 stamps'],
+    'a first-of-session read must speak for a transaction that just happened');
+});
+
+test('v499 a cold open on genuinely old history still says nothing, and never repeats', () => {
+  const h = celebrationHarnessV499();
+  h.earn('biz', [earnV499(agoV499(2 * 24 * 60 * 60 * 1000))], 'stamps');
+  assert.deepEqual(h.fired, [], 'a plain reload must not re-celebrate last week');
+  h.earn('biz', [earnV499(agoV499(2 * 24 * 60 * 60 * 1000))], 'stamps');
+  assert.deepEqual(h.fired, [], 'and an idle poll re-reading the same answer stays quiet');
+});
+
+test('v499 the freshness window is absolute, so a phone running fast still knows its own sale', () => {
+  const h = celebrationHarnessV499();
+  h.earn('biz', [earnV499(new Date(Date.now() + 30_000).toISOString())], 'stamps');
+  assert.deepEqual(h.fired, ['+2 stamps'],
+    'a server timestamp slightly AHEAD of the device clock is still this customer\'s transaction');
+});
+
+test('v499 the redemption gate takes the same rule, and callers passing no time are unchanged', () => {
+  const h = celebrationHarnessV499();
+  assert.equal(h.gate('redeemed', 'biz', 'fp-1', agoV499(20_000)), true,
+    'a reward handed over at the counter confirms itself when the app is opened after');
+  const h2 = celebrationHarnessV499();
+  assert.equal(h2.gate('redeemed', 'biz', 'fp-1', agoV499(2 * 24 * 60 * 60 * 1000)), false,
+    'an old redemption on a cold open stays silent');
+  const h3 = celebrationHarnessV499();
+  assert.equal(h3.gate('redeemed', 'biz', 'fp-1'), false,
+    'no timestamp = the original seed-then-fire behaviour, exactly');
+  assert.equal(h3.gate('redeemed', 'biz', 'fp-2'), true, 'and the second, changed answer fires');
+  assert.equal(h3.gate('redeemed', 'biz', 'fp-2'), false, 'while the same answer never repeats');
+});

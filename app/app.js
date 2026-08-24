@@ -10964,13 +10964,39 @@ function customerCelebrateV468({icon='star',headline='',detail=''}={}){
    session — record and stay silent, so a plain reload never celebrates history. sessionStorage,
    not localStorage: the customer surface is barred from localStorage, and a celebration is not
    worth persisting across sessions anyway. */
-function customerCelebrationNewV468(channel,businessId,fingerprint){
+/* nestly_v499 (owner, 2026-08-25: "i still do not see the pop up for successful transaction").
+   THE HOLE IN SEED-THEN-FIRE. The rule above is right about history and wrong about the present:
+   on the FIRST read of a session it records and stays silent, so it cannot tell "an earn from
+   last Tuesday" apart from "the sale the staff rang up ten seconds ago". That is precisely the
+   ordinary case — the customer pays at the counter and THEN opens their app — and it is the one
+   the owner kept photographing. Proven by executing the shipped function: with the page already
+   open the banner fires; opened fresh after the same sale, nothing.
+   The freshness window closes it without giving up the thing seed-then-fire protects: a first
+   read still stays silent for anything OLDER than this, so a plain reload never re-celebrates
+   history. Only something that happened within the window — which cannot be anything but the
+   transaction the customer just took part in — speaks on a cold open.
+   THE CLOCK is the phone's, compared against the server's timestamp, and the comparison is
+   ABSOLUTE so a device running a little fast or slow still recognises its own transaction. A
+   badly-wrong clock degrades to exactly today's behaviour (silence) or one stale banner; no
+   figure rides on this — the balance on screen is still the ledger's answer, and this only
+   decides whether a 5-second banner is drawn. */
+const CUSTOMER_CELEBRATION_FRESH_MS_V499=180000; // 3 minutes: counter → pocket → phone
+function customerCelebrationFreshV499(happenedAt){
+  const at=Date.parse(String(happenedAt||''));
+  if(!Number.isFinite(at))return false;
+  return Math.abs(Date.now()-at)<=CUSTOMER_CELEBRATION_FRESH_MS_V499;
+}
+function customerCelebrationNewV468(channel,businessId,fingerprint,happenedAtV499=null){
   const fingerprintV468=String(fingerprint||'');
   if(!fingerprintV468)return false;
   const key=`nestly.customer.celebrate.${channel}.${S.user?.id||'anonymous'}.${businessId||'none'}`;
   let previous='';
   try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprintV468)}catch{}
-  return !!previous&&previous!==fingerprintV468;
+  if(previous===fingerprintV468)return false;
+  /* nestly_v499: a first-of-session read speaks only for something that just happened. Callers
+     that pass no timestamp keep the original behaviour exactly. */
+  if(!previous)return customerCelebrationFreshV499(happenedAtV499);
+  return true;
 }
 /* V468-E3: which engine handed the reward over. Same vocabulary as entitlementSourceChipV429,
    which labels the same five sources on the reward-history card; 'reward' is an ordinary
@@ -10984,7 +11010,11 @@ function customerConfirmedEarnFeedback(businessId,items=[],unit='points'){
   const key=`nestly.customer.latestEarn.${S.user?.id||'anonymous'}.${businessId}`;
   let previous='';
   try{previous=sessionStorage.getItem(key)||'';sessionStorage.setItem(key,fingerprint)}catch{}
-  if(!previous||previous===fingerprint)return;
+  if(previous===fingerprint)return;
+  /* nestly_v499: the same rule as customerCelebrationNewV468 — a first-of-session read speaks
+     only for an earn that just happened, so "pay at the counter, then open the app" finally
+     confirms itself, while a reload still never re-celebrates history. */
+  if(!previous&&!customerCelebrationFreshV499(latest.event_at))return;
   const increase=Number(latest.points_delta);
   /* V468-E2(b): the same server event, said where the customer is actually looking. The noun comes
      from the v429 unit plumbing rather than a second copy of the stamp/point spelling rules, and
@@ -13624,7 +13654,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
     if(!latestV468)return;
     const sourceV468=String(latestV468.source||'reward');
     const fingerprintV468=`${sourceV468}:${latestV468.id||''}:${latestV468.redeemed_at||''}`;
-    if(!customerCelebrationNewV468('redeemed',businessId,fingerprintV468))return;
+    /* nestly_v499: the redemption's own server timestamp, so a reward handed over at the counter
+       still says so when the customer opens their app a moment later. */
+    if(!customerCelebrationNewV468('redeemed',businessId,fingerprintV468,latestV468.redeemed_at))return;
     /* nestly_v464 puts LAPSED rewards on this same list under source 'expired'. Losing a reward
        to its deadline is not a thing to celebrate. It is still recorded above, so the next real
        redemption after one still fires. */
