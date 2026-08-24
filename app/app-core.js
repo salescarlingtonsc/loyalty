@@ -6796,6 +6796,16 @@ function growUsageShiftMonthsV392(date,months){
   const safeDay=Math.min(day,lastDay);
   return `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
 }
+const GROW_USAGE_COMPARE_OPTIONS_V392=Object.freeze([
+  {key:'previous',label:'Period before'},
+  {key:'last_month',label:'Last month'},
+  {key:'last_year',label:'Last year'}
+]);
+/* The column and the chart name the basis the owner picked, so a figure can never be read
+   against a period nobody chose. */
+function growUsageCompareLabelV392(range){
+  return (GROW_USAGE_COMPARE_OPTIONS_V392.find(option=>option.key===(range?.basis||'previous'))||{}).label||'Period before';
+}
 /* ---------- V142 merchant-owned customer payments ---------- */
 async function loadMerchantPaymentsV142(){
   const wrap=$('merchantPaymentsWrapV142');if(!wrap||!S.biz?.id)return;

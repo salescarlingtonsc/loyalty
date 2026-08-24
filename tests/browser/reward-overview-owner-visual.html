@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="7c024f04ee2c92c08411b2091aa3836ff6ff91766f67f3778c05e73dc666554f"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="bc1005d54ae64457874b6ae5da910725ac9b733109d89f6e75776b3e1bc60486"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -187,6 +187,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
+/* nestly_v485 (owner photo 2). The badge that marks the ONE live offer a customer meets on their
+   Home screen. It borrows .pill.ok rather than minting a colour: green is already this app's
+   "this is the active one", and the badge sits in a strip of ghost buttons, so it has to read as
+   a state and not as a fourth thing to press. inline-flex only so the house glyph and the words
+   share a baseline — .pill itself is inline-block and would drop the icon below the text. */
+.grow-offer-featured-mark-v485{display:inline-flex;align-items:center;gap:5px;align-self:center}
+.grow-offer-featured-mark-v485 svg{flex:0 0 auto}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
@@ -2011,6 +2018,20 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
    flex column and each child is simply bounded by it. */
 .grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
+/* nestly_v485 (owner photo 6, "move here cancel button"). The dialog's title row: the heading and
+   the ✕ that dismisses it. The row is the flex column's own child, so it inherits the full 480px
+   the fields already share and the ✕ lands exactly on their right edge — the same edge v422/v449
+   spent two passes establishing, not a new one.
+   The ✕ is a 32px target with a 44px hit area behind it, which is what makes it usable with a
+   thumb without a 44px hole in the layout above the first label. */
+.grow-points-form-head-v485{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.grow-points-form-head-v485>b{min-width:0}
+.grow-points-form-close-v485{flex:0 0 auto;position:relative;display:grid;place-items:center;
+  width:32px;height:32px;margin:-4px 0 0 0;padding:0;border:0;border-radius:50%;
+  background:transparent;color:var(--muted,#666);cursor:pointer}
+.grow-points-form-close-v485::after{content:"";position:absolute;inset:-6px}
+.grow-points-form-close-v485:hover,.grow-points-form-close-v485:focus-visible{
+  background:var(--peekaa-red-soft,#FBEBE8);color:var(--peekaa-red,#C0392B)}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -4426,7 +4447,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 7c024f04ee2c92c08411b2091aa3836ff6ff91766f67f3778c05e73dc666554f</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · bc1005d54ae64457874b6ae5da910725ac9b733109d89f6e75776b3e1bc60486</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -10690,8 +10711,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :growCountCellV271(row.uses,row.verbV470);
           return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${usesCellV471}</td></tr>`;
         }).join('')}
-      </tbody></table></div>
-      ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
+      </tbody></table></div>`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
     </div>
   </section>`;
@@ -10832,7 +10852,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      alongside it and wired below to the form's own Cancel, so dismissing it can never take a
      different path from the button. */
   const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<div class="grow-points-modal-back-v410" data-grow-points-modal-back-v410 aria-hidden="true"></div><li class="grow-points-form-card-v343 grow-points-form-modal-v410" data-grow-points-addform-v326 role="dialog" aria-modal="true" aria-labelledby="growPointsFormTitleV410">
-    <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
+    ${/* nestly_v485 (owner, photo 6: the bottom Cancel struck out, an arrow to the dialog's
+         top-right corner and a drawn circle — "move here cancel button"). The dismiss control is
+         now the ✕ every other dialog in this app puts in that corner, and the bottom row is left
+         holding only the two things that CHANGE something: Save changes and Delete. That is the
+         point of the move — Cancel sat between them, so the destructive button and the safe one
+         were separated by a third button that looked like both.
+         It carries data-grow-points-add-cancel-v326 itself rather than a new hook, so the two
+         existing bindings (the backdrop's cancelV410 pass-through and growPointsAddCancel) find
+         exactly one node on the same selector and NOTHING was rewired. Dismissing from the
+         corner, the backdrop or Esc therefore still take one single path. */''}
+    <div class="grow-points-form-head-v485">
+      <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
+      <button type="button" class="grow-points-form-close-v485" data-grow-points-add-cancel-v326="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button>
+    </div>
     ${/* nestly_v422 (owner photo 3: "please fix this misalignment"). The three fields carried
          inline width:100%;max-width:280px / 140px / 420px — sizes for the pre-v410 INLINE card,
          where they sat side by side in a list row. Since v410 this form is only ever a dialog, and
@@ -10871,7 +10904,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growPointsCurrentPhotoUrlV343||growPointsPhotoFileV343?` <button type="button" class="btn ghost sm" id="growPointsPhotoRemoveV343" style="margin-top:6px">Remove photo</button>`:''}
     </p>
     ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button><button type="button" class="btn ghost sm" data-grow-points-add-cancel-v326="1">Cancel</button>${/*
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button>${/*
       nestly_v416: Delete moved in here with the rest of the row's controls. The grid has no row
       to hang it off, and a gift that cannot be removed from the surface that creates it is a
       one-way door. Same RPC and same confirm state the level row used. */''}
@@ -11898,8 +11931,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        every other live row offers the one-tap change. */
     const featuredV462=growFeaturedOfferIdV462&&String(item.id)===growFeaturedOfferIdV462;
     const featurableV462=growOffersCanWriteV324&&life.live&&bucket==='published';
-    const featureNoteV462=featuredV462
-      ?`<p class="muted small grow-offer-featured-note-v462" data-grow-offer-featured-v462="${esc(item.id)}">${CUI.icon('loyalty',{size:14})} Shown on customer Home${growFeaturedPinnedV462?'':' — chosen for you because it went live most recently'}</p>`
+    /* nestly_v485 (owner, photo 2: a badge drawn into this row's button strip — "once this show
+       on Home, put mark"). The row DID say so, in a muted grey sentence under the offer name, next
+       to every other muted grey sentence on the page — and it carried no styling of its own at all
+       (neither grow-offer-featured-row-v462 nor grow-offer-featured-note-v462 had a single CSS
+       rule). So the one offer the customer actually meets on their Home screen looked like every
+       other live row.
+       The mark now sits where the owner drew it: in the button strip, in the slot the OTHER live
+       rows fill with "Show on Home". That is what makes it read as this row's answer to that
+       button rather than as one more line of prose, and it squares the strip up — a featured row
+       was previously one control short, so its Edit and End sat left of everyone else's.
+       Presentation only: the state, its data-grow-offer-featured-v462 hook and the id it carries
+       are unchanged, so anything that reads the featured row still finds it — and so are the
+       WORDS. The owner asked for a mark, not for new wording, and "Shown on customer Home" is the
+       sentence the R2b ruling settled on, so it is carried across verbatim into the badge. */
+    const featureMarkV485=featuredV462
+      ?`<span class="pill ok grow-offer-featured-mark-v485" data-grow-offer-featured-v462="${esc(item.id)}">${CUI.icon('home',{size:14})} Shown on customer Home</span>`
+      :'';
+    /* The explanatory clause survives only where it says something the badge does not: that this
+       offer was picked automatically. A pinned offer needs no sentence — the badge is the whole
+       fact. */
+    const featureNoteV462=featuredV462&&!growFeaturedPinnedV462
+      ?`<p class="muted small grow-offer-featured-note-v462">Chosen for you because it went live most recently.</p>`
       :'';
     return `<div class="promotion-item-row${featuredV462?' grow-offer-featured-row-v462':''}" data-merchant-content${featuredV462?' data-grow-offer-is-featured-v462="1"':''}>
       ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
@@ -11907,6 +11960,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p>${featureNoteV462}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
         ${featurableV462&&!featuredV462?`<button type="button" class="btn ghost sm grow-offer-feature-v462" data-grow-offer-feature-v462="${esc(item.id)}" data-grow-offer-feature-name-v462="${esc(item.name||item.offerFacts||'this offer')}">Show on Home</button>`:''}
+        ${featureMarkV485}
         ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
         ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
@@ -13906,7 +13960,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'7c024f04ee2c92c08411b2091aa3836ff6ff91766f67f3778c05e73dc666554f',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'bc1005d54ae64457874b6ae5da910725ac9b733109d89f6e75776b3e1bc60486',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

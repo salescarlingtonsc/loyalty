@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="306952d1d22d7cac55468935469c734df457faa9c9a7fd5a298d61e8234ab13e"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="2e019be480bc883a3d37a90b8f8da57dcb6245b51cb14560a443d03ffbc483bb"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -187,6 +187,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
+/* nestly_v485 (owner photo 2). The badge that marks the ONE live offer a customer meets on their
+   Home screen. It borrows .pill.ok rather than minting a colour: green is already this app's
+   "this is the active one", and the badge sits in a strip of ghost buttons, so it has to read as
+   a state and not as a fourth thing to press. inline-flex only so the house glyph and the words
+   share a baseline — .pill itself is inline-block and would drop the icon below the text. */
+.grow-offer-featured-mark-v485{display:inline-flex;align-items:center;gap:5px;align-self:center}
+.grow-offer-featured-mark-v485 svg{flex:0 0 auto}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
@@ -2011,6 +2018,20 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
    flex column and each child is simply bounded by it. */
 .grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
+/* nestly_v485 (owner photo 6, "move here cancel button"). The dialog's title row: the heading and
+   the ✕ that dismisses it. The row is the flex column's own child, so it inherits the full 480px
+   the fields already share and the ✕ lands exactly on their right edge — the same edge v422/v449
+   spent two passes establishing, not a new one.
+   The ✕ is a 32px target with a 44px hit area behind it, which is what makes it usable with a
+   thumb without a 44px hole in the layout above the first label. */
+.grow-points-form-head-v485{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.grow-points-form-head-v485>b{min-width:0}
+.grow-points-form-close-v485{flex:0 0 auto;position:relative;display:grid;place-items:center;
+  width:32px;height:32px;margin:-4px 0 0 0;padding:0;border:0;border-radius:50%;
+  background:transparent;color:var(--muted,#666);cursor:pointer}
+.grow-points-form-close-v485::after{content:"";position:absolute;inset:-6px}
+.grow-points-form-close-v485:hover,.grow-points-form-close-v485:focus-visible{
+  background:var(--peekaa-red-soft,#FBEBE8);color:var(--peekaa-red,#C0392B)}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -4427,7 +4448,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 306952d1d22d7cac55468935469c734df457faa9c9a7fd5a298d61e8234ab13e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 2e019be480bc883a3d37a90b8f8da57dcb6245b51cb14560a443d03ffbc483bb</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7888,7 +7909,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'306952d1d22d7cac55468935469c734df457faa9c9a7fd5a298d61e8234ab13e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'2e019be480bc883a3d37a90b8f8da57dcb6245b51cb14560a443d03ffbc483bb',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

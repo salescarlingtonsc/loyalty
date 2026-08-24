@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="b742cf1d04867765d369892fc8513c981900fa7f21e871a45aa7a70e7189fbaa">
+<meta name="v104-production-source-sha256" content="ac0f46cf33732e4145a964d49138b92668880b24ae02f6d4bb6f46635aec2619">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -194,6 +194,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
+/* nestly_v485 (owner photo 2). The badge that marks the ONE live offer a customer meets on their
+   Home screen. It borrows .pill.ok rather than minting a colour: green is already this app's
+   "this is the active one", and the badge sits in a strip of ghost buttons, so it has to read as
+   a state and not as a fourth thing to press. inline-flex only so the house glyph and the words
+   share a baseline — .pill itself is inline-block and would drop the icon below the text. */
+.grow-offer-featured-mark-v485{display:inline-flex;align-items:center;gap:5px;align-self:center}
+.grow-offer-featured-mark-v485 svg{flex:0 0 auto}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
@@ -2018,6 +2025,20 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
    flex column and each child is simply bounded by it. */
 .grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
+/* nestly_v485 (owner photo 6, "move here cancel button"). The dialog's title row: the heading and
+   the ✕ that dismisses it. The row is the flex column's own child, so it inherits the full 480px
+   the fields already share and the ✕ lands exactly on their right edge — the same edge v422/v449
+   spent two passes establishing, not a new one.
+   The ✕ is a 32px target with a 44px hit area behind it, which is what makes it usable with a
+   thumb without a 44px hole in the layout above the first label. */
+.grow-points-form-head-v485{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.grow-points-form-head-v485>b{min-width:0}
+.grow-points-form-close-v485{flex:0 0 auto;position:relative;display:grid;place-items:center;
+  width:32px;height:32px;margin:-4px 0 0 0;padding:0;border:0;border-radius:50%;
+  background:transparent;color:var(--muted,#666);cursor:pointer}
+.grow-points-form-close-v485::after{content:"";position:absolute;inset:-6px}
+.grow-points-form-close-v485:hover,.grow-points-form-close-v485:focus-visible{
+  background:var(--peekaa-red-soft,#FBEBE8);color:var(--peekaa-red,#C0392B)}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -4438,7 +4459,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source b742cf1d04867765d369892fc8513c981900fa7f21e871a45aa7a70e7189fbaa</p>
+  <p class="v104-provenance">Local production-render harness · source ac0f46cf33732e4145a964d49138b92668880b24ae02f6d4bb6f46635aec2619</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4450,7 +4471,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="b742cf1d04867765d369892fc8513c981900fa7f21e871a45aa7a70e7189fbaa";
+const PRODUCTION_SOURCE_SHA256="ac0f46cf33732e4145a964d49138b92668880b24ae02f6d4bb6f46635aec2619";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

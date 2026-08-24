@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ae264498ac42a0b9d817ebb59fad3877754cdabd2b46470a2018f3ed2072313b"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="afb6fc777b9e2e59c3312cfac5373a778f0a0af665ef971dc6f3fff07d2ef54e"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -187,6 +187,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
+/* nestly_v485 (owner photo 2). The badge that marks the ONE live offer a customer meets on their
+   Home screen. It borrows .pill.ok rather than minting a colour: green is already this app's
+   "this is the active one", and the badge sits in a strip of ghost buttons, so it has to read as
+   a state and not as a fourth thing to press. inline-flex only so the house glyph and the words
+   share a baseline — .pill itself is inline-block and would drop the icon below the text. */
+.grow-offer-featured-mark-v485{display:inline-flex;align-items:center;gap:5px;align-self:center}
+.grow-offer-featured-mark-v485 svg{flex:0 0 auto}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
@@ -2011,6 +2018,20 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
    flex column and each child is simply bounded by it. */
 .grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
+/* nestly_v485 (owner photo 6, "move here cancel button"). The dialog's title row: the heading and
+   the ✕ that dismisses it. The row is the flex column's own child, so it inherits the full 480px
+   the fields already share and the ✕ lands exactly on their right edge — the same edge v422/v449
+   spent two passes establishing, not a new one.
+   The ✕ is a 32px target with a 44px hit area behind it, which is what makes it usable with a
+   thumb without a 44px hole in the layout above the first label. */
+.grow-points-form-head-v485{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.grow-points-form-head-v485>b{min-width:0}
+.grow-points-form-close-v485{flex:0 0 auto;position:relative;display:grid;place-items:center;
+  width:32px;height:32px;margin:-4px 0 0 0;padding:0;border:0;border-radius:50%;
+  background:transparent;color:var(--muted,#666);cursor:pointer}
+.grow-points-form-close-v485::after{content:"";position:absolute;inset:-6px}
+.grow-points-form-close-v485:hover,.grow-points-form-close-v485:focus-visible{
+  background:var(--peekaa-red-soft,#FBEBE8);color:var(--peekaa-red,#C0392B)}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls
@@ -4427,7 +4448,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · ae264498ac42a0b9d817ebb59fad3877754cdabd2b46470a2018f3ed2072313b</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · afb6fc777b9e2e59c3312cfac5373a778f0a0af665ef971dc6f3fff07d2ef54e</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8081,7 +8102,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'ae264498ac42a0b9d817ebb59fad3877754cdabd2b46470a2018f3ed2072313b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'afb6fc777b9e2e59c3312cfac5373a778f0a0af665ef971dc6f3fff07d2ef54e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

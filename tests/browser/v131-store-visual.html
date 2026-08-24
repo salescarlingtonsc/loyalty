@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="bc6732f0f409c18fd3cb697046fd8bd7a1291448c1e3a50b4c8c2d008d1633e7"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="71fad5082fdb000292d31c74436e86f650923e54b0ac67cde96a901bc878e63d"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -186,6 +186,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .grid{display:grid;gap:16px}
 .muted{color:var(--muted)} .small{font-size:12.5px}
 .pill{display:inline-block;padding:3.5px 10px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:-.005em;white-space:nowrap}
+/* nestly_v485 (owner photo 2). The badge that marks the ONE live offer a customer meets on their
+   Home screen. It borrows .pill.ok rather than minting a colour: green is already this app's
+   "this is the active one", and the badge sits in a strip of ghost buttons, so it has to read as
+   a state and not as a fourth thing to press. inline-flex only so the house glyph and the words
+   share a baseline — .pill itself is inline-block and would drop the icon below the text. */
+.grow-offer-featured-mark-v485{display:inline-flex;align-items:center;gap:5px;align-self:center}
+.grow-offer-featured-mark-v485 svg{flex:0 0 auto}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
@@ -2010,6 +2017,20 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
    :not(.grow-points-form-modal-v410) block near the top of this sheet), so the dialog is a plain
    flex column and each child is simply bounded by it. */
 .grow-points-form-card-v343.grow-points-form-modal-v410>*{min-width:0;max-width:100%}
+/* nestly_v485 (owner photo 6, "move here cancel button"). The dialog's title row: the heading and
+   the ✕ that dismisses it. The row is the flex column's own child, so it inherits the full 480px
+   the fields already share and the ✕ lands exactly on their right edge — the same edge v422/v449
+   spent two passes establishing, not a new one.
+   The ✕ is a 32px target with a 44px hit area behind it, which is what makes it usable with a
+   thumb without a 44px hole in the layout above the first label. */
+.grow-points-form-head-v485{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.grow-points-form-head-v485>b{min-width:0}
+.grow-points-form-close-v485{flex:0 0 auto;position:relative;display:grid;place-items:center;
+  width:32px;height:32px;margin:-4px 0 0 0;padding:0;border:0;border-radius:50%;
+  background:transparent;color:var(--muted,#666);cursor:pointer}
+.grow-points-form-close-v485::after{content:"";position:absolute;inset:-6px}
+.grow-points-form-close-v485:hover,.grow-points-form-close-v485:focus-visible{
+  background:var(--peekaa-red-soft,#FBEBE8);color:var(--peekaa-red,#C0392B)}
 /* In the inline card each control is sized by its own grid track; in a column they should all be
    the width of the dialog, or the textarea reads as a different kind of field from the inputs.
    nestly_v422: `max-width` is dropped too. Those inline caps (280 / 140 / 420) size the controls

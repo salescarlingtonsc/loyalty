@@ -15535,8 +15535,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             :growCountCellV271(row.uses,row.verbV470);
           return `<tr${hidden}${row.groupV413?` data-grow-usage-group-v413="${esc(row.groupV413)}"`:''}${row.childV410?' data-grow-usage-child-v413="1"':''}><td data-label="Category">${nameCell}</td><td data-label="Programmes">${programmesCell}</td><td data-label="Times used">${usesCellV471}</td></tr>`;
         }).join('')}
-      </tbody></table></div>
-      ${growUsageComparisonChartV386(growAnalyticsRowsV375,null,null)}`
+      </tbody></table></div>`
       :'<p class="muted small" style="margin-top:8px">No programme has been set up yet, so there is nothing to measure.</p>'}
     </div>
   </section>`;
@@ -15677,7 +15676,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      alongside it and wired below to the form's own Cancel, so dismissing it can never take a
      different path from the button. */
   const growPointsAddFormV326=growPointsAddOpenV326==='form'?`<div class="grow-points-modal-back-v410" data-grow-points-modal-back-v410 aria-hidden="true"></div><li class="grow-points-form-card-v343 grow-points-form-modal-v410" data-grow-points-addform-v326 role="dialog" aria-modal="true" aria-labelledby="growPointsFormTitleV410">
-    <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
+    ${/* nestly_v485 (owner, photo 6: the bottom Cancel struck out, an arrow to the dialog's
+         top-right corner and a drawn circle — "move here cancel button"). The dismiss control is
+         now the ✕ every other dialog in this app puts in that corner, and the bottom row is left
+         holding only the two things that CHANGE something: Save changes and Delete. That is the
+         point of the move — Cancel sat between them, so the destructive button and the safe one
+         were separated by a third button that looked like both.
+         It carries data-grow-points-add-cancel-v326 itself rather than a new hook, so the two
+         existing bindings (the backdrop's cancelV410 pass-through and growPointsAddCancel) find
+         exactly one node on the same selector and NOTHING was rewired. Dismissing from the
+         corner, the backdrop or Esc therefore still take one single path. */''}
+    <div class="grow-points-form-head-v485">
+      <b id="growPointsFormTitleV410">${growPointsEditingV326?'Edit gift':'Add a gift'}</b>
+      <button type="button" class="grow-points-form-close-v485" data-grow-points-add-cancel-v326="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button>
+    </div>
     ${/* nestly_v422 (owner photo 3: "please fix this misalignment"). The three fields carried
          inline width:100%;max-width:280px / 140px / 420px — sizes for the pre-v410 INLINE card,
          where they sat side by side in a list row. Since v410 this form is only ever a dialog, and
@@ -15716,7 +15728,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growPointsCurrentPhotoUrlV343||growPointsPhotoFileV343?` <button type="button" class="btn ghost sm" id="growPointsPhotoRemoveV343" style="margin-top:6px">Remove photo</button>`:''}
     </p>
     ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button><button type="button" class="btn ghost sm" data-grow-points-add-cancel-v326="1">Cancel</button>${/*
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button>${/*
       nestly_v416: Delete moved in here with the rest of the row's controls. The grid has no row
       to hang it off, and a gift that cannot be removed from the surface that creates it is a
       one-way door. Same RPC and same confirm state the level row used. */''}
@@ -16743,8 +16755,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        every other live row offers the one-tap change. */
     const featuredV462=growFeaturedOfferIdV462&&String(item.id)===growFeaturedOfferIdV462;
     const featurableV462=growOffersCanWriteV324&&life.live&&bucket==='published';
-    const featureNoteV462=featuredV462
-      ?`<p class="muted small grow-offer-featured-note-v462" data-grow-offer-featured-v462="${esc(item.id)}">${CUI.icon('loyalty',{size:14})} Shown on customer Home${growFeaturedPinnedV462?'':' — chosen for you because it went live most recently'}</p>`
+    /* nestly_v485 (owner, photo 2: a badge drawn into this row's button strip — "once this show
+       on Home, put mark"). The row DID say so, in a muted grey sentence under the offer name, next
+       to every other muted grey sentence on the page — and it carried no styling of its own at all
+       (neither grow-offer-featured-row-v462 nor grow-offer-featured-note-v462 had a single CSS
+       rule). So the one offer the customer actually meets on their Home screen looked like every
+       other live row.
+       The mark now sits where the owner drew it: in the button strip, in the slot the OTHER live
+       rows fill with "Show on Home". That is what makes it read as this row's answer to that
+       button rather than as one more line of prose, and it squares the strip up — a featured row
+       was previously one control short, so its Edit and End sat left of everyone else's.
+       Presentation only: the state, its data-grow-offer-featured-v462 hook and the id it carries
+       are unchanged, so anything that reads the featured row still finds it — and so are the
+       WORDS. The owner asked for a mark, not for new wording, and "Shown on customer Home" is the
+       sentence the R2b ruling settled on, so it is carried across verbatim into the badge. */
+    const featureMarkV485=featuredV462
+      ?`<span class="pill ok grow-offer-featured-mark-v485" data-grow-offer-featured-v462="${esc(item.id)}">${CUI.icon('home',{size:14})} Shown on customer Home</span>`
+      :'';
+    /* The explanatory clause survives only where it says something the badge does not: that this
+       offer was picked automatically. A pinned offer needs no sentence — the badge is the whole
+       fact. */
+    const featureNoteV462=featuredV462&&!growFeaturedPinnedV462
+      ?`<p class="muted small grow-offer-featured-note-v462">Chosen for you because it went live most recently.</p>`
       :'';
     return `<div class="promotion-item-row${featuredV462?' grow-offer-featured-row-v462':''}" data-merchant-content${featuredV462?' data-grow-offer-is-featured-v462="1"':''}>
       ${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}
@@ -16752,6 +16784,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small">${esc(label)}${detail?` · ${esc(detail)}`:''}</p>${featureNoteV462}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
         ${featurableV462&&!featuredV462?`<button type="button" class="btn ghost sm grow-offer-feature-v462" data-grow-offer-feature-v462="${esc(item.id)}" data-grow-offer-feature-name-v462="${esc(item.name||item.offerFacts||'this offer')}">Show on Home</button>`:''}
+        ${featureMarkV485}
         ${growOffersCanWriteV324?`<a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a>`:''}
         ${growOffersCanWriteV324&&bucket!=='history'?`<button type="button" class="${deleteBtnClass}" data-grow-offer-delete-v324="${esc(item.id)}" data-grow-offer-published-v324="${item.active?'1':''}" data-grow-offer-name-v324="${esc(item.name||item.offerFacts||(bucket==='draft'?'this draft':'this offer'))}">${deleteLabel}</button>`:''}
       </div></div>`;
@@ -28345,16 +28378,6 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
   </section>`;
 }
 
-const GROW_USAGE_COMPARE_OPTIONS_V392=Object.freeze([
-  {key:'previous',label:'Period before'},
-  {key:'last_month',label:'Last month'},
-  {key:'last_year',label:'Last year'}
-]);
-/* The column and the chart name the basis the owner picked, so a figure can never be read
-   against a period nobody chose. */
-function growUsageCompareLabelV392(range){
-  return (GROW_USAGE_COMPARE_OPTIONS_V392.find(option=>option.key===(range?.basis||'previous'))||{}).label||'Period before';
-}
 function growUsageComparisonRangeV392(from,to,basis){
   if(basis==='last_month'||basis==='last_year'){
     const months=basis==='last_year'?12:1;
