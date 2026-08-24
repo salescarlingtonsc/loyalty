@@ -4386,11 +4386,22 @@ function customerHeroStampCardV422(quest){
      merge into a blob. Same viewBox, same size and same currentColor as the star it replaces, so
      nothing about the cell's layout or the compact (22px) variant changes. */
   const crownV471='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M2 5.4l3.1 2.2L8 3l2.9 4.6L14 5.4l-1 7.6H3L2 5.4Z" fill="currentColor"/></svg>';
+  /* nestly_v486 (owner, photo A: "stamp 2 / 4 / 10 is a gift - and i must be able to click into
+     2/4/10 to view what is that rewards (showing the gift / expiry and details all in one)").
+     A slot that CARRIES a gift becomes a real <button>; every other slot stays the inert <span>
+     it was. That split is deliberate - making all fifteen tappable would promise an answer on
+     twelve slots that have nothing to say.
+     A button, not a span with a click handler: it is reachable by keyboard and announced as
+     something you can press, which a styled <span> is not. The inner markup is untouched, so the
+     crown, the number and the raised gift glyph are drawn exactly as before. */
   const cells=Array.from({length:total},(unused,index)=>{
     const slot=index+1,rung=marks.get(slot),collected=index<filled;
-    return `<span class="customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${
-      rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
-    }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}</span>`;
+    const inner=`${rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
+      }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}`;
+    const cls=`customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}`;
+    if(!rung)return `<span class="${cls}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${inner}</span>`;
+    return `<button type="button" class="${cls} is-tappable-v486" data-hero-stamp-slot-v422="${slot}" data-hero-stamp-gift-v486="${slot}" aria-label="${
+      esc(`Stamp ${slot} - ${rung.name||'reward'}. See what this gift is.`)}"><span aria-hidden="true">${inner}</span></button>`;
   }).join('');
   /* The one sentence the drawing puts under the grid. quest.next is the server's own first
      unclaimed milestone, so this can never name a gift the counter would refuse. With every
@@ -4416,7 +4427,11 @@ function customerHeroStampCardV422(quest){
      about nothing is a button that lies. Keyed by nothing: the sheet is built from the milestone
      the button sits beside, so there is no id to look up and nothing to go stale. */
   const helpV478=next?customerRewardHelpButtonV468('data-hero-stamp-rules-v478','1',next.name||'this reward'):'';
-  const gridV475=`<div class="customer-hero-stamp-grid-v422" role="img" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
+  /* nestly_v486: role="img" made every child presentational - correct while the cells were inert
+     decoration, and wrong the moment some of them became buttons, because a screen reader ignores
+     the contents of an image. It is a labelled group now, so the progress summary is still
+     announced AND the gift buttons inside it can be reached. */
+  const gridV475=`<div class="customer-hero-stamp-grid-v422" role="group" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
   return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoV475?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
     ${helpV478?`<div class="customer-hero-stamp-help-v478">${helpV478}</div>`:''}
     <div class="customer-hero-stamp-body-v475">

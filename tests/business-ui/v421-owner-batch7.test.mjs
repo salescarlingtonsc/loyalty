@@ -197,7 +197,12 @@ test('v421 "Other" is never printed to a customer as a description of the busine
 
 test('v421 the preview passes the same business fields the customer app reads', () => {
   const preview = appJs.slice(appJs.indexOf('function customerInterfaceLivePreviewMarkupV326('));
-  const head = preview.slice(0, 4000);
+  /* nestly_v486: this window is an arbitrary slice of the function, not a contract about where
+     in it these fields must appear. v486 added the live-rewards lookup above them and pushed the
+     first of the three from 3.9k to 4191 — the assertions below were still true, the window had
+     simply stopped reaching them. Widened to cover the whole function (7.8k today) so the test
+     keeps checking what it says it checks instead of where the lines happen to sit. */
+  const head = preview.slice(0, 12000);
   assert.match(head, /bio:\(\$\('bbio'\)\?\.value\?\?S\.biz\.bio\?\?''\)\.trim\(\)/,
     'Company bio — the field the owner marked as missing — read live off its own control');
   assert.match(head, /gallery:Array\.isArray\(businessProfileExtrasV418\?\.gallery\)/);

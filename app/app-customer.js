@@ -3147,12 +3147,23 @@ function customerRewardRulesRowsV468(reward={},{unit='points',currency='SGD'}={}
 function showCustomerRewardRulesV468(reward={},{unit='points',currency='SGD',title=''}={}){
   const rowsV468=customerRewardRulesRowsV468(reward,{unit,currency});
   const nameV468=String(title||reward.customer_name||reward.name||reward.label||'').trim()||'Reward';
+  /* Accepts either shape: the catalogue row's snake_case image_ref, or the stamp milestone's
+     camelCase imageRef from stampQuestNormaliseV323. */
+  const photoV486=customerMediaUrlV95(reward.image_ref||reward.imageRef||'');
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface customer-reward-rules-modal-v468';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-labelledby','customerRewardRulesTitleV468');
   overlay.innerHTML=`<section class="modal-card customer-offer-detail">
     <div class="row"><p class="customer-quest-kicker">Reward rules</p><span class="spacer"></span><button class="btn ghost sm" data-reward-rules-close-v468 type="button" aria-label="Close reward rules">${CUI.icon('close',{size:20})}</button></div>
+    ${/* nestly_v486 (owner, photo A: the gift sheet must show "the gift / expiry and details all
+         in one"). The picture is the fastest way a customer who reads little English learns what
+         the gift IS, and it is the same image_ref the card, the reward list and the hero photo
+         already draw - one gift, one picture, wherever it appears. Drawn only when there is one:
+         a gift with no photo renders no element at all, so nothing collapses and no placeholder
+         box appears. onerror is handled below, matching the v475/v468 bargain - a storage object
+         that has since been deleted removes the image rather than leaving a broken icon. */''}
+    ${photoV486?`<img class="customer-reward-rules-photo-v486" src="${esc(photoV486)}" alt="" loading="lazy" decoding="async" data-reward-rules-photo-v486>`:''}
     <h2 id="customerRewardRulesTitleV468">${esc(nameV468)}</h2>
     ${rowsV468.length
       ?`<dl class="customer-reward-rules-v468">${rowsV468.map(([term,value])=>
@@ -3164,6 +3175,9 @@ function showCustomerRewardRulesV468(reward={},{unit='points',currency='SGD',tit
      ever hands focus back to the "?" that opened it. */
   const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),initialFocus:'[data-reward-rules-close-v468]'});
   overlay.querySelector('[data-reward-rules-close-v468]').onclick=()=>deactivate({restoreFocus:true});
+  overlay.querySelectorAll('[data-reward-rules-photo-v486]').forEach(image=>{
+    image.onerror=()=>image.remove();
+  });
 }
 /* nestly_v471 (owner ruling 2026-08-23, asked what should happen when a gift's end date passes:
    "in customer view, they should see the expiry of each gift, example free lotion will expire on
@@ -6074,20 +6088,37 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         /* nestly_v478: the stamp page's "?" opens the shared rules sheet, built from the
            milestone beside it. `unit` is stamps by definition on this card, and the slot IS the
            price, so the sheet's "What it costs" row reads in the card's own units. */
-        heroSlotV422.querySelectorAll('[data-hero-stamp-rules-v478]').forEach(button=>{
+        /* nestly_v486 (owner photo A). One sheet builder for both entry points: the "?" asks about
+           quest.next (the gift being worked toward), a tapped stamp asks about the gift ON that
+           stamp. The owner kept BOTH controls when asked, and this is what keeps them honest -
+           they open the same sheet over different milestones, never two different sheets.
+           rung.slot IS the price on a stamp card, which is why cost_points reads it. */
+        const stampRulesV486=rung=>{
+          if(!rung)return;
+          showCustomerRewardRulesV468({
+            customer_name:rung.name,cost_points:rung.slot,
+            description:rung.description,terms:rung.terms,instructions:rung.instructions,
+            expires_at:rung.expiresAt||null,
+            imageRef:rung.imageRef||'',
+            claim_available_until:customerStampGiftEndsV484.get(String(rung.rewardId||''))||null
+          },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
+        };
+        heroSlotV422.querySelectorAll('[data-hero-stamp-gift-v486]').forEach(button=>{
           button.onclick=()=>{
-            const rung=quest?.next;
-            if(!rung)return;
-            showCustomerRewardRulesV468({
-              customer_name:rung.name,cost_points:rung.slot,
-              description:rung.description,terms:rung.terms,instructions:rung.instructions,
-              expires_at:rung.expiresAt||null,
-              /* nestly_v484: the gift's own end date, keyed by its reward id. Null when the
-                 catalogue has not arrived yet or the gift has no end date, and a null prints
-                 nothing at all. */
-              claim_available_until:customerStampGiftEndsV484.get(String(rung.rewardId||''))||null
-            },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
+            const slot=Number(button.dataset.heroStampGiftV486||0);
+            /* The SAME first-unclaimed-wins pick customerHeroStampCardV422 used to decide which
+               gift to draw on this slot, so the sheet can never describe a different gift from
+               the one the customer just tapped. */
+            const rungs=(Array.isArray(quest?.milestones)?quest.milestones:[]).filter(r=>r.slot===slot);
+            stampRulesV486(rungs.find(r=>!r.claimed)||rungs[0]||null);
           };
+        });
+        /* nestly_v486: the "?" now goes through the same builder as a tapped stamp rather than
+           keeping a second copy of the same object literal. Two copies would have drifted the
+           first time either was touched - v484's expiry line had to be written into one of them
+           already. Behaviour is unchanged: it still describes quest.next. */
+        heroSlotV422.querySelectorAll('[data-hero-stamp-rules-v478]').forEach(button=>{
+          button.onclick=()=>stampRulesV486(quest?.next);
         });
         /* nestly_v483 (owner, photos 9 + 10 held side by side: "needs to be align … in terms of
            photo placement, '?' placement"). PRESENTATION ONLY — the button node, its attributes

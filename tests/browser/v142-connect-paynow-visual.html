@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="2e019be480bc883a3d37a90b8f8da57dcb6245b51cb14560a443d03ffbc483bb"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="219f515fecd238ca4f389a2aea8b23c3d42c7c81deb889c508cb36b2048f1775"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -194,6 +194,23 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
    share a baseline — .pill itself is inline-block and would drop the icon below the text. */
 .grow-offer-featured-mark-v485{display:inline-flex;align-items:center;gap:5px;align-self:center}
 .grow-offer-featured-mark-v485 svg{flex:0 0 auto}
+
+/* nestly_v486 (owner, photo 4: "Save photos and links" struck through with "no need this, cause
+   here have" pointing at the page's own Save, and the branch block ringed with an arrow to that
+   same button). Owner's call when asked: the one Save stays at the FOOT of the page.
+   The per-section Saves are HIDDEN, not deleted, and that distinction is the whole design. The
+   foot button (#ciSaveV368) does not perform its own write — it finds every enabled button in the
+   visible section whose label starts with "Save" and clicks it. Deleting these would delete the
+   writes themselves; hiding them leaves the mechanism byte-identical and simply stops the owner
+   being asked to choose between four buttons that were never alternatives. display:none keeps a
+   programmatic .click() working and takes them out of the tab order, which is exactly right — they
+   are now an implementation detail of the foot Save, not controls.
+   ONLY the three the foot button actually presses are hidden. "Replace logo", "Add" and the rest
+   do NOT match its /^save\b/i predicate, so hiding them would strand those actions with no way to
+   run them. */
+.customer-interface-view-v296 .settings-save-row,
+.customer-interface-view-v296 #ciExtrasSaveV418,
+.customer-interface-view-v296 [data-branch-save-v325]{display:none}
 .pill.on{background:var(--success-bg);color:var(--green)} .pill.off{background:var(--neutral-bg);color:var(--muted)}
 .pill.new{background:var(--tint);color:var(--coral)} .pill.ok{background:var(--success-bg);color:var(--green)} .pill.no{background:var(--danger-bg);color:var(--red)}
 /* Wave 1: the attention state — Draft / Paused / Not set up / Pending / Ends soon. Grey means
@@ -3806,6 +3823,18 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    stamp without covering the number or the star inside it. */
 .customer-hero-stamp-gift-v422{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
   color:#fff;line-height:0}
+/* nestly_v486 (owner photo A): a gift slot is a <button> now, so it has to be told to stop
+   looking like one. Everything visual still comes from .customer-hero-stamp-cell-v422 above -
+   these only strip the UA button box so the circle is drawn exactly as the <span> version was.
+   The focus ring is explicit because outline:none on a keyboard-reachable control would be a
+   real accessibility regression, and the tap target is widened by a pseudo-element rather than
+   by size, so a 28px circle keeps its place in the fixed 5x28 grid v416/v449 depend on. */
+.customer-hero-stamp-cell-v422.is-tappable-v486{padding:0;margin:0;background:none;font:inherit;
+  -webkit-appearance:none;appearance:none;cursor:pointer;box-sizing:border-box}
+.customer-hero-stamp-cell-v422.is-tappable-v486::after{content:"";position:absolute;inset:-7px;border-radius:999px}
+.customer-hero-stamp-cell-v422.is-tappable-v486:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(hover:hover){.customer-hero-stamp-cell-v422.is-tappable-v486:hover{box-shadow:0 0 0 4px rgba(255,255,255,.42)}}
+.customer-hero-stamp-cell-v422.is-tappable-v486>span{display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%}
 .customer-hero-stamp-num-v422{opacity:.85}
 .customer-hero-stamp-next-v422{margin:16px 0 0;font-weight:750;font-size:14px;line-height:1.25;color:#fff}
 .customer-hero-stamp-carried-v422{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.78)}
@@ -4423,6 +4452,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   background:var(--card,#fff);color:var(--muted,#666);
   font:600 14px/1 inherit;cursor:pointer;position:relative}
 .customer-reward-help-v468::after{content:"";position:absolute;inset:-9px}
+/* nestly_v486 (owner photo A: the sheet must show "the gift / expiry and details all in one").
+   The gift's own picture, at the head of its rules sheet. Sized off the sheet rather than fixed
+   so it stays inside a narrow phone, and capped in height so a tall portrait photo cannot push
+   the rules themselves below the fold - the rules are what the sheet is FOR. */
+.customer-reward-rules-photo-v486{display:block;width:100%;max-width:220px;max-height:180px;
+  margin:12px 0 4px;object-fit:cover;border-radius:14px;background:var(--peekaa-red-soft,#FBEBE8)}
 .customer-reward-help-v468:hover,.customer-reward-help-v468:focus-visible{color:var(--ink,#161616);border-color:var(--ink,#161616)}
 /* nestly_v471: the same "?" on the RED hero card. v468 styled it for a white reward card — a
    white disc with a grey hairline — which on the red gradient reads as a hole punched in the card.
@@ -4448,7 +4483,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 2e019be480bc883a3d37a90b8f8da57dcb6245b51cb14560a443d03ffbc483bb</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 219f515fecd238ca4f389a2aea8b23c3d42c7c81deb889c508cb36b2048f1775</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5077,6 +5112,20 @@ function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=f
     .filter(Boolean).join(' · ');
   const useRow=use=>`<div class="row c360-reward-row-v226"><span class="small">${whenText(use)}</span><span class="spacer"></span>${
     use.reversed?'<span class="pill ok">Added back · no refund</span>':'<span class="pill new">session used</span>'}</div>`;
+  /* nestly_v486 (owner, photo 5: the whole right column struck through - "just show package
+     detail, this is too confusing & long"). MEASURED on the owner's own screenshot: three package
+     blocks, and the SAME four-line "This customer holds more than one ..." paragraph printed under
+     each of them, because the caveat is a property of the plan NAME and every entry sharing that
+     name repeats it. So two thirds of the column's length was one sentence said three times.
+     Two presentational changes, no information dropped:
+       1. a caveat is printed ONCE per card - the first entry that raises it keeps it, and an
+          identical repeat on a later entry is dropped. Entry-SPECIFIC text (the unattributed
+          caveat quotes that entry's own counts) is not identical, so it is never deduped away.
+       2. what survives sits behind a closed disclosure, so the card opens on the package facts
+          the counter actually needs - used/left, price, service, Use a session - and the
+          explanation is one tap away for the person who wants it.
+     Same <details class="c360-reward-adjust"> the Session history row beside it already uses. */
+  const caveatsSeenV486=new Set();
   const packageBlock=entry=>{
     const bought=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):null;
     const service=entry.serviceName
@@ -5093,7 +5142,14 @@ function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=f
       </div>
       <p class="small" style="margin-top:6px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
       <p class="muted small" style="margin-top:3px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
-      ${caveats.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}
+      ${(()=>{
+        const freshV486=caveats.filter(text=>!caveatsSeenV486.has(text));
+        freshV486.forEach(text=>caveatsSeenV486.add(text));
+        return freshV486.length
+          ?`<details class="c360-reward-adjust" style="margin-top:6px"><summary>Why this list may look off</summary><div style="margin-top:6px">${
+            freshV486.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}</div></details>`
+          :'';
+      })()}
       ${entry.uses.length
         ?`<details class="c360-reward-adjust" style="margin-top:8px"><summary>Session history · ${entry.uses.length}</summary><div style="margin-top:6px">${entry.uses.map(useRow).join('')}</div></details>`
         :'<p class="muted small" style="margin-top:6px">No session use has been recorded against this package yet.</p>'}
@@ -7909,7 +7965,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'2e019be480bc883a3d37a90b8f8da57dcb6245b51cb14560a443d03ffbc483bb',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'219f515fecd238ca4f389a2aea8b23c3d42c7c81deb889c508cb36b2048f1775',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

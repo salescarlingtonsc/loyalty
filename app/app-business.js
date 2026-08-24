@@ -6139,6 +6139,20 @@ function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=f
     .filter(Boolean).join(' · ');
   const useRow=use=>`<div class="row c360-reward-row-v226"><span class="small">${whenText(use)}</span><span class="spacer"></span>${
     use.reversed?'<span class="pill ok">Added back · no refund</span>':'<span class="pill new">session used</span>'}</div>`;
+  /* nestly_v486 (owner, photo 5: the whole right column struck through - "just show package
+     detail, this is too confusing & long"). MEASURED on the owner's own screenshot: three package
+     blocks, and the SAME four-line "This customer holds more than one ..." paragraph printed under
+     each of them, because the caveat is a property of the plan NAME and every entry sharing that
+     name repeats it. So two thirds of the column's length was one sentence said three times.
+     Two presentational changes, no information dropped:
+       1. a caveat is printed ONCE per card - the first entry that raises it keeps it, and an
+          identical repeat on a later entry is dropped. Entry-SPECIFIC text (the unattributed
+          caveat quotes that entry's own counts) is not identical, so it is never deduped away.
+       2. what survives sits behind a closed disclosure, so the card opens on the package facts
+          the counter actually needs - used/left, price, service, Use a session - and the
+          explanation is one tap away for the person who wants it.
+     Same <details class="c360-reward-adjust"> the Session history row beside it already uses. */
+  const caveatsSeenV486=new Set();
   const packageBlock=entry=>{
     const bought=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):null;
     const service=entry.serviceName
@@ -6155,7 +6169,14 @@ function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=f
       </div>
       <p class="small" style="margin-top:6px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
       <p class="muted small" style="margin-top:3px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
-      ${caveats.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}
+      ${(()=>{
+        const freshV486=caveats.filter(text=>!caveatsSeenV486.has(text));
+        freshV486.forEach(text=>caveatsSeenV486.add(text));
+        return freshV486.length
+          ?`<details class="c360-reward-adjust" style="margin-top:6px"><summary>Why this list may look off</summary><div style="margin-top:6px">${
+            freshV486.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}</div></details>`
+          :'';
+      })()}
       ${entry.uses.length
         ?`<details class="c360-reward-adjust" style="margin-top:8px"><summary>Session history · ${entry.uses.length}</summary><div style="margin-top:6px">${entry.uses.map(useRow).join('')}</div></details>`
         :'<p class="muted small" style="margin-top:6px">No session use has been recorded against this package yet.</p>'}
@@ -32353,6 +32374,46 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
       <div class="wallet-reward-actions"><button class="btn sm" type="button" disabled title="Sample preview — not a real redemption">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div>
     </article>`).join('')}</div>`;
 }
+/* nestly_v486 (owner ruling 2026-08-24 on the Business Profile Live preview: "make sure it is a
+   live sync of real customer view, it should not look different. the only differences is their
+   own individual details and rewards and gift"). Owner's call when asked: the REWARDS, GIFT
+   PHOTOS and OFFERS become real; the per-customer numbers - balance and tier standing - stay
+   sample, because they belong to a person and this screen belongs to a business.
+   Both reads reuse what the workspace already uses, rather than minting a second definition of
+   "this firm's rewards" or "this firm's live offers":
+     - loyalty_rewards, filtered to active and unpaused, cheapest first, which is the same table
+       and the same predicate the reward editor reads;
+     - business_get_promotion_editor_v155 through promotionEditorItemV104 and the existing
+       promotionLifecycleV186 live test - so an offer that is a draft, has not started, or has
+       already ended is left out here exactly as it is left out of the customer's page.
+   A failed read leaves the previous sample in place: a preview that renders nothing would be
+   worse than one that is generic, which is the same bargain v417 struck for the spine. */
+let businessProfilePreviewLiveV486={rewards:null,offers:null};
+async function loadBusinessProfilePreviewLiveV486(){
+  const businessIdV486=S.biz?.id;
+  if(!businessIdV486)return;
+  const [rewardsResV486,promosResV486]=await Promise.all([
+    sb.from('loyalty_rewards')
+      .select('id,active,paused,customer_name,name,description,image_ref,cost_points,claim_available_until')
+      .eq('business_id',businessIdV486).eq('active',true).order('cost_points').limit(24),
+    sb.rpc('business_get_promotion_editor_v155',{p_business:businessIdV486})
+  ]);
+  if(S.biz?.id!==businessIdV486)return;
+  if(!rewardsResV486.error&&Array.isArray(rewardsResV486.data)){
+    businessProfilePreviewLiveV486.rewards=rewardsResV486.data.filter(row=>row&&row.paused!==true);
+  }
+  if(!promosResV486.error){
+    const itemsV486=(Array.isArray(promosResV486.data?.items)?promosResV486.data.items:[])
+      .map(promotionEditorItemV104).filter(item=>promotionLifecycleV186(item).live);
+    /* The same reshape promotionPreviewMarkupV104 performs for the offer studio's own preview:
+       customerPromotionCardV104 reads image_url and metadata.cta, the editor row carries imageUrl
+       and ctaKind/ctaLabel. One card, one reshape, two places that show it. */
+    businessProfilePreviewLiveV486.offers=itemsV486.map(item=>({...item,
+      image_url:item.imageUrl||item.image_url||'',
+      metadata:{...(item.metadata||{}),cta:{kind:item.ctaKind,label:item.ctaLabel}}}));
+  }
+  refreshCustomerInterfaceLivePreviewV326();
+}
 function customerInterfaceLivePreviewMarkupV326(){
   const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
   const logoUrl=logoImg?.getAttribute('src')||'';
@@ -32364,7 +32425,11 @@ function customerInterfaceLivePreviewMarkupV326(){
     heroColor:contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375),
     name,tagline:'',description:'',balance:77877,unit:'points',
     tier:{current:{label:'Diamond'},basis:'points_earned',metric:77877,tiers:[]},
-    benefits:[],offers:[],rewards:[],products:[],services:[],capabilities:{}
+    /* nestly_v486: the firm's own LIVE offers, so the Limited offers rail in the preview shows
+       what a customer would actually swipe through rather than an empty state. */
+    benefits:[],
+    offers:Array.isArray(businessProfilePreviewLiveV486.offers)?businessProfilePreviewLiveV486.offers:[],
+    rewards:[],products:[],services:[],capabilities:{}
   };
   /* v393: the preview's loyalty object carries the server's nested tier snapshot, so what the
      owner sees on this screen is rendered by the same code path a real customer's wallet uses. */
@@ -32374,7 +32439,22 @@ function customerInterfaceLivePreviewMarkupV326(){
   const loyalty={balance:previewUnitV417==='stamps'?4:77877,unit:previewUnitV417,enabled:true,
     tier:{name:'Diamond',threshold:50000,perk_note:null,points_multiplier:1.5,
       basis:'points_earned',metric:77877,next:{name:'Obsidian',threshold:100000,remaining:22123}}};
-  const reward={name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
+  /* nestly_v486: the reward the preview names is now one of the firm's OWN, cheapest first -
+     which is the one a customer is most likely to be working toward. The invented
+     "Free Facial cream" survives only as the fallback for a firm with no rewards yet, or a read
+     that has not landed, so the phone is never blank. image_ref carries the real gift photo
+     through the same customerMediaUrlV95 path the customer's own wallet uses. */
+  const liveRewardsV486=Array.isArray(businessProfilePreviewLiveV486.rewards)
+    ?businessProfilePreviewLiveV486.rewards:[];
+  const firstRewardV486=liveRewardsV486[0]||null;
+  const reward=firstRewardV486
+    ?{name:String(firstRewardV486.customer_name||firstRewardV486.name||'').trim()||'Reward',
+      cost_units:Math.max(0,Number(firstRewardV486.cost_points)||0),
+      image_ref:firstRewardV486.image_ref||'',
+      description:firstRewardV486.description||'',
+      claim_available_until:firstRewardV486.claim_available_until||null,
+      available_now:true,remaining_units:0}
+    :{name:'Free Facial cream',cost_units:1000,available_now:true,remaining_units:0};
   const actionableCard={loyalty,next_eligible_reward:reward,birthday_benefit:null};
   const merchantExperience=customerMerchantExperienceMarkupV95({
     /* V385: the preview reads the LIVE industry controls the same way it reads the live name,
@@ -32697,6 +32777,10 @@ async function customerInterfacePageV243(hashParam){
   /* nestly_v418: same shape as the branch card above — the section renders its loading state with
      the page, then fills itself. */
   loadBusinessProfileExtrasV418();
+  /* nestly_v486: fills the Live preview with the firm's real rewards and live offers, then
+     repaints it. Fire-and-forget for the same reason the two loaders above it are - the page is
+     usable while it is in flight, and a failure leaves the sample preview standing. */
+  void loadBusinessProfilePreviewLiveV486();
   wireBookingRulesV325(()=>customerInterfaceHostV288.isConnected&&M()===customerInterfaceHostV288);
   loadCustomerProgrammePresentationEditorV95();
   /* V296: a re-render triggered by adding or retiring a customer field must come back to the
