@@ -646,9 +646,13 @@ const CUSTOMER_INTERFACE_TABS_V368=['appointment','actions'];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
-  /* V275: Bottles sits with the jobs done during service, beside Record sale — parking and
-     calling a bottle happens at the same moment as ringing the drink. Bar tenants only. */
-  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bottles','bookings','waitlist']},
+  /* V275 put Bottles inside Serve & sell; nestly_v488 (owner, photo 2: "i want the module
+     'bottle' to be standalone - not under serve and sell") lifts it out into its own flat rail
+     entry directly below the group it left. Flat like Home and Customers because it is one
+     surface. The gating is unchanged and does the hiding for free: 'bottles' is only in the bar
+     sector's bundle, so every other sector's rail simply never grows this row. */
+  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
+  {key:'bottles',icon:'bottle',flat:'Bottles',items:['bottles']},
   /* V294 (owner markup 2026-08-12): the combined "Memberships & gift cards" programme card was
      removed, and that card was the only advertised door to gift-card management (the grow group
      renders no module rows). Gift cards are sold at the counter, so the surface moved to Serve &
@@ -21477,7 +21481,7 @@ async function tillPage(){
       /* v187: bundles were authorable but unsellable. Read the bundle and its member services
          here; which of those services may actually be sold at THIS branch is still decided by
          the checkout catalogue above, never by this list. */
-      sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id)')
+      sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id,product_id)')
         .eq('business_id',S.biz.id).eq('active',true).order('name'),
       /* V365 (owner, photo 4: "there must be a qrcode for merchant to scan and issue the
          rewards"). The scan already exists — "Scan customer QR" resolves the member code to this
@@ -21576,13 +21580,18 @@ async function tillPage(){
       /* V365: the customer's claimable tier benefits, each with what is left this period. */
       customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
-      /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
-         missing a service is not the deal the customer was quoted, so it is withheld rather than
-         quietly sold short. Prices come from the branch's own catalogue. */
+      /* A bundle is offered only when EVERY member in it is sellable at this branch — a bundle
+         missing a member is not the deal the customer was quoted, so it is withheld rather than
+         quietly sold short. Prices come from the branch's own catalogue.
+         nestly_v488: members are services OR products now, each checked against its own branch
+         catalogue exactly as before. */
       bundles:bundleRows.error?null:(bundleRows.data||[]).map(bundle=>{
         const catalogueById=new Map(activeItems.filter(item=>item.item_type==='service')
           .map(item=>[item.item_id,item]));
+        const productCatalogueV488=new Map(activeItems.filter(item=>item.item_type==='product')
+          .map(item=>[item.item_id,item]));
         const wanted=(bundle.bundle_items||[]).map(row=>row.service_id).filter(Boolean);
+        const wantedProductsV488=(bundle.bundle_items||[]).map(row=>row.product_id).filter(Boolean);
         const items=wanted.map(serviceId=>{
           const listed=catalogueById.get(serviceId);
           if(!listed)return null;
@@ -21590,8 +21599,15 @@ async function tillPage(){
             name:serviceDisplayName(serviceById[serviceId]||listed),
             unit_cents:listed.unit_cents||0};
         });
+        const productItemsV488=wantedProductsV488.map(productId=>{
+          const listed=productCatalogueV488.get(productId);
+          if(!listed)return null;
+          return {id:productId,name:listed.name||'Product',unit_cents:listed.unit_cents||0};
+        });
         return {id:bundle.id,name:bundle.name,unit_cents:bundle.price_cents||0,
-          items:items.filter(Boolean),complete:wanted.length>0&&items.every(Boolean)};
+          items:[...items,...productItemsV488].filter(Boolean),
+          complete:(wanted.length+wantedProductsV488.length)>0
+            &&items.every(Boolean)&&productItemsV488.every(Boolean)};
       }).filter(bundle=>bundle.complete)
     };
     draw();
@@ -21618,7 +21634,7 @@ async function tillPage(){
   function addBundleLines(bundle){
     if(cartLocked())return;
     if(!Array.isArray(bundle?.items)||!bundle.items.length){
-      return toast('That bundle has no services in it yet.');
+      return toast('That bundle has no items in it yet.');
     }
     const existing=cart.find(line=>line.type==='bundle'&&line.ref===bundle.id);
     if(existing){existing.qty+=1}
@@ -23908,25 +23924,31 @@ async function servicesPage(){
       <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div></div>`);
   let bundleCacheV285=[],editingBundleIdV285=null;
   async function loadBR(){
-    const [servicesResult,bundlesResult]=await Promise.all([
+    const [servicesResult,bundlesResult,productsResultV488]=await Promise.all([
       sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
-      sb.from('bundles').select('*, bundle_items(service_id, services(name))').eq('business_id',S.biz.id).order('name')]);
+      /* nestly_v488: product members ride the same row; a pre-v488 server that has no product_id
+         column answers this select with an error, which the existing loadError path reports
+         honestly instead of painting a half-true catalogue. */
+      sb.from('bundles').select('*, bundle_items(service_id, product_id, services(name), products(name))').eq('business_id',S.biz.id).order('name'),
+      sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')]);
     if(!isCurrent())return;
-    const loadError=servicesResult.error||bundlesResult.error;
+    const loadError=servicesResult.error||bundlesResult.error||productsResultV488.error;
     if(loadError){
       $('blist3').innerHTML=`<div class="err">Bundles could not be loaded. <button class="btn ghost sm" id="servicesBRRetry">Retry</button></div>`;
       $('servicesBRRetry').onclick=loadBR;return;
     }
     const sv2=servicesResult.data,bu=bundlesResult.data;
     if(canWrite)$('bsv').innerHTML=(sv2||[]).map(s=>`<label data-merchant-content style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
-      <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">No active services yet — add at least two in the Services tab, then come back.</span>';
+      <input type="checkbox" style="width:auto" data-bs="${s.id}">${esc(s.name)}</label>`).join('')||'<span class="muted">No active services yet — add them in the Services tab.</span>';
+    if(canWrite&&$('bpvV488'))$('bpvV488').innerHTML=(productsResultV488.data||[]).map(pr=>`<label data-merchant-content style="display:inline-flex;gap:6px;margin:4px 10px 0 0;cursor:pointer;color:var(--ink)">
+      <input type="checkbox" style="width:auto" data-bp-v488="${pr.id}">${esc(pr.name)}</label>`).join('')||'<span class="muted">No active products yet — add them in Products.</span>';
     /* V285: a bundle could be created and then never corrected — no rename, no reprice, no way
        to change what is in it, no way to switch it off and no way to remove it. bundles and
        bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
        rather than table DML. */
     bundleCacheV285=bu||[];
     $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||'')).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||i.products?.name||'')).filter(Boolean).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
@@ -23968,7 +23990,7 @@ async function servicesPage(){
     if($('badd3'))$('badd3').textContent='Save bundle';
     if($('bnm'))$('bnm').value='';
     if($('bpr'))$('bpr').value='';
-    document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=false});
+    document.querySelectorAll('[data-bs],[data-bp-v488]').forEach(box=>{box.checked=false});
   }
   async function openBundleEditV285(bundleId){
     const bundle=bundleCacheV285.find(item=>item.id===bundleId);
@@ -23979,41 +24001,65 @@ async function servicesPage(){
     $('badd3').textContent='Save changes';
     $('bnm').value=bundle.name||'';
     $('bpr').value=(Number(bundle.price_cents||0)/100).toFixed(2);
-    const included=new Set((bundle.bundle_items||[]).map(item=>item.service_id));
+    const included=new Set((bundle.bundle_items||[]).map(item=>item.service_id).filter(Boolean));
+    const includedProductsV488=new Set((bundle.bundle_items||[]).map(item=>item.product_id).filter(Boolean));
     document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=included.has(box.dataset.bs)});
+    document.querySelectorAll('[data-bp-v488]').forEach(box=>{box.checked=includedProductsV488.has(box.dataset.bpV488)});
     $('bnm').focus();
   }
   if(canWrite)$('badd3').onclick=async()=>{
     const badd3=$('badd3');
     const name=$('bnm').value.trim();
     const picked=[...document.querySelectorAll('[data-bs]')].filter(x=>x.checked).map(x=>x.dataset.bs);
+    const pickedProductsV488=[...document.querySelectorAll('[data-bp-v488]')].filter(x=>x.checked).map(x=>x.dataset.bpV488);
     if(name.length<2) return toast('Name the bundle');
-    if(picked.length<2) return toast('Pick at least 2 services');
+    /* nestly_v488: the floor of 2 counts ITEMS, not services — one service plus one product is
+       a real bundle, and a products-only bundle is one too. */
+    if(picked.length+pickedProductsV488.length<2) return toast('Pick at least 2 items');
     const priceCents=Math.round(parseFloat($('bpr').value||'0')*100);
+    /* nestly_v488: with products in the membership the save goes through the v488 writers. A
+       services-only bundle keeps the v123/v285 writers it has always used — those are proven,
+       and the CDN window means this bundle can be served before the migration is applied; the
+       one case that NEEDS the new server (a mixed bundle) fails with an honest sentence rather
+       than silently dropping the products. */
+    const usesProductsV488=pickedProductsV488.length>0;
+    const missingV488=error=>error?.code==='PGRST202'||error?.code==='42883';
     if(editingBundleIdV285){
       CUI.setButtonBusy(badd3,{busy:true,label:'Saving…'});
-      const {error}=await sb.rpc('update_service_bundle_v285',{p_business:S.biz.id,
-        p_bundle:editingBundleIdV285,p_name:name,p_price_cents:priceCents,
-        p_service_ids:picked,p_active:null});
+      const {error}=usesProductsV488
+        ?await sb.rpc('update_bundle_v488',{p_business:S.biz.id,
+          p_bundle:editingBundleIdV285,p_name:name,p_price_cents:priceCents,
+          p_service_ids:picked,p_product_ids:pickedProductsV488,p_active:null})
+        :await sb.rpc('update_service_bundle_v285',{p_business:S.biz.id,
+          p_bundle:editingBundleIdV285,p_name:name,p_price_cents:priceCents,
+          p_service_ids:picked,p_active:null});
       if(badd3.isConnected)CUI.setButtonBusy(badd3,{busy:false});
-      if(error)return fail(error);
+      if(error)return missingV488(error)
+        ?toast('Product bundles need the latest Peekaa service update.')
+        :fail(error);
       closeBundleFormV285();
       toast('Bundle updated');
       await loadBR();
       return;
     }
     const bundleSlot='nestly.services.createBundle.v123';
-    const fingerprint=JSON.stringify([S.biz.id,name,priceCents,[...picked].sort()]);
+    const fingerprint=JSON.stringify([S.biz.id,name,priceCents,[...picked].sort(),[...pickedProductsV488].sort()]);
     CUI.setButtonBusy(badd3,{busy:true,label:'Saving…'});
     try{
-      const {data,error}=await sb.rpc('create_service_bundle_v123',{
-        p_business:S.biz.id,p_name:name,p_price_cents:priceCents,
-        p_service_ids:picked,p_idempotency_key:writeAttemptKey(bundleSlot,fingerprint)
-      });
-      if(error)return fail(error);
+      const {data,error}=usesProductsV488
+        ?await sb.rpc('create_bundle_v488',{
+          p_business:S.biz.id,p_name:name,p_price_cents:priceCents,
+          p_service_ids:picked,p_product_ids:pickedProductsV488,
+          p_idempotency_key:writeAttemptKey(bundleSlot,fingerprint)})
+        :await sb.rpc('create_service_bundle_v123',{
+          p_business:S.biz.id,p_name:name,p_price_cents:priceCents,
+          p_service_ids:picked,p_idempotency_key:writeAttemptKey(bundleSlot,fingerprint)});
+      if(error)return missingV488(error)
+        ?toast('Product bundles need the latest Peekaa service update.')
+        :fail(error);
       clearWriteAttempt(bundleSlot);
       toast(isReplayResult(data)?'Bundle already created — no duplicate':'Bundle created');
-      $('bnm').value='';document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=false});
+      $('bnm').value='';document.querySelectorAll('[data-bs],[data-bp-v488]').forEach(box=>{box.checked=false});
       if($('bundleFormCard'))$('bundleFormCard').style.display='none';
       await loadBR();
     }finally{
@@ -41052,9 +41098,12 @@ async function bottleSetupPageV275(){
       <label for="bkCapacity" style="margin-top:14px">Storage capacity</label>
       <input id="bkCapacity" type="number" min="1" max="10000" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.storage_capacity)||500))}">
       <p class="muted small" style="margin-top:-2px">How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. ${esc(String(Number(data?.in_storage)||0))} in storage right now.</p>
-      <label for="bkRemindDays" style="margin-top:14px">Remind the customer</label>
-      <input id="bkRemindDays" type="number" min="1" max="90" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(extraResultV278.data?.reminder_days)||7))}">
-      <p class="muted small" style="margin-top:-2px">Days before a bottle expires that Peekaa messages the customer in their app. It runs by itself every night, and a bottle past its window is marked expired the same way.</p>
+      ${/* nestly_v488 (owner: "push notification when left 7 days to expiry and left 3 days and
+           today expiry"). The reminder stopped being a per-business number and became a fixed
+           three-checkpoint schedule in the nightly sweep, so the input came off this page — a
+           field that no longer steers anything is a lie with a Save button. The v282 setting and
+           its RPC stay deployed; nothing reads them any more. */''}
+      <p class="muted small" style="margin-top:14px"><b>Customer reminders</b><br>Peekaa messages the customer in their app 7 days before a bottle expires, again at 3 days, and on the day itself. It runs by itself every night; a bottle past its window is marked Expired.</p>
     </section>
     <section class="card" style="margin-top:16px">
       <div class="cui-card-head"><h2>Tier keep windows</h2><p>Give your best customers longer. A tier left blank uses the keep window above.</p></div>
@@ -41106,9 +41155,53 @@ async function bottleSetupPageV275(){
       if(removed?.in_use&&!await confirmActionV386(`${removed.name} still holds bottles. Remove it from the list? Bottles already there keep the name, staff just cannot pick it again.`))return;
       locations=locations.filter((_,position)=>position!==index);
       paintLocations();
+      void commitLocationsV488();   /* nestly_v488: removal commits too */
+    });
+    /* nestly_v488: a rename commits when the owner leaves the field, not per keystroke. An
+       emptied box commits nothing (the committer drops unnamed rows from the payload but they
+       stay in the local list, so the big Save's own guard still catches them). */
+    host.querySelectorAll('[data-location-name]').forEach(input=>input.onchange=()=>{
+      if(String(input.value||'').trim())void commitLocationsV488();
     });
   }
   paintLocations();
+
+  /* nestly_v488 (owner, photo 4: "storage shelf does not work - not able to save shelf").
+     The save RPC was proven fine — run as the real owner it stores and returns the shelf — so
+     what did not work was the CONTRACT of this card: Add and the remove button only edited a
+     local list, and the actual write was a "Save bottle keep" button four cards further down.
+     The owner's own screenshots show the result: a shelf typed and Added here, and the Park
+     dialog still saying "No storage places yet". Everywhere else in this app an Add beside an
+     input WRITES (bottle catalogue above, gift levels, branches), so this card kept a promise
+     it did not make.
+     The shelf card is write-through now: Add, remove and a finished rename each commit at once
+     through the same bar_save_setup_v279 the big Save uses. The keep numbers sent are the LAST
+     SAVED ones, never the inputs — a half-typed keep window above must not be committed as a
+     side effect of naming a shelf. The big Save still works and still updates that baseline. */
+  let savedKeepV488={
+    days:Number(data?.keep_days)||30,
+    capacity:Number(data?.storage_capacity)||500
+  };
+  let committingLocationsV488=false;
+  async function commitLocationsV488(){
+    if(committingLocationsV488)return;
+    const named=locations.map(location=>({...location,name:String(location.name||'').trim()}))
+      .filter(location=>location.name);
+    committingLocationsV488=true;
+    const {data:saved,error}=await sb.rpc('bar_save_setup_v279',{
+      p_business:S.biz.id,p_keep_days:savedKeepV488.days,
+      p_storage_capacity:savedKeepV488.capacity,
+      p_locations:named.map(location=>({id:location.id,name:location.name}))
+    });
+    committingLocationsV488=false;
+    if(!isCurrent()||!$('bkLocList'))return;
+    if(error){toast(ownerErrorText(error)||'The shelf could not be saved — try again.');return}
+    locations=(Array.isArray(saved?.locations)?saved.locations:[])
+      .filter(location=>location?.active!==false)
+      .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+    paintLocations();
+    toast('Shelves saved');
+  }
 
   /* V278 tier windows. The list is declarative like the shelf list: whatever is on screen is what
      the business has, and a cleared box DELETES that tier's override rather than leaving a number
@@ -41293,13 +41386,15 @@ async function bottleSetupPageV275(){
     if(locations.some(location=>location.name.toLocaleLowerCase()===name.toLocaleLowerCase()))return toast('That place is already on the list');
     locations.push({id:null,name,in_use:false});
     input.value='';input.focus();paintLocations();
+    void commitLocationsV488();   /* nestly_v488: Add IS the save now */
   };
   $('bkAddLoc').onclick=addLocation;
   $('bkNewLoc').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();addLocation()}};
   $('bkSave').onclick=async()=>{
     const days=Number($('bkDays').value);
     const capacity=Number($('bkCapacity').value);
-    const remindDays=Number($('bkRemindDays').value);
+    /* nestly_v488: remindDays is gone with its field — the reminder schedule is fixed at
+       7 / 3 / 0 days in the nightly sweep and nothing on this page steers it any more. */
     const errorHost=$('bkErr'),status=$('bkStatus'),save=$('bkSave');
     errorHost.innerHTML='';
     if(!Number.isInteger(days)||days<1||days>365){
@@ -41308,10 +41403,6 @@ async function bottleSetupPageV275(){
     }
     if(!Number.isInteger(capacity)||capacity<1||capacity>10000){
       errorHost.innerHTML='<div class="err">Storage capacity must be a whole number between 1 and 10000 bottles.</div>';
-      return;
-    }
-    if(!Number.isInteger(remindDays)||remindDays<1||remindDays>90){
-      errorHost.innerHTML='<div class="err">The reminder must be a whole number between 1 and 90 days before expiry.</div>';
       return;
     }
     /* V288 (V285 landed the same guard concurrently; one kept): names are editable now, so an emptied box is caught here rather than as a server
@@ -41336,18 +41427,10 @@ async function bottleSetupPageV275(){
       errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(saveError)||'Bottle keep could not be saved.')}</div>`;
       return;
     }
-    /* V282: a SECOND call rather than a fourth parameter on bar_save_setup_v279, for the reason
-       V279 recorded in this same handler — an overload differing only in arity is what makes
-       PostgREST's resolution ambiguous. It runs only after the keep window has landed, so a
-       failure here cannot leave the two numbers disagreeing about which save succeeded. */
-    const {error:remindError}=await sb.rpc('bar_save_expiry_reminder_days_v282',{
-      p_business:S.biz.id,p_days:remindDays
-    });
-    if(!isCurrent()||!save.isConnected)return;
-    if(remindError){
-      errorHost.innerHTML=`<div class="err">${esc(ownerErrorText(remindError)||'The reminder window could not be saved. The keep window was saved.')}</div>`;
-      return;
-    }
+    savedKeepV488={days,capacity};   /* nestly_v488: the write-through committer's new baseline */
+    /* nestly_v488: the V282 second call (bar_save_expiry_reminder_days_v282) left with the
+       reminder field — the schedule is fixed in the sweep now. The RPC stays deployed for the
+       CDN window; nothing here reads or writes it any more. */
     locations=(Array.isArray(saved?.locations)?saved.locations:[])
       .filter(location=>location?.active!==false)
       .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
@@ -41602,10 +41685,48 @@ async function bottlesPage(){
        only when there is something to wire. A code that resolves selects the customer outright; a
        code that does not is dropped into the search box, which is exactly what the bartender would
        have typed — failing soft to the field the button was a shortcut past. */
+    /* nestly_v488 (owner, photo 3: an arrow from the customer's My Peekaa QR into this Scan
+       button — "i need the scan to read the customer profile and retrieve its data").
+       The V279 resolver was LOCAL: it matched the decoded text against the loaded client list by
+       uuid or phone tail. But the QR a customer actually shows is their global member code,
+       nestly:member:<token> — a token that is neither their client id nor their phone, so the
+       one code customers carry was exactly the one this button could not read.
+       It now goes through the SAME server resolver every other member scan in this app uses —
+       staff_scan_member_qr_v327, which maps the token to THIS business's client row (provisioning
+       one on first scan, which is why the resolved customer may not be in the loaded list yet and
+       is appended to it). The V279 local matching is kept as the fallback for the other codes a
+       counter meets (a client-id QR, a phone barcode), and unresolved text still lands in the
+       search box — failing soft to the field the button is a shortcut past. */
+    const applyScannedClientV488=client=>{
+      if(!clients.some(row=>String(row.id)===String(client.id)))clients.push(client);
+      $('parkCustomerSearch').value=String(client.full_name||'');
+      renderClientOptions($('parkCustomerSearch').value);
+      $('parkClient').value=client.id;
+      loadAutoKeepV278();
+    };
     const scanButtonV279=$('parkScanV279');
     if(scanButtonV279)scanButtonV279.onclick=async()=>{
       const scanned=await openBottleQrScanV279();
       if(!isCurrent()||!$('parkClient')||!scanned)return;
+      const payloadV488=redemptionPayloadFromQr(scanned);
+      if(payloadV488.kind==='member'){
+        toast('Looking up this customer…');
+        const {data,error}=await sb.rpc('staff_scan_member_qr_v327',{
+          p_business:S.biz.id,p_member_qr:payloadV488.token});
+        if(!isCurrent()||!$('parkClient'))return;
+        if(error||data?.status!=='found'){
+          toast(error?.code==='PGRST202'||error?.code==='42883'
+            ?'Member lookup needs the latest Peekaa service update.'
+            :(data?.message||'This member QR could not be resolved. Ask them to open it again.'));
+          return;
+        }
+        applyScannedClientV488({id:data.client_id,full_name:data.full_name||'Peekaa Member',
+          phone:data.phone||''});
+        /* Static copy on purpose — the v97 localization guard forbids interpolated toast text,
+           and the customer's name is already on screen in the search field this filled. */
+        toast(data.newly_linked?'Customer found — newly joined here':'Customer found');
+        return;
+      }
       const match=resolveScannedCustomerV279(scanned,clients);
       if(!match){
         const digits=String(scanned).replace(/\D/g,'');
@@ -41614,10 +41735,7 @@ async function bottlesPage(){
         toast('Code not recognised — search for them');
         return;
       }
-      $('parkCustomerSearch').value=String(match.full_name||'');
-      renderClientOptions($('parkCustomerSearch').value);
-      $('parkClient').value=match.id;
-      loadAutoKeepV278();
+      applyScannedClientV488(match);
     };
     /* V279 item 4: the four smart buttons write the number, and the band beneath shows the colour
        the bottle will carry from here on — the same renderer the rows and the card use. */

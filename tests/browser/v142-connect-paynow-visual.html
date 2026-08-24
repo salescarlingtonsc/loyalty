@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="47282ec87b81a2eb2c84d8fca200f90356b47e1f6ee0e709f127c74af8bde6c1"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="562d7de62b4c81ed3d521301f1a06d579c25781eb61cddeadfd4230ee1d3f810"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4516,7 +4516,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 47282ec87b81a2eb2c84d8fca200f90356b47e1f6ee0e709f127c74af8bde6c1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 562d7de62b4c81ed3d521301f1a06d579c25781eb61cddeadfd4230ee1d3f810</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -5929,7 +5929,7 @@ async function tillPage(){
       /* v187: bundles were authorable but unsellable. Read the bundle and its member services
          here; which of those services may actually be sold at THIS branch is still decided by
          the checkout catalogue above, never by this list. */
-      sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id)')
+      sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id,product_id)')
         .eq('business_id',S.biz.id).eq('active',true).order('name'),
       /* V365 (owner, photo 4: "there must be a qrcode for merchant to scan and issue the
          rewards"). The scan already exists — "Scan customer QR" resolves the member code to this
@@ -6028,13 +6028,18 @@ async function tillPage(){
       /* V365: the customer's claimable tier benefits, each with what is left this period. */
       customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
-      /* A bundle is offered only when EVERY service in it is sellable at this branch — a bundle
-         missing a service is not the deal the customer was quoted, so it is withheld rather than
-         quietly sold short. Prices come from the branch's own catalogue. */
+      /* A bundle is offered only when EVERY member in it is sellable at this branch — a bundle
+         missing a member is not the deal the customer was quoted, so it is withheld rather than
+         quietly sold short. Prices come from the branch's own catalogue.
+         nestly_v488: members are services OR products now, each checked against its own branch
+         catalogue exactly as before. */
       bundles:bundleRows.error?null:(bundleRows.data||[]).map(bundle=>{
         const catalogueById=new Map(activeItems.filter(item=>item.item_type==='service')
           .map(item=>[item.item_id,item]));
+        const productCatalogueV488=new Map(activeItems.filter(item=>item.item_type==='product')
+          .map(item=>[item.item_id,item]));
         const wanted=(bundle.bundle_items||[]).map(row=>row.service_id).filter(Boolean);
+        const wantedProductsV488=(bundle.bundle_items||[]).map(row=>row.product_id).filter(Boolean);
         const items=wanted.map(serviceId=>{
           const listed=catalogueById.get(serviceId);
           if(!listed)return null;
@@ -6042,8 +6047,15 @@ async function tillPage(){
             name:serviceDisplayName(serviceById[serviceId]||listed),
             unit_cents:listed.unit_cents||0};
         });
+        const productItemsV488=wantedProductsV488.map(productId=>{
+          const listed=productCatalogueV488.get(productId);
+          if(!listed)return null;
+          return {id:productId,name:listed.name||'Product',unit_cents:listed.unit_cents||0};
+        });
         return {id:bundle.id,name:bundle.name,unit_cents:bundle.price_cents||0,
-          items:items.filter(Boolean),complete:wanted.length>0&&items.every(Boolean)};
+          items:[...items,...productItemsV488].filter(Boolean),
+          complete:(wanted.length+wantedProductsV488.length)>0
+            &&items.every(Boolean)&&productItemsV488.every(Boolean)};
       }).filter(bundle=>bundle.complete)
     };
     draw();
@@ -6070,7 +6082,7 @@ async function tillPage(){
   function addBundleLines(bundle){
     if(cartLocked())return;
     if(!Array.isArray(bundle?.items)||!bundle.items.length){
-      return toast('That bundle has no services in it yet.');
+      return toast('That bundle has no items in it yet.');
     }
     const existing=cart.find(line=>line.type==='bundle'&&line.ref===bundle.id);
     if(existing){existing.qty+=1}
@@ -7998,7 +8010,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'47282ec87b81a2eb2c84d8fca200f90356b47e1f6ee0e709f127c74af8bde6c1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'562d7de62b4c81ed3d521301f1a06d579c25781eb61cddeadfd4230ee1d3f810',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

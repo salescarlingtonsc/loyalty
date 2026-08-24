@@ -167,11 +167,13 @@ test('the reminder window is one number per business, owner-writable and bounded
   assert.match(migration, /function public\.bar_save_expiry_reminder_days_v282\(/);
   assert.match(migration, /only an owner may change the reminder window/);
   assert.match(migration, /'reminder_days', app\.bar_expiry_reminder_days_v282\(p_business\)/);
-  // The business surface can see it and set it.
-  assert.match(app, /id="bkRemindDays"/);
-  assert.match(app, /Number\(extraResultV278\.data\?\.reminder_days\)\|\|7/);
-  assert.match(app, /sb\.rpc\('bar_save_expiry_reminder_days_v282',\{/);
-  assert.match(app, /The reminder must be a whole number between 1 and 90 days before expiry\./);
+  /* nestly_v488 (owner: "push notification when left 7 days ... and left 3 days and today").
+     The per-business number became a fixed 7/3/0 schedule in the sweep, so the business surface
+     no longer shows or writes it — the server pieces above stay deployed, and the page now
+     STATES the fixed schedule instead of offering a dial that steers nothing. */
+  assert.doesNotMatch(app, /id="bkRemindDays"/);
+  assert.doesNotMatch(app, /sb\.rpc\('bar_save_expiry_reminder_days_v282',\{/);
+  assert.match(app, /7 days before a bottle expires, again at 3 days, and on the day itself/);
 });
 
 // ---------------------------------------------------------------------------

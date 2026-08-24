@@ -76,10 +76,12 @@ test('V276 the app-bar action and the mobile dock follow the same rule as the ra
     'no advertisement site may keep the unfiltered check');
 });
 
-test('V276 a bar keeps Bookings, Waitlist and Bottles in Serve & sell', () => {
+test('V276 a bar keeps Bookings and Waitlist in Serve & sell, and Bottles standalone (v488)', () => {
   assert.match(app,
-    /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely") */
-    /\{key:'serve',icon:'till',label:'Serve & sell',items:\['till','appointments','bottles','bookings','waitlist'\]\}/);
+    /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely");
+       nestly_v488 (owner, photo 2): Bottles left the group for its own flat rail entry. */
+    /\{key:'serve',icon:'till',label:'Serve & sell',items:\['till','appointments','bookings','waitlist'\]\}/);
+  assert.match(app, /\{key:'bottles',icon:'bottle',flat:'Bottles',items:\['bottles'\]\}/);
   // Bottles is stripped for every sector except a bar, and for no other reason.
   assert.match(navHtml, /const sectorShowsBottlesV275=isBarSectorV275\(\);/);
   assert.match(navHtml, /\.filter\(module=>module!=='bottles'\|\|sectorShowsBottlesV275\)/);

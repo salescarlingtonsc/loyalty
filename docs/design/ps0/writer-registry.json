@@ -2010,15 +2010,6 @@
       "kernel_migratability": "non-value - a notification about physical property. No ledger, no entitlement, no money."
     },
     {
-      "id": "browser.rpc:app/app.js:bar_save_expiry_reminder_days_v282",
-      "surface": "browser_rpc_binding",
-      "rpc": "bar_save_expiry_reminder_days_v282",
-      "resolves_to": "bar_save_expiry_reminder_days_v282/2",
-      "rows_written": "public.bar_bottle_settings (upsert of the single expiry_reminder_days column; keep_days and storage_capacity are untouched and keep their own writer, bar_save_setup_v279)",
-      "call_site_finding": "OK - owner-only Operations setup write, gated by app.require_bar_business_v275 + app.require_bar_staff_v275(write) + an explicit app.is_salon_owner check, and bounded server-side to 1..90 days. The browser supplies one integer and a business id; there is no identity, customer or money argument. It is a SECOND call rather than a fourth parameter on bar_save_setup_v279 for the reason V279 recorded in the same handler - an overload differing only in arity is what makes PostgREST resolution ambiguous - and it runs only after the keep window has landed, so a failure cannot leave the two numbers disagreeing about which save succeeded.",
-      "kernel_migratability": "non-value - configuration only. How many days before expiry a customer is reminded touches no ledger, no sale and no money; it changes only when app.v282_sweep_bottle_expiry enqueues an in-app notification."
-    },
-    {
       "id": "db.fn:public.update_expense_v285/5",
       "surface": "db_function",
       "latest_file": "20260812000600_nestly_v285_a4_gap_closure.sql",
@@ -2045,6 +2036,24 @@
       "rows_written": "public.expenses (UPDATE of amount_cents / category / note on one active row); via update_expense_v285: audit_log:INSERT",
       "call_site_finding": "OK - finance-gated (view_finance) and additionally guarded client-side by canWriteModule('expenses'). The browser sends one expense id and three values; it cannot move the cost to another branch or another date, and the server refuses a voided row.",
       "kernel_migratability": "non-value - correcting a business cost. V285 added it because the only prior repair was void-and-retype, which leaves two rows where the business made one cost."
+    },
+    {
+      "id": "browser.rpc:app/app.js:create_bundle_v488",
+      "surface": "browser_rpc_binding",
+      "rpc": "create_bundle_v488",
+      "resolves_to": "create_bundle_v488/6",
+      "rows_written": "public.bundles (INSERT), public.bundle_items (INSERT of service AND product members), app.service_bundle_operations_v123 (idempotency record), audit_log:INSERT",
+      "call_site_finding": "OK - the v123 creator with a p_product_ids parameter (nestly_v488, owner: 'i need product bundling as well'). Same app.can_module_write(business,'services') gate, same idempotency table and advisory-lock discipline; the browser uses it only when products are picked, so a services-only bundle keeps riding the proven v123 writer.",
+      "kernel_migratability": "non-value - catalogue metadata. Selling a bundle is still an ordinary sale written by the till."
+    },
+    {
+      "id": "browser.rpc:app/app.js:update_bundle_v488",
+      "surface": "browser_rpc_binding",
+      "rpc": "update_bundle_v488",
+      "resolves_to": "update_bundle_v488/7",
+      "rows_written": "public.bundles (UPDATE of name / price_cents / active), public.bundle_items (DELETE + INSERT of the full mixed membership when either list is supplied), audit_log:INSERT",
+      "call_site_finding": "OK - the v285 updater with a p_product_ids parameter (nestly_v488). Same authorization; supplying either member list replaces the WHOLE membership, which is the only shape the editor ever sends. Every named service/product must be active and belong to the tenant.",
+      "kernel_migratability": "non-value - catalogue metadata. Selling a bundle is still an ordinary sale written by the till."
     },
     {
       "id": "browser.rpc:app/app.js:update_service_bundle_v285",

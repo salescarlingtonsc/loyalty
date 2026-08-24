@@ -328,7 +328,13 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      nestly_v394 is added to BOTH lists as a named, sanctioned point. Its acceptance suite is
      db/tests/v394_tier_lifecycle_checkout.sql (14 assertions, proven rolled-back against
      production before apply). The PS-2A shadow increments (v61-v64) remain barred. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout)/;
+  /* nestly_v488 (owner: "i need product bundling as well"). Same reasoning as v370/v394: bundle
+     member expansion happens inside the pricing authority, so teaching it product members has to
+     be a named, sanctioned redefinition. The change is two lines in the bundle loop — each member
+     line's kind/id come from ps1c_bundle_lines_v204 instead of being hardcoded 'service' — and
+     its acceptance suite is db/tests/v488_product_bundles_and_bottle_checkpoints.sql. The PS-2A
+     shadow increments (v61-v64) remain barred. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints)/;
   const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;

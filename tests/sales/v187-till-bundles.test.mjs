@@ -50,7 +50,7 @@ test('a bundle is one cart line the SERVER prices and expands', () => {
   assert.doesNotMatch(add, /unit_cents:item\.unit_cents/,
     'a browser-computed per-service price is exactly what never reached the server');
   assert.match(add, /if\(cartLocked\(\)\)return/);
-  assert.match(add, /That bundle has no services in it yet\./);
+  assert.match(add, /That bundle has no items in it yet\./); // nestly_v488: members may be products too
   assert.match(add, /onSaleLinesChanged\(\)/, 'the kernel must re-evaluate after the line is added');
 });
 
@@ -69,11 +69,13 @@ test('the bundle line carries no price to the server, and the server owns the sp
 
 test('a bundle is only offered when every service in it is sellable at this branch', () => {
   const load = section(app, 'bundles:bundleRows.error?null:', 'draw();');
-  assert.match(load, /complete:wanted\.length>0&&items\.every\(Boolean\)/);
+  /* nestly_v488: members are services OR products; completeness now spans both lists. */
+  assert.match(load, /complete:\(wanted\.length\+wantedProductsV488\.length\)>0/);
+  assert.match(load, /&&items\.every\(Boolean\)&&productItemsV488\.every\(Boolean\)/);
   assert.match(load, /\.filter\(bundle=>bundle\.complete\)/);
   assert.match(load, /catalogueById\.get\(serviceId\)/,
     'prices and availability come from the branch catalogue, not the bundle row');
-  assert.match(app, /sb\.from\('bundles'\)\.select\('id,name,price_cents,active,bundle_items\(service_id\)'\)/);
+  assert.match(app, /sb\.from\('bundles'\)\.select\('id,name,price_cents,active,bundle_items\(service_id,product_id\)'\)/);
   assert.match(app, /\.eq\('business_id',S\.biz\.id\)\.eq\('active',true\)/);
 });
 
