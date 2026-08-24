@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="9ef98e58f3f1ee77fbd1fede3541f9072166d11a78fa07b5bb2967a33d8f32c1"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="b82b5a25cd120aea206010044b51937710b041028e6f9936b18062eae4ccde9a"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3503,6 +3503,17 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
 .customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
 .customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+/* nestly_v502 (owner: "yes keep it visible greyed out until 1 sep"). A tier perk whose allowance
+   is spent for this window STAYS on the page instead of vanishing — a standing right that
+   disappears the moment it is used reads to its holder as a right that was taken away. Greyed,
+   not hidden, and the card itself says when it returns.
+   Deliberately opacity + a dashed edge rather than a colour swap: it must be legible enough to
+   read the "Back on 1 Sep" line (that sentence is the entire reason the card is still here), while
+   being unmistakably not-now next to a live perk beside it. The photo tile is dimmed further so
+   the eye lands on the copy rather than the badge. */
+.customer-tier-perk-spent-v502{opacity:.66;border-style:dashed}
+.customer-tier-perk-spent-v502 .customer-reward-photo-v340{opacity:.72;filter:grayscale(1)}
+.customer-tier-perk-spent-v502 .customer-reward-name-v339{font-weight:650}
 .customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
 .customer-reward-name-v339{display:block;font-size:16px;line-height:1.3;overflow-wrap:anywhere}
 .customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
@@ -4606,7 +4617,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 9ef98e58f3f1ee77fbd1fede3541f9072166d11a78fa07b5bb2967a33d8f32c1</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · b82b5a25cd120aea206010044b51937710b041028e6f9936b18062eae4ccde9a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -8102,7 +8113,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'9ef98e58f3f1ee77fbd1fede3541f9072166d11a78fa07b5bb2967a33d8f32c1',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'b82b5a25cd120aea206010044b51937710b041028e6f9936b18062eae4ccde9a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

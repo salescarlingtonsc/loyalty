@@ -52,7 +52,8 @@ const harness = (() => {
 
 const goldPerk = {
   benefit_id: 'b-1', tier_label: 'Gold', sentence: '20% off — 1 per month',
-  remaining: 1, limit_period: 'month', period_ends_at: '2026-09-01T00:00:00+08:00'
+  remaining: 1, limit_period: 'month', period_ends_at: '2026-09-01T00:00:00+08:00',
+  claimable_now: true, blocked_reason: null
 };
 
 test('v501 the perk card says what it is, what is left, and when it lapses', () => {
@@ -79,7 +80,8 @@ test('v501 a monthly perk prints the LAST USABLE DAY, not the instant it lapses'
 test('v501 an unlimited perk claims no deadline and no dwindling count', () => {
   const html = harness.card({
     benefit_id: 'b-2', tier_label: 'Diamond', sentence: 'Free coffee',
-    remaining: null, limit_period: 'ever', period_ends_at: null
+    remaining: null, limit_period: 'ever', period_ends_at: null,
+    claimable_now: true, blocked_reason: null
   });
   assert.match(html, /No limit — use it whenever you visit\./);
   assert.doesNotMatch(html, /Use by/, 'nothing that never lapses may print a lapse date');
@@ -111,10 +113,13 @@ test('v501 only perks the counter would honour are listed, and they are counted 
   const loader = block('const loadRewards=async()=>', 'const activityState={items:[],nextCursor:null}');
   assert.match(loader, /customerRpc\('customer_get_tier_benefits_v501',\{p_business_slug:businessSlug\}\)/,
     'the customer read is fetched WITH the catalogue, not in a second pass');
-  assert.match(loader, /\.filter\(perk=>perk&&perk\.claimable_now===true\)/,
-    'a spent or out-of-season perk must not be offered — the v422 ruling, applied here');
-  assert.match(loader, /Available\$\{readyCountV397\+entitlementsV429\.length\+tierPerksV501\.length\?/,
-    'a perk sitting in the panel uncounted would make the tab number an undercount');
+  /* nestly_v502: every perk the tier carries is LISTED (greyed when spent — see the v502 tests
+     below); only the claimable ones are COUNTED, so the tab can never promise the counter
+     something it would refuse. */
+  assert.match(loader, /const tierPerksClaimableV502=tierPerksV501\.filter\(perk=>perk\.claimable_now===true\);/,
+    'the claimable subset must still be derived, because the tab count depends on it');
+  assert.match(loader, /Available\$\{readyCountV397\+entitlementsV429\.length\+tierPerksClaimableV502\.length\?/,
+    'a GREYED perk in the Available tally would overstate what the counter will accept');
   assert.match(loader, /\(entitlementsV429\.length\|\|tierPerksV501\.length\)\?''/,
     '"nothing to claim yet" must not be printed above a perk the customer can walk in and use');
   assert.match(loader, /data-customer-tier-perks-v501/);
@@ -133,4 +138,76 @@ test('v501/UI the tier editor stacks instead of being laid out as a row', () => 
     'the form carries the class the rule targets');
   assert.match(indexHtml, /#growTiersBenefitTemplateV363\{flex:0 1 260px;min-width:190px\}/,
     'the benefit-template picker had shrunk to 98px and truncated its label mid-word ("Discou")');
+});
+
+/* ==============================================================================================
+ * nestly_v502 — a spent perk stays visible, greyed, and says when it comes back
+ *
+ * Owner, 2026-08-25: "yes keep it visible greyed out until 1 sep". A standing tier right that
+ * disappears the moment it is used reads to its holder as a right that was taken away.
+ * ============================================================================================ */
+
+const spentPerk = {
+  benefit_id: 'b-1', tier_label: 'Gold', sentence: '20% off — 1 per month',
+  remaining: 0, limit_period: 'month', period_ends_at: '2026-09-01T00:00:00+08:00',
+  claimable_now: false, blocked_reason: 'used_up'
+};
+
+test('v502 a spent perk is greyed and kept, never hidden', () => {
+  const html = harness.card(spentPerk);
+  assert.match(html, /customer-tier-perk-spent-v502/, 'the greyed treatment is on the card itself');
+  assert.match(html, /data-tier-perk-claimable-v502="no"/);
+  assert.match(html, /20% off — 1 per month/, 'the perk still names itself');
+  assert.match(html, /Already used this month\./);
+  assert.match(indexHtml, /\.customer-tier-perk-spent-v502\{opacity:\.66;border-style:dashed\}/,
+    'greyed must be legible — the "Back on" line is the whole reason the card is still here');
+});
+
+test('v502 the spent card prints the RETURN date, and the live card the LAST USABLE day', () => {
+  /* Two different ends of one instant. The server says the August window closes at 1 Sep 00:00
+     SGT. While the perk is usable that means "use by 31 Aug"; once it is spent it means "back on
+     1 Sep". Printing either one in the other's place misinforms by a day. */
+  const live = harness.card(goldPerk);
+  const spent = harness.card(spentPerk);
+  assert.match(live, /Use by 31 Aug 2026/);
+  assert.doesNotMatch(live, /Back on/, 'a usable perk must not talk about coming back');
+  assert.match(spent, /Back on 1 Sep/, 'the day the allowance renews');
+  assert.doesNotMatch(spent, /Use by/, 'a spent perk must not advertise a deadline to use it');
+  assert.match(spent, /data-tier-perk-back-v502="2026-09-01T00:00:00\+08:00"/);
+});
+
+test('v502 a spent perk offers no counter instruction, because there is nothing to hand over', () => {
+  const spent = harness.card(spentPerk);
+  assert.doesNotMatch(spent, /member QR/,
+    'telling a customer to show a QR for a perk the till would refuse is the v495 contradiction');
+  assert.doesNotMatch(spent, /data-tier-perk-remaining-v501/, 'no "0 left" — it says "already used"');
+});
+
+test('v502 a birthday perk out of season is NOT given a monthly return date', () => {
+  /* It comes back in the customer's birthday month, which this card cannot know — so it says the
+     true thing rather than inventing the 1st of next month. */
+  const bday = harness.card({
+    benefit_id: 'b-3', tier_label: 'Diamond', sentence: 'Free cake',
+    remaining: 1, limit_period: 'birthday_month', period_ends_at: '2026-09-01T00:00:00+08:00',
+    claimable_now: false, blocked_reason: 'not_birthday_month'
+  });
+  assert.match(bday, /Yours during your birthday month\./);
+  assert.match(bday, /data-tier-perk-state-v502="birthday"/);
+  assert.doesNotMatch(bday, /Back on/, 'a birthday perk does not renew on the 1st of next month');
+  assert.doesNotMatch(bday, /Use by/);
+  assert.match(bday, /customer-tier-perk-spent-v502/, 'still greyed — it cannot be used today');
+});
+
+test('v502 every perk is listed, but only claimable ones are counted', () => {
+  const loader = block('const loadRewards=async()=>', 'const activityState={items:[],nextCursor:null}');
+  assert.match(loader, /\.filter\(perk=>perk&&typeof perk==='object'\)/,
+    'the list is no longer narrowed to claimable — that is the whole v502 change');
+  /* Precisely: the LIST's own filter must not be the claimable one. (An earlier version of this
+     assertion used a loose [\s\S]{0,400} window and matched the tierPerksClaimableV502 line on the
+     next line down — a test that failed on correct code. Pin the exact shipped substring instead.) */
+  assert.ok(!loader.includes(":[]).filter(perk=>perk&&perk.claimable_now===true)"),
+    'the old claimable-only list must be gone, not merely shadowed');
+  const listLine = loader.slice(loader.indexOf('const tierPerksV501='));
+  assert.ok(listLine.slice(0, listLine.indexOf(';')).includes("typeof perk==='object'"),
+    'the list itself keeps every perk the tier carries');
 });

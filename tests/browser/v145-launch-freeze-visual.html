@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5b89e745b24d79344d2a292d74320625de6e9d51aaa430cc35a7267dd7df7c6c"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="e6294237529c7dffb2b0221a1cba5d24d81b25713bfb462fd50aa45961c24469"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3503,6 +3503,17 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
 .customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
 .customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+/* nestly_v502 (owner: "yes keep it visible greyed out until 1 sep"). A tier perk whose allowance
+   is spent for this window STAYS on the page instead of vanishing — a standing right that
+   disappears the moment it is used reads to its holder as a right that was taken away. Greyed,
+   not hidden, and the card itself says when it returns.
+   Deliberately opacity + a dashed edge rather than a colour swap: it must be legible enough to
+   read the "Back on 1 Sep" line (that sentence is the entire reason the card is still here), while
+   being unmistakably not-now next to a live perk beside it. The photo tile is dimmed further so
+   the eye lands on the copy rather than the badge. */
+.customer-tier-perk-spent-v502{opacity:.66;border-style:dashed}
+.customer-tier-perk-spent-v502 .customer-reward-photo-v340{opacity:.72;filter:grayscale(1)}
+.customer-tier-perk-spent-v502 .customer-reward-name-v339{font-weight:650}
 .customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
 .customer-reward-name-v339{display:block;font-size:16px;line-height:1.3;overflow-wrap:anywhere}
 .customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
@@ -4606,7 +4617,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5b89e745b24d79344d2a292d74320625de6e9d51aaa430cc35a7267dd7df7c6c</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e6294237529c7dffb2b0221a1cba5d24d81b25713bfb462fd50aa45961c24469</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8288,7 +8299,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'5b89e745b24d79344d2a292d74320625de6e9d51aaa430cc35a7267dd7df7c6c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'e6294237529c7dffb2b0221a1cba5d24d81b25713bfb462fd50aa45961c24469',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

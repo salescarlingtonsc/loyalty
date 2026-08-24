@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="90d1431139ca1931c868966f0d79c8a65b8708b4d351616f2d42ba8dfb9721e8"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="970d3ace0b26a5949e3d6203195e627adffe7deac1ebe42e09654e6285f4dc8b"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3503,6 +3503,17 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
 .customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
 .customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+/* nestly_v502 (owner: "yes keep it visible greyed out until 1 sep"). A tier perk whose allowance
+   is spent for this window STAYS on the page instead of vanishing — a standing right that
+   disappears the moment it is used reads to its holder as a right that was taken away. Greyed,
+   not hidden, and the card itself says when it returns.
+   Deliberately opacity + a dashed edge rather than a colour swap: it must be legible enough to
+   read the "Back on 1 Sep" line (that sentence is the entire reason the card is still here), while
+   being unmistakably not-now next to a live perk beside it. The photo tile is dimmed further so
+   the eye lands on the copy rather than the badge. */
+.customer-tier-perk-spent-v502{opacity:.66;border-style:dashed}
+.customer-tier-perk-spent-v502 .customer-reward-photo-v340{opacity:.72;filter:grayscale(1)}
+.customer-tier-perk-spent-v502 .customer-reward-name-v339{font-weight:650}
 .customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
 .customer-reward-name-v339{display:block;font-size:16px;line-height:1.3;overflow-wrap:anywhere}
 .customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
@@ -4605,7 +4616,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 90d1431139ca1931c868966f0d79c8a65b8708b4d351616f2d42ba8dfb9721e8</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 970d3ace0b26a5949e3d6203195e627adffe7deac1ebe42e09654e6285f4dc8b</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14147,7 +14158,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'90d1431139ca1931c868966f0d79c8a65b8708b4d351616f2d42ba8dfb9721e8',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'970d3ace0b26a5949e3d6203195e627adffe7deac1ebe42e09654e6285f4dc8b',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

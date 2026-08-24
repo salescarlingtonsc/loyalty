@@ -6655,35 +6655,69 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        There is no QR button, and that is correct rather than missing: a perk is applied by staff
        once they have the customer on screen, which they get by scanning the member QR this same
        wallet already shows. The line under the card says exactly that. */
+    /* nestly_v502 (owner, 2026-08-25: "yes keep it visible greyed out until 1 sep"). A perk whose
+       allowance is spent no longer vanishes for the rest of the month — a standing tier right that
+       disappears the moment it is used looks to its holder exactly like a perk that was taken away.
+       It stays on the page, greyed, saying the one thing the customer actually wants to know:
+       when it comes back.
+       THE TWO DATES ARE DIFFERENT ENDS OF THE SAME INSTANT, and getting them the wrong way round
+       would misinform in both directions. The server hands back the moment the window CLOSES —
+       1 Sep 00:00 SGT for August. While the perk is still usable, the honest thing to print is the
+       last day it can be used (that instant minus a millisecond → "Use by 31 Aug"). Once it is
+       spent, the honest thing is the moment the allowance renews, which is that instant itself
+       → "Back on 1 Sep".
+       A BIRTHDAY perk is greyed for a different reason and must NOT be given a monthly date: it
+       returns in the customer's birthday month, not on the 1st of next month, so it says that
+       instead of inventing a deadline it cannot know. */
     const tierPerkCardV501=perk=>{
       const sentence=String(perk?.sentence||perk?.label||'').trim()||'Tier perk';
       const tierLabel=String(perk?.tier_label||'').trim();
       const remaining=perk?.remaining;
       const endsAt=perk?.period_ends_at||'';
-      return `<article class="wallet-reward customer-reward-card-v339" data-customer-tier-perk-v501="${esc(String(perk?.benefit_id||''))}">
+      const claimableV502=perk?.claimable_now===true;
+      const reasonV502=String(perk?.blocked_reason||'');
+      const windowNoun=customerTierPerkWindowNounV501(perk?.limit_period);
+      /* The status line, one branch per real state — never a blank card. */
+      const statusV502=claimableV502
+        ?(Number.isFinite(Number(remaining))&&remaining!==null
+          ?`<p class="muted small" data-tier-perk-remaining-v501="${esc(String(remaining))}" style="margin-top:5px">${esc(customerPointTotalV103(Number(remaining)))} left ${esc(windowNoun)}</p>`
+          :'<p class="muted small" style="margin-top:5px">No limit — use it whenever you visit.</p>')
+        :reasonV502==='not_birthday_month'
+          ?'<p class="muted small" data-tier-perk-state-v502="birthday" style="margin-top:5px">Yours during your birthday month.</p>'
+          :`<p class="muted small" data-tier-perk-state-v502="used" style="margin-top:5px">Already used ${esc(windowNoun)}.</p>`;
+      /* Use by … while it is live; Back on … once it is spent. Never both, never neither. */
+      const dateLineV502=!endsAt?''
+        :claimableV502
+          ?`<p class="muted small customer-reward-useby-v464" data-tier-perk-ends-v501="${esc(String(endsAt))}" style="margin-top:5px">Use by ${esc(walletDate(customerTierPerkLastDayV501(endsAt)))}</p>`
+          :reasonV502==='not_birthday_month'?''
+          :`<p class="muted small" data-tier-perk-back-v502="${esc(String(endsAt))}" style="margin-top:5px">Back on ${esc(walletDate(endsAt))}</p>`;
+      return `<article class="wallet-reward customer-reward-card-v339${claimableV502?'':' customer-tier-perk-spent-v502'}" data-customer-tier-perk-v501="${esc(String(perk?.benefit_id||''))}"${claimableV502?'':' data-tier-perk-claimable-v502="no"'}>
       <div class="customer-reward-photo-v340 customer-reward-photo-empty-v340">${CUI.icon('diamond',{size:24})}</div>
       <div class="customer-reward-copy-v492">
-      <div class="customer-reward-card-head-v339"><span class="pill ok">${esc(tierLabel?`${tierLabel} perk`:'Tier perk')}</span></div>
+      <div class="customer-reward-card-head-v339"><span class="pill ${claimableV502?'ok':'off'}">${esc(tierLabel?`${tierLabel} perk`:'Tier perk')}</span></div>
       <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(sentence)}</b>
-      ${Number.isFinite(Number(remaining))&&remaining!==null
-        ?`<p class="muted small" data-tier-perk-remaining-v501="${esc(String(remaining))}" style="margin-top:5px">${esc(customerPointTotalV103(Number(remaining)))} left ${esc(customerTierPerkWindowNounV501(perk?.limit_period))}</p>`
-        :'<p class="muted small" style="margin-top:5px">No limit — use it whenever you visit.</p>'}
-      ${endsAt?`<p class="muted small customer-reward-useby-v464" data-tier-perk-ends-v501="${esc(String(endsAt))}" style="margin-top:5px">Use by ${esc(walletDate(customerTierPerkLastDayV501(endsAt)))}</p>`:''}
-      <p class="muted small" style="margin-top:7px">Show your member QR at the counter — staff apply it to your bill.</p>
+      ${statusV502}
+      ${dateLineV502}
+      ${claimableV502?'<p class="muted small" style="margin-top:7px">Show your member QR at the counter — staff apply it to your bill.</p>':''}
       </div></article>`;
     };
     /* The server's own list, in the server's own order (soonest to lapse first). An error or an
        unrecognised payload leaves it empty, which is the fail-closed rule above. */
     const entitlementsV429=!entitlementsResultV427?.error&&Array.isArray(entitlementsResultV427?.data?.active)
       ?entitlementsResultV427.data.active:[];
-    /* nestly_v501: only the perks the customer can actually walk in and use today. A perk whose
-       allowance is spent, or a birthday perk outside their birthday month, is NOT listed — the
-       owner's ruling on photo 6 (v422) applies here for the same reason it applied to rewards:
-       this panel is what the counter will honour, and a card the till refuses is worse than no
-       card. The tier ladder higher up the page is where a customer reads what they have but
-       cannot use yet. */
+    /* nestly_v502 (owner: "yes keep it visible greyed out until 1 sep"). EVERY perk this
+       customer's tier carries is listed; the card above greys the ones that cannot be used right
+       now and says when they return. This is a deliberate departure from the v422 ruling for
+       REWARDS ("only show what the counter will honour"), and the difference is real: a reward the
+       customer has not earned yet is a thing they do not have, while a tier perk is a standing
+       right they DO have and have merely spent for this window. Hiding it reads as withdrawal.
+       Nothing greyed is counted as claimable below, so the panel still cannot overstate what the
+       counter will accept. */
     const tierPerksV501=(!tierPerkResultV501?.error&&Array.isArray(tierPerkResultV501?.data?.benefits)
-      ?tierPerkResultV501.data.benefits:[]).filter(perk=>perk&&perk.claimable_now===true);
+      ?tierPerkResultV501.data.benefits:[]).filter(perk=>perk&&typeof perk==='object');
+    /* The COUNT is still claimable-only — a greyed perk in the Available tally would promise the
+       counter something it would refuse, which is the one thing v495 exists to prevent. */
+    const tierPerksClaimableV502=tierPerksV501.filter(perk=>perk.claimable_now===true);
     /* nestly_v422 (owner photo 6, "Available" and "History" written as tabs over this heading, with
        "once redeemed, rewards go history"). History is NOT fetched here: it is a second server read
        and most customers open this screen to claim, not to reminisce, so it loads the first time
@@ -6696,7 +6730,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         ${/* nestly_v429 (C): the count is what the panel PAINTS — catalogue rewards plus the
              entitlements the counter already owes this customer. A voucher sitting in the panel
              uncounted would make the number an undercount of what they can walk in and use. */''}
-        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${readyCountV397+entitlementsV429.length+tierPerksV501.length?` (${readyCountV397+entitlementsV429.length+tierPerksV501.length})`:''}</button>
+        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${readyCountV397+entitlementsV429.length+tierPerksClaimableV502.length?` (${readyCountV397+entitlementsV429.length+tierPerksClaimableV502.length})`:''}</button>
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">

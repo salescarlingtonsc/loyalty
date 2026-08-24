@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="43e9ffd9e066fa5ed4c55289a85141304bd1df6a6af65e9dfa017b15fd5c9248">
+<meta name="v105-production-component-sha256" content="5467d6fc8817f5219c947f7dc39062b41fe838ec398c73ad6c650cb8b5a4563d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3509,6 +3509,17 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-tier-perk-v339 span{min-width:0;overflow-wrap:anywhere}
 .customer-reward-card-v339 .customer-reward-card-head-v339{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
 .customer-reward-card-v339 .customer-reward-card-head-v339:empty{display:none}
+/* nestly_v502 (owner: "yes keep it visible greyed out until 1 sep"). A tier perk whose allowance
+   is spent for this window STAYS on the page instead of vanishing — a standing right that
+   disappears the moment it is used reads to its holder as a right that was taken away. Greyed,
+   not hidden, and the card itself says when it returns.
+   Deliberately opacity + a dashed edge rather than a colour swap: it must be legible enough to
+   read the "Back on 1 Sep" line (that sentence is the entire reason the card is still here), while
+   being unmistakably not-now next to a live perk beside it. The photo tile is dimmed further so
+   the eye lands on the copy rather than the badge. */
+.customer-tier-perk-spent-v502{opacity:.66;border-style:dashed}
+.customer-tier-perk-spent-v502 .customer-reward-photo-v340{opacity:.72;filter:grayscale(1)}
+.customer-tier-perk-spent-v502 .customer-reward-name-v339{font-weight:650}
 .customer-reward-locked-v339{background:#efe7fb;color:#5b3fa6}
 .customer-reward-name-v339{display:block;font-size:16px;line-height:1.3;overflow-wrap:anywhere}
 .customer-reward-cost-v339{margin-top:4px;font-weight:700;color:var(--merchant-accent,var(--coral))}
@@ -5420,7 +5431,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 43e9ffd9e066</span>
+<span class="v105-provenance">v105 production-component harness · 5467d6fc8817</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5545,7 +5556,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'43e9ffd9e066fa5ed4c55289a85141304bd1df6a6af65e9dfa017b15fd5c9248',
+  sourceHash:'5467d6fc8817f5219c947f7dc39062b41fe838ec398c73ad6c650cb8b5a4563d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
