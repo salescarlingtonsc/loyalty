@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5a830ad270c6089c8f8e31547d7c64de9729688a6fbe3a09311699180d33b006"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="594acd9128e7442ef3b877bdc8477c3f047250ad4b4adfea0d53589042a2eb73"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -3923,6 +3923,16 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.92)!important;font-size:12px!important;line-height:1.2!important}
 .customer-business-summary-actions-v349{margin-top:13px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
 .customer-business-summary-actions-v349:has(>:only-child){grid-template-columns:1fr!important}
+/* nestly_v491 (owner, photo 4: an arrow dragging "Book now" down and right, "Here"). MEASURED at
+   1024px on a reward swipe page carrying a gift photo: the copy column is 222px, so the two-column
+   action grid gave Redeem now and Book now 106px EACH — well under the 150px the claim button was
+   designed around, which is why that row reads as squashed beside the picture.
+   The row stacks when — and only when — a photo is stealing that width: Redeem now takes the full
+   222px and Book now sits beneath it, which is the direction the owner's arrow points. A reward
+   page with no photo keeps both buttons side by side across the whole card, and page 1 is
+   untouched entirely (its action row is a sibling of the body, not inside the narrow copy column,
+   so it was never cramped). Below 380px everything already stacked and still does. */
+.customer-hero-has-photo-v468 .customer-business-summary-actions-v349{grid-template-columns:1fr!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:var(--control-h)!important;border-radius:10px!important;font-size:13px!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{background:#fff!important;color:var(--brand-red-dark)!important;box-shadow:0 8px 18px rgba(83,26,21,.14)!important}
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
@@ -5626,6 +5636,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'5a830ad270c6089c8f8e31547d7c64de9729688a6fbe3a09311699180d33b006',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'594acd9128e7442ef3b877bdc8477c3f047250ad4b4adfea0d53589042a2eb73',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="562d7de62b4c81ed3d521301f1a06d579c25781eb61cddeadfd4230ee1d3f810"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="809cf0a172e69b67e806a0e8f93056ead162d78831235f1763ad45a7adff78af"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3922,6 +3922,16 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.92)!important;font-size:12px!important;line-height:1.2!important}
 .customer-business-summary-actions-v349{margin-top:13px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
 .customer-business-summary-actions-v349:has(>:only-child){grid-template-columns:1fr!important}
+/* nestly_v491 (owner, photo 4: an arrow dragging "Book now" down and right, "Here"). MEASURED at
+   1024px on a reward swipe page carrying a gift photo: the copy column is 222px, so the two-column
+   action grid gave Redeem now and Book now 106px EACH — well under the 150px the claim button was
+   designed around, which is why that row reads as squashed beside the picture.
+   The row stacks when — and only when — a photo is stealing that width: Redeem now takes the full
+   222px and Book now sits beneath it, which is the direction the owner's arrow points. A reward
+   page with no photo keeps both buttons side by side across the whole card, and page 1 is
+   untouched entirely (its action row is a sibling of the body, not inside the narrow copy column,
+   so it was never cramped). Below 380px everything already stacked and still does. */
+.customer-hero-has-photo-v468 .customer-business-summary-actions-v349{grid-template-columns:1fr!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:var(--control-h)!important;border-radius:10px!important;font-size:13px!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{background:#fff!important;color:var(--brand-red-dark)!important;box-shadow:0 8px 18px rgba(83,26,21,.14)!important}
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
@@ -4516,7 +4526,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 562d7de62b4c81ed3d521301f1a06d579c25781eb61cddeadfd4230ee1d3f810</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 809cf0a172e69b67e806a0e8f93056ead162d78831235f1763ad45a7adff78af</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -8010,7 +8020,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'562d7de62b4c81ed3d521301f1a06d579c25781eb61cddeadfd4230ee1d3f810',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'809cf0a172e69b67e806a0e8f93056ead162d78831235f1763ad45a7adff78af',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

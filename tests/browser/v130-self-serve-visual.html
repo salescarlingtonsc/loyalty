@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="01cb81f61c7ea01e614b6a48052cb3d581ed91609de55ac8c644ccffbe120ec8"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="58f390da1bff5218fa5bca589277f1ca0aeb8e894a1a19a1dd61fab3b6a7daa7"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3921,6 +3921,16 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-shell .card.customer-business-summary-v346 .customer-business-progress-line-v362{margin-top:3px!important;color:rgba(255,255,255,.92)!important;font-size:12px!important;line-height:1.2!important}
 .customer-business-summary-actions-v349{margin-top:13px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
 .customer-business-summary-actions-v349:has(>:only-child){grid-template-columns:1fr!important}
+/* nestly_v491 (owner, photo 4: an arrow dragging "Book now" down and right, "Here"). MEASURED at
+   1024px on a reward swipe page carrying a gift photo: the copy column is 222px, so the two-column
+   action grid gave Redeem now and Book now 106px EACH — well under the 150px the claim button was
+   designed around, which is why that row reads as squashed beside the picture.
+   The row stacks when — and only when — a photo is stealing that width: Redeem now takes the full
+   222px and Book now sits beneath it, which is the direction the owner's arrow points. A reward
+   page with no photo keeps both buttons side by side across the whole card, and page 1 is
+   untouched entirely (its action row is a sibling of the body, not inside the narrow copy column,
+   so it was never cramped). Below 380px everything already stacked and still does. */
+.customer-hero-has-photo-v468 .customer-business-summary-actions-v349{grid-template-columns:1fr!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:var(--control-h)!important;border-radius:10px!important;font-size:13px!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{background:#fff!important;color:var(--brand-red-dark)!important;box-shadow:0 8px 18px rgba(83,26,21,.14)!important}
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
