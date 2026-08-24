@@ -234,6 +234,16 @@ const rewardCardSrc = sliceBetween(
   'rewardCardV422',
 );
 
+/* nestly_v496: the card now prints the stack badge (×N) from the server's quantity column, via a
+   one-line counter declared beside it in loadRewards. Pulled in whole, same rule as the helpers
+   above — the harness runs the shipped line, never a restatement of it. */
+const instanceCountSrcV496 = sliceBetween(
+  app,
+  '    const instanceCountV496=item=>',
+  ';\n',
+  'instanceCountV496',
+);
+
 /* V469: V468-E4 gave every reward card a "?" that opens its rules, so rewardCardV422 now calls
    customerRewardHelpButtonV468. The harness evaluates the REAL card, so it needs the real helper
    too — stubbing it would let the card's own markup drift out from under this suite. It is pulled
@@ -262,7 +272,7 @@ function renderRewardCard(reward) {
     CUI: { icon: () => '<svg></svg>' },
   };
   const names = Object.keys(scope);
-  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardUnitSrcV489}\n${unitNounSrcV489}\n${rewardHelpSrc}\n${rewardEndsSrcV471}\n${rewardCardSrc}\nreturn rewardCardV422;`;
+  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardUnitSrcV489}\n${unitNounSrcV489}\n${rewardHelpSrc}\n${rewardEndsSrcV471}\n${instanceCountSrcV496};\n${rewardCardSrc}\nreturn rewardCardV422;`;
   // eslint-disable-next-line no-new-func
   return new Function(...names, body)(...names.map(n => scope[n]))(reward);
 }

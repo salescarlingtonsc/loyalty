@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9310e0542f202dbf2b8c9cce7590f7f231c61326d4765408525d2c4c18de6514"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="e2b13d1c80e99e61dba53d39110ade9040ca4d7f7ee7e0bd213acdfa378d20df"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4562,10 +4562,29 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
   opacity:.6}
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
+/* nestly_v496 (owner, photo 2: the milestone bullets rewritten by hand as "5 (stamp) get ABC"
+   rows — "improve the UI UX"). Each rung is a row: a stamp-shaped slot badge, then the gift it
+   buys. The badge borrows the stamp-ring family's look so the ladder and the grid above it read
+   as one system. */
+.customer-stamp-ladder-v496{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.customer-stamp-rung-v496{display:flex;align-items:center;gap:9px;min-width:0}
+.customer-stamp-rung-slot-v496{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;
+  border-radius:50%;border:2px solid var(--peekaa-red,#B3261E);color:var(--peekaa-red,#B3261E);
+  background:var(--peekaa-red-soft,#FBEBE8);font-size:13px;font-weight:800;line-height:1}
+.customer-stamp-rung-gift-v496{min-width:0;font-size:14px;line-height:1.35;
+  overflow-wrap:anywhere}
+.customer-stamp-rung-gift-v496 b{font-weight:700}
+.customer-stamp-rung-v496[data-stamp-quest-rung-claimed-v323="yes"] .customer-stamp-rung-slot-v496{
+  background:var(--peekaa-red,#B3261E);color:#fff}
+.customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
+/* nestly_v496 (owner, photo 2: "it should show quantity = 2 - and able to redeem twice"). The
+   stack badge beside "Ready to claim" — same pill family, weighted so x2 reads as a count, not
+   a size tag. */
+.customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 9310e0542f202dbf2b8c9cce7590f7f231c61326d4765408525d2c4c18de6514</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e2b13d1c80e99e61dba53d39110ade9040ca4d7f7ee7e0bd213acdfa378d20df</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8247,7 +8266,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'9310e0542f202dbf2b8c9cce7590f7f231c61326d4765408525d2c4c18de6514',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'e2b13d1c80e99e61dba53d39110ade9040ca4d7f7ee7e0bd213acdfa378d20df',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

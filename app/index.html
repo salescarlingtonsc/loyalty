@@ -4593,6 +4593,25 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
   opacity:.6}
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
+/* nestly_v496 (owner, photo 2: the milestone bullets rewritten by hand as "5 (stamp) get ABC"
+   rows — "improve the UI UX"). Each rung is a row: a stamp-shaped slot badge, then the gift it
+   buys. The badge borrows the stamp-ring family's look so the ladder and the grid above it read
+   as one system. */
+.customer-stamp-ladder-v496{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.customer-stamp-rung-v496{display:flex;align-items:center;gap:9px;min-width:0}
+.customer-stamp-rung-slot-v496{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;
+  border-radius:50%;border:2px solid var(--peekaa-red,#B3261E);color:var(--peekaa-red,#B3261E);
+  background:var(--peekaa-red-soft,#FBEBE8);font-size:13px;font-weight:800;line-height:1}
+.customer-stamp-rung-gift-v496{min-width:0;font-size:14px;line-height:1.35;
+  overflow-wrap:anywhere}
+.customer-stamp-rung-gift-v496 b{font-weight:700}
+.customer-stamp-rung-v496[data-stamp-quest-rung-claimed-v323="yes"] .customer-stamp-rung-slot-v496{
+  background:var(--peekaa-red,#B3261E);color:#fff}
+.customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
+/* nestly_v496 (owner, photo 2: "it should show quantity = 2 - and able to redeem twice"). The
+   stack badge beside "Ready to claim" — same pill family, weighted so x2 reads as a count, not
+   a size tag. */
+.customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 </style>
 </head>
 <body>
@@ -4640,7 +4659,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=a35f3b8c80d2","business":"/app-business.js?b=91ab27b45179","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=8e63fd1f3a91","business":"/app-business.js?b=91ab27b45179","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -4664,6 +4683,6 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=02eb26ced403" defer></script>
+<script src="/app-core.js?b=87849405fcff" defer></script>
 </body>
 </html>

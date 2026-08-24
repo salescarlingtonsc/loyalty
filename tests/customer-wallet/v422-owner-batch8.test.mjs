@@ -202,13 +202,18 @@ test('photo 8: a card with no slots draws nothing rather than an empty frame', (
   assert.equal(harness.customerHeroStampCardV422(null), '');
 });
 
-test('photo 8: carried stamps are said out loud, never absorbed', () => {
-  /* Cubbly's real state: 753 stamps against a 5-slot card. The card shows 5 of 5; the rest is a
-     fact the customer owns and must not vanish into an invisible completed card. */
+test('photo 8 x v496: excess stamps clamp the grid, and the carried sentence is gone', () => {
+  /* nestly_v496 (owner, photo 1: "remove this old one ... all stamps cleared, SHOW my next card
+     here"). A full card now CLOSES the moment the wallet draws it — the customer's own look calls
+     customer_rollover_full_stamp_card_v496 and the excess lands on the fresh card — so the hero
+     never has a surplus to narrate. The clamp stays as the honest fallback for the one render
+     that races the roll: the grid must not draw 753 cells, and it must not print a sentence about
+     a state the server is already correcting. */
   const html = harness.customerHeroStampCardV422(quest(5, 753,
     [{ slot: 5, name: 'Free Lotion', stamps_to_go: 0, claimed_this_cycle: false }]));
   assert.match(html, /data-hero-stampcard-v422="5\/5"/);
-  assert.match(html, /748 already counted toward your next card/);
+  assert.doesNotMatch(html, /already counted toward your next card/);
+  assert.doesNotMatch(html, /customer-hero-stamp-carried-v422/);
 });
 
 test('photo 8: the hero paints from the wallet first and is replaced by the real card', () => {
@@ -328,7 +333,7 @@ test('photo 6: Available and History are tabs, and History is not fetched until 
      v427 entitlements the counter already owes this customer, both of which have been read by the
      time it is printed. A voucher sitting in the panel uncounted would make the number an
      undercount of what the customer can walk in and use. */
-  assert.match(rewards, /Available\$\{claimableRewardsV422\.length\+entitlementsV429\.length\?` \(\$\{claimableRewardsV422\.length\+entitlementsV429\.length\}\)`:''\}/,
+  assert.match(rewards, /Available\$\{readyCountV397\+entitlementsV429\.length\?` \(\$\{readyCountV397\+entitlementsV429\.length\}\)`:''\}/,
     'Available does carry a count, because it has been read');
   assert.match(rewards, /const entitlementsV429=!entitlementsResultV427\?\.error&&Array\.isArray\(entitlementsResultV427\?\.data\?\.active\)/,
     'and it is the server\'s own active list, empty on any refusal');
@@ -476,8 +481,12 @@ test('nestly_v428 item 6: the tile says how many the customer may TAKE, not how 
 
 test('nestly_v428 item 6: the Available panel says which part of the count the customer gets', () => {
   const rewards = code(section('const loadRewards=async()=>', 'const activityState={items:[],nextCursor:null}'));
-  /* One derivation feeds the pill, the tile subtitle and the list, so the three cannot disagree. */
-  assert.match(rewards, /const claimableRewardsV422=rewards\.filter\(item=>item\.action_key&&customerRewardCanRedeem\(item,redemptionEnabled\)\);\s*\r?\n\s*const readyCountV397=claimableRewardsV422\.length;/);
+  /* One derivation feeds the pill, the tile subtitle and the list, so the three cannot disagree.
+     nestly_v496: the derivation now SUMS INSTANCES (the server's quantity column — a gift earned
+     on the closed card and again on the fresh one counts twice), matching the server's own
+     customer_ready_reward_count_v465, which sums the same column. */
+  assert.match(rewards, /const claimableRewardsV422=rewards\.filter\(item=>item\.action_key&&customerRewardCanRedeem\(item,redemptionEnabled\)\);/);
+  assert.match(rewards, /const instanceCountV496=item=>Math\.max\(1,Math\.floor\(Number\(item\?\.quantity\)\|\|1\)\);\s*\r?\n\s*const readyCountV397=claimableRewardsV422\.reduce\(\(total,item\)=>total\+instanceCountV496\(item\),0\);/);
   assert.match(rewards, /const chooseOneSlotV428=customerStampChooseOneSlotV428\(claimableRewardsV422,loyalty\.unit\);/);
   assert.match(rewards, /customerRewardReadyCountApplyV397\(readyCountV397,heroRootV397,\{chooseOneV428:chooseOneSlotV428\}\)/);
   assert.match(rewards, /data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick\./);
@@ -485,7 +494,7 @@ test('nestly_v428 item 6: the Available panel says which part of the count the c
   /* nestly_v429 (C): and it now also counts the v427 entitlements painted below the catalogue
      cards — a welcome gift or bring-back voucher the counter already owes them is claimable, so
      leaving it out would make this number an undercount of the same panel. */
-  assert.match(rewards, /data-rewards-tab-v422="available">Available\$\{claimableRewardsV422\.length\+entitlementsV429\.length\?` \(\$\{claimableRewardsV422\.length\+entitlementsV429\.length\}\)`:''\}/);
+  assert.match(rewards, /data-rewards-tab-v422="available">Available\$\{readyCountV397\+entitlementsV429\.length\?` \(\$\{readyCountV397\+entitlementsV429\.length\}\)`:''\}/);
 });
 
 test('nestly_v428 item 9: a stamps balance never prints as points because the unit was missed', () => {

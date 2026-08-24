@@ -3841,16 +3841,22 @@ function customerStampQuestBodyV323(quest){
   const nextLine=!next?ct('stampsQuestAllClaimed')
     :next.toGo===0?ct('stampsReady',{gift})
     :ct('stampsRemaining',{count:customerPointTotalV103(next.toGo),gift});
+  /* nestly_v496 (owner, photo 2: the bullet list struck out and rewritten by hand as
+     "5 (stamp) get ABC / 10 (stamp) get X / 15 (stamp) get X" — "improve the UI UX").
+     The ladder becomes those rows: a slot badge with a stamp glyph, then "get" and the gift.
+     Every data-* attribute survives in the same order (three suites read the rung pair
+     adjacently), and the v464 status suffix — collected / expired / use-by — still rides on
+     the row it describes. */
   const ladder=quest.milestones.length
-    ?`<ul class="customer-programme-stamp-quest-v323" data-stamp-quest-list-v323="${quest.milestones.length}">${
-      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
+    ?`<ul class="customer-programme-stamp-quest-v323 customer-stamp-ladder-v496" data-stamp-quest-list-v323="${quest.milestones.length}">${
+      quest.milestones.map(rung=>`<li class="customer-stamp-rung-v496" data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
         /* nestly_v464: the rung carries its own deadline so the ladder can say it in the same
            place the customer reads the gift's name. Only the SERVER's verdict decides "expired";
            the date is printed, never compared, because the browser's clock is not the authority. */''
-        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
-        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`
-        :rung.availability==='reward_expired'?`<span class="muted small" data-stamp-quest-rung-state-v464="expired"> · ${esc(ct('stampsRewardExpired'))}</span>`
-        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small" data-stamp-quest-rung-state-v464="useby"> · ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
+        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><span class="customer-stamp-rung-slot-v496"><b>${esc(String(rung.slot))}</b></span><span class="customer-stamp-rung-gift-v496">get <b data-merchant-content>${esc(rung.name)}</b></span>${
+        rung.claimed?`<span class="muted small customer-stamp-rung-state-v496"> ${esc(ct('stampsQuestClaimed'))}</span>`
+        :rung.availability==='reward_expired'?`<span class="muted small customer-stamp-rung-state-v496" data-stamp-quest-rung-state-v464="expired"> ${esc(ct('stampsRewardExpired'))}</span>`
+        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small customer-stamp-rung-state-v496" data-stamp-quest-rung-state-v464="useby"> ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
         :''}</li>`).join('')
     }</ul>`
     :'';
@@ -3867,7 +3873,12 @@ function customerStampQuestBodyV323(quest){
     <p class="muted small" data-stamp-quest-line-v323="next">${esc(nextLine)}</p>
     ${expiryLineV435?`<p class="muted small" data-stamp-quest-line-v323="expiry">${esc(expiryLineV435)}</p>`:''}
     ${keptLineV435?`<p class="muted small" data-stamp-quest-line-v323="kept">${esc(keptLineV435)}</p>`:''}
-    ${quest.carried>0?`<p class="muted small" data-stamp-quest-line-v323="carried">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+    ${/* nestly_v496 (owner, photo 1: "remove this old one ... all stamps cleared, SHOW my next
+         card here"). The carried line is gone WITH its state: a full card now closes the moment
+         the customer looks (customer_rollover_full_stamp_card_v496 fires beside the wallet
+         loaders), so the excess IS the fresh card's filled count and there is nothing left to
+         explain. The min(filled,slots) clamp above stays as the honest fallback for the one
+         render that races the roll. */''}
     ${ladder}`;
 }
 /* The "reward ready" banner. Renders only when the server's own next_eligible_reward is
@@ -6355,7 +6366,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        reuses it. It was filtered twice with the same predicate, and the tile copy and the list now
        have to agree about more than a number, so one derivation is the only safe shape. */
     const claimableRewardsV422=rewards.filter(item=>item.action_key&&customerRewardCanRedeem(item,redemptionEnabled));
-    const readyCountV397=claimableRewardsV422.length;
+    /* nestly_v496 (owner, photo 2: "it should show quantity = 2 - and able to redeem twice ...
+       able to stack"). The server's reward_availability_v432 now counts INSTANCES — a gift earned
+       on the closed card AND again on the fresh one arrives as one row with quantity 2. The pill,
+       the tile and the Available tab all sum instances so they agree with the server's own
+       customer_ready_reward_count_v465, which sums the same column. A payload without the field
+       (older server) reads as 1 per row — exactly the pre-v496 number. */
+    const instanceCountV496=item=>Math.max(1,Math.floor(Number(item?.quantity)||1));
+    const readyCountV397=claimableRewardsV422.reduce((total,item)=>total+instanceCountV496(item),0);
     const chooseOneSlotV428=customerStampChooseOneSlotV428(claimableRewardsV422,loyalty.unit);
     customerRewardReadyCountApplyV397(readyCountV397,heroRootV397,{chooseOneV428:chooseOneSlotV428});
     customerHeroRewardPagesV395(rewards,{
@@ -6437,7 +6455,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       return `<article class="wallet-reward customer-reward-card-v339">
       <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
-        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-copy-v492"><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
+        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-copy-v492"><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${
+        /* nestly_v496: the stack, said out loud. One card per reward; the badge is how many of it
+           the counter will honour — earned on this card and on completed ones before it. */
+        instanceCountV496(r)>1?`<span class="pill customer-reward-quantity-v496" data-reward-quantity-v496="${instanceCountV496(r)}">×${esc(String(instanceCountV496(r)))}</span>`:''}${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       ${/* nestly_v489 (owner, photo 5: "no points, why show these rewards, please sync!!!").
            The cost printed the PAGE's unit, so on a firm running points a gift priced in STAMPS
@@ -6512,7 +6533,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         ${/* nestly_v429 (C): the count is what the panel PAINTS — catalogue rewards plus the
              entitlements the counter already owes this customer. A voucher sitting in the panel
              uncounted would make the number an undercount of what they can walk in and use. */''}
-        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${claimableRewardsV422.length+entitlementsV429.length?` (${claimableRewardsV422.length+entitlementsV429.length})`:''}</button>
+        <button type="button" role="tab" aria-selected="true" data-rewards-tab-v422="available">Available${readyCountV397+entitlementsV429.length?` (${readyCountV397+entitlementsV429.length})`:''}</button>
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
@@ -7068,6 +7089,24 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Rate your visit'))}</h2><p class="muted small">${esc(ct('Your review helps other people find this business.'))}</p></div></div>
       <a class="btn sm" href="${esc(walletReviewUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">${CUI.icon('loyalty',{size:16})}<span>Leave a public review</span></a>`;
   };
+  /* nestly_v496 (owner, photo 1: "when 15 stamps are accumulated - the customer should see the
+     new card (fresh 15 empty stamp card)"). v489's rollover fires on the NEXT SALE; this is the
+     other trigger moment — the customer LOOKING. The RPC is the customer's door onto the same
+     v489 close: a card that is not full returns rolled=0 after one cheap read, a full one closes
+     with slots=target so the excess lands on the fresh card, and the unclaimed gifts become
+     survivors the Available list keeps until their own v464 expiry.
+     Fired IN PARALLEL with the loaders rather than ahead of them — an await-first would tax every
+     wallet open with a round trip for a state that occurs once per completed card. When it does
+     roll, counterMomentV468's silent refresh repaints the sections in place from the post-roll
+     truth (scroll held, no shell rebuild), which is the same path a realtime stamp ping takes.
+     GATED ON !silent: the 20s poll and the doorbell both re-enter this render silently, and a
+     kick per poll would be exactly the v370 amplification this app already paid to remove — one
+     look, one kick. The gate is also the loop-brake: roll -> silent refresh -> no second kick. */
+  if(!silent)void customerRpc('customer_rollover_full_stamp_card_v496',{p_business_slug:businessSlug})
+    .then(rolloverV496=>{
+      if(!isWalletCurrent())return;
+      if(Number(rolloverV496?.data?.rolled||0)>0)void customerCounterMomentV468();
+    }).catch(()=>{});
   await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadStampCardV323(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275(),loadRedemptionCelebrationV468()]);
   if(!isWalletCurrent())return;
 }

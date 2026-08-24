@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="a65820c662652d46fabfc34f6029be912819b462f1c12a3e8f88772ee7456414">
+<meta name="v105-production-component-sha256" content="4f6468f9a462cba6e8375e7908b2e347bd09ff12d22bec19b9467bf09d295ed9">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -4568,6 +4568,25 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
   opacity:.6}
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
+/* nestly_v496 (owner, photo 2: the milestone bullets rewritten by hand as "5 (stamp) get ABC"
+   rows — "improve the UI UX"). Each rung is a row: a stamp-shaped slot badge, then the gift it
+   buys. The badge borrows the stamp-ring family's look so the ladder and the grid above it read
+   as one system. */
+.customer-stamp-ladder-v496{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.customer-stamp-rung-v496{display:flex;align-items:center;gap:9px;min-width:0}
+.customer-stamp-rung-slot-v496{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;
+  border-radius:50%;border:2px solid var(--peekaa-red,#B3261E);color:var(--peekaa-red,#B3261E);
+  background:var(--peekaa-red-soft,#FBEBE8);font-size:13px;font-weight:800;line-height:1}
+.customer-stamp-rung-gift-v496{min-width:0;font-size:14px;line-height:1.35;
+  overflow-wrap:anywhere}
+.customer-stamp-rung-gift-v496 b{font-weight:700}
+.customer-stamp-rung-v496[data-stamp-quest-rung-claimed-v323="yes"] .customer-stamp-rung-slot-v496{
+  background:var(--peekaa-red,#B3261E);color:#fff}
+.customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
+/* nestly_v496 (owner, photo 2: "it should show quantity = 2 - and able to redeem twice"). The
+   stack badge beside "Ready to claim" — same pill family, weighted so x2 reads as a count, not
+   a size tag. */
+.customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
 .platform-console{
   min-height:100dvh;background:var(--bg);color:var(--ink);
@@ -5379,7 +5398,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · a65820c66265</span>
+<span class="v105-provenance">v105 production-component harness · 4f6468f9a462</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5504,7 +5523,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'a65820c662652d46fabfc34f6029be912819b462f1c12a3e8f88772ee7456414',
+  sourceHash:'4f6468f9a462cba6e8375e7908b2e347bd09ff12d22bec19b9467bf09d295ed9',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

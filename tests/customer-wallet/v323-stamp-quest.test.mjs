@@ -155,14 +155,32 @@ test('V323 the rings draw the current card, marking every milestone and every co
     ['customer-programme-stamp-ring', 'customer-programme-stamp-rings', 'is-filled', 'is-goal']);
 });
 
-test('V323 stamps past the end of the card are CARRIED and said out loud', () => {
+test('V323 x v496: stamps past the end of the card clamp, and the carried line is gone', () => {
+  /* nestly_v496 (owner, photo 1). A full card closes the moment the customer looks at it —
+     customer_rollover_full_stamp_card_v496 fires beside the wallet loaders and the excess lands
+     on the fresh card — so this body never narrates a surplus. The clamp survives as the honest
+     fallback for the single render that races the roll. */
   const markup = quest.customerStampQuestBodyV323(
     quest.stampQuestNormaliseV323(payload({ filled: 8, carried: 2, claimed: [3, 5] })));
   assert.equal(line(markup, 'progress'), '8 of 8 stamps on this card.',
     'the card never shows more than its own length');
-  assert.equal(line(markup, 'carried'), '2 already counted toward your next card.');
+  assert.equal(line(markup, 'carried'), null,
+    'no sentence about carried stamps — the server rolls the card instead of the copy explaining it');
+  assert.doesNotMatch(markup, /already counted toward your next card/);
   assert.equal(line(markup, 'next'), ct('stampsReady', { gift: 'Free haircut' }),
     'a full card names the gift that finishes the quest');
+});
+
+test('v496 the ladder is the owner\'s hand-drawn rows: slot badge, then "get" and the gift', () => {
+  const markup = quest.customerStampQuestBodyV323(quest.stampQuestNormaliseV323(payload()));
+  assert.match(markup, /customer-stamp-ladder-v496/);
+  assert.match(markup,
+    /<span class="customer-stamp-rung-slot-v496"><b>5<\/b><\/span><span class="customer-stamp-rung-gift-v496">get <b data-merchant-content>A pastry<\/b><\/span>/,
+    'each rung reads "5 · get A pastry" — the photo-2 redraw');
+  /* And the wallet render actually fires the roll: the RPC beside the loaders, gated on !silent
+     so the 20-second poll cannot amplify it, refreshing in place only when something rolled. */
+  assert.match(app, /if\(!silent\)void customerRpc\('customer_rollover_full_stamp_card_v496',\{p_business_slug:businessSlug\}\)/);
+  assert.match(app, /if\(Number\(rolloverV496\?\.data\?\.rolled\|\|0\)>0\)void customerCounterMomentV468\(\);/);
 });
 
 test('V323 the stamp card never prints a points figure', () => {
@@ -261,12 +279,14 @@ test('V323 the loader replaces the v310 card only on a clean answer, and never b
   assert.match(app, /await Promise\.all\(\[loadMemberCodeW6I2\(\),loadReferralCardV300\(\),loadStampCardV323\(\),/);
 });
 
-test('V323 the four remaining customer sentences exist in all four locales', () => {
+test('V323 the three remaining customer sentences exist in all four locales', () => {
   /* tests/customer-wallet/v293-customer-wallet-localization.test.mjs turns red on a missing key;
      this asserts the same thing at the point the keys were added, and that none of the four
      translations was left as the English string. */
-  /* nestly_v422 removed stampsQuestRetired from all four locales with the sentence it served. */
-  const keys = ['stampsQuestProgress', 'stampsQuestCarried', 'stampsQuestClaimed',
+  /* nestly_v422 removed stampsQuestRetired from all four locales with the sentence it served.
+     nestly_v496 removed stampsQuestCarried the same way — the server rolls a full card, so no
+     locale has a carried sentence left to speak. */
+  const keys = ['stampsQuestProgress', 'stampsQuestClaimed',
     'stampsQuestAllClaimed'];
   for (const key of keys) {
     const values = [...app.matchAll(new RegExp(`^\\s{4}${key}:'([^']*)',$`, 'gm'))]

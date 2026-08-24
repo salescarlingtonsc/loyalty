@@ -2463,6 +2463,12 @@
       "path": "db/migrations/20260824_nestly_v495_stopped_programme_gifts_not_offered.sql",
       "semanticVersion": "v495",
       "proposedDeployVersion": "20260824000009"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v496_full_card_rolls_and_gifts_stack.sql",
+      "semanticVersion": "v496",
+      "proposedDeployVersion": "20260825000001"
     }
   ]
 }

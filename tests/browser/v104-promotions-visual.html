@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="928473bff5f52c1a16a6f619f5d2cec4fc67f2df837e00a1ad3f54f2e7b3c6a8">
+<meta name="v104-production-source-sha256" content="7d7716af4488939d1fe165a808181eace5e511619b83c8db045396994bd7a57e">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -4569,6 +4569,25 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
   opacity:.6}
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
+/* nestly_v496 (owner, photo 2: the milestone bullets rewritten by hand as "5 (stamp) get ABC"
+   rows — "improve the UI UX"). Each rung is a row: a stamp-shaped slot badge, then the gift it
+   buys. The badge borrows the stamp-ring family's look so the ladder and the grid above it read
+   as one system. */
+.customer-stamp-ladder-v496{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.customer-stamp-rung-v496{display:flex;align-items:center;gap:9px;min-width:0}
+.customer-stamp-rung-slot-v496{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;
+  border-radius:50%;border:2px solid var(--peekaa-red,#B3261E);color:var(--peekaa-red,#B3261E);
+  background:var(--peekaa-red-soft,#FBEBE8);font-size:13px;font-weight:800;line-height:1}
+.customer-stamp-rung-gift-v496{min-width:0;font-size:14px;line-height:1.35;
+  overflow-wrap:anywhere}
+.customer-stamp-rung-gift-v496 b{font-weight:700}
+.customer-stamp-rung-v496[data-stamp-quest-rung-claimed-v323="yes"] .customer-stamp-rung-slot-v496{
+  background:var(--peekaa-red,#B3261E);color:#fff}
+.customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
+/* nestly_v496 (owner, photo 2: "it should show quantity = 2 - and able to redeem twice"). The
+   stack badge beside "Ready to claim" — same pill family, weighted so x2 reads as a count, not
+   a size tag. */
+.customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -4576,7 +4595,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 928473bff5f52c1a16a6f619f5d2cec4fc67f2df837e00a1ad3f54f2e7b3c6a8</p>
+  <p class="v104-provenance">Local production-render harness · source 7d7716af4488939d1fe165a808181eace5e511619b83c8db045396994bd7a57e</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4588,7 +4607,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="928473bff5f52c1a16a6f619f5d2cec4fc67f2df837e00a1ad3f54f2e7b3c6a8";
+const PRODUCTION_SOURCE_SHA256="7d7716af4488939d1fe165a808181eace5e511619b83c8db045396994bd7a57e";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -5736,16 +5755,22 @@ function customerStampQuestBodyV323(quest){
   const nextLine=!next?ct('stampsQuestAllClaimed')
     :next.toGo===0?ct('stampsReady',{gift})
     :ct('stampsRemaining',{count:customerPointTotalV103(next.toGo),gift});
+  /* nestly_v496 (owner, photo 2: the bullet list struck out and rewritten by hand as
+     "5 (stamp) get ABC / 10 (stamp) get X / 15 (stamp) get X" — "improve the UI UX").
+     The ladder becomes those rows: a slot badge with a stamp glyph, then "get" and the gift.
+     Every data-* attribute survives in the same order (three suites read the rung pair
+     adjacently), and the v464 status suffix — collected / expired / use-by — still rides on
+     the row it describes. */
   const ladder=quest.milestones.length
-    ?`<ul class="customer-programme-stamp-quest-v323" data-stamp-quest-list-v323="${quest.milestones.length}">${
-      quest.milestones.map(rung=>`<li data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
+    ?`<ul class="customer-programme-stamp-quest-v323 customer-stamp-ladder-v496" data-stamp-quest-list-v323="${quest.milestones.length}">${
+      quest.milestones.map(rung=>`<li class="customer-stamp-rung-v496" data-stamp-quest-rung-v323="${rung.slot}" data-stamp-quest-rung-claimed-v323="${rung.claimed?'yes':'no'}"${
         /* nestly_v464: the rung carries its own deadline so the ladder can say it in the same
            place the customer reads the gift's name. Only the SERVER's verdict decides "expired";
            the date is printed, never compared, because the browser's clock is not the authority. */''
-        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><b>${esc(String(rung.slot))}</b> <span data-merchant-content>${esc(rung.name)}</span>${
-        rung.claimed?`<span class="muted small"> · ${esc(ct('stampsQuestClaimed'))}</span>`
-        :rung.availability==='reward_expired'?`<span class="muted small" data-stamp-quest-rung-state-v464="expired"> · ${esc(ct('stampsRewardExpired'))}</span>`
-        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small" data-stamp-quest-rung-state-v464="useby"> · ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
+        }${rung.expiresAt?` data-stamp-quest-rung-expires-v464="${esc(String(rung.expiresAt))}"`:''}><span class="customer-stamp-rung-slot-v496"><b>${esc(String(rung.slot))}</b></span><span class="customer-stamp-rung-gift-v496">get <b data-merchant-content>${esc(rung.name)}</b></span>${
+        rung.claimed?`<span class="muted small customer-stamp-rung-state-v496"> ${esc(ct('stampsQuestClaimed'))}</span>`
+        :rung.availability==='reward_expired'?`<span class="muted small customer-stamp-rung-state-v496" data-stamp-quest-rung-state-v464="expired"> ${esc(ct('stampsRewardExpired'))}</span>`
+        :rung.expiresAt&&rung.availability==='available_at_counter'?`<span class="muted small customer-stamp-rung-state-v496" data-stamp-quest-rung-state-v464="useby"> ${esc(ct('stampsRewardUseBy',{date:walletDate(rung.expiresAt)}))}</span>`
         :''}</li>`).join('')
     }</ul>`
     :'';
@@ -5762,7 +5787,12 @@ function customerStampQuestBodyV323(quest){
     <p class="muted small" data-stamp-quest-line-v323="next">${esc(nextLine)}</p>
     ${expiryLineV435?`<p class="muted small" data-stamp-quest-line-v323="expiry">${esc(expiryLineV435)}</p>`:''}
     ${keptLineV435?`<p class="muted small" data-stamp-quest-line-v323="kept">${esc(keptLineV435)}</p>`:''}
-    ${quest.carried>0?`<p class="muted small" data-stamp-quest-line-v323="carried">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+    ${/* nestly_v496 (owner, photo 1: "remove this old one ... all stamps cleared, SHOW my next
+         card here"). The carried line is gone WITH its state: a full card now closes the moment
+         the customer looks (customer_rollover_full_stamp_card_v496 fires beside the wallet
+         loaders), so the excess IS the fresh card's filled count and there is nothing left to
+         explain. The min(filled,slots) clamp above stays as the honest fallback for the one
+         render that races the roll. */''}
     ${ladder}`;
 }
 /* 2 · POINTS & GIFTS. The one card that prints a raw point number — the stack's single hero. The
@@ -6205,7 +6235,9 @@ function customerHeroStampCardV422(quest){
       <div class="customer-hero-stamp-copy-v475">
         ${gridV475}
         <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
-        ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+        ${/* nestly_v496: the carried line is gone from the hero too — a full card rolls the
+             moment the wallet draws it, so the hero shows the NEXT card with the excess already
+             on it (owner, photo 1). */''}
       </div>
       ${photoV475?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`:''}
     </div>

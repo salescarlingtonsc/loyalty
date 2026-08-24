@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d9ab257ff463a1daa94c5a01d2bc8e402c2e31f98b60709451ec221311a88f2f"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0bd1ae242a0652e9ccf438dbb3394dff6f782c75c5bb32393b4007066be27ea2"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4561,6 +4561,25 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
   opacity:.6}
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
+/* nestly_v496 (owner, photo 2: the milestone bullets rewritten by hand as "5 (stamp) get ABC"
+   rows — "improve the UI UX"). Each rung is a row: a stamp-shaped slot badge, then the gift it
+   buys. The badge borrows the stamp-ring family's look so the ladder and the grid above it read
+   as one system. */
+.customer-stamp-ladder-v496{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.customer-stamp-rung-v496{display:flex;align-items:center;gap:9px;min-width:0}
+.customer-stamp-rung-slot-v496{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;
+  border-radius:50%;border:2px solid var(--peekaa-red,#B3261E);color:var(--peekaa-red,#B3261E);
+  background:var(--peekaa-red-soft,#FBEBE8);font-size:13px;font-weight:800;line-height:1}
+.customer-stamp-rung-gift-v496{min-width:0;font-size:14px;line-height:1.35;
+  overflow-wrap:anywhere}
+.customer-stamp-rung-gift-v496 b{font-weight:700}
+.customer-stamp-rung-v496[data-stamp-quest-rung-claimed-v323="yes"] .customer-stamp-rung-slot-v496{
+  background:var(--peekaa-red,#B3261E);color:#fff}
+.customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
+/* nestly_v496 (owner, photo 2: "it should show quantity = 2 - and able to redeem twice"). The
+   stack badge beside "Ready to claim" — same pill family, weighted so x2 reads as a count, not
+   a size tag. */
+.customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px;max-width:calc(100vw - 16px);overflow:auto}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v131-nav{position:relative;top:auto;right:auto;padding:8px}.center-wrap{padding:12px}.modal-card{margin:12px;max-height:calc(100dvh - 24px)}}</style></head><body><nav class="v131-nav"><button class="btn" data-view="native">Native</button><button class="btn ghost" data-view="deletion">Profile</button><button class="btn ghost" data-view="persona">Workspaces</button><button class="btn ghost" data-view="customer-unavailable">Customer blocked</button><button class="btn ghost" data-view="customer-error">Customer error</button><button class="btn ghost" data-view="persona-error">Account error</button><button class="btn ghost" data-view="workspace-error">Staff blocked</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

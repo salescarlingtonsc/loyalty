@@ -1929,7 +1929,6 @@ const CUSTOMER_COPY=Object.freeze({
     /* v323 (R5) — the quest. Claiming a milestone no longer spends the stamps, so the card has a
        length, a position on it, and a list of what has already been collected on THIS card. */
     stampsQuestProgress:'{filled} of {total} stamps on this card.',
-    stampsQuestCarried:'{count} already counted toward your next card.',
     stampsQuestClaimed:'Collected on this card',
     /* nestly_v464 (owner ruling R3(e)): the deadline the owner set on an earned reward. */
     stampsRewardUseBy:'Use by {date}',
@@ -2159,7 +2158,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsNoGift:'已集 {count} 个章。',
     /* v323 (R5) — the quest. */
     stampsQuestProgress:'这张卡已集 {filled}/{total} 个章。',
-    stampsQuestCarried:'另有 {count} 个章已计入下一张卡。',
     stampsQuestClaimed:'本卡已领取',
     stampsRewardUseBy:'请在 {date} 前使用',
     stampsRewardExpired:'已过期',
@@ -2383,7 +2381,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsNoGift:'{count} cop dikumpul.',
     /* v323 (R5) — the quest. */
     stampsQuestProgress:'{filled} daripada {total} cop pada kad ini.',
-    stampsQuestCarried:'{count} lagi sudah dikira untuk kad anda yang seterusnya.',
     stampsQuestClaimed:'Sudah dituntut pada kad ini',
     stampsRewardUseBy:'Guna sebelum {date}',
     stampsRewardExpired:'Tamat tempoh',
@@ -2607,7 +2604,6 @@ const CUSTOMER_COPY=Object.freeze({
     stampsNoGift:'{count} முத்திரைகள் சேர்க்கப்பட்டன.',
     /* v323 (R5) — the quest. */
     stampsQuestProgress:'இந்த அட்டையில் {total}-இல் {filled} முத்திரைகள்.',
-    stampsQuestCarried:'மேலும் {count} அடுத்த அட்டைக்குக் கணக்கிடப்பட்டுள்ளன.',
     stampsQuestClaimed:'இந்த அட்டையில் பெறப்பட்டது',
     stampsRewardUseBy:'{date}க்குள் பயன்படுத்தவும்',
     stampsRewardExpired:'காலாவதியானது',
@@ -4442,7 +4438,9 @@ function customerHeroStampCardV422(quest){
       <div class="customer-hero-stamp-copy-v475">
         ${gridV475}
         <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
-        ${quest.carried>0?`<p class="customer-hero-stamp-carried-v422">${esc(ct('stampsQuestCarried',{count:customerPointTotalV103(quest.carried)}))}</p>`:''}
+        ${/* nestly_v496: the carried line is gone from the hero too — a full card rolls the
+             moment the wallet draws it, so the hero shows the NEXT card with the excess already
+             on it (owner, photo 1). */''}
       </div>
       ${photoV475?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`:''}
     </div>
