@@ -1103,10 +1103,6 @@ const growPointsEndDateInputV472=value=>{
   if(!Number.isFinite(at.getTime()))return '';
   return new Date(at.getTime()+8*3600000).toISOString().slice(0,10);
 };
-/* The earliest day the field will accept. Today in SGT, not tomorrow: the writer refuses only a
-   date that is already PAST, and today still has hours left in it — an owner running a one-day
-   promotion must be able to say so. */
-const growPointsEndDateMinV472=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 /* reporting-scale:start — keep raw exports complete despite the Data API row cap. */
 const DATA_API_PAGE_SIZE=1000;
 const sgDateBoundary=(date,dayOffset=0)=>{
@@ -15739,7 +15735,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
          END of the chosen day in SGT so a gift dated "21 September" is claimable all of the 21st.
          Blank means no deadline, which is what every existing gift already has. */''}
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddEndsV472">Last day to redeem <span class="muted">(optional)</span></label><br><input id="growPointsAddEndsV472" class="grow-setup-input-v301" type="date" min="${esc(growPointsEndDateMinV472())}" value="${esc(growPointsAddDraftV326.endsOn||'')}"><br><span class="muted small">Customers see &ldquo;Expires on this date &mdash; redeem before then&rdquo;. Leave blank and it never expires.</span></p>
+    ${/* nestly_v487 (owner, photo 6: the whole "Last day to redeem" row struck through -
+         "redundant, delete this for all gifts", and photo 7 held up as where expiry belongs).
+         The field is gone because there were TWO expiry clocks on one gift and they answered
+         different questions: this one said when the gift stops being OFFERED, while the Stamp
+         Card rule in photo 7 says how long a customer has to use one they have already EARNED.
+         The owner's ruling is that the second is the real one, so the first stops existing.
+         Removing the input is not enough on its own - see the save handler, which now clears
+         any date a gift already carries rather than letting an invisible one keep applying. */''}
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -18085,7 +18088,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       name:String(nameField?.value??growPointsAddDraftV326.name??''),
       points:pointsField?.value??growPointsAddDraftV326.points??'',
       description:String(descField?.value??growPointsAddDraftV326.description??''),
-      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??''),
+      endsOn:'',
       whereItWorks:String($('growPointsAddWhereV477')?.value??growPointsAddDraftV326.whereItWorks??'')
     };
   };
@@ -18110,7 +18113,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    const endsOnV472=String($('growPointsAddEndsV472')?.value||'').trim();
+    /* nestly_v487: there is no field to read any more, and the empty string is load-bearing -
+       p_clear_end_date below is `!endsOnV472`, so '' makes every save an EXPLICIT clear. That is
+       what turns "delete this for all gifts" into something true rather than cosmetic: a gift
+       that already had a date loses it the next time it is saved, instead of keeping an expiry
+       the owner can no longer see or change. */
+    const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}

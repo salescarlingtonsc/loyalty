@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b521101ceff5b44de9fe41f7090a5c3b5c749c83ac41cd64689d010fd3197a1b"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="0831a7a85aac128eac6a67c47d42e2afe7587277d81444a290e351648f0cc72e"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4171,7 +4171,20 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
    the frame reads as full-bleed artwork rather than as empty space. */
 .customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
 .customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
-.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+/* nestly_v487 (owner, photo A: the bars either side of a portrait poster ringed - "solve ugly
+   photo alignment"). The poster is still CONTAINed, never cropped - that is a standing owner
+   ruling (V173/V371, reaffirmed 2026-08-19) and this does not touch it. What was ugly is what
+   filled the margin: v421 blurred the artwork and pushed saturate(1.12) THROUGH it, so a colourful
+   promo turned the frame into a saturated rainbow smear that fought the poster it was meant to sit
+   behind. It is desaturated and dimmed now, so it reads as a soft neutral mount rather than as a
+   second, louder picture; a flat scrim on top evens out whatever the artwork happens to be. */
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(26px) saturate(.42) brightness(.88)}
+.customer-home-offer-media.has-art-v421::after{content:"";position:absolute;inset:0;z-index:0;background:rgba(23,22,26,.18);pointer-events:none}
+/* And the alignment itself: the poster used to run edge to edge into that smear. A small inset
+   plus its own corner radius and shadow makes it read as a picture deliberately mounted in a
+   frame, which is what stops the two layers looking like a mistake. */
+.customer-home-offer-media.has-art-v421{padding:10px}
+.customer-home-offer-media.has-art-v421>img{border-radius:10px;box-shadow:0 6px 18px rgba(23,22,26,.28)}
 .customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
 
 /* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
@@ -4382,6 +4395,26 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-reward-copy-v468{min-width:0}
+/* nestly_v487 (owner photo 3). The points hero's gift column. It reuses the reward hero's own
+   grid (customer-hero-reward-body-v468) rather than minting a second two-column layout, so the
+   picture lands on exactly the same edge and top as the one on the reward and stamp cards - which
+   is the alignment v483 was spent establishing. */
+/* The two-column rule lives on the SECTION for the reward hero (.customer-hero-has-photo-v468),
+   which this body is not inside. :has() keeps the decision with the markup that actually decides
+   it — the column exists exactly when the tile was drawn — instead of threading a second class
+   down from a caller that does not know. Without :has() support this degrades to one column with
+   the tile under the balance: plainer, never broken. */
+.customer-hero-points-body-v487:has(.customer-hero-gift-art-v487){grid-template-columns:minmax(0,1fr) 92px}
+@media(max-width:340px){
+  .customer-hero-points-body-v487:has(.customer-hero-gift-art-v487){grid-template-columns:minmax(0,1fr) 72px}
+}
+.customer-hero-gift-art-v487{display:block}
+.customer-hero-gift-fallback-v487{display:grid;place-items:center;width:92px;aspect-ratio:1;
+  border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
+  box-shadow:0 10px 20px rgba(83,26,21,.22);color:#fff}
+@media(max-width:340px){
+  .customer-hero-gift-fallback-v487{width:72px}
+}
 .customer-hero-reward-photo-v468{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);
   border:2px solid rgba(255,255,255,.5);box-shadow:0 10px 20px rgba(83,26,21,.22)}
@@ -4482,7 +4515,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b521101ceff5b44de9fe41f7090a5c3b5c749c83ac41cd64689d010fd3197a1b</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0831a7a85aac128eac6a67c47d42e2afe7587277d81444a290e351648f0cc72e</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -10929,7 +10962,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
          END of the chosen day in SGT so a gift dated "21 September" is claimable all of the 21st.
          Blank means no deadline, which is what every existing gift already has. */''}
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddEndsV472">Last day to redeem <span class="muted">(optional)</span></label><br><input id="growPointsAddEndsV472" class="grow-setup-input-v301" type="date" min="${esc(growPointsEndDateMinV472())}" value="${esc(growPointsAddDraftV326.endsOn||'')}"><br><span class="muted small">Customers see &ldquo;Expires on this date &mdash; redeem before then&rdquo;. Leave blank and it never expires.</span></p>
+    ${/* nestly_v487 (owner, photo 6: the whole "Last day to redeem" row struck through -
+         "redundant, delete this for all gifts", and photo 7 held up as where expiry belongs).
+         The field is gone because there were TWO expiry clocks on one gift and they answered
+         different questions: this one said when the gift stops being OFFERED, while the Stamp
+         Card rule in photo 7 says how long a customer has to use one they have already EARNED.
+         The owner's ruling is that the second is the real one, so the first stops existing.
+         Removing the input is not enough on its own - see the save handler, which now clears
+         any date a gift already carries rather than letting an invisible one keep applying. */''}
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -13275,7 +13315,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       name:String(nameField?.value??growPointsAddDraftV326.name??''),
       points:pointsField?.value??growPointsAddDraftV326.points??'',
       description:String(descField?.value??growPointsAddDraftV326.description??''),
-      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??''),
+      endsOn:'',
       whereItWorks:String($('growPointsAddWhereV477')?.value??growPointsAddDraftV326.whereItWorks??'')
     };
   };
@@ -13300,7 +13340,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    const endsOnV472=String($('growPointsAddEndsV472')?.value||'').trim();
+    /* nestly_v487: there is no field to read any more, and the empty string is load-bearing -
+       p_clear_end_date below is `!endsOnV472`, so '' makes every save an EXPLICIT clear. That is
+       what turns "delete this for all gifts" into something true rather than cosmetic: a gift
+       that already had a date loses it the next time it is saved, instead of keeping an expiry
+       the owner can no longer see or change. */
+    const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
@@ -13995,7 +14040,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b521101ceff5b44de9fe41f7090a5c3b5c749c83ac41cd64689d010fd3197a1b',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'0831a7a85aac128eac6a67c47d42e2afe7587277d81444a290e351648f0cc72e',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

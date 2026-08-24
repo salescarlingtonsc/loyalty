@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="018933b3399c9e0b01a1c2c704f21b80f96555f0f6c89ff246f5575e01ec5ce3">
+<meta name="v104-production-source-sha256" content="ed8267b002873781fe7a4c372a06561df273fe53eee015dc2054b8ff2175d7f7">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -4178,7 +4178,20 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
    the frame reads as full-bleed artwork rather than as empty space. */
 .customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
 .customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
-.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+/* nestly_v487 (owner, photo A: the bars either side of a portrait poster ringed - "solve ugly
+   photo alignment"). The poster is still CONTAINed, never cropped - that is a standing owner
+   ruling (V173/V371, reaffirmed 2026-08-19) and this does not touch it. What was ugly is what
+   filled the margin: v421 blurred the artwork and pushed saturate(1.12) THROUGH it, so a colourful
+   promo turned the frame into a saturated rainbow smear that fought the poster it was meant to sit
+   behind. It is desaturated and dimmed now, so it reads as a soft neutral mount rather than as a
+   second, louder picture; a flat scrim on top evens out whatever the artwork happens to be. */
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(26px) saturate(.42) brightness(.88)}
+.customer-home-offer-media.has-art-v421::after{content:"";position:absolute;inset:0;z-index:0;background:rgba(23,22,26,.18);pointer-events:none}
+/* And the alignment itself: the poster used to run edge to edge into that smear. A small inset
+   plus its own corner radius and shadow makes it read as a picture deliberately mounted in a
+   frame, which is what stops the two layers looking like a mistake. */
+.customer-home-offer-media.has-art-v421{padding:10px}
+.customer-home-offer-media.has-art-v421>img{border-radius:10px;box-shadow:0 6px 18px rgba(23,22,26,.28)}
 .customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
 
 /* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
@@ -4389,6 +4402,26 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-reward-copy-v468{min-width:0}
+/* nestly_v487 (owner photo 3). The points hero's gift column. It reuses the reward hero's own
+   grid (customer-hero-reward-body-v468) rather than minting a second two-column layout, so the
+   picture lands on exactly the same edge and top as the one on the reward and stamp cards - which
+   is the alignment v483 was spent establishing. */
+/* The two-column rule lives on the SECTION for the reward hero (.customer-hero-has-photo-v468),
+   which this body is not inside. :has() keeps the decision with the markup that actually decides
+   it — the column exists exactly when the tile was drawn — instead of threading a second class
+   down from a caller that does not know. Without :has() support this degrades to one column with
+   the tile under the balance: plainer, never broken. */
+.customer-hero-points-body-v487:has(.customer-hero-gift-art-v487){grid-template-columns:minmax(0,1fr) 92px}
+@media(max-width:340px){
+  .customer-hero-points-body-v487:has(.customer-hero-gift-art-v487){grid-template-columns:minmax(0,1fr) 72px}
+}
+.customer-hero-gift-art-v487{display:block}
+.customer-hero-gift-fallback-v487{display:grid;place-items:center;width:92px;aspect-ratio:1;
+  border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
+  box-shadow:0 10px 20px rgba(83,26,21,.22);color:#fff}
+@media(max-width:340px){
+  .customer-hero-gift-fallback-v487{width:72px}
+}
 .customer-hero-reward-photo-v468{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);
   border:2px solid rgba(255,255,255,.5);box-shadow:0 10px 20px rgba(83,26,21,.22)}
@@ -4494,7 +4527,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 018933b3399c9e0b01a1c2c704f21b80f96555f0f6c89ff246f5575e01ec5ce3</p>
+  <p class="v104-provenance">Local production-render harness · source ed8267b002873781fe7a4c372a06561df273fe53eee015dc2054b8ff2175d7f7</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4506,7 +4539,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="018933b3399c9e0b01a1c2c704f21b80f96555f0f6c89ff246f5575e01ec5ce3";
+const PRODUCTION_SOURCE_SHA256="ed8267b002873781fe7a4c372a06561df273fe53eee015dc2054b8ff2175d7f7";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -6129,6 +6162,51 @@ function customerHeroStampCardV422(quest){
     </div>
   </div>`;
 }
+/* nestly_v487. The gift tile that fills the points hero's empty right. Two states and no third:
+   a real photo when one is known, and the gift glyph when it is not - which is exactly what the
+   owner asked for ("if no photo put [gift] logo") and means the column is never an empty hole.
+   The name and cost are stamped on the node so customerHeroGiftArtApplyV487 can find the matching
+   catalogue row later without re-rendering the card. */
+function customerHeroGiftArtV487(reward){
+  const nameV487=String(reward?.name||reward?.customer_name||'').trim();
+  if(!nameV487)return '';
+  const costV487=Number(reward?.cost_units??reward?.cost_points);
+  const photoV487=customerMediaUrlV95(reward?.image_ref||reward?.imageRef||'');
+  return `<div class="customer-hero-gift-art-v487" data-hero-gift-art-v487="${esc(nameV487.toLowerCase())}" data-hero-gift-cost-v487="${
+    Number.isFinite(costV487)?esc(String(costV487)):''}" aria-hidden="true">${
+    photoV487
+      ?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV487)}" alt="" loading="lazy" decoding="async" data-hero-gift-photo-v487>`
+      :`<span class="customer-hero-gift-fallback-v487">${CUI.icon('giftcard',{size:34})}</span>`}</div>`;
+}
+/* Paint-then-correct, the v397 contract. Called once the reward catalogue has landed: if the row
+   the hero named has a photo, the glyph becomes that photo. Matched on name AND cost, the same
+   pairing loadRewards already uses to reconcile an action against the catalogue, so a firm with
+   two gifts of one name does not get the wrong picture. Nothing happens when no row matches or
+   the row has no photo - the glyph stays, which is a true answer, not a placeholder. */
+function customerHeroGiftArtApplyV487(rewards=[],root=document){
+  const rowsV487=Array.isArray(rewards)?rewards:[];
+  root.querySelectorAll('[data-hero-gift-art-v487]').forEach(host=>{
+    if(host.querySelector('[data-hero-gift-photo-v487]'))return;
+    const nameV487=String(host.dataset.heroGiftArtV487||'');
+    const costV487=String(host.dataset.heroGiftCostV487||'');
+    const match=rowsV487.find(row=>{
+      const rowName=String(row?.customer_name||row?.name||'').trim().toLowerCase();
+      if(rowName!==nameV487)return false;
+      if(!costV487)return true;
+      return String(Number(row?.cost_points??row?.cost_units))===costV487;
+    });
+    const url=customerMediaUrlV95(match?.image_ref||'');
+    if(!url)return;
+    const img=document.createElement('img');
+    img.className='customer-hero-reward-photo-v468';
+    img.src=url;img.alt='';img.loading='lazy';img.decoding='async';
+    img.setAttribute('data-hero-gift-photo-v487','');
+    /* Same bargain as v468/v475: a storage object that has since been deleted leaves the glyph
+       standing rather than a broken-image icon. */
+    img.onerror=()=>img.remove();
+    host.replaceChildren(img);
+  });
+}
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
@@ -6290,9 +6368,31 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
             ${modeV386==='stamps'?''
               :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(progressSublineV465)}">${esc(subline)}</span></span>`}
           </div>
-          ${figureV386}
+          ${/* nestly_v487 (owner, photo 3: an arrow into the card's empty right - "here put photo
+               of gift, if no photo put [gift] logo"). The stamps hero got this in v475; the points
+               hero never did, so the same card was full-bleed artwork on one programme and half
+               empty on the other.
+               THE PHOTO CANNOT BE PAINTED ON THE FIRST FRAME. next_eligible_reward is the only
+               reward this function is given and it carries no image_ref - verified against
+               production, the column simply is not in c45_base_actionable_wallet_card. So the tile
+               is drawn from whatever IS known: the reward's own image_ref when a caller supplies
+               one (the workspace Live preview does, since v486), and otherwise the gift glyph the
+               owner asked for as the fallback. loadRewards then upgrades it from the catalogue,
+               which is the same paint-then-correct contract v397 uses for the ready count - never
+               a guess, just a better answer once the real one arrives.
+               Stamps is excluded: that card already carries its own photo from v475, and two
+               pictures on one card is the thing this is meant to fix. */''}
+          ${modeV386==='stamps'?`${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
-          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}`
+            :`<div class="customer-hero-reward-body-v468 customer-hero-points-body-v487">
+            <div class="customer-hero-reward-copy-v468">
+              ${figureV386}
+              ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+              ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+            </div>
+            ${customerHeroGiftArtV487(reward)}
+          </div>`}
           ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
             ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
             ${bookAction}
@@ -6507,21 +6607,6 @@ function customerRewardAvailabilityLineV399(reward,unit){
    failed but the catalogue answered — and that branch still renders these hero pages. Keying on it
    there would open the first reward's sheet for every "?" on the card. The index cannot collide. */
 let customerHeroRewardRowsV471=[];
-/* nestly_v484 (owner ruling 2026-08-24 on the stamp card's "?": "just make sure the '?' contains
-   expiry date. leave the rest untouched").
-   customer_get_stamp_card_v323 builds each milestone's JSON from a row that HAS
-   claim_available_until — it reads it, to decide the 'ended' availability — but never emits the
-   key, so the stamp page's sheet had no date to print. The reward pages' "?" prints it as
-   "Claim it by" (it is fed a whole catalogue row), which is the row the owner is pointing at.
-   Rather than change that RPC, the date is looked up client-side from the reward catalogue the
-   wallet has already fetched. The key is the reward's OWN id: the milestone's reward_id is
-   loyalty_rewards.id (the same column customer_get_stamp_card_v323 joins loyalty_redemptions on),
-   so this is an exact identity match, NOT the name+cost matching used elsewhere on this page —
-   which is why it cannot attach one gift's deadline to another gift of the same name.
-   A gift with no end date, which is all but two rows in production today, stores nothing and the
-   sheet prints no date row — the v471/v468 rule that an absent field prints nothing is unchanged.
-   ONLY this one field is added; every other row in the stamp sheet is left exactly as it was. */
-let customerStampGiftEndsV484=new Map();
 function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');

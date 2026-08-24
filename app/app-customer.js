@@ -3927,6 +3927,35 @@ function wireCustomerClaimRewardV395(root=document){
   }});
   return buttons.length;
 }
+/* Paint-then-correct, the v397 contract. Called once the reward catalogue has landed: if the row
+   the hero named has a photo, the glyph becomes that photo. Matched on name AND cost, the same
+   pairing loadRewards already uses to reconcile an action against the catalogue, so a firm with
+   two gifts of one name does not get the wrong picture. Nothing happens when no row matches or
+   the row has no photo - the glyph stays, which is a true answer, not a placeholder. */
+function customerHeroGiftArtApplyV487(rewards=[],root=document){
+  const rowsV487=Array.isArray(rewards)?rewards:[];
+  root.querySelectorAll('[data-hero-gift-art-v487]').forEach(host=>{
+    if(host.querySelector('[data-hero-gift-photo-v487]'))return;
+    const nameV487=String(host.dataset.heroGiftArtV487||'');
+    const costV487=String(host.dataset.heroGiftCostV487||'');
+    const match=rowsV487.find(row=>{
+      const rowName=String(row?.customer_name||row?.name||'').trim().toLowerCase();
+      if(rowName!==nameV487)return false;
+      if(!costV487)return true;
+      return String(Number(row?.cost_points??row?.cost_units))===costV487;
+    });
+    const url=customerMediaUrlV95(match?.image_ref||'');
+    if(!url)return;
+    const img=document.createElement('img');
+    img.className='customer-hero-reward-photo-v468';
+    img.src=url;img.alt='';img.loading='lazy';img.decoding='async';
+    img.setAttribute('data-hero-gift-photo-v487','');
+    /* Same bargain as v468/v475: a storage object that has since been deleted leaves the glyph
+       standing rather than a broken-image icon. */
+    img.onerror=()=>img.remove();
+    host.replaceChildren(img);
+  });
+}
 /* The greeting is the SUM of the numbers printed on the cards below it — the owner's invariant.
    `known` goes false the moment ONE card has no count, because a partial sum printed as a total
    would just be a new way of being wrong. */
@@ -4070,21 +4099,6 @@ function customerRewardAvailabilityLineV399(reward,unit){
    failed but the catalogue answered — and that branch still renders these hero pages. Keying on it
    there would open the first reward's sheet for every "?" on the card. The index cannot collide. */
 let customerHeroRewardRowsV471=[];
-/* nestly_v484 (owner ruling 2026-08-24 on the stamp card's "?": "just make sure the '?' contains
-   expiry date. leave the rest untouched").
-   customer_get_stamp_card_v323 builds each milestone's JSON from a row that HAS
-   claim_available_until — it reads it, to decide the 'ended' availability — but never emits the
-   key, so the stamp page's sheet had no date to print. The reward pages' "?" prints it as
-   "Claim it by" (it is fed a whole catalogue row), which is the row the owner is pointing at.
-   Rather than change that RPC, the date is looked up client-side from the reward catalogue the
-   wallet has already fetched. The key is the reward's OWN id: the milestone's reward_id is
-   loyalty_rewards.id (the same column customer_get_stamp_card_v323 joins loyalty_redemptions on),
-   so this is an exact identity match, NOT the name+cost matching used elsewhere on this page —
-   which is why it cannot attach one gift's deadline to another gift of the same name.
-   A gift with no end date, which is all but two rows in production today, stores nothing and the
-   sheet prints no date row — the v471/v468 rule that an absent field prints nothing is unchanged.
-   ONLY this one field is added; every other row in the stamp sheet is left exactly as it was. */
-let customerStampGiftEndsV484=new Map();
 function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
@@ -6098,9 +6112,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           showCustomerRewardRulesV468({
             customer_name:rung.name,cost_points:rung.slot,
             description:rung.description,terms:rung.terms,instructions:rung.instructions,
+            /* nestly_v487 (owner ruling, photos 6 + 7): expires_at is reward_expires_at - the
+               deadline the Stamp Card's own "Rewards expire N days after they are earned" rule
+               produces, which the owner has confirmed is THE expiry a customer should be told
+               about. v484's per-gift claim_available_until line is gone with the field that fed
+               it: two clocks on one gift answered different questions and only this one is about
+               the gift the customer is holding. */
             expires_at:rung.expiresAt||null,
-            imageRef:rung.imageRef||'',
-            claim_available_until:customerStampGiftEndsV484.get(String(rung.rewardId||''))||null
+            imageRef:rung.imageRef||''
           },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
         };
         heroSlotV422.querySelectorAll('[data-hero-stamp-gift-v486]').forEach(button=>{
@@ -6303,11 +6322,6 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ...(Array.isArray(actionsResult.data?.rewards)?actionsResult.data.rewards:[])
     ];
     const catalog=walletCatalogV241;
-    /* nestly_v484: the stamp card's "?" reads its expiry date from here. Rebuilt on every wallet
-       render so a gift whose end date the owner has just cleared stops printing one. */
-    customerStampGiftEndsV484=new Map(walletCatalogV241
-      .filter(item=>item?.id&&item.claim_available_until)
-      .map(item=>[String(item.id),item.claim_available_until]));
     const rewards=actionRewards.length?actionRewards.map(actionReward=>{
       if(actionReward.redemption_kind==='classic_points'){
         return {...actionReward,customer_name:actionReward.name||'Redeem points',
@@ -6525,6 +6539,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        hero's Redeem button, and it queries heroRootV397 because the swipe lives outside #walletRewards.
        The lookup is by index into customerHeroRewardRowsV471 — see that array's own note for why
        action_key cannot be trusted on this surface. */
+    /* nestly_v487: the catalogue has landed, so the points hero's gift glyph can become the real
+       gift photo. Same place, same moment and same payload as the ready-count correction above. */
+    customerHeroGiftArtApplyV487(rewards,heroRootV397);
     (heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-hero-reward-rules-v471]')||[])
       .forEach(button=>button.onclick=()=>{
         const match=customerHeroRewardRowsV471[Number(button.dataset.heroRewardRulesV471)];

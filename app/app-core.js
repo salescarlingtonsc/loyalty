@@ -948,6 +948,10 @@ const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*
    UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
    the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
 const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
+/* The earliest day the field will accept. Today in SGT, not tomorrow: the writer refuses only a
+   date that is already PAST, and today still has hours left in it — an owner running a one-day
+   promotion must be able to say so. */
+const growPointsEndDateMinV472=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 const sgDateInputValue=(date=new Date())=>{
   const values={};
   new Intl.DateTimeFormat('en-CA',{
@@ -4444,6 +4448,22 @@ function customerHeroStampCardV422(quest){
     </div>
   </div>`;
 }
+/* nestly_v487. The gift tile that fills the points hero's empty right. Two states and no third:
+   a real photo when one is known, and the gift glyph when it is not - which is exactly what the
+   owner asked for ("if no photo put [gift] logo") and means the column is never an empty hole.
+   The name and cost are stamped on the node so customerHeroGiftArtApplyV487 can find the matching
+   catalogue row later without re-rendering the card. */
+function customerHeroGiftArtV487(reward){
+  const nameV487=String(reward?.name||reward?.customer_name||'').trim();
+  if(!nameV487)return '';
+  const costV487=Number(reward?.cost_units??reward?.cost_points);
+  const photoV487=customerMediaUrlV95(reward?.image_ref||reward?.imageRef||'');
+  return `<div class="customer-hero-gift-art-v487" data-hero-gift-art-v487="${esc(nameV487.toLowerCase())}" data-hero-gift-cost-v487="${
+    Number.isFinite(costV487)?esc(String(costV487)):''}" aria-hidden="true">${
+    photoV487
+      ?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV487)}" alt="" loading="lazy" decoding="async" data-hero-gift-photo-v487>`
+      :`<span class="customer-hero-gift-fallback-v487">${CUI.icon('giftcard',{size:34})}</span>`}</div>`;
+}
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
@@ -4605,9 +4625,31 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
             ${modeV386==='stamps'?''
               :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(progressSublineV465)}">${esc(subline)}</span></span>`}
           </div>
-          ${figureV386}
+          ${/* nestly_v487 (owner, photo 3: an arrow into the card's empty right - "here put photo
+               of gift, if no photo put [gift] logo"). The stamps hero got this in v475; the points
+               hero never did, so the same card was full-bleed artwork on one programme and half
+               empty on the other.
+               THE PHOTO CANNOT BE PAINTED ON THE FIRST FRAME. next_eligible_reward is the only
+               reward this function is given and it carries no image_ref - verified against
+               production, the column simply is not in c45_base_actionable_wallet_card. So the tile
+               is drawn from whatever IS known: the reward's own image_ref when a caller supplies
+               one (the workspace Live preview does, since v486), and otherwise the gift glyph the
+               owner asked for as the fallback. loadRewards then upgrades it from the catalogue,
+               which is the same paint-then-correct contract v397 uses for the ready count - never
+               a guess, just a better answer once the real one arrives.
+               Stamps is excluded: that card already carries its own photo from v475, and two
+               pictures on one card is the thing this is meant to fix. */''}
+          ${modeV386==='stamps'?`${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
-          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}`
+            :`<div class="customer-hero-reward-body-v468 customer-hero-points-body-v487">
+            <div class="customer-hero-reward-copy-v468">
+              ${figureV386}
+              ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+              ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+            </div>
+            ${customerHeroGiftArtV487(reward)}
+          </div>`}
           ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
             ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
             ${bookAction}

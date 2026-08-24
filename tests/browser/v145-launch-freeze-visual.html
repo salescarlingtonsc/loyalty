@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="c2139aae2533197005db9fdce40a1251860e40939739287170d6da0cce4afc49"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d5b2ff511bff0fb65d021c70a62afb7e255b71c9df75e5b4ba755ded90be5a0c"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4171,7 +4171,20 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
    the frame reads as full-bleed artwork rather than as empty space. */
 .customer-home-offer-media{aspect-ratio:auto;flex:1 1 0%;min-height:88px}
 .customer-home-offer-media>img{position:relative;z-index:1;object-fit:contain}
-.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(20px) saturate(1.12) brightness(.98)}
+/* nestly_v487 (owner, photo A: the bars either side of a portrait poster ringed - "solve ugly
+   photo alignment"). The poster is still CONTAINed, never cropped - that is a standing owner
+   ruling (V173/V371, reaffirmed 2026-08-19) and this does not touch it. What was ugly is what
+   filled the margin: v421 blurred the artwork and pushed saturate(1.12) THROUGH it, so a colourful
+   promo turned the frame into a saturated rainbow smear that fought the poster it was meant to sit
+   behind. It is desaturated and dimmed now, so it reads as a soft neutral mount rather than as a
+   second, louder picture; a flat scrim on top evens out whatever the artwork happens to be. */
+.customer-home-offer-media.has-art-v421::before{content:"";position:absolute;inset:-14%;z-index:0;background-image:var(--offer-art);background-size:cover;background-position:center;filter:blur(26px) saturate(.42) brightness(.88)}
+.customer-home-offer-media.has-art-v421::after{content:"";position:absolute;inset:0;z-index:0;background:rgba(23,22,26,.18);pointer-events:none}
+/* And the alignment itself: the poster used to run edge to edge into that smear. A small inset
+   plus its own corner radius and shadow makes it read as a picture deliberately mounted in a
+   frame, which is what stops the two layers looking like a mistake. */
+.customer-home-offer-media.has-art-v421{padding:10px}
+.customer-home-offer-media.has-art-v421>img{border-radius:10px;box-shadow:0 6px 18px rgba(23,22,26,.28)}
 .customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
 
 /* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
@@ -4382,6 +4395,26 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .customer-hero-has-photo-v468 .customer-hero-reward-body-v468{grid-template-columns:minmax(0,1fr) 92px}
 .customer-hero-reward-copy-v468{min-width:0}
+/* nestly_v487 (owner photo 3). The points hero's gift column. It reuses the reward hero's own
+   grid (customer-hero-reward-body-v468) rather than minting a second two-column layout, so the
+   picture lands on exactly the same edge and top as the one on the reward and stamp cards - which
+   is the alignment v483 was spent establishing. */
+/* The two-column rule lives on the SECTION for the reward hero (.customer-hero-has-photo-v468),
+   which this body is not inside. :has() keeps the decision with the markup that actually decides
+   it — the column exists exactly when the tile was drawn — instead of threading a second class
+   down from a caller that does not know. Without :has() support this degrades to one column with
+   the tile under the balance: plainer, never broken. */
+.customer-hero-points-body-v487:has(.customer-hero-gift-art-v487){grid-template-columns:minmax(0,1fr) 92px}
+@media(max-width:340px){
+  .customer-hero-points-body-v487:has(.customer-hero-gift-art-v487){grid-template-columns:minmax(0,1fr) 72px}
+}
+.customer-hero-gift-art-v487{display:block}
+.customer-hero-gift-fallback-v487{display:grid;place-items:center;width:92px;aspect-ratio:1;
+  border-radius:16px;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.5);
+  box-shadow:0 10px 20px rgba(83,26,21,.22);color:#fff}
+@media(max-width:340px){
+  .customer-hero-gift-fallback-v487{width:72px}
+}
 .customer-hero-reward-photo-v468{display:block;width:92px;aspect-ratio:1;object-fit:cover;
   border-radius:16px;background:rgba(255,255,255,.16);
   border:2px solid rgba(255,255,255,.5);box-shadow:0 10px 20px rgba(83,26,21,.22)}
@@ -4483,7 +4516,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · c2139aae2533197005db9fdce40a1251860e40939739287170d6da0cce4afc49</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d5b2ff511bff0fb65d021c70a62afb7e255b71c9df75e5b4ba755ded90be5a0c</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8137,7 +8170,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'c2139aae2533197005db9fdce40a1251860e40939739287170d6da0cce4afc49',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'d5b2ff511bff0fb65d021c70a62afb7e255b71c9df75e5b4ba755ded90be5a0c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

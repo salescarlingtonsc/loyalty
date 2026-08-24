@@ -9801,6 +9801,51 @@ function customerHeroStampCardV422(quest){
     </div>
   </div>`;
 }
+/* nestly_v487. The gift tile that fills the points hero's empty right. Two states and no third:
+   a real photo when one is known, and the gift glyph when it is not - which is exactly what the
+   owner asked for ("if no photo put [gift] logo") and means the column is never an empty hole.
+   The name and cost are stamped on the node so customerHeroGiftArtApplyV487 can find the matching
+   catalogue row later without re-rendering the card. */
+function customerHeroGiftArtV487(reward){
+  const nameV487=String(reward?.name||reward?.customer_name||'').trim();
+  if(!nameV487)return '';
+  const costV487=Number(reward?.cost_units??reward?.cost_points);
+  const photoV487=customerMediaUrlV95(reward?.image_ref||reward?.imageRef||'');
+  return `<div class="customer-hero-gift-art-v487" data-hero-gift-art-v487="${esc(nameV487.toLowerCase())}" data-hero-gift-cost-v487="${
+    Number.isFinite(costV487)?esc(String(costV487)):''}" aria-hidden="true">${
+    photoV487
+      ?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV487)}" alt="" loading="lazy" decoding="async" data-hero-gift-photo-v487>`
+      :`<span class="customer-hero-gift-fallback-v487">${CUI.icon('giftcard',{size:34})}</span>`}</div>`;
+}
+/* Paint-then-correct, the v397 contract. Called once the reward catalogue has landed: if the row
+   the hero named has a photo, the glyph becomes that photo. Matched on name AND cost, the same
+   pairing loadRewards already uses to reconcile an action against the catalogue, so a firm with
+   two gifts of one name does not get the wrong picture. Nothing happens when no row matches or
+   the row has no photo - the glyph stays, which is a true answer, not a placeholder. */
+function customerHeroGiftArtApplyV487(rewards=[],root=document){
+  const rowsV487=Array.isArray(rewards)?rewards:[];
+  root.querySelectorAll('[data-hero-gift-art-v487]').forEach(host=>{
+    if(host.querySelector('[data-hero-gift-photo-v487]'))return;
+    const nameV487=String(host.dataset.heroGiftArtV487||'');
+    const costV487=String(host.dataset.heroGiftCostV487||'');
+    const match=rowsV487.find(row=>{
+      const rowName=String(row?.customer_name||row?.name||'').trim().toLowerCase();
+      if(rowName!==nameV487)return false;
+      if(!costV487)return true;
+      return String(Number(row?.cost_points??row?.cost_units))===costV487;
+    });
+    const url=customerMediaUrlV95(match?.image_ref||'');
+    if(!url)return;
+    const img=document.createElement('img');
+    img.className='customer-hero-reward-photo-v468';
+    img.src=url;img.alt='';img.loading='lazy';img.decoding='async';
+    img.setAttribute('data-hero-gift-photo-v487','');
+    /* Same bargain as v468/v475: a storage object that has since been deleted leaves the glyph
+       standing rather than a broken-image icon. */
+    img.onerror=()=>img.remove();
+    host.replaceChildren(img);
+  });
+}
 function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
@@ -9962,9 +10007,31 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
             ${modeV386==='stamps'?''
               :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(progressSublineV465)}">${esc(subline)}</span></span>`}
           </div>
-          ${figureV386}
+          ${/* nestly_v487 (owner, photo 3: an arrow into the card's empty right - "here put photo
+               of gift, if no photo put [gift] logo"). The stamps hero got this in v475; the points
+               hero never did, so the same card was full-bleed artwork on one programme and half
+               empty on the other.
+               THE PHOTO CANNOT BE PAINTED ON THE FIRST FRAME. next_eligible_reward is the only
+               reward this function is given and it carries no image_ref - verified against
+               production, the column simply is not in c45_base_actionable_wallet_card. So the tile
+               is drawn from whatever IS known: the reward's own image_ref when a caller supplies
+               one (the workspace Live preview does, since v486), and otherwise the gift glyph the
+               owner asked for as the fallback. loadRewards then upgrades it from the catalogue,
+               which is the same paint-then-correct contract v397 uses for the ready count - never
+               a guess, just a better answer once the real one arrives.
+               Stamps is excluded: that card already carries its own photo from v475, and two
+               pictures on one card is the thing this is meant to fix. */''}
+          ${modeV386==='stamps'?`${figureV386}
           ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
-          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+          ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}`
+            :`<div class="customer-hero-reward-body-v468 customer-hero-points-body-v487">
+            <div class="customer-hero-reward-copy-v468">
+              ${figureV386}
+              ${showRewardLinesV386?`<p class="customer-business-summary-line-v362">${esc(claimLine)}</p>`:''}
+              ${showRewardLinesV386&&progressLine?`<p class="customer-business-progress-line-v362">${esc(progressLine)}</p>`:''}
+            </div>
+            ${customerHeroGiftArtV487(reward)}
+          </div>`}
           ${rewardReady||bookAction?`<div class="customer-business-summary-actions-v349">
             ${rewardReady?`<button type="button" class="customer-business-claim-v347" data-claim-reward-scroll-v337><span>Claim reward</span><span aria-hidden="true">›</span></button>`:''}
             ${bookAction}
@@ -10179,21 +10246,6 @@ function customerRewardAvailabilityLineV399(reward,unit){
    failed but the catalogue answered — and that branch still renders these hero pages. Keying on it
    there would open the first reward's sheet for every "?" on the card. The index cannot collide. */
 let customerHeroRewardRowsV471=[];
-/* nestly_v484 (owner ruling 2026-08-24 on the stamp card's "?": "just make sure the '?' contains
-   expiry date. leave the rest untouched").
-   customer_get_stamp_card_v323 builds each milestone's JSON from a row that HAS
-   claim_available_until — it reads it, to decide the 'ended' availability — but never emits the
-   key, so the stamp page's sheet had no date to print. The reward pages' "?" prints it as
-   "Claim it by" (it is fed a whole catalogue row), which is the row the owner is pointing at.
-   Rather than change that RPC, the date is looked up client-side from the reward catalogue the
-   wallet has already fetched. The key is the reward's OWN id: the milestone's reward_id is
-   loyalty_rewards.id (the same column customer_get_stamp_card_v323 joins loyalty_redemptions on),
-   so this is an exact identity match, NOT the name+cost matching used elsewhere on this page —
-   which is why it cannot attach one gift's deadline to another gift of the same name.
-   A gift with no end date, which is all but two rows in production today, stores nothing and the
-   sheet prints no date row — the v471/v468 rule that an absent field prints nothing is unchanged.
-   ONLY this one field is added; every other row in the stamp sheet is left exactly as it was. */
-let customerStampGiftEndsV484=new Map();
 function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
@@ -12642,9 +12694,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
           showCustomerRewardRulesV468({
             customer_name:rung.name,cost_points:rung.slot,
             description:rung.description,terms:rung.terms,instructions:rung.instructions,
+            /* nestly_v487 (owner ruling, photos 6 + 7): expires_at is reward_expires_at - the
+               deadline the Stamp Card's own "Rewards expire N days after they are earned" rule
+               produces, which the owner has confirmed is THE expiry a customer should be told
+               about. v484's per-gift claim_available_until line is gone with the field that fed
+               it: two clocks on one gift answered different questions and only this one is about
+               the gift the customer is holding. */
             expires_at:rung.expiresAt||null,
-            imageRef:rung.imageRef||'',
-            claim_available_until:customerStampGiftEndsV484.get(String(rung.rewardId||''))||null
+            imageRef:rung.imageRef||''
           },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
         };
         heroSlotV422.querySelectorAll('[data-hero-stamp-gift-v486]').forEach(button=>{
@@ -12847,11 +12904,6 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ...(Array.isArray(actionsResult.data?.rewards)?actionsResult.data.rewards:[])
     ];
     const catalog=walletCatalogV241;
-    /* nestly_v484: the stamp card's "?" reads its expiry date from here. Rebuilt on every wallet
-       render so a gift whose end date the owner has just cleared stops printing one. */
-    customerStampGiftEndsV484=new Map(walletCatalogV241
-      .filter(item=>item?.id&&item.claim_available_until)
-      .map(item=>[String(item.id),item.claim_available_until]));
     const rewards=actionRewards.length?actionRewards.map(actionReward=>{
       if(actionReward.redemption_kind==='classic_points'){
         return {...actionReward,customer_name:actionReward.name||'Redeem points',
@@ -13069,6 +13121,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        hero's Redeem button, and it queries heroRootV397 because the swipe lives outside #walletRewards.
        The lookup is by index into customerHeroRewardRowsV471 — see that array's own note for why
        action_key cannot be trusted on this surface. */
+    /* nestly_v487: the catalogue has landed, so the points hero's gift glyph can become the real
+       gift photo. Same place, same moment and same payload as the ready-count correction above. */
+    customerHeroGiftArtApplyV487(rewards,heroRootV397);
     (heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-hero-reward-rules-v471]')||[])
       .forEach(button=>button.onclick=()=>{
         const match=customerHeroRewardRowsV471[Number(button.dataset.heroRewardRulesV471)];
@@ -30271,7 +30326,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
          END of the chosen day in SGT so a gift dated "21 September" is claimable all of the 21st.
          Blank means no deadline, which is what every existing gift already has. */''}
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddEndsV472">Last day to redeem <span class="muted">(optional)</span></label><br><input id="growPointsAddEndsV472" class="grow-setup-input-v301" type="date" min="${esc(growPointsEndDateMinV472())}" value="${esc(growPointsAddDraftV326.endsOn||'')}"><br><span class="muted small">Customers see &ldquo;Expires on this date &mdash; redeem before then&rdquo;. Leave blank and it never expires.</span></p>
+    ${/* nestly_v487 (owner, photo 6: the whole "Last day to redeem" row struck through -
+         "redundant, delete this for all gifts", and photo 7 held up as where expiry belongs).
+         The field is gone because there were TWO expiry clocks on one gift and they answered
+         different questions: this one said when the gift stops being OFFERED, while the Stamp
+         Card rule in photo 7 says how long a customer has to use one they have already EARNED.
+         The owner's ruling is that the second is the real one, so the first stops existing.
+         Removing the input is not enough on its own - see the save handler, which now clears
+         any date a gift already carries rather than letting an invisible one keep applying. */''}
     <p class="grow-setup-sentence-v301">
       <label class="muted small">Photo <span class="muted">(optional)</span></label><br>
       ${growPointsPhotoFileV343?`<img src="${esc(growPointsPhotoPreviewUrlForV349(growPointsPhotoFileV343))}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;display:block;margin-bottom:6px"><span class="muted small">New photo — saved when you press Save.</span>`
@@ -32617,7 +32679,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       name:String(nameField?.value??growPointsAddDraftV326.name??''),
       points:pointsField?.value??growPointsAddDraftV326.points??'',
       description:String(descField?.value??growPointsAddDraftV326.description??''),
-      endsOn:String($('growPointsAddEndsV472')?.value??growPointsAddDraftV326.endsOn??''),
+      endsOn:'',
       whereItWorks:String($('growPointsAddWhereV477')?.value??growPointsAddDraftV326.whereItWorks??'')
     };
   };
@@ -32642,7 +32704,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    const endsOnV472=String($('growPointsAddEndsV472')?.value||'').trim();
+    /* nestly_v487: there is no field to read any more, and the empty string is load-bearing -
+       p_clear_end_date below is `!endsOnV472`, so '' makes every save an EXPLICIT clear. That is
+       what turns "delete this for all gifts" into something true rather than cosmetic: a gift
+       that already had a date loses it the next time it is saved, instead of keeping an expiry
+       the owner can no longer see or change. */
+    const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
