@@ -4056,6 +4056,21 @@ function customerRewardAvailabilityLineV399(reward,unit){
    failed but the catalogue answered — and that branch still renders these hero pages. Keying on it
    there would open the first reward's sheet for every "?" on the card. The index cannot collide. */
 let customerHeroRewardRowsV471=[];
+/* nestly_v484 (owner ruling 2026-08-24 on the stamp card's "?": "just make sure the '?' contains
+   expiry date. leave the rest untouched").
+   customer_get_stamp_card_v323 builds each milestone's JSON from a row that HAS
+   claim_available_until — it reads it, to decide the 'ended' availability — but never emits the
+   key, so the stamp page's sheet had no date to print. The reward pages' "?" prints it as
+   "Claim it by" (it is fed a whole catalogue row), which is the row the owner is pointing at.
+   Rather than change that RPC, the date is looked up client-side from the reward catalogue the
+   wallet has already fetched. The key is the reward's OWN id: the milestone's reward_id is
+   loyalty_rewards.id (the same column customer_get_stamp_card_v323 joins loyalty_redemptions on),
+   so this is an exact identity match, NOT the name+cost matching used elsewhere on this page —
+   which is why it cannot attach one gift's deadline to another gift of the same name.
+   A gift with no end date, which is all but two rows in production today, stores nothing and the
+   sheet prints no date row — the v471/v468 rule that an absent field prints nothing is unchanged.
+   ONLY this one field is added; every other row in the stamp sheet is left exactly as it was. */
+let customerStampGiftEndsV484=new Map();
 function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',currentRewardName='',currentRewardCost=null,redemptionEnabled=false,bookAction='',viewAllHref='',viewAllAction=''}={},root=document){
   const swipe=root.querySelector('[data-hero-swipe-v395]');
   const track=swipe?.querySelector('[data-hero-track-v395]');
@@ -6066,7 +6081,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
             showCustomerRewardRulesV468({
               customer_name:rung.name,cost_points:rung.slot,
               description:rung.description,terms:rung.terms,instructions:rung.instructions,
-              expires_at:rung.expiresAt||null
+              expires_at:rung.expiresAt||null,
+              /* nestly_v484: the gift's own end date, keyed by its reward id. Null when the
+                 catalogue has not arrived yet or the gift has no end date, and a null prints
+                 nothing at all. */
+              claim_available_until:customerStampGiftEndsV484.get(String(rung.rewardId||''))||null
             },{unit:'stamps',currency:b?.currency||'SGD',title:rung.name});
           };
         });
@@ -6253,6 +6272,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ...(Array.isArray(actionsResult.data?.rewards)?actionsResult.data.rewards:[])
     ];
     const catalog=walletCatalogV241;
+    /* nestly_v484: the stamp card's "?" reads its expiry date from here. Rebuilt on every wallet
+       render so a gift whose end date the owner has just cleared stops printing one. */
+    customerStampGiftEndsV484=new Map(walletCatalogV241
+      .filter(item=>item?.id&&item.claim_available_until)
+      .map(item=>[String(item.id),item.claim_available_until]));
     const rewards=actionRewards.length?actionRewards.map(actionReward=>{
       if(actionReward.redemption_kind==='classic_points'){
         return {...actionReward,customer_name:actionReward.name||'Redeem points',
