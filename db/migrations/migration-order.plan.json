@@ -2451,6 +2451,12 @@
       "path": "db/migrations/20260824_nestly_v489_stamp_card_auto_rollover.sql",
       "semanticVersion": "v489",
       "proposedDeployVersion": "20260824000007"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v494_wallet_signal_visits_and_grants.sql",
+      "semanticVersion": "v494",
+      "proposedDeployVersion": "20260824000008"
     }
   ]
 }

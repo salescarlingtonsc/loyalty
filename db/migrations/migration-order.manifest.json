@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 406,
-  "executableCount": 392,
+  "itemCount": 407,
+  "executableCount": 393,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -597,7 +597,7 @@
     },
     {
       "sourceDeployVersion": "20260824",
-      "count": 7,
+      "count": 8,
       "paths": [
         "db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql",
         "db/migrations/20260824_nestly_v479_customer_wallet_realtime_signal.sql",
@@ -605,7 +605,8 @@
         "db/migrations/20260824_nestly_v481_legacy_referral_credit_fail_closed.sql",
         "db/migrations/20260824_nestly_v482_loyalty_fence_null_guard.sql",
         "db/migrations/20260824_nestly_v488_product_bundles_and_bottle_checkpoints.sql",
-        "db/migrations/20260824_nestly_v489_stamp_card_auto_rollover.sql"
+        "db/migrations/20260824_nestly_v489_stamp_card_auto_rollover.sql",
+        "db/migrations/20260824_nestly_v494_wallet_signal_visits_and_grants.sql"
       ]
     }
   ],
@@ -3857,6 +3858,14 @@
       "semanticVersion": "v489",
       "proposedDeployVersion": "20260824000007",
       "sha256": "39d63f55356c9edaa860b7ca40073ecff7fde73314bac429ccc83f6a505b2852"
+    },
+    {
+      "order": 407,
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v494_wallet_signal_visits_and_grants.sql",
+      "semanticVersion": "v494",
+      "proposedDeployVersion": "20260824000008",
+      "sha256": "c6e96faa0d63e30f74f7d585afee47efcd6ac4cef50e7d06cbfd6fbb9d6c9e8f"
     }
   ]
 }

@@ -66,9 +66,17 @@ test('v418 only https links the app can name are drawn', () => {
 
 /* ------------------------------------------------ the editor ------------------------------- */
 
-test('v418 the editor is on the Business Profile, above branch contact details', () => {
-  assert.match(appJs, /\$\{businessProfileExtrasCardHtmlV418\(\)\}\s*\n\s*\$\{businessProfileBranchCardHtmlV325\(\)\}/);
+test('v418 the editor is on the Business Profile, and the branch card sits under the preview', () => {
+  /* nestly_v493 (owner, photos 6 + 7: "move here", pointing at the empty space under the Live
+     preview). The two cards were adjacent in the form column; the branch card is now the
+     preview column's second child. Both are still on this page and still loaded by their own
+     loaders — only the column changed. */
+  assert.match(appJs, /\$\{businessProfileExtrasCardHtmlV418\(\)\}`,businessProfileBranchCardHtmlV325\(\)\)\)\}/);
+  assert.match(appJs, /\$\{customerInterfacePreviewSideCardHtmlV325\(\)\}\$\{belowPreviewHtml\}/,
+    'the branch card renders below the preview, not beside the form');
   assert.match(appJs, /loadBusinessProfileExtrasV418\(\);/);
+  assert.match(appJs, /loadBranchContactCardV325\(\);/,
+    'and its loader still runs — moving the column must not strand the fetch');
 });
 
 test('v418 a gallery upload writes to this business\'s own gallery folder', () => {

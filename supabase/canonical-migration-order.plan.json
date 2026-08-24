@@ -2446,6 +2446,12 @@
       "version": "20260824000007",
       "name": "nestly_v489_stamp_card_auto_rollover",
       "sourcePath": "db/migrations/20260824_nestly_v489_stamp_card_auto_rollover.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000008",
+      "name": "nestly_v494_wallet_signal_visits_and_grants",
+      "sourcePath": "db/migrations/20260824_nestly_v494_wallet_signal_visits_and_grants.sql"
     }
   ]
 }

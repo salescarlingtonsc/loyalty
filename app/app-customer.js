@@ -6437,7 +6437,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       return `<article class="wallet-reward customer-reward-card-v339">
       <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
-        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
+        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-copy-v492"><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       ${/* nestly_v489 (owner, photo 5: "no points, why show these rewards, please sync!!!").
            The cost printed the PAGE's unit, so on a firm running points a gift priced in STAMPS
@@ -6465,6 +6465,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
+      </div>
       <div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div></article>`;
     };
     /* nestly_v429 (C): an entitlement card. Deliberately NOT a rewardCardV422 with fields blanked

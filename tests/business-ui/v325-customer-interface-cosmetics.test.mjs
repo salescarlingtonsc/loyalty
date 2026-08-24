@@ -111,7 +111,10 @@ test('V368 Save replaces Publish, sits at the foot, and presses the section\'s o
 });
 
 test('V325 steps 1-2 pair the form with the SAME live-preview renderer as step 3', () => {
-  assert.match(page, /const ciWithPreviewV325=formHtml=>/);
+  /* nestly_v493: the helper takes a second argument now — the html that goes BELOW the preview
+     (branch contact details moved into that column, owner photos 6+7). The pairing this test
+     exists to protect is unchanged: one form column, one preview renderer. */
+  assert.match(page, /const ciWithPreviewV325=\(formHtml,belowPreviewHtml=''\)=>/);
   assert.match(page, /customerInterfacePreviewSideCardHtmlV325\(\)/);
   const sideCard = section(app, 'function customerInterfacePreviewSideCardHtmlV325(', 'function customerInterfacePreviewUrlV243(');
   // V326: no iframe/URL — the side card and the step-3 card both call the ONE inline renderer.

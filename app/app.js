@@ -904,11 +904,21 @@ let growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
    actually enforces is points_multiplier, which has its own field and is untouched here. */
 /* V369: the picker seeds a KIND and its value now, not a sentence. "Write my own" is the only
    entry that produces free text. */
+/* nestly_v493 (owner, photos 2 + 3: the circled "add a benefit" picker struck out and photo 3 —
+   the per-row kind picker — held up beside it, "both needs to sync").
+   Two dropdowns chose the same thing in two vocabularies: this one offered "10% off every visit /
+   20% off every visit / Free item / Write my own", while the row it creates offered "Discount /
+   Free item / My own wording". An owner picked "20% off every visit" and the row it produced said
+   "Discount" — the same benefit named twice, differently, one line apart.
+   One vocabulary now, and it is the ROW's, because the row is the thing that persists and the one
+   the owner edits afterwards. The percentage left the labels with it: it was never a separate
+   choice, only a prefill, and offering 10 and 20 as the two options implied a menu where there is
+   a free number. Picking Discount now opens the row with an empty % for the owner to type, which
+   is the same field they would have corrected anyway. */
 const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
-  ['discount_pct:10','10% off every visit'],
-  ['discount_pct:20','20% off every visit'],
+  ['discount_pct:','Discount'],
   ['free_item:','Free item'],
-  ['custom:','Write my own']
+  ['custom:','My own wording']
 ]);
 /* V365 — every benefit carries a LIMIT, and the limit is part of the sentence the customer reads.
    Owner (2026-08-16, photo 4): "all these needs to set a limit (like 30times per month or 1 time
@@ -13043,7 +13053,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       return `<article class="wallet-reward customer-reward-card-v339">
       <div class="customer-reward-photo-v340${imageUrlV340?'':' customer-reward-photo-empty-v340'}">${imageUrlV340
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
-        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
+        :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-copy-v492"><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
       ${/* nestly_v489 (owner, photo 5: "no points, why show these rewards, please sync!!!").
            The cost printed the PAGE's unit, so on a firm running points a gift priced in STAMPS
@@ -13071,6 +13081,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       ${r.eligibility?`<p class="muted small" style="margin-top:5px">${[['branches','locations'],['services','services'],['products','products']].filter(([key])=>r.eligibility[key]?.scope==='restricted').map(([key,label])=>`${Number(r.eligibility[key].count||0)} eligible ${label}`).join(' · ')||'Valid across all eligible services and locations.'}</p>`:''}
       ${r.instructions?`<details style="margin-top:9px"><summary class="small">How to use</summary><p class="muted small" style="margin-top:5px">${esc(r.instructions)}</p></details>`:''}
       ${r.terms?`<details style="margin-top:9px"><summary class="small">Terms</summary><p class="muted small" style="margin-top:5px">${esc(r.terms)}</p></details>`:''}
+      </div>
       <div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-redeem="${esc(r.action_key)}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div></article>`;
     };
     /* nestly_v429 (C): an entitlement card. Deliberately NOT a rewardCardV422 with fields blanked
@@ -31233,7 +31244,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          glyph as the row (see the tier card above), so a tier cannot show one badge on the rail
          and another in the list. */
       const ladderIconV399=CUI.icon(Number(tier.threshold||0)>=500?'memberships':Number(tier.threshold||0)>=100?'loyalty':'star',{size:16});
-      return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+      /* nestly_v493 (owner, photo 1: the rail's first and last tiers sliced off at both screen
+         edges — "ntial / oints" on the left, "Diam / 500 p" on the right). A stop is centred on
+         its position with translateX(-50%), so the 0% stop put half its 92px label outside the
+         left edge and the 100% stop half outside the right. The track is inset by half a label at
+         each end now, so 0% and 100% land where a whole label still fits. Nothing about the
+         SPACING between tiers changes — the same fraction, over a track two half-labels shorter. */
+      const railFracV493=(pct/100).toFixed(4);
+      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
     }).join('')}
   </div>`:'';
   const growTiersManageV331=!canRewards
@@ -47564,13 +47582,31 @@ function wireBookingRulesV325(isCurrent=()=>true){
    and customerInterfaceSampleRewardRowsV326 draws sample reward rows in the exact "wallet-reward"
    markup that RPC would have produced, with the QR action stripped (no real intent to create). */
 function customerInterfaceSampleRewardRowsV326(rewardUnit){
-  const sample=[
+  /* nestly_v493 (owner, photos 4 + 5: the preview's reward list held up against the firm's real
+     reward list — "must tally with existing rewards, refer to photo 5 as correct because it is
+     the actual rewards set for the customers").
+     These two rows were HARDCODED — "Free Lotion 5" and "Free Facial cream 1,000" — so every firm
+     on Peekaa saw one invented gift at a price nobody had set. v486 made the preview's hero read
+     the real catalogue and simply did not reach this list; it is the same read, so it uses the
+     same cache. Cheapest first, capped at the two rows this block has always drawn, and each row
+     prints the reward's OWN unit through the v429 rule rather than the page's (the v489 lesson).
+     The invented pair survives only as the fallback for a firm with no rewards yet, or a
+     catalogue read that has not landed — a preview that renders nothing would say less than one
+     that is visibly generic. */
+  const liveV493=(Array.isArray(businessProfilePreviewLiveV486.rewards)
+    ?businessProfilePreviewLiveV486.rewards:[])
+    .map(row=>({cost:Math.max(0,Number(row?.cost_points)||0),
+      name:String(row?.customer_name||row?.name||'').trim(),
+      unit:customerRewardUnitV429(row,rewardUnit),ready:true}))
+    .filter(row=>row.name)
+    .slice(0,2);
+  const sample=liveV493.length?liveV493:[
     {cost:5,name:'Free Lotion',ready:true},
     {cost:1000,name:'Free Facial cream',ready:true}
   ];
   return `<p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
     <div class="wallet-rewards">${sample.map(r=>`<article class="wallet-reward">
-      <div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(r.cost))} ${esc(rewardUnit)}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.name)}</span></b><span class="spacer"></span>${r.ready?'<span class="pill ok">Ready</span>':''}</div>
+      <div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(r.cost))} ${esc(customerUnitNounV429(r.unit||rewardUnit,r.cost))}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.name)}</span></b><span class="spacer"></span>${r.ready?'<span class="pill ok">Ready</span>':''}</div>
       <p class="small" style="margin-top:9px">Available at counter</p>
       <div class="wallet-reward-actions"><button class="btn sm" type="button" disabled title="Sample preview — not a real redemption">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div>
     </article>`).join('')}</div>`;
@@ -47904,9 +47940,17 @@ async function customerInterfacePageV243(hashParam){
      viewports — reusing `.split`, the grid this business console already collapses to one column
      at <=900px (see app/index.html), rather than inventing a new breakpoint. Step 3 (Preview) IS
      that card, so it stays single-column there instead of showing the same phone frame twice. */
-  const ciWithPreviewV325=formHtml=>`<div class="split ci-step-layout-v325">
+  /* nestly_v493 (owner, photos 6 + 7: the Branch contact details card ringed, and a box drawn in
+     the empty space UNDER the Live preview labelled "move here").
+     The preview column is one phone mockup and then nothing — on a tall screen most of that column
+     is blank while the form column runs long. Branch contact details is the natural tenant: it is
+     the other thing on this page a CUSTOMER reads (the address and phone on their business page),
+     so it belongs beside the picture of what customers see rather than buried under the brand
+     form. It keeps its own card, its own ids and its own per-branch Save — only the column it
+     sits in changes, so loadBranchContactCardV325 finds exactly what it always did. */
+  const ciWithPreviewV325=(formHtml,belowPreviewHtml='')=>`<div class="split ci-step-layout-v325">
       <div class="ci-step-main-v325">${formHtml}</div>
-      <div class="ci-step-preview-v325">${customerInterfacePreviewSideCardHtmlV325()}</div>
+      <div class="ci-step-preview-v325">${customerInterfacePreviewSideCardHtmlV325()}${belowPreviewHtml}</div>
     </div>`;
   /* V368 (owner markup, photo 4): "Customer Interface" becomes "Customer Action" — the module's
      name follows the page the owner is standing on — the "Everything a customer sees and uses ·
@@ -47918,11 +47962,11 @@ async function customerInterfacePageV243(hashParam){
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
     ${workspaceBrandPanelHtmlV259()}
-    ${/* nestly_v418 (owner, photo 10): the new segment sits with the rest of the profile, above
-         branch contact details — photos and links are what a customer reads about the business,
-         branch phone numbers are how they reach one. */''}
-    ${businessProfileExtrasCardHtmlV418()}
-    ${businessProfileBranchCardHtmlV325()}`))}
+    ${/* nestly_v418 (owner, photo 10): the new segment sits with the rest of the profile. v493
+         moved branch contact details out of this column entirely — see ciWithPreviewV325 — so
+         "above branch contact details" no longer describes where this sits; photos and links
+         remain the last thing in the form column. */''}
+    ${businessProfileExtrasCardHtmlV418()}`,businessProfileBranchCardHtmlV325()))}
     ${/* V368 (owner markup, photo 4: the whole Live preview column crossed out with "this one no
          need here"). The phone frame is gone from Appointment Setting; step 3 IS the preview and
          still holds it, so nothing is lost — only the copy that showed it beside a booking form

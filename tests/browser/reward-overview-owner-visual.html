@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="84014b47cb87485a802fd68e9cbf21fbb8ba6bc0ee6730646c551434a4aac68d"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="9b3d048bb3b7ec8d39326b56c75ba9c129ee9aafe3df05e277e211db330389e0"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2088,7 +2088,9 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-row-v343{border-radius:0!important;box-shadow:none!important;border-color:var(--line)!important;border-top:0!important}
 .grow-tier-name-cell-v343{display:flex;align-items:center;gap:14px;min-width:0}.grow-tier-name-cell-v343 b{font-size:1rem}.grow-tier-name-cell-v343 small{display:block}
 .grow-tier-row-icon-v343{width:40px;height:40px;border-radius:999px;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex-shrink:0}
-@media(max-width:768px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}.grow-tier-ladder-line-v343{min-width:620px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
+@media(max-width:768px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}/* nestly_v493: the line is inset to the same half-label margin the stops now use, so the rail
+   starts and ends under its first and last badge instead of running to the clipped edges. */
+.grow-tier-ladder-line-v343{min-width:0;left:46px;right:46px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
 @media(max-width:860px){.grow-tier-table-head-v343{display:none}.grow-tier-table-row-v343{grid-template-columns:1fr}.grow-tier-table-row-v343>.row{justify-content:flex-start!important}}
 /* V351 (owner UX pass, 2026-08-16): the 4-column "Tier name / Required points / Status / Actions"
    table read like a database admin screen — replaced with a plain card row, same information,
@@ -3326,6 +3328,20 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   gap:6px 12px;align-items:start;padding:13px 14px}
 .customer-rewards-carousel-v337 .customer-reward-photo-v340{grid-area:photo;width:64px;height:64px;aspect-ratio:auto;margin:0;border-radius:14px}
 .customer-rewards-carousel-v337 .customer-reward-card-head-v339{grid-area:copy;margin:0}
+/* nestly_v492 (owner, photo 8: an empty band ringed between the "Ready to claim" pill and the
+   reward name). MEASURED: 44px of nothing. The card is a two-column grid and EVERY line of copy
+   was its own grid row, so the 64px photo — pinned to row 1, which the pill only needs 26px of —
+   stretched that first row to 64 and pushed the name (row 2) clear of the pill. The gap was the
+   photo's height leaking into the copy column.
+   A CSS-only span does not fix this: negative row indices resolve against the EXPLICIT grid,
+   which `grid-template-areas:'photo copy'` gives exactly ONE row, so `grid-row:1/-2` silently
+   collapses back to row 1. The copy is therefore ONE grid cell now (.customer-reward-copy-v492),
+   which is what it always was semantically: the row's height is the copy's own height, the photo
+   sits at the top of it, and the lines inside space themselves by their own margins.
+   The actions row stays a separate child spanning both columns, so the full-width QR button is
+   unchanged. */
+.customer-rewards-carousel-v337 .customer-reward-copy-v492{grid-area:copy;min-width:0}
+.customer-rewards-carousel-v337 .customer-reward-photo-v340{align-self:start}
 .customer-rewards-carousel-v337 .wallet-reward>:not(.customer-reward-photo-v340):not(.customer-reward-card-head-v339):not(.wallet-reward-actions){grid-column:2}
 .customer-rewards-carousel-v337 .wallet-reward-actions{grid-column:1/-1;margin-top:8px}
 .customer-rewards-carousel-v337 .wallet-reward-actions .btn{width:100%;justify-content:center;min-height:44px}
@@ -4525,7 +4541,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-rules-v468 dd{margin:3px 0 0;font-size:14px;line-height:1.45}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 84014b47cb87485a802fd68e9cbf21fbb8ba6bc0ee6730646c551434a4aac68d</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 9b3d048bb3b7ec8d39326b56c75ba9c129ee9aafe3df05e277e211db330389e0</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6345,11 +6361,21 @@ let growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
    actually enforces is points_multiplier, which has its own field and is untouched here. */
 /* V369: the picker seeds a KIND and its value now, not a sentence. "Write my own" is the only
    entry that produces free text. */
+/* nestly_v493 (owner, photos 2 + 3: the circled "add a benefit" picker struck out and photo 3 —
+   the per-row kind picker — held up beside it, "both needs to sync").
+   Two dropdowns chose the same thing in two vocabularies: this one offered "10% off every visit /
+   20% off every visit / Free item / Write my own", while the row it creates offered "Discount /
+   Free item / My own wording". An owner picked "20% off every visit" and the row it produced said
+   "Discount" — the same benefit named twice, differently, one line apart.
+   One vocabulary now, and it is the ROW's, because the row is the thing that persists and the one
+   the owner edits afterwards. The percentage left the labels with it: it was never a separate
+   choice, only a prefill, and offering 10 and 20 as the two options implied a menu where there is
+   a free number. Picking Discount now opens the row with an empty % for the owner to type, which
+   is the same field they would have corrected anyway. */
 const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
-  ['discount_pct:10','10% off every visit'],
-  ['discount_pct:20','20% off every visit'],
+  ['discount_pct:','Discount'],
   ['free_item:','Free item'],
-  ['custom:','Write my own']
+  ['custom:','My own wording']
 ]);
 /* V365 — every benefit carries a LIMIT, and the limit is part of the sentence the customer reads.
    Owner (2026-08-16, photo 4): "all these needs to set a limit (like 30times per month or 1 time
@@ -11767,7 +11793,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          glyph as the row (see the tier card above), so a tier cannot show one badge on the rail
          and another in the list. */
       const ladderIconV399=CUI.icon(Number(tier.threshold||0)>=500?'memberships':Number(tier.threshold||0)>=100?'loyalty':'star',{size:16});
-      return `<span class="grow-tier-ladder-stop-v343" style="left:${pct}%"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+      /* nestly_v493 (owner, photo 1: the rail's first and last tiers sliced off at both screen
+         edges — "ntial / oints" on the left, "Diam / 500 p" on the right). A stop is centred on
+         its position with translateX(-50%), so the 0% stop put half its 92px label outside the
+         left edge and the 100% stop half outside the right. The track is inset by half a label at
+         each end now, so 0% and 100% land where a whole label still fits. Nothing about the
+         SPACING between tiers changes — the same fraction, over a track two half-labels shorter. */
+      const railFracV493=(pct/100).toFixed(4);
+      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
     }).join('')}
   </div>`:'';
   const growTiersManageV331=!canRewards
@@ -14050,7 +14083,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'84014b47cb87485a802fd68e9cbf21fbb8ba6bc0ee6730646c551434a4aac68d',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'9b3d048bb3b7ec8d39326b56c75ba9c129ee9aafe3df05e277e211db330389e0',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

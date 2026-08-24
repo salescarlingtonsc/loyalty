@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="093579962948ae856a9be86011302d3a69e919df7eec638b4bbf5955abea2d2a"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="121c3a05208790db44f56d28c08c01304410d21aa8b330df08ed5c7f91916450"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2087,7 +2087,9 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-row-v343{border-radius:0!important;box-shadow:none!important;border-color:var(--line)!important;border-top:0!important}
 .grow-tier-name-cell-v343{display:flex;align-items:center;gap:14px;min-width:0}.grow-tier-name-cell-v343 b{font-size:1rem}.grow-tier-name-cell-v343 small{display:block}
 .grow-tier-row-icon-v343{width:40px;height:40px;border-radius:999px;background:var(--tint);color:var(--coral);display:grid;place-items:center;flex-shrink:0}
-@media(max-width:768px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}.grow-tier-ladder-line-v343{min-width:620px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
+@media(max-width:768px){.grow-tier-ladder-v343{overflow:auto;padding-bottom:70px}/* nestly_v493: the line is inset to the same half-label margin the stops now use, so the rail
+   starts and ends under its first and last badge instead of running to the clipped edges. */
+.grow-tier-ladder-line-v343{min-width:0;left:46px;right:46px}.grow-tier-ladder-stop-v343{min-width:82px}.grow-tier-basis-card-v343{align-items:flex-start;flex-direction:column}}
 @media(max-width:860px){.grow-tier-table-head-v343{display:none}.grow-tier-table-row-v343{grid-template-columns:1fr}.grow-tier-table-row-v343>.row{justify-content:flex-start!important}}
 /* V351 (owner UX pass, 2026-08-16): the 4-column "Tier name / Required points / Status / Actions"
    table read like a database admin screen — replaced with a plain card row, same information,
@@ -3325,6 +3327,20 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
   gap:6px 12px;align-items:start;padding:13px 14px}
 .customer-rewards-carousel-v337 .customer-reward-photo-v340{grid-area:photo;width:64px;height:64px;aspect-ratio:auto;margin:0;border-radius:14px}
 .customer-rewards-carousel-v337 .customer-reward-card-head-v339{grid-area:copy;margin:0}
+/* nestly_v492 (owner, photo 8: an empty band ringed between the "Ready to claim" pill and the
+   reward name). MEASURED: 44px of nothing. The card is a two-column grid and EVERY line of copy
+   was its own grid row, so the 64px photo — pinned to row 1, which the pill only needs 26px of —
+   stretched that first row to 64 and pushed the name (row 2) clear of the pill. The gap was the
+   photo's height leaking into the copy column.
+   A CSS-only span does not fix this: negative row indices resolve against the EXPLICIT grid,
+   which `grid-template-areas:'photo copy'` gives exactly ONE row, so `grid-row:1/-2` silently
+   collapses back to row 1. The copy is therefore ONE grid cell now (.customer-reward-copy-v492),
+   which is what it always was semantically: the row's height is the copy's own height, the photo
+   sits at the top of it, and the lines inside space themselves by their own margins.
+   The actions row stays a separate child spanning both columns, so the full-width QR button is
+   unchanged. */
+.customer-rewards-carousel-v337 .customer-reward-copy-v492{grid-area:copy;min-width:0}
+.customer-rewards-carousel-v337 .customer-reward-photo-v340{align-self:start}
 .customer-rewards-carousel-v337 .wallet-reward>:not(.customer-reward-photo-v340):not(.customer-reward-card-head-v339):not(.wallet-reward-actions){grid-column:2}
 .customer-rewards-carousel-v337 .wallet-reward-actions{grid-column:1/-1;margin-top:8px}
 .customer-rewards-carousel-v337 .wallet-reward-actions .btn{width:100%;justify-content:center;min-height:44px}
