@@ -380,12 +380,13 @@ test('v479 the wallet watcher subscribes to the customer\'s own signal row, and 
     'the doorbell table the migration put into the realtime publication');
   assert.match(watcherSrcV479, /filter:`auth_user_id=eq\.\$\{S\.user\.id\}`/,
     'filtered to the signed-in customer — never a firehose of every tenant\'s signals');
-  assert.match(watcherSrcV479, /S\.user\?\.id&&typeof sb\.channel==='function'/,
+  /* nestly_v498: the guard moved into joinSignalChannelV498 — same rule, new home. */
+  assert.match(watcherSrcV479, /if\(stopped\|\|!S\.user\?\.id\|\|typeof sb\.channel!=='function'\)return;/,
     'no user or no realtime client means no subscription, never a throw');
 });
 
 test('v479 the ping lands on the counter moment, because a push IS a counter moment', () => {
-  const handler = section("table:'customer_wallet_signals_v479'", '.subscribe()', watcherSrcV479);
+  const handler = section("table:'customer_wallet_signals_v479'", '.subscribe(status=>{', watcherSrcV479);
   assert.match(handler, /void counterMomentV468\(\)/,
     'immediate refresh + restored tick budget + the 60s close watch that path already earned');
   assert.match(handler, /now-lastSignalAtV479<1500/,
@@ -408,7 +409,7 @@ test('v479 the channel dies with the watcher, and the poll is NOT removed', () =
 test('v479 the push carries no figures — the refresh is what puts numbers on screen', () => {
   /* The handler must not read anything off the event payload: the doorbell is not a statement.
      If a payload field were ever consumed, the number on screen could disagree with the ledger. */
-  const handler = section("table:'customer_wallet_signals_v479'", '.subscribe()', watcherSrcV479);
+  const handler = section("table:'customer_wallet_signals_v479'", '.subscribe(status=>{', watcherSrcV479);
   assert.doesNotMatch(handler, /payload|\.new\b|\.old\b|record/,
     'exact factual data means the ledger-backed refresh is the only source of numbers');
 });

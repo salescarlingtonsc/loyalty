@@ -51,13 +51,16 @@ test('it is torn down by the router, like every other customer overlay', () => {
 });
 
 test('both wallet surfaces are watched', () => {
-  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false}={}){', 'async function renderCustomerInAppInbox');
+  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){', 'async function renderCustomerInAppInbox');
   /* v333: both refresh SILENTLY — no shell rebuild, no scroll jump, and no repaint at all unless
      a server answer actually moved.
      V370: each also hands the watcher its own pulse reader, so a tick costs one read instead of
      the whole pipeline. */
-  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,\(\)=>renderCustomerWallet\(null,\{silent:true\}\),\s*customerWalletHomePulseReaderV370\(\)\)/, 'Home');
-  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,\(\)=>renderCustomerWallet\(businessSlug,\{silent:true\}\),\s*customerWalletProgrammePulseReaderV370\(businessSlug,/, 'programme detail');
+  /* nestly_v498: the refresh closure now carries a force flag — a doorbell ping bypasses the
+     v333 fact-signature skip (a stamp-gift redemption moves no balance, so the eight facts can
+     be unchanged while the Available list is stale); an idle tick never sets it. */
+  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,forceV498=>renderCustomerWallet\(null,\{silent:true,forceV498:forceV498===true\}\),\s*customerWalletHomePulseReaderV370\(\)\)/, 'Home');
+  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,forceV498=>renderCustomerWallet\(businessSlug,\{silent:true,forceV498:forceV498===true\}\),\s*customerWalletProgrammePulseReaderV370\(businessSlug,/, 'programme detail');
 });
 
 /* ---------- V370: poll amplification regressions (Supabase load audit 2026-08-17) ----------
@@ -87,7 +90,7 @@ test('V370 the tick allowance is a budget for the page, not for each glance', ()
 });
 
 test('V370 the pulse baseline is seeded from data the render already fetched', () => {
-  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false}={}){', 'async function renderCustomerInAppInbox');
+  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){', 'async function renderCustomerInAppInbox');
   assert.match(wallet, /rememberCustomerWalletPulseSignatureV370\(customerWalletProgrammePulseOfV370\(actionableCard,null\)\)/,
     'no extra round trip to establish the baseline');
   /* `as_of` is statement_timestamp() — including it would make every tick look changed. */
@@ -96,7 +99,7 @@ test('V370 the pulse baseline is seeded from data the render already fetched', (
 });
 
 test('V370 the global inbox sync no longer rides every silent 20-second poll', () => {
-  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false}={}){', 'async function renderCustomerInAppInbox');
+  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){', 'async function renderCustomerInAppInbox');
   assert.match(wallet, /if\(customerInboxSyncDueV370\(silent\)\)\{[\s\S]{0,200}?customer_sync_in_app_inbox_global/,
     'the sync is gated');
   assert.match(wallet, /return customerRpc\('customer_get_in_app_inbox_global_count'\)/,
@@ -107,7 +110,7 @@ test('V370 the global inbox sync no longer rides every silent 20-second poll', (
 });
 
 test('V370 the reward catalogue reuses the business actions this render already fetched', () => {
-  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false}={}){', 'async function renderCustomerInAppInbox');
+  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){', 'async function renderCustomerInAppInbox');
   const rewards = wallet.slice(wallet.indexOf('const loadRewards='), wallet.indexOf('const loadTransactions='));
   assert.match(rewards, /const actionsResult=businessId\?businessActionsResult:await unavailableBusinessId\(\)/,
     'no second customer_get_business_actions_v89 in the same render');
@@ -116,13 +119,15 @@ test('V370 the reward catalogue reuses the business actions this render already 
 
 /* v333: the refresh is invisible unless something changed. These four are the whole contract. */
 test('a silent refresh never rebuilds the shell, moves focus, re-counts a view or pops a sheet', () => {
-  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false}={}){', 'async function renderCustomerInAppInbox');
+  const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){', 'async function renderCustomerInAppInbox');
   assert.match(wallet, /if\(!silent\)renderCustomerShell\(/, 'the page on screen is the page that stays');
   assert.match(wallet, /if\(!silent\)focusCustomerRoute\(\);/);
   assert.match(wallet, /if\(!silent\)showCustomerPromotionPopupV122\(/);
   assert.match(wallet, /if\(businessId&&!silent\)\{/, 'no re-counted session start or DAU write');
-  assert.match(wallet, /customerWalletFactsUnchangedV333\(silent,/,
-    'an unchanged answer paints nothing at all');
+  /* nestly_v498: the skip is bypassed only under a doorbell/counter-moment force — an idle tick
+     still pays nothing for an unchanged answer. */
+  assert.match(wallet, /customerWalletFactsUnchangedV333\(silent&&!forceV498,/,
+    'an unchanged answer paints nothing at all (unless a ping said it changed)');
   const paint = section('function customerWalletSilentPaintV333', 'async function renderCustomerWallet(');
   assert.match(paint, /scroller\.scrollTop=scrollTop/, 'a real update holds the scroll position');
   assert.match(paint, /host\.contains\(focused\)\)return false/,
@@ -139,4 +144,37 @@ test('the native app tells the truth about notifications instead of hiding them'
   assert.match(appJs, /Alerts on your lock screen are not switched on for this app yet/);
   assert.match(appJs, /id="customerDeviceNotificationsNative"[\s\S]{0,600}?href="#\/customer\/messages"/,
     'and points at the inbox that does work');
+});
+
+/* ---------- nestly_v498: the doorbell that failed silently (owner, 2026-08-25) ----------
+   "why record sale does not reflect immediately to customer app?" Production logs told the story:
+   the app opened at 01:19:06 into a COLD Realtime tenant, the channel's first join failed with no
+   status callback watching, realtime.subscription held no customer row until 01:30:48, and the
+   poll budget then ran the page fully quiet. Three rules, pinned: */
+
+test('v498 a refused channel join is retried with bounded backoff, never abandoned silently', () => {
+  assert.match(watcher, /\.subscribe\(status=>\{/,
+    'subscribe must observe its own outcome — the naked .subscribe() is the shape that failed');
+  assert.match(watcher, /if\(status==='SUBSCRIBED'\)\{signalRetriesV498=0;return\}/,
+    'a successful join resets the budget so a later drop starts its backoff fresh');
+  assert.match(watcher, /if\(signalRetriesV498>=5\|\|signalRetryTimerV498\)return;/,
+    'bounded: five attempts, one timer — a genuinely-down tenant is not hammered');
+  assert.match(watcher, /1000\*\(2\*\*signalRetriesV498\)/, 'exponential backoff: 2s,4s,8s,16s,32s');
+  assert.match(watcher, /if\(signalChannelV479\)\{try\{sb\.removeChannel\(signalChannelV479\)\}catch\{\}signalChannelV479=null\}\s*\r?\n\s*try\{\s*\r?\n?\s*signalChannelV479=sb\.channel/,
+    'each attempt rebuilds the channel from scratch — an errored postgres_changes channel does not recover');
+  assert.match(watcher, /if\(!signalChannelUpV498\(\)\)\{signalRetriesV498=0;joinSignalChannelV498\(\)\}/,
+    'a return to the foreground gives the doorbell its chance back');
+});
+
+test('v498 the poll budget applies only while the doorbell is standing', () => {
+  assert.match(watcher, /if\(ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295&&signalChannelUpV498\(\)\)return;/,
+    'with the channel joined, nine ticks then silence is the right economy; without it, the 20s pulse is the only ear left and must keep going');
+  assert.doesNotMatch(watcher, /!alive\(\)\|\|ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295\|\|/,
+    'the old combined guard — budget enforced even with the doorbell dead — must be gone');
+});
+
+test('v498 a doorbell ping forces the repaint through the fact-signature skip', () => {
+  const moment = watcher.slice(watcher.indexOf('const counterMomentV468=async()=>{'));
+  assert.match(moment.slice(0, moment.indexOf('};')), /await refresh\(true\)/,
+    'a counter moment is a positive statement that something changed — redeeming a stamp gift moves no balance, so the eight summary facts alone would skip the very repaint the ping exists for');
 });

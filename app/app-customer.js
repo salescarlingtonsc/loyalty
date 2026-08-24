@@ -5272,6 +5272,7 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
   const stop=()=>{
     if(stopped)return;stopped=true;
     if(timer)clearTimeout(timer);timer=0;
+    if(signalRetryTimerV498){clearTimeout(signalRetryTimerV498);signalRetryTimerV498=0}
     document.removeEventListener('visibilitychange',onVisibility);
     if(signalChannelV479){try{sb.removeChannel(signalChannelV479)}catch{}signalChannelV479=null}
     if(activeCustomerWalletLiveCleanupV295===stop)activeCustomerWalletLiveCleanupV295=()=>{};
@@ -5292,7 +5293,16 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
      customer did something. It is not a tighter poll: the idle cadence is untouched. */
   const arm=()=>{
     if(timer)clearTimeout(timer);
-    if(!alive()||ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295||document.visibilityState!=='visible')return;
+    /* nestly_v498: the tick budget assumed the doorbell would take over when the polls ran out —
+       and when the channel's first join failed against a cold Realtime tenant, both were gone
+       and the page went fully quiet until navigation (the owner's "takes awhile"). The budget
+       now applies ONLY while the doorbell is actually standing: with the channel joined, nine
+       ticks then silence is the right economy, because the push carries everything after; with
+       it down, the 20s pulse keeps going for as long as the page is visible — it is the only
+       ear the customer has left, and one signature-check RPC per 20s is the price of the
+       promise "immediate, not database refresh". */
+    if(!alive()||document.visibilityState!=='visible')return;
+    if(ticks>=CUSTOMER_WALLET_POLL_LIMIT_V295&&signalChannelUpV498())return;
     const delayV468=Date.now()<counterUntilV468
       ?CUSTOMER_WALLET_COUNTER_POLL_MS_V468:CUSTOMER_WALLET_POLL_MS_V295;
     timer=setTimeout(async()=>{
@@ -5323,7 +5333,14 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
     if(stopped)return;
     ticks=0;
     counterUntilV468=Date.now()+CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468;
-    try{await refresh()}catch{}
+    /* nestly_v498: FORCED through the v333 fact-signature skip. A counter moment — a doorbell
+       ping, a shown member code, a settled QR — is a positive statement that something changed,
+       and the eight summary facts do not always carry it: redeeming a stamp gift moves no
+       balance (milestones are non-consuming), so the signature matched, the render returned
+       before the section loaders ran, and the redeemed gift kept saying "Ready to claim". The
+       paint is still the v333 in-place one (scroll held); only the skip is bypassed, and only
+       here — the idle ticks keep the economy. */
+    try{await refresh(true)}catch{}
     arm();
   };
   activeCustomerWalletCounterMomentV468=counterMomentV468;
@@ -5333,6 +5350,11 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
     /* Back in the customer's hand: read now — in full, because this is the counter moment the
        feature was built for. V370: the allowance is NOT reset; the window is a budget for this
        page, not for this glance. */
+    /* nestly_v498: and the doorbell gets its chance back. A socket that died in a pocket, or a
+       join the cold tenant refused five times, retries ONCE per return to the foreground — the
+       retry counter is reset so the backoff loop can run again, from a moment when the network
+       is demonstrably up (the refresh below is about to use it). */
+    if(!signalChannelUpV498()){signalRetriesV498=0;joinSignalChannelV498()}
     try{await refresh()}catch{}
     arm();
   }
@@ -5355,7 +5377,30 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
      the business side.
      The 1.5s collapse absorbs a sale that writes several ledger rows (earn + retention) without
      running the 12-read refresh once per row. */
-  if(S.user?.id&&typeof sb.channel==='function'){
+  /* nestly_v498 (owner, 2026-08-25: "why record sale does not reflect immediately to customer
+     app? stamps takes awhile to reflect, redeem rewards also takes awhile?").
+     THE PROOF FROM PRODUCTION LOGS: the customer opened the app at 01:19:06 and the Realtime
+     tenant was COLD-STARTING at that exact second ("Tenant gadpooereceldfpfxsod is
+     initializing"); realtime.subscription then held NO customer_wallet_signals_v479 row until
+     01:30:48, when a page navigation re-created the channel against a now-warm tenant. So for
+     eleven minutes the doorbell rang on the server (the signal row was bumped 95s after the
+     01:31 sale) and nothing was attached to hear it. Two client faults let that happen:
+       1. `.subscribe()` was called with NO status callback — a join refused by a cold tenant
+          (CHANNEL_ERROR / TIMED_OUT) failed SILENTLY and was never retried, so one bad second
+          at open cost the whole page view its push.
+       2. see arm(): the poll budget then ran out and the page went fully quiet.
+     THE REJOIN LOOP. The channel is (re)built from scratch on every attempt — supabase-js does
+     not reliably recover a postgres_changes channel that errored during join, so the old object
+     is removed first. Bounded backoff (2s,4s,8s,16s,32s, then stop): a tenant that is merely
+     cold is warm within one or two attempts; one that is genuinely down should not be hammered,
+     and the poll below carries the page meanwhile. A successful join resets the budget so later
+     drops start fresh, and a return to the foreground retries once even after the attempts are
+     spent — the socket that died in a pocket gets its chance back when the customer looks. */
+  let signalRetriesV498=0,signalRetryTimerV498=0;
+  const signalChannelUpV498=()=>signalChannelV479?.state==='joined';
+  const joinSignalChannelV498=()=>{
+    if(stopped||!S.user?.id||typeof sb.channel!=='function')return;
+    if(signalChannelV479){try{sb.removeChannel(signalChannelV479)}catch{}signalChannelV479=null}
     try{
       signalChannelV479=sb.channel(`wallet-signal-${S.user.id}`)
         .on('postgres_changes',
@@ -5368,9 +5413,22 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
             lastSignalAtV479=now;
             void counterMomentV468();
           })
-        .subscribe();
+        .subscribe(status=>{
+          if(stopped)return;
+          if(status==='SUBSCRIBED'){signalRetriesV498=0;return}
+          /* CLOSED also lands here when stop() removes the channel — the `stopped` guard above
+             is what keeps teardown from scheduling a ghost rejoin. */
+          if(status!=='CHANNEL_ERROR'&&status!=='TIMED_OUT'&&status!=='CLOSED')return;
+          if(signalRetriesV498>=5||signalRetryTimerV498)return;
+          signalRetriesV498+=1;
+          signalRetryTimerV498=setTimeout(()=>{
+            signalRetryTimerV498=0;
+            if(alive())joinSignalChannelV498();
+          },1000*(2**signalRetriesV498));
+        });
     }catch{signalChannelV479=null}
-  }
+  };
+  joinSignalChannelV498();
   document.addEventListener('visibilitychange',onVisibility);
   activeCustomerWalletLiveCleanupV295=stop;
   arm();
@@ -5429,7 +5487,7 @@ function customerWalletSilentPaintV333(html){
   if(scroller)scroller.scrollTop=scrollTop;
   return true;
 }
-async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
+async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){
   /* A silent pass rides the CURRENT epoch instead of opening a new one. Bumping it would make
      the watcher that scheduled this very refresh look stale to itself and stop. The guard still
      works: any real navigation renders non-silently, bumps the epoch, and every await below sees
@@ -5499,7 +5557,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
       /* v333: nothing the customer can see has moved — leave the page exactly as it is. */
       const homeSignatureV333=customerWalletFactSignatureOfV333(['home',data,customerHomeOverview.walletCards,
         homeOffersStateV333,homePendingRedemptionV333,customerHomeOverview.activeRequestCount]);
-      if(customerWalletFactsUnchangedV333(silent,homeSignatureV333))return;
+      if(customerWalletFactsUnchangedV333(silent&&!forceV498,homeSignatureV333))return;
       if(!renderActionableWalletHome(data,{
         legacyCards:customerHomeOverview.walletCards,
         offersState:homeOffersStateV333,
@@ -5581,7 +5639,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const fallbackPendingRedemptionV333=offersResult.error?null:offersResult.data?.pending_redemption||null;
     const fallbackSignatureV333=customerWalletFactSignatureOfV333(['fallback-home',cards,offersState,
       fallbackPendingRedemptionV333,bookingsAvailable?bookingCount:0]);
-    if(customerWalletFactsUnchangedV333(silent,fallbackSignatureV333))return;
+    if(customerWalletFactsUnchangedV333(silent&&!forceV498,fallbackSignatureV333))return;
     /* v178 source-shape sentinel: const fallbackHomeMarkupV333=`${customerHomeOffersMarkupV167(offersState)} */
     const fallbackHomeMarkupV333=`${customerHomeGreetingV343(context.profile)}
       ${customerHomeSummaryV343(cards)}
@@ -5607,7 +5665,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        V370: the tick reads customer_get_wallet only — the one read this fallback Home draws its
        balances and booking counts from — and pays for the other three only when it moves. */
     rememberCustomerWalletPulseV370(data??null);
-    if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(null,{silent:true}),
+    if(!silent)watchCustomerWalletV295(isWalletCurrent,forceV498=>renderCustomerWallet(null,{silent:true,forceV498:forceV498===true}),
       customerWalletHomePulseReaderV370());
     return;
   }
@@ -5728,7 +5786,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      which is exactly what the owner was seeing every twenty seconds. */
   const programmeSignatureV333=customerWalletFactSignatureOfV333(['programme',businessSlug,summary,
     capabilities,actionableCard,programmeCards,presentation,businessActions]);
-  if(customerWalletFactsUnchangedV333(silent,programmeSignatureV333))return;
+  if(customerWalletFactsUnchangedV333(silent&&!forceV498,programmeSignatureV333))return;
   const programmeBodyMarkupV333=`<div id="customerBusinessMainV348" class="customer-business-main-v348">
       ${customerMerchantExperienceMarkupV95({presentation,business:b,actionableCard,programmeCards,bookingEnabled:capabilities.booking_request&&bookingEnabled,offersStatus:programmeOffersStatus,rewardsHost:capabilities.rewards===true,programmeCapabilities:capabilities,collapsedHeaderV339:true,backHrefV340:'#/customer/programmes',packages,membership,walletLoyalty:loyalty})}
     </div>
@@ -5990,7 +6048,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      v333: silently — and the watcher re-arms itself now, so only a real render builds one.
      V370: a tick reads the actionable card alone (one RPC) and only pays for the full 12-read
      refresh when that card differs from what is on screen. */
-  if(!silent)watchCustomerWalletV295(isWalletCurrent,()=>renderCustomerWallet(businessSlug,{silent:true}),
+  if(!silent)watchCustomerWalletV295(isWalletCurrent,forceV498=>renderCustomerWallet(businessSlug,{silent:true,forceV498:forceV498===true}),
     customerWalletProgrammePulseReaderV370(businessSlug,customerFeatures.customer_actionable_wallet===true));
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
