@@ -4972,6 +4972,45 @@ function customerCelebrateV468({icon='star',headline='',detail=''}={}){
   },reducedV468?CUSTOMER_CELEBRATION_STILL_MS_V468:CUSTOMER_CELEBRATION_MS_V468);
   return true;
 }
+/* V468-E2(b): the "has the customer already seen this one?" gate, seed-then-fire, exactly the
+   discipline the v91 earn toast already used. An empty slot means this is the first read of the
+   session — record and stay silent, so a plain reload never celebrates history. sessionStorage,
+   not localStorage: the customer surface is barred from localStorage, and a celebration is not
+   worth persisting across sessions anyway. */
+/* nestly_v499 (owner, 2026-08-25: "i still do not see the pop up for successful transaction").
+   THE HOLE IN SEED-THEN-FIRE. The rule above is right about history and wrong about the present:
+   on the FIRST read of a session it records and stays silent, so it cannot tell "an earn from
+   last Tuesday" apart from "the sale the staff rang up ten seconds ago". That is precisely the
+   ordinary case — the customer pays at the counter and THEN opens their app — and it is the one
+   the owner kept photographing. Proven by executing the shipped function: with the page already
+   open the banner fires; opened fresh after the same sale, nothing.
+   The freshness window closes it without giving up the thing seed-then-fire protects: a first
+   read still stays silent for anything OLDER than this, so a plain reload never re-celebrates
+   history. Only something that happened within the window — which cannot be anything but the
+   transaction the customer just took part in — speaks on a cold open.
+   THE CLOCK is the phone's, compared against the server's timestamp, and the comparison is
+   ABSOLUTE so a device running a little fast or slow still recognises its own transaction. A
+   badly-wrong clock degrades to exactly today's behaviour (silence) or one stale banner; no
+   figure rides on this — the balance on screen is still the ledger's answer, and this only
+   decides whether a 5-second banner is drawn. */
+/* nestly_v500 — FINGERPRINT ROTATION + the incident that forced it. v499 committed app.js,
+   app-customer.js and index.html but NOT the regenerated app/app-core.js, which is where these
+   two declarations landed. So production served an index.html pointing at a core chunk that did
+   not contain them, while app-customer.js called customerCelebrationFreshV499 twice: a
+   ReferenceError inside loadActivity, thrown into the section loaders' Promise.all.
+   Committing the right core body is not enough on its own — the poisoned body was already
+   cached at the UNCHANGED /app-core.js?b=<hash> URL, and Cloudflare holds it for four hours —
+   so this comment exists to mint a NEW hash and route around the cached entry.
+   THE RULE, now written where the next person will hit it: app/app-core.js, app-customer.js,
+   app-business.js, app-auth.js and app-i18n.js are GENERATED, and every one of them that
+   bundle-stamp touched must be staged with app.js and index.html. Staging a subset ships an
+   index.html whose fingerprints promise code that is not in the repo. */
+const CUSTOMER_CELEBRATION_FRESH_MS_V499=180000; // 3 minutes: counter → pocket → phone
+function customerCelebrationFreshV499(happenedAt){
+  const at=Date.parse(String(happenedAt||''));
+  if(!Number.isFinite(at))return false;
+  return Math.abs(Date.now()-at)<=CUSTOMER_CELEBRATION_FRESH_MS_V499;
+}
 function customerSuccessCue(){
   if(!customerCelebrationSoundEnabled)return;
   if(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;

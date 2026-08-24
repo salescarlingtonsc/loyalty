@@ -10980,6 +10980,18 @@ function customerCelebrateV468({icon='star',headline='',detail=''}={}){
    badly-wrong clock degrades to exactly today's behaviour (silence) or one stale banner; no
    figure rides on this — the balance on screen is still the ledger's answer, and this only
    decides whether a 5-second banner is drawn. */
+/* nestly_v500 — FINGERPRINT ROTATION + the incident that forced it. v499 committed app.js,
+   app-customer.js and index.html but NOT the regenerated app/app-core.js, which is where these
+   two declarations landed. So production served an index.html pointing at a core chunk that did
+   not contain them, while app-customer.js called customerCelebrationFreshV499 twice: a
+   ReferenceError inside loadActivity, thrown into the section loaders' Promise.all.
+   Committing the right core body is not enough on its own — the poisoned body was already
+   cached at the UNCHANGED /app-core.js?b=<hash> URL, and Cloudflare holds it for four hours —
+   so this comment exists to mint a NEW hash and route around the cached entry.
+   THE RULE, now written where the next person will hit it: app/app-core.js, app-customer.js,
+   app-business.js, app-auth.js and app-i18n.js are GENERATED, and every one of them that
+   bundle-stamp touched must be staged with app.js and index.html. Staging a subset ships an
+   index.html whose fingerprints promise code that is not in the repo. */
 const CUSTOMER_CELEBRATION_FRESH_MS_V499=180000; // 3 minutes: counter → pocket → phone
 function customerCelebrationFreshV499(happenedAt){
   const at=Date.parse(String(happenedAt||''));
