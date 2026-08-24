@@ -6555,7 +6555,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     /* nestly_v487: the catalogue has landed, so the points hero's gift glyph can become the real
        gift photo. Same place, same moment and same payload as the ready-count correction above. */
     customerHeroGiftArtApplyV487(rewards,heroRootV397);
-    /* nestly_v490: the points/tiers page-1 "?", wired the moment the catalogue can answer it.
+    /* nestly_v490 (fingerprint rotated once: a verification fetch raced the deploy and poisoned
+       the CDN entry for the previous customer-chunk URL with the pre-v490 body — this comment
+       exists to mint a fresh hash, and as the warning: never fetch a fingerprinted chunk URL
+       before the deployed HTML references it).
+       The points/tiers page-1 "?", wired the moment the catalogue can answer it.
        The gift's identity is read off the v487 art node beside the button (data-hero-gift-art =
        lowercased name, data-hero-gift-cost = cost) — the two are drawn under one condition, so
        the sheet always describes the picture next to it. Matched on name AND cost, the same
