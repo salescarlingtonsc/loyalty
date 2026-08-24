@@ -6073,6 +6073,27 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     const shareButton=$('customerReferralShare');
     if(shareButton)shareButton.onclick=()=>shareCustomerReferralV300(data,{...b,id:businessId||b.id,slug:businessSlug});
   };
+  /* nestly_v497 (owner, 2026-08-25: "it clearly shows the 15 stamps are completed - why the stamp
+     card still yet to reflect new stamp card?").
+     THE DEFECT v496 SHIPPED WITH. v496 fired the rollover RPC in PARALLEL with the section
+     loaders, to keep a round trip off every wallet open. But customer_get_stamp_card_v323 is a
+     fast read and it won that race: the card painted from PRE-roll truth — the full card the
+     owner photographed at 01:19, with the roll landing at 01:19:29 — and v496's fallback repaint
+     could not correct it, because it went through the v333 SILENT refresh, which short-circuits
+     on an unchanged fact signature (customerWalletCanSkipRepaintV333) and the stamp card is not
+     in that signature. So the stale card stood until a hard reload.
+     THE FIX IS ORDERING, not a second correction. The two loyalty-truth readers below await this
+     promise before they read; the other thirteen loaders are untouched and still start
+     immediately, so the PAGE is not a round trip slower — only the two sections that would
+     otherwise print a card the server has already replaced.
+     loadRewards is gated too, and deliberately: a customer holding two cards' worth rolls TWICE,
+     and the same gift then survives on both closed cycles — quantity 2. Reading that list before
+     the roll would show quantity 1 and undercount what the counter owes them.
+     FAIL-OPEN: a refused or failed roll resolves this promise anyway, and the readers proceed on
+     pre-roll truth, which is exactly the behaviour before v496. A roll is never required for the
+     wallet to render. */
+  let stampRolloverV496=null;
+  const afterStampRolloverV497=async()=>{try{await stampRolloverV496}catch{}};
   /* v323 (R5): the stamp card is a QUEST. The v310 card has already painted from the wallet
      payload; this replaces its figure and its sentence with the truth once the reader answers.
      EVERY failure path leaves the v310 card exactly as it is — a missing RPC (an old server behind
@@ -6091,6 +6112,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
        note below when a stopped stamp programme still holds the customer's stamps. */
     const pointsCardV435=document.querySelector('[data-programme-card="points"]');
     if(!card&&!heroSlotV422&&!pointsCardV435)return;
+    /* nestly_v497: the roll settles BEFORE this read, so a completed card is never painted. */
+    await afterStampRolloverV497();
+    if(!isWalletCurrent())return;
     const {data,error}=await customerRpc('customer_get_stamp_card_v323',{p_business_slug:businessSlug});
     if(!isWalletCurrent())return;
     if(error)return;
@@ -6284,6 +6308,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
   const loadRewards=async()=>{
     const host=$('walletRewards');if(!host)return;
     host.setAttribute('aria-busy','true');
+    /* nestly_v497: after the roll, so a gift that survives on two closed cycles is listed at the
+       quantity the counter will actually honour. See the note on stampRolloverV496. */
+    await afterStampRolloverV497();
+    if(!isWalletSectionCurrent(host))return;
     /* V370: customer_get_business_actions_v89 is already fetched by this very render, a few
        dozen lines above, with the same p_business and inside the same epoch — this was a second
        round trip for an answer we were already holding. `businessActionsResult` is reused
@@ -7095,18 +7123,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
      v489 close: a card that is not full returns rolled=0 after one cheap read, a full one closes
      with slots=target so the excess lands on the fresh card, and the unclaimed gifts become
      survivors the Available list keeps until their own v464 expiry.
-     Fired IN PARALLEL with the loaders rather than ahead of them — an await-first would tax every
-     wallet open with a round trip for a state that occurs once per completed card. When it does
-     roll, counterMomentV468's silent refresh repaints the sections in place from the post-roll
-     truth (scroll held, no shell rebuild), which is the same path a realtime stamp ping takes.
+     nestly_v497: the call is STARTED here and the promise is handed to the two loyalty-truth
+     readers, which await it before their own reads — see the stampRolloverV496 note above for the
+     race this closes. It is started rather than awaited, so the other thirteen loaders below are
+     not held up behind it and the page as a whole costs no extra round trip.
      GATED ON !silent: the 20s poll and the doorbell both re-enter this render silently, and a
-     kick per poll would be exactly the v370 amplification this app already paid to remove — one
-     look, one kick. The gate is also the loop-brake: roll -> silent refresh -> no second kick. */
-  if(!silent)void customerRpc('customer_rollover_full_stamp_card_v496',{p_business_slug:businessSlug})
-    .then(rolloverV496=>{
-      if(!isWalletCurrent())return;
-      if(Number(rolloverV496?.data?.rolled||0)>0)void customerCounterMomentV468();
-    }).catch(()=>{});
+     roll attempt per poll would be exactly the v370 amplification this app already paid to
+     remove — one look, one attempt. On a silent pass the promise stays null and the readers await
+     nothing, so the poll behaves precisely as it did before v496. */
+  if(!silent)stampRolloverV496=customerRpc('customer_rollover_full_stamp_card_v496',
+    {p_business_slug:businessSlug}).catch(()=>null);
   await Promise.all([loadMemberCodeW6I2(),loadReferralCardV300(),loadStampCardV323(),loadGrowthOffers(),loadRewards(),loadTransactions(),loadActivity(),loadGiftCards(),loadPackages(),loadMemberships(),loadAppointments(),loadBirthdayParticipation(),loadFeedback(),loadBottlesV275(),loadRedemptionCelebrationV468()]);
   if(!isWalletCurrent())return;
 }

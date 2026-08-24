@@ -177,10 +177,9 @@ test('v496 the ladder is the owner\'s hand-drawn rows: slot badge, then "get" an
   assert.match(markup,
     /<span class="customer-stamp-rung-slot-v496"><b>5<\/b><\/span><span class="customer-stamp-rung-gift-v496">get <b data-merchant-content>A pastry<\/b><\/span>/,
     'each rung reads "5 · get A pastry" — the photo-2 redraw');
-  /* And the wallet render actually fires the roll: the RPC beside the loaders, gated on !silent
-     so the 20-second poll cannot amplify it, refreshing in place only when something rolled. */
-  assert.match(app, /if\(!silent\)void customerRpc\('customer_rollover_full_stamp_card_v496',\{p_business_slug:businessSlug\}\)/);
-  assert.match(app, /if\(Number\(rolloverV496\?\.data\?\.rolled\|\|0\)>0\)void customerCounterMomentV468\(\);/);
+  /* That the wallet render actually FIRES the roll, and fires it before the readers read, is
+     pinned by the two nestly_v497 tests at the foot of this file — v496's own call shape (a
+     fire-and-forget with a counterMoment fallback) lost the race it created and is gone. */
 });
 
 test('V323 the stamp card never prints a points figure', () => {
@@ -300,4 +299,82 @@ test('V323 the three remaining customer sentences exist in all four locales', ()
     assert.match(value, /\{filled\}/);
     assert.match(value, /\{total\}/);
   }
+});
+
+/* ==============================================================================================
+ * nestly_v497 — THE ROLL SETTLES BEFORE THE CARD IS READ
+ *
+ * The defect this closes is v496's own, and the owner caught it on camera: at 01:19 the phone
+ * showed a completed 15/15 card; the server rolled it at 01:19:29. v496 fired the rollover in
+ * PARALLEL with the section loaders, the fast stamp-card read won the race and painted pre-roll
+ * truth, and the fallback repaint went through the v333 SILENT refresh — which short-circuits on
+ * an unchanged fact signature that the stamp card is not part of. So the stale card stood.
+ *
+ * The gate is EXECUTED below, not described: a slow roll must actually hold the reader back.
+ * ============================================================================================ */
+
+test('v497 the rollover gate makes a reader wait for the roll, and never throws on a failed one', async () => {
+  /* The shipped two lines, lifted verbatim — not a restatement of them. */
+  const gateSrc = app.slice(app.indexOf('  let stampRolloverV496=null;'));
+  const decl = gateSrc.slice(0, gateSrc.indexOf('\n', gateSrc.indexOf('afterStampRolloverV497')) + 1);
+  assert.match(decl, /let stampRolloverV496=null;/);
+  assert.match(decl, /const afterStampRolloverV497=async\(\)=>\{try\{await stampRolloverV496\}catch\{\}\};/);
+
+  const gate = new Function(`${decl}
+    return {set:p=>{stampRolloverV496=p},wait:afterStampRolloverV497};`)();
+
+  /* 1. A SLOW roll holds the reader. Without the gate `order` would read ['read','roll']. */
+  const order = [];
+  let settle;
+  gate.set(new Promise(resolve => { settle = () => { order.push('roll'); resolve({ data: { rolled: 1 } }); }; }));
+  const reader = gate.wait().then(() => order.push('read'));
+  await new Promise(r => setTimeout(r, 5));   // the window the fast read used to win
+  assert.deepEqual(order, [], 'the reader must not have read while the roll was still in flight');
+  settle();
+  await reader;
+  assert.deepEqual(order, ['roll', 'read'], 'the card is read only after the roll has settled');
+
+  /* 2. FAIL-OPEN. A refused roll must not strand the wallet — the reader proceeds on pre-roll
+        truth, which is exactly the behaviour before v496. */
+  gate.set(Promise.reject(new Error('42501')));
+  await gate.wait();
+
+  /* 3. A SILENT pass never starts a roll, so the promise stays null and the reader awaits
+        nothing — the 20s poll costs the same as it did before v496. */
+  gate.set(null);
+  await gate.wait();
+});
+
+test('v497 both loyalty-truth readers pass through the gate BEFORE they read', () => {
+  /* Positional, because position is precisely what was wrong: v496 had the gate nowhere and the
+     reads first. A gate that exists but sits after the read would be the same bug wearing the
+     fix's name, and a plain "does the call appear" grep would pass it. */
+  const between = (start, end) => {
+    const from = app.indexOf(start);
+    assert.ok(from >= 0, `missing ${start}`);
+    const to = app.indexOf(end, from);
+    assert.ok(to > from, `missing ${end} after ${start}`);
+    return app.slice(from, to);
+  };
+
+  const stampLoader = between('const loadStampCardV323=async()=>', 'const loadGrowthOffers=async()=>');
+  const stampGate = stampLoader.indexOf('await afterStampRolloverV497();');
+  const stampRead = stampLoader.indexOf("customerRpc('customer_get_stamp_card_v323'");
+  assert.ok(stampGate >= 0, 'the stamp card loader does not wait for the roll');
+  assert.ok(stampGate < stampRead, 'the stamp card is read BEFORE the roll settles — the v496 race');
+
+  const rewardsLoader = between('const loadRewards=async()=>', 'const activityState={items:[],nextCursor:null}');
+  const rewardsGate = rewardsLoader.indexOf('await afterStampRolloverV497();');
+  const rewardsRead = rewardsLoader.indexOf("customerRpc('customer_get_reward_catalog'");
+  assert.ok(rewardsGate >= 0, 'the reward list does not wait for the roll');
+  assert.ok(rewardsGate < rewardsRead,
+    'the catalogue is read before the roll — a gift surviving on two closed cycles would list quantity 1');
+
+  /* And the roll is STARTED, not awaited, at the call site: the other loaders must not queue
+     behind it, or every wallet open pays a round trip for a once-per-card event. */
+  assert.match(app,
+    /if\(!silent\)stampRolloverV496=customerRpc\('customer_rollover_full_stamp_card_v496',\s*\r?\n?\s*\{p_business_slug:businessSlug\}\)\.catch\(\(\)=>null\);/,
+    'the roll must be started (promise captured) rather than awaited at the call site');
+  assert.ok(app.indexOf('stampRolloverV496=customerRpc(') < app.indexOf('await Promise.all([loadMemberCodeW6I2()'),
+    'the roll must be started before the loaders run, or the gate would wait on null');
 });
