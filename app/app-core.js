@@ -4633,6 +4633,17 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
                  left it: there the balance is a number and the count is the only readiness cue. */''}
             ${modeV386==='stamps'?''
               :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(progressSublineV465)}">${esc(subline)}</span></span>`}
+            ${/* nestly_v490 (owner, photo 1: "the stamps interface is correct with '?' ... i need
+                 tier and points rewards to reflect the same design"). The stamp hero has carried
+                 a "?" since v478; the points and tiers heroes never did, so the same card
+                 answered "what are the rules of this gift?" on one programme and went silent on
+                 the other two. One button here covers BOTH remaining modes, drawn under exactly
+                 the condition the v487 gift-art tile is drawn under — a named next reward — so
+                 the picture and the question mark always appear together, as they do on stamps.
+                 It is wired in loadRewards beside the art upgrade, reading the SAME name+cost
+                 the art node carries, so the sheet can never describe a different gift from the
+                 picture beside it. */''}
+            ${modeV386!=='stamps'&&rewardName?customerRewardHelpButtonV468('data-hero-next-rules-v490',rewardName,rewardName):''}
           </div>
           ${/* nestly_v487 (owner, photo 3: an arrow into the card's empty right - "here put photo
                of gift, if no photo put [gift] logo"). The stamps hero got this in v475; the points

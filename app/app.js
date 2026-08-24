@@ -10019,6 +10019,17 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
                  left it: there the balance is a number and the count is the only readiness cue. */''}
             ${modeV386==='stamps'?''
               :`<span class="customer-business-ready-v347">${CUI.icon(rewardReady?'giftcard':'loyalty',{size:16})}<span data-reward-ready-count-v397 data-reward-ready-fallback-v397="${esc(progressSublineV465)}">${esc(subline)}</span></span>`}
+            ${/* nestly_v490 (owner, photo 1: "the stamps interface is correct with '?' ... i need
+                 tier and points rewards to reflect the same design"). The stamp hero has carried
+                 a "?" since v478; the points and tiers heroes never did, so the same card
+                 answered "what are the rules of this gift?" on one programme and went silent on
+                 the other two. One button here covers BOTH remaining modes, drawn under exactly
+                 the condition the v487 gift-art tile is drawn under — a named next reward — so
+                 the picture and the question mark always appear together, as they do on stamps.
+                 It is wired in loadRewards beside the art upgrade, reading the SAME name+cost
+                 the art node carries, so the sheet can never describe a different gift from the
+                 picture beside it. */''}
+            ${modeV386!=='stamps'&&rewardName?customerRewardHelpButtonV468('data-hero-next-rules-v490',rewardName,rewardName):''}
           </div>
           ${/* nestly_v487 (owner, photo 3: an arrow into the card's empty right - "here put photo
                of gift, if no photo put [gift] logo"). The stamps hero got this in v475; the points
@@ -13150,6 +13161,35 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
     /* nestly_v487: the catalogue has landed, so the points hero's gift glyph can become the real
        gift photo. Same place, same moment and same payload as the ready-count correction above. */
     customerHeroGiftArtApplyV487(rewards,heroRootV397);
+    /* nestly_v490: the points/tiers page-1 "?", wired the moment the catalogue can answer it.
+       The gift's identity is read off the v487 art node beside the button (data-hero-gift-art =
+       lowercased name, data-hero-gift-cost = cost) — the two are drawn under one condition, so
+       the sheet always describes the picture next to it. Matched on name AND cost, the same
+       pairing the art upgrade uses; when no catalogue row matches (the read failed, or the row
+       retired between paints) the sheet falls back to the painted facts rather than going dead —
+       a "?" that answers with less beats one that answers with nothing. */
+    (heroRootV397.querySelectorAll('[data-hero-next-rules-v490]')||[]).forEach(button=>{
+      button.onclick=()=>{
+        const artV490=button.closest('.customer-business-summary-v346')
+          ?.querySelector('[data-hero-gift-art-v487]');
+        /* The button's own attribute carries the DISPLAY name (the art node lowercases its
+           copy for matching), so a fallback sheet is titled the way the card is. */
+        const displayV490=String(button.dataset.heroNextRulesV490||'').trim();
+        const nameV490=(String(artV490?.dataset.heroGiftArtV487||'').trim()||displayV490.toLowerCase());
+        const costV490=String(artV490?.dataset.heroGiftCostV487||'');
+        if(!nameV490)return;
+        const match=rewards.find(row=>{
+          const rowName=String(row?.customer_name||row?.name||'').trim().toLowerCase();
+          if(rowName!==nameV490)return false;
+          if(!costV490)return true;
+          return String(Number(row?.cost_points??row?.cost_units))===costV490;
+        });
+        const fallbackV490={customer_name:displayV490||nameV490,
+          cost_points:Number.isFinite(Number(costV490))?Number(costV490):0};
+        const rowV490=match||fallbackV490;
+        showCustomerRewardRulesV468(rowV490,{unit:customerRewardUnitV429(rowV490,rewardUnit),currency});
+      };
+    });
     (heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-hero-reward-rules-v471]')||[])
       .forEach(button=>button.onclick=()=>{
         const match=customerHeroRewardRowsV471[Number(button.dataset.heroRewardRulesV471)];
