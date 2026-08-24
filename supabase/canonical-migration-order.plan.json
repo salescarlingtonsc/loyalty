@@ -2452,6 +2452,12 @@
       "version": "20260824000008",
       "name": "nestly_v494_wallet_signal_visits_and_grants",
       "sourcePath": "db/migrations/20260824_nestly_v494_wallet_signal_visits_and_grants.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000009",
+      "name": "nestly_v495_stopped_programme_gifts_not_offered",
+      "sourcePath": "db/migrations/20260824_nestly_v495_stopped_programme_gifts_not_offered.sql"
     }
   ]
 }

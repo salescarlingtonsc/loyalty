@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="769362155882e64fb7e6b81735da37df5fe484747748cfe95bb95dc6b247f991">
+<meta name="v104-production-source-sha256" content="928473bff5f52c1a16a6f619f5d2cec4fc67f2df837e00a1ad3f54f2e7b3c6a8">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -3348,6 +3348,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    The actions row stays a separate child spanning both columns, so the full-width QR button is
    unchanged. */
 .customer-rewards-carousel-v337 .customer-reward-copy-v492{grid-area:copy;min-width:0}
+/* nestly_v495 (owner photo 1): the compact Packages-bought row — date, plan, used-count, Details.
+   A muted, struck-through exhausted row keeps the same layout, so the list reads as one table. */
+.c360-package-row-v495{gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.c360-package-row-v495:last-child{border-bottom:0}
+.c360-package-row-v495.is-exhausted-v442{opacity:.6}
 .customer-rewards-carousel-v337 .customer-reward-photo-v340{align-self:start}
 .customer-rewards-carousel-v337 .wallet-reward>:not(.customer-reward-photo-v340):not(.customer-reward-card-head-v339):not(.wallet-reward-actions){grid-column:2}
 .customer-rewards-carousel-v337 .wallet-reward-actions{grid-column:1/-1;margin-top:8px}
@@ -4216,8 +4221,26 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 /* And the alignment itself: the poster used to run edge to edge into that smear. A small inset
    plus its own corner radius and shadow makes it read as a picture deliberately mounted in a
    frame, which is what stops the two layers looking like a mistake. */
-.customer-home-offer-media.has-art-v421{padding:10px}
-.customer-home-offer-media.has-art-v421>img{border-radius:10px;box-shadow:0 6px 18px rgba(23,22,26,.28)}
+/* nestly_v495 (owner, photo 3 vs photo 4: "in customer view the photo should be to scale, photo 4
+   is beautifully scaled. I need the limited offer in home page to be bigger and able to scale the
+   image to be clear and readable").
+   Photo 4 is the BUSINESS page's offer card, where the image runs the full card width at its own
+   natural aspect ratio and IS the top of the card. Photo 3 is the Home card, where the artwork was
+   contained inside a height-rationed media box on a 320px tile, mounted on a blur — legible as a
+   thumbnail, not as a poster. Three changes close the gap:
+     1. the card grows: min(88vw,368px) against the old min(78vw,320px) — one card fills most of a
+        phone with the next peeking, which is photo 4's rhythm. The 380px small-phone override
+        below is beaten by these later rules on purpose.
+     2. the image sizes the box: width 100%, height auto, so the poster renders at its own aspect
+        ratio edge to edge exactly as the business page draws it, capped at 480px so an extreme
+        portrait cannot swallow the feed — only past that cap does the v421 contain+mount kick in.
+     3. the v487 mount inset is dropped here: a full-bleed poster needs no frame. The blur backdrop
+        stays for the capped case, where it is the letterbox fill. */
+.customer-home-offer{flex-basis:min(88vw,368px)!important;height:auto!important;min-height:0!important}
+.customer-home-offer-media{aspect-ratio:auto;min-height:0}
+.customer-home-offer-media>img{position:relative;z-index:1;width:100%;height:auto;max-height:480px;object-fit:contain}
+.customer-home-offer-media.has-art-v421{padding:0}
+.customer-home-offer-media.has-art-v421>img{border-radius:0;box-shadow:none}
 .customer-home-offer-copy{min-height:0!important;height:auto!important;flex:0 0 auto}
 
 /* nestly_v421 (owner, photo 2: the offer's title and its View more button ringed where the screen
@@ -4553,7 +4576,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 769362155882e64fb7e6b81735da37df5fe484747748cfe95bb95dc6b247f991</p>
+  <p class="v104-provenance">Local production-render harness · source 928473bff5f52c1a16a6f619f5d2cec4fc67f2df837e00a1ad3f54f2e7b3c6a8</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4565,7 +4588,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="769362155882e64fb7e6b81735da37df5fe484747748cfe95bb95dc6b247f991";
+const PRODUCTION_SOURCE_SHA256="928473bff5f52c1a16a6f619f5d2cec4fc67f2df837e00a1ad3f54f2e7b3c6a8";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

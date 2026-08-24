@@ -20071,24 +20071,52 @@ async function clientDetail(id){
      looking at. One idempotency key per (package, branch) attempt survives a retry; a
      completed use reloads the profile so the counter, the chip and the history agree again. */
   const packageUseIdemV442=new Map();
-  routeMain.querySelectorAll('[data-use-package-v442]').forEach(button=>{
-    button.onclick=async()=>{
-      const entry=packageModelV442.find(item=>item.id===button.dataset.usePackageV442);
-      if(!entry)return;
-      const branchId=$('c360PackageBranchV442')?.value||'';
-      if(!branchId)return toast('Choose the branch using this session');
-      if(!await confirmActionV386(
-        `Use one ${entry.planName} session for ${c.full_name}? ${entry.remaining-1} of ${entry.sessions} will be left. No payment is taken, and only Packages can undo it.`,
-        {confirmLabel:'Use a session',danger:false}))return;
-      if(!isClientDetailCurrent())return;
-      CUI.setButtonBusy(button,{busy:true,label:'Using…'});
-      const {result,error}=await usePackageSessionV442({
-        businessId:S.biz.id,clientPackageId:entry.id,branchId,attempts:packageUseIdemV442});
-      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
-      if(error)return fail(error);
-      toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
-      if(isClientDetailCurrent())clientDetail(id);
-    };
+  /* nestly_v495: the use-session handler is a NAMED function now, because its button moved into
+     the per-package pop-up (owner photo 1) and a dialog appended to <body> is outside every
+     selector loop run at page render. Same body, same RPC, same idempotency map, same confirm —
+     the one write path v442 insisted on, called from one more place. */
+  const usePackageFromV495=async(entry,button)=>{
+    const branchId=$('c360PackageBranchV442')?.value||'';
+    if(!branchId)return toast('Choose the branch using this session');
+    if(!await confirmActionV386(
+      `Use one ${entry.planName} session for ${c.full_name}? ${entry.remaining-1} of ${entry.sessions} will be left. No payment is taken, and only Packages can undo it.`,
+      {confirmLabel:'Use a session',danger:false}))return;
+    if(!isClientDetailCurrent())return;
+    CUI.setButtonBusy(button,{busy:true,label:'Using…'});
+    const {result,error}=await usePackageSessionV442({
+      businessId:S.biz.id,clientPackageId:entry.id,branchId,attempts:packageUseIdemV442});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+    if(error)return fail(error);
+    toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));
+    if(isClientDetailCurrent())clientDetail(id);
+  };
+  /* The pop-up the owner sketched: "click here to see pop-up of timeline details, when bought,
+     when last time used". Body is packageDetailEntryHtmlV495 — the old card block, resited —
+     so the dialog and the old card can never tell the story differently. */
+  const openPackageDetailV495=entryId=>{
+    const entry=packageModelV442.find(item=>item.id===entryId);
+    if(!entry)return;
+    const overlay=document.createElement('div');
+    overlay.className='modal';overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','pkgDetailTitleV495');
+    overlay.innerHTML=`<section class="modal-card">
+      <div class="row"><h2 id="pkgDetailTitleV495" style="font-size:1.15rem" data-merchant-content>${esc(entry.planName)}</h2><span class="spacer"></span>
+        <button class="btn ghost sm" type="button" data-pkg-detail-close-v495 aria-label="Close package detail">${CUI.icon('close',{size:18})}</button></div>
+      <div style="margin-top:10px">${packageDetailEntryHtmlV495(entry,{
+        canUse:canReadPackages&&canWriteModule('packages'),
+        branches:packageBranchesV442,branchError:packageBranchErrorV442,
+        staffName,branchName:packageBranchNameV442})}</div>
+    </section>`;
+    document.body.appendChild(overlay);
+    const deactivate=CUI.activateDialog(overlay,{onClose:()=>deactivate({restoreFocus:true}),
+      initialFocus:'[data-pkg-detail-close-v495]'});
+    overlay.querySelector('[data-pkg-detail-close-v495]').onclick=()=>deactivate({restoreFocus:true});
+    overlay.querySelectorAll('[data-use-package-v442]').forEach(button=>{
+      button.onclick=()=>usePackageFromV495(entry,button);
+    });
+  };
+  routeMain.querySelectorAll('[data-package-details-v495]').forEach(button=>{
+    button.onclick=()=>openPackageDetailV495(button.dataset.packageDetailsV495);
   });
   const eraseButtonV291=$('c360EraseV291');
   if(eraseButtonV291)eraseButtonV291.onclick=()=>openEraseClientDialogV291({
@@ -20757,83 +20785,85 @@ function packageDetailModelV442({packages=[],sales=[]}={}){
   }).sort((a,b)=>(packageMomentV442(b.purchasedAt)??0)-(packageMomentV442(a.purchasedAt)??0)
     ||String(a.id).localeCompare(String(b.id)));
 }
+/* nestly_v495 (owner, photo 1: the whole Package detail column struck through — "current UI UX
+   for package is too messy - i need you to follow as per my request" — and the request sketched
+   as a compact table: "Packages Bought / 12/06/26 | Facial | 3/5 used | Details", with "click
+   here to see pop-up of timeline details, when bought, when last time used").
+   The card is now exactly that sketch: one row per purchase — bought date, plan, used-count,
+   Details — and EVERYTHING else (price, service, last used, the session timeline, the caveats,
+   the branch picker and Use a session) lives in a pop-up opened from the row. Nothing was
+   deleted: packageDetailEntryHtmlV495 below is the old per-package block, resited. The v486
+   dedupe note still applies inside the dialog, trivially, because a dialog shows one package. */
+function packageUseWhenTextV495(use,staffName={},branchName={}){
+  return [esc(sgt(use.at)||formatCustomerJoinedDateV141(use.at)),
+    use.staffId&&staffName[use.staffId]?esc(staffName[use.staffId]):'',
+    use.branchId&&branchName[use.branchId]?esc(branchName[use.branchId]):'']
+    .filter(Boolean).join(' · ');
+}
+function packageUseRowHtmlV495(use,staffName,branchName){
+  return `<div class="row c360-reward-row-v226"><span class="small">${packageUseWhenTextV495(use,staffName,branchName)}</span><span class="spacer"></span>${
+    use.reversed?'<span class="pill ok">Added back · no refund</span>':'<span class="pill new">session used</span>'}</div>`;
+}
+/* The pop-up's body: the full story of ONE purchase. This is the old card block plus the two
+   facts the owner's sketch names outright — when bought and when last used — and the branch
+   picker + Use control, which belong beside the history they extend. */
+function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=false,
+  staffName={},branchName={}}={}){
+  const branchList=Array.isArray(branches)?branches:[];
+  const actionable=canUse&&!branchError&&branchList.length>0&&!entry.exhausted;
+  const bought=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):null;
+  const service=entry.serviceName
+    ?serviceDisplayName({name:entry.serviceName,variant_label:entry.serviceVariant,
+      duration_min:entry.serviceDuration}):'';
+  const liveUses=entry.uses.filter(use=>!use.reversed);
+  const lastUsedAt=liveUses.length?liveUses[liveUses.length-1].at:null;
+  const caveats=[
+    entry.ambiguous?`This customer holds more than one “${entry.planName}”. A session use is recorded on the sale, not against one purchase, so the list below covers every use of this package name since this one was bought.`:'',
+    entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${liveUses.length} matching sales are visible to you here.`:''
+  ].filter(Boolean);
+  return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
+    <div class="c360-summary-row-v294">
+      <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)} · v${entry.planVersion}</span>
+      <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
+    </div>
+    <p class="small" style="margin-top:8px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
+    <p class="muted small" style="margin-top:4px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
+    <p class="muted small" style="margin-top:4px">Last used ${lastUsedAt?packageUseWhenTextV495({at:lastUsedAt},staffName,branchName):'— never'}</p>
+    ${caveats.map(text=>`<p class="muted small" style="margin-top:6px">${esc(text)}</p>`).join('')}
+    ${entry.uses.length
+      ?`<div style="margin-top:12px"><b class="small">Session history · ${entry.uses.length}</b><div style="margin-top:6px">${entry.uses.map(use=>packageUseRowHtmlV495(use,staffName,branchName)).join('')}</div></div>`
+      :'<p class="muted small" style="margin-top:8px">No session use has been recorded against this package yet.</p>'}
+    ${entry.exhausted?''
+      :branchError&&canUse
+        ?'<p class="err small" style="margin-top:10px" role="status">The branch list could not be loaded, so a session cannot be used from here yet. Reload the profile and try again.</p>'
+      :!canUse
+        ?'<p class="muted small" style="margin-top:10px">Read only — ask for Packages edit access to use a session.</p>'
+      :!branchList.length
+        ?'<p class="muted small" style="margin-top:10px">No active branch is available to you, so a session cannot be used from here.</p>'
+        :`<div style="margin-top:12px"><label for="c360PackageBranchV442">Branch recording used session</label><select id="c360PackageBranchV442">${branchList.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name)}</option>`).join('')}</select></div>`}
+    ${actionable
+      ?`<div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-use-package-v442="${esc(entry.id)}">${CUI.icon('packages',{size:16})}<span>Use a session</span></button></div>`
+      :''}
+  </div>`;
+}
 function packageDetailCardHtmlV442(model,{canUse=false,branches=[],branchError=false,
   staffName={},branchName={}}={}){
   const entries=Array.isArray(model)?model:[];
   /* Empty is absent, exactly as the visit-feedback strip beside it does it. A customer who
      never bought a package gets no card, not a card that says nothing. */
   if(!entries.length)return '';
-  const branchList=Array.isArray(branches)?branches:[];
-  /* Nothing is said about using a session when there is no session left to use — an
-     all-exhausted card must not read as a permissions problem. */
-  const hasUsable=entries.some(entry=>!entry.exhausted);
-  const actionable=hasUsable&&canUse&&!branchError&&branchList.length>0;
-  const whenText=use=>[esc(sgt(use.at)||formatCustomerJoinedDateV141(use.at)),
-    use.staffId&&staffName[use.staffId]?esc(staffName[use.staffId]):'',
-    use.branchId&&branchName[use.branchId]?esc(branchName[use.branchId]):'']
-    .filter(Boolean).join(' · ');
-  const useRow=use=>`<div class="row c360-reward-row-v226"><span class="small">${whenText(use)}</span><span class="spacer"></span>${
-    use.reversed?'<span class="pill ok">Added back · no refund</span>':'<span class="pill new">session used</span>'}</div>`;
-  /* nestly_v486 (owner, photo 5: the whole right column struck through - "just show package
-     detail, this is too confusing & long"). MEASURED on the owner's own screenshot: three package
-     blocks, and the SAME four-line "This customer holds more than one ..." paragraph printed under
-     each of them, because the caveat is a property of the plan NAME and every entry sharing that
-     name repeats it. So two thirds of the column's length was one sentence said three times.
-     Two presentational changes, no information dropped:
-       1. a caveat is printed ONCE per card - the first entry that raises it keeps it, and an
-          identical repeat on a later entry is dropped. Entry-SPECIFIC text (the unattributed
-          caveat quotes that entry's own counts) is not identical, so it is never deduped away.
-       2. what survives sits behind a closed disclosure, so the card opens on the package facts
-          the counter actually needs - used/left, price, service, Use a session - and the
-          explanation is one tap away for the person who wants it.
-     Same <details class="c360-reward-adjust"> the Session history row beside it already uses. */
-  const caveatsSeenV486=new Set();
-  const packageBlock=entry=>{
-    const bought=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):null;
-    const service=entry.serviceName
-      ?serviceDisplayName({name:entry.serviceName,variant_label:entry.serviceVariant,
-        duration_min:entry.serviceDuration}):'';
-    const caveats=[
-      entry.ambiguous?`This customer holds more than one “${entry.planName}”. A session use is recorded on the sale, not against one purchase, so the list below covers every use of this package name since this one was bought.`:'',
-      entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${entry.uses.filter(use=>!use.reversed).length} matching sale${entry.uses.filter(use=>!use.reversed).length===1?'':'s'} ${entry.uses.filter(use=>!use.reversed).length===1?'is':'are'} visible to you here.`:''
-    ].filter(Boolean);
-    return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
-      <div class="c360-summary-row-v294">
-        <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)} · v${entry.planVersion}</span>
-        <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
-      </div>
-      <p class="small" style="margin-top:6px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
-      <p class="muted small" style="margin-top:3px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
-      ${(()=>{
-        const freshV486=caveats.filter(text=>!caveatsSeenV486.has(text));
-        freshV486.forEach(text=>caveatsSeenV486.add(text));
-        return freshV486.length
-          ?`<details class="c360-reward-adjust" style="margin-top:6px"><summary>Why this list may look off</summary><div style="margin-top:6px">${
-            freshV486.map(text=>`<p class="muted small" style="margin-top:5px">${esc(text)}</p>`).join('')}</div></details>`
-          :'';
-      })()}
-      ${entry.uses.length
-        ?`<details class="c360-reward-adjust" style="margin-top:8px"><summary>Session history · ${entry.uses.length}</summary><div style="margin-top:6px">${entry.uses.map(useRow).join('')}</div></details>`
-        :'<p class="muted small" style="margin-top:6px">No session use has been recorded against this package yet.</p>'}
-      ${actionable&&!entry.exhausted
-        ?`<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-use-package-v442="${esc(entry.id)}">${CUI.icon('packages',{size:16})}<span>Use a session</span></button></div>`
-        :''}
-    </div>`;
-  };
-  return `<section class="card c360-packages-card-v442" id="c360-packages-v442" aria-label="Package detail">
-    <b>Package detail</b>
+  return `<section class="card c360-packages-card-v442" id="c360-packages-v442" aria-label="Packages bought">
+    <b>Packages bought</b>
     <p class="muted small" style="margin:5px 0 0">Prepaid sessions this customer has bought. Using one deducts a session and records a zero-value visit; it never takes another payment.</p>
-    ${!hasUsable?''
-      :branchError&&canUse
-        ?'<p class="err small" style="margin-top:8px" role="status">The branch list could not be loaded, so a session cannot be used from here yet. Reload the profile and try again.</p>'
-      :!canUse
-        ?'<p class="muted small" style="margin-top:8px">Read only — ask for Packages edit access to use a session.</p>'
-      :!branchList.length
-        ?'<p class="muted small" style="margin-top:8px">No active branch is available to you, so a session cannot be used from here.</p>'
-        /* Visible label, the same words the Packages page uses. CLAUDE.md's low-literacy rule
-           makes an sr-only label the wrong trade here: the person choosing is at the counter. */
-        :`<div style="margin-top:10px"><label for="c360PackageBranchV442">Branch recording used session</label><select id="c360PackageBranchV442">${branchList.map(branch=>`<option value="${esc(branch.id)}">${esc(branch.name||'Branch')}</option>`).join('')}</select></div>`}
-    ${entries.map(packageBlock).join('')}
+    <div style="margin-top:10px">${entries.map(entry=>{
+      const boughtShort=entry.purchasedAt?formatCustomerJoinedDateV141(entry.purchasedAt):'—';
+      return `<div class="row c360-package-row-v495${entry.exhausted?' is-exhausted-v442':''}">
+        <span class="small" style="flex:0 0 auto">${esc(boughtShort)}</span>
+        <span class="small" data-merchant-content style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(entry.planName)}</b></span>
+        <span class="small" style="flex:0 0 auto">${entry.used}/${entry.sessions} used</span>
+        <button class="btn ghost sm" type="button" data-package-details-v495="${esc(entry.id)}">Details</button>
+      </div>`;
+    }).join('')}</div>
   </section>`;
 }
 /* Branch scope for the use action. Same role-scoped reader every other branch picker on this
@@ -47629,15 +47659,32 @@ let businessProfilePreviewLiveV486={rewards:null,offers:null};
 async function loadBusinessProfilePreviewLiveV486(){
   const businessIdV486=S.biz?.id;
   if(!businessIdV486)return;
-  const [rewardsResV486,promosResV486]=await Promise.all([
+  const [rewardsResV486,promosResV486,spineResV495]=await Promise.all([
     sb.from('loyalty_rewards')
-      .select('id,active,paused,customer_name,name,description,image_ref,cost_points,claim_available_until')
+      .select('id,active,paused,programme_id,customer_name,name,description,image_ref,cost_points,claim_available_until')
       .eq('business_id',businessIdV486).eq('active',true).order('cost_points').limit(24),
-    sb.rpc('business_get_promotion_editor_v155',{p_business:businessIdV486})
+    sb.rpc('business_get_promotion_editor_v155',{p_business:businessIdV486}),
+    /* nestly_v495 (owner, photo 2: two rewards ringed in the preview — "this 2 rewards is not
+       shown to customer at customer app - please remove it"). They were right, and the reason is
+       the PROGRAMME. v486/v493 read every active reward this firm owns, which includes rewards
+       belonging to a programme the owner has SWITCHED OFF — on the tenant in the photo those are
+       the two cheapest, so they were exactly the two the preview picked. The customer's own page
+       resolves availability through the spine and does not offer them.
+       The preview now reads the spine too and keeps only rewards on a RUNNING programme, so
+       "what customers see as you edit" is once again a true sentence. */
+    sb.from('business_programmes').select('id').eq('business_id',businessIdV486).eq('active',true)
   ]);
   if(S.biz?.id!==businessIdV486)return;
   if(!rewardsResV486.error&&Array.isArray(rewardsResV486.data)){
-    businessProfilePreviewLiveV486.rewards=rewardsResV486.data.filter(row=>row&&row.paused!==true);
+    /* A failed spine read must not silently widen the list back out to switched-off programmes:
+       with no spine to check against, the preview keeps whatever it had rather than showing
+       rewards it cannot vouch for. */
+    const liveProgrammesV495=!spineResV495.error&&Array.isArray(spineResV495.data)
+      ?new Set(spineResV495.data.map(row=>String(row.id))):null;
+    if(liveProgrammesV495){
+      businessProfilePreviewLiveV486.rewards=rewardsResV486.data
+        .filter(row=>row&&row.paused!==true&&liveProgrammesV495.has(String(row.programme_id||'')));
+    }
   }
   if(!promosResV486.error){
     const itemsV486=(Array.isArray(promosResV486.data?.items)?promosResV486.data.items:[])

@@ -68,7 +68,7 @@ const activeBranchesForScopeV217 = (branches = []) => (branches || []).filter((b
 const V = new Function(
   'esc', 'money', 'sgt', 'CUI', 'sb', 'visibleBranchesForCurrentUser', 'activeBranchesForScopeV217', 'console',
   `${collaborators}\n${v442}\n  return {PACKAGE_SESSION_NOTE_PREFIX_V442,packageSessionUsesV442,packageDetailModelV442,
-    packageDetailCardHtmlV442,packageUseBranchesV442,usePackageSessionV442};`,
+    packageDetailCardHtmlV442,packageDetailEntryHtmlV495,packageUseBranchesV442,usePackageSessionV442};`,
 )(esc, money, sgt, CUI, sb, visibleBranchesForCurrentUser, activeBranchesForScopeV217, { error() {} });
 
 const visibleText = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
@@ -101,9 +101,18 @@ const salesWithThreeUses = () => ([
   { id: 's-5', occurred_at: '2026-08-04T03:00:00Z', kind: 'service', amount_cents: 0, note: 'Comped consultation', staff_id: 'st-1', branch_id: 'br-1' },
 ]);
 
-const render = (model, options = {}) => V.packageDetailCardHtmlV442(model, {
-  staffName: STAFF, branchName: BRANCH, ...options,
-});
+/* nestly_v495 (owner photo 1): the card became a compact row list and everything it used to
+   print — price, service, session timeline, caveats, branch picker, Use a session — moved into
+   a per-package pop-up (packageDetailEntryHtmlV495). What the STAFF MEMBER can see is therefore
+   the card PLUS each entry's dialog body, and that combined surface is what this harness renders,
+   so every content assertion below keeps exactly the force it had against the old single card. */
+const render = (model, options = {}) => {
+  const opts = { staffName: STAFF, branchName: BRANCH, ...options };
+  const card = V.packageDetailCardHtmlV442(model, opts);
+  if (!card) return card;
+  return card + (Array.isArray(model) ? model : [])
+    .map((entry) => V.packageDetailEntryHtmlV495(entry, opts)).join('');
+};
 
 /* ============================ A — one active package, three uses ============================ */
 
@@ -375,19 +384,30 @@ test('F1 every V442 identifier the profile uses is declared in the profile', () 
 });
 
 test('F2 the handler reads the dataset key the markup actually emits', () => {
-  const html = render(V.packageDetailModelV442({ packages: [ACTIVE_PACKAGE], sales: [] }),
-    { canUse: true, branches: [{ id: 'br-1', name: 'Bugis' }] });
-  const attribute = html.match(/<button[^>]*\sdata-([a-z0-9-]+)="cp-active"/)[1];
-  assert.equal(attribute, 'use-package-v442');
+  /* nestly_v495: the CARD's button opens the pop-up, so its attribute is the details key; the
+     Use button lives inside the dialog and is wired with the entry object directly — no dataset
+     round-trip that could dangle. Both halves are asserted. */
+  const cardHtml = V.packageDetailCardHtmlV442(
+    V.packageDetailModelV442({ packages: [ACTIVE_PACKAGE], sales: [] }),
+    { canUse: true, branches: [{ id: 'br-1', name: 'Bugis' }], staffName: STAFF, branchName: BRANCH });
+  const attribute = cardHtml.match(/<button[^>]*\sdata-([a-z0-9-]+)="cp-active"/)[1];
+  assert.equal(attribute, 'package-details-v495');
   const camel = attribute.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
   assert.ok(clientDetail.includes(`querySelectorAll('[data-${attribute}]')`),
     'the profile must select on the attribute the card emits');
   assert.ok(clientDetail.includes(`button.dataset.${camel}`),
     `the handler must read dataset.${camel}`);
+  /* And the dialog's own Use button is wired straight to the shared write path. */
+  assert.ok(clientDetail.includes("overlay.querySelectorAll('[data-use-package-v442]')"),
+    'the dialog must wire the Use control it renders');
+  assert.ok(clientDetail.includes('usePackageFromV495(entry,button)'),
+    'through the one named write path, never a second copy');
 });
 
 test('F3 the write is confirmed, branch-scoped and reloads the profile', () => {
-  const block = clientDetail.slice(clientDetail.indexOf("querySelectorAll('[data-use-package-v442]')"));
+  /* nestly_v495: the handler body is the named usePackageFromV495 now — same content, one
+     write path, callable from the dialog. */
+  const block = clientDetail.slice(clientDetail.indexOf('const usePackageFromV495='));
   const handler = block.slice(0, block.indexOf('const eraseButtonV291'));
   assert.match(handler, /await confirmActionV386\(/, 'the house confirm, not a bare click');
   assert.match(handler, /\$\('c360PackageBranchV442'\)/, 'the branch comes from the picker on the card');
@@ -417,8 +437,11 @@ test('F4 the card is placed under the summary card, in the right column, and onl
 test('F5 the card reuses the profile\'s existing classes rather than inventing a parallel system', () => {
   const html = render(V.packageDetailModelV442({ packages: [ACTIVE_PACKAGE], sales: salesWithThreeUses() }),
     { canUse: true, branches: [{ id: 'br-1', name: 'Bugis' }] });
+  /* nestly_v495: c360-reward-adjust (the <details> disclosure) left this surface with the
+     collapse — a dialog dedicated to one package shows its history open, so there is nothing
+     to disclose. Every other idiom stays borrowed. */
   for (const cls of ['card', 'c360-summary-row-v294', 'c360-summary-label-v294',
-    'c360-summary-value-v294', 'pill', 'c360-reward-adjust', 'c360-reward-row-v226', 'muted small']) {
+    'c360-summary-value-v294', 'pill', 'c360-reward-row-v226', 'muted small']) {
     assert.ok(html.includes(cls), `${cls} is the profile's own idiom and must be reused`);
   }
 });

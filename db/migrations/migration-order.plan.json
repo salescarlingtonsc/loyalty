@@ -2457,6 +2457,12 @@
       "path": "db/migrations/20260824_nestly_v494_wallet_signal_visits_and_grants.sql",
       "semanticVersion": "v494",
       "proposedDeployVersion": "20260824000008"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v495_stopped_programme_gifts_not_offered.sql",
+      "semanticVersion": "v495",
+      "proposedDeployVersion": "20260824000009"
     }
   ]
 }

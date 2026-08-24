@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 363,
-  "itemCount": 408,
+  "pendingCount": 364,
+  "itemCount": 409,
   "items": [
     {
       "order": 1,
@@ -4087,6 +4087,16 @@
       "path": "supabase/migrations/20260824000008_nestly_v494_wallet_signal_visits_and_grants.sql",
       "octetLength": 4207,
       "sha256": "c6e96faa0d63e30f74f7d585afee47efcd6ac4cef50e7d06cbfd6fbb9d6c9e8f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 409,
+      "kind": "pending",
+      "version": "20260824000009",
+      "name": "nestly_v495_stopped_programme_gifts_not_offered",
+      "path": "supabase/migrations/20260824000009_nestly_v495_stopped_programme_gifts_not_offered.sql",
+      "octetLength": 4183,
+      "sha256": "c1c09b4e127cd040ecd4cdf0816abbdf652d65bfcbe91114a7c396119e67a6f7",
       "provenance": "local-source"
     }
   ]
