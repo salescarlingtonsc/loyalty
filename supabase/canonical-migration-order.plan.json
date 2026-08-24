@@ -2440,6 +2440,12 @@
       "version": "20260824000006",
       "name": "nestly_v488_product_bundles_and_bottle_checkpoints",
       "sourcePath": "db/migrations/20260824_nestly_v488_product_bundles_and_bottle_checkpoints.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260824000007",
+      "name": "nestly_v489_stamp_card_auto_rollover",
+      "sourcePath": "db/migrations/20260824_nestly_v489_stamp_card_auto_rollover.sql"
     }
   ]
 }

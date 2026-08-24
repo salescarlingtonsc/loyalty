@@ -98,7 +98,9 @@ test('reward progress is formatted, bounded, accessible, and safe for zero-cost 
   /* v339 gave the cost its own line under the reward name (photo 1) instead of leading a single
      trade sentence. The figure and its source are unchanged — still the same clamped `cost` the
      progress bar uses, still through customerPointTotalV103. */
-  assert.match(app,/class="wallet-reward-cost customer-reward-cost-v339">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/p>/);
+  /* nestly_v489: the cost prints the REWARD's own unit (owner, photo 5: "no points, why show
+     these rewards, please sync!!!") — a stamp gift on a points firm read "5 points". */
+  assert.match(app,/class="wallet-reward-cost customer-reward-cost-v339">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(customerUnitNounV429\(customerRewardUnitV429\(r,rewardUnit\),cost\)\)\}<\/p>/);
   assert.match(app,/customerPointTotalV103\(Math\.abs\(delta\)\)/);
   assert.match(app,/customerPointTotalV103\(earned\)/);
   assert.match(app,/is ready to redeem/);

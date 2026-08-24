@@ -64,6 +64,10 @@ const escSrc = extractConst(app, 'esc');
 const walletDateSrc = extractFunction(app, 'walletDate');
 const pointTotalSrc = extractFunction(app, 'customerPointTotalV103');
 const rewardDescSrc = extractFunction(app, 'customerRewardDescriptionV183');
+/* nestly_v489: the card prints the REWARD's own unit now, so its two real unit helpers join the
+   harness. Extracted, never stubbed — a stub here would let the card claim any noun it liked. */
+const rewardUnitSrcV489 = extractFunction(app, 'customerRewardUnitV429');
+const unitNounSrcV489 = extractFunction(app, 'customerUnitNounV429');
 
 /* ============================================================ 1 · the owner's form */
 
@@ -258,7 +262,7 @@ function renderRewardCard(reward) {
     CUI: { icon: () => '<svg></svg>' },
   };
   const names = Object.keys(scope);
-  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardHelpSrc}\n${rewardEndsSrcV471}\n${rewardCardSrc}\nreturn rewardCardV422;`;
+  const body = `${escSrc}\n${walletDateSrc}\n${pointTotalSrc}\n${rewardDescSrc}\n${rewardUnitSrcV489}\n${unitNounSrcV489}\n${rewardHelpSrc}\n${rewardEndsSrcV471}\n${rewardCardSrc}\nreturn rewardCardV422;`;
   // eslint-disable-next-line no-new-func
   return new Function(...names, body)(...names.map(n => scope[n]))(reward);
 }

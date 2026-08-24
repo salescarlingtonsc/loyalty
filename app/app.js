@@ -9891,8 +9891,17 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const rewardName=String(reward?.name||'').trim();
   const sessions=Number(packages.sessions_remaining||0);
   const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
+  /* nestly_v489 (owner, photo 3: "Free Lotion ready to claim" struck out, "Next Available Reward:
+     Lotion" written beside it). The stamp hero has said "Next available Reward: X" since v422;
+     the points hero said something different about the same kind of fact, which is what let the
+     owner read a 0-points header and a "ready to claim" line as a contradiction.
+     One sentence for both heroes now. Readiness is NOT lost with the wording: the pill above
+     still carries the server's ready count (v397/v399) and the Claim reward button below is drawn
+     only when the server says the reward is claimable — so this line names the reward and the two
+     controls around it state whether it can be taken, which is the split the stamp hero already
+     uses. */
   const claimLine=rewardReady
-    ?`${rewardName||'Reward'} ready to claim`
+    ?`Next available Reward: ${rewardName||'Reward'}`
     :sessions>0?`${sessions} session${sessions===1?'':'s'} left`
     :subline;
   const progressLine=remaining>0
@@ -10321,7 +10330,11 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
        place the cost is written down. */
     const needV468=!readyV397&&remaining>0
       ?`${customerPointTotalV103(remaining)} more ${customerUnitNounV429(rewardUnitV468,remaining)} to go`:'';
-    const counterV468=stampsV468&&needV468?needV468:`${customerPointTotalV103(cost)} ${unitWord}`;
+    /* nestly_v489: the price half of this counter printed unitWord — the PAGE's unit — so a
+       READY stamp gift on a points firm read "5 points" (owner, photo 4). The distance half was
+       already unit-correct via customerUnitNounV429; the price now is too. */
+    const counterV468=stampsV468&&needV468?needV468
+      :`${customerPointTotalV103(cost)} ${customerUnitNounV429(rewardUnitV468,cost)}`;
     /* Mark 4, an arrow into the empty right of the card: "show gift photo" — the same image_ref
        the reward list and the business-side reward rows render. It is a GRID COLUMN, not an
        overlay: with no photo the body is one column and the card is byte-identical to v399's, so
@@ -10341,7 +10354,7 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
        V468-C4: on a stamp card the distance has moved up into the counter, so this line is left
        with only the job it cannot delegate — reporting a refusal the arithmetic cannot see. */
     const lineTextV468=remaining>0
-      ?(stampsV468?'':`${customerPointTotalV103(remaining)} ${unitWord} to go`)
+      ?(stampsV468?'':`${customerPointTotalV103(remaining)} ${customerUnitNounV429(rewardUnitV468,remaining)} to go`)
       :customerRewardAvailabilityLineV399(reward,rewardUnitV468);
     /* Owner struck out the meter and the sentence under a READY reward: at 100% the meter says
        nothing and "Ready to redeem on your next visit" repeats the pill above it. A reward still
@@ -13021,7 +13034,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false}={}){
         ?`<img src="${esc(imageUrlV340)}" alt="" loading="lazy" data-reward-photo-v340>`
         :CUI.icon('loyalty',{size:24})}</div><div class="customer-reward-card-head-v339"><span class="pill ok">Ready to claim</span>${customerRewardHelpButtonV468('data-reward-rules-v468',r.action_key,r.customer_name||'Reward')}</div>
       <b class="wallet-reward-trade customer-reward-name-v339">${esc(r.customer_name||'Reward')}</b>
-      ${cost>0?`<p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(rewardUnit)}</p>`:''}
+      ${/* nestly_v489 (owner, photo 5: "no points, why show these rewards, please sync!!!").
+           The cost printed the PAGE's unit, so on a firm running points a gift priced in STAMPS
+           read "5 points" — directly under a header saying the customer has 0 points. Both
+           statements were true and the pair was nonsense: the reward is a stamp-card gift the
+           customer had genuinely earned with 13 stamps.
+           customerRewardUnitV429 is the existing rule for exactly this — a reward that declares
+           its own unit outranks the caller's — and customerUnitNounV429 gets the singular right.
+           Nothing about WHICH rewards are listed changes here; v464 rule 7 (a stopped stamp
+           programme still lists what the customer can genuinely claim) is untouched. */''}
+      ${cost>0?`<p class="wallet-reward-cost customer-reward-cost-v339">${esc(customerPointTotalV103(cost))} ${esc(customerUnitNounV429(customerRewardUnitV429(r,rewardUnit),cost))}</p>`:''}
       ${customerRewardDescriptionV183(r.description)?`<p class="muted small" style="margin-top:7px">${esc(customerRewardDescriptionV183(r.description))}</p>`:''}
       ${/* nestly_v464 (owner ruling R3(e): "the customer sees the expiry date on each earned
            reward"). The server's date, printed with the same walletDate() the granted-entitlement

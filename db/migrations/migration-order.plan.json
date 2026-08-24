@@ -2445,6 +2445,12 @@
       "path": "db/migrations/20260824_nestly_v488_product_bundles_and_bottle_checkpoints.sql",
       "semanticVersion": "v488",
       "proposedDeployVersion": "20260824000006"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260824_nestly_v489_stamp_card_auto_rollover.sql",
+      "semanticVersion": "v489",
+      "proposedDeployVersion": "20260824000007"
     }
   ]
 }

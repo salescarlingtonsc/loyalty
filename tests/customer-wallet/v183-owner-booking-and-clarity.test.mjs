@@ -66,7 +66,9 @@ test('the offers shelf title is one icon-led line',()=>{
 test('a reward states the exchange — what it is, and what it costs',()=>{
   const rewards=section(app,'const loadRewards=async','const loadTransactions=');
   assert.match(rewards,/class="wallet-reward-trade customer-reward-name-v339">\$\{esc\(r\.customer_name\|\|'Reward'\)\}<\/b>/);
-  assert.match(rewards,/class="wallet-reward-cost customer-reward-cost-v339">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(rewardUnit\)\}<\/p>/);
+  /* nestly_v489: the cost prints the REWARD's own unit (owner, photo 5: "no points, why show
+     these rewards, please sync!!!") — a stamp gift on a points firm read "5 points". */
+  assert.match(rewards,/class="wallet-reward-cost customer-reward-cost-v339">\$\{esc\(customerPointTotalV103\(cost\)\)\} \$\{esc\(customerUnitNounV429\(customerRewardUnitV429\(r,rewardUnit\),cost\)\)\}<\/p>/);
   assert.doesNotMatch(rewards,/<span class="pill">\$\{esc\(customerPointTotalV103\(r\.cost_points\|\|0\)\)\}/,
     'the duplicate cost pill is gone now that the cost leads the line');
 });

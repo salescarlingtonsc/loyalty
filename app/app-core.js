@@ -4505,8 +4505,17 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const rewardName=String(reward?.name||'').trim();
   const sessions=Number(packages.sessions_remaining||0);
   const cost=reward?Math.max(0,Number(reward.cost_units)||0):0;
+  /* nestly_v489 (owner, photo 3: "Free Lotion ready to claim" struck out, "Next Available Reward:
+     Lotion" written beside it). The stamp hero has said "Next available Reward: X" since v422;
+     the points hero said something different about the same kind of fact, which is what let the
+     owner read a 0-points header and a "ready to claim" line as a contradiction.
+     One sentence for both heroes now. Readiness is NOT lost with the wording: the pill above
+     still carries the server's ready count (v397/v399) and the Claim reward button below is drawn
+     only when the server says the reward is claimable — so this line names the reward and the two
+     controls around it state whether it can be taken, which is the split the stamp hero already
+     uses. */
   const claimLine=rewardReady
-    ?`${rewardName||'Reward'} ready to claim`
+    ?`Next available Reward: ${rewardName||'Reward'}`
     :sessions>0?`${sessions} session${sessions===1?'':'s'} left`
     :subline;
   const progressLine=remaining>0
