@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 418,
-  "executableCount": 404,
+  "itemCount": 420,
+  "executableCount": 406,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -612,7 +612,7 @@
     },
     {
       "sourceDeployVersion": "20260825",
-      "count": 10,
+      "count": 12,
       "paths": [
         "db/migrations/20260825_nestly_v496_full_card_rolls_and_gifts_stack.sql",
         "db/migrations/20260825_nestly_v501_customer_sees_tier_benefits.sql",
@@ -623,7 +623,9 @@
         "db/migrations/20260825_nestly_v510_operating_system_crm_foundation.sql",
         "db/migrations/20260825_nestly_v511_work_operating_system.sql",
         "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql",
-        "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql"
+        "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql",
+        "db/migrations/20260825_nestly_v513_welcome_gift_on_every_signup.sql",
+        "db/migrations/20260825_nestly_v514_one_authority_for_on_means_live.sql"
       ]
     }
   ],
@@ -3971,6 +3973,22 @@
       "semanticVersion": "v512",
       "proposedDeployVersion": "20260825000010",
       "sha256": "5e0bbdf708c8db86230cc4e3c64921ae5ab7ebbf2697aa4387c745a66f83ec68"
+    },
+    {
+      "order": 419,
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v513_welcome_gift_on_every_signup.sql",
+      "semanticVersion": "v513",
+      "proposedDeployVersion": "20260825000011",
+      "sha256": "4ac4fa0a06953e2cb3ee7b7252e9c3333c6f328b28f5dea2b6f8715b3bf6f7f3"
+    },
+    {
+      "order": 420,
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v514_one_authority_for_on_means_live.sql",
+      "semanticVersion": "v514",
+      "proposedDeployVersion": "20260825000012",
+      "sha256": "1cf4e12514525216536d3299dda447ac226315bbfc1c10db1703dbde665081f9"
     }
   ]
 }

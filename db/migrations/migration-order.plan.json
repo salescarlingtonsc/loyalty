@@ -2523,6 +2523,18 @@
       "path": "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql",
       "semanticVersion": "v512",
       "proposedDeployVersion": "20260825000010"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v513_welcome_gift_on_every_signup.sql",
+      "semanticVersion": "v513",
+      "proposedDeployVersion": "20260825000011"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v514_one_authority_for_on_means_live.sql",
+      "semanticVersion": "v514",
+      "proposedDeployVersion": "20260825000012"
     }
   ]
 }

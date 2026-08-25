@@ -2518,6 +2518,18 @@
       "version": "20260825000010",
       "name": "nestly_v512_commercial_handoff_integrity",
       "sourcePath": "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000011",
+      "name": "nestly_v513_welcome_gift_on_every_signup",
+      "sourcePath": "db/migrations/20260825_nestly_v513_welcome_gift_on_every_signup.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000012",
+      "name": "nestly_v514_one_authority_for_on_means_live",
+      "sourcePath": "db/migrations/20260825_nestly_v514_one_authority_for_on_means_live.sql"
     }
   ]
 }
