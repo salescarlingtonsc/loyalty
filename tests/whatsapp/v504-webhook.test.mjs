@@ -278,8 +278,46 @@ test('the edge function is registered as public — Meta cannot present a JWT', 
 
 test('the endpoint never replies to a customer or calls the Meta send API', () => {
   // Phase scope, enforced rather than promised: this build receives only.
-  const source = readFileSync(resolve(ROOT, 'supabase/functions/whatsapp-webhook/index.ts'), 'utf8');
-  for (const forbidden of ['graph.facebook.com', '/messages', 'WHATSAPP_ACCESS_TOKEN']) {
-    assert.ok(!source.includes(forbidden), `${forbidden} is out of scope for the webhook foundation`);
+  //
+  // Reads the endpoint's WHOLE module graph, not just index.ts. The single-file
+  // version of this guard was vacuous: a `fetch('https://graph.facebook.com/...')`
+  // planted in _shared/whatsapp-webhook.ts — which index.ts imports on line 22 —
+  // left the suite 22/22 green. A scope fence that only inspects the entry point
+  // is not a fence.
+  const graph = [
+    'supabase/functions/whatsapp-webhook/index.ts',
+    'supabase/functions/_shared/whatsapp-webhook.ts',
+    'supabase/functions/_shared/whatsapp-webhook-boundaries.mjs',
+  ];
+  for (const file of graph) {
+    const source = readFileSync(resolve(ROOT, file), 'utf8');
+    for (const forbidden of ['graph.facebook.com', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID']) {
+      assert.ok(!source.includes(forbidden), `${forbidden} is out of scope for the webhook foundation (${file})`);
+    }
   }
+});
+
+test('the scope fence covers every file the endpoint actually imports', () => {
+  // Guards the guard: if a future edit adds a new local import to the webhook,
+  // this fails until that file is added to the graph above. Otherwise the fence
+  // silently stops covering the code it exists to cover.
+  const declared = new Set([
+    'supabase/functions/whatsapp-webhook/index.ts',
+    'supabase/functions/_shared/whatsapp-webhook.ts',
+    'supabase/functions/_shared/whatsapp-webhook-boundaries.mjs',
+  ]);
+  const seen = new Set();
+  const walk = (file) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    const source = readFileSync(resolve(ROOT, file), 'utf8');
+    for (const [, spec] of source.matchAll(/from\s+'(\.[^']+)'/g)) {
+      const resolved = resolve(dirname(resolve(ROOT, file)), spec)
+        .slice(resolve(ROOT).length + 1);
+      walk(resolved);
+    }
+  };
+  walk('supabase/functions/whatsapp-webhook/index.ts');
+  assert.deepEqual([...seen].sort(), [...declared].sort(),
+    'the webhook import graph changed — update the scope fence above to match');
 });
