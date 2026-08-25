@@ -682,7 +682,7 @@
   {
    "id": "db.fn:public.adjust_points/4",
    "surface": "db_function",
-   "latest_file": "20260813001400_nestly_v311_programme_money_kernel.sql",
+   "latest_file": "20260825000009_nestly_v512_adjust_follows_the_running_programme.sql",
    "rows_written": "points_batches:INSERT/UPDATE, points_ledger:INSERT",
    "detected_signals": "for-update",
    "entry_point": "adjust_points(p_business,p_client,p_points,p_reason) V173 (pause enforcement) re-created this function; the rows it writes are unchanged (points_batches INSERT/UPDATE, points_ledger INSERT), only the defining migration moved.",

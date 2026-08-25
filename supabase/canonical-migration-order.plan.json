@@ -2506,6 +2506,12 @@
       "version": "20260825000008",
       "name": "nestly_v511_work_operating_system",
       "sourcePath": "db/migrations/20260825_nestly_v511_work_operating_system.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000009",
+      "name": "nestly_v512_adjust_follows_the_running_programme",
+      "sourcePath": "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql"
     }
   ]
 }

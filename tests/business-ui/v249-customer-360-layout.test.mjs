@@ -87,7 +87,10 @@ test('V249/V294 the KPI tiles fold into the summary card and the identity line k
 test('V249 the expiry note and both collapsibles live inside the POINTS card, once each', () => {
   // Exactly one definition of each collapsible in the whole bundle — moved, not copied.
   assert.equal((app.match(/<summary>Balance and earning<\/summary>/g) || []).length, 1);
-  assert.equal((app.match(/<summary>Correct points balance<\/summary>/g) || []).length, 1);
+  /* nestly_v512: the summary follows the RUNNING unit — the control writes to whichever
+     programme is live, so a stamp-card business reads "Correct stamp balance". Matched as a
+     plain substring because the source now holds a template expression, not literal text. */
+  assert.equal(app.split('Correct ${esc(unit==="stamps"?"stamp":"points")} balance').length - 1, 1);
   assert.equal((app.match(/id="adjV"/g) || []).length, 1);
   assert.equal((app.match(/id="adjGo"/g) || []).length, 1);
   assert.equal((app.match(/c360-points-expiry/g) || []).length, 1);
@@ -97,8 +100,8 @@ test('V249 the expiry note and both collapsibles live inside the POINTS card, on
   assert.ok(panelStart > 0, 'the moved collapsibles are assigned to the points panel');
   const panel = profile.slice(panelStart, profile.indexOf('  }else{', panelStart));
   assert.match(panel, /<summary>Balance and earning<\/summary>/);
-  assert.match(panel, /<summary>Correct points balance<\/summary>/);
-  assert.ok(panel.indexOf('Balance and earning') < panel.indexOf('Correct points balance'),
+  assert.ok(panel.includes('Correct ${esc(unit==="stamps"?"stamp":"points")} balance'), "the adjust collapsible is inside the points panel");
+  assert.ok(panel.indexOf('Balance and earning') < panel.indexOf('} balance</summary>'),
     'balance and earning comes first, as drawn');
   // Their handlers and gates are untouched: owner-only, loyalty-write-only adjustment.
   assert.match(panel, /S\.myRole==='owner'&&canWriteLoyalty\?`<details/);
