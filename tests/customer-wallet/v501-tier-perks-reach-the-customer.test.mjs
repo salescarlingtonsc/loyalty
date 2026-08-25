@@ -88,13 +88,20 @@ test('v501 an unlimited perk claims no deadline and no dwindling count', () => {
   assert.doesNotMatch(html, /data-tier-perk-remaining-v501/);
 });
 
-test('v501 the card promises the counter, not a QR button it does not have', () => {
-  /* A perk is applied by staff once they have the customer on screen — which they get from the
-     member QR this same wallet already shows. Drawing a redeem QR here would be a button that
-     leads nowhere, the same reasoning v429 applied to granted entitlements. */
+test('v515 a metered perk carries its own QR; an unlimited one stays automatic', () => {
+  /* nestly_v515 REVERSED the v501 ruling above (owner, 2026-08-25: "all rewards and gifts must
+     have a qrcode tagged to it for customer to press and let business scan"). A perk with a real
+     allowance now mints customer_create_gift_intent_v515 against its benefit_id and staff scan it
+     through to staff_issue_tier_benefit_v365 — the same writer the till's Give button calls.
+     An UNLIMITED perk deliberately keeps NO button: evaluate_checkout already applies it at
+     payment, so a QR would burn an issue record for an unmetered benefit and risk double
+     application. The server enforces the same rule, so this is not a browser-only decision. */
   const html = harness.card(goldPerk);
-  assert.match(html, /Show your member QR at the counter — staff apply it to your bill\./);
-  assert.doesNotMatch(html, /data-customer-redeem/, 'no redemption-intent button on a perk card');
+  assert.match(html, /data-customer-gift-redeem="tier_perk:/, 'a metered perk offers its QR');
+  assert.doesNotMatch(html, /data-customer-redeem=/, 'never the catalogue redemption contract');
+  const unlimited = harness.card({ ...goldPerk, remaining: null });
+  assert.doesNotMatch(unlimited, /data-customer-gift-redeem/, 'an unlimited perk offers no QR');
+  assert.match(unlimited, /Applied automatically at payment/);
 });
 
 test('v501 the window noun and the heading read as English, and degrade safely', () => {

@@ -785,18 +785,26 @@ function redemptionPayloadFromQr(value,currentUrl=location.href){
      of four codes a customer is holding before choosing a control. */
   const memberPrefixed=raw.match(/^nestly:member:([A-Za-z0-9_-]{20,512})$/i);
   if(memberPrefixed)return {kind:'member',token:memberPrefixed[1]};
+  /* nestly_v515 (owner: "all rewards and gifts must have a qrcode tagged to it"). ONE new kind,
+     not four: a welcome gift, a bring-back voucher, a referral gift and a tier perk all mint the
+     same intent and the SERVER dispatches to the right redeemer. The counter never has to know
+     which family it is holding — the same rule the member prefix above was added under. */
+  const giftPrefixed=raw.match(/^nestly:gift:([A-Za-z0-9_-]{20,512})$/i);
+  if(giftPrefixed)return {kind:'gift',token:giftPrefixed[1]};
   try{
     const url=new URL(raw,currentUrl);
     const hashParams=new URLSearchParams((url.hash.split('?')[1]||''));
     const growthToken=url.searchParams.get('growth_token')||hashParams.get('growth_token')||'';
     const promotionToken=url.searchParams.get('promotion_token')||hashParams.get('promotion_token')||'';
-    const token=growthToken||promotionToken||url.searchParams.get('redemption')||url.searchParams.get('token')
+    const giftToken=url.searchParams.get('gift_token')||hashParams.get('gift_token')||'';
+    const token=growthToken||promotionToken||giftToken||url.searchParams.get('redemption')||url.searchParams.get('token')
       ||hashParams.get('redemption')||hashParams.get('token')||'';
     if(!/^[A-Za-z0-9_-]{20,512}$/.test(token))return {kind:'',token:''};
     const hashPath=(url.hash.split('?')[0]||'').toLowerCase();
     const kind=promotionToken||hashPath==='#/promotion-redeem'
       ?'promotion'
-      :growthToken||hashPath==='#/growth-redeem'?'growth':'classic';
+      :growthToken||hashPath==='#/growth-redeem'?'growth'
+      :giftToken||hashPath==='#/gift-redeem'?'gift':'classic';
     return {kind,token};
   }catch{return {kind:'',token:''}}
 }
@@ -954,6 +962,16 @@ function openMerchantRedemptionScanner({
       ?await sb.rpc('redeem_growth_offer_v108',{
         p_business:businessId,p_token:token,p_sale:saleId,p_idempotency_key:redemptionAttempt.key
       })
+      /* nestly_v515: a welcome gift, bring-back voucher, referral gift or tier perk. ONE arm —
+         staff_scan_gift_qr_v515 reads the intent it minted and routes to the matching redeemer,
+         each of which re-checks its OWN permission predicate, so the counter's authorisation
+         rules are preserved per kind rather than flattened into this one call. p_sale is passed
+         because a min-spend welcome gift is settled against a real recorded sale. */
+      :payload.kind==='gift'
+      ?await sb.rpc('staff_scan_gift_qr_v515',{
+        p_business:businessId,p_branch:branchId,p_qr_token:token,
+        p_sale:saleId||null,p_idempotency_key:redemptionAttempt.key
+      })
       :await sb.rpc('merchant_scan_redemption_qr_v117',{
         p_business:businessId,p_branch:branchId,p_qr_token:token,
         p_idempotency_key:redemptionAttempt.key
@@ -969,6 +987,12 @@ function openMerchantRedemptionScanner({
         ?'This offer could not be accepted. It may have expired, or it belongs to another business.'
       :payload.kind==='growth'
         ?'This offer could not be confirmed. Check that it belongs to this customer and purchase, and that it has not expired or already been used.'
+      :payload.kind==='gift'
+        ?(String(error.message||'').includes('qualifying sale')
+          ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
+          :String(error.message||'').includes('period rolled over')
+          ?'This perk\u2019s period has rolled over. Ask the customer to show a fresh QR.'
+          :'This gift could not be given. It may have expired, already been used, or belong to another business.')
         :'This redemption could not be confirmed. It may be expired, already used, or for another business.';return}
     if(payload.kind==='promotion'&&data?.status==='already_redeemed'){
       status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;

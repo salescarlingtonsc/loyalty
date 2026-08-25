@@ -325,7 +325,13 @@ test('index integrates all v108 owner and customer RPCs without changing classic
   assert.match(module,/dismiss_growth_recommendation_v108/);
   assert.match(index,/customer_get_growth_offers_v108/);
   assert.match(module,/customer_prepare_growth_offer_qr_v108/);
-  assert.match(index,/publicAppUrl\(`redeem\?token=/);
+  /* nestly_v515 parameterised showPendingRedemptionQr so gift QRs could reuse it. The classic
+     route must still be what a catalogue redemption gets, so this asserts the DEFAULT rather than
+     a literal that a refactor can move: qrRoute defaults to 'redeem', and the URL is built from
+     it. A default slip here would point catalogue QRs at the gift route and break every catalogue
+     redemption — the highest-severity regression in that change. */
+  assert.match(index,/qrRoute='redeem'/, "the catalogue QR route must remain the default");
+  assert.match(index,/publicAppUrl\(`\$\{qrRoute\}\?token=/);
   assert.match(index,/showGrowthOfferQr/);
   assert.match(index,/buildGrowthRedeemUrl/);
 });

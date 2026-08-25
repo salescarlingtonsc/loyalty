@@ -2541,6 +2541,18 @@
       "path": "db/migrations/20260825_nestly_v513_onboarding_next_actor_and_review.sql",
       "semanticVersion": "v513",
       "proposedDeployVersion": "20260825000013"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v515_a_qr_on_every_gift.sql",
+      "semanticVersion": "v515",
+      "proposedDeployVersion": "20260825000014"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v516_stamp_qr_asks_the_availability_core.sql",
+      "semanticVersion": "v516",
+      "proposedDeployVersion": "20260825000015"
     }
   ]
 }

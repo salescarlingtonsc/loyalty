@@ -349,7 +349,13 @@ function showCustomerPackageQrV347({item={},businessName='',onClose=()=>{}}={}){
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerPackageQrDone'});
 }
-function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}={}){
+/* nestly_v515: the SAME dialog now serves gift QRs. Parameterised, never forked — the three
+   defaults below reproduce the catalogue behaviour byte for byte, because a slip here would point
+   a catalogue QR at the gift route and the scanner would refuse every catalogue redemption. */
+function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{},
+  qrRoute='redeem',
+  pollRpc='customer_get_redemption_intent_v89',
+  cancelRpc='customer_cancel_redemption_intent_v89'}={}){
   const token=String(intent?.qr_token||'');
   if(!token)return;
   activeCustomerRedemptionCleanup({restoreFocus:false});
@@ -362,7 +368,7 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     <p class="muted small" id="customerRedemptionQrStatus" role="status" aria-live="polite" style="margin-top:10px">Your points are not redeemed until the business scans and confirms this QR.${intent?.expires_at?` <span id="customerRedemptionCountdown">${esc(redemptionCountdownText(intent.expires_at))}</span>.`:''}</p>
     <div class="row" style="margin-top:16px"><button class="btn danger" id="customerRedemptionQrCancel" type="button">Cancel redemption</button><button class="btn ghost" id="customerRedemptionQrDone" type="button">Close — keep pending</button></div></section>`;
   document.body.appendChild(overlay);
-  const qrValue=publicAppUrl(`redeem?token=${encodeURIComponent(token)}`);
+  const qrValue=publicAppUrl(`${qrRoute}?token=${encodeURIComponent(token)}`);
   void loadQrLibrary().then(()=>new QRCode(overlay.querySelector('#customerRedemptionQr'),{text:qrValue,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}))
     .catch(()=>{
       const status=overlay.querySelector('#customerRedemptionQrStatus');
@@ -433,7 +439,13 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
       return;
     }
     pollInFlight=(async()=>{
-      const {data,error}=await sb.rpc('customer_get_redemption_intent_v89',{p_intent:intent.intent_id});
+      /* Both names are written out LITERALLY on purpose. Passing the RPC name through a
+         variable hid two call sites from scripts/ps0/discover-writers.mjs, and a browser RPC the
+         writer registry cannot see is exactly what that registry exists to prevent. One dialog,
+         two visible call sites. */
+      const {data,error}=await (pollRpc==='customer_get_gift_intent_v515'
+        ?sb.rpc('customer_get_gift_intent_v515',{p_intent:intent.intent_id})
+        :sb.rpc('customer_get_redemption_intent_v89',{p_intent:intent.intent_id}));
       if(closed||terminal)return;
       if(error){
         if(afterCancellationFailure){
@@ -481,10 +493,11 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{}}
     const status=overlay.querySelector('#customerRedemptionQrStatus');
     status.textContent='Cancelling this redemption…';
     const slot='nestly.customer.cancelRedemption';
-    const {data,error}=await sb.rpc('customer_cancel_redemption_intent_v89',{
-      p_intent:intent.intent_id,
-      p_idempotency_key:writeAttemptKey(slot,String(intent.intent_id))
-    });
+    const cancelArgs={p_intent:intent.intent_id,
+      p_idempotency_key:writeAttemptKey(slot,String(intent.intent_id))};
+    const {data,error}=await (cancelRpc==='customer_cancel_gift_intent_v515'
+      ?sb.rpc('customer_cancel_gift_intent_v515',cancelArgs)
+      :sb.rpc('customer_cancel_redemption_intent_v89',cancelArgs));
     if(!overlay.isConnected)return;
     if(error){
       await reconcileRedemptionState({afterCancellationFailure:true});
@@ -6716,6 +6729,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       ${expires?`<p class="muted small" style="margin-top:5px">Use it by ${esc(expires)}</p>`:''}
       ${floor?`<p class="muted small" style="margin-top:5px">${esc(floor)}</p>`:''}
       ${instructions?`<p class="muted small" style="margin-top:7px">${esc(instructions)}</p>`:''}
+      ${/* nestly_v515 (owner: "all rewards and gifts must have a qrcode tagged to it for customer
+           to press and let business scan"). The comment above this card used to explain why there
+           was no QR here — that a grant is redeemed by staff, so a button would lead nowhere. It
+           leads somewhere now: customer_create_gift_intent_v515 mints an intent against this
+           grant id and staff_scan_gift_qr_v515 routes the scan to the very same
+           staff_redeem_* function the till's Give button calls, with its own permission
+           predicate intact. The Give button stays: this adds a second door, it does not close
+           the first. */''}
+      ${grant?.id?`<div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-gift-redeem="${esc(String(grant?.source||''))}:${esc(String(grant.id))}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div>`:''}
       </article>`;
     };
     /* nestly_v501: a tier PERK card. Deliberately not an entitlementCardV429 with fields renamed:
@@ -6772,7 +6794,16 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(sentence)}</b>
       ${statusV502}
       ${dateLineV502}
-      ${claimableV502?'<p class="muted small" style="margin-top:7px">Show your member QR at the counter — staff apply it to your bill.</p>':''}
+      ${/* nestly_v515: a METERED perk gets its own QR. An unlimited one deliberately does not —
+           evaluate_checkout already applies it at payment (tillAutoTierDiscountV373), so a QR
+           would both burn an issue record for a benefit with no limit and risk the discount being
+           applied twice. That is the owner's ruling of 2026-08-25, and the server enforces it too:
+           customer_create_gift_intent_v515 refuses an unlimited perk with "applied automatically
+           at payment". A spent or out-of-birthday-month perk keeps its greyed state and no button,
+           because the counter would refuse it. */''}
+      ${claimableV502&&perk?.benefit_id&&Number.isFinite(Number(remaining))&&remaining!==null
+        ?`<div class="wallet-reward-actions"><button class="btn sm" type="button" data-customer-gift-redeem="tier_perk:${esc(String(perk.benefit_id))}">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div>`
+        :claimableV502?'<p class="muted small" style="margin-top:7px">Applied automatically at payment — no need to show anything.</p>':''}
       </div></article>`;
     };
     /* The server's own list, in the server's own order (soonest to lapse first). An error or an
@@ -6826,7 +6857,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
              a customer holding a welcome gift has plainly got something to claim. */''}
         ${entitlementsV429.length
           ?`<div class="customer-rewards-carousel-head-v337" style="margin-top:14px"><h3>Given to you</h3></div>
-            <p class="muted small customer-programme-rewards-lede">Nothing to scan — staff apply these at the counter.</p>
+            <p class="muted small customer-programme-rewards-lede">Show the QR on a gift and staff will scan it.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337" data-customer-entitlements-v429>${entitlementsV429.map(entitlementCardV429).join('')}</div>`
           :''}
         ${/* nestly_v501: LAST, under its own heading. A perk is not a gift the counter owes and not
@@ -6834,7 +6865,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
              every window, so it reads as its own group rather than being folded into either. */''}
         ${tierPerksV501.length
           ?`<div class="customer-rewards-carousel-head-v337" style="margin-top:14px"><h3>${esc(tierPerkHeadingV501(tierPerkResultV501?.data?.tier?.label))}</h3></div>
-            <p class="muted small customer-programme-rewards-lede">Yours for as long as you hold this tier — staff apply them at the counter.</p>
+            <p class="muted small customer-programme-rewards-lede">Yours for as long as you hold this tier. Show the QR where there is one; the rest apply automatically at payment.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337" data-customer-tier-perks-v501>${tierPerksV501.map(tierPerkCardV501).join('')}</div>`
           :''}
       </div>
@@ -7026,11 +7057,57 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       if(lineV339){claimValidityNodeV339.textContent=lineV339;claimValidityNodeV339.hidden=false}
     }
     let redemptionAttempt=null;
+    let giftAttemptV515=null;  /* nestly_v515: its own key, so a gift retry never collides with a catalogue retry */
     /* nestly_v397: the hero swipe's "Redeem now" carries the same data-customer-redeem contract,
        so it is wired HERE rather than growing a second redemption path. It lives outside #walletRewards,
        hence the second query. Each button restores its OWN label afterwards — the hero says
        "Redeem now", the list says "Show QR at counter", and the shared handler must not
        overwrite one with the other. */
+    /* nestly_v515: the GIFT button is wired by its own handler, deliberately NOT by widening the
+       `rewards.find(...)` lookup below. That lookup resolves catalogue rewards by action_key; a
+       grant or a perk is not in that array, so widening it would either return undefined and
+       fall into the silent `if(!reward)return` — a button that visibly does nothing, the exact
+       failure this wave was reported for — or force a fake reward shape through the catalogue
+       path. One button, one contract, one RPC, and the SERVER decides which of the four gift
+       families it is. */
+    host.querySelectorAll('[data-customer-gift-redeem]').forEach(button=>{
+      button.onclick=async()=>{
+        if(button.disabled)return;
+        const [giftKind,targetId]=String(button.dataset.customerGiftRedeem||'').split(':');
+        if(!giftKind||!targetId)return toast('This gift could not be prepared. Reload and try again.');
+        const restore=button.querySelector('span')?.textContent||'Show QR at counter';
+        if(!giftAttemptV515||giftAttemptV515.target!==targetId){
+          giftAttemptV515={target:targetId,key:crypto.randomUUID()};
+        }
+        button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
+        const {data:intent,error}=await sb.rpc('customer_create_gift_intent_v515',{
+          p_business:businessId,p_gift_kind:giftKind,p_target:targetId,
+          p_idempotency_key:giftAttemptV515.key});
+        if(!isWalletSectionCurrent(host)||!button.isConnected)return;
+        button.disabled=false;button.querySelector('span').textContent=restore;
+        if(error){
+          /* The server's own sentence when it is one the customer can act on; a generic line
+             otherwise. Never a silent return — that is what made the old buttons look broken. */
+          const message=String(error.message||'');
+          toast(error.code==='PGRST202'||error.code==='42883'
+            ?'Gift QRs need the latest Peekaa service update.'
+            :message.includes('used this perk')||message.includes('birthday month')
+              ||message.includes('applied automatically')||message.includes('not available')
+              ?message.charAt(0).toUpperCase()+message.slice(1)
+              :'This gift could not be prepared right now. Please try again.');
+          return;
+        }
+        if(!intent?.qr_token){
+          toast('This gift could not be prepared right now. Please try again.');return;
+        }
+        showPendingRedemptionQr({intent,businessName:b.name,
+          rewardName:intent.reward_label||'Your gift',
+          qrRoute:'gift-redeem',
+          pollRpc:'customer_get_gift_intent_v515',
+          cancelRpc:'customer_cancel_gift_intent_v515',
+          onClose:()=>{giftAttemptV515=null;loadRewards();void customerCounterMomentV468()}});
+      };
+    });
     [...host.querySelectorAll('[data-customer-redeem]'),
      ...(heroRootV397.querySelectorAll('[data-hero-swipe-v395] [data-customer-redeem]')||[])
     ].forEach(button=>button.onclick=async()=>{

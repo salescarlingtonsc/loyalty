@@ -2536,6 +2536,18 @@
       "version": "20260825000013",
       "name": "nestly_v513_onboarding_next_actor_and_review",
       "sourcePath": "db/migrations/20260825_nestly_v513_onboarding_next_actor_and_review.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000014",
+      "name": "nestly_v515_a_qr_on_every_gift",
+      "sourcePath": "db/migrations/20260825_nestly_v515_a_qr_on_every_gift.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000015",
+      "name": "nestly_v516_stamp_qr_asks_the_availability_core",
+      "sourcePath": "db/migrations/20260825_nestly_v516_stamp_qr_asks_the_availability_core.sql"
     }
   ]
 }
