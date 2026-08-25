@@ -42,7 +42,9 @@ test('appointment change is a labelled keyboard-complete modal', () => {
   assert.match(source, /<label for="walletChangeAt">/);
   assert.match(source, /<label for="walletChangeNote">/);
   assert.match(source, /CUI\.activateDialog\(modal,\{onClose:close,initialFocus:'#walletChangeKind'\}\)/);
-  assert.match(source, /close\(\);toast\('Request sent to the business'\)/);
+  /* nestly_v509: 'Choose another time' became a REPLACING reschedule (v508), so the close+toast
+     line branches on kind. Both outcomes still close first and speak second. */
+  assert.match(source, /close\(\);toast\(kind==='reschedule'\?'Request sent — the business will confirm your new time\.':'Request sent to the business'\)/);
 });
 
 test('public booking uses semantic choices, safe contrast and the exact result host', () => {

@@ -39,17 +39,25 @@ test('an upcoming booked appointment offers Change, under both of the wallet gat
   assert.equal(changeAction(ongoingGroup, { ...upcoming, appointment_id: '' }, true), false);
 });
 
-test('the Bookings page renders and wires the existing wallet change control', () => {
-  /* V344 moved the row markup into its own renderer (customerBookingAppointmentRowV344) above the
-     page function, so it is matched against the file rather than the page slice. The contract is
-     unchanged: the Change button appears only when customerBookingChangeActionV286 says so, and it
-     carries its own appointment id and business slug. */
-  assert.match(appJs, /const action=customerBookingChangeActionV286\(group,item,changesFeatureEnabled\)\s*\n\s*\?`<button class="btn ghost sm walletChange" type="button" data-id="\$\{esc\(item\.appointment_id\)\}" data-business-slug="\$\{esc\(group\.business_slug\)\}">Change<\/button>`/);
-  assert.match(bookings, /const changesFeatureEnabled=context\.features\.customer_actions===true;/);
-  assert.match(bookings, /wireWalletAppointmentActions\('',\{onDone:\(\)=>renderCustomerBookings\(\)\}\)/,
-    'every Change button carries its own slug, and a sent request repaints the page');
-  // No new server surface: the same RPC the wallet already calls.
-  assert.match(appJs, /sb\.rpc\('customer_request_appointment_action',\{\s*p_business_slug:button\.dataset\.businessSlug\|\|businessSlug/);
+test('the Bookings page renders and wires the replacing Reschedule control', () => {
+  /* nestly_v509 (owner photo 3): the ongoing row's control is Reschedule, and reschedule means
+     REPLACE — customer_reschedule_appointment_v508 cancels the booked appointment and files a
+     fresh pending request in one transaction. The old v286 "Change" button (a v33 amendment the
+     appointment waited on) is gone from these rows; the wallet sheet's cancel path keeps v33. */
+  assert.match(appJs, /const rescheduleV508=group\.bookingEnabled===true&&!!group\.business_slug&&!!item\.appointment_id\s*\n\s*&&String\(item\.status\|\|''\)==='booked'&&tab==='bookings';/);
+  assert.match(appJs, /const action=rescheduleV508\s*\n\s*\?`<button class="btn ghost sm" type="button" data-reschedule-v508="\$\{esc\(item\.appointment_id\)\}" data-business-slug="\$\{esc\(group\.business_slug\)\}" data-starts-at="\$\{esc\(item\.starts_at\|\|''\)\}">Reschedule<\/button>`/);
+  assert.doesNotMatch(appJs, /class="btn ghost sm walletChange" type="button" data-id="\$\{esc\(item\.appointment_id\)\}"[^`]*>Change</,
+    'the amendment-style Change button must not return to the Bookings rows');
+  // The page wires every Reschedule button to the replace sheet, and a sent request repaints.
+  assert.match(bookings, /data-reschedule-v508\]'\)\.forEach\(button=>\{/);
+  assert.match(bookings, /openRescheduleReplaceSheetV508\(\{/);
+  assert.match(bookings, /onDone:\(\)=>renderCustomerBookings\(\)/);
+  // The sheet says what Send does before it is pressed, and calls the v508 replace RPC.
+  assert.match(appJs, /Your current appointment is removed straight away\./);
+  assert.match(appJs, /sb\.rpc\('customer_reschedule_appointment_v508',\{\s*p_business_slug:businessSlug,p_appointment:appointmentId/);
+  const changesFeature=bookings.includes("const changesFeatureEnabled=context.features.customer_actions===true;");
+  assert.equal(changesFeature, true, 'the customer_actions feature flag is still read for the wallet cancel path');
+  assert.match(bookings, /wireWalletAppointmentActions\('',\{onDone:\(\)=>renderCustomerBookings\(\)\}\)/);
   assert.match(bookings, /appointment_changes_enabled:!response\.error&&response\.data\?\.appointment_changes\?\.enabled===true/);
   const compose = section(appJs, 'function composeCustomerBookingGroups', 'const CUSTOMER_BOOKING_TABS_V178');
   assert.match(compose, /group\.appointmentChangesEnabled=card\?\.appointment_changes_enabled===true;/);

@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 369,
-  "itemCount": 414,
+  "pendingCount": 370,
+  "itemCount": 415,
   "items": [
     {
       "order": 1,
@@ -4147,6 +4147,16 @@
       "path": "supabase/migrations/20260825000005_nestly_v507_a_business_is_born_live.sql",
       "octetLength": 5353,
       "sha256": "afe2febfe3f55156fffe775034d87aec6f374ea0c2be82ab06287de71a6c5a89",
+      "provenance": "local-source"
+    },
+    {
+      "order": 415,
+      "kind": "pending",
+      "version": "20260825000006",
+      "name": "nestly_v508_reschedule_is_a_fresh_request",
+      "path": "supabase/migrations/20260825000006_nestly_v508_reschedule_is_a_fresh_request.sql",
+      "octetLength": 9261,
+      "sha256": "dcb3cf61d345fce0391782784cf096f7d8a2a5967dfd50ebe42975f5f84f1a04",
       "provenance": "local-source"
     }
   ]

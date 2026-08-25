@@ -2103,6 +2103,13 @@
    "kernel_migratability": "unaffected - a projection refresh, not an economic write; nothing for the kernel to own",
    "call_site_finding": "OK - zero-argument call; v286 routed it through customerRpc (12s abort) which is what made the literal name discoverable. The call itself is unchanged since v177."
   },
+ {
+  "id": "browser.rpc:app/app.js:customer_reschedule_appointment_v508",
+  "surface": "browser_rpc_binding",
+  "rpc": "customer_reschedule_appointment_v508",
+  "resolves_to": "customer_reschedule_appointment_v508/4 (authenticated customer, verified link derived from auth.uid(); nestly_v509 UI). ONE transaction: cancels the caller's own booked future appointment and inserts a fresh 'pending' booking_requests row plus the app.booking_management_tokens row that makes it visible/withdrawable — the owner's 2026-08-25 ruling that reschedule is a fresh request the business approves, never an amendment the old appointment waits on. Writes appointments.status, booking_requests, app.booking_management_tokens and audit_log; none is a VALUE_TABLE, so no value impact. Rides app.v89_customer_booking_gate (business booking switch + open workspace) on the request insert.",
+  "call_site_finding": "none — new time validated future server-side; atomicity is the idempotency (a replay finds the appointment no longer 'booked' and is refused already_actioned); 5-per-15-min throttle per client; audit_log'd"
+ },
   {
    "id": "browser.rpc:app/app.js:customer_withdraw_booking_request_v290",
    "surface": "browser_rpc_binding",

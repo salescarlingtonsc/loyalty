@@ -203,7 +203,11 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
   assert.match(bookings,/customer_list_programmes_v89/);
   assert.match(bookings,/customer_get_business_actions_v89/);
   assert.match(bookings,/response\.data\?\.booking\?\.enabled===true/);
-  assert.match(bookings,/group\.bookingEnabled&&group\.business_slug[\s\S]*ct\('Book again'\)/);
+  /* nestly_v509 (owner photo 3): the header "Rebook" button is GONE — it filed a brand-new
+     request while the old booking stayed. The header now carries only the Open programme link,
+     and re-timing an ongoing booking is the row's own Reschedule (replace semantics). */
+  assert.doesNotMatch(bookings,/group\.bookingEnabled&&group\.business_slug\?`<button[^`]*Book again/);
+  assert.match(bookings,/group\.business_slug\?`<a class="btn ghost sm" href="#\/wallet\/\$\{encodeURIComponent\(group\.business_slug\)\}">\$\{esc\(ct\('Open programme'\)\)\}<\/a>`:''/);
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{

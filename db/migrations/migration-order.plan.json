@@ -2493,6 +2493,12 @@
       "path": "db/migrations/20260825_nestly_v507_a_business_is_born_live.sql",
       "semanticVersion": "v507",
       "proposedDeployVersion": "20260825000005"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v508_reschedule_is_a_fresh_request.sql",
+      "semanticVersion": "v508",
+      "proposedDeployVersion": "20260825000006"
     }
   ]
 }

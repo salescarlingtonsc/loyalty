@@ -4515,6 +4515,13 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   const claimLine=rewardReady
     ?`Next available Reward: ${rewardName||'Reward'}`
     :sessions>0?`${sessions} session${sessions===1?'':'s'} left`
+    /* nestly_v509 (owner, photos 1+2: "why is there a discrepancies?"). The ready card named the
+       gift ("Next available Reward: Free Lotion") while the not-ready card fell back to `subline`
+       — the SAME distance sentence the pill above already carries — so a 0-point customer read
+       "10 points to reward" twice and never learned WHAT they were earning toward. The v489 rule
+       ("one sentence for both heroes") now holds in both states: this line names the reward
+       whenever the server names one, and the pill + progressLine keep stating the distance. */
+    :rewardName?`Next available Reward: ${rewardName}`
     :subline;
   const progressLine=remaining>0
     ?`${customerPointTotalV103(remaining)} ${unit==='stamps'?'stamps':unitLabel} to next reward`

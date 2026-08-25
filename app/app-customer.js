@@ -1805,8 +1805,16 @@ function customerBookingDateTileV344(value){
 }
 function customerBookingAppointmentRowV344(group,item,changesFeatureEnabled=false){
   const tab=customerBookingAppointmentTabV178(item);
-  const action=customerBookingChangeActionV286(group,item,changesFeatureEnabled)
-    ?`<button class="btn ghost sm walletChange" type="button" data-id="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}">Change</button>`
+  /* nestly_v509 (owner photo 3): an ongoing booked row offers Reschedule, and reschedule means
+     REPLACE — customer_reschedule_appointment_v508 cancels this appointment and files a fresh
+     pending request the business approves or rejects, in one transaction. The old "Change"
+     control (v286) filed a v33 amendment request that left the appointment booked until the
+     business approved it, which is exactly the shape the owner struck out. Gated on the
+     business's own booking switch, because a reschedule IS a booking. */
+  const rescheduleV508=group.bookingEnabled===true&&!!group.business_slug&&!!item.appointment_id
+    &&String(item.status||'')==='booked'&&tab==='bookings';
+  const action=rescheduleV508
+    ?`<button class="btn ghost sm" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>`
     :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
       ?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book again'))}</button>`
       :`<span class="pill ${tab==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
@@ -1996,7 +2004,10 @@ async function renderCustomerBookings(){
     ${currentBookingTab==='bookings'?customerBookingChooserV291(allGroups):''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${group.bookingEnabled&&group.business_slug?`<button class="btn sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${esc(ct('Book again'))}</button>`:group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
+    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
+       filed a brand-new request while the old booking stayed — two live bookings for one visit.
+       Rebooking a PAST visit keeps its own "Book again" on history rows; an ONGOING booking is
+       re-timed through the row's Reschedule, which replaces rather than duplicates. */''}${group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
       ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
     </section>`).join('')}</div>`
@@ -2069,6 +2080,16 @@ async function renderCustomerBookings(){
         toast('Request withdrawn');
         renderCustomerBookings();
       };
+    });
+    /* nestly_v509: Reschedule = replace. One sheet, one RPC, one transaction on the server —
+       the booked appointment is cancelled and a fresh pending request appears in this same list,
+       with the business approving or rejecting the new time exactly as it does a portal request. */
+    $('walletBody').querySelectorAll('[data-reschedule-v508]').forEach(button=>{
+      button.onclick=()=>openRescheduleReplaceSheetV508({
+        appointmentId:button.dataset.rescheduleV508,
+        businessSlug:button.dataset.businessSlug,
+        startsAt:button.dataset.startsAt,
+        onDone:()=>renderCustomerBookings()});
     });
     /* v286: no page-wide slug here — every Change button carries its own business. A sent request
        repaints the page so the row reflects what the business will now see, rather than leaving a
@@ -2755,7 +2776,8 @@ function wireWalletAppointmentActions(businessSlug,{onDone=null}={}){
     modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','walletChangeTitle');
     modal.innerHTML=`<div class="modal-card"><div class="row"><h2 id="walletChangeTitle">Change appointment</h2><span class="spacer"></span><button class="btn ghost sm" id="walletChangeClose" aria-label="Close change appointment">Close</button></div>
       <label for="walletChangeKind">Request</label><select id="walletChangeKind"><option value="cancel">Cancel appointment</option><option value="reschedule">Choose another time</option></select>
-      <div id="walletChangeTime" hidden><label for="walletChangeAt">Preferred new time</label><input id="walletChangeAt" type="datetime-local"></div>
+      <div id="walletChangeTime" hidden><label for="walletChangeAt">Preferred new time</label><input id="walletChangeAt" type="datetime-local">
+      <p class="muted small" style="margin-top:6px">Choosing another time sends a fresh booking request and removes this appointment straight away. The business confirms the new time.</p></div>
       <label for="walletChangeNote">Note (optional)</label><textarea id="walletChangeNote" rows="3" maxlength="750"></textarea>
       <button class="btn" id="walletChangeSend" style="width:100%;margin-top:16px">Send request</button></div>`;
     document.body.appendChild(modal);
@@ -2768,17 +2790,69 @@ function wireWalletAppointmentActions(businessSlug,{onDone=null}={}){
       const kind=$('walletChangeKind').value,local=$('walletChangeAt').value;
       if(kind==='reschedule'&&!local)return toast('Choose a new time');
       $('walletChangeSend').disabled=true;
-      const {error}=await sb.rpc('customer_request_appointment_action',{
-        p_business_slug:button.dataset.businessSlug||businessSlug,p_appointment:button.dataset.id,p_action:kind,
-        p_proposed_at:kind==='reschedule'?sgIso(local):null,
-        p_note:$('walletChangeNote').value.trim()||null,p_idempotency_key:crypto.randomUUID()});
+      /* nestly_v509: 'Choose another time' now means what the Bookings page's Reschedule means —
+         a fresh request that REPLACES the appointment (customer_reschedule_appointment_v508),
+         not a v33 amendment the appointment waits on. Two doors, one behaviour. Cancel keeps the
+         v33 approval path: cancelling is the business's decision to acknowledge, rescheduling is
+         the customer declaring the old slot dead and proposing a new one. */
+      const {error}=kind==='reschedule'
+        ?await sb.rpc('customer_reschedule_appointment_v508',{
+            p_business_slug:button.dataset.businessSlug||businessSlug,p_appointment:button.dataset.id,
+            p_preferred_at:sgIso(local),p_note:$('walletChangeNote').value.trim()||null})
+        :await sb.rpc('customer_request_appointment_action',{
+            p_business_slug:button.dataset.businessSlug||businessSlug,p_appointment:button.dataset.id,p_action:kind,
+            p_proposed_at:null,
+            p_note:$('walletChangeNote').value.trim()||null,p_idempotency_key:crypto.randomUUID()});
       if(error){$('walletChangeSend').disabled=false;return toast('The change could not be saved. Please try again.')}
-      close();toast('Request sent to the business');
+      close();toast(kind==='reschedule'?'Request sent — the business will confirm your new time.':'Request sent to the business');
       if(typeof onDone==='function')onDone();
     };
   });
 }
 
+/* nestly_v509 (owner photo 3). The reschedule sheet: one new time, one optional note, one
+   explicit sentence about what pressing Send does — because what it does is IRREVERSIBLE for the
+   old slot. Same modal grammar as the walletChange sheet beside it (CUI.activateDialog, close on
+   overlay, sgIso for the +08:00 instant). already_actioned means a double-tap or a stale row:
+   the appointment is no longer booked, so the honest response is to repaint, not retry. */
+function openRescheduleReplaceSheetV508({appointmentId,businessSlug,startsAt,onDone}={}){
+  const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','rescheduleV508Title');
+  const oldLine=walletDate(startsAt,true)||'';
+  modal.innerHTML=`<div class="modal-card"><div class="row"><h2 id="rescheduleV508Title">Reschedule</h2><span class="spacer"></span><button class="btn ghost sm" id="rescheduleV508Close" aria-label="Close reschedule">Close</button></div>
+    ${oldLine?`<p class="muted small" style="margin-top:4px" data-merchant-content>Current appointment: ${esc(oldLine)}</p>`:''}
+    <label for="rescheduleV508At">New date &amp; time</label><input id="rescheduleV508At" type="datetime-local">
+    <label for="rescheduleV508Note">Note (optional)</label><textarea id="rescheduleV508Note" rows="3" maxlength="750"></textarea>
+    <p class="muted small" style="margin-top:8px">This sends a fresh booking request for the business to approve or reject. Your current appointment is removed straight away.</p>
+    <button class="btn" id="rescheduleV508Send" style="width:100%;margin-top:12px">Send request</button></div>`;
+  document.body.appendChild(modal);
+  let deactivateDialog;
+  const close=()=>deactivateDialog?deactivateDialog():modal.remove();
+  deactivateDialog=CUI.activateDialog(modal,{onClose:close,initialFocus:'#rescheduleV508At'});
+  $('rescheduleV508Close').onclick=close;
+  $('rescheduleV508Send').onclick=async()=>{
+    const local=$('rescheduleV508At').value;
+    if(!local)return toast('Choose a new time');
+    if(Date.parse(sgIso(local))<=Date.now())return toast('The new time must be in the future');
+    $('rescheduleV508Send').disabled=true;
+    const {data,error}=await sb.rpc('customer_reschedule_appointment_v508',{
+      p_business_slug:businessSlug,p_appointment:appointmentId,
+      p_preferred_at:sgIso(local),p_note:$('rescheduleV508Note').value.trim()||null});
+    if(error){
+      $('rescheduleV508Send').disabled=false;
+      if(String(error.message||'')==='already_actioned'){
+        close();toast('This appointment has already changed — the list has been refreshed.');
+        if(typeof onDone==='function')onDone();
+        return;
+      }
+      return toast('The reschedule could not be sent. Please try again.');
+    }
+    close();
+    toast('Request sent — the business will confirm your new time.');
+    if(typeof onDone==='function')onDone();
+    return data;
+  };
+}
 function actionableWalletExpiryText(expiry,unit){
   if(expiry?.mode==='none')return 'Never expires';
   if(Number(expiry?.expiring_units||0)>0&&expiry?.next_expiry_at){
