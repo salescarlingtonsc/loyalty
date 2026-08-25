@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 423,
-  "executableCount": 409,
+  "itemCount": 424,
+  "executableCount": 410,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -4016,6 +4016,14 @@
       "semanticVersion": "v516",
       "proposedDeployVersion": "20260825000015",
       "sha256": "16494e44cdbea76ecd33a6ce7fd88772a1bc9eee9afa6d0f6c9c0a41e708db33"
+    },
+    {
+      "order": 424,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql",
+      "semanticVersion": "v517",
+      "proposedDeployVersion": "20260826000001",
+      "sha256": "efe2e04935da78b2950a665728314659da4e8a97d8aac111f04904b1e1e96659"
     }
   ]
 }

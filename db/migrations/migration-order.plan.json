@@ -2553,6 +2553,12 @@
       "path": "db/migrations/20260825_nestly_v516_stamp_qr_asks_the_availability_core.sql",
       "semanticVersion": "v516",
       "proposedDeployVersion": "20260825000015"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql",
+      "semanticVersion": "v517",
+      "proposedDeployVersion": "20260826000001"
     }
   ]
 }

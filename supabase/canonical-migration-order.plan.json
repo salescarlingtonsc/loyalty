@@ -2548,6 +2548,12 @@
       "version": "20260825000015",
       "name": "nestly_v516_stamp_qr_asks_the_availability_core",
       "sourcePath": "db/migrations/20260825_nestly_v516_stamp_qr_asks_the_availability_core.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000001",
+      "name": "nestly_v517_whatsapp_foundations",
+      "sourcePath": "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql"
     }
   ]
 }
