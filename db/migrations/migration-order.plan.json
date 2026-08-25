@@ -2487,6 +2487,12 @@
       "path": "db/migrations/20260825_nestly_v505_first_gift_before_go_live.sql",
       "semanticVersion": "v505",
       "proposedDeployVersion": "20260825000004"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v507_a_business_is_born_live.sql",
+      "semanticVersion": "v507",
+      "proposedDeployVersion": "20260825000005"
     }
   ]
 }

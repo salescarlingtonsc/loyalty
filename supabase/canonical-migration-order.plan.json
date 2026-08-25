@@ -2482,6 +2482,12 @@
       "version": "20260825000004",
       "name": "nestly_v505_first_gift_before_go_live",
       "sourcePath": "db/migrations/20260825_nestly_v505_first_gift_before_go_live.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000005",
+      "name": "nestly_v507_a_business_is_born_live",
+      "sourcePath": "db/migrations/20260825_nestly_v507_a_business_is_born_live.sql"
     }
   ]
 }
