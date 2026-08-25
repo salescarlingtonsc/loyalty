@@ -211,3 +211,57 @@ test('v502 every perk is listed, but only claimable ones are counted', () => {
   assert.ok(listLine.slice(0, listLine.indexOf(';')).includes("typeof perk==='object'"),
     'the list itself keeps every perk the tier carries');
 });
+
+/* ==============================================================================================
+ * nestly_v503 — the tab strip is no longer covered by the tier list
+ *
+ * Owner, 2026-08-25, THIRD report: "why still same UI UX - overlapping text". MEASURED at 1280px:
+ * a 22px overlap, 41% of the "Live tiers (3) | History (12)" strip's height, which is why both
+ * labels were sliced off along their bottom edge.
+ *
+ * The margin-top:-22px was correct when written — the list is styled to JOIN the summary card
+ * above it into one continuous card (border-top:0, bottom-only radius) and the negative margin
+ * closed the gap. It broke when the tab strip was later rendered BETWEEN the two, so the pull-up
+ * landed on the strip instead of the summary card.
+ *
+ * WHY THIS TEST EXISTS AS SOURCE ASSERTIONS: the geometry itself is covered by the browser
+ * fixtures under tests/browser/. What this pins is the specific trap — a pull-up margin on a
+ * container that something else now precedes. My first rig omitted the
+ * .grow-overview[data-programme-view="tiers"] wrapper, none of these rules applied, and it
+ * measured a clean 10px gap: a false negative that cost a round trip and let me tell the owner
+ * "no overlap" about a page that plainly had one.
+ * ============================================================================================ */
+
+test('v503 the tier list no longer pulls itself up over the tab strip', () => {
+  /* This selector appears more than once (an earlier rule sets only `gap`), so pick the block
+     that actually positions the container rather than the first textual match. */
+  const blocks = [...indexHtml.matchAll(
+    /\.grow-overview\[data-programme-view="tiers"\] \[data-grow-tiers-list-v331\]\{([^}]*)\}/g)]
+    .map(m => m[1]);
+  assert.ok(blocks.length, 'the tier list container rule is missing');
+  const positioning = blocks.filter(body => /margin-top/.test(body));
+  assert.equal(positioning.length, 1, 'exactly one rule should position this container');
+  const rule = [positioning[0]];
+  assert.doesNotMatch(rule[0], /margin-top:-/,
+    'a negative pull-up here lands on the tab strip that now precedes this container');
+  assert.match(rule[0], /margin-top:10px!important/);
+  /* With the join gone the container has to finish itself, or it reads as a clipped card. */
+  assert.match(rule[0], /border:1px solid var\(--hair\)/);
+  assert.match(rule[0], /border-radius:18px/);
+  assert.doesNotMatch(rule[0], /border-top:0/,
+    'no top border was only acceptable while it was joined to the card above');
+  assert.match(rule[0], /padding:22px/,
+    'the top padding the missing top border used to stand in for');
+});
+
+test('v503 nothing else in the workspace pulls a list up over a sibling', () => {
+  /* The customer nav Scan FAB rides above its bar deliberately and is exempt; a -2px optical
+     nudge on a grid cell is not a pull-up. Anything else negative on a LIST container would be
+     this same bug wearing a different selector. */
+  const offenders = [...indexHtml.matchAll(/([^{}\n]*\{[^}]*margin-top:-\d+px[^}]*\})/g)]
+    .map(m => m[1])
+    .filter(rule => !/customer-nav-scan|grow-tier-benefit-preview-v369/.test(rule))
+    .filter(rule => /\[data-grow-[a-z-]*list|rewardlist|-list-v\d+\]/.test(rule));
+  assert.deepEqual(offenders, [],
+    `a list container is being pulled up over whatever precedes it:\n${offenders.join('\n')}`);
+});

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="df54ab94c232ad1ce652014c3372cdfc1e1f6d70ff6179b9bc29eb14a23122b6"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="e44b6619e8fc48f369ba52e9cc1dfa4e77b0ebf69f30bccabba7c8896629b746"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2081,7 +2081,23 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>li:not(.imp-note){min-height:78px;padding:20px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]{border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(48,36,28,.08);padding:22px}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li{box-shadow:none!important;border:0!important;padding:0!important}
-.grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{margin-top:-22px!important;border:1px solid var(--hair);border-top:0;border-radius:0 0 18px 18px;background:#fff;padding:0 22px 22px}
+/* nestly_v503 (owner, 2026-08-25, third report: "why still same UI UX - overlapping text").
+   THE OVERLAP, MEASURED: 22px — 41% of the "Live tiers (3) | History (12)" strip was covered by
+   the tier list, which is why both labels were sliced off along their bottom edge in the owner's
+   screenshot.
+   The margin-top:-22px was not a mistake when it was written: this container is styled to JOIN the
+   summary card above it into one continuous card (hence border-top:0 and the bottom-only radius),
+   and the negative margin closed the gap between them. What broke it is that the tab strip was
+   later rendered BETWEEN the two, so the pull-up stopped landing on the summary card and started
+   landing on the strip.
+   The join is therefore already gone — the summary card carries a full 18px radius on all four
+   corners and reads as a finished card on its own. So the list becomes a finished card too:
+   positive margin, a complete border and radius, and the top padding the missing top border used
+   to stand in for. AFTER, measured: strip fully visible, 12px above it and 10px below.
+   MEASURING NOTE for whoever revisits this: a rig that omits the .grow-overview[data-programme-
+   view="tiers"] wrapper does NOT reproduce this — none of these rules apply without it, and the
+   list then measures a clean 10px gap. That false negative cost a round trip. */
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{margin-top:10px!important;border:1px solid var(--hair);border-radius:18px;background:#fff;padding:22px}
 .grow-tier-table-head-v343,.grow-tier-table-row-v343{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(140px,1fr) minmax(110px,.75fr) minmax(180px,1fr);gap:16px;align-items:center}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-head-v343{min-height:42px;padding:0 24px!important;border:1px solid var(--line)!important;border-radius:12px 12px 0 0!important;box-shadow:none!important;background:#fff!important;color:var(--muted);font-size:12px;font-weight:700}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-row-v343{border-radius:0!important;box-shadow:none!important;border-color:var(--line)!important;border-top:0!important}
