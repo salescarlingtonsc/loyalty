@@ -16,8 +16,11 @@ async function loadConsole(){
 
 test('signups, applications and demo requests are super-admin sub-modules',async()=>{
   const Console=await loadConsole();
+  // V513 adds one more super-admin-only sub-module: Onboarding metrics,
+  // behind platform_get_onboarding_metrics_v513, using the exact same tab
+  // mechanism as Signups/Applications/Demo requests rather than a new route.
   assert.deepEqual(Array.from(Console.onboardingTabsFor(true),tab=>tab.key),
-    ['pipeline','signups','applications','demo-requests']);
+    ['pipeline','signups','applications','demo-requests','metrics']);
   // A non-super-admin has no signup or application work, so they get the
   // pipeline alone — and no tab strip at all rather than a strip of one.
   assert.deepEqual(Array.from(Console.onboardingTabsFor(false),tab=>tab.key),['pipeline']);

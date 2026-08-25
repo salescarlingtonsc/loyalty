@@ -140,7 +140,7 @@ test('owner-only onboarding decisions are hidden from delegated admins',async()=
   assert.equal(api.superAdminOnly(true,'owner control'),'owner control');
   const source=await read('app/platform-console.js');
   assert.match(source,/context\.access\?\.role==='super_admin'/);
-  assert.match(source,/function onboardingPanelHtml\(payload,error,CUI,isSuperAdmin=false\)/);
+  assert.match(source,/function onboardingPanelHtml\(payload,error,CUI,isSuperAdmin=false,review=null,reviewError=null\)/);
   assert.match(source,/superAdminOnly\(isSuperAdmin,checklist\.blocked_at[\s\S]*data-onboarding-unblock[\s\S]*data-onboarding-block/);
   assert.match(source,/superAdminOnly\(isSuperAdmin,`<button type="button" class="btn sm" data-onboarding-activate/);
   assert.match(source,/superAdminOnly\(isSuperAdmin&&canWaive,`<button type="button" class="btn ghost sm" data-onboarding-waive/);

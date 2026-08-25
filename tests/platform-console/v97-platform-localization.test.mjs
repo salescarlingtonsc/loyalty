@@ -314,8 +314,20 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // was not already a literal pt() argument elsewhere). Metadata and
   // announcement inventories are unchanged — every route.label removed from
   // routes[] already had an identical distinct string surviving elsewhere.
-  assert.equal(explicit.length,1038,'update the audited explicit-copy inventory when adding runtime UI');
-  assert.equal(metadata.length,821,'update the audited CUI metadata inventory when adding UI metadata'); // V504
+  // V513 (P4 onboarding review surface): +12 distinct explicit pt() strings
+  // (the next_actor chip's three labels, the ready verdict pair, the
+  // readiness block's four field labels, the Submit for review button, and
+  // the metrics tab's empty-state title/body — 'Onboarding metrics' and
+  // 'Not submitted'-adjacent copy dedupe against strings introduced by the
+  // same wave). +4 distinct metadata strings ('Onboarding metrics' used as
+  // both a CUI.card title and the tab label, the metrics subtitle, and the
+  // metrics empty-state title/body pair count as new object-literal values).
+  // Announcement inventory is unchanged — 'Submitted for review.' is passed
+  // through runChecklistButton's shared message parameter, the same
+  // non-literal-argument shape every other v79 action confirmation already
+  // uses, so it was never part of this audited set.
+  assert.equal(explicit.length,1050,'update the audited explicit-copy inventory when adding runtime UI');
+  assert.equal(metadata.length,825,'update the audited CUI metadata inventory when adding UI metadata'); // V513
   assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');

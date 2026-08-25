@@ -3382,6 +3382,40 @@
       'Timeline':'Garis masa','Business 360 unavailable':'Perniagaan 360 tidak tersedia'
     })
   });
+  // V513: the P4 onboarding review surface. platform_get_onboarding_review_v513
+  // answers "whose move is it" for one business (a merchant/Peekaa/system
+  // next-actor chip, a ready verdict, and platform-vs-merchant touch counts);
+  // onboarding_submit_for_review_v513 is the one write; platform_get_onboarding_metrics_v513
+  // is the super-admin-only cross-business rollup. All three degrade to a
+  // quiet "not available yet" note if the migration is not applied yet.
+  const PLATFORM_COPY_V513=Object.freeze({
+    'zh-CN':Object.freeze({
+      "Merchant's move":'商户待处理',"Peekaa's move":'Peekaa 待处理','System':'系统',
+      'Ready':'已就绪','Not ready':'尚未就绪','Last evaluated':'最近评估时间',
+      'Submitted for review':'已提交审核','Not submitted':'尚未提交',
+      'Platform touches':'平台介入次数','Merchant touches':'商户介入次数',
+      'Submit for review':'提交审核',
+      'Onboarding review is not available yet.':'入驻审核功能尚不可用。',
+      'Onboarding metrics':'入驻指标',
+      'Platform vs merchant effort per business, and days from creation to live.':'按商户统计的平台与商户投入，以及从创建到上线所需天数。',
+      'Days to live':'上线所需天数',
+      'No onboarding metrics yet':'尚无入驻指标',
+      'Metrics appear once a business has an onboarding checklist.':'商户拥有入驻清单后即会显示指标。'
+    }),
+    ms:Object.freeze({
+      "Merchant's move":'Giliran peniaga',"Peekaa's move":'Giliran Peekaa','System':'Sistem',
+      'Ready':'Sedia','Not ready':'Belum sedia','Last evaluated':'Terakhir dinilai',
+      'Submitted for review':'Dihantar untuk semakan','Not submitted':'Belum dihantar',
+      'Platform touches':'Sentuhan platform','Merchant touches':'Sentuhan peniaga',
+      'Submit for review':'Hantar untuk semakan',
+      'Onboarding review is not available yet.':'Semakan penerimaan belum tersedia lagi.',
+      'Onboarding metrics':'Metrik penerimaan',
+      'Platform vs merchant effort per business, and days from creation to live.':'Usaha platform berbanding peniaga bagi setiap perniagaan, dan bilangan hari dari penciptaan hingga langsung.',
+      'Days to live':'Hari hingga langsung',
+      'No onboarding metrics yet':'Tiada metrik penerimaan lagi',
+      'Metrics appear once a business has an onboarding checklist.':'Metrik akan dipaparkan sebaik sahaja perniagaan mempunyai senarai semak penerimaan.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3401,6 +3435,7 @@
       ??PLATFORM_COPY_V297[platformLocale]?.[key]
       ??PLATFORM_COPY_V312[platformLocale]?.[key]
       ??PLATFORM_COPY_V511[platformLocale]?.[key]
+      ??PLATFORM_COPY_V513[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -5797,6 +5832,86 @@
   function onboardingTone(status) {
     return ['ready','activated'].includes(status)?'ok':status==='blocked'?'no':status==='in_progress'?'new':'off';
   }
+  // ------------------------------------------------------------ V513 review
+  // platform_get_onboarding_review_v513 is the one reader behind three
+  // surfaces (the firm onboarding drawer, Business 360, and the onboarding
+  // board): a next_actor chip ('merchant'|'peekaa'|'system'), a ready
+  // verdict, and platform-vs-merchant touch counts. Every caller of this
+  // helper wraps the RPC in its own try/catch and passes null/undefined
+  // through on failure, so a missing v513 migration renders a quiet note
+  // instead of breaking the surface it decorates.
+  function v513ReviewFacts(payload) {
+    const review=asObject(payload),checklist=asObject(review.checklist),interventions=asObject(review.interventions);
+    return {
+      nextActor:checklist.next_actor||'',
+      ready:review.ready===true,
+      lastEvaluatedAt:checklist.last_evaluated_at||null,
+      submittedForReviewAt:checklist.submitted_for_review_at||null,
+      platformTouches:Number(interventions.platform_touches||0),
+      merchantTouches:Number(interventions.merchant_touches||0)
+    };
+  }
+  function v513NextActorLabel(nextActor) {
+    return nextActor==='merchant'?pt("Merchant's move")
+      :nextActor==='peekaa'?pt("Peekaa's move")
+      :nextActor==='system'?pt('System')
+      :platformStatus(nextActor||'');
+  }
+  function v513NextActorTone(nextActor) {
+    return nextActor==='merchant'?'new':nextActor==='peekaa'?'no':'off';
+  }
+  function v513ReviewUnavailableHtml() {
+    return `<p class="muted small" data-v513-review-unavailable>${escapeHtml(pt('Onboarding review is not available yet.'))}</p>`;
+  }
+  // Shared by the firm onboarding drawer (A) and Business 360 (B) — same
+  // chip, same verdict, same touch counts, read from the same RPC.
+  function v513ReadinessHtml(payload,error,CUI) {
+    if(error||!asObject(payload).checklist)return v513ReviewUnavailableHtml();
+    const facts=v513ReviewFacts(payload);
+    return `<div class="platform-detail-grid" data-v513-readiness>
+      <div class="platform-list-row">
+        ${CUI.status(v513NextActorLabel(facts.nextActor),v513NextActorTone(facts.nextActor))}
+        ${CUI.status(facts.ready?pt('Ready'):pt('Not ready'),facts.ready?'ok':'off')}
+      </div>
+      <dl class="platform-context-list">
+        <div><dt>${escapeHtml(pt('Last evaluated'))}</dt><dd>${escapeHtml(dateTime(facts.lastEvaluatedAt))}</dd></div>
+        <div><dt>${escapeHtml(pt('Submitted for review'))}</dt><dd>${escapeHtml(facts.submittedForReviewAt?dateTime(facts.submittedForReviewAt):pt('Not submitted'))}</dd></div>
+        <div><dt>${escapeHtml(pt('Platform touches'))}</dt><dd>${facts.platformTouches}</dd></div>
+        <div><dt>${escapeHtml(pt('Merchant touches'))}</dt><dd>${facts.merchantTouches}</dd></div>
+      </dl>
+    </div>`;
+  }
+  // Onboarding board (C): a compact chip for a card/row that already has an
+  // onboarding checklist. A missing hydration entry (RPC not deployed, or
+  // the firm has no checklist yet) renders nothing rather than a placeholder
+  // chip — the badge row already carries enough state without an empty one.
+  function v513NextActorChip(item,CUI) {
+    return item?.onboarding_next_actor
+      ?CUI.status(v513NextActorLabel(item.onboarding_next_actor),v513NextActorTone(item.onboarding_next_actor))
+      :'';
+  }
+  // Batches platform_get_onboarding_review_v513 across every business_id on
+  // the current page, the same Promise.allSettled shape hydrateOnboardingCards
+  // already uses for get_business_onboarding_v79 below — one row failing (or
+  // the RPC not existing yet) just leaves that item without a chip.
+  async function hydrateOnboardingReviewV513(sb,items) {
+    const businessIds=[...new Set(items.map(item=>item.converted_business_id||item.business_id).filter(Boolean))];
+    if(!businessIds.length)return items;
+    const results=await Promise.allSettled(businessIds.map(businessId=>
+      rpc(sb,'platform_get_onboarding_review_v513',{p_business:businessId})
+    ));
+    const byBusiness=new Map();
+    results.forEach((result,index)=>{
+      if(result.status==='fulfilled'&&result.value?.checklist)byBusiness.set(String(businessIds[index]),result.value);
+    });
+    if(!byBusiness.size)return items;
+    return items.map(item=>{
+      const review=byBusiness.get(String(item.converted_business_id||item.business_id||''));
+      if(!review)return item;
+      const facts=v513ReviewFacts(review);
+      return {...item,onboarding_next_actor:facts.nextActor,onboarding_ready_v513:facts.ready};
+    });
+  }
   function mergeFirmOnboardingItems(directoryItems,prospects) {
     const prospectsById=new Map(prospects.map(item=>[
       String(item.prospect_id||item.id||''),item
@@ -5919,6 +6034,7 @@
         ${completeness?CUI.status(pt('{percent}% complete',{percent:Math.max(0,Math.min(100,completeness))}),completeness>=80?'ok':'new'):''}
         ${progress!==null?CUI.status(pt('{percent}% onboarded',{percent:Math.max(0,Math.min(100,progress))}),progress===100?'ok':'new'):''}
         ${onboarding?CUI.status(platformStatus(onboarding),onboardingTone(onboarding)):''}
+        ${v513NextActorChip(item,CUI)}
         ${summary.mandatoryTotal?CUI.status(pt('{fulfilled}/{total} required',{fulfilled:summary.mandatoryFulfilled,total:summary.mandatoryTotal}),'off'):''}
         ${Number(summary.blockedItems?.length||0)>0?CUI.status(pt('{count} blocked',{count:summary.blockedItems.length}),'no'):''}
         ${warnings.slice(0,3).map(flag=>CUI.status(platformStatus(flag),'no')).join('')}
@@ -5956,7 +6072,7 @@
     return `<article class="platform-prospect-card platform-prospect-card-compact" draggable="${draggable?'true':'false'}" data-prospect="${escapeHtml(id)}" data-version="${prospectVersion(item)}" data-stage="${escapeHtml(stage)}" data-lane="${escapeHtml(lane)}" data-has-prospect="${canOpenDetail?'true':'false'}" data-can-move="${draggable?'true':'false'}" tabindex="0" role="button" aria-label="${escapeHtml(pt(canOpenDetail?'Open':'View firm record for'))} ${escapeHtml(prospectCompany(item))}"${draggable?` aria-describedby="platformKanbanMoveHint"`:''}>
       <div class="platform-prospect-name">${escapeHtml(prospectCompany(item))}</div>
       <p class="platform-card-line">${escapeHtml(owner)} · ${escapeHtml(when)}</p>
-      <div class="platform-card-badges">${CUI.status(stageLabel,'off')}${prospectPrimaryBadge(item,CUI)}</div>
+      <div class="platform-card-badges">${CUI.status(stageLabel,'off')}${prospectPrimaryBadge(item,CUI)}${v513NextActorChip(item,CUI)}</div>
     </article>`;
   }
   // List view: one row per firm, the same columns an operator sorts by.
@@ -5983,7 +6099,7 @@
             <td data-label="${escapeHtml(pt('Operational status'))}">${escapeHtml(pt(lane?.label||'New & unassigned'))}</td>
             <td data-label="${escapeHtml(pt('Owner'))}">${escapeHtml(item.consultant_name||item.owner_name||pt(item.assigned_consultant_id?'Assigned':'Unassigned'))}</td>
             <td data-label="${escapeHtml(pt('Next action'))}">${escapeHtml(canOpenDetail?relativeActivity(nextAction,{future:true}):relativeActivity(item.last_activity_at))}</td>
-            <td data-label="${escapeHtml(pt('Attention'))}">${badge}</td>
+            <td data-label="${escapeHtml(pt('Attention'))}">${badge}${v513NextActorChip(item,CUI)}</td>
           </tr>`;
         }).join('')}</tbody>
       </table>
@@ -6450,7 +6566,11 @@
     Object.freeze({key:'pipeline',label:'Pipeline'}),
     Object.freeze({key:'signups',label:'Signups',superAdminOnly:true}),
     Object.freeze({key:'applications',label:'Applications',superAdminOnly:true}),
-    Object.freeze({key:'demo-requests',label:'Demo requests',superAdminOnly:true})
+    Object.freeze({key:'demo-requests',label:'Demo requests',superAdminOnly:true}),
+    /* V513: platform_get_onboarding_metrics_v513 is super-admin-only on the
+       server, so the tab that reaches it is gated the same way as Signups,
+       Applications and Demo requests — no new route, one more tab. */
+    Object.freeze({key:'metrics',label:'Onboarding metrics',superAdminOnly:true})
   ]);
   function onboardingTabsFor(isSuperAdmin){
     return onboardingTabs.filter(tab=>!tab.superAdminOnly||isSuperAdmin);
@@ -6571,14 +6691,21 @@
         applications:asArray(applicationQueue,['applications']).length
       });
       if(tab==='pipeline'){
+        // Best-effort per-business hydration: a business without a checklist,
+        // or an environment where v513 is not deployed yet, just leaves that
+        // item's chip empty — the pipeline still renders from `items` either way.
+        const hydratedItems=await hydrateOnboardingReviewV513(sb,items).catch(()=>items);
+        if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
         main.innerHTML=onboardingHtml({
-          items,CUI,filters,tabStrip,
+          items:hydratedItems,CUI,filters,tabStrip,
           attentionSummary:prior?.attentionSummary||directory.attention_summary,
           exceptions:leadExceptions,role:context.access?.role||'',canWrite:context.canWrite,isSuperAdmin,pagination
         });
-        wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
+        wireOnboarding({...context,items:hydratedItems,filters,onboardingPage:pageState,onboardingLoadMore:false});
       }else if(tab==='demo-requests'){
         await renderDemoRequests(context,{tabStrip});
+      }else if(tab==='metrics'){
+        await renderOnboardingMetricsV513(context,{tabStrip});
       }else{
         main.innerHTML=`${CUI.pageHeader({
           title:'Onboarding',
@@ -6630,6 +6757,42 @@
         });
       }
     }catch(error){showError(main,error,CUI,'Onboarding')}
+  }
+  // Super-admin-only cross-business rollup behind the Onboarding metrics tab.
+  // A plain table on purpose — no charts, no scores, just the two touch
+  // counts and days-to-live per business platform_get_onboarding_metrics_v513
+  // returns. Falls back to the file's usual systemUpdateRequired() full-page
+  // note if the v513 migration is not applied yet in this environment.
+  async function renderOnboardingMetricsV513(context,{tabStrip=''}={}) {
+    const {main,CUI,sb,generation,isCurrent}=context;
+    const header=CUI.pageHeader({
+      title:'Onboarding',
+      subtitle:'Platform vs merchant effort per business, and days from creation to live.',
+      iconName:'setup'
+    });
+    main.innerHTML=`${header}${tabStrip}${loading(CUI,'Onboarding metrics','Loading onboarding metrics…','setup')}`;
+    try{
+      const payload=await rpc(sb,'platform_get_onboarding_metrics_v513',{p_limit:100});
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
+      const rows=asArray(payload,['items','rows']);
+      main.innerHTML=`${header}${tabStrip}${rows.length?CUI.card({
+        title:'Onboarding metrics',
+        body:CUI.table({
+          caption:'Onboarding metrics',
+          headers:['Business','Platform touches','Merchant touches','Days to live'],
+          rows:rows.map(row=>[
+            escapeHtml(row.name||row.business_id||''),
+            String(Number(row.platform_touches||0)),
+            String(Number(row.merchant_touches||0)),
+            row.days_to_live===null||row.days_to_live===undefined?'—':String(Number(row.days_to_live))
+          ])
+        })
+      }):CUI.emptyState({
+        iconName:'setup',title:'No onboarding metrics yet',
+        body:'Metrics appear once a business has an onboarding checklist.'
+      })}`;
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Onboarding metrics')}
   }
   /* V292: this used to end in `.slice(0,8)`, and NOTHING in the console could
      reach the ninth website signup -- not a button, not a filter, not a search.
@@ -7345,6 +7508,16 @@
       }catch(error){
         detail.onboarding_error=error;
       }
+      // V513: fetched alongside the v79 checklist read, never instead of it —
+      // this is a readiness overlay (next_actor/ready/touch counts), not a
+      // replacement for the evidence checklist v79 already owns.
+      try{
+        detail.onboarding_review=asObject(await rpc(sb,'platform_get_onboarding_review_v513',{
+          p_business:prospect.converted_business_id
+        }));
+      }catch(error){
+        detail.onboarding_review_error=error;
+      }
     }
     return detail;
   }
@@ -7399,7 +7572,7 @@
   function sectionHeader(title,action='') {
     return`<div class="platform-list-row"><h2>${escapeHtml(pt(title))}</h2>${action}</div>`;
   }
-  function onboardingPanelHtml(payload,error,CUI,isSuperAdmin=false) {
+  function onboardingPanelHtml(payload,error,CUI,isSuperAdmin=false,review=null,reviewError=null) {
     if(error)return CUI.card({
       title:'Evidence-backed onboarding',
       body:error.platformUpdateRequired
@@ -7427,6 +7600,7 @@
         <div><h2 id="onboardingChecklistTitle">${escapeHtml(pt("Evidence-backed onboarding"))}</h2><p class="muted small">${escapeHtml(pt('Checklist version {version} · only recorded evidence changes readiness.',{version:facts.version}))}</p></div>
         ${CUI.status(platformStatus(facts.status),onboardingTone(facts.status))}
       </div>
+      ${v513ReadinessHtml(review,reviewError,CUI)}
       <div class="platform-detail-grid">
         ${detailObjectHtml({
           business:onboarding.business?.name,
@@ -7442,6 +7616,7 @@
         ${facts.status==='not_started'?`<button type="button" class="btn sm" data-onboarding-start${canStart?'':` disabled title="${escapeHtml(pt('The workspace owner must accept access first.'))}"`}>${CUI.icon('forward',{size:16})}<span>${escapeHtml(pt("Start onboarding"))}</span></button>`:''}
         <button type="button" class="btn ghost sm" data-onboarding-refresh>${CUI.icon('retention',{size:16})}<span>${escapeHtml(pt("Refresh evidence"))}</span></button>
         <button type="button" class="btn ghost sm" data-onboarding-reissue>${CUI.icon('customers',{size:16})}<span>${escapeHtml(pt("Reissue owner invite"))}</span></button>
+        <button type="button" class="btn ghost sm" data-onboarding-submit-review>${CUI.icon('forward',{size:16})}<span>${escapeHtml(pt("Submit for review"))}</span></button>
         ${superAdminOnly(isSuperAdmin,checklist.blocked_at
           ?`<button type="button" class="btn ghost sm" data-onboarding-unblock>${escapeHtml(pt("Unblock onboarding"))}</button>`
           :`<button type="button" class="btn danger sm" data-onboarding-block>${escapeHtml(pt("Block onboarding"))}</button>`)}
@@ -7639,7 +7814,7 @@
       ])}
       ${converted?'':`<p class="platform-route-note small">${escapeHtml(pt('Current stage:'))} ${escapeHtml(platformStatus(stage))}. ${escapeHtml(pt(stage==='client'?(termsAccepted?'Commercial terms and verified payment are ready for account creation.':'Accepted commercial terms are required before account creation.'):stage==='closed_won'?'Create the inactive account now so Stripe or a manual invoice can collect payment. Activation remains blocked until payment is verified.':'Complete the evidence-backed commercial pipeline first.'))}</p>`}
     </section>
-    <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin):CUI.card({title:'Onboarding checklist',body:`<p class="muted small">${escapeHtml(pt("The evidence checklist is created during transactional account conversion."))}</p>`})}</section>
+    <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin,detail.onboarding_review,detail.onboarding_review_error):CUI.card({title:'Onboarding checklist',body:`<p class="muted small">${escapeHtml(pt("The evidence checklist is created during transactional account conversion."))}</p>`})}</section>
     <section class="card platform-detail-section" id="detail-audit">
       ${sectionHeader('Audit and stage history')}
       <div class="platform-detail-grid"><div><h3>${escapeHtml(pt("Stage history"))}</h3>${asArray(detail.stage_history).length?asArray(detail.stage_history).map(history=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(history.to_stage_key))}</b><p class="muted small">${escapeHtml(history.reason_code?platformStatus(history.reason_code):pt('Stage transition'))}</p></div><span class="muted small">${escapeHtml(dateTime(history.occurred_at))}</span></div>`).join(''):detailObjectHtml(null)}</div>
@@ -8222,6 +8397,12 @@
     const one=(selector,handler)=>{const target=overlay.querySelector(selector);if(target)target.onclick=()=>handler(target)};
     one('[data-onboarding-refresh]',button=>runChecklistButton(
       button,detail,context,'refresh_business_onboarding_v79',expected,'Onboarding evidence refreshed.'
+    ));
+    // V513: idempotent, and platform roles may call it on the merchant's
+    // behalf, so it carries no expected-version guard of its own — the same
+    // button/spinner/error pattern as Refresh evidence above.
+    one('[data-onboarding-submit-review]',button=>runChecklistButton(
+      button,detail,context,'onboarding_submit_for_review_v513',{p_business:businessId},'Submitted for review.'
     ));
     one('[data-onboarding-start]',()=>previewThenConfirm({
       title:'Start onboarding',
@@ -12796,6 +12977,9 @@
       const total=Number(payload.total_count??items.length);
       const consultants=canAssignScopedProspect(context)
         ?await fetchScopedConsultants(sb,items):[];
+      // Same best-effort per-business v513 hydration as the super-admin
+      // pipeline (renderOnboarding): a missing chip never blocks the board.
+      const cardItems=await hydrateOnboardingReviewV513(sb,items).catch(()=>items);
       main.innerHTML=`${CUI.pageHeader({
         title:'Onboarding',subtitle:access.scope==='own_created_or_assigned'
           ?'Manage only the firms you created or are assigned to.'
@@ -12808,13 +12992,13 @@
         <button class="btn" type="submit">${CUI.icon('search',{size:17})}<span>${escapeHtml(pt('Search'))}</span></button>
       </form>
       <div class="platform-kanban platform-kanban-responsive" aria-label="${escapeHtml(pt('Scoped onboarding Kanban'))}">${operationalLanes.map(lane=>{
-        const laneItems=items.filter(item=>operationalLaneFor(item)===lane.key);
+        const laneItems=cardItems.filter(item=>operationalLaneFor(item)===lane.key);
         return `<section class="platform-kanban-column" aria-labelledby="scoped-lane-${lane.key}">
           <header class="platform-kanban-head"><div><h2 id="scoped-lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2><p>${escapeHtml(pt(lane.description))}</p></div><span class="platform-count">${laneItems.length}</span></header>
           <div class="platform-card-list">${laneItems.map(item=>prospectCardHtml(item,CUI,{canWrite:context.canWrite})).join('')||`<p class="muted small platform-lane-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
         </section>`;
       }).join('')}</div>
-      <div class="platform-prospect-list platform-prospect-list-responsive" aria-label="${escapeHtml(pt('Scoped onboarding list'))}">${items.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>
+      <div class="platform-prospect-list platform-prospect-list-responsive" aria-label="${escapeHtml(pt('Scoped onboarding list'))}">${cardItems.map(item=>prospectCardHtml(item,CUI,{mobile:true,canWrite:context.canWrite})).join('')||CUI.emptyState({iconName:'setup',title:'No firms in scope',body:'Try another search or ask a super admin to review assignments.'})}</div>
       <div class="platform-paged-summary"><p class="muted small">${escapeHtml(pt('{shown} of {count} firms loaded.',{shown:items.length,count:total}))}</p>
         ${Object.keys(nextCursor).length&&items.length<total?`<button type="button" class="btn ghost" id="platformScopedOnboardingMore">${escapeHtml(pt('Load 50 more firms'))}</button>`:''}
       </div>`;
@@ -13481,7 +13665,7 @@
     }catch(error){showError(main,error,CUI,'Work')}
   }
   // ------------------------------------------------------------ business 360
-  function v511Business360Html(payload,CUI){
+  function v511Business360Html(payload,CUI,review=null,reviewError=null){
     const identity=asObject(payload.identity),owner=asObject(payload.relationship_owner),
       commercial=asObject(payload.commercial),entitlement=asObject(payload.entitlement),
       onboarding=asObject(payload.onboarding),nextAction=asObject(payload.next_action),
@@ -13506,10 +13690,10 @@
           ['payment_status','Payment status',value=>value?v511Label(value):'—'],
           ['activated_at','Activated',dateTime]
         ])}`})}
-      ${CUI.card({title:'Onboarding',body:onboarding.status?typedDetailHtml(onboarding,[
+      ${CUI.card({title:'Onboarding',body:`${onboarding.status?typedDetailHtml(onboarding,[
         ['status','Status',value=>v511Label(value)],
         ['started_at','Started',dateTime],['activated_at','Activated',dateTime]
-      ]):localizedEmptyHtml('No onboarding checklist recorded')})}
+      ]):localizedEmptyHtml('No onboarding checklist recorded')}${v513ReadinessHtml(review,reviewError,CUI)}`})}
       ${CUI.card({title:'Next action',body:nextAction.work_item_id?`
         <p><b>${escapeHtml(nextAction.title||pt('Untitled'))}</b></p>
         <p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(nextAction.due_at)}))} · ${escapeHtml(v511Label(nextAction.state))}</p>
@@ -13546,12 +13730,20 @@
     deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     const host=overlay.querySelector('[data-detail]');
     try{
-      const payload=asObject(await rpc(sb,'platform_get_business_360_v511',{p_business:businessId,p_timeline_limit:20}));
+      // V513's review RPC decorates this drawer's Onboarding card; it never
+      // gates the drawer itself — a rejection here is captured, not thrown,
+      // so a missing migration degrades the card, not the whole 360 view.
+      const [payload,review]=await Promise.all([
+        rpc(sb,'platform_get_business_360_v511',{p_business:businessId,p_timeline_limit:20}).then(value=>asObject(value)),
+        rpc(sb,'platform_get_onboarding_review_v513',{p_business:businessId}).then(
+          value=>({value:asObject(value),error:null}),error=>({value:null,error})
+        )
+      ]);
       if(!host.isConnected)return;
       const identity=asObject(payload.identity);
       const titleHost=overlay.querySelector('#business360Title');
       if(titleHost)titleHost.textContent=identity.name||pt('Business 360');
-      host.innerHTML=v511Business360Html(payload,CUI);
+      host.innerHTML=v511Business360Html(payload,CUI,review.value,review.error);
     }catch(error){
       host.innerHTML=error?.platformUpdateRequired
         ?systemUpdateRequired(CUI,'Business 360')
@@ -13751,7 +13943,10 @@
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
-    v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES
+    v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,
+    v513ReviewFacts,v513NextActorLabel,v513NextActorTone,v513ReadinessHtml,
+    v513ReviewUnavailableHtml,v513NextActorChip,hydrateOnboardingReviewV513,
+    renderOnboardingMetricsV513
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -13782,7 +13977,10 @@
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
-    v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES
+    v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,
+    v513ReviewFacts,v513NextActorLabel,v513NextActorTone,v513ReadinessHtml,
+    v513ReviewUnavailableHtml,v513NextActorChip,hydrateOnboardingReviewV513,
+    renderOnboardingMetricsV513
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
