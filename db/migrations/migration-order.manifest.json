@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 417,
-  "executableCount": 403,
+  "itemCount": 418,
+  "executableCount": 404,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -612,7 +612,7 @@
     },
     {
       "sourceDeployVersion": "20260825",
-      "count": 9,
+      "count": 10,
       "paths": [
         "db/migrations/20260825_nestly_v496_full_card_rolls_and_gifts_stack.sql",
         "db/migrations/20260825_nestly_v501_customer_sees_tier_benefits.sql",
@@ -622,7 +622,8 @@
         "db/migrations/20260825_nestly_v508_reschedule_is_a_fresh_request.sql",
         "db/migrations/20260825_nestly_v510_operating_system_crm_foundation.sql",
         "db/migrations/20260825_nestly_v511_work_operating_system.sql",
-        "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql"
+        "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql",
+        "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql"
       ]
     }
   ],
@@ -3962,6 +3963,14 @@
       "semanticVersion": "v512",
       "proposedDeployVersion": "20260825000009",
       "sha256": "0828c0aff1cbf0be2a5d18b86b1c55e65cdcf27d1a8f5e282f88865aaf584c41"
+    },
+    {
+      "order": 418,
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql",
+      "semanticVersion": "v512",
+      "proposedDeployVersion": "20260825000010",
+      "sha256": "5e0bbdf708c8db86230cc4e3c64921ae5ab7ebbf2697aa4387c745a66f83ec68"
     }
   ]
 }

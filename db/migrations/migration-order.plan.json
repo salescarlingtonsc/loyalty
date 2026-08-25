@@ -2517,6 +2517,12 @@
       "path": "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql",
       "semanticVersion": "v512",
       "proposedDeployVersion": "20260825000009"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql",
+      "semanticVersion": "v512",
+      "proposedDeployVersion": "20260825000010"
     }
   ]
 }

@@ -2512,6 +2512,12 @@
       "version": "20260825000009",
       "name": "nestly_v512_adjust_follows_the_running_programme",
       "sourcePath": "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000010",
+      "name": "nestly_v512_commercial_handoff_integrity",
+      "sourcePath": "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql"
     }
   ]
 }
