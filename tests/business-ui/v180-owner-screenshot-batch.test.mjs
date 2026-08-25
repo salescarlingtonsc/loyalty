@@ -91,7 +91,11 @@ test('staff performance shows two money cards, and the grid matches', () => {
 test('reports read as money in, money out, result, then why', () => {
   // V272 owner instruction ("delete this tab cause here have already"): Staff performance is no
   // longer a nav entry, so the order this test guards now ends at Customer intelligence.
-  assert.ok(app.includes("items:['dailyreport','sales','expenses','pnl','reports','customerintel']"),
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
+     They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
+     FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
+     them is a one-line change. */
+  assert.ok(app.includes("items:['dailyreport','sales','reports','customerintel']"),
     'reports nav order not applied');
 });
 

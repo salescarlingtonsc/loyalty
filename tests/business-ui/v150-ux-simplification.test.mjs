@@ -36,7 +36,13 @@ test('V150 sidebar keeps operational actions separate from money history', () =>
      as money in -> money out -> result -> why. The separation this test guards is unchanged. */
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
      this nav; the #/staffperf route and the Business Insights card that reaches it are unchanged. */
-  assert.match(navBlock, /items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
+     They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
+     FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
+     them is a one-line change. */
+  assert.match(navBlock, /items:\['dailyreport','sales','reports','customerintel'\]/);
+  assert.doesNotMatch(navBlock, /items:\[[^\]]*'expenses'/, 'Expenses left the Reports nav');
+  assert.doesNotMatch(navBlock, /items:\[[^\]]*'pnl'/, 'P&L left the Reports nav');
 });
 
 test('V150 dashboard removes launch banner and keeps the requested KPI and chart structure', () => {

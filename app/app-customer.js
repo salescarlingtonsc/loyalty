@@ -2646,7 +2646,7 @@ function renderCustomerNotJoinedV289(businessSlug){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
   const label=customerBusinessSlugLabelV289(businessSlug);
-  body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:Georgia,'Times New Roman',serif">${esc(label)}</b><small>Not joined yet</small></span></span></header>
+  body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:var(--sf)">${esc(label)}</b><small>Not joined yet</small></span></span></header>
   <section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
     <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:22px">You haven’t joined ${esc(label)} yet</h1>
@@ -4342,18 +4342,22 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
             ${customerRewardEndsLineV471(reward)}
             ${meterV468}
             ${readyV397||!lineTextV468?'':`<p class="customer-business-summary-line-v362">${esc(lineTextV468)}</p>`}
-            ${readyV397?`<div class="customer-business-summary-actions-v349">
-              ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show
-                   QR to redeem"). It carries the SAME data-customer-redeem action_key contract the
-                   reward list's own "Show QR at counter" button carries, and loadRewards wires
-                   both with one handler — so this opens the existing intent + QR path and does not
-                   invent a second way to redeem. */''}
-              <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
-              ${bookAction}
-            </div>`:''}
           </div>
           ${photoV468?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV468)}" alt="" loading="lazy" decoding="async" data-hero-reward-photo-v468>`:''}
         </div>
+        ${/* nestly_v517 (owner, photo B vs photo C: "i will need photo B to follow the buttons
+             placement, example Redeem now at bottom left while Book now to be at bottom right").
+             These two buttons used to sit INSIDE customer-hero-reward-copy-v468 — the narrow left
+             column that shares its row with the gift photo — so the 1fr 1fr grid had half a card
+             to work with and the pair stacked. The main hero (page 1, the owner's photo C) has
+             always placed them AFTER the body, at full card width, which is why only that page
+             looked right. Same position now, so every page in the swipe reads the same.
+             nestly_v397's contract is unchanged: the button still carries the data-customer-redeem
+             action_key that loadRewards wires, so this is a move, not a second redemption path. */''}
+        ${readyV397?`<div class="customer-business-summary-actions-v349">
+          <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
+          ${bookAction}
+        </div>`:''}
       </section>
     </div>`;
   }).filter(Boolean);

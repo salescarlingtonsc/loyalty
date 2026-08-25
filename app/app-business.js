@@ -241,7 +241,13 @@ const NAVGROUPS=[
      here have already", arrowing at the Team performance card on Business Insights. The nav entry
      is gone; the #/staffperf route, its page and that card's link are untouched, so deep links and
      history keep working. activeGroupKey() below maps the route back to this group. */
-  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel']},
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L with "delete this").
+     Both come OUT OF THE NAV only — their routes, RPCs, tables and permissions are untouched, so
+     nothing a firm has already recorded is lost and re-listing them here is a one-line change if
+     the owner wants them back. Deliberately not deleted deeper than the menu: expenses feed the
+     P&L, the P&L feeds Business Insights, and removing the data would silently change figures the
+     owner reads elsewhere. */
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel']},
   /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
      list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup']}
@@ -32598,7 +32604,11 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
     <div class="wallet-rewards">${sample.map(r=>`<article class="wallet-reward">
       <div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(r.cost))} ${esc(customerUnitNounV429(r.unit||rewardUnit,r.cost))}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.name)}</span></b><span class="spacer"></span>${r.ready?'<span class="pill ok">Ready</span>':''}</div>
       <p class="small" style="margin-top:9px">Available at counter</p>
-      <div class="wallet-reward-actions"><button class="btn sm" type="button" disabled title="Sample preview — not a real redemption">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div>
+      ${/* nestly_v517 (owner, photo 8: both preview buttons struck through, "remove this"). This
+           is a PREVIEW of what the customer sees, and the button here was permanently disabled —
+           it could never be pressed, so it taught the owner nothing and read as a broken control
+           sitting under their own branding. The lede above already says how redemption works. The
+           real button on the real customer card is untouched. */''}
     </article>`).join('')}</div>`;
 }
 /* nestly_v486 (owner ruling 2026-08-24 on the Business Profile Live preview: "make sure it is a

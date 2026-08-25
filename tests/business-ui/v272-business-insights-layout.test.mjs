@@ -79,7 +79,11 @@ test('V272 (B) the excluded-branch truth the notice carried is restated next to 
 test('V272 (C) Staff performance is gone from the nav rail', () => {
   const navGroups = js.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
   assert.doesNotMatch(navGroups, /'staffperf'/);
-  assert.match(navGroups, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
+     They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
+     FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
+     them is a one-line change. */
+  assert.match(navGroups, /label:'Reports',items:\['dailyreport','sales','reports','customerintel'\]/);
 });
 
 test('V272 (C) the #/staffperf route and the Team performance card link both survive', () => {

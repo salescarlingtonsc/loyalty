@@ -55,7 +55,11 @@ test('the deliberate separation between doing and reviewing is intact', () => {
   assert.match(app, /label:'Serve & sell',items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
      this group; the doing-vs-reviewing separation this test guards is unchanged. */
-  assert.match(app, /label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]/);
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
+     They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
+     FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
+     them is a one-line change. */
+  assert.match(app, /label:'Reports',items:\['dailyreport','sales','reports','customerintel'\]/);
   const groups = app.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
   assert.equal((groups.match(/'sales'/g) || []).length, 1, 'one entry, never duplicated');
 });

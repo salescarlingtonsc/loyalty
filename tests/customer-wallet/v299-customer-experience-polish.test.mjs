@@ -263,7 +263,13 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(indexHtml,/\.customer-business-shortcut-content-v348>\.customer-business-referral-v362\{display:grid!important\}/);
   assert.match(indexHtml,/\.customer-business-detail-store-v348\[hidden\]\{display:none!important\}/);
   assert.doesNotMatch(indexHtml,/\.customer-business-profile-v346 \.customer-reward-offer-swipe-v339\{display:none!important\}/);
-  assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:Georgia/);
+  /* nestly_v517 (owner: "standardise the font for all the fonts in my customer app ... change
+     to something less fanciful — you can see the font dancing"). The customer surface used
+     Georgia as its display face in 18 places beside the system stack everywhere else, which
+     is the mixture the owner was seeing. One family now. The heading still gets its OWN rule
+     — that is what this assertion has always been protecting — it just names var(--sf). */
+  assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:var\(--sf\)/);
+  assert.doesNotMatch(indexHtml,/font-family:Georgia/, 'the customer app carries one font family');
   assert.match(indexHtml,/\.customer-shell \.card\.customer-business-summary-v346\{[^}]*linear-gradient\(145deg,var\(--brand-red\) 0%,var\(--brand-red-dark\) 100%\)/);
   assert.match(indexHtml,/\.customer-business-balance-v347\{[^}]*font-size:56px!important/);
   assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*grid-template-columns:1fr 1fr!important/);

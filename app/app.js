@@ -712,7 +712,13 @@ const NAVGROUPS=[
      here have already", arrowing at the Team performance card on Business Insights. The nav entry
      is gone; the #/staffperf route, its page and that card's link are untouched, so deep links and
      history keep working. activeGroupKey() below maps the route back to this group. */
-  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','expenses','pnl','reports','customerintel']},
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L with "delete this").
+     Both come OUT OF THE NAV only — their routes, RPCs, tables and permissions are untouched, so
+     nothing a firm has already recorded is lost and re-listing them here is a one-line change if
+     the owner wants them back. Deliberately not deleted deeper than the menu: expenses feed the
+     P&L, the P&L feeds Business Insights, and removing the data would silently change figures the
+     owner reads elsewhere. */
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel']},
   /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
      list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup']}
@@ -7385,7 +7391,7 @@ function renderCustomerNotJoinedV289(businessSlug){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   const body=$('walletBody');if(!body)return;
   const label=customerBusinessSlugLabelV289(businessSlug);
-  body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:Georgia,'Times New Roman',serif">${esc(label)}</b><small>Not joined yet</small></span></span></header>
+  body.innerHTML=`<header class="customer-business-header-v346" style="margin-bottom:10px"><a class="btn ghost sm" href="#/customer/programmes" aria-label="Back to My Rewards" style="min-width:44px;padding:0 14px">‹</a><span class="customer-business-identity-v346"><span class="customer-programme-logo" aria-hidden="true">${esc((label||'?').slice(0,1).toUpperCase())}</span><span><b style="font-family:var(--sf)">${esc(label)}</b><small>Not joined yet</small></span></span></header>
   <section class="card" style="text-align:center;padding:30px 22px" aria-labelledby="customerNotJoinedTitle">
     <div aria-hidden="true">${CUI.icon('loyalty',{size:32})}</div>
     <h1 id="customerNotJoinedTitle" style="margin-top:12px;font-size:22px">You haven’t joined ${esc(label)} yet</h1>
@@ -10552,18 +10558,22 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
             ${customerRewardEndsLineV471(reward)}
             ${meterV468}
             ${readyV397||!lineTextV468?'':`<p class="customer-business-summary-line-v362">${esc(lineTextV468)}</p>`}
-            ${readyV397?`<div class="customer-business-summary-actions-v349">
-              ${/* nestly_v397 (owner photo D: a button drawn onto this card, "click then can show
-                   QR to redeem"). It carries the SAME data-customer-redeem action_key contract the
-                   reward list's own "Show QR at counter" button carries, and loadRewards wires
-                   both with one handler — so this opens the existing intent + QR path and does not
-                   invent a second way to redeem. */''}
-              <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
-              ${bookAction}
-            </div>`:''}
           </div>
           ${photoV468?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV468)}" alt="" loading="lazy" decoding="async" data-hero-reward-photo-v468>`:''}
         </div>
+        ${/* nestly_v517 (owner, photo B vs photo C: "i will need photo B to follow the buttons
+             placement, example Redeem now at bottom left while Book now to be at bottom right").
+             These two buttons used to sit INSIDE customer-hero-reward-copy-v468 — the narrow left
+             column that shares its row with the gift photo — so the 1fr 1fr grid had half a card
+             to work with and the pair stacked. The main hero (page 1, the owner's photo C) has
+             always placed them AFTER the body, at full card width, which is why only that page
+             looked right. Same position now, so every page in the swipe reads the same.
+             nestly_v397's contract is unchanged: the button still carries the data-customer-redeem
+             action_key that loadRewards wires, so this is a move, not a second redemption path. */''}
+        ${readyV397?`<div class="customer-business-summary-actions-v349">
+          <button type="button" class="customer-business-claim-v347" data-customer-redeem="${esc(reward.action_key)}" data-hero-redeem-v397><span>Redeem now</span><span aria-hidden="true">›</span></button>
+          ${bookAction}
+        </div>`:''}
       </section>
     </div>`;
   }).filter(Boolean);
@@ -48113,7 +48123,11 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
     <div class="wallet-rewards">${sample.map(r=>`<article class="wallet-reward">
       <div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(r.cost))} ${esc(customerUnitNounV429(r.unit||rewardUnit,r.cost))}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.name)}</span></b><span class="spacer"></span>${r.ready?'<span class="pill ok">Ready</span>':''}</div>
       <p class="small" style="margin-top:9px">Available at counter</p>
-      <div class="wallet-reward-actions"><button class="btn sm" type="button" disabled title="Sample preview — not a real redemption">${CUI.icon('scan',{size:16})}<span>Show QR at counter</span></button></div>
+      ${/* nestly_v517 (owner, photo 8: both preview buttons struck through, "remove this"). This
+           is a PREVIEW of what the customer sees, and the button here was permanently disabled —
+           it could never be pressed, so it taught the owner nothing and read as a broken control
+           sitting under their own branding. The lede above already says how redemption works. The
+           real button on the real customer card is untouched. */''}
     </article>`).join('')}</div>`;
 }
 /* nestly_v486 (owner ruling 2026-08-24 on the Business Profile Live preview: "make sure it is a

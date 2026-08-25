@@ -22,7 +22,11 @@ test('V164 sidebar terminology is merchant-facing', () => {
      result, then why). The merchant-facing terminology this test guards is unchanged. */
   /* V272 owner instruction ("delete this tab cause here have already"): the Staff performance
      entry is gone from this group; the merchant-facing terminology this test guards is unchanged. */
-  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','expenses','pnl','reports','customerintel'\]\}/);
+  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
+     They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
+     FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
+     them is a one-line change. */
+  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','reports','customerintel'\]\}/);
 });
 
 test('V164 Dashboard adds schedule glance and in-card KPI action labels', () => {
