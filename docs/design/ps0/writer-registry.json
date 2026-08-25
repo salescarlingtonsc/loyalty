@@ -418,7 +418,7 @@
    "id": "browser.rpc:app/app.js:business_create_reward_v326",
    "surface": "browser_rpc_binding",
    "rpc": "business_create_reward_v326",
-   "resolves_to": "business_create_reward_v326/5 (owner-only via app.c45_owner_loyalty_write; writes both loyalty_rewards AND a matching loyalty_reward_versions row at the business's currently PUBLISHED config version, which is what makes the new gift immediately redeemable with no draft/publish step)",
+   "resolves_to": "business_create_reward_v326/9 (owner-only via app.c45_owner_loyalty_write; writes both loyalty_rewards AND a matching loyalty_reward_versions row). nestly_v505: the target version is the business's currently PUBLISHED config version when there is one \u2014 which is what makes the new gift immediately redeemable with no draft/publish step \u2014 and otherwise the business's own newest DRAFT (app.reward_draft_target_v505). Before v505 the null case raised XX001, so a business that had never gone live could not save its first gift at all; the draft case replies publish_status='pending' with a blocker so the browser cannot claim the gift is live.",
    "call_site_finding": "none \u2014 validates non-empty name and positive points server-side; audit_log'd"
   },
   {
@@ -2231,7 +2231,7 @@
    "id": "browser.rpc:app/app.js:business_update_reward_v326",
    "surface": "browser_rpc_binding",
    "rpc": "business_update_reward_v326",
-   "resolves_to": "business_update_reward_v326/8 (owner-only via app.c45_owner_loyalty_write; V343). Writes public.loyalty_rewards ONLY \u2014 name/description/cost_points/credit_cents/image_ref \u2014 and deliberately never loyalty_reward_versions, following business_set_reward_paused_v326's precedent that the versions table is an immutable per-publish snapshot, not a live mirror.",
+   "resolves_to": "business_update_reward_v326/11 (owner-only via app.c45_owner_loyalty_write; V343). Writes public.loyalty_rewards, and since v423 also the reward's row in the PUBLISHED config version under the app.v423_reward_edit_version_id token the immutability guard checks, plus any undiverged draft clones. nestly_v505: when the business has never published there is no published row to sync, so the write lands in the business's own draft (app.reward_draft_target_v505) \u2014 previously the version write was skipped entirely, which would have let publish carry the pre-edit text live.",
    "call_site_finding": "none \u2014 the Points/Stamp pages re-read all fields from the row before every write, so a photo pick cannot discard a value typed a second earlier; non-empty name and positive points validated server-side; audit_log'd"
   },
   {

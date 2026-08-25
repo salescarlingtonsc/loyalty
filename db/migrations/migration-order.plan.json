@@ -2481,6 +2481,12 @@
       "path": "db/migrations/20260825_nestly_v504_whatsapp_webhook_inbox.sql",
       "semanticVersion": "v504",
       "proposedDeployVersion": "20260825000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v505_first_gift_before_go_live.sql",
+      "semanticVersion": "v505",
+      "proposedDeployVersion": "20260825000004"
     }
   ]
 }

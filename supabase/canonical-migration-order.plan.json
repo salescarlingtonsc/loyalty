@@ -2476,6 +2476,12 @@
       "version": "20260825000003",
       "name": "nestly_v504_whatsapp_webhook_inbox",
       "sourcePath": "db/migrations/20260825_nestly_v504_whatsapp_webhook_inbox.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000004",
+      "name": "nestly_v505_first_gift_before_go_live",
+      "sourcePath": "db/migrations/20260825_nestly_v505_first_gift_before_go_live.sql"
     }
   ]
 }
