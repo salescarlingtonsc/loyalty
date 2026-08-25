@@ -93,21 +93,19 @@ test('one attention badge wins, in act-now order', async () => {
 test('a lane drop resolves to hand-writable stages only', async () => {
   const Console = await loadConsole();
   // Conversion- and onboarding-controlled stages are never drop targets.
-  const stagesFor = lane => Array.from(Console.laneMoveStages(lane));
-  assert.deepEqual(stagesFor('case_won'), ['client']);
+  const stagesFor = (lane,from='contacted') => Array.from(Console.laneMoveStages(lane,from));
+  assert.deepEqual(stagesFor('case_won'), [],
+    'commercial close is evidence-gated in its dedicated modal, never a blind lane drop');
   // The closed lane now legitimately holds all six closed-without-activation
   // stages introduced by the pipeline vocabulary change (was just ['lost']
   // under the old 19-stage set); all six are still hand-writable drop
   // targets, unlike the conversion/onboarding-controlled case_won stages.
-  assert.deepEqual(stagesFor('closed'), [
-    'lost', 'not_interested', 'no_response', 'invalid_contact', 'closed_business', 'do_not_contact'
-  ]);
-  assert.deepEqual(stagesFor('inbox'), ['new_lead']);
-  // The pipeline vocabulary change collapsed the old multi-stage "decision"
-  // grouping (which included quotation_sent) down to a single 'appointment'
-  // stage; it is still a valid, hand-writable drop target.
+  assert.deepEqual(stagesFor('closed'), ['lost']);
+  assert.deepEqual(stagesFor('inbox'), []);
+  // Decision contains the canonical appointment/proposal/nurture stages, but
+  // only transitions allowed from the current stage are offered.
   const decision = stagesFor('decision');
-  assert.deepEqual(decision, ['appointment']);
+  assert.deepEqual(decision, ['appointment','nurture']);
   for (const lane of Console.operationalLanes) {
     for (const stage of stagesFor(lane.key)) {
       assert.ok(!['account_created', 'onboarding', 'activated', 'unmapped'].includes(stage),
@@ -205,30 +203,13 @@ test('list view does not echo the lane in the stage column for website signups',
   assert.notEqual(cells[1], cells[2], 'stage must not duplicate the lane column');
 });
 
-test('v184 archive and merge are offered only to a super admin, and only pre-workspace', async () => {
+test('archive remains audited while unsafe prospect-only merge is removed', async () => {
   const source = await read('app/platform-console.js');
-
-  // Both actions are gated on super admin AND on the firm not being converted.
-  assert.match(source, /\$\{isSuperAdmin&&!converted\?`<button type="button" class="btn ghost sm" data-merge-prospect>/);
   assert.match(source, /data-archive-prospect>/);
   assert.match(source, /on\('\[data-archive-prospect\]',\(\)=>archiveProspectModal\(prospect,context\)\)/);
-  assert.match(source, /on\('\[data-merge-prospect\]',\(\)=>mergeProspectModal\(prospect,context\)\)/);
-
-  // Card-action selectors must include the new buttons or a click would fall
-  // through to "open the drawer" instead of firing the action.
-  assert.match(source, /'\[data-archive-prospect\]','\[data-merge-prospect\]'/);
-
-  // Both call the v184 RPCs and both demand a reason field.
   assert.match(source, /platform_archive_prospect_v184',\{[\s\S]{0,120}p_reason/);
-  assert.match(source, /platform_merge_prospects_v184',\{[\s\S]{0,200}p_reason/);
   assert.match(source, /id:'archiveReason'[^}]*required:true/);
-  assert.match(source, /id:'mergeReason'[^}]*required:true/);
-
-  // The merge picker never offers the record being merged away, and skips
-  // firms that have no prospect record at all.
-  assert.match(source, /row\.prospect_id&&String\(row\.prospect_id\)!==String\(prospect\.id\)/);
-
-  // The copy must be honest about what survives.
+  assert.doesNotMatch(source, /platform_merge_prospects_v184|data-merge-prospect/);
   assert.match(source, /Nothing is deleted/);
   assert.match(source, /cannot be restored on its own/);
 });

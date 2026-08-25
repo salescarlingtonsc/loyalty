@@ -606,7 +606,8 @@ test('daily onboarding forms use consultant names, SGD and percentages instead o
   // above and below). What must stay true here is that the remaining stage
   // evidence fields use human names, not raw database ids or units.
   assert.doesNotMatch(stage,/\(cents\)/);
-  assert.match(stage,/label:'Assigned consultant'/);
+  assert.doesNotMatch(stage,/label:'Assigned consultant'/);
+  assert.match(source,/evidence\.assigned_consultant=String\(prospect\.assigned_consultant_id/);
   assert.match(stage,/label:'Appointment owner'/);
   assert.match(conversion,/Accepted amount \(SGD\)/);
   assert.match(conversion,/label:'Onboarding owner'/);

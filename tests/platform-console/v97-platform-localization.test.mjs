@@ -308,9 +308,9 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,997,'update the audited explicit-copy inventory when adding runtime UI'); // V312
-  assert.equal(metadata.length,782,'update the audited CUI metadata inventory when adding UI metadata'); // V312
-  assert.equal(announcements.length,49,'update the audited static announcement inventory when adding announcements'); // V312
+  assert.equal(explicit.length,1035,'update the audited explicit-copy inventory when adding runtime UI'); // V504
+  assert.equal(metadata.length,821,'update the audited CUI metadata inventory when adding UI metadata'); // V504
+  assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]
@@ -572,7 +572,8 @@ test('prospect lifecycle conditional branches render real localized controls for
   for(const locale of ['zh-CN','ms']){
     api.setPlatformLocaleForTest(locale);
     const newLead=api.prospectLifecycleActionsHtml({converted:false,stage:'new_lead',termsAccepted:false},CUI);
-    assert.match(newLead,/data-convert/);
+    assert.doesNotMatch(newLead,/data-convert/);
+    assert.match(newLead,/Advance the evidence-backed pipeline|推进有证据支持|Majukan saluran bukti/);
     assert.match(newLead,/data-lost/);
     assert.ok(!newLead.includes('${'));
     assert.ok(!newLead.includes('>Convert to client<'));
@@ -595,7 +596,7 @@ test('prospect lifecycle conditional branches render real localized controls for
     assert.ok(!converted.includes('Account lifecycle is controlled by onboarding evidence.'));
 
     const lost=api.prospectLifecycleActionsHtml({converted:false,stage:'lost',termsAccepted:false},CUI);
-    assert.match(lost,/data-convert/);
+    assert.doesNotMatch(lost,/data-convert/);
     assert.doesNotMatch(lost,/data-lost/);
     assert.ok(!lost.includes('${'));
   }
@@ -677,16 +678,19 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   const classifications=[
     {kind:'localized-ui',pattern:/^(?:disabled title="§"|name="bank_account_number" inputmode="numeric" placeholder="§")$/},
     {kind:'data-only',pattern:/^(?:§ (?:KB|MB)|Platform import review: §|NPU: §)$/},
-    {kind:'technical',pattern:/^(?:nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|§-business-explorer-§\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\")$/}
+    {kind:'technical',pattern:/^(?:confirm:§|nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|§-business-explorer-§\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\"|#\/platform\/work\?scope=§|\?search=§|#\/platform\/subscription-operations§)$/}
   ];
   const classified=inventory.map(entry=>({
     ...entry,kind:classifications.find(rule=>rule.pattern.test(entry.text))?.kind||'unclassified'
   }));
-  assert.equal(classified.length,47,'review every interpolated template segment when the inventory changes');
+  // V504: three new technical URL-fragment segments (work scope routing and the
+  // subscription-operations search deep link) and one localized-ui segment (the
+  // disabled Claim button's title, which already goes through pt()).
+  assert.equal(classified.length,52,'review every interpolated template segment when the inventory changes');
   assert.deepEqual(classified.filter(entry=>entry.kind==='unclassified'),[]);
-  assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,5);
+  assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,6);
   assert.equal(classified.filter(entry=>entry.kind==='data-only').length,4);
-  assert.equal(classified.filter(entry=>entry.kind==='technical').length,38);
+  assert.equal(classified.filter(entry=>entry.kind==='technical').length,42);
 });
 
 test('every mixed UI grammar template localizes arbitrary values in Chinese and Malay',async()=>{

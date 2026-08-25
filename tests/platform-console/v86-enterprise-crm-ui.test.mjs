@@ -49,14 +49,14 @@ test('enterprise mapping handles synonyms, conflicts, custom fields and duplicat
   assert.match(analysed[1].errors.join(' '),/duplicate of source row 2/i);
 });
 
-test('v86 drawer binds typed firm CRM and governed stage contracts',async()=>{
+test('enterprise drawer binds typed firm CRM and v510 governed stage contracts',async()=>{
   const source=await read('app/platform-console.js');
   for(const rpc of [
     'platform_get_prospect_detail_v86','platform_list_prospect_audit_v86',
     'platform_record_company_profile_v86','platform_upsert_prospect_contact_v86',
     'platform_record_qualification_v86','platform_record_activity_detail_v86',
     'platform_record_commercial_detail_v86','platform_record_conversion_configuration_v86',
-    'platform_refresh_prospect_quality_v86','platform_move_prospect_stage_v86'
+    'platform_refresh_prospect_quality_v86','platform_transition_lead_v510'
   ])assert.match(source,new RegExp(rpc));
   assert.match(source,/p_expected_version:prospectVersion\(prospect\)/);
   assert.match(source,/p_idempotency_key:idempotencyKey\(\)/);
@@ -68,21 +68,20 @@ test('v86 drawer binds typed firm CRM and governed stage contracts',async()=>{
   ])assert.match(source,new RegExp(section));
 });
 
-test('all fifteen pipeline stages have visible gates and system stages stay managed',async()=>{
+test('canonical pipeline stages have visible gates and system stages stay managed',async()=>{
   const source=await read('app/platform-console.js');
   // Owner directive replaced the old 19-stage vocabulary (six "no pick up"
   // stages, site visits, quotations) with a 15-stage conversion funnel.
   const stages=[
-    'new_lead','assigned','contacted','interested','appointment','client',
+    'new_lead','assigned','contacted','interested','appointment','proposal','closed_won','nurture','client',
     'account_created','onboarding','activated','not_interested',
     'no_response','invalid_contact','closed_business','do_not_contact','lost'
   ];
   for(const stage of stages)assert.match(source,new RegExp(`${stage}:|\\['${stage}'`));
   assert.match(source,/stageGateDefinitions/);
-  // client and account_created stay system-managed: client is only reachable
-  // through the dedicated commercial-terms conversion flow, and moving
-  // directly into account_created/onboarding/activated is blocked outright.
-  assert.match(source,/toStage==='client'\)return commercialTermsModal/);
+  // closed_won records commercial agreement only. Legacy client and the later
+  // account/onboarding/activation states are never human stage-picker writes.
+  assert.match(source,/toStage==='closed_won'\)return commercialTermsModal/);
   assert.match(source,/This stage is controlled by account conversion and onboarding evidence/i);
   assert.match(source,/Reason or context/);
   assert.match(source,/Accepted product, seats, billing cycle, value and currency/);
@@ -123,13 +122,13 @@ test('enterprise reports and billing expose cross-domain exports and reconciliat
   const source=await read('app/platform-console.js');
   assert.match(source,/activeKey==='reports'.*renderPlatformReports/);
   for(const rpc of [
-    'platform_generate_improvement_report_v82','platform_get_sme_analytics_v86',
+    'platform_generate_improvement_report_v82','platform_get_sme_analytics_v510',
     'platform_get_billing_v125',
     'platform_get_automation_billing_v89','platform_get_automation_reconciliation_v89'
   ])assert.match(source,new RegExp(rpc));
   assert.doesNotMatch(source,/get_billing_reconciliation_v77/);
   assert.doesNotMatch(source,/platform_get_billing_reconciliation_v89/);
-  assert.match(source,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v86[\s\S]*Promise\.resolve\(null\)/);
+  assert.match(source,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v510[\s\S]*Promise\.resolve\(null\)/);
   assert.match(source,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v125'[\s\S]*Promise\.resolve\(null\)/);
   assert.match(source,/SME acquisition and onboarding omitted/);
   assert.match(source,/Subscription billing omitted/);

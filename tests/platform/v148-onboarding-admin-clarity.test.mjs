@@ -133,8 +133,9 @@ test('existing onboarding CRM offers URL-persistent Kanban and List views',async
 test('new prospect keeps one request identity through lost-response retry',async()=>{
   const source=await read('app/platform-console.js');
   const create=source.match(/async function newProspectModal[\s\S]+?\n  function prospectImportModal/)?.[0]||'';
-  assert.match(create,/const createAttemptKey=idempotencyKey\(\)/);
-  assert.match(create,/p_idempotency_key:createAttemptKey/);
+  assert.match(create,/let createAttemptKey=idempotencyKey\(\),createAttemptFingerprint=''/);
+  assert.match(create,/createAttemptFingerprint!==fingerprint\)createAttemptKey=idempotencyKey\(\)/);
+  assert.match(create,/p_operation_key:createAttemptKey/);
   assert.doesNotMatch(create,/p_idempotency_key:idempotencyKey\(\)/);
   assert.match(create,/Prospect \{name\} was saved\. Refresh the onboarding list/);
 });

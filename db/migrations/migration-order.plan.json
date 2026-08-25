@@ -2499,6 +2499,18 @@
       "path": "db/migrations/20260825_nestly_v508_reschedule_is_a_fresh_request.sql",
       "semanticVersion": "v508",
       "proposedDeployVersion": "20260825000006"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v510_operating_system_crm_foundation.sql",
+      "semanticVersion": "v510",
+      "proposedDeployVersion": "20260825000007"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v511_work_operating_system.sql",
+      "semanticVersion": "v511",
+      "proposedDeployVersion": "20260825000008"
     }
   ]
 }

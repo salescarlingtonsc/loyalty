@@ -9,7 +9,7 @@ test('client conversion uses the exact v79 optimistic and idempotent contract', 
   const source = await read('app/platform-console.js');
 
   assert.match(source, /Create Peekaa account/);
-  assert.match(source, /previewThenConfirm\(\{\s*title:'Create Peekaa account'/);
+  assert.match(source, /title:prospectStage\(prospect\)==='closed_won'\?'Prepare billing account':'Create Peekaa account'/);
   assert.match(source, /convert_sme_prospect_v79',\{\s*p_prospect:prospect\.id,\s*p_expected_version:prospectVersion\(prospect\),\s*p_idempotency_key:idempotencyKey\(\)/);
   assert.match(source, /result\.outcome==='duplicate_workspace'/);
   assert.match(source, /No workspace was created/);

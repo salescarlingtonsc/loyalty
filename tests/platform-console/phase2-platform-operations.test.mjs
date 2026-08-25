@@ -9,17 +9,17 @@ const read = path => readFile(new URL(path, root), 'utf8');
 // Mirrors public.sme_pipeline_stages in production. Owner directive replaced
 // the old 19-stage vocabulary (inherited from a different business's sales
 // motion: six separate "no pick up" stages, site visits, quotations) with a
-// 15-stage conversion funnel. `client` and `account_created` are kept but
-// hidden from the rep-facing stage picker because convert_sme_prospect_v79
-// hard-depends on both.
+// canonical sales stages plus preserved legacy/system states. CLOSED_WON is a
+// commercial agreement only; payment, workspace creation and activation remain separate.
 const officialStages = [
   'new_lead','assigned','contacted','interested','appointment',
+  'proposal','closed_won','nurture',
   'client','account_created','onboarding','activated',
   'not_interested','no_response','invalid_contact','closed_business',
   'do_not_contact','lost'
 ];
 
-test('onboarding exposes all 15 official stages and maps them into five operational lanes', async () => {
+test('onboarding exposes canonical CRM stages and maps them into five operational lanes', async () => {
   const source = await read('app/platform-console.js');
   const context = { Object };
   context.globalThis = context;
@@ -33,11 +33,11 @@ test('onboarding exposes all 15 official stages and maps them into five operatio
   assert.doesNotMatch(JSON.stringify(stages), /unmapped/i);
   assert.equal(lanes.length,5);
   assert.deepEqual(lanes.find(lane=>lane.key==='case_won')?.stages,[
-    'client','account_created','onboarding','activated'
+    'closed_won','client','account_created','onboarding','activated'
   ]);
   assert.equal(lanes.find(lane=>lane.key==='case_won')?.label,'Case won');
   assert.deepEqual(lanes.flatMap(lane=>lane.stages).sort(),[...officialStages,'unmapped'].sort());
-  assert.match(source, /\['account_created','onboarding','activated'\]\.includes\(option\.key\)\?' disabled'/);
+  assert.match(source, /canonicalTransitionTargets/);
   assert.match(source, /evidence-backed onboarding gates and an auditable launch decision/);
   assert.doesNotMatch(source, /Activated remains unavailable until the real launch checklist is connected/);
   assert.doesNotMatch(source, /data-drop-stage/);
@@ -61,14 +61,14 @@ test('platform console wires v75 sector mutations through dry-run previews', asy
   assert.match(source, /previewThenConfirm/);
 });
 
-test('pipeline mutations, detail and imports use the v76 core plus v86 governed contracts', async () => {
+test('pipeline reads preserve compatibility while writes use v510 canonical contracts', async () => {
   const source = await read('app/platform-console.js');
   for (const rpc of [
     'platform_list_firm_onboarding_v88','platform_list_prospects_v76',
-    'platform_get_prospect_detail_v76','platform_create_prospect_v76',
-    'platform_update_prospect_v76','platform_assign_prospect_v89',
+    'platform_get_prospect_detail_v76','platform_ingest_lead_v510',
+    'platform_update_prospect_v76','platform_transfer_lead_v510','platform_queue_lead_v510',
     'platform_add_prospect_activity_v76','platform_create_prospect_task_v76',
-    'platform_complete_prospect_task_v76','platform_move_prospect_stage_v86',
+    'platform_complete_prospect_task_v76','platform_transition_lead_v510',
     'platform_stage_prospect_import_v76','platform_commit_prospect_import_v86'
   ]) assert.match(source, new RegExp(rpc));
 
@@ -76,7 +76,7 @@ test('pipeline mutations, detail and imports use the v76 core plus v86 governed 
   assert.match(source, /p_company:\{legal_name:/);
   assert.match(source, /p_primary_contact:\{full_name:/);
   assert.match(source, /p_source_system:'platform_console',p_source_name:/);
-  assert.match(source, /p_batch:batch,p_idempotency_key:/);
+  assert.match(source, /platform_commit_prospect_import_v86',\{p_batch:batch\}/);
   assert.match(source, /item\.current_stage_key\|\|item\.stage_key/);
   assert.match(source, /item\.legal_name\|\|item\.trading_name/);
   assert.match(source, /item\.primary_contact\?\.full_name/);

@@ -46,8 +46,9 @@ test('v146 renders signed expense effects and reversal controls truthfully',()=>
 test('v146 prospect create keeps one retry key and does not misreport refresh failure',async()=>{
   const source=await read('app/platform-console.js');
   const modal=source.match(/async function newProspectModal[\s\S]+?\n  function prospectImportModal/)?.[0]||'';
-  assert.match(modal,/const createAttemptKey=idempotencyKey\(\)/);
-  assert.match(modal,/p_idempotency_key:createAttemptKey/);
+  assert.match(modal,/let createAttemptKey=idempotencyKey\(\),createAttemptFingerprint=''/);
+  assert.match(modal,/createAttemptFingerprint!==fingerprint\)createAttemptKey=idempotencyKey\(\)/);
+  assert.match(modal,/p_operation_key:createAttemptKey/);
   assert.doesNotMatch(modal,/p_idempotency_key:idempotencyKey\(\)/);
   assert.match(modal,/controls\.close\(\);[\s\S]+Prospect \{name\} created[\s\S]+try\{await renderOnboarding/);
   assert.match(modal,/was saved\. Refresh the onboarding list/);

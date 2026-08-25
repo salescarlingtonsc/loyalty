@@ -21,7 +21,7 @@ test('operational board stays within five lanes and keeps Case won distinct from
   }));
   assert.equal(lanes.length,5);
   assert.deepEqual(lanes.find(lane=>lane.key==='case_won'),{
-    key:'case_won',label:'Case won',stages:['client','account_created','onboarding','activated']
+    key:'case_won',label:'Case won',stages:['closed_won','client','account_created','onboarding','activated']
   });
   // The closed lane now legitimately holds all six closed-without-activation
   // states, not just 'lost'. What must stay true is that it remains a

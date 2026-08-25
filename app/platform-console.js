@@ -3175,7 +3175,45 @@
       'Rating high to low':'评分从高到低','Most reviews first':'评价最多优先',
       'Recently contacted':'最近联系','Follow-up due first':'跟进最紧急优先',
       'Follow-up scheduled':'已安排跟进','No follow-up set':'未设置跟进',
-      'Assigned prospect':'已分配的潜在商户','Unassigned prospect':'未分配的潜在商户'
+      'Assigned prospect':'已分配的潜在商户','Unassigned prospect':'未分配的潜在商户',
+      'Possible duplicate found. Review the duplicate queue before creating another record.':'发现可能重复的记录。请先检查重复项队列，再创建新记录。',
+      'Possible duplicate found. Ask an administrator to review the duplicate queue.':'发现可能重复的记录。请管理员检查重复项队列。',
+      'That stage transition is not allowed from {stage}.':'不允许从“{stage}”转到该阶段。',
+      'Closed won':'已成交','Nurture':'培育','Legacy deal agreed':'旧版已达成协议',
+      'Commercially agreed; payment and activation remain separate':'商业条款已达成；付款与激活仍为独立步骤'
+      ,'First action due':'首次行动截止时间','Proposal issued at':'方案发出时间',
+      'Proposal version / commercial notes':'方案版本／商业备注','Recontact permission':'再次联系许可',
+      'Permission recorded':'许可记录','Close opportunity as won':'将商机结为赢单',
+      'Preview closed-won transition':'预览赢单转换','Payment / onboarding follow-up due':'付款／入驻跟进截止时间',
+      'Confirm commercial agreement':'确认商业协议'
+      ,'Duplicate review':'重复项复核','No duplicates waiting':'没有待复核的重复项',
+      'Every canonical Company identity review has been decided.':'所有规范公司身份复核均已完成。',
+      'Resolve possible duplicate':'处理可能的重复项','Apply reviewed decision':'应用复核决定',
+      'Reviewed decision':'复核决定','Different Company — create a distinct record':'不同公司 — 创建独立记录',
+      'Reject this intake':'拒绝此条录入','Same Company: {name} ({basis})':'同一公司：{name}（{basis}）',
+      '{count} possible matches. Strong identity conflicts cannot be forced into a new Company.':'{count} 个可能匹配。强身份冲突不能强制创建为新公司。',
+      'Duplicate review resolved: {outcome}.':'重复项复核已处理：{outcome}。',
+      'Awaiting verified payment before account creation.':'等待已验证付款后创建账户。',
+      'Record commercial agreement':'记录商业协议',
+      'Prepare billing account':'准备账单账户',
+      'Create the inactive account now so Stripe or a manual invoice can collect payment. Activation remains blocked until payment is verified.':'立即创建未激活账户，以便 Stripe 或人工发票收款。付款验证前仍禁止激活。',
+      'What requires action today':'今天需要处理的事项',
+      'One canonical queue for overdue work, missing ownership and inactive owners.':'一个统一队列，汇总逾期工作、无人负责及负责人已停用的事项。',
+      'Lead action queue':'潜在客户行动队列','Claim':'认领','Open':'打开',
+      'No lead exceptions require action.':'没有需要处理的潜在客户异常。',
+      'Lead claimed. Its existing next action was preserved.':'已认领潜在客户，并保留原有的下一步行动。',
+      'The lead could not be claimed.':'无法认领该潜在客户。',
+      'Advance the evidence-backed pipeline before commercial handoff.':'先推进有证据支持的销售流程，再进行商业交接。',
+      'Commercial terms and verified payment are ready for account creation.':'商业条款与已验证付款已满足账户创建条件。',
+      'Verified payment is required before account creation.':'创建账户前必须有已验证付款。',
+      'Complete the evidence-backed commercial pipeline first.':'请先完成有证据支持的商业流程。',
+      'Existing prospect {name} updated with this source.':'已用此来源更新现有潜在客户 {name}。',
+      '{name} is already a Peekaa merchant. Open the firm record.':'{name} 已是 Peekaa 商户。请打开企业记录。',
+      'Possible duplicate for {name} was added to Duplicate review.':'{name} 的可能重复项已加入重复项复核。',
+      'Existing firm updated with this source.':'已用此来源更新现有企业。',
+      'This firm is already a Peekaa merchant.':'此企业已是 Peekaa 商户。',
+      'Possible duplicate added to the administrator review queue.':'可能的重复项已加入管理员复核队列。'
+      ,'Complete operational timeline':'完整运营时间线'
     }),
     ms:Object.freeze({
       'Select {name}':'Pilih {name}','Sort by':'Susun mengikut',
@@ -3204,7 +3242,140 @@
       'Rating high to low':'Penilaian tinggi ke rendah','Most reviews first':'Paling banyak ulasan dahulu',
       'Recently contacted':'Baru dihubungi','Follow-up due first':'Susulan tertunggak dahulu',
       'Follow-up scheduled':'Susulan dijadualkan','No follow-up set':'Tiada susulan ditetapkan',
-      'Assigned prospect':'Prospek ditugaskan','Unassigned prospect':'Prospek belum ditugaskan'
+      'Assigned prospect':'Prospek ditugaskan','Unassigned prospect':'Prospek belum ditugaskan',
+      'Possible duplicate found. Review the duplicate queue before creating another record.':'Kemungkinan rekod pendua ditemui. Semak baris gilir pendua sebelum mencipta rekod baharu.',
+      'Possible duplicate found. Ask an administrator to review the duplicate queue.':'Kemungkinan rekod pendua ditemui. Minta pentadbir menyemak baris gilir pendua.',
+      'That stage transition is not allowed from {stage}.':'Peralihan tahap itu tidak dibenarkan daripada {stage}.',
+      'Closed won':'Jualan ditutup','Nurture':'Pupuk','Legacy deal agreed':'Perjanjian lama dipersetujui',
+      'Commercially agreed; payment and activation remain separate':'Persetujuan komersial dicapai; pembayaran dan pengaktifan kekal berasingan'
+      ,'First action due':'Tindakan pertama perlu dibuat','Proposal issued at':'Cadangan dikeluarkan pada',
+      'Proposal version / commercial notes':'Versi cadangan / nota komersial','Recontact permission':'Kebenaran menghubungi semula',
+      'Permission recorded':'Kebenaran direkodkan','Close opportunity as won':'Tutup peluang sebagai berjaya',
+      'Preview closed-won transition':'Pratonton peralihan jualan berjaya','Payment / onboarding follow-up due':'Susulan pembayaran / penyertaan perlu dibuat',
+      'Confirm commercial agreement':'Sahkan persetujuan komersial'
+      ,'Duplicate review':'Semakan pendua','No duplicates waiting':'Tiada pendua menunggu',
+      'Every canonical Company identity review has been decided.':'Semua semakan identiti Syarikat kanonik telah diputuskan.',
+      'Resolve possible duplicate':'Selesaikan kemungkinan pendua','Apply reviewed decision':'Gunakan keputusan semakan',
+      'Reviewed decision':'Keputusan disemak','Different Company — create a distinct record':'Syarikat berbeza — cipta rekod berasingan',
+      'Reject this intake':'Tolak kemasukan ini','Same Company: {name} ({basis})':'Syarikat sama: {name} ({basis})',
+      '{count} possible matches. Strong identity conflicts cannot be forced into a new Company.':'{count} padanan berkemungkinan. Konflik identiti kukuh tidak boleh dipaksa menjadi Syarikat baharu.',
+      'Duplicate review resolved: {outcome}.':'Semakan pendua diselesaikan: {outcome}.',
+      'Awaiting verified payment before account creation.':'Menunggu pembayaran disahkan sebelum penciptaan akaun.',
+      'Record commercial agreement':'Rekod persetujuan komersial',
+      'Prepare billing account':'Sediakan akaun pengebilan',
+      'Create the inactive account now so Stripe or a manual invoice can collect payment. Activation remains blocked until payment is verified.':'Cipta akaun tidak aktif sekarang supaya Stripe atau invois manual boleh menerima bayaran. Pengaktifan kekal disekat sehingga bayaran disahkan.',
+      'What requires action today':'Perkara yang perlu tindakan hari ini',
+      'One canonical queue for overdue work, missing ownership and inactive owners.':'Satu baris gilir utama untuk kerja lewat, tanpa pemilik dan pemilik tidak aktif.',
+      'Lead action queue':'Baris gilir tindakan prospek','Claim':'Tuntut','Open':'Buka',
+      'No lead exceptions require action.':'Tiada pengecualian prospek yang memerlukan tindakan.',
+      'Lead claimed. Its existing next action was preserved.':'Prospek dituntut dan tindakan seterusnya dikekalkan.',
+      'The lead could not be claimed.':'Prospek tidak dapat dituntut.',
+      'Advance the evidence-backed pipeline before commercial handoff.':'Majukan saluran bukti sebelum serahan komersial.',
+      'Commercial terms and verified payment are ready for account creation.':'Terma komersial dan pembayaran disahkan sedia untuk penciptaan akaun.',
+      'Verified payment is required before account creation.':'Pembayaran disahkan diperlukan sebelum penciptaan akaun.',
+      'Complete the evidence-backed commercial pipeline first.':'Lengkapkan saluran komersial berasaskan bukti dahulu.',
+      'Existing prospect {name} updated with this source.':'Prospek sedia ada {name} dikemas kini dengan sumber ini.',
+      '{name} is already a Peekaa merchant. Open the firm record.':'{name} sudah menjadi peniaga Peekaa. Buka rekod firma.',
+      'Possible duplicate for {name} was added to Duplicate review.':'Kemungkinan pendua untuk {name} ditambah ke Semakan pendua.',
+      'Existing firm updated with this source.':'Firma sedia ada dikemas kini dengan sumber ini.',
+      'This firm is already a Peekaa merchant.':'Firma ini sudah menjadi peniaga Peekaa.',
+      'Possible duplicate added to the administrator review queue.':'Kemungkinan pendua ditambah ke baris gilir semakan pentadbir.'
+      ,'Complete operational timeline':'Garis masa operasi lengkap'
+    })
+  });
+  // V511: the work operating system and Business 360. New copy only — every
+  // string below is either introduced by the command center, the work queue,
+  // or the Business 360 panel; nothing here replaces an earlier translation.
+  const PLATFORM_COPY_V511=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Command center':'指挥中心','Priorities':'优先事项','Work':'工作',
+      'Subject':'主题','Domain':'领域',
+      'Every open exception across work, leads, onboarding, billing and applications — one queue, ranked by urgency.':'工作、潜在客户、入驻、账单与申请中的所有未处理异常——一个队列，按紧急程度排序。',
+      'Needs action':'需要处理','{count} open items across the operation.':'整个运营中有 {count} 个未处理事项。',
+      'The operation is clear':'运营状态良好',
+      'No work, lead, onboarding, billing or application item needs attention right now. New exceptions will appear here the moment they exist.':'目前没有工作、潜在客户、入驻、账单或申请事项需要处理。一旦出现新的异常，会立即显示在此处。',
+      'Inactive Owner':'负责人已停用','Due Today':'今天到期','Stalled':'停滞',
+      'Payment Failed':'付款失败','Awaiting Decision':'等待决定','Missing Next Action':'缺少下一步行动',
+      'Lead':'潜在客户','Application':'申请','Untitled':'未命名',
+      'Business 360':'商户全景',
+      'Loading identity, ownership, commercial and operational status…':'正在加载身份、负责人、商业与运营状态…',
+      'Loading business operating summary…':'正在加载商户运营摘要…',
+      'Identity':'身份信息','Acquired via':'获取方式','Assisted Sale':'协助销售','Self Service':'自助注册',
+      'Relationship owner':'关系负责人','No relationship owner assigned':'尚未指定关系负责人',
+      'Commercial':'商业条款','Entitlement':'权益状态','Entitled':'已符合资格',
+      'Awaiting verified payment':'等待已验证付款','Not live':'尚未上线','Payment status':'付款状态','Activated':'已激活',
+      'No onboarding checklist recorded':'未记录入驻清单','No open action recorded':'没有记录未完成行动',
+      'Open work':'未结工作','Blocker':'阻碍因素','No timeline activity recorded':'未记录时间线活动',
+      'Claimed':'已认领','Transferred':'已转移','State Changed':'状态已变更','Due Changed':'截止时间已变更',
+      'Unblocked':'已解除阻碍','Waiting Set':'已设为等待',
+      'Claim, progress and close the operational actions behind every business and lead.':'认领、推进并关闭每个商户与潜在客户背后的运营行动。',
+      'My work':'我的工作','Work item':'工作项','Start':'开始','Wait':'等待',
+      'Managed by {source}':'由{source}管理','Automation':'自动化',
+      'No work in this queue':'此队列中没有工作','Nothing matches this scope right now.':'目前此范围内没有匹配项。',
+      'Work type':'工作类型','Title':'标题','Due date':'截止日期','Return date':'恢复日期',
+      'Mark work item as waiting':'将工作项设为等待','Block work item':'阻止工作项','Close work item':'关闭工作项',
+      'New work item':'新建工作项','Create work item':'创建工作项',
+      'No consultant profile to claim with':'没有可用于认领的顾问身份',
+      'Work item claimed.':'工作项已认领。','Work item started.':'工作项已开始。',
+      'Work item set to waiting.':'工作项已设为等待。','Work item blocked.':'工作项已阻止。',
+      'Work item closed.':'工作项已关闭。','Work item created.':'工作项已创建。',
+      'This item changed since it was loaded. The list has been refreshed.':'此项目自加载后已发生变更，列表已刷新。',
+      'The work item could not be claimed.':'无法认领该工作项。','The work item could not be started.':'无法开始该工作项。',
+      'The work item could not be updated.':'无法更新该工作项。','The work item could not be created.':'无法创建工作项。',
+      'Lead Follow Up':'潜在客户跟进','Commercial Review':'商业复核','Payment Exception':'付款异常',
+      'Manual Payment Review':'人工付款复核','Onboarding Step':'入驻步骤','Onboarding Blocked':'入驻受阻',
+      'Activation Review':'激活复核','Renewal Prep':'续约准备','Support Action':'支持行动',
+      'Data Correction':'数据更正','Integration Incident':'集成事故','Anomaly Review':'异常复核',
+      'Not Needed':'无需处理','Superseded':'已被取代','Waiting':'等待中','Work scope':'工作范围',
+      'A work item must name a business or a lead.':'工作项必须指定一个商户或潜在客户。',
+      'Command center queue':'指挥中心队列','Work queue':'工作队列',
+      'Business ID (optional anchor)':'商户 ID（可选锚点）','Lead ID (optional anchor)':'潜在客户 ID（可选锚点）',
+      'Timeline':'时间线','Business 360 unavailable':'商户全景不可用'
+    }),
+    ms:Object.freeze({
+      'Command center':'Pusat arahan','Priorities':'Keutamaan','Work':'Kerja',
+      'Subject':'Subjek','Domain':'Domain',
+      'Every open exception across work, leads, onboarding, billing and applications — one queue, ranked by urgency.':'Setiap pengecualian terbuka merentasi kerja, prospek, penerimaan, pengebilan dan permohonan — satu baris gilir, disusun mengikut kesegeraan.',
+      'Needs action':'Perlu tindakan','{count} open items across the operation.':'{count} item terbuka merentasi keseluruhan operasi.',
+      'The operation is clear':'Operasi dalam keadaan baik',
+      'No work, lead, onboarding, billing or application item needs attention right now. New exceptions will appear here the moment they exist.':'Tiada item kerja, prospek, penerimaan, pengebilan atau permohonan yang memerlukan perhatian sekarang. Pengecualian baharu akan dipaparkan di sini sebaik sahaja wujud.',
+      'Inactive Owner':'Pemilik tidak aktif','Due Today':'Perlu hari ini','Stalled':'Terhenti',
+      'Payment Failed':'Pembayaran gagal','Awaiting Decision':'Menunggu keputusan','Missing Next Action':'Tiada tindakan seterusnya',
+      'Lead':'Prospek','Application':'Permohonan','Untitled':'Tanpa tajuk',
+      'Business 360':'Perniagaan 360',
+      'Loading identity, ownership, commercial and operational status…':'Memuatkan identiti, pemilikan, status komersial dan operasi…',
+      'Loading business operating summary…':'Memuatkan ringkasan operasi perniagaan…',
+      'Identity':'Identiti','Acquired via':'Diperoleh melalui','Assisted Sale':'Jualan berbantu','Self Service':'Layan diri',
+      'Relationship owner':'Pemilik hubungan','No relationship owner assigned':'Tiada pemilik hubungan ditugaskan',
+      'Commercial':'Komersial','Entitlement':'Kelayakan','Entitled':'Layak',
+      'Awaiting verified payment':'Menunggu pembayaran disahkan','Not live':'Belum langsung','Payment status':'Status pembayaran','Activated':'Diaktifkan',
+      'No onboarding checklist recorded':'Tiada senarai semak penerimaan direkodkan','No open action recorded':'Tiada tindakan terbuka direkodkan',
+      'Open work':'Kerja terbuka','Blocker':'Penghalang','No timeline activity recorded':'Tiada aktiviti garis masa direkodkan',
+      'Claimed':'Dituntut','Transferred':'Dipindahkan','State Changed':'Status berubah','Due Changed':'Tarikh akhir berubah',
+      'Unblocked':'Disekat dibuka','Waiting Set':'Ditetapkan menunggu',
+      'Claim, progress and close the operational actions behind every business and lead.':'Tuntut, majukan dan tutup tindakan operasi di sebalik setiap perniagaan dan prospek.',
+      'My work':'Kerja saya','Work item':'Item kerja','Start':'Mula','Wait':'Tunggu',
+      'Managed by {source}':'Diuruskan oleh {source}','Automation':'Automasi',
+      'No work in this queue':'Tiada kerja dalam baris gilir ini','Nothing matches this scope right now.':'Tiada yang sepadan dengan skop ini sekarang.',
+      'Work type':'Jenis kerja','Title':'Tajuk','Due date':'Tarikh akhir','Return date':'Tarikh kembali',
+      'Mark work item as waiting':'Tanda item kerja sebagai menunggu','Block work item':'Sekat item kerja','Close work item':'Tutup item kerja',
+      'New work item':'Item kerja baharu','Create work item':'Cipta item kerja',
+      'No consultant profile to claim with':'Tiada profil perunding untuk menuntut',
+      'Work item claimed.':'Item kerja dituntut.','Work item started.':'Item kerja dimulakan.',
+      'Work item set to waiting.':'Item kerja ditetapkan menunggu.','Work item blocked.':'Item kerja disekat.',
+      'Work item closed.':'Item kerja ditutup.','Work item created.':'Item kerja dicipta.',
+      'This item changed since it was loaded. The list has been refreshed.':'Item ini berubah sejak dimuatkan. Senarai telah disegarkan semula.',
+      'The work item could not be claimed.':'Item kerja tidak dapat dituntut.','The work item could not be started.':'Item kerja tidak dapat dimulakan.',
+      'The work item could not be updated.':'Item kerja tidak dapat dikemas kini.','The work item could not be created.':'Item kerja tidak dapat dicipta.',
+      'Lead Follow Up':'Susulan prospek','Commercial Review':'Semakan komersial','Payment Exception':'Pengecualian pembayaran',
+      'Manual Payment Review':'Semakan pembayaran manual','Onboarding Step':'Langkah penerimaan','Onboarding Blocked':'Penerimaan disekat',
+      'Activation Review':'Semakan pengaktifan','Renewal Prep':'Persediaan pembaharuan','Support Action':'Tindakan sokongan',
+      'Data Correction':'Pembetulan data','Integration Incident':'Insiden integrasi','Anomaly Review':'Semakan anomali',
+      'Not Needed':'Tidak diperlukan','Superseded':'Digantikan','Waiting':'Menunggu','Work scope':'Skop kerja',
+      'A work item must name a business or a lead.':'Item kerja mesti menamakan perniagaan atau prospek.',
+      'Command center queue':'Baris gilir pusat arahan','Work queue':'Baris gilir kerja',
+      'Business ID (optional anchor)':'ID perniagaan (pautan pilihan)','Lead ID (optional anchor)':'ID prospek (pautan pilihan)',
+      'Timeline':'Garis masa','Business 360 unavailable':'Perniagaan 360 tidak tersedia'
     })
   });
   let platformLocale='en';
@@ -3225,6 +3396,7 @@
       ??PLATFORM_COPY_V292[platformLocale]?.[key]
       ??PLATFORM_COPY_V297[platformLocale]?.[key]
       ??PLATFORM_COPY_V312[platformLocale]?.[key]
+      ??PLATFORM_COPY_V511[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3348,21 +3520,33 @@
   const prospectStages = Object.freeze([
     ['new_lead','Prospect'],['assigned','Assigned'],['contacted','Contacted'],
     ['interested','Interested'],['appointment','Appointment'],
-    ['client','Deal agreed'],['account_created','Workspace created'],
+    ['proposal','Proposal'],['closed_won','Closed won'],['nurture','Nurture'],
+    ['client','Legacy deal agreed'],['account_created','Workspace created'],
     ['onboarding','Onboarding'],['activated','Peekaa merchant'],
     ['not_interested','Not interested'],['no_response','No response'],
     ['invalid_contact','Invalid contact'],['closed_business','Closed business'],
     ['do_not_contact','Do not contact'],['lost','Lost']
   ].map(([key,label])=>Object.freeze({key,label})));
+  const canonicalHumanStageKeys=Object.freeze(new Set([
+    'assigned','contacted','interested','appointment','proposal','closed_won','nurture','lost'
+  ]));
+  const canonicalTransitionTargets=Object.freeze({
+    new_lead:['assigned','contacted','nurture','lost'],assigned:['contacted','nurture','lost'],
+    contacted:['interested','appointment','nurture','lost'],
+    interested:['appointment','proposal','nurture','lost'],
+    appointment:['interested','proposal','nurture','lost'],
+    proposal:['interested','closed_won','nurture','lost'],nurture:['contacted','lost'],
+    lost:['nurture','contacted']
+  });
   const operationalLanes = Object.freeze([
     Object.freeze({key:'inbox',label:'New & unassigned',description:'New leads and records that need triage',
       stages:Object.freeze(['unmapped','new_lead'])}),
     Object.freeze({key:'contacting',label:'Contact & meeting',description:'Outreach, callbacks and scheduled conversations',
       stages:Object.freeze(['assigned','contacted','interested'])}),
     Object.freeze({key:'decision',label:'Decision',description:'Qualified firms considering the proposal',
-      stages:Object.freeze(['appointment'])}),
-    Object.freeze({key:'case_won',label:'Case won',description:'Signed, website-signup and onboarded firms',
-      stages:Object.freeze(['client','account_created','onboarding','activated'])}),
+      stages:Object.freeze(['appointment','proposal','nurture'])}),
+    Object.freeze({key:'case_won',label:'Case won',description:'Commercially agreed; payment and activation remain separate',
+      stages:Object.freeze(['closed_won','client','account_created','onboarding','activated'])}),
     Object.freeze({key:'closed',label:'Closed',description:'Opportunities closed without activation',
       stages:Object.freeze(['lost','not_interested','no_response','invalid_contact','closed_business','do_not_contact'])})
   ]);
@@ -3416,6 +3600,9 @@
     contacted:['Contact channel and timestamp','Outcome or next step'],
     interested:['Interest notes','Next follow-up'],
     appointment:['Appointment date and owner','Channel, location or meeting URL'],
+    proposal:['Proposal issued','Next decision follow-up'],
+    closed_won:['Accepted commercial agreement','Payment/onboarding follow-up; activation remains separate'],
+    nurture:['Permission to recontact','Recontact date'],
     client:['Accepted product, seats, billing cycle, value and currency','Owner email','Onboarding owner and target go-live'],
     account_created:['Successful server-side conversion','Linked workspace and owner invitation'],
     onboarding:['Evidence checklist and responsible owner','Target go-live and incomplete mandatory work'],
@@ -3435,10 +3622,10 @@
   const platformWriteSelector=[
     '#platformNewProspect','#platformImportProspects','#platformScopedNewProspect',
     '[data-move]','[data-move-select]','[data-edit-prospect]','[data-assign-prospect]','[data-scoped-assign]',
-    '[data-add-note]','[data-add-npu]','[data-archive-prospect]','[data-merge-prospect]','[data-add-activity]','[data-add-task]',
+    '[data-add-note]','[data-add-npu]','[data-archive-prospect]','[data-add-activity]','[data-add-task]',
     '[data-add-contact]','[data-edit-contact-profile]','[data-erase-contact]','[data-edit-company-profile]',
     '[data-edit-qualification]','[data-edit-commercial-detail]','[data-edit-conversion-config]',
-    '[data-refresh-quality]','[data-upload-document]','[data-lost]','[data-convert]',
+    '[data-refresh-quality]','[data-upload-document]','[data-lost]','[data-claim-lead]',
     '[data-create-account]','[data-complete-task]','[data-onboarding-start]',
     '[data-onboarding-refresh]','[data-onboarding-reissue]','[data-onboarding-block]',
     '[data-onboarding-unblock]','[data-onboarding-activate]','[data-onboarding-evidence]',
@@ -3449,7 +3636,9 @@
     '#platformNewConsultant','#platformAttributeConsultant','#platformNewPolicy',
     '#platformNewPayout','[data-edit-consultant]','[data-forfeit-consultant]',
     '[data-approve-accrual]','[data-add-payout-line]','[data-approve-payout]',
-    '[data-record-payout]','[data-automation-write]'
+    '[data-record-payout]','[data-automation-write]',
+    '#platformNewWorkItem','[data-work-claim]','[data-work-start]','[data-work-wait]',
+    '[data-work-block]','[data-work-done]'
   ].join(',');
 
   function escapeHtml(value) {
@@ -3717,6 +3906,15 @@
     const path=String(hash || '').split('?')[0].replace(/\/+$/,'');
     if(path==='#/platform')return true;
     if(!path.startsWith('#/platform/'))return false;
+    /* V511: Command center and Work are reachable for every active platform
+       role (the server itself never module-gates them — see
+       app.v511_assert_work_reader(), which only requires SOME platform
+       role) and are therefore resolved here directly rather than through the
+       route registry. The registry backs every exact-route-list assertion in
+       this suite; a module-gated top-level entry there would force every
+       onboarding-scoped role's route list to include them, which does not
+       match what the v511 RPCs actually authorise. */
+    if(path.slice('#/platform/'.length)==='command-center'||path.slice('#/platform/'.length)==='work')return true;
     return routes.some(route=>route.key!=='overview'&&route.key===path.slice('#/platform/'.length));
   }
 
@@ -3724,6 +3922,7 @@
     const path = String(hash || '').split('?')[0].replace(/\/+$/,'');
     if (path === '#/platform' || path === '#') return 'overview';
     const requested = path.slice('#/platform/'.length);
+    if(requested==='command-center'||requested==='work')return requested;
     return routes.some(route => route.key === requested) ? requested : 'overview';
   }
 
@@ -3791,21 +3990,31 @@
 
   function shellHtml({CUI,brand,activeKey,workspaceHash,access,allowedRoutes}) {
     const route = routes.find(item => item.key === activeKey) || routes[0];
+    // V511: Command center and Work are not route-registry entries (see
+    // isRoute() / render()), so their title and write-state fall back to a
+    // direct label here instead of a route lookup that would never match.
+    const isV511DirectRoute=activeKey==='command-center'||activeKey==='work';
+    const topbarTitle=activeKey==='command-center'?pt('Command center')
+      :activeKey==='work'?pt('Work'):pt(route.label);
+    const topbarWritable=isV511DirectRoute
+      ||activeKey==='access'||modulePermission(access,activeKey)==='rw';
     return `<div class="platform-console">
       <a class="skip-link" href="#platformMain">${escapeHtml(pt('Skip to platform content'))}</a>
       <aside class="platform-rail" aria-label="${escapeHtml(pt('Platform console'))}">
         <div class="platform-brand"><a href="#/platform" class="logo" aria-label="${escapeHtml(brand.productName)} ${escapeHtml(pt('Platform'))}">${wordmarkHtml(brand)}</a><span class="platform-tag">${escapeHtml(pt('Platform'))}</span></div>
         <div class="platform-access-summary" aria-label="${escapeHtml(pt('Current platform access'))}">
           <b>${escapeHtml(roleLabel(access.role))}</b>
-          <span>${escapeHtml(scopeLabel(access.scope))} · ${escapeHtml(pt(activeKey==='access'||modulePermission(access,activeKey)==='rw'?'Read and write':'Read only'))}</span>
+          <span>${escapeHtml(scopeLabel(access.scope))} · ${escapeHtml(pt(topbarWritable?'Read and write':'Read only'))}</span>
         </div>
         ${navigationHtml(CUI,activeKey,allowedRoutes)}
         <div class="platform-rail-foot"><a class="platform-back" href="${escapeHtml(workspaceHash)}">${CUI.icon('back',{size:17})}<span>${escapeHtml(pt('Back to workspace'))}</span></a></div>
       </aside>
       <div class="platform-column">
         <header class="platform-topbar">
-          <div class="platform-topbar-title">${escapeHtml(pt(route.label))}</div>
+          <div class="platform-topbar-title">${escapeHtml(topbarTitle)}</div>
           <div class="platform-topbar-actions">
+            <a class="btn ghost sm${activeKey==='command-center'?' active':''}" href="#/platform/command-center" aria-label="${escapeHtml(pt('Command center'))}">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Command center'))}</span></a>
+            <a class="btn ghost sm${activeKey==='work'?' active':''}" href="#/platform/work" aria-label="${escapeHtml(pt('Work'))}">${CUI.icon('setup',{size:17})}<span>${escapeHtml(pt('Work'))}</span></a>
             ${platformLocaleSwitcherHtml()}
             <a class="btn ghost sm platform-topbar-workspace" href="${escapeHtml(workspaceHash)}" aria-label="${escapeHtml(pt('Back to workspace'))}">${CUI.icon('back',{size:17})}<span>${escapeHtml(pt('Workspace'))}</span></a>
             <button class="btn ghost sm" type="button" id="platformSignOut">${CUI.icon('close',{size:17})}<span>${escapeHtml(pt('Sign out'))}</span></button>
@@ -4793,13 +5002,14 @@
     const {CUI,sb}=context,overlay=document.createElement('div');
     overlay.className='platform-drawer';overlay.tabIndex=-1;
     overlay.innerHTML=`<section class="platform-drawer-panel platform-enterprise-drawer" aria-labelledby="enterpriseFirmTitle">
-      <div class="platform-drawer-head"><div><h1 id="enterpriseFirmTitle" style="font-size:1.45rem">${escapeHtml(firm.name)}</h1><p class="muted small">${escapeHtml(sectorLabel(firm.industry))} · ${escapeHtml(filters.from)} ${escapeHtml(pt('to'))} ${escapeHtml(filters.to)}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div>
+      <div class="platform-drawer-head"><div><h1 id="enterpriseFirmTitle" style="font-size:1.45rem">${escapeHtml(firm.name)}</h1><p class="muted small">${escapeHtml(sectorLabel(firm.industry))} · ${escapeHtml(filters.from)} ${escapeHtml(pt('to'))} ${escapeHtml(filters.to)}</p></div><div class="platform-actions"><button type="button" class="btn ghost sm" data-open-business-360>${CUI.icon('info',{size:16})}<span>${escapeHtml(pt('Business 360'))}</span></button><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div></div>
       <div id="enterpriseFirmBody">${loading(CUI,'Customer records','Loading the first complete-snapshot page…','customers')}</div>
     </section>`;
     document.body.appendChild(overlay);
     let deactivate;
     const close=()=>closeOverlay(overlay,deactivate);
     overlay.querySelector('.platform-drawer-close').onclick=close;
+    overlay.querySelector('[data-open-business-360]').onclick=()=>openBusiness360V511(firmId(firm),context);
     deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     const scopedFilters={...filters,businesses:[firmId(firm)]};
     const body=overlay.querySelector('#enterpriseFirmBody');
@@ -5316,7 +5526,7 @@
         rpc(sb,'platform_generate_improvement_report_v82',enterpriseArgs(filters)),
         fetchEnterpriseCustomerPage(sb,filters,null),
         sectionAccess.onboarding
-          ?rpc(sb,'platform_get_sme_analytics_v86',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null})
+          ?rpc(sb,'platform_get_sme_analytics_v510',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null})
           :Promise.resolve(null),
         sectionAccess.billing?rpc(sb,'platform_get_billing_v125',{p_business:null,p_limit:250}):Promise.resolve(null)
       ]);
@@ -5597,13 +5807,14 @@
   // Stages an operator may move a firm INTO by hand. account_created,
   // onboarding and activated are set by conversion/onboarding evidence, and
   // unmapped is a data state, never a destination.
-  function laneMoveStages(laneKey) {
+  function laneMoveStages(laneKey,fromStage) {
     const lane=operationalLanes.find(option=>option.key===laneKey);
     if(!lane)return[];
-    return lane.stages.filter(stage=>
-      !['account_created','onboarding','activated','unmapped'].includes(stage)
+    return lane.stages.filter(stage=>canonicalHumanStageKeys.has(stage)
+      &&canTransitionProspectTo(fromStage,stage)
       &&prospectStages.some(option=>option.key===stage));
   }
+  const canTransitionProspectTo=(from,to)=>asArray(canonicalTransitionTargets[from]).includes(to);
   function prospectCardHtml(item,CUI,{mobile=false,canWrite=true,compact=false}={}) {
     if(compact)return prospectCompactCardHtml(item,CUI,{canWrite});
     const stage=prospectStage(item),id=item.id||item.prospect_id||item.row_id||item.business_id;
@@ -5663,7 +5874,7 @@
         :`<a class="btn ghost sm" href="#/platform/firms">${escapeHtml(pt("Open firm directory"))}</a>`}</div>`:`<div class="platform-card-actions" data-card-actions>
         <label class="sr-only" for="move-${escapeHtml(id)}">${escapeHtml(pt('Move {name} to stage',{name:prospectCompany(item)}))}</label>
         <select id="move-${escapeHtml(id)}" data-move-select>
-          ${prospectStages.map(option=>`<option value="${option.key}"${option.key===stage?' selected':''}${['account_created','onboarding','activated'].includes(option.key)?' disabled':''}>${escapeHtml(pt(option.label))}</option>`).join('')}
+          ${prospectStages.map(option=>`<option value="${option.key}"${option.key===stage?' selected':''}${option.key!==stage&&!canTransitionProspectTo(stage,option.key)?' disabled':''}>${escapeHtml(pt(option.label))}</option>`).join('')}
         </select>
         <button type="button" class="btn ghost sm" data-move aria-label="${escapeHtml(pt('Move prospect'))}">${CUI.icon('forward',{size:16})}</button>
       </div>`}
@@ -6062,8 +6273,22 @@
     if(!active.length)return'';
     return `<div class="platform-active-filters" aria-label="${escapeHtml(pt('Active filters'))}">${CUI.icon('search',{size:16})}<span>${escapeHtml(pt("Active:"))}</span>${active.map(([key,label])=>`<span class="chip">${escapeHtml(pt(label))} · ${escapeHtml(key==='attention'?attentionFilterLabel(filters[key]):platformStatus(filters[key]))}</span>`).join('')}</div>`;
   }
+  function leadExceptionQueueHtml(payload,CUI,role) {
+    const rows=asArray(payload,['items']);
+    return `<section class="card" data-lead-exception-queue>
+      <div class="platform-list-row"><div><h2>${escapeHtml(pt('What requires action today'))}</h2>
+        <p class="muted small">${escapeHtml(pt('One canonical queue for overdue work, missing ownership and inactive owners.'))}</p></div>
+        <span class="pill">${rows.length}</span></div>
+      ${rows.length?CUI.table({caption:'Lead action queue',headers:['Firm','Reason','Owner','Next action','Due','Action'],rows:rows.map(row=>[
+        escapeHtml(row.company_name||pt('Unnamed firm')),platformStatus(row.exception_reason),
+        row.ownership_state==='queued'?pt('Unassigned'):escapeHtml(row.owner_name||pt('Assigned')),
+        escapeHtml(row.next_action_type||pt('Not recorded')),dateTime(row.due_at),
+        `<div class="platform-actions">${role==='sales_staff'&&row.ownership_state==='queued'?`<button type="button" class="btn sm" data-claim-lead="${escapeHtml(row.prospect_id)}" data-version="${escapeHtml(row.version)}">${escapeHtml(pt('Claim'))}</button>`:''}<button type="button" class="btn ghost sm" data-exception-open="${escapeHtml(row.prospect_id)}">${escapeHtml(pt('Open'))}</button></div>`
+      ])}):`<p class="muted small">${escapeHtml(pt('No lead exceptions require action.'))}</p>`}
+    </section>`;
+  }
   function onboardingHtml({
-    items,CUI,filters,attentionSummary={},canWrite=true,pagination={},tabStrip=''
+    items,CUI,filters,attentionSummary={},exceptions={},role='',canWrite=true,isSuperAdmin=false,pagination={},tabStrip=''
   }) {
     const view=filters.view==='list'?'list':'kanban';
     const filtered=sortProspects(items.filter(item=>prospectMatchesFilters(item,filters)),filters.sort);
@@ -6088,8 +6313,8 @@
       title:'Onboarding',
       subtitle:'Move from first contact to activation with evidence-backed onboarding gates and an auditable launch decision.',
       iconName:'setup',
-      actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Onboarding view'))}"><button type="button" class="btn ghost" data-onboarding-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button type="button" class="btn ghost" data-onboarding-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>${canWrite?`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>${escapeHtml(pt('Import prospects'))}</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New prospect'))}</span></button>`:''}`
-    })}${tabStrip}
+      actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Onboarding view'))}"><button type="button" class="btn ghost" data-onboarding-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button type="button" class="btn ghost" data-onboarding-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>${isSuperAdmin?`<button type="button" class="btn ghost" id="platformIdentityReviews">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Duplicate review'))}</span></button>`:''}${canWrite?`<button type="button" class="btn ghost" id="platformImportProspects">${CUI.icon('import',{size:17})}<span>${escapeHtml(pt('Import prospects'))}</span></button><button type="button" class="btn" id="platformNewProspect">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New prospect'))}</span></button>`:''}`
+    })}${tabStrip}${leadExceptionQueueHtml(exceptions,CUI,role)}
       <section class="platform-attention-summary" aria-label="${escapeHtml(pt('Onboarding attention queue'))}">
         ${[
           ['due','Due now','no'],['critical','Critical','no'],['warning','Warning','new'],
@@ -6229,7 +6454,7 @@
     const previousScroll=prior?Number(globalObject.scrollY||0):null;
     main.innerHTML=loading(CUI,'Onboarding',prior?'Loading the next 50 firms…':'Loading the SME pipeline…','setup');
     try{
-      const [directory,list,applicationQueue,accountSignupQueue]=await Promise.all([
+      const [directory,list,applicationQueue,accountSignupQueue,leadExceptions]=await Promise.all([
         fetchFirmDirectoryPageV88(sb,filters,{
           required:true,limit:50,
           snapshot:prior?.snapshot_at||null,
@@ -6257,7 +6482,9 @@
           :Promise.resolve({applications:[],limit:applicationLimit}),
         prior?.accountSignupQueue?Promise.resolve(prior.accountSignupQueue):context.access?.role==='super_admin'
           ?rpc(sb,'platform_list_account_signups_v160',{p_search:filters.search||null,p_limit:100})
-          :Promise.resolve({items:[]})
+          :Promise.resolve({items:[]}),
+        prior?.leadExceptions?Promise.resolve(prior.leadExceptions)
+          :rpc(sb,'platform_list_lead_exceptions_v510',{p_owner:null,p_limit:100})
       ]);
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       const directoryItems=asArray(prior?.directoryItems).concat(directory.items);
@@ -6268,7 +6495,7 @@
         snapshot_at:prior?.snapshot_at||directory.snapshot_at,
         next_cursor:directory.next_cursor,
         next_before:list?.next_before||null,
-        directoryItems,prospectItems,total,applicationQueue,accountSignupQueue
+        directoryItems,prospectItems,total,applicationQueue,accountSignupQueue,leadExceptions
       };
       const pagination={shown:directoryItems.length,total,hasMore:directoryItems.length<total};
       if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
@@ -6285,7 +6512,7 @@
         main.innerHTML=onboardingHtml({
           items,CUI,filters,tabStrip,
           attentionSummary:prior?.attentionSummary||directory.attention_summary,
-          canWrite:context.canWrite,pagination
+          exceptions:leadExceptions,role:context.access?.role||'',canWrite:context.canWrite,isSuperAdmin,pagination
         });
         wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
       }else{
@@ -6601,6 +6828,24 @@
     }
     const newProspect=main.querySelector('#platformNewProspect');
     if(newProspect)newProspect.onclick=()=>newProspectModal(context);
+    const identityReviews=main.querySelector('#platformIdentityReviews');
+    if(identityReviews)identityReviews.onclick=()=>identityReviewModal(context);
+    main.querySelectorAll('[data-exception-open]').forEach(button=>button.onclick=()=>{
+      const id=button.dataset.exceptionOpen;
+      const item=items.find(row=>String(row.id||row.prospect_id)===id)
+        ||{id,prospect_id:id,company_name:pt('Firm record')};
+      openProspectDetail(item,{...context,onboardingFilters:filters,
+        prospectCloseHash:onboardingHash(filters)});
+    });
+    main.querySelectorAll('[data-claim-lead]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      try{
+        await rpc(context.sb,'platform_claim_lead_v510',{p_prospect:button.dataset.claimLead,
+          p_expected_version:Number(button.dataset.version),p_operation_key:idempotencyKey()});
+        CUI.announce(pt('Lead claimed. Its existing next action was preserved.'));
+        await renderOnboarding({...context,onboardingLoadMore:false,onboardingPage:null},filters);
+      }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'The lead could not be claimed.'),{assertive:true})}
+    });
     const importProspects=main.querySelector('#platformImportProspects');
     if(importProspects)importProspects.onclick=()=>prospectImportModal(context);
     main.querySelectorAll('[data-prospect]').forEach(card=>{
@@ -6686,7 +6931,7 @@
   function requestLaneMove(prospect,laneKey,context) {
     const {CUI}=context;
     if(operationalLaneFor(prospect)===laneKey)return;
-    const stages=laneMoveStages(laneKey);
+    const stages=laneMoveStages(laneKey,prospectStage(prospect));
     const laneLabel=pt(operationalLanes.find(lane=>lane.key===laneKey)?.label||laneKey);
     if(!stages.length){
       CUI.announce(pt('{lane} is reached through account conversion and onboarding evidence, not by moving a card.',{lane:laneLabel}),{assertive:true});
@@ -6706,9 +6951,42 @@
       }
     });
   }
+  async function identityReviewModal(context) {
+    const {CUI,sb}=context;
+    const payload=asObject(await rpc(sb,'platform_list_identity_reviews_v510',{p_limit:100}));
+    const review=asArray(payload.items)[0];
+    if(!review){
+      showResultModal({title:'Duplicate review',CUI,body:CUI.emptyState({iconName:'check',
+        title:'No duplicates waiting',body:'Every canonical Company identity review has been decided.'})});
+      return;
+    }
+    const company=asObject(review.company_payload),candidates=asArray(review.candidates);
+    const hasStrongConflict=candidates.some(candidate=>['strong','conflict'].includes(String(candidate.confidence||'')));
+    modal({title:'Resolve possible duplicate',submitLabel:'Apply reviewed decision',CUI,body:`
+      <div class="platform-route-note"><b>${escapeHtml(company.trading_name||company.legal_name||pt('Unnamed firm'))}</b>
+        <p class="small">${escapeHtml(review.source_system)} · ${escapeHtml(review.source_type)} · ${escapeHtml(dateTime(review.created_at))}</p></div>
+      ${CUI.field({id:'identityReviewDecision',label:'Reviewed decision',control:'select',required:true,
+        attributes:'name="decision"',options:[
+          ...candidates.map(candidate=>({value:`confirm:${candidate.company_id}`,
+            label:pt('Same Company: {name} ({basis})',{name:candidate.company_name||candidate.company_id,basis:platformStatus(candidate.match_basis)})})),
+          ...(!hasStrongConflict?[{value:'create_distinct:',label:'Different Company — create a distinct record'}]:[]),
+          {value:'reject:',label:'Reject this intake'}
+        ]})}
+      <p class="muted small">${escapeHtml(pt('{count} possible matches. Strong identity conflicts cannot be forced into a new Company.',{count:candidates.length}))}</p>`,
+      onSubmit:async(form,controls)=>{
+        const [decision,candidate]=String(form.get('decision')||'').split(':');
+        const result=asObject(await rpc(sb,'platform_resolve_identity_review_v510',{
+          p_intake:review.intake_id,p_decision:decision,p_candidate_company:candidate||null,
+          p_expected_updated_at:review.updated_at,p_operation_key:idempotencyKey()
+        }));
+        controls.close();
+        await renderOnboarding(context);
+        CUI.announce(pt('Duplicate review resolved: {outcome}.',{outcome:platformStatus(result.disposition)}));
+      }});
+  }
   async function newProspectModal(context) {
     const {CUI,sb}=context;
-    const createAttemptKey=idempotencyKey();
+    let createAttemptKey=idempotencyKey(),createAttemptFingerprint='';
     const consultants=await fetchScopedConsultants(sb).catch(()=>[]);
     modal({title:'New prospect',submitLabel:'Create prospect',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'newCompanyName',label:'Company name',required:true,attributes:'name="company_name"'})}
@@ -6719,20 +6997,24 @@
       ${CUI.field({id:'newConsultant',label:'Sales consultant',control:'select',options:[
         {value:'',label:'Unassigned'},...consultants
       ],attributes:'name="consultant"'})}
-      ${CUI.field({id:'newStage',label:'Starting stage',control:'select',options:prospectStages.filter(stage=>!['client','account_created','onboarding','activated'].includes(stage.key)).map(stage=>({value:stage.key,label:stage.label,selected:stage.key==='new_lead'})),attributes:'name="stage"'})}
-      ${CUI.field({id:'newTags',label:'Tags',placeholder:'Comma separated',attributes:'name="tags"'})}
+      ${CUI.field({id:'newNextAction',label:'First action due',type:'datetime-local',required:true,attributes:'name="next_action_at"'})}
     </div>`,onSubmit:async(form,controls)=>{
       if(!form.get('contact_email')&&!form.get('contact_phone'))throw new Error(pt('Add a contact email or phone number.'));
-      const data=await rpc(sb,'platform_create_prospect_v76',{
+      const args={
         p_company:{legal_name:form.get('company_name'),registration_number:form.get('uen')||null},
         p_primary_contact:{full_name:form.get('contact_name'),email:form.get('contact_email')||null,phone:form.get('contact_phone')||null},
-        p_stage_key:form.get('stage'),p_consultant:form.get('consultant')||null,p_source:{source_system:'platform_console',source_type:'manual'},
-        p_tags:String(form.get('tags')||'').split(',').map(value=>value.trim()).filter(Boolean),
-        p_idempotency_key:createAttemptKey
-      });
-      const prospectName=data?.prospect?.company_name||form.get('company_name');
+        p_consultant:form.get('consultant')||null,p_source:{source_system:'platform_console',source_type:'manual'},
+        p_next_action_at:new Date(form.get('next_action_at')).toISOString()};
+      const fingerprint=JSON.stringify(args);
+      if(createAttemptFingerprint&&createAttemptFingerprint!==fingerprint)createAttemptKey=idempotencyKey();
+      createAttemptFingerprint=fingerprint;
+      const data=await rpc(sb,'platform_ingest_lead_v510',{...args,p_operation_key:createAttemptKey});
+      const prospectName=form.get('company_name');
       controls.close();
-      CUI.announce(pt('Prospect {name} created.',{name:prospectName}));
+      CUI.announce(pt(data?.disposition==='created'?'Prospect {name} created.'
+        :data?.disposition==='reused'?'Existing prospect {name} updated with this source.'
+        :data?.disposition==='existing_merchant'?'{name} is already a Peekaa merchant. Open the firm record.'
+        :'Possible duplicate for {name} was added to Duplicate review.',{name:prospectName}));
       try{await renderOnboarding(context);}
       catch(error){
         console.error(error);
@@ -6891,11 +7173,7 @@
     ]);
   }
   async function commitProspectImport(sb,batch) {
-    try{return await rpc(sb,'platform_commit_prospect_import_v86',{p_batch:batch})}
-    catch(error){
-      if(!error.platformUpdateRequired)throw error;
-      return rpc(sb,'platform_commit_prospect_import_v76',{p_batch:batch,p_idempotency_key:idempotencyKey()});
-    }
+    return rpc(sb,'platform_commit_prospect_import_v86',{p_batch:batch});
   }
   function renderCommittedImport(controls,committed,batch,context) {
     const inserted=Number(committed.inserted_rows??committed.imported_rows??committed.imported_count??committed.imported??0);
@@ -6965,7 +7243,7 @@
   }
   async function loadProspectDetail(sb,id) {
     const legacy=asObject(await rpc(sb,'platform_get_prospect_detail_v76',{p_prospect:id}));
-    let extended={},audit={};
+    let extended={},audit={},timeline={};
     try{
       extended=asObject(await rpc(sb,'platform_get_prospect_detail_v86',{
         p_prospect:id,p_snapshot_at:null,p_limit:100
@@ -6974,6 +7252,7 @@
         p_prospect:id,p_snapshot_at:extended.snapshot_at||null,p_limit:100,
         p_after_created_at:null,p_after_id:null
       }));
+      timeline=asObject(await rpc(sb,'platform_get_lead_timeline_v510',{p_prospect:id,p_limit:100}));
     }catch(error){
       if(!error.platformUpdateRequired)throw error;
       extended={v86_unavailable:true};audit={items:[]};
@@ -6986,7 +7265,7 @@
       qualification:extended.qualification||legacy.qualification,
       commercial_terms:extended.commercial_terms||legacy.commercial_terms,
       activities:asArray(extended.activities).length?extended.activities:legacy.activities,
-      audit:asArray(audit,['items'])
+      audit:asArray(audit,['items']),operating_timeline:asArray(timeline,['items'])
     };
     const prospect=asObject(detail.prospect);
     try{
@@ -7136,9 +7415,11 @@
   function prospectLifecycleActionsHtml({converted=false,stage='',termsAccepted=false},CUI) {
     const accountAction=converted
       ?`<span class="muted small">${escapeHtml(pt('Account lifecycle is controlled by onboarding evidence.'))}</span>`
-      :stage==='client'
-        ?`<button type="button" class="btn" data-create-account${termsAccepted?'':` disabled title="${escapeHtml(pt('Accepted or signed commercial terms are required.'))}"`}>${CUI.icon('branch',{size:16})}<span>${escapeHtml(pt('Create Peekaa account'))}</span></button>`
-        :`<button type="button" class="btn ghost sm" data-convert>${escapeHtml(pt('Convert to client'))}</button>`;
+      :stage==='client'||stage==='closed_won'
+        ?`<button type="button" class="btn" data-create-account${termsAccepted?'':` disabled title="${escapeHtml(pt('Accepted or signed commercial terms are required.'))}"`}>${CUI.icon('branch',{size:16})}<span>${escapeHtml(pt(stage==='closed_won'?'Prepare billing account':'Create Peekaa account'))}</span></button>`
+          :stage==='proposal'
+            ?`<button type="button" class="btn ghost sm" data-close-won>${escapeHtml(pt('Record commercial agreement'))}</button>`
+            :`<span class="muted small">${escapeHtml(pt('Advance the evidence-backed pipeline before commercial handoff.'))}</span>`;
     const lostAction=converted||stage==='lost'
       ?''
       :`<button type="button" class="btn danger sm" data-lost>${escapeHtml(pt('Mark lost'))}</button>`;
@@ -7147,6 +7428,7 @@
   function prospectDetailHtml(detail,CUI,isSuperAdmin=false) {
     const prospect=asObject(detail.prospect),company=asObject(detail.company),assignment=asObject(detail.assignment);
     const contacts=asArray(detail.contacts),activities=asArray(detail.activities),tasks=asArray(detail.tasks);
+    const operatingTimeline=asArray(detail.operating_timeline);
     const stage=prospectStage(prospect),converted=Boolean(prospect.converted_business_id);
     const companyProfile=asObject(detail.company_profile),qualification=asObject(detail.qualification);
     const terms=commercialBase(detail.commercial_terms),commercialDetail=commercialExtended(detail.commercial_terms);
@@ -7178,8 +7460,7 @@
           <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add follow-up task"))}</span></button>
           <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
           <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record not proceeding"))}</button>
-          ${isSuperAdmin&&!converted?`<button type="button" class="btn ghost sm" data-merge-prospect>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Merge into another firm"))}</span></button>
-          <button type="button" class="btn ghost sm" data-archive-prospect>${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Archive this record"))}</span></button>`:''}
+          ${isSuperAdmin&&!converted?`<button type="button" class="btn ghost sm" data-archive-prospect>${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Archive this record"))}</span></button>`:''}
           ${prospectLifecycleActionsHtml({converted,stage,termsAccepted},CUI)}
         </div>
       </details>
@@ -7256,6 +7537,7 @@
     </section>
     <section class="card platform-detail-section" id="detail-activities">
       ${sectionHeader('Activities and timeline',`<details class="platform-action-disclosure"><summary class="btn ghost sm">${CUI.icon('add',{size:16})}<span>${escapeHtml(pt("Log activity"))}</span></summary><div class="platform-action-disclosure-menu">${['call','whatsapp','email','meeting'].map(type=>`<button type="button" class="btn ghost sm" data-add-activity="${type}">${escapeHtml(pt('Log {type}',{type:platformStatus(type)}))}</button>`).join('')}</div></details>`)}
+      ${operatingTimeline.length?`<h3 class="small">${escapeHtml(pt('Complete operational timeline'))}</h3>${operatingTimeline.map(event=>`<article class="platform-timeline-item"><div class="platform-timeline-marker"></div><div><div class="platform-list-row"><b>${escapeHtml(platformStatus(event.event_type))}</b><span class="muted small">${escapeHtml(dateTime(event.occurred_at))}</span></div><p class="small">${escapeHtml(event.summary||'')}</p></div></article>`).join('')}`:''}
       ${activities.length?activities.map(activity=>`<article class="platform-timeline-item"><div class="platform-timeline-marker"></div><div><div class="platform-list-row"><b>${escapeHtml(platformStatus(activity.activity_type||activity.type))}</b><span class="muted small">${escapeHtml(dateTime(activity.occurred_at||activity.created_at))}</span></div><p class="small">${escapeHtml(activity.summary||activity.detail||'')}</p>${Object.keys(asObject(activity.extended_detail)).length?`<p class="muted small">${escapeHtml([activity.extended_detail.outcome,activity.extended_detail.channel&&platformStatus(activity.extended_detail.channel),activity.extended_detail.next_action].filter(Boolean).join(' · '))}</p>`:''}</div></article>`).join(''):detailObjectHtml(null)}
     </section>
     <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||pt('Task'))}</b><p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))} · ${escapeHtml(platformStatus(task.status||'open'))}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
@@ -7291,7 +7573,7 @@
         ['require_two_factor','Require 2FA'],['customer_success_consultant_id','Customer success owner'],
         ['target_go_live','Target go-live']
       ])}
-      ${converted?'':`<p class="platform-route-note small">${escapeHtml(pt('Current stage:'))} ${escapeHtml(platformStatus(stage))}. ${escapeHtml(pt(stage==='client'?(termsAccepted?'Commercial terms are ready for account creation.':'Accepted commercial terms are required before account creation.'):'Complete the evidence-backed Client gate first.'))}</p>`}
+      ${converted?'':`<p class="platform-route-note small">${escapeHtml(pt('Current stage:'))} ${escapeHtml(platformStatus(stage))}. ${escapeHtml(pt(stage==='client'?(termsAccepted?'Commercial terms and verified payment are ready for account creation.':'Accepted commercial terms are required before account creation.'):stage==='closed_won'?'Create the inactive account now so Stripe or a manual invoice can collect payment. Activation remains blocked until payment is verified.':'Complete the evidence-backed commercial pipeline first.'))}</p>`}
     </section>
     <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin):CUI.card({title:'Onboarding checklist',body:`<p class="muted small">${escapeHtml(pt("The evidence checklist is created during transactional account conversion."))}</p>`})}</section>
     <section class="card platform-detail-section" id="detail-audit">
@@ -7312,7 +7594,6 @@
     on('[data-add-note]',()=>activityModal(prospect,'note',context));
     on('[data-add-npu]',()=>activityModal(prospect,'npu',context));
     on('[data-archive-prospect]',()=>archiveProspectModal(prospect,context));
-    on('[data-merge-prospect]',()=>mergeProspectModal(prospect,context));
     overlay.querySelectorAll('[data-add-activity]').forEach(button=>button.onclick=()=>activityModal(prospect,button.dataset.addActivity,context));
     on('[data-add-task]',()=>taskModal(prospect,context));
     on('[data-add-contact]',()=>contactModal(detail,null,context));
@@ -7338,7 +7619,7 @@
     overlay.querySelectorAll('[data-upload-document]').forEach(button=>button.onclick=()=>documentUploadModal(detail,context));
     overlay.querySelectorAll('[data-read-document]').forEach(button=>button.onclick=()=>openProspectDocument(button.dataset.readDocument,button,context));
     on('[data-lost]',()=>requestStageMove(prospect,'lost',context));
-    on('[data-convert]',()=>requestStageMove(prospect,'client',context));
+    on('[data-close-won]',()=>requestStageMove(prospect,'closed_won',context));
     on('[data-create-account]',()=>requestAccountConversion(detail,context));
     overlay.querySelectorAll('[data-complete-task]').forEach(button=>button.onclick=()=>completeTaskModal(button.dataset.completeTask,context));
     if(detail.onboarding?.checklist)wireOnboardingChecklist(detail,context);
@@ -7590,9 +7871,8 @@
       await refreshAfterProspectMutation(prospect.id,controls,context,'Account configuration saved.');
     }});
   }
-  // Archive and merge are the CRM's only destructive verbs, so both state the
-  // consequence up front, require a written reason (the RPC rejects a blank
-  // one) and land in the audit log. Neither deletes a row.
+  // Archive is reversible and audited. Company consolidation is deliberately
+  // unavailable until it can redirect canonical identities as one transaction.
   function archiveProspectModal(prospect,context) {
     const {CUI,sb}=context;
     modal({
@@ -7607,40 +7887,6 @@
         context.markBoardDirty?.();
         context.close?.();
         CUI.announce(pt('{name} archived.',{name:prospectCompany(prospect)}));
-      }
-    });
-  }
-  async function mergeProspectModal(prospect,context) {
-    const {CUI,sb}=context;
-    // Offer every other live firm that still has a prospect record; a firm
-    // that already owns a workspace cannot be merged away.
-    const directory=await fetchFirmDirectoryPageV88(sb,defaultOnboardingFilters(),{required:true,limit:250})
-      .catch(()=>null);
-    const options=asArray(directory?.items)
-      .filter(row=>row.prospect_id&&String(row.prospect_id)!==String(prospect.id))
-      .map(row=>({value:String(row.prospect_id),label:prospectCompany(row)}))
-      .sort((a,b)=>a.label.localeCompare(b.label));
-    if(!options.length){
-      CUI.announce(pt('There is no other firm record to merge into.'),{assertive:true});
-      return;
-    }
-    modal({
-      title:'Merge into another firm',submitLabel:'Merge records',CUI,
-      body:`<p class="small">${escapeHtml(pt('Contacts, activities, tasks, documents and tags move to the firm you choose. {name} is then archived and cannot be restored on its own. Stage history and evidence stay with {name}, so the audit trail is not rewritten.',{name:prospectCompany(prospect)}))}</p>
-        ${CUI.field({id:'mergeTarget',label:'Keep this firm',control:'select',required:true,attributes:'name="target"',options})}
-        ${CUI.field({id:'mergeReason',label:'Why are these the same firm?',control:'textarea',required:true,attributes:'name="reason" rows="3"',hint:'Recorded in the audit log.'})}`,
-      onSubmit:async(form,controls)=>{
-        const result=asObject(await rpc(sb,'platform_merge_prospects_v184',{
-          p_source:prospect.id,p_target:String(form.get('target')||''),
-          p_reason:String(form.get('reason')||'')
-        }));
-        controls.close();
-        context.markBoardDirty?.();
-        context.close?.();
-        const moved=asObject(result.moved);
-        CUI.announce(pt('Merged. {contacts} contacts and {activities} activities moved to the surviving firm.',{
-          contacts:Number(moved.contacts||0),activities:Number(moved.activities||0)
-        }));
       }
     });
   }
@@ -7859,7 +8105,7 @@
     const {CUI,sb}=context,prospect=asObject(detail.prospect),company=asObject(detail.company);
     const terms=asObject(detail.commercial_terms);
     previewThenConfirm({
-      title:'Create Peekaa account',
+      title:prospectStage(prospect)==='closed_won'?'Prepare billing account':'Create Peekaa account',
       preview:{
         action:'Create an inactive Peekaa workspace and evidence checklist',
         prospect_id:prospect.id,
@@ -8062,7 +8308,6 @@
       ${CUI.field({id:'editRegistration',label:'UEN / registration',value:company.registration_number||'',attributes:'name="registration_number"'})}
       ${CUI.field({id:'editEmail',label:'Company email',type:'email',value:company.email||'',attributes:'name="email"'})}
       ${CUI.field({id:'editPhone',label:'Company phone',value:company.phone||'',attributes:'name="phone"'})}
-      ${CUI.field({id:'editNextAction',label:'Next action at',type:'datetime-local',value:prospect.next_action_at?String(prospect.next_action_at).slice(0,16):'',attributes:'name="next_action_at"'})}
       ${CUI.field({id:'editPriority',label:'Priority',control:'select',options:['low','normal','high','urgent'].map(value=>({value,label:platformStatus(value),selected:value===(prospect.priority||'normal')})),attributes:'name="priority"'})}
       ${CUI.field({id:'editRegion',label:'Region',value:prospect.region||'',attributes:'name="region"'})}
       <div class="wide">${CUI.field({id:'editTags',label:'Tags',value:asArray(detail.tags).map(tag=>tag.tag_key||tag.name||tag).join(', '),attributes:'name="tags"'})}</div>
@@ -8070,7 +8315,7 @@
       const patch={
         legal_name:form.get('legal_name'),trading_name:form.get('trading_name')||null,
         registration_number:form.get('registration_number')||null,email:form.get('email')||null,
-        phone:form.get('phone')||null,next_action_at:form.get('next_action_at')?new Date(form.get('next_action_at')).toISOString():null,
+        phone:form.get('phone')||null,
         priority:form.get('priority')||null,region:form.get('region')||null,
         tags:String(form.get('tags')||'').split(',').map(value=>value.trim()).filter(Boolean)
       };
@@ -8089,10 +8334,7 @@
       })),attributes:'name="consultant"'
     })}<p class="muted small">${escapeHtml(pt("Choose by consultant name. Assignment changes are recorded in the prospect history."))}</p>`,
       onSubmit:async(form,controls)=>{
-        await rpc(sb,'platform_assign_prospect_v89',{
-          p_prospect:prospect.id,p_consultant:form.get('consultant')||null,
-          p_reason:'admin assignment from enterprise onboarding'
-        });
+        await saveCanonicalLeadAssignment(sb,prospect,form.get('consultant')||null,'Admin assignment from enterprise onboarding');
         controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Prospect assignment updated.');
       }});
   }
@@ -8111,8 +8353,6 @@
       ${CUI.field({id:'activityOutcome',label:'Outcome',value:type==='npu'?'No answer':'',attributes:'name="outcome"'})}
       ${CUI.field({id:'activityDisposition',label:'Disposition',value:type==='npu'?'no_answer':'',attributes:'name="disposition"'})}
       ${CUI.field({id:'activityDuration',label:'Duration (seconds)',type:'number',attributes:'name="duration_seconds" min="0" step="1"'})}
-      ${CUI.field({id:'activityNextAction',label:'Next action',attributes:'name="next_action"'})}
-      ${CUI.field({id:'activityNextDue',label:'Next action due',type:'datetime-local',attributes:'name="next_action_due_at"'})}
       ${CUI.field({id:'activityMeetingAt',label:'Meeting at',type:'datetime-local',attributes:'name="meeting_at"'})}
       <div class="wide">${CUI.field({id:'activityMeetingUrl',label:'Meeting URL',type:'url',attributes:'name="meeting_url"'})}</div>
       <div class="wide">${CUI.field({id:'activityMeetingLocation',label:'Meeting location',attributes:'name="meeting_location"'})}</div>
@@ -8131,7 +8371,6 @@
             outcome:form.get('outcome')||null,disposition:form.get('disposition')||null,
             duration_seconds:nullableNumber(form.get('duration_seconds')),
             direction:form.get('direction')||null,channel:form.get('channel')||null,
-            next_action:form.get('next_action')||null,next_action_due_at:nullableDateTime(form.get('next_action_due_at')),
             meeting_at:nullableDateTime(form.get('meeting_at')),meeting_url:form.get('meeting_url')||null,
             meeting_location:form.get('meeting_location')||null,attachments:[],created_source:'manual'
           }});
@@ -8166,12 +8405,16 @@
   function requestStageMove(prospect,toStage,context) {
     const current=prospectStage(prospect);
     if(toStage===current)return;
+    if(!canTransitionProspectTo(current,toStage)){
+      context.CUI.announce(pt('That stage transition is not allowed from {stage}.',{stage:platformStatus(current)}),{assertive:true});
+      return;
+    }
     if(['account_created','onboarding','activated'].includes(toStage)){
       context.CUI.announce('This stage is controlled by account conversion and onboarding evidence.',{assertive:true});
       return;
     }
     if(toStage==='lost')return lostStageModal(prospect,context);
-    if(toStage==='client')return commercialTermsModal(prospect,context);
+    if(toStage==='closed_won')return commercialTermsModal(prospect,context);
     return stageEvidenceModal(prospect,toStage,context);
   }
   function stageField(CUI,{id,label,type='text',control='input',required=true,options=[],hint='',wide=false,value='',money=false}) {
@@ -8183,7 +8426,6 @@
     const specs={
       new_lead:[{id:'source',label:'Lead source'}],
       assigned:[
-        {id:'assigned_consultant',label:'Assigned consultant'},
         {id:'context',label:'Assignment reason',control:'textarea',wide:true}
       ],
       contacted:[
@@ -8200,6 +8442,14 @@
         {id:'meeting_url',label:'Meeting URL',type:'url',required:false},
         {id:'physical_location',label:'Physical location',required:false}
       ],
+      proposal:[
+        {id:'proposal_issued',label:'Proposal issued at',type:'datetime-local'},
+        {id:'context',label:'Proposal version / commercial notes',control:'textarea',wide:true}
+      ],
+      nurture:[
+        {id:'recontact_permission',label:'Recontact permission',control:'select',options:[{value:'true',label:'Permission recorded'}]},
+        {id:'recontact_at',label:'Recontact at',type:'datetime-local'}
+      ],
       not_interested:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
       no_response:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
       invalid_contact:[{id:'context',label:'Reason / context',control:'textarea',wide:true}],
@@ -8213,7 +8463,10 @@
     const specs=stageEvidenceFieldSpecs(toStage);
     modal({title:pt('Move to {stage}',{stage:stageLabel}),submitLabel:'Review stage move',CUI,body:`
       <div class="platform-gate-summary"><b>${escapeHtml(pt("Entry gate"))}</b><ul>${asArray(stageGateDefinitions[toStage]).map(requirement=>`<li>${escapeHtml(requirement)}</li>`).join('')}</ul></div>
-      <div class="platform-form-grid">${specs.map(spec=>stageField(CUI,spec)).join('')}</div>`,
+      <div class="platform-form-grid">${specs.map(spec=>stageField(CUI,spec)).join('')}
+        ${stageField(CUI,{id:'next_action_type',label:'Next action',value:toStage==='nurture'?'recontact':'follow_up'})}
+        ${stageField(CUI,{id:'next_action_at',label:'Next action due',type:'datetime-local'})}
+      </div>`,
       onSubmit:async(form,controls)=>{
         const evidence={};
         specs.forEach(spec=>{
@@ -8227,12 +8480,20 @@
         });
         if(toStage==='appointment'&&!evidence.meeting_url&&!evidence.physical_location)
           throw new Error(pt('Add a meeting URL or physical location.'));
+        const nextActionType=String(form.get('next_action_type')||'').trim();
+        const nextActionAt=new Date(form.get('next_action_at')).toISOString();
+        // Stage evidence and the canonical next action are one fact, not two
+        // independently editable dates.  Persist the canonical value in both
+        // representations so the database can prove that they agree.
+        if(toStage==='interested')evidence.next_follow_up_at=nextActionAt;
+        if(toStage==='nurture')evidence.recontact_at=nextActionAt;
+        if(toStage==='assigned')evidence.assigned_consultant=String(prospect.assigned_consultant_id||'');
         controls.close();
         previewThenConfirm({
           title:pt('Confirm {stage}',{stage:stageLabel}),
           preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:toStage,entry_gate:stageGateDefinitions[toStage],evidence},
           CUI,onConfirm:async confirmControls=>{
-            await performStageMove(prospect,toStage,{entryEvidence:evidence},context);
+            await performStageMove(prospect,toStage,{entryEvidence:evidence,nextActionType,nextActionAt},context);
             confirmControls.close();
           }
         });
@@ -8248,13 +8509,20 @@
     </div>`,onSubmit:async(form,controls)=>{
       const recontactPermission=Boolean(form.get('recontact_at'));
       const fields={reason_code:form.get('reason_code'),context:form.get('reason_detail')||form.get('competitor')||'No additional context',competitor:form.get('competitor')||null,recontact_permission:recontactPermission,recontact_at:form.get('recontact_at')||null};
-      controls.close();previewThenConfirm({title:'Confirm lost transition',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'lost',...fields},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'lost',{entryEvidence:fields},context);confirmControls.close()}});
+      controls.close();previewThenConfirm({title:'Confirm lost transition',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'lost',...fields},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'lost',{entryEvidence:fields,nextActionType:null,nextActionAt:null},context);confirmControls.close()}});
     }});
+  }
+  function saveCanonicalLeadAssignment(sb,prospect,consultant,reason) {
+    const common={p_prospect:prospect.id||prospect.prospect_id,
+      p_expected_version:prospectVersion(prospect),p_reason:reason,p_operation_key:idempotencyKey()};
+    return consultant
+      ?rpc(sb,'platform_transfer_lead_v510',{...common,p_consultant:consultant})
+      :rpc(sb,'platform_queue_lead_v510',{...common,p_queue_key:'sales_intake'});
   }
   async function commercialTermsModal(prospect,context) {
     const {CUI,sb}=context;
     const consultants=await fetchScopedConsultants(sb,[prospect]).catch(()=>scopedConsultantOptions([prospect]));
-    modal({title:'Convert to client',submitLabel:'Preview conversion',CUI,body:`<div class="platform-form-grid">
+    modal({title:'Close opportunity as won',submitLabel:'Preview closed-won transition',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'termsProduct',label:'Product',required:true,attributes:'name="product_code"'})}
       ${CUI.field({id:'termsPlan',label:'Plan',required:true,attributes:'name="plan_code"'})}
       ${CUI.field({id:'termsSeats',label:'Seats',type:'number',required:true,attributes:'name="seats" min="1" step="1"'})}
@@ -8269,22 +8537,30 @@
         }))
       ],attributes:'name="onboarding_owner"'})}
       ${CUI.field({id:'termsGoLive',label:'Target go-live',type:'date',required:true,attributes:'name="target_go_live"'})}
+      ${CUI.field({id:'termsNextAction',label:'Payment / onboarding follow-up due',type:'datetime-local',required:true,attributes:'name="next_action_at"'})}
     </div>`,onSubmit:async(form,controls)=>{
       const terms={product_code:form.get('product_code'),plan_code:form.get('plan_code'),seats:Number(form.get('seats')),billing_cycle:form.get('billing_cycle'),accepted_value_cents:moneyInputToCents(form.get('accepted_amount')),currency:String(form.get('currency')).toUpperCase(),contract_status:'accepted',owner_email:form.get('owner_email'),onboarding_owner_consultant_id:form.get('onboarding_owner'),target_go_live:form.get('target_go_live')};
-      controls.close();previewThenConfirm({title:'Confirm commercial terms',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'client',entry_gate:stageGateDefinitions.client,commercial_terms:terms},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'client',{entryEvidence:{explicit_confirmation:true},commercialTerms:terms},context);confirmControls.close()}});
+      const nextActionAt=new Date(form.get('next_action_at')).toISOString();
+      controls.close();previewThenConfirm({title:'Confirm commercial agreement',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'closed_won',entry_gate:stageGateDefinitions.closed_won,commercial_terms:terms},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'closed_won',{entryEvidence:{explicit_confirmation:true},commercialTerms:terms,nextActionType:'payment_follow_up',nextActionAt},context);confirmControls.close()}});
     }});
   }
   async function performStageMove(prospect,toStage,options,context) {
     const {sb,CUI}=context;
     try{
-      await rpc(sb,'platform_move_prospect_stage_v86',{
+      await rpc(sb,'platform_transition_lead_v510',{
         p_prospect:prospect.id||prospect.prospect_id,p_to_stage:toStage,
         p_expected_version:prospectVersion(prospect),
         p_entry_evidence:options.entryEvidence||{},
+        p_next_action_type:options.nextActionType||null,
+        p_next_action_at:options.nextActionAt||null,
+        p_reason_code:options.entryEvidence?.reason_code||null,
+        p_reason_detail:options.entryEvidence?.context||null,
         p_commercial_terms:options.commercialTerms||null,
-        p_idempotency_key:idempotencyKey()
+        p_operation_key:idempotencyKey()
       });
-      context.close?.();await renderOnboarding(context);CUI.announce(pt('Prospect moved to {stage}.',{stage:platformStatus(toStage)}));
+      context.close?.();
+      if(context.refresh)await context.refresh();else await renderOnboarding(context);
+      CUI.announce(pt('Prospect moved to {stage}.',{stage:platformStatus(toStage)}));
     }catch(error){CUI.announce(platformErrorMessage(error,'Stage move failed.'),{assertive:true});throw error}
   }
 
@@ -9408,6 +9684,8 @@
      is chosen, and enforced again before the call is made. */
   function prospectingOutreachModal(context,prospectId,options={}) {
     const {CUI,sb}=context;
+    let outreachAttemptKey='';
+    let outreachFingerprint='';
     const overlay=modal({
       title:options.followUpOnly?'Schedule follow-up':'Log outreach',
       submitLabel:'Save outreach',CUI,
@@ -9428,14 +9706,21 @@
         if(outcome==='follow_up'&&!followUp){
           throw new Error(pt('A follow-up outcome needs a date and time, so the next person knows when to call back.'));
         }
-        await rpc(sb,'platform_crm_log_outreach_v297',{
+        const request={
           p_prospect:prospectId,
           p_channel:String(form.get('channel')||'call'),
           p_outcome:outcome,
           p_notes:String(form.get('notes')||'').trim()||null,
           p_contact:null,
-          p_next_follow_up_at:followUp?new Date(followUp).toISOString():null,
-          p_idempotency_key:prospectingIdempotencyKey()
+          p_next_follow_up_at:followUp?new Date(followUp).toISOString():null
+        };
+        const fingerprint=JSON.stringify(request);
+        if(fingerprint!==outreachFingerprint){
+          outreachFingerprint=fingerprint;
+          outreachAttemptKey=prospectingIdempotencyKey();
+        }
+        await rpc(sb,'platform_crm_log_outreach_v297',{
+          ...request,p_idempotency_key:outreachAttemptKey
         });
         controls.close();
         CUI.announce('Outreach saved.');
@@ -9494,7 +9779,7 @@
           if(!chosen)return;
           assign.disabled=true;
           try{
-            await rpc(sb,'platform_assign_prospect_v89',{p_prospect:prospectId,p_consultant:chosen,p_reason:'Assigned from prospecting'});
+            await saveCanonicalLeadAssignment(sb,{...asObject(detail.prospect),id:prospectId},chosen,'Assigned from prospecting');
             CUI.announce(pt('Prospect assigned.'));
             await afterSave();
           }catch(error){
@@ -9729,9 +10014,9 @@
           if(!consultant){if(result)result.textContent=pt('Choose a consultant first.');return}
           assign.disabled=true;
           try{
-            const outcome=asObject(await rpc(sb,'platform_explorer_bulk_assign_v312',{
+            const outcome=asObject(await rpc(sb,'platform_bulk_transfer_leads_v510',{
               p_prospects:[...state.bulkSelection],p_consultant:consultant,
-              p_reason:'Bulk assigned from Business Explorer'
+              p_reason:'Bulk assigned from Business Explorer',p_operation_key:idempotencyKey()
             }));
             state.bulkSelection.clear();
             await Promise.all([loadPage(0,false),refreshMap(),refreshSummary()]);
@@ -12067,8 +12352,8 @@
     return`#/platform/reports${[...params].length?`?${params.toString()}`:''}`;
   }
 
-  /* Owner rule (2026-08-10): ONLY the super admin assigns firms to
-     consultants. The DB enforces it in platform_assign_prospect_v89/_v76;
+  /* Owner rule: ONLY the super admin transfers firms between an owner and queue.
+     The v510 ownership RPCs enforce versioning, audit and explicit queue state;
      this just keeps dead buttons off every other role's screen. */
   function canAssignScopedProspect(context) {
     return context?.canWrite===true&&context?.access?.role==='super_admin';
@@ -12118,7 +12403,7 @@
     overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head">
       <div><h1 id="scopedFirmTitle" style="font-size:1.45rem">${escapeHtml(item.name||item.legal_name||pt('Firm 360'))}</h1>
       <p class="muted small">${escapeHtml(pt('Read-only firm view · database-enforced assignment scope'))}</p></div>
-      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button>
+      <div class="platform-actions"><button type="button" class="btn ghost sm" data-open-business-360>${CUI.icon('info',{size:16})}<span>${escapeHtml(pt('Business 360'))}</span></button><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div>
       </div><div data-detail>${CUI.loadingState({title:'Firm 360',body:'Loading this firm’s performance and customer intelligence…',iconName:'branch'})}</div></section>`;
     document.body.appendChild(overlay);
     let deactivate;
@@ -12127,6 +12412,7 @@
       onClose?.();
     };
     overlay.querySelector('.platform-drawer-close').onclick=close;
+    overlay.querySelector('[data-open-business-360]').onclick=()=>openBusiness360V511(businessId,context);
     deactivate=CUI.activateDialog(overlay,{onClose:close});
     const host=overlay.querySelector('[data-detail]');
     try{
@@ -12267,25 +12553,33 @@
 
   function scopedProspectCreateModal(context,onSaved) {
     const {CUI,sb}=context;
+    let createAttemptKey=idempotencyKey(),createAttemptFingerprint='';
     modal({
       title:'Add firm to CRM',submitLabel:'Create firm',CUI,
       body:`${CUI.field({id:'scopedNewCompany',label:'Company name',required:true,attributes:'name="company_name" minlength="2" maxlength="200"'})}
       ${CUI.field({id:'scopedNewContact',label:'Boss / primary contact name',attributes:'name="contact_name" maxlength="200"'})}
       ${CUI.field({id:'scopedNewPhone',label:'Phone number',type:'tel',hint:'Add a phone number or email address.',attributes:'name="phone" autocomplete="tel"'})}
       ${CUI.field({id:'scopedNewEmail',label:'Email',type:'email',attributes:'name="email" autocomplete="email"'})}
-      ${CUI.field({id:'scopedNewSector',label:'Sector key (optional)',hint:'For example: fnb, facial, salon or fitness. Leave blank if undecided.',attributes:'name="sector_key" autocapitalize="none"'})}`,
+      ${CUI.field({id:'scopedNewSector',label:'Sector key (optional)',hint:'For example: fnb, facial, salon or fitness. Leave blank if undecided.',attributes:'name="sector_key" autocapitalize="none"'})}
+      ${CUI.field({id:'scopedNewNextAction',label:'First action due',type:'datetime-local',required:true,attributes:'name="next_action_at"'})}`,
       onSubmit:async(form,controls)=>{
         if(!String(form.get('phone')||'').trim()&&!String(form.get('email')||'').trim()){
           throw new Error(pt('Add a phone number or email address.'));
         }
-        await rpc(sb,'platform_create_my_prospect_v89',{
-          p_company_name:form.get('company_name'),
-          p_sector_key:String(form.get('sector_key')||'').trim()||null,
-          p_phone:String(form.get('phone')||'').trim()||null,
-          p_email:String(form.get('email')||'').trim()||null,
-          p_contact_name:String(form.get('contact_name')||'').trim()||null
-        });
-        controls.close();await onSaved?.();CUI.announce('Firm added to your CRM.');
+        const args={
+          p_company:{legal_name:form.get('company_name'),sector_key:String(form.get('sector_key')||'').trim()||null},
+          p_primary_contact:{full_name:String(form.get('contact_name')||'').trim()||'Business contact',
+            phone:String(form.get('phone')||'').trim()||null,email:String(form.get('email')||'').trim()||null},
+          p_source:{source_system:'platform_console',source_type:'manual'},
+          p_next_action_at:new Date(form.get('next_action_at')).toISOString()};
+        const fingerprint=JSON.stringify(args);
+        if(createAttemptFingerprint&&createAttemptFingerprint!==fingerprint)createAttemptKey=idempotencyKey();
+        createAttemptFingerprint=fingerprint;
+        const result=await rpc(sb,'platform_ingest_lead_v510',{...args,p_operation_key:createAttemptKey});
+        controls.close();await onSaved?.();CUI.announce(pt(result?.disposition==='created'?'Firm added to your CRM.'
+          :result?.disposition==='reused'?'Existing firm updated with this source.'
+          :result?.disposition==='existing_merchant'?'This firm is already a Peekaa merchant.'
+          :'Possible duplicate added to the administrator review queue.'));
       }
     });
   }
@@ -12319,11 +12613,8 @@
       })}
       <p class="muted small">${escapeHtml(pt("Choose by consultant name. Sales staff continue to see only firms they created or are assigned to."))}</p>`,
       onSubmit:async(form,controls)=>{
-        await rpc(context.sb,'platform_assign_prospect_v89',{
-          p_prospect:prospect.id||prospect.prospect_id,
-          p_consultant:String(form.get('consultant')||'')||null,
-          p_reason:'admin assignment from scoped onboarding'
-        });
+        await saveCanonicalLeadAssignment(context.sb,prospect,
+          String(form.get('consultant')||'')||null,'Admin assignment from scoped onboarding');
         controls.close();await onSaved?.();context.CUI.announce('Consultant assignment updated.');
       }
     });
@@ -12446,18 +12737,12 @@
         }});
       });
       main.querySelectorAll('[data-move]').forEach(button=>{
-        button.onclick=async event=>{
+        button.onclick=event=>{
           event.stopPropagation();
           const card=button.closest('[data-prospect]'),item=items.find(row=>String(row.id||row.prospect_id||row.row_id||row.business_id)===card.dataset.prospect);
-          button.disabled=true;
-          try{
-            await rpc(sb,'platform_move_my_prospect_stage_v89',{
-              p_prospect:item.prospect_id||item.id,
-              p_to_stage:card.querySelector('[data-move-select]').value,
-              p_expected_version:prospectVersion(item),p_reason:null
-            });
-            await renderScopedOnboarding(context,activeSearch);CUI.announce('Prospect stage updated.');
-          }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Stage could not be updated.'),{assertive:true})}
+          requestStageMove(item,card.querySelector('[data-move-select]').value,{
+            ...context,refresh:()=>renderScopedOnboarding(context,activeSearch)
+          });
         };
       });
       main.querySelectorAll('[data-prospect]').forEach(card=>{
@@ -12680,6 +12965,504 @@
     CUI.focusRoute(main);
   }
 
+  // ============================================================== V511 =====
+  // The work operating system: platform_command_center_v511 answers "what
+  // requires action today", platform_list_work_v511 / *_assign_* / *_transition_*
+  // / *_create_* run the queue behind it, and platform_get_business_360_v511
+  // is the one-round-trip operator entry point for a single business. None of
+  // the three writes to work_items_v511 directly from here — every mutation
+  // goes through the named RPC, and origin_kind<>'native' items are never
+  // offered a close action because the server itself refuses that close.
+  const V511_WORK_TYPES=Object.freeze([
+    'lead_follow_up','commercial_review','payment_exception','manual_payment_review',
+    'onboarding_step','onboarding_blocked','activation_review','renewal_prep',
+    'support_action','data_correction','integration_incident','anomaly_review'
+  ]);
+  const V511_CLOSE_OUTCOMES=Object.freeze(['completed','not_needed','superseded','rejected']);
+  const V511_WORK_SCOPES=Object.freeze(['mine','team','unassigned','overdue']);
+  const v511Label=value=>platformStatus(value);
+  function v511AttentionTone(value){
+    if(['blocked','overdue','payment_failed'].includes(value))return'no';
+    if(['unassigned','inactive_owner','stalled','missing_next_action'].includes(value))return'new';
+    return'off';
+  }
+  function v511StateTone(state){
+    return state==='blocked'?'no':state==='done'?'ok':state==='cancelled'?'off':'new';
+  }
+  // Resolves the acting login's own platform_consultants.id. The v511 RPCs
+  // never hand this back on their own (assign requires it as an INPUT, not an
+  // output), so this reuses the one existing reader that already resolves
+  // 'self' the same way app.v226_self_consultant() does: a caller with no
+  // items yet still gets back their own id in the `consultant` field.
+  async function v511ResolveSelfConsultant(sb){
+    try{
+      const payload=asObject(await rpc(sb,'platform_crm_pipeline_v226',{p_limit:1}));
+      return payload.consultant_unlinked?null:(payload.consultant||null);
+    }catch{return null}
+  }
+  async function v511HandleActionError(error,refresh,CUI,fallback){
+    if(String(error?.code)==='40001'){
+      await refresh();
+      CUI.announce(pt('This item changed since it was loaded. The list has been refreshed.'),{assertive:true});
+      return;
+    }
+    CUI.announce(platformErrorMessage(error,fallback),{assertive:true});
+  }
+  // ---------------------------------------------------------- command center
+  function v511CommandCenterHtml(items,CUI,consultantNames){
+    const sorted=[...items].sort((left,right)=>
+      (Number(right.severity||0)-Number(left.severity||0))
+      ||String(left.due_at||'').localeCompare(String(right.due_at||'')));
+    const ownerLabel=row=>row.owner_id
+      ?escapeHtml(consultantNames.get(String(row.owner_id))||pt('Assigned'))
+      :pt('Unassigned');
+    return `${CUI.pageHeader({
+      title:'Command center',
+      subtitle:'Every open exception across work, leads, onboarding, billing and applications — one queue, ranked by urgency.',
+      iconName:'info'
+    })}
+    ${sorted.length?CUI.card({
+      title:'Needs action',
+      description:pt('{count} open items across the operation.',{count:sorted.length}),
+      body:CUI.table({
+        caption:'Command center queue',
+        headers:['Priority','Subject','Domain','Reason','Owner','Due','Action'],
+        rows:sorted.map(row=>[
+          Number(row.severity)>=3?CUI.status(pt('Urgent'),'no'):CUI.status(pt('Attention'),'new'),
+          escapeHtml(row.subject||pt('Untitled')),
+          escapeHtml(v511Label(row.domain)),
+          escapeHtml(v511Label(row.reason)),
+          ownerLabel(row),
+          dateTime(row.due_at),
+          `<button type="button" class="btn ghost sm" data-command-center-open data-domain="${escapeHtml(row.domain)}" data-ref="${escapeHtml(row.ref_id||'')}" data-business="${escapeHtml(row.business_id||'')}" data-prospect="${escapeHtml(row.prospect_id||'')}">${escapeHtml(pt('Open'))}</button>`
+        ])
+      })
+    }):CUI.emptyState({
+      iconName:'check',title:'The operation is clear',
+      body:'No work, lead, onboarding, billing or application item needs attention right now. New exceptions will appear here the moment they exist.'
+    })}`;
+  }
+  function v511CommandCenterNavigate(button,context){
+    const businessId=button.dataset.business,prospectId=button.dataset.prospect,
+      domain=button.dataset.domain,refId=button.dataset.ref;
+    if(businessId){openBusiness360V511(businessId,context);return}
+    if(prospectId){globalObject.location.hash=onboardingHash(defaultOnboardingFilters(),{prospect:prospectId});return}
+    // 'application' rows carry neither anchor (a self-service application has
+    // no prospect or business yet) — land on the queue that already knows how
+    // to focus one, instead of a dead button.
+    if(domain==='application'&&refId){
+      globalObject.location.hash=onboardingHash(defaultOnboardingFilters(),{application:refId});
+      return;
+    }
+    globalObject.location.hash='#/platform/work';
+  }
+  async function renderCommandCenterV511(context){
+    const {main,CUI,sb,generation,isCurrent}=context;
+    main.innerHTML=loading(CUI,'Command center','Loading every open exception…','info');
+    try{
+      const [payload,consultantsPayload]=await Promise.all([
+        rpc(sb,'platform_command_center_v511',{p_limit:50}),
+        rpc(sb,'platform_list_assignment_consultants_v89').catch(()=>({items:[]}))
+      ]);
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
+      const items=asArray(payload,['items']);
+      const consultantNames=new Map(asArray(consultantsPayload,['items'])
+        .map(row=>[String(row.id),row.display_name]));
+      main.innerHTML=v511CommandCenterHtml(items,CUI,consultantNames);
+      main.querySelectorAll('[data-command-center-open]').forEach(button=>{
+        button.onclick=()=>v511CommandCenterNavigate(button,context);
+      });
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Command center')}
+  }
+  // ------------------------------------------------------------------- work
+  const v511WorkTabs=Object.freeze([
+    Object.freeze({key:'mine',label:'My work'}),
+    Object.freeze({key:'team',label:'Team'}),
+    Object.freeze({key:'unassigned',label:'Unassigned'}),
+    Object.freeze({key:'overdue',label:'Overdue'})
+  ]);
+  // Team raises 42501 for a sales_staff caller (v511's own scope contract) —
+  // the tab is hidden rather than offered and caught, per the house rule.
+  function v511WorkTabsFor(isSalesStaff){
+    return v511WorkTabs.filter(tab=>!(isSalesStaff&&tab.key==='team'));
+  }
+  function v511DefaultWorkFilters(){return{scope:'mine'}}
+  function v511WorkHash(filters=v511DefaultWorkFilters()){
+    return filters.scope&&filters.scope!=='mine'
+      ?`#/platform/work?scope=${encodeURIComponent(filters.scope)}`
+      :'#/platform/work';
+  }
+  function workStateFromHash(hash){
+    const query=String(hash||'').split('?')[1]||'';
+    const params=new Map(query.split('&').filter(Boolean).map(pair=>{
+      const [key,...rest]=pair.split('=');
+      return[decodeURIComponent(key||''),decodeURIComponent(rest.join('=')||'')];
+    }));
+    const scope=String(params.get('scope')||'mine').trim();
+    return{scope:V511_WORK_SCOPES.includes(scope)?scope:'mine'};
+  }
+  function v511OriginSourceLabel(originKind){
+    if(originKind==='sme_prospect_task')return pt('CRM');
+    if(originKind==='subscription_task')return pt('Billing');
+    if(originKind==='onboarding_item')return pt('Onboarding');
+    return pt('Automation');
+  }
+  // A projected item belongs to its source system of record; the server
+  // itself refuses to close one here (origin_kind<>'native'), so the console
+  // never offers a close action for it either — only a deep link to where it
+  // actually lives.
+  function v511DeepLinkHash(item){
+    if(item.origin_kind==='sme_prospect_task'&&item.prospect_id){
+      return onboardingHash(defaultOnboardingFilters(),{prospect:item.prospect_id});
+    }
+    if(item.origin_kind==='subscription_task'){
+      return `#/platform/subscription-operations${item.subject_name?`?search=${encodeURIComponent(item.subject_name)}`:''}`;
+    }
+    if(item.origin_kind==='onboarding_item'){
+      return onboardingHash({...defaultOnboardingFilters(),search:item.subject_name||''});
+    }
+    return null;
+  }
+  function v511WorkRowActionsHtml(item,canWrite,canClaim){
+    if(!canWrite)return'';
+    if(item.origin_kind!=='native'){
+      return `<span class="muted small">${escapeHtml(pt('Managed by {source}',{source:v511OriginSourceLabel(item.origin_kind)}))}</span>`;
+    }
+    const buttons=[];
+    if(item.ownership_state==='queued'){
+      buttons.push(`<button type="button" class="btn sm" data-work-claim="${escapeHtml(item.id)}" data-version="${escapeHtml(item.version)}"${canClaim?'':` disabled title="${escapeHtml(pt('No consultant profile to claim with'))}"`}>${escapeHtml(pt('Claim'))}</button>`);
+    }
+    if(item.state==='open'){
+      buttons.push(`<button type="button" class="btn ghost sm" data-work-start="${escapeHtml(item.id)}" data-version="${escapeHtml(item.version)}">${escapeHtml(pt('Start'))}</button>`);
+    }
+    if(!['done','cancelled'].includes(item.state)){
+      buttons.push(`<button type="button" class="btn ghost sm" data-work-wait="${escapeHtml(item.id)}" data-version="${escapeHtml(item.version)}">${escapeHtml(pt('Wait'))}</button>`);
+      buttons.push(`<button type="button" class="btn ghost sm" data-work-block="${escapeHtml(item.id)}" data-version="${escapeHtml(item.version)}">${escapeHtml(pt('Block'))}</button>`);
+      buttons.push(`<button type="button" class="btn ghost sm" data-work-done="${escapeHtml(item.id)}" data-version="${escapeHtml(item.version)}">${escapeHtml(pt('Done'))}</button>`);
+    }
+    return `<div class="platform-actions">${buttons.join('')}</div>`;
+  }
+  function v511WorkRowHtml(item,CUI,canWrite,canClaim){
+    const link=v511DeepLinkHash(item);
+    const subjectText=escapeHtml(item.subject_name||pt('Untitled'));
+    const subject=link
+      ?`<a href="${escapeHtml(link)}">${subjectText}</a>`
+      :(item.business_id
+        ?`<button type="button" class="platform-link-button" data-work-business="${escapeHtml(item.business_id)}">${subjectText}</button>`
+        :subjectText);
+    return[
+      `<div><b>${escapeHtml(item.title||pt('Untitled'))}</b><p class="muted small">${escapeHtml(v511Label(item.work_type))}</p></div>`,
+      subject,
+      CUI.status(v511Label(item.state),v511StateTone(item.state)),
+      CUI.status(v511Label(item.attention),v511AttentionTone(item.attention)),
+      item.ownership_state==='queued'?pt('Unassigned'):escapeHtml(item.owner_name||pt('Assigned')),
+      dateTime(item.due_at),
+      v511WorkRowActionsHtml(item,canWrite,canClaim)
+    ];
+  }
+  function v511WorkTabStripHtml(active,isSalesStaff){
+    return `<nav class="platform-actions platform-subnav" aria-label="${escapeHtml(pt('Work scope'))}">${
+      v511WorkTabsFor(isSalesStaff).map(tab=>
+        `<button type="button" class="btn ${tab.key===active?'':'ghost'} sm" data-work-tab="${escapeHtml(tab.key)}" aria-pressed="${tab.key===active}">${escapeHtml(pt(tab.label))}</button>`
+      ).join('')
+    }</nav>`;
+  }
+  function v511WorkHtml({items,CUI,scope,isSalesStaff,canWrite,canClaim}){
+    return `${CUI.pageHeader({
+      title:'Work',
+      subtitle:'Claim, progress and close the operational actions behind every business and lead.',
+      iconName:'setup',
+      actions:canWrite?`<button type="button" class="btn" id="platformNewWorkItem">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New work item'))}</span></button>`:''
+    })}
+    ${v511WorkTabStripHtml(scope,isSalesStaff)}
+    ${items.length?CUI.table({
+      caption:'Work queue',
+      headers:['Work item','Subject','State','Attention','Owner','Due','Actions'],
+      rows:items.map(item=>v511WorkRowHtml(item,CUI,canWrite,canClaim))
+    }):CUI.emptyState({iconName:'check',title:'No work in this queue',body:'Nothing matches this scope right now.'})}`;
+  }
+  function v511NewWorkItemModal(context){
+    const {CUI,sb,consultants=[]}=context;
+    modal({title:'New work item',submitLabel:'Create work item',CUI,body:`
+      ${CUI.field({id:'v511WorkType',label:'Work type',control:'select',
+        options:V511_WORK_TYPES.map(value=>({value,label:v511Label(value)})),
+        attributes:'name="work_type" required'})}
+      ${CUI.field({id:'v511WorkTitle',label:'Title',required:true,attributes:'name="title" maxlength="200"'})}
+      ${CUI.field({id:'v511WorkDetail',label:'Detail',control:'textarea',attributes:'name="detail" rows="3"'})}
+      ${CUI.field({id:'v511WorkDue',label:'Due date',type:'datetime-local',required:true,attributes:'name="due_at"'})}
+      ${CUI.field({id:'v511WorkOwner',label:'Owner',control:'select',
+        options:[{value:'',label:pt('Unassigned')},...consultants.map(row=>({value:row.id,label:row.display_name}))],
+        attributes:'name="owner"'})}
+      <div class="platform-form-grid">
+        ${CUI.field({id:'v511WorkBusiness',label:'Business ID (optional anchor)',attributes:'name="business"',value:context.anchorBusiness||''})}
+        ${CUI.field({id:'v511WorkProspect',label:'Lead ID (optional anchor)',attributes:'name="prospect"',value:context.anchorProspect||''})}
+      </div>
+    `,onSubmit:async(form,controls)=>{
+      const business=String(form.get('business')||'').trim()||null;
+      const prospect=String(form.get('prospect')||'').trim()||null;
+      if(!business&&!prospect)throw new Error(pt('A work item must name a business or a lead.'));
+      const owner=String(form.get('owner')||'').trim()||null;
+      try{
+        await rpc(sb,'platform_create_work_item_v511',{
+          p_work_type:form.get('work_type'),p_title:form.get('title'),p_detail:form.get('detail')||null,
+          p_business:business,p_prospect:prospect,
+          p_due_at:new Date(form.get('due_at')).toISOString(),
+          p_owner:owner,p_queue:owner?null:'operations_intake',p_priority:0,
+          p_idempotency_key:idempotencyKey()
+        });
+      }catch(error){
+        if(String(error?.code)==='40001'){
+          controls.close();await context.refreshWork();
+          CUI.announce(pt('This item changed since it was loaded. The list has been refreshed.'),{assertive:true});
+          return;
+        }
+        throw error;
+      }
+      controls.close();
+      CUI.announce(pt('Work item created.'));
+      await context.refreshWork();
+    }});
+  }
+  function v511WaitModal(item,context){
+    const {CUI,sb}=context;
+    modal({title:'Mark work item as waiting',submitLabel:'Save',CUI,body:`
+      ${CUI.field({id:'v511WaitReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}
+      ${CUI.field({id:'v511WaitUntil',label:'Return date',type:'datetime-local',required:true,attributes:'name="waiting_until"'})}
+    `,onSubmit:async(form,controls)=>{
+      try{
+        await rpc(sb,'platform_transition_work_item_v511',{
+          p_work_item:item.id,p_expected_version:Number(item.version),p_to_state:'waiting',
+          p_reason:form.get('reason'),p_waiting_until:new Date(form.get('waiting_until')).toISOString(),
+          p_due_at:null,p_close_outcome:null,p_idempotency_key:idempotencyKey()
+        });
+      }catch(error){
+        if(String(error?.code)==='40001'){
+          controls.close();await context.refreshWork();
+          CUI.announce(pt('This item changed since it was loaded. The list has been refreshed.'),{assertive:true});
+          return;
+        }
+        throw error;
+      }
+      controls.close();
+      CUI.announce(pt('Work item set to waiting.'));
+      await context.refreshWork();
+    }});
+  }
+  function v511BlockModal(item,context){
+    const {CUI,sb}=context;
+    modal({title:'Block work item',submitLabel:'Block',CUI,body:
+      CUI.field({id:'v511BlockReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'}),
+      onSubmit:async(form,controls)=>{
+      try{
+        await rpc(sb,'platform_transition_work_item_v511',{
+          p_work_item:item.id,p_expected_version:Number(item.version),p_to_state:'blocked',
+          p_reason:form.get('reason'),p_waiting_until:null,p_due_at:null,p_close_outcome:null,
+          p_idempotency_key:idempotencyKey()
+        });
+      }catch(error){
+        if(String(error?.code)==='40001'){
+          controls.close();await context.refreshWork();
+          CUI.announce(pt('This item changed since it was loaded. The list has been refreshed.'),{assertive:true});
+          return;
+        }
+        throw error;
+      }
+      controls.close();
+      CUI.announce(pt('Work item blocked.'));
+      await context.refreshWork();
+    }});
+  }
+  function v511DoneModal(item,context){
+    const {CUI,sb}=context;
+    modal({title:'Close work item',submitLabel:'Close',CUI,body:
+      CUI.field({id:'v511DoneOutcome',label:'Outcome',control:'select',required:true,
+        options:V511_CLOSE_OUTCOMES.map(value=>({value,label:v511Label(value)})),
+        attributes:'name="outcome" required'}),
+      onSubmit:async(form,controls)=>{
+      try{
+        await rpc(sb,'platform_transition_work_item_v511',{
+          p_work_item:item.id,p_expected_version:Number(item.version),p_to_state:'done',
+          p_reason:null,p_waiting_until:null,p_due_at:null,p_close_outcome:form.get('outcome'),
+          p_idempotency_key:idempotencyKey()
+        });
+      }catch(error){
+        if(String(error?.code)==='40001'){
+          controls.close();await context.refreshWork();
+          CUI.announce(pt('This item changed since it was loaded. The list has been refreshed.'),{assertive:true});
+          return;
+        }
+        throw error;
+      }
+      controls.close();
+      CUI.announce(pt('Work item closed.'));
+      await context.refreshWork();
+    }});
+  }
+  function wireWorkV511(renderContext){
+    const {main,CUI,sb,items,filters,access,selfConsultant}=renderContext;
+    const isSalesStaff=access?.role==='sales_staff';
+    const refresh=()=>renderWorkV511(renderContext,filters);
+    const modalContext={...renderContext,refreshWork:refresh};
+    main.querySelectorAll('[data-work-tab]').forEach(button=>button.onclick=()=>{
+      const next={scope:button.dataset.workTab};
+      if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',v511WorkHash(next));
+      renderWorkV511({...renderContext,hash:v511WorkHash(next)},next);
+    });
+    const newWorkItem=main.querySelector('#platformNewWorkItem');
+    if(newWorkItem)newWorkItem.onclick=()=>v511NewWorkItemModal(modalContext);
+    const findItem=id=>items.find(row=>String(row.id)===String(id));
+    main.querySelectorAll('[data-work-claim]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      try{
+        await rpc(sb,'platform_assign_work_item_v511',{
+          p_work_item:button.dataset.workClaim,p_expected_version:Number(button.dataset.version),
+          p_owner:selfConsultant,p_queue:null,p_idempotency_key:idempotencyKey()
+        });
+        CUI.announce(pt('Work item claimed.'));
+        await refresh();
+      }catch(error){
+        button.disabled=false;
+        await v511HandleActionError(error,refresh,CUI,'The work item could not be claimed.');
+      }
+    });
+    main.querySelectorAll('[data-work-start]').forEach(button=>button.onclick=async()=>{
+      button.disabled=true;
+      try{
+        await rpc(sb,'platform_transition_work_item_v511',{
+          p_work_item:button.dataset.workStart,p_expected_version:Number(button.dataset.version),
+          p_to_state:'in_progress',p_reason:null,p_waiting_until:null,p_due_at:null,
+          p_close_outcome:null,p_idempotency_key:idempotencyKey()
+        });
+        CUI.announce(pt('Work item started.'));
+        await refresh();
+      }catch(error){
+        button.disabled=false;
+        await v511HandleActionError(error,refresh,CUI,'The work item could not be started.');
+      }
+    });
+    main.querySelectorAll('[data-work-wait]').forEach(button=>{
+      const item=findItem(button.dataset.workWait);
+      if(item)button.onclick=()=>v511WaitModal({...item,version:Number(button.dataset.version)},modalContext);
+    });
+    main.querySelectorAll('[data-work-block]').forEach(button=>{
+      const item=findItem(button.dataset.workBlock);
+      if(item)button.onclick=()=>v511BlockModal({...item,version:Number(button.dataset.version)},modalContext);
+    });
+    main.querySelectorAll('[data-work-done]').forEach(button=>{
+      const item=findItem(button.dataset.workDone);
+      if(item)button.onclick=()=>v511DoneModal({...item,version:Number(button.dataset.version)},modalContext);
+    });
+    main.querySelectorAll('[data-work-business]').forEach(button=>button.onclick=()=>{
+      openBusiness360V511(button.dataset.workBusiness,renderContext);
+    });
+    if(isSalesStaff&&!selfConsultant){
+      CUI.announce?.(pt('No consultant profile to claim with'));
+    }
+  }
+  async function renderWorkV511(context,filters=v511DefaultWorkFilters()){
+    const {main,CUI,sb,generation,isCurrent,access}=context;
+    const isSalesStaff=access?.role==='sales_staff';
+    const scope=isSalesStaff&&filters.scope==='team'?'mine':filters.scope;
+    main.innerHTML=loading(CUI,'Work','Loading the work queue…','setup');
+    try{
+      const [list,consultantsPayload,selfConsultant]=await Promise.all([
+        rpc(sb,'platform_list_work_v511',{p_scope:scope,p_owner:null,p_limit:100}),
+        rpc(sb,'platform_list_assignment_consultants_v89').catch(()=>({items:[]})),
+        v511ResolveSelfConsultant(sb)
+      ]);
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
+      const items=asArray(list,['items']);
+      const consultants=asArray(consultantsPayload,['items']);
+      main.innerHTML=v511WorkHtml({items,CUI,scope,isSalesStaff,canWrite:context.canWrite,canClaim:selfConsultant!=null});
+      const renderContext={
+        ...context,items,filters:{scope},consultants,selfConsultant,
+        canClaim:selfConsultant!=null
+      };
+      wireWorkV511(renderContext);
+      CUI.focusRoute(main);
+    }catch(error){showError(main,error,CUI,'Work')}
+  }
+  // ------------------------------------------------------------ business 360
+  function v511Business360Html(payload,CUI){
+    const identity=asObject(payload.identity),owner=asObject(payload.relationship_owner),
+      commercial=asObject(payload.commercial),entitlement=asObject(payload.entitlement),
+      onboarding=asObject(payload.onboarding),nextAction=asObject(payload.next_action),
+      openWork=asObject(payload.open_work),timeline=asArray(payload.timeline);
+    return `<div class="platform-detail-grid">
+      ${CUI.card({title:'Identity',body:typedDetailHtml(identity,[
+        ['name','Name'],['industry','Industry'],
+        ['acquired_via','Acquired via',value=>value?v511Label(value):'—']
+      ])})}
+      ${CUI.card({title:'Relationship owner',body:owner.consultant_id?typedDetailHtml(owner,[
+        ['name','Owner'],['active',pt('Status'),value=>value?pt('Active'):pt('Inactive')]
+      ]):localizedEmptyHtml('No relationship owner assigned')})}
+      ${CUI.card({title:'Commercial',body:typedDetailHtml(commercial,[
+        ['stage','Stage',value=>value?v511Label(value):'—']
+      ])})}
+      ${CUI.card({title:'Entitlement',body:`
+        <div class="platform-list-row">
+          ${CUI.status(entitlement.entitled?pt('Entitled'):pt('Awaiting verified payment'),entitlement.entitled?'ok':'new')}
+          ${CUI.status(entitlement.live?pt('Live'):pt('Not live'),entitlement.live?'ok':'off')}
+        </div>
+        ${typedDetailHtml({payment_status:entitlement.payment_status,activated_at:entitlement.activated_at},[
+          ['payment_status','Payment status',value=>value?v511Label(value):'—'],
+          ['activated_at','Activated',dateTime]
+        ])}`})}
+      ${CUI.card({title:'Onboarding',body:onboarding.status?typedDetailHtml(onboarding,[
+        ['status','Status',value=>v511Label(value)],
+        ['started_at','Started',dateTime],['activated_at','Activated',dateTime]
+      ]):localizedEmptyHtml('No onboarding checklist recorded')})}
+      ${CUI.card({title:'Next action',body:nextAction.work_item_id?`
+        <p><b>${escapeHtml(nextAction.title||pt('Untitled'))}</b></p>
+        <p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(nextAction.due_at)}))} · ${escapeHtml(v511Label(nextAction.state))}</p>
+      `:localizedEmptyHtml('No open action recorded')})}
+      ${CUI.card({title:'Open work',body:detailObjectHtml({
+        total:Number(openWork.total||0),overdue:Number(openWork.overdue||0),
+        blocked:Number(openWork.blocked||0)
+      })})}
+    </div>
+    ${payload.blocker?`<div class="platform-route-note platform-status-note">${CUI.icon('info',{size:19})}<div><b>${escapeHtml(pt('Blocker'))}</b><p class="small">${escapeHtml(payload.blocker)}</p></div></div>`:''}
+    ${CUI.card({title:'Timeline',body:timeline.length?timeline.map(entry=>`
+      <div class="platform-action-item"><div>
+        <b>${escapeHtml(v511Label(entry.kind))}</b>
+        <p class="muted small">${escapeHtml(dateTime(entry.at))} · ${escapeHtml(entry.source==='work'?pt('Work'):pt('Commercial'))}</p>
+        ${entry.subject?`<p class="small">${escapeHtml(entry.subject)}</p>`:''}
+      </div></div>`).join(''):localizedEmptyHtml('No timeline activity recorded')})}`;
+  }
+  async function openBusiness360V511(businessId,context){
+    const {CUI,sb}=context;
+    if(!businessId)return;
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','business360Title');
+    overlay.innerHTML=`<section class="platform-drawer-panel" aria-labelledby="business360Title"><div class="platform-drawer-head">
+      <div><h1 id="business360Title" style="font-size:1.45rem">${escapeHtml(pt('Business 360'))}</h1>
+      <p class="muted small">${escapeHtml(pt('Loading identity, ownership, commercial and operational status…'))}</p></div>
+      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button>
+    </div><div data-detail>${CUI.loadingState({title:'Business 360',body:'Loading business operating summary…',iconName:'branch'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate;
+    const close=()=>closeOverlay(overlay,deactivate);
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    const host=overlay.querySelector('[data-detail]');
+    try{
+      const payload=asObject(await rpc(sb,'platform_get_business_360_v511',{p_business:businessId,p_timeline_limit:20}));
+      if(!host.isConnected)return;
+      const identity=asObject(payload.identity);
+      const titleHost=overlay.querySelector('#business360Title');
+      if(titleHost)titleHost.textContent=identity.name||pt('Business 360');
+      host.innerHTML=v511Business360Html(payload,CUI);
+    }catch(error){
+      host.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Business 360')
+        :CUI.errorState({title:'Business 360 unavailable',message:platformErrorMessage(error,'Business 360 unavailable')});
+    }
+  }
+  // ===========================================================================
+
   async function render({root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash='#/'} = {}) {
     if (!root || !sb || !CUI) throw new Error(pt('Platform console dependencies are unavailable.'));
     lastRenderArgs={root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash};
@@ -12719,14 +13502,20 @@
     }
     const allowedRoutes=visibleRoutes(access);
     const requestedKey=routeKey(hash);
-    const activeRoute=allowedRoutes.find(route=>route.key===requestedKey)||allowedRoutes[0];
+    // V511: Command center and Work resolve outside the route registry (see
+    // the comment on isRoute() above) — any active platform role reaches
+    // them, so activeRoute is a plain stand-in rather than a registry match,
+    // and it never triggers the registry's own-hash redirect below.
+    const isV511DirectRoute=requestedKey==='command-center'||requestedKey==='work';
+    const activeRoute=isV511DirectRoute?{key:requestedKey}
+      :allowedRoutes.find(route=>route.key===requestedKey)||allowedRoutes[0];
     if(!activeRoute){
       root.innerHTML=platformAccessDeniedHtml({
         CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
       });return;
     }
     const activeKey=activeRoute.key;
-    if(activeKey!==requestedKey&&globalObject.history?.replaceState){
+    if(!isV511DirectRoute&&activeKey!==requestedKey&&globalObject.history?.replaceState){
       globalObject.history.replaceState(null,'',activeRoute.hash);
     }
     root.innerHTML = shellHtml({
@@ -12770,6 +13559,11 @@
       onSignOut,workspaceHash,generation,access,activeKey,
       canWrite:activeKey==='access'||canWriteModule(access,activeRoute.moduleKey||activeKey)
     };
+    // V511: every active platform role may write here — the server enforces
+    // the finer per-row rule itself (own item only for sales_staff; a
+    // projected item can never be closed at all) — so the client does not
+    // additionally gate on a module permission the v511 RPCs never check.
+    if(isV511DirectRoute)context.canWrite=true;
     activeContext=context;
     let task;
     const useScopedV89=access.role!=='super_admin';
@@ -12791,6 +13585,8 @@
     if(!task&&activeKey==='onboarding')task=renderOnboarding(
       context,onboardingStateFromHash(hash).filters
     );
+    if(!task&&activeKey==='command-center')task=renderCommandCenterV511(context);
+    if(!task&&activeKey==='work')task=renderWorkV511(context,workStateFromHash(hash));
     if(!task&&activeKey==='billing')task=renderBilling(context);
     if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
     if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
@@ -12835,7 +13631,11 @@
     renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
     prospectingProject,prospectingClusters,prospectingFilterPayload,
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
-    receiptRows,receiptUnreadableReason
+    receiptRows,receiptUnreadableReason,
+    renderCommandCenterV511,renderWorkV511,openBusiness360V511,
+    v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
+    v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
+    v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -12862,7 +13662,11 @@
       renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
       prospectingProject,prospectingClusters,prospectingFilterPayload,
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
-    receiptRows,receiptUnreadableReason
+    receiptRows,receiptUnreadableReason,
+    renderCommandCenterV511,renderWorkV511,openBusiness360V511,
+    v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
+    v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
+    v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

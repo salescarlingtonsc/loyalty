@@ -115,9 +115,11 @@ test('the summary renders the conversion counters', () => {
   assert.doesNotMatch(html, /score/i);
 });
 
-test('the explorer is wired to the v312 RPCs and not the retired v297 search', () => {
+test('the explorer keeps v312 readers but uses the canonical v510 ownership writer', () => {
   assert.ok(source.includes('platform_explorer_search_v312'));
-  assert.ok(source.includes('platform_explorer_bulk_assign_v312'));
+  assert.ok(source.includes('platform_bulk_transfer_leads_v510'));
+  assert.equal(source.includes('platform_explorer_bulk_assign_v312'),false,
+    'the retired ownership writer must no longer be called');
   assert.ok(source.includes('platform_conversion_funnel_v312'));
   assert.ok(source.includes('platform_merchant_matches_v312'));
   assert.ok(source.includes('platform_decide_merchant_match_v312'));
@@ -134,7 +136,7 @@ test('every deleted lead-scoring symbol is gone from source and exports', () => 
 });
 
 test('bulk assignment is offered only to a super admin and reports what it skipped', () => {
-  assert.ok(source.includes('platform_explorer_bulk_assign_v312'));
+  assert.ok(source.includes('platform_bulk_transfer_leads_v510'));
   // The RPC silently refuses businesses that are already merchants; if the UI
   // never surfaces `skipped`, an admin sees "assigned 50" when it assigned 30.
   assert.match(source, /skipped/, 'the skipped count must reach the operator');

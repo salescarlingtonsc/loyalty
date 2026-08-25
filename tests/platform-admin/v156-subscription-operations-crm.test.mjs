@@ -116,8 +116,8 @@ test('admin UX exposes internal subscription operations and retains accessible C
   assert.match(consoleSource, /data-onboarding-view="list"/);
   assert.match(consoleSource, /renderCustomerLifecycle/);
   assert.match(consoleSource, /manualPaymentModal/);
-  assert.match(consoleSource, /platform_create_prospect_v76/);
-  assert.match(consoleSource, /p_idempotency_key:createAttemptKey/);
+  assert.match(consoleSource, /platform_ingest_lead_v510/);
+  assert.match(consoleSource, /p_operation_key:createAttemptKey/);
   assert.match(consoleSource, /if\(!form\.get\('contact_email'\)&&!form\.get\('contact_phone'\)\)/);
 });
 

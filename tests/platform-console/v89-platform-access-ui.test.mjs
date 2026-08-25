@@ -88,10 +88,10 @@ test('super-admin grant editor and delegated platform users use scoped v89 CRM p
   for(const rpc of [
     'platform_list_my_access_v89','platform_list_access_grants_v89',
     'platform_upsert_access_grant_v89','platform_list_my_firms_v105',
-    'platform_create_my_prospect_v89','platform_move_my_prospect_stage_v89','platform_get_my_prospect_v89',
+    'platform_ingest_lead_v510','platform_transition_lead_v510','platform_get_my_prospect_v89',
     'platform_add_my_prospect_activity_v89','platform_create_my_prospect_task_v89',
     'platform_complete_my_prospect_task_v89',
-    'platform_assign_prospect_v89','platform_list_assignment_consultants_v89'
+    'platform_transfer_lead_v510','platform_queue_lead_v510','platform_list_assignment_consultants_v89'
   ])assert.match(source,new RegExp(rpc));
   for(const rpc of [
     'platform_get_assigned_firm_report_v94','platform_get_catalogue_affinity_v94',
@@ -183,7 +183,8 @@ test('custom admin with onboarding write access gets a named consultant assignme
     role:'admin',scope:'all',module_perms:{onboarding:'rw',firms:'r'}
   });
   // Owner rule (2026-08-10): only the super admin assigns firms. An admin's
-  // button would be dead against platform_assign_prospect_v89's gate.
+  // Assignment remains owner-only; v510 performs it through the canonical
+  // ownership transition instead of the retired direct-assignment RPC.
   assert.equal(api.canAssignScopedProspect({access,canWrite:api.canWriteModule(access,'onboarding')}),false);
   assert.equal(api.canAssignScopedProspect({
     access:api.normalizePlatformAccess({role:'super_admin',scope:'all',module_perms:{'*':'rw'}}),
@@ -199,7 +200,7 @@ test('custom admin with onboarding write access gets a named consultant assignme
   const source=await read('app/platform-console.js');
   assert.match(source,/canAssignScopedProspect\(context\)\?`<button[^>]*data-scoped-assign/);
   assert.match(source,/id:'scopedAssignmentConsultant',label:'Sales consultant',control:'select'/);
-  assert.match(source,/platform_assign_prospect_v89',\{[\s\S]*p_prospect:[\s\S]*p_consultant:/);
+  assert.match(source,/platform_transfer_lead_v510',\{\.\.\.common,p_consultant:consultant\}/);
   assert.match(source,/platform_list_assignment_consultants_v89/);
   assert.doesNotMatch(source,/scopedAssignmentConsultant',label:'Consultant ID'/);
 });
@@ -285,7 +286,7 @@ test('reports-only admin receives the core report without unauthorized optional 
     source.indexOf('async function renderCrossDomainReport'),
     source.indexOf('async function renderPlatformReports')
   );
-  assert.match(renderer,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v86[\s\S]*:Promise\.resolve\(null\)/);
+  assert.match(renderer,/sectionAccess\.onboarding[\s\S]*platform_get_sme_analytics_v510[\s\S]*:Promise\.resolve\(null\)/);
   assert.match(renderer,/sectionAccess\.billing\?rpc\(sb,'platform_get_billing_v125'[\s\S]*:Promise\.resolve\(null\)/);
   assert.doesNotMatch(renderer,/platform_get_billing_reconciliation_v89/);
   assert.match(source,/SME acquisition and onboarding omitted/);
