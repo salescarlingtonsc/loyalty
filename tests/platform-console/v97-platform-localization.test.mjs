@@ -308,7 +308,13 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   const explicit=[...new Set([...source.matchAll(/\bpt\((['"])(.*?)\1/g)].map(match=>match[2]))];
   const metadata=[...new Set([...source.matchAll(/\b(?:title|subtitle|description|caption|label|hint|placeholder|body|message|actionLabel|submitLabel)\s*:\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
   const announcements=[...new Set([...source.matchAll(/\.announce\(\s*(['"])(.*?)\1/g)].map(match=>match[2]))];
-  assert.equal(explicit.length,1035,'update the audited explicit-copy inventory when adding runtime UI'); // V504
+  // Operating-system IA pass: +3 distinct explicit strings (the two new tab-
+  // strip aria-labels, 'Subscription operations sections' and 'Firm
+  // directory view', plus one of the Firms/Companies mode-toggle labels that
+  // was not already a literal pt() argument elsewhere). Metadata and
+  // announcement inventories are unchanged — every route.label removed from
+  // routes[] already had an identical distinct string surviving elsewhere.
+  assert.equal(explicit.length,1038,'update the audited explicit-copy inventory when adding runtime UI');
   assert.equal(metadata.length,821,'update the audited CUI metadata inventory when adding UI metadata'); // V504
   assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
@@ -678,19 +684,20 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   const classifications=[
     {kind:'localized-ui',pattern:/^(?:disabled title="§"|name="bank_account_number" inputmode="numeric" placeholder="§")$/},
     {kind:'data-only',pattern:/^(?:§ (?:KB|MB)|Platform import review: §|NPU: §)$/},
-    {kind:'technical',pattern:/^(?:confirm:§|nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|§-business-explorer-§\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\"|#\/platform\/work\?scope=§|\?search=§|#\/platform\/subscription-operations§)$/}
+    {kind:'technical',pattern:/^(?:confirm:§|nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|§-business-explorer-§\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\"|#\/platform\/work\?scope=§|\?search=§|#\/platform\/subscription-operations§|&view=§|#\/platform\/subscription-operations\?tab=lifecycle§|&business=§|#\/platform\/subscription-operations\?tab=billing§|#\/platform\/firms\?§)$/}
   ];
   const classified=inventory.map(entry=>({
     ...entry,kind:classifications.find(rule=>rule.pattern.test(entry.text))?.kind||'unclassified'
   }));
-  // V504: three new technical URL-fragment segments (work scope routing and the
-  // subscription-operations search deep link) and one localized-ui segment (the
-  // disabled Claim button's title, which already goes through pt()).
-  assert.equal(classified.length,52,'review every interpolated template segment when the inventory changes');
+  // Operating-system IA pass: legacyRouteRedirects carries the ?business=,
+  // ?view= and Companies filter query strings from a retired route's old
+  // hash onto its new home — five new technical URL-fragment segments (all
+  // in the .hash() builders next to the routes[] registry).
+  assert.equal(classified.length,57,'review every interpolated template segment when the inventory changes');
   assert.deepEqual(classified.filter(entry=>entry.kind==='unclassified'),[]);
   assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,6);
   assert.equal(classified.filter(entry=>entry.kind==='data-only').length,4);
-  assert.equal(classified.filter(entry=>entry.kind==='technical').length,42);
+  assert.equal(classified.filter(entry=>entry.kind==='technical').length,47);
 });
 
 test('every mixed UI grammar template localizes arbitrary values in Chinese and Malay',async()=>{

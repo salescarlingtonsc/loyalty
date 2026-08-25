@@ -838,6 +838,8 @@
       'Companies unavailable':'无法加载公司',
       'CRM':'客户关系管理',
       'Onboarding sections':'入驻分区',
+      'Subscription operations sections':'订阅操作分区',
+      'Firm directory view':'企业目录视图',
       'Pipeline':'管道',
       'Signups':'注册申请',
       'People who created an account. Decide who becomes a workspace.':'已创建账号的用户。决定谁可以开通工作区。',
@@ -1198,6 +1200,8 @@
       'Companies unavailable':'Syarikat tidak tersedia',
       'CRM':'CRM',
       'Onboarding sections':'Bahagian onboarding',
+      'Subscription operations sections':'Bahagian operasi langganan',
+      'Firm directory view':'Paparan direktori firma',
       'Pipeline':'Saluran',
       'Signups':'Pendaftaran',
       'People who created an account. Decide who becomes a workspace.':'Orang yang telah membuka akaun. Tentukan siapa yang menjadi ruang kerja.',
@@ -3489,16 +3493,17 @@
        'onboarding' module gate for exactly the reason CRM does — one grant, one
        decision. The reader itself decides what a consultant may write or assign. */
     {key:'prospecting',moduleKey:'onboarding',label:'Prospecting',shortLabel:'Prospect',hash:'#/platform/prospecting',icon:'branch'},
-    /* V292: super-admin only and deliberately without a moduleKey, like the partner
-       register. A demo request is an unqualified prospect who has no tenant, so no
-       tenant-scoped grant can be the thing that opens it. */
-    {key:'demo-requests',label:'Demo requests',shortLabel:'Demos',hash:'#/platform/demo-requests',icon:'customers',superAdminOnly:true},
-    {key:'customer-lifecycle',moduleKey:'billing',label:'Customer lifecycle',shortLabel:'Customers',hash:'#/platform/customer-lifecycle',icon:'branch'},
+    /* Peekaa operating-system IA pass: demo-requests, customer-lifecycle,
+       billing and companies were four separate top-level routes for content
+       that already lived beside a near-identical sibling — a demo request is
+       a kind of application (Onboarding already has an applications tab), and
+       customer-lifecycle/billing/companies all read data that
+       subscription-operations and firms already load. Each is now a tab or
+       mode of its host route instead of its own entry. legacyRouteRedirects
+       (below) keeps every old hash and deep link resolving to its new home. */
     {key:'firms',label:'Firms',shortLabel:'Firms',hash:'#/platform/firms',icon:'branch'},
-    {key:'companies',label:'Companies',shortLabel:'Companies',hash:'#/platform/companies',icon:'branch',superAdminOnly:true},
     {key:'reports',label:'Reports',shortLabel:'Reports',hash:'#/platform/reports',icon:'reports'},
     {key:'marketing',label:'Marketing usage',shortLabel:'Marketing',hash:'#/platform/marketing',icon:'retention',superAdminOnly:true},
-    {key:'billing',label:'Billing',shortLabel:'Billing',hash:'#/platform/billing',icon:'reports'},
     {key:'subscription-operations',moduleKey:'billing',label:'Subscription operations',shortLabel:'Subscriptions',hash:'#/platform/subscription-operations',icon:'reports'},
     {key:'pnl',label:'Cash P&L',shortLabel:'P&L',hash:'#/platform/pnl',icon:'reports',superAdminOnly:true},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
@@ -3509,6 +3514,41 @@
     {key:'partners',label:'Partner obligations',shortLabel:'Partners',hash:'#/platform/partners',icon:'setup',superAdminOnly:true},
     {key:'access',label:'Platform access',shortLabel:'Access',hash:'#/platform/access',icon:'staff',superAdminOnly:true}
   ]);
+  /* Four routes retired in the operating-system IA pass. isRoute()/routeKey()
+     resolve every one of these segments so a bookmark or a typed URL never
+     404s; render() below rewrites the address bar to the .hash() below,
+     landing on the specific tab/mode that carries the old content, and
+     preserving whichever query parameters that destination understands
+     (business=, view=, or the Companies filter set). */
+  const legacyRouteRedirects=Object.freeze({
+    'demo-requests':Object.freeze({
+      toKey:'onboarding',
+      hash:()=>onboardingHash({...defaultOnboardingFilters(),tab:'demo-requests'})
+    }),
+    'customer-lifecycle':Object.freeze({
+      toKey:'subscription-operations',
+      hash:originalHash=>{
+        const view=platformRouteParam(originalHash,'view');
+        return `#/platform/subscription-operations?tab=lifecycle${view?`&view=${encodeURIComponent(view)}`:''}`;
+      }
+    }),
+    'billing':Object.freeze({
+      toKey:'subscription-operations',
+      hash:originalHash=>{
+        const business=platformRouteParam(originalHash,'business');
+        return `#/platform/subscription-operations?tab=billing${business?`&business=${encodeURIComponent(business)}`:''}`;
+      }
+    }),
+    'companies':Object.freeze({
+      toKey:'firms',
+      hash:originalHash=>{
+        const query=String(originalHash||'').split('?')[1]||'';
+        const params=new URLSearchParams(query);
+        params.set('mode','collections');
+        return `#/platform/firms?${params.toString()}`;
+      }
+    })
+  });
   const platformModuleKeys=Object.freeze([
     'overview','onboarding','firms','reports','billing','commissions','sectors','automation'
   ]);
@@ -3723,10 +3763,10 @@
        rail. Putting CRM first made the Sales header point at CRM while the word
        "CRM" appeared nowhere. Onboarding stays the home it has always been, and
        CRM appears as a named child. */
-    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm','prospecting','demo-requests'])}),
-    Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['customer-lifecycle','firms','companies'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm','prospecting'])}),
+    Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['firms'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
-    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','billing','pnl','commissions'])}),
+    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
     Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','partners','access'])})
   ]);
@@ -3915,6 +3955,9 @@
        onboarding-scoped role's route list to include them, which does not
        match what the v511 RPCs actually authorise. */
     if(path.slice('#/platform/'.length)==='command-center'||path.slice('#/platform/'.length)==='work')return true;
+    /* Retired routes (see legacyRouteRedirects above) still answer isRoute()
+       as real — they resolve to their new home instead of 404ing. */
+    if(legacyRouteRedirects[path.slice('#/platform/'.length)])return true;
     return routes.some(route=>route.key!=='overview'&&route.key===path.slice('#/platform/'.length));
   }
 
@@ -3923,6 +3966,7 @@
     if (path === '#/platform' || path === '#') return 'overview';
     const requested = path.slice('#/platform/'.length);
     if(requested==='command-center'||requested==='work')return requested;
+    if(legacyRouteRedirects[requested])return legacyRouteRedirects[requested].toKey;
     return routes.some(route => route.key === requested) ? requested : 'overview';
   }
 
@@ -4408,6 +4452,18 @@
     const firm=catalog.find(row=>firmId(row)===selected[0]);
     return asArray(firm?.branches);
   }
+  /* Companies (retired as its own route) is now Firms' "Collections" mode —
+     the same platform_company_directory_v202 data, presented as a filtered,
+     collections-first view of the same firm population instead of a second
+     route. This toggle is how a super admin moves between the two; both
+     labels reuse the pre-existing route names as-is, so no new translated
+     copy was needed for them — only this toggle's own aria-label is new. */
+  function firmDirectoryModeToggleHtml(active){
+    return `<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Firm directory view'))}">
+      <a class="btn ${active==='collections'?'ghost':''} sm" href="#/platform/firms">${escapeHtml(pt('Firms'))}</a>
+      <a class="btn ${active==='collections'?'':'ghost'} sm" href="#/platform/firms?mode=collections">${escapeHtml(pt('Companies'))}</a>
+    </div>`;
+  }
   function enterpriseHtml(payload,CUI,filters,catalog,canGenerateReport=false,showDemo=false) {
     const allFirms=asArray(payload,['firms']),pagination=asObject(payload.pagination);
     const demoCount=allFirms.filter(firm=>firm.is_demo).length;
@@ -4417,7 +4473,8 @@
     return `${CUI.pageHeader({
       title:'Enterprise data',
       subtitle:'Inspect every firm from company level down to branches and customer records, using one explicit reporting scope.',
-      iconName:'branch'
+      iconName:'branch',
+      actions:firmDirectoryModeToggleHtml('directory')
     })}
       <form class="card platform-enterprise-filters" id="enterpriseFilters">
         <div class="platform-enterprise-filter-grid">
@@ -6384,11 +6441,16 @@
      one route because they share one fetch and one set of filters — splitting
      the route would mean loading the same data three times.
      Signups and applications are super-admin work, so those tabs only exist
-     for a super admin; everyone else sees the pipeline alone and no tab strip. */
+     for a super admin; everyone else sees the pipeline alone and no tab strip.
+     Demo requests joined this strip in the operating-system IA pass: a demo
+     request is an unqualified prospect with no tenant yet, which is exactly
+     what an application is before it is approved — the same super-admin-only
+     job, reusing the same tab mechanism rather than a fourth top-level route. */
   const onboardingTabs=Object.freeze([
     Object.freeze({key:'pipeline',label:'Pipeline'}),
     Object.freeze({key:'signups',label:'Signups',superAdminOnly:true}),
-    Object.freeze({key:'applications',label:'Applications',superAdminOnly:true})
+    Object.freeze({key:'applications',label:'Applications',superAdminOnly:true}),
+    Object.freeze({key:'demo-requests',label:'Demo requests',superAdminOnly:true})
   ]);
   function onboardingTabsFor(isSuperAdmin){
     return onboardingTabs.filter(tab=>!tab.superAdminOnly||isSuperAdmin);
@@ -6515,6 +6577,8 @@
           exceptions:leadExceptions,role:context.access?.role||'',canWrite:context.canWrite,isSuperAdmin,pagination
         });
         wireOnboarding({...context,items,filters,onboardingPage:pageState,onboardingLoadMore:false});
+      }else if(tab==='demo-requests'){
+        await renderDemoRequests(context,{tabStrip});
       }else{
         main.innerHTML=`${CUI.pageHeader({
           title:'Onboarding',
@@ -10600,7 +10664,7 @@
       const companies=asArray(payload.items),sectors=asArray(payload.sectors);
       const collection=asObject(payload.collection),due=asObject(payload.due);
       const chip=(label,value,key,current)=>`<button type="button" class="btn ${current===value?'':'ghost'} sm" data-company-filter="${escapeHtml(key)}" data-company-value="${escapeHtml(value)}">${escapeHtml(label)}</button>`;
-      main.innerHTML=`${CUI.pageHeader({title:'Companies',subtitle:'Every firm by sector, with who pays by itself and who has to be chased.',iconName:'branch'})}
+      main.innerHTML=`${CUI.pageHeader({title:'Companies',subtitle:'Every firm by sector, with who pays by itself and who has to be chased.',iconName:'branch',actions:firmDirectoryModeToggleHtml('collections')})}
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Collection summary'))}">${[
           ['To chase',Number(collection.chase||0),'info'],
           ['Auto-collect',Number(collection.auto||0),'check'],
@@ -11021,6 +11085,11 @@
     const status=String(view.status??platformRouteParam(context.hash,'status')??'');
     const search=String(view.search??platformRouteParam(context.hash,'search')??'');
     const carried=asArray(view.loaded);
+    /* This is now a tab inside Onboarding rather than its own route \u2014 the
+       strip is handed down by renderOnboarding on first paint and carried
+       through every self-refresh below so it never disappears after a
+       filter, load-more or outcome action. */
+    const tabStrip=view.tabStrip||'';
     main.innerHTML=loading(CUI,'Demo requests','Loading demo requests\u2026','customers');
     try{
       const payload=asObject(await rpc(sb,'platform_list_demo_requests_v292',{
@@ -11031,10 +11100,10 @@
       const total=Number(payload.total_count??items.length);
       const awaiting=Number(payload.new_count||0);
       const hasMore=items.length<total;
-      const refresh=()=>renderDemoRequests(context,{status,search});
+      const refresh=()=>renderDemoRequests(context,{status,search,tabStrip});
       main.innerHTML=`${CUI.pageHeader({title:'Demo requests',
         subtitle:'Prospects who asked for a Peekaa demo. Contact them, then record what happened.',
-        iconName:'customers'})}
+        iconName:'customers'})}${tabStrip}
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Demo request queue'))}">${[
           ['Awaiting contact',awaiting,'info'],['Total requests',total,'customers']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
@@ -11049,12 +11118,12 @@
       if(form)form.onsubmit=event=>{
         event.preventDefault();
         const data=new FormData(form);
-        renderDemoRequests(context,{status:String(data.get('status')||''),search:String(data.get('search')||'')});
+        renderDemoRequests(context,{status:String(data.get('status')||''),search:String(data.get('search')||''),tabStrip});
       };
       const clear=main.querySelector('#demoRequestClear');
-      if(clear)clear.onclick=()=>renderDemoRequests(context,{status:'',search:''});
+      if(clear)clear.onclick=()=>renderDemoRequests(context,{status:'',search:'',tabStrip});
       const more=main.querySelector('#demoRequestLoadMore');
-      if(more)more.onclick=()=>renderDemoRequests(context,{status,search,loaded:items});
+      if(more)more.onclick=()=>renderDemoRequests(context,{status,search,loaded:items,tabStrip});
       main.querySelectorAll('[data-demo-contacted]').forEach(button=>{
         const request=items.find(entry=>String(entry.id)===button.dataset.demoContacted);
         if(request)button.onclick=()=>demoRequestOutcomeModal(context,request,refresh);
@@ -11317,8 +11386,24 @@
     return `<div class="platform-load-more" data-platform-window="${windowState.canGrow?'growable':'capped'}"><p class="muted small">${shown}${advice}</p>${button}</div>`;
   }
 
+  /* Subscription operations gained a tab strip in the operating-system IA pass:
+     Billing (the exception overview below, ex-standalone route) and Customer
+     lifecycle (the read-only lanes, ex-standalone route) are now reached this
+     way instead of by their own top-level routes. Every tab reuses the
+     original route label as its tab label, so no new translated copy was
+     needed for the strip contents — only its own aria-label is new. */
+  function subscriptionOperationsTabStripHtml(active){
+    const tabs=[
+      ['','Subscription operations','#/platform/subscription-operations'],
+      ['billing','Billing','#/platform/subscription-operations?tab=billing'],
+      ['lifecycle','Customer lifecycle','#/platform/subscription-operations?tab=lifecycle']
+    ];
+    return `<nav class="platform-actions platform-subnav" aria-label="${escapeHtml(pt('Subscription operations sections'))}">${
+      tabs.map(([key,label,tabHash])=>`<a class="btn ${key===active?'':'ghost'} sm" href="${tabHash}"${key===active?' aria-current="page"':''}>${escapeHtml(pt(label))}</a>`).join('')}</nav>`;
+  }
   async function renderBilling(context) {
     const {main,CUI,sb}=context;
+    const tabStrip=subscriptionOperationsTabStripHtml('billing');
     main.innerHTML=loading(CUI,'Billing','Loading platform billing truth…','reports');
     try{
       const [billingPayload,catalogPayload]=await Promise.all([
@@ -11337,7 +11422,7 @@
         paid:value.paid+(row.last_paid_at?1:0),failed:value.failed+Number(row.failed_event_count||0)
       }),{total:0,overdue:0,paid:0,failed:0});
       main.innerHTML=`${CUI.pageHeader({title:'Billing',subtitle:'Resolve subscription, invoice and payment exceptions. Technical reconciliation history is in System health.',iconName:'reports',
-        actions:`<button type="button" class="btn" id="platformNewBillingPrice">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New price version'))}</span></button>`})}
+        actions:`<button type="button" class="btn" id="platformNewBillingPrice">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('New price version'))}</span></button>`})}${tabStrip}
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Billing summary'))}">${[
           ['Period amount due',currency(totals.total),'reports'],['Paid firms',totals.paid,'check'],['Overdue firms',totals.overdue,'info'],['Failed events',totals.failed,'retention']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
@@ -11389,10 +11474,12 @@
   }
 
   async function renderCustomerLifecycle(context,view=platformRouteParam(context.hash,'view')||'kanban') {
-    const {main,CUI,sb}=context;main.innerHTML=loading(CUI,'Customer lifecycle','Loading system-derived customer status…','branch');
+    const {main,CUI,sb}=context;
+    const tabStrip=subscriptionOperationsTabStripHtml('lifecycle');
+    main.innerHTML=loading(CUI,'Customer lifecycle','Loading system-derived customer status…','branch');
     try{const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:null,p_status:null,p_limit:500})),rows=asArray(payload.subscriptions),lanes=[['payment_received','Payment received'],['onboarding','Onboarding'],['active','Active'],['renewal_approaching','Renewal approaching'],['payment_action_required','Payment action required'],['past_due','Past due'],['cancel_at_period_end','Cancel at period end'],['cancelled','Cancelled']];
       const cards=items=>items.map(row=>`<article class="card platform-prospect-card"><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.canonical_status))} · ${escapeHtml(platformStatus(row.billing_interval||'subscription'))}</p><p class="small">${escapeHtml(pt('Paid through'))}: ${escapeHtml(dateTime(row.paid_through))}<br>${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}</p><p class="muted small platform-break">${escapeHtml(row.billing_email||pt('Billing contact missing'))}</p><a class="btn ghost sm" href="#/platform/subscription-operations?search=${encodeURIComponent(row.business_name)}">${escapeHtml(pt('Open operations'))}</a></article>`).join('');
-      main.innerHTML=`${CUI.pageHeader({title:'Customer lifecycle',subtitle:'System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.',iconName:'branch',actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Customer lifecycle view'))}"><button class="btn ghost" data-lifecycle-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button class="btn ghost" data-lifecycle-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>`})}
+      main.innerHTML=`${CUI.pageHeader({title:'Customer lifecycle',subtitle:'System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.',iconName:'branch',actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Customer lifecycle view'))}"><button class="btn ghost" data-lifecycle-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button class="btn ghost" data-lifecycle-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>`})}${tabStrip}
         <div class="platform-kanban platform-kanban-responsive" ${view==='kanban'?'':'hidden'} aria-label="${escapeHtml(pt('System-derived customer lifecycle'))}">${lanes.map(([key,label])=>{const items=rows.filter(row=>lifecycleLane(row)===key);return`<section class="platform-kanban-column"><div class="platform-kanban-head"><h2>${escapeHtml(pt(label))}</h2><span>${escapeHtml(items.length)}</span></div>${cards(items)||`<p class="muted small">${escapeHtml(pt('No customers'))}</p>`}</section>`}).join('')}</div>
         <section class="platform-prospect-list" ${view==='list'?'':'hidden'}><div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,false)}</div></section>
         ${platformWindowHtml(platformWindowState({loaded:rows.length,limit:500,ceiling:500}),{cappedAdvice:'Search for the business by name to reach a subscription that is not listed.'})}`;
@@ -11502,6 +11589,16 @@
   }
   async function renderSubscriptionOperations(context,filters={}) {
     const {main,CUI,sb}=context;
+    /* Billing and Customer lifecycle are tabs of this route now (see
+       subscriptionOperationsTabStripHtml above renderBilling). The tab is
+       read straight from the hash rather than from `filters`, because the
+       in-place filter-form and clear-button self-calls below only ever pass
+       search/status/etc — they never carry a tab, and must not be able to
+       accidentally knock the view off whichever tab is actually on screen. */
+    const tab=platformRouteParam(context.hash,'tab');
+    if(tab==='billing')return renderBilling(context);
+    if(tab==='lifecycle')return renderCustomerLifecycle(context);
+    const tabStrip=subscriptionOperationsTabStripHtml('');
     const search=(filters.search??platformRouteParam(context.hash,'search'))||null;
     const status=(filters.status??platformRouteParam(context.hash,'status'))||null;
     main.innerHTML=loading(CUI,'Subscription operations','Loading subscriptions, documents and payment follow-up…','reports');
@@ -11516,7 +11613,7 @@
       const renewalDays=value=>value?Math.ceil((new Date(value).getTime()-Date.now())/86400000):null;
       const rows=rawRows.filter(row=>(!local.interval||row.billing_interval===local.interval)&&(!local.payment||row.latest_invoice_status===local.payment)&&(!local.owner||row.crm_owner===local.owner)&&(!local.document||row.document_delivery_status===local.document)&&(!local.lifecycle||lifecycleLane(row)===local.lifecycle)&&(!local.renewal||(renewalDays(row.next_renewal)!==null&&renewalDays(row.next_renewal)>=0&&renewalDays(row.next_renewal)<=Number(local.renewal)))).sort((a,b)=>local.sort==='business_name'?String(a.business_name).localeCompare(String(b.business_name)):local.sort==='latest_payment'?new Date(b.latest_payment_at||0)-new Date(a.latest_payment_at||0):local.sort==='start_date'?new Date(b.subscription_created_at||0)-new Date(a.subscription_created_at||0):local.sort==='subscription_value'?Number(b.latest_amount_paid_cents||0)-Number(a.latest_amount_paid_cents||0):local.sort==='days_overdue'?renewalDays(a.next_renewal)-renewalDays(b.next_renewal):new Date(a.next_renewal||8640000000000000)-new Date(b.next_renewal||8640000000000000));
       const cards=[['Active subscriptions',summary.active,'active'],['New subscriptions this month',summary.new_this_month,'active'],['Renewing in 30 days',summary.renewing_30,'renewing_30'],['Renewing in 14 days',summary.renewing_14,'renewing_14'],['Renewing in 7 days',summary.renewing_7,'renewing_7'],['Payment failed',summary.payment_failed,'payment_failed'],['Past due',summary.past_due,'past_due'],['Cancel at period end',summary.cancel_at_period_end,'cancel_at_period_end'],['Cancelled this month',summary.cancelled_this_month,'canceled']];
-      main.innerHTML=`${CUI.pageHeader({title:'Subscription operations',subtitle:'Internal Peekaa subscription, renewal, billing-document and delivery control. Stripe paid invoices remain payment truth.',iconName:'reports',actions:context.canWrite?`<button type="button" class="btn" id="v156BillingSettings">${CUI.icon('setup',{size:17})}<span>${escapeHtml(pt('Billing settings'))}</span></button>`:''})}
+      main.innerHTML=`${CUI.pageHeader({title:'Subscription operations',subtitle:'Internal Peekaa subscription, renewal, billing-document and delivery control. Stripe paid invoices remain payment truth.',iconName:'reports',actions:context.canWrite?`<button type="button" class="btn" id="v156BillingSettings">${CUI.icon('setup',{size:17})}<span>${escapeHtml(pt('Billing settings'))}</span></button>`:''})}${tabStrip}
         ${!payload.profile_ready?CUI.errorState({title:'Seller billing profile incomplete',message:'Final document issuance is blocked until UEN, registered address, billing email, GST decision and payment terms are configured.'}):''}
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Subscription summary'))}">${cards.map(([label,value,cardStatus])=>`<a class="card platform-kpi platform-kpi-link" href="#/platform/subscription-operations?status=${encodeURIComponent(cardStatus)}"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value||0)}</div></a>`).join('')}</section>
         <section class="card platform-detail-section"><div class="platform-list-row"><div><h2>${escapeHtml(pt('Subscriptions'))}</h2><p class="muted small">${escapeHtml(pt('Paid-through dates and renewal dates come from canonical provider invoice and subscription periods.'))}</p></div><div><b>${escapeHtml(profile.brand_name||'Peekaa')}</b><p class="muted small">${escapeHtml(profile.legal_name||'')} · ${escapeHtml(pt('Bank account ending {last4}',{last4:payload.bank_account_last4||'—'}))}</p></div></div>
@@ -13465,6 +13562,19 @@
 
   async function render({root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash='#/'} = {}) {
     if (!root || !sb || !CUI) throw new Error(pt('Platform console dependencies are unavailable.'));
+    /* Retired routes (legacyRouteRedirects, above routes[]) are rewritten to
+       their new home BEFORE anything else runs, so every downstream read of
+       `hash` — tab state, filters, the ?business=/?view= carry-over — already
+       sees the canonical URL. The address bar is corrected to match. */
+    const legacySegment=(()=>{
+      const path=String(hash||'').split('?')[0].replace(/\/+$/,'');
+      return path.startsWith('#/platform/')?path.slice('#/platform/'.length):'';
+    })();
+    const legacyRedirect=legacyRouteRedirects[legacySegment];
+    if(legacyRedirect){
+      hash=legacyRedirect.hash(hash);
+      if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',hash);
+    }
     lastRenderArgs={root,sb,CUI,brand,hash,isCurrent,onSignOut,workspaceHash};
     const generation = ++renderGeneration;
     readOnlyObserver?.disconnect();readOnlyObserver=null;
@@ -13576,9 +13686,14 @@
         ?loadOverview(context)
         :renderScopedOverview(context);
     }
-    if(!task&&activeKey==='firms')task=renderEnterprise(
-      context,enterpriseReportFiltersFromHash(hash)
-    );
+    /* Companies (retired as its own route) is now a "Collections" mode of
+       Firms — same route key, a different presentation of the same directory
+       reached via ?mode=collections. Only the super-admin branch above can
+       still be unclaimed here (renderScopedFirms already took the task for
+       every other role), so no extra role check is needed. */
+    if(!task&&activeKey==='firms')task=platformRouteParam(hash,'mode')==='collections'
+      ?renderCompanies(context)
+      :renderEnterprise(context,enterpriseReportFiltersFromHash(hash));
     if(!task&&activeKey==='reports')task=renderPlatformReports(
       context,enterpriseReportFiltersFromHash(hash)
     );
@@ -13587,10 +13702,12 @@
     );
     if(!task&&activeKey==='command-center')task=renderCommandCenterV511(context);
     if(!task&&activeKey==='work')task=renderWorkV511(context,workStateFromHash(hash));
-    if(!task&&activeKey==='billing')task=renderBilling(context);
+    /* Billing and Customer lifecycle (retired as their own routes) are now
+       tabs of Subscription operations; renderSubscriptionOperations reads
+       ?tab= from the hash itself and delegates to renderBilling /
+       renderCustomerLifecycle internally. Demo requests moved the same way,
+       into a tab of Onboarding, handled inside renderOnboarding. */
     if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
-    if(!task&&activeKey==='customer-lifecycle')task=renderCustomerLifecycle(context);
-    if(!task&&activeKey==='companies')task=renderCompanies(context);
     if(!task&&activeKey==='marketing')task=renderMarketingUsage(context);
     if(!task&&activeKey==='crm')task=renderCrm(context);
     if(!task&&activeKey==='prospecting')task=renderProspecting(context);
@@ -13599,7 +13716,6 @@
     if(!task&&activeKey==='sectors')task=renderSectors(context);
     if(!task&&activeKey==='automation')task=renderAutomation(context);
     if(!task&&activeKey==='partners')task=renderPartnerObligations(context);
-    if(!task&&activeKey==='demo-requests')task=renderDemoRequests(context);
     if(!task){
       main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
     }else await task;

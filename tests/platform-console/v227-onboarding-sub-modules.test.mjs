@@ -14,10 +14,10 @@ async function loadConsole(){
   return context.NestlyPlatformConsole;
 }
 
-test('signups and applications are super-admin sub-modules',async()=>{
+test('signups, applications and demo requests are super-admin sub-modules',async()=>{
   const Console=await loadConsole();
   assert.deepEqual(Array.from(Console.onboardingTabsFor(true),tab=>tab.key),
-    ['pipeline','signups','applications']);
+    ['pipeline','signups','applications','demo-requests']);
   // A non-super-admin has no signup or application work, so they get the
   // pipeline alone — and no tab strip at all rather than a strip of one.
   assert.deepEqual(Array.from(Console.onboardingTabsFor(false),tab=>tab.key),['pipeline']);

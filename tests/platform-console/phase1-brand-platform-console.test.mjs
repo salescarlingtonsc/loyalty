@@ -77,10 +77,8 @@ test('platform console exposes the required namespaced routes', async () => {
   const consoleApi = context.NestlyPlatformConsole;
   assert.equal(consoleApi.isRoute('#/platform'),true);
   assert.equal(consoleApi.isRoute('#/platform/onboarding'),true);
-  assert.equal(consoleApi.isRoute('#/platform/customer-lifecycle'),true);
   assert.equal(consoleApi.isRoute('#/platform/firms'),true);
   assert.equal(consoleApi.isRoute('#/platform/reports'),true);
-  assert.equal(consoleApi.isRoute('#/platform/billing'),true);
   assert.equal(consoleApi.isRoute('#/platform/subscription-operations'),true);
   assert.equal(consoleApi.isRoute('#/platform/pnl'),true);
   assert.equal(consoleApi.isRoute('#/platform/commissions'),true);
@@ -93,15 +91,25 @@ test('platform console exposes the required namespaced routes', async () => {
      still refused - is unchanged and asserted immediately after. */
   assert.equal(consoleApi.isRoute('#/platform/crm'),true);
   assert.equal(consoleApi.isRoute('#/platform/prospecting'),true);
-  assert.equal(consoleApi.isRoute('#/platform/companies'),true);
   assert.equal(consoleApi.isRoute('#/platform/marketing'),true);
   assert.equal(consoleApi.isRoute('#/platform/partners'),true);
   assert.equal(consoleApi.isRoute('#/platform/unknown'),false);
   assert.equal(consoleApi.routeKey('#/platform'),'overview');
   assert.equal(consoleApi.routeKey('#/platform/commissions'),'commissions');
+  /* Operating-system IA pass: demo-requests, customer-lifecycle, billing and
+     companies were retired as top-level routes and merged into a sibling as
+     a tab or mode. Old hashes still resolve rather than 404 — isRoute() says
+     so and routeKey() answers with the route that now owns the content. */
+  for(const legacy of ['demo-requests','customer-lifecycle','billing','companies']){
+    assert.equal(consoleApi.isRoute(`#/platform/${legacy}`),true,`#/platform/${legacy} must still resolve`);
+  }
+  assert.equal(consoleApi.routeKey('#/platform/demo-requests'),'onboarding');
+  assert.equal(consoleApi.routeKey('#/platform/customer-lifecycle'),'subscription-operations');
+  assert.equal(consoleApi.routeKey('#/platform/billing'),'subscription-operations');
+  assert.equal(consoleApi.routeKey('#/platform/companies'),'firms');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Today','Onboarding','CRM','Prospecting','Demo requests','Customer lifecycle','Firms','Companies','Reports','Marketing usage','Billing','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Platform access'] // V282
+    ['Today','Onboarding','CRM','Prospecting','Firms','Reports','Marketing usage','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Platform access'] // operating-system IA pass: -4 merged routes
   );
 });
 

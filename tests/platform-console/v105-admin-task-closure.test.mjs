@@ -105,7 +105,10 @@ test('Today is the first task destination while all authorised deep links remain
   assert.equal(groups.filter(group=>!group.secondary).length,6);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','crm','prospecting','demo-requests','customer-lifecycle','firms','companies','reports','marketing','billing','subscription-operations','pnl','commissions','sectors','automation','partners','access'], // V282
+    // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
+    // companies merged into a sibling route as a tab/mode; their deep links
+    // still resolve (see legacyRouteRedirects / phase1-brand-platform-console).
+    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','access'],
     'task-first navigation must not delete an authorised route or its deep link'
   );
 });

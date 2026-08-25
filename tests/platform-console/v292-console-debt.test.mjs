@@ -121,24 +121,28 @@ test('demo requests are a real super-admin queue on a real paged reader',async()
   const api=await loadConsole();
   const source=await read('app/platform-console.js');
 
-  const route=api.routes.find(entry=>entry.key==='demo-requests');
-  assert.ok(route,'the console must expose a demo-requests route');
-  assert.equal(route.hash,'#/platform/demo-requests');
-  assert.equal(route.superAdminOnly,true);
-  assert.equal(route.moduleKey,undefined,'a demo request has no tenant, so no tenant grant may open it');
+  // Operating-system IA pass: demo requests moved from its own top-level
+  // route into a super-admin-only tab of Onboarding — a demo request is an
+  // unqualified prospect with no tenant, the same job as the applications
+  // tab beside it. It is no longer in the route registry at all; the old
+  // hash still resolves via legacyRouteRedirects (see
+  // phase1-brand-platform-console's redirect assertions).
+  assert.equal(api.routes.some(entry=>entry.key==='demo-requests'),false,
+    'demo-requests must no longer be a top-level route');
+  const tab=api.onboardingTabs.find(entry=>entry.key==='demo-requests');
+  assert.ok(tab,'the console must expose a demo-requests onboarding tab');
+  assert.equal(tab.superAdminOnly,true);
 
-  // An admin without super-admin rights must not see it at all.
-  const admin=api.normalizePlatformAccess({role:'admin',scope:'all',module_perms:{}});
-  assert.equal(api.visibleRoutes(admin).some(entry=>entry.key==='demo-requests'),false);
-  const superAdmin=api.normalizePlatformAccess({role:'super_admin',scope:'all',module_perms:{}});
-  assert.equal(api.visibleRoutes(superAdmin).some(entry=>entry.key==='demo-requests'),true);
+  // An admin without super-admin rights must not see the tab at all.
+  assert.equal(api.onboardingTabsFor(false).some(entry=>entry.key==='demo-requests'),false);
+  assert.equal(api.onboardingTabsFor(true).some(entry=>entry.key==='demo-requests'),true);
 
   // This reader takes a real offset and returns a real total, so the queue pages
   // rather than growing a limit and guessing.
   assert.match(source,/platform_list_demo_requests_v292',\{\s*p_status:status\|\|null,p_search:search\|\|null,\s*p_limit:PLATFORM_WINDOW_STEP,p_offset:carried\.length/);
   assert.match(source,/const total=Number\(payload\.total_count\?\?items\.length\)/);
   assert.match(source,/pt\('Showing \{shown\} of \{count\}\.',/);
-  assert.match(source,/if\(!task&&activeKey==='demo-requests'\)task=renderDemoRequests\(context\)/);
+  assert.match(source,/\}else if\(tab==='demo-requests'\)\{\s*await renderDemoRequests\(context,\{tabStrip\}\);/);
 });
 
 test('marking a demo request contacted captures what was said; archiving is one click',async()=>{

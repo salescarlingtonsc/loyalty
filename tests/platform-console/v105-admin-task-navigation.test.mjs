@@ -28,10 +28,15 @@ test('desktop administration has six primary task areas plus secondary platform 
     })),
     [
       {key:'overview',routes:['overview']},
-      {key:'sales',routes:['onboarding','crm','prospecting','demo-requests']}, // V292
-      {key:'customers',routes:['customer-lifecycle','firms','companies']},
+      // Operating-system IA pass: demo-requests is now a tab of Onboarding
+      // rather than a sibling route in this group (see onboardingTabs).
+      {key:'sales',routes:['onboarding','crm','prospecting']},
+      // customer-lifecycle and companies are now a tab/mode of
+      // subscription-operations and firms respectively, not their own routes.
+      {key:'customers',routes:['firms']},
       {key:'reports',routes:['reports','marketing']}, // V256
-      {key:'finance',routes:['subscription-operations','billing','pnl','commissions']},
+      // billing is now the "Billing" tab of subscription-operations.
+      {key:'finance',routes:['subscription-operations','pnl','commissions']},
       {key:'automation',routes:['automation']},
       {key:'platform-controls',routes:['sectors','partners','access']}
     ]
@@ -40,7 +45,10 @@ test('desktop administration has six primary task areas plus secondary platform 
   assert.equal(groups.find(group=>group.key==='platform-controls')?.secondary,true);
   assert.deepEqual(
     Array.from(allowed,route=>route.key),
-    ['overview','onboarding','crm','prospecting','demo-requests','customer-lifecycle','firms','companies','reports','marketing','billing','subscription-operations','pnl','commissions','sectors','automation','partners','access'], // V282
+    // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
+    // companies merged into a sibling route as a tab/mode; their deep links
+    // still resolve (see legacyRouteRedirects / phase1-brand-platform-console).
+    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','access'],
     'streamlining must not delete a capability or deep link'
   );
 });
