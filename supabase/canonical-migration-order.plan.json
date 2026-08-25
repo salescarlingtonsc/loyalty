@@ -2470,6 +2470,12 @@
       "version": "20260825000002",
       "name": "nestly_v501_customer_sees_tier_benefits",
       "sourcePath": "db/migrations/20260825_nestly_v501_customer_sees_tier_benefits.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000003",
+      "name": "nestly_v504_whatsapp_webhook_inbox",
+      "sourcePath": "db/migrations/20260825_nestly_v504_whatsapp_webhook_inbox.sql"
     }
   ]
 }

@@ -31,6 +31,11 @@ verify_jwt = false
 [functions.customer-push-dispatch]
 verify_jwt = false
 
+# v504 Meta WhatsApp Cloud API webhook. Meta cannot present a Supabase JWT;
+# the endpoint authenticates GET by verify token and POST by X-Hub-Signature-256.
+[functions.whatsapp-webhook]
+verify_jwt = false
+
 [functions.sme-document-signer]
 verify_jwt = true
 

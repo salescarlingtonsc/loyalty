@@ -2475,6 +2475,12 @@
       "path": "db/migrations/20260825_nestly_v501_customer_sees_tier_benefits.sql",
       "semanticVersion": "v501",
       "proposedDeployVersion": "20260825000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v504_whatsapp_webhook_inbox.sql",
+      "semanticVersion": "v504",
+      "proposedDeployVersion": "20260825000003"
     }
   ]
 }
