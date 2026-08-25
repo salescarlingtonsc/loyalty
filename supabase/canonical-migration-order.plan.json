@@ -2530,6 +2530,12 @@
       "version": "20260825000012",
       "name": "nestly_v514_one_authority_for_on_means_live",
       "sourcePath": "db/migrations/20260825_nestly_v514_one_authority_for_on_means_live.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260825000013",
+      "name": "nestly_v513_onboarding_next_actor_and_review",
+      "sourcePath": "db/migrations/20260825_nestly_v513_onboarding_next_actor_and_review.sql"
     }
   ]
 }

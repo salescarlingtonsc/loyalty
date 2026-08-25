@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 420,
-  "executableCount": 406,
+  "itemCount": 421,
+  "executableCount": 407,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -612,7 +612,7 @@
     },
     {
       "sourceDeployVersion": "20260825",
-      "count": 12,
+      "count": 13,
       "paths": [
         "db/migrations/20260825_nestly_v496_full_card_rolls_and_gifts_stack.sql",
         "db/migrations/20260825_nestly_v501_customer_sees_tier_benefits.sql",
@@ -624,6 +624,7 @@
         "db/migrations/20260825_nestly_v511_work_operating_system.sql",
         "db/migrations/20260825_nestly_v512_adjust_follows_the_running_programme.sql",
         "db/migrations/20260825_nestly_v512_commercial_handoff_integrity.sql",
+        "db/migrations/20260825_nestly_v513_onboarding_next_actor_and_review.sql",
         "db/migrations/20260825_nestly_v513_welcome_gift_on_every_signup.sql",
         "db/migrations/20260825_nestly_v514_one_authority_for_on_means_live.sql"
       ]
@@ -3989,6 +3990,14 @@
       "semanticVersion": "v514",
       "proposedDeployVersion": "20260825000012",
       "sha256": "1cf4e12514525216536d3299dda447ac226315bbfc1c10db1703dbde665081f9"
+    },
+    {
+      "order": 421,
+      "kind": "executable",
+      "path": "db/migrations/20260825_nestly_v513_onboarding_next_actor_and_review.sql",
+      "semanticVersion": "v513",
+      "proposedDeployVersion": "20260825000013",
+      "sha256": "8ad3bb4c9a323d2bf8d2176e7fe0380e1d0b9fb4e8543721a6f9b78f9db3f378"
     }
   ]
 }
