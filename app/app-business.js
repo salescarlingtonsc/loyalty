@@ -14337,12 +14337,24 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V240: 'both' makes TWO tiles live at once (points and tiers), which is the whole point of
      the Chagee shape. The stamp card is still mutually exclusive with the points engine. */
   const liveLoyaltyModelKeysV240=liveLoyaltyModelV235==='both'?['redeem','tiers']:[liveLoyaltyModelV235];
-  /* Wave 1 pill semantics: running = green 'On' (ruling-4 vocabulary); running-but-unpublished
-     keeps its compound truth but moves to the warn tone — it is earning, and it needs a look.
-     'Not included' stays quietly grey; plain 'Off' stays grey. */
+  /* Wave 1 pill semantics: running = green 'On' (ruling-4 vocabulary); 'Not included' stays
+     quietly grey; plain 'Off' stays grey.
+     nestly_v506 (owner, 2026-08-25: "why it shows unpublished — it should be on or off or Not set
+     up?"). The fourth branch used to print a COMPOUND word, `On · unpublished`, which was wrong
+     three times over. (1) It is not in the vocabulary: the STATUS_WORDS block at the top of this
+     file says every availability pill reads its word from there and nothing else hardcodes one —
+     this line hardcoded one. (2) It contradicted its own page: the tab strip partitions these
+     same tiles on the TONE (growTopicOngoingV244 is `status[1]==='on'`), so the card reading
+     "On" was simultaneously counted under "Not set up (7)" and excluded from "On (0)", and its
+     own button said "Continue set up". (3) It was not true. loyaltyLive is
+     `spine running AND businesses.active_config_version_id`, and that second half is null only
+     for a business that has NEVER published — which means no configuration has ever reached a
+     customer, so nothing is earning and nothing is redeemable. "Not set up" is the honest word
+     for that, and it is the word the tab and the button were already using. The warn tone is
+     unchanged, so no count moves; only the word the owner reads does. */
   const loyaltyModelTileStatusV235=key=>!canRewards?['Not included','off']
     :!liveLoyaltyModelKeysV240.includes(key)?[STATUS_WORDS.off,'off']
-    :loyaltyLive?[STATUS_WORDS.on,'on']:[`${STATUS_WORDS.on} · unpublished`,'warn'];
+    :loyaltyLive?[STATUS_WORDS.on,'on']:['Not set up','warn'];
   /* V296 (owner markup 2026-08-12, "X NO — not linked to point" across the Tiered membership and
      Stamp card cards): otherModelLiveV235() rendered "<other model> is the live model" as those
      cards' subtitle, so a card about tiers spent its one line talking about points. A pending card
