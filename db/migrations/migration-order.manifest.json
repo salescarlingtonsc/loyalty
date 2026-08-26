@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 428,
-  "executableCount": 414,
+  "itemCount": 429,
+  "executableCount": 415,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -633,13 +633,14 @@
     },
     {
       "sourceDeployVersion": "20260826",
-      "count": 5,
+      "count": 6,
       "paths": [
         "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql",
         "db/migrations/20260826_nestly_v518_capability_grants_and_quota.sql",
         "db/migrations/20260826_nestly_v518a_capability_unlimited_grant.sql",
         "db/migrations/20260826_nestly_v520_a_points_gift_can_expire.sql",
-        "db/migrations/20260826_nestly_v521_redemption_off_is_a_decision.sql"
+        "db/migrations/20260826_nestly_v521_redemption_off_is_a_decision.sql",
+        "db/migrations/20260826_nestly_v523_customer_intelligence_follows_entitlement.sql"
       ]
     }
   ],
@@ -4067,6 +4068,14 @@
       "semanticVersion": "v521",
       "proposedDeployVersion": "20260826000005",
       "sha256": "500b743026f63f6093cf0724ba4c56b46729a5ca14bf7a0b83b7367fb7ce993a"
+    },
+    {
+      "order": 429,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v523_customer_intelligence_follows_entitlement.sql",
+      "semanticVersion": "v523",
+      "proposedDeployVersion": "20260826000006",
+      "sha256": "f3d6f04e2a5e3632dc4add23a079cdfd6483417fdd55c4c78893f244a31900f9"
     }
   ]
 }

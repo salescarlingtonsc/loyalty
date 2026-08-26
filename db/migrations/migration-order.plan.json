@@ -2583,6 +2583,12 @@
       "path": "db/migrations/20260826_nestly_v521_redemption_off_is_a_decision.sql",
       "semanticVersion": "v521",
       "proposedDeployVersion": "20260826000005"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v523_customer_intelligence_follows_entitlement.sql",
+      "semanticVersion": "v523",
+      "proposedDeployVersion": "20260826000006"
     }
   ]
 }
