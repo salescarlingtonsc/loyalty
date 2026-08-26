@@ -16393,6 +16393,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="grow-tiers-page-v343">
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
+      <div id="growBbWhatsappStripV551"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
            to give programmes to customer inactive for > 30 days / > 60 days / > 90 days"). The old
@@ -18065,6 +18066,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     };
   });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
+  loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
     growBbDraftV361={name:'',reward:'',away:'',expiry:''};
@@ -29391,6 +29393,37 @@ function reportShareBarV297(entries,{format=value=>String(value)}={}){
     </div>
     <ul class="report-share-legend-v297">${usable.map(([label,value],index)=>`<li><span class="report-share-dot-v297" aria-hidden="true" style="background:${colour(index)}"></span>${esc(label)} · <b>${esc(format(value))}</b> · ${Math.round(share(value))}%</li>`).join('')}</ul>
   </div>`;
+}
+/* V551 — the WhatsApp delivery strip on the Bring-back page. The server
+   (get_retention_send_stats_v551) owns every count and the template's approval
+   status; this only prints. While the Meta template is under review the strip
+   says so instead of showing a dead zero — and a suppression total is shown
+   with its named reasons, because a refusal the owner cannot see is a support
+   ticket, not a safety feature. */
+async function loadGrowBbWhatsappStripV551(root){
+  const host=(root||document).querySelector('#growBbWhatsappStripV551');
+  if(!host)return;
+  host.innerHTML='';
+  const {data,error}=await sb.rpc('get_retention_send_stats_v551',{p_business:S.biz.id});
+  if(error||!data)return;
+  if(!host.isConnected)return;
+  const n=k=>Number(data[k])||0;
+  const reasons=data.suppressed_reasons&&typeof data.suppressed_reasons==='object'?data.suppressed_reasons:{};
+  const reasonLabelV551={platform_outbound_off:'messaging is off platform-wide',retention_sends_off:'WhatsApp offers are not switched on yet',capability_disabled:'WhatsApp offers are not enabled for this business',synthetic_client:'demo customers are never messaged',consent_missing:'the customer has not consented to offers',consent_withdrawn:'the customer opted out',preference_opt_out:'the customer turned offers off in their app',no_phone:'no phone number on file',customer_opted_out:'the customer replied STOP',stale_unsent:'the offer aged out before sending'};
+  const reasonBits=Object.entries(reasons).map(([k,v])=>`${Number(v)||0} — ${reasonLabelV551[k]||k}`);
+  const pending=data.template_status&&data.template_status!=='approved';
+  const total=n('queued')+n('sent')+n('delivered')+n('read')+n('failed')+n('suppressed');
+  host.innerHTML=`<section class="card" style="margin-top:12px" aria-labelledby="growBbWaTitleV551">
+    <b id="growBbWaTitleV551">WhatsApp delivery</b>
+    ${pending
+      ?`<p class="muted small" style="margin-top:6px">The bring-back message is being reviewed by WhatsApp. Vouchers granted meanwhile queue up and send automatically once it is approved.</p>`
+      :`<p class="muted small" style="margin-top:6px">Consenting customers with a phone number get the voucher on WhatsApp automatically.</p>`}
+    ${total?`<div class="row" style="gap:14px;flex-wrap:wrap;margin-top:8px">
+      ${[['Waiting',n('queued')],['Sent',n('sent')],['Delivered',n('delivered')],['Read',n('read')],['Failed',n('failed')],['Not sent',n('suppressed')]]
+        .map(([label,value])=>`<span class="muted small"><b style="font-size:1.15em">${value}</b> ${label}</span>`).join('')}
+    </div>`:''}
+    ${reasonBits.length?`<p class="muted small" style="margin-top:8px">Not sent because: ${esc(reasonBits.join(' · '))}.</p>`:''}
+  </section>`;
 }
 /* V550 — the recovered-revenue report renderer, deliberately a PURE top-level function so a
    test can execute it against a fixture payload. Every judgement (lapsed guard, attribution

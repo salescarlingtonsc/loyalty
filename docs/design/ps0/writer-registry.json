@@ -3607,6 +3607,10 @@
    "reason": "v550 read-only recovered-revenue report: joins bring-back grants and attention outreach to counts_as_visit sales entirely in SELECTs behind require_module_scope_v145(reports+clients+sales); no DML, no ledger or value write."
   },
   {
+   "id": "browser.rpc:app/app.js:get_retention_send_stats_v551",
+   "reason": "v551 read-only WhatsApp bring-back send counters for one business (lifecycle counts, named suppression reasons, template approval status) behind require_module_scope_v145(retention); no DML, no phone numbers or message bodies, no ledger or value write."
+  },
+  {
    "id": "browser.rpc:app/app.js:record_attention_outreach_v550",
    "reason": "v550 outreach evidence writer: inserts one immutable row per business/client/SG-day into attention_outreach_v550 (an evidence table, not a value table) behind require_module_scope_v145(clients) and a client-membership check; repeat taps collapse via on-conflict-do-nothing; it never touches a ledger, balance or entitlement."
   },

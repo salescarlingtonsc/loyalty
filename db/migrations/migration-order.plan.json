@@ -2685,6 +2685,12 @@
    "path": "db/migrations/20260827_nestly_v554_v154_family_provenance.sql",
    "semanticVersion": "v554",
    "proposedDeployVersion": "20260827000010"
+  },
+  {
+   "kind": "executable",
+   "path": "db/migrations/20260827_nestly_v551_whatsapp_bringback_sends.sql",
+   "semanticVersion": "v551",
+   "proposedDeployVersion": "20260827000011"
   }
  ]
 }

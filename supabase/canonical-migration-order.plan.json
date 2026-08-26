@@ -2680,6 +2680,12 @@
       "version": "20260827000010",
       "name": "nestly_v554_v154_family_provenance",
       "sourcePath": "db/migrations/20260827_nestly_v554_v154_family_provenance.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000011",
+      "name": "nestly_v551_whatsapp_bringback_sends",
+      "sourcePath": "db/migrations/20260827_nestly_v551_whatsapp_bringback_sends.sql"
     }
   ]
 }
