@@ -2584,6 +2584,12 @@
       "version": "20260826000006",
       "name": "nestly_v523_customer_intelligence_follows_entitlement",
       "sourcePath": "db/migrations/20260826_nestly_v523_customer_intelligence_follows_entitlement.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000007",
+      "name": "nestly_v528_whatsapp_webhook_retention",
+      "sourcePath": "db/migrations/20260826_nestly_v528_whatsapp_webhook_retention.sql"
     }
   ]
 }
