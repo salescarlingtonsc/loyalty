@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="57a210e76a3a3063a88ceaf7bc15e66cdfc76510673796a4f0f07b7b545de9d0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="298582495833ccb50f213dba9c7213123bfbb3b24d05be479b6fb7f1644a93f1"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2438,7 +2438,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    (which would move the summary card out of the top-right slot v294/v295/v442 built). */
 .c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
 .c360-col-v476:empty{display:none}
-.c360-summary-card-v294{align-self:start;padding:12px 16px}
+/* nestly_v540 (owner, photo 1: a red box drawn over the empty space beside the summary card —
+   "enlarge the boxes to make the boxes look aligned with its counterparts below"). THE TWO
+   `align-self:start` DECLARATIONS BELOW ARE GONE, and the reason is an axis flip nobody would
+   spot by reading either change on its own.
+   V294/V295 wrote them when .c360-content-split-v295 was a GRID and these were grid cells. In a
+   grid, align-self is the BLOCK axis, so `start` meant "do not stretch to the height of the
+   tallest card in the row" — correct, and invisible horizontally.
+   nestly_v476 then made each column `display:flex;flex-direction:column` to close the vertical
+   gaps. In a COLUMN flex container the cross axis is HORIZONTAL, so the very same declaration
+   started shrinking these cards to their content width instead.
+   MEASURED against the Referral & consent card directly beneath them, which has no align-self and
+   therefore stretches: summary 230px vs referral 480 / 688 / 928px at 1024 / 1440 / 1920. The card
+   was frozen at 230px at every desktop width — the empty space the owner boxed. Removing the
+   declaration restores the flex default (stretch) and the two match exactly at all four widths;
+   mobile was already 342/342 and is untouched.
+   .c360-col-v476 KEEPS its own align-self:start: that element IS a grid child of .split, so there
+   the declaration still means the block axis, and still correctly stops a short column stretching
+   to the taller one's height. */
+.c360-summary-card-v294{padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
 .c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
@@ -2454,7 +2472,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
    card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
    the separator between packages and the muting of an exhausted one. */
-.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+.c360-summary-stack-v442{display:grid;gap:16px;min-width:0;max-width:100%}
 @media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
 /* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
    list is also a div, so :first-of-type would match IT and leave a rule above the first
@@ -4650,7 +4668,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 57a210e76a3a3063a88ceaf7bc15e66cdfc76510673796a4f0f07b7b545de9d0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 298582495833ccb50f213dba9c7213123bfbb3b24d05be479b6fb7f1644a93f1</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14317,7 +14335,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'57a210e76a3a3063a88ceaf7bc15e66cdfc76510673796a4f0f07b7b545de9d0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'298582495833ccb50f213dba9c7213123bfbb3b24d05be479b6fb7f1644a93f1',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

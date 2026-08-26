@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="20a0160025e2a302f3c3feca6f339ce11d19147e6dcfba258d0a27de2b1fc769"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="fafcfa3f00a7a5b460e9f2477a49c8c54dd59da8ad03802e7d2b03508771e296"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2438,7 +2438,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    (which would move the summary card out of the top-right slot v294/v295/v442 built). */
 .c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
 .c360-col-v476:empty{display:none}
-.c360-summary-card-v294{align-self:start;padding:12px 16px}
+/* nestly_v540 (owner, photo 1: a red box drawn over the empty space beside the summary card —
+   "enlarge the boxes to make the boxes look aligned with its counterparts below"). THE TWO
+   `align-self:start` DECLARATIONS BELOW ARE GONE, and the reason is an axis flip nobody would
+   spot by reading either change on its own.
+   V294/V295 wrote them when .c360-content-split-v295 was a GRID and these were grid cells. In a
+   grid, align-self is the BLOCK axis, so `start` meant "do not stretch to the height of the
+   tallest card in the row" — correct, and invisible horizontally.
+   nestly_v476 then made each column `display:flex;flex-direction:column` to close the vertical
+   gaps. In a COLUMN flex container the cross axis is HORIZONTAL, so the very same declaration
+   started shrinking these cards to their content width instead.
+   MEASURED against the Referral & consent card directly beneath them, which has no align-self and
+   therefore stretches: summary 230px vs referral 480 / 688 / 928px at 1024 / 1440 / 1920. The card
+   was frozen at 230px at every desktop width — the empty space the owner boxed. Removing the
+   declaration restores the flex default (stretch) and the two match exactly at all four widths;
+   mobile was already 342/342 and is untouched.
+   .c360-col-v476 KEEPS its own align-self:start: that element IS a grid child of .split, so there
+   the declaration still means the block axis, and still correctly stops a short column stretching
+   to the taller one's height. */
+.c360-summary-card-v294{padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
 .c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
@@ -2454,7 +2472,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
    card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
    the separator between packages and the muting of an exhausted one. */
-.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+.c360-summary-stack-v442{display:grid;gap:16px;min-width:0;max-width:100%}
 @media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
 /* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
    list is also a div, so :first-of-type would match IT and leave a rule above the first
@@ -4651,7 +4669,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 20a0160025e2a302f3c3feca6f339ce11d19147e6dcfba258d0a27de2b1fc769</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · fafcfa3f00a7a5b460e9f2477a49c8c54dd59da8ad03802e7d2b03508771e296</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8380,7 +8398,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'20a0160025e2a302f3c3feca6f339ce11d19147e6dcfba258d0a27de2b1fc769',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'fafcfa3f00a7a5b460e9f2477a49c8c54dd59da8ad03802e7d2b03508771e296',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

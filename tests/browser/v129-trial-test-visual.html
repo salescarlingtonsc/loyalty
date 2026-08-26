@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="7fe1a0162098a8a7cdc44c2186bce877cdb405541121d987c75847d88d127e40"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="9339c6b104fa5e970ccc98d86fb80d2f0cd97e3bb1ebeb6c4ccf5bf5a6e87020"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2438,7 +2438,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    (which would move the summary card out of the top-right slot v294/v295/v442 built). */
 .c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
 .c360-col-v476:empty{display:none}
-.c360-summary-card-v294{align-self:start;padding:12px 16px}
+/* nestly_v540 (owner, photo 1: a red box drawn over the empty space beside the summary card —
+   "enlarge the boxes to make the boxes look aligned with its counterparts below"). THE TWO
+   `align-self:start` DECLARATIONS BELOW ARE GONE, and the reason is an axis flip nobody would
+   spot by reading either change on its own.
+   V294/V295 wrote them when .c360-content-split-v295 was a GRID and these were grid cells. In a
+   grid, align-self is the BLOCK axis, so `start` meant "do not stretch to the height of the
+   tallest card in the row" — correct, and invisible horizontally.
+   nestly_v476 then made each column `display:flex;flex-direction:column` to close the vertical
+   gaps. In a COLUMN flex container the cross axis is HORIZONTAL, so the very same declaration
+   started shrinking these cards to their content width instead.
+   MEASURED against the Referral & consent card directly beneath them, which has no align-self and
+   therefore stretches: summary 230px vs referral 480 / 688 / 928px at 1024 / 1440 / 1920. The card
+   was frozen at 230px at every desktop width — the empty space the owner boxed. Removing the
+   declaration restores the flex default (stretch) and the two match exactly at all four widths;
+   mobile was already 342/342 and is untouched.
+   .c360-col-v476 KEEPS its own align-self:start: that element IS a grid child of .split, so there
+   the declaration still means the block axis, and still correctly stops a short column stretching
+   to the taller one's height. */
+.c360-summary-card-v294{padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
 .c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
@@ -2454,7 +2472,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
    card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
    the separator between packages and the muting of an exhausted one. */
-.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+.c360-summary-stack-v442{display:grid;gap:16px;min-width:0;max-width:100%}
 @media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
 /* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
    list is also a div, so :first-of-type would match IT and leave a rule above the first
@@ -4651,7 +4669,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7fe1a0162098a8a7cdc44c2186bce877cdb405541121d987c75847d88d127e40</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9339c6b104fa5e970ccc98d86fb80d2f0cd97e3bb1ebeb6c4ccf5bf5a6e87020</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -28088,6 +28106,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'7fe1a0162098a8a7cdc44c2186bce877cdb405541121d987c75847d88d127e40',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'9339c6b104fa5e970ccc98d86fb80d2f0cd97e3bb1ebeb6c4ccf5bf5a6e87020',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="b7e9d28051cba8c39b0e09523b85f38a66b788df9bcd4a96c0ad9465fe503799">
+<meta name="v105-production-component-sha256" content="ac75c748da79c4905ea53e702b9ea77eb504b99a051df0747e52b38ffa9c646d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2444,7 +2444,25 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    (which would move the summary card out of the top-right slot v294/v295/v442 built). */
 .c360-col-v476{display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start}
 .c360-col-v476:empty{display:none}
-.c360-summary-card-v294{align-self:start;padding:12px 16px}
+/* nestly_v540 (owner, photo 1: a red box drawn over the empty space beside the summary card —
+   "enlarge the boxes to make the boxes look aligned with its counterparts below"). THE TWO
+   `align-self:start` DECLARATIONS BELOW ARE GONE, and the reason is an axis flip nobody would
+   spot by reading either change on its own.
+   V294/V295 wrote them when .c360-content-split-v295 was a GRID and these were grid cells. In a
+   grid, align-self is the BLOCK axis, so `start` meant "do not stretch to the height of the
+   tallest card in the row" — correct, and invisible horizontally.
+   nestly_v476 then made each column `display:flex;flex-direction:column` to close the vertical
+   gaps. In a COLUMN flex container the cross axis is HORIZONTAL, so the very same declaration
+   started shrinking these cards to their content width instead.
+   MEASURED against the Referral & consent card directly beneath them, which has no align-self and
+   therefore stretches: summary 230px vs referral 480 / 688 / 928px at 1024 / 1440 / 1920. The card
+   was frozen at 230px at every desktop width — the empty space the owner boxed. Removing the
+   declaration restores the flex default (stretch) and the two match exactly at all four widths;
+   mobile was already 342/342 and is untouched.
+   .c360-col-v476 KEEPS its own align-self:start: that element IS a grid child of .split, so there
+   the declaration still means the block axis, and still correctly stops a short column stretching
+   to the taller one's height. */
+.c360-summary-card-v294{padding:12px 16px}
 .c360-summary-row-v294{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--hair)}
 .c360-summary-row-v294:last-of-type{border-bottom:0}
 .c360-summary-label-v294{color:var(--muted);font-size:12.5px;font-weight:650}
@@ -2460,7 +2478,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    own 960px "stack first" rule so the figures still lead on a phone. Everything inside the
    card reuses .c360-summary-row-v294 / .pill / .c360-reward-adjust — the only new rules are
    the separator between packages and the muting of an exhausted one. */
-.c360-summary-stack-v442{display:grid;gap:16px;align-self:start;min-width:0;max-width:100%}
+.c360-summary-stack-v442{display:grid;gap:16px;min-width:0;max-width:100%}
 @media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}
 /* The separator is an ADJACENT-SIBLING rule, not :first-of-type: the branch picker above the
    list is also a div, so :first-of-type would match IT and leave a rule above the first
@@ -5465,7 +5483,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · b7e9d28051cb</span>
+<span class="v105-provenance">v105 production-component harness · ac75c748da79</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5590,7 +5608,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'b7e9d28051cba8c39b0e09523b85f38a66b788df9bcd4a96c0ad9465fe503799',
+  sourceHash:'ac75c748da79c4905ea53e702b9ea77eb504b99a051df0747e52b38ffa9c646d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
