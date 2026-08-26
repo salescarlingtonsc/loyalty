@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="a7fb672e509dbbcc15f23074631741611ffd266c2d6352cb604d8ce39dd715d5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c8c43293ce8285a2a1b027e8ab518b0f5a721423b179093dac20c213d548f788"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5110,12 +5110,62 @@ function selfServePaymentReturnStateV286(){
 function selfServeActivatedRouteV286(slug){
   return `#/workspace/${encodeURIComponent(String(slug||''))}/setup`;
 }
+/* nestly_v542 (owner, screenshot of this very screen: "i need a back button for firms to change
+   from stripe payment to manual payment. because now not able to reverse the payment method").
+   There was no way back, and a plain back LINK would have been worse than none: the only manual
+   route in the product, request_self_serve_manual_application_v159, refuses any account already
+   attached to a business — which every owner on this screen is — so the form it led to was
+   guaranteed to 42501.
+   This asks instead. business_request_manual_payment_v542 records a request and nothing else: no
+   approval change, no workspace unlock, no invoice, no payment. The Super Admin still raises and
+   verifies the invoice through the tools that already exist. The copy says exactly that, because
+   an owner who believes they have switched and stops paying attention is the failure this screen
+   cannot afford. */
+function selfServeManualSwitchCardV542(onboarding){
+  const businessId=String(onboarding?.business_id||'');
+  if(!businessId)return '';
+  return `<div class="card" style="margin-top:18px;text-align:left" data-self-serve-manual-v542>
+    <b>Prefer to pay another way?</b>
+    <p class="muted small" style="margin-top:6px">If you would rather settle by bank transfer or another arrangement than by card, ask us and we will raise an invoice for you. Your workspace stays closed until that payment is received — asking does not open it, and does not cancel the Stripe option if you change your mind.</p>
+    <button class="btn ghost" id="selfServeManualAskV542" style="width:100%;margin-top:14px">Ask to pay another way</button>
+    <p class="muted small" id="selfServeManualStatusV542" role="status" aria-live="polite" style="margin-top:8px"></p>
+  </div>`;
+}
+function wireSelfServeManualSwitchV542(onboarding){
+  const button=$('selfServeManualAskV542');
+  if(!button)return;
+  const status=$('selfServeManualStatusV542');
+  const businessId=String(onboarding?.business_id||'');
+  const settled=text=>{button.disabled=true;button.textContent='Request sent';if(status)status.textContent=text};
+  /* Show an existing request on arrival, so a returning owner is not invited to ask twice. */
+  void sb.rpc('business_get_manual_payment_request_v542',{p_business:businessId}).then(({data,error})=>{
+    if(error||!data||data.status!=='ok')return;
+    if(data.request_status==='open')settled('We have your request. Our team will send an invoice — your workspace opens once that payment is received.');
+  });
+  /* One key per screen, so a double tap is the same request rather than a second one. The server
+     is idempotent either way; this simply keeps the two in agreement. */
+  const key=crypto.randomUUID();
+  button.onclick=async()=>{
+    button.disabled=true;
+    if(status)status.textContent='Sending your request…';
+    const {data,error}=await sb.rpc('business_request_manual_payment_v542',{
+      p_business:businessId,p_idempotency_key:key,p_contact_phone:null,p_note:null});
+    if(error){
+      button.disabled=false;
+      if(status)status.textContent=ownerErrorText(error);
+      return;
+    }
+    if(data?.status==='ok')return settled('Request sent. Our team will send an invoice — your workspace opens once that payment is received. You can still pay by card above if you prefer.');
+    button.disabled=false;
+    if(status)status.textContent='That request could not be sent. Please try again.';
+  };
+}
 function renderSelfServePaymentPendingV286(onboarding){
   const setupEpoch=++businessSetupRenderEpoch;
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
   const {canceled,processing}=selfServePaymentReturnStateV286();
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
-  wireBusinessSetupAccount();wireAccountDeletionButton();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${selfServeManualSwitchCardV542(onboarding)}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  wireBusinessSetupAccount();wireAccountDeletionButton();wireSelfServeManualSwitchV542(onboarding);
   $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
   $('onboardRetry').onclick=route;
   if(!processing)return;

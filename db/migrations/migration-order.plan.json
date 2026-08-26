@@ -2625,6 +2625,12 @@
       "path": "db/migrations/20260826_nestly_v537_capability_module_gate_uses_effective_mode.sql",
       "semanticVersion": "v537",
       "proposedDeployVersion": "20260826000012"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql",
+      "semanticVersion": "v542",
+      "proposedDeployVersion": "20260827000001"
     }
   ]
 }

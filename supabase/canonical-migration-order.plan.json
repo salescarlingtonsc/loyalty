@@ -2620,6 +2620,12 @@
       "version": "20260826000012",
       "name": "nestly_v537_capability_module_gate_uses_effective_mode",
       "sourcePath": "db/migrations/20260826_nestly_v537_capability_module_gate_uses_effective_mode.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000001",
+      "name": "nestly_v542_pending_business_may_ask_to_pay_manually",
+      "sourcePath": "db/migrations/20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql"
     }
   ]
 }
