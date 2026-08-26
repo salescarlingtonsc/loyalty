@@ -46428,7 +46428,13 @@ async function dailyReportPage(){
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
-            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total</b></td><td class="num"><b>${money(revenue)}</b></td></tr></table></div>`
+            <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total of listed rows (signed)</b></td><td class="num"><b>${money(rows.reduce((a,r)=>a+Number(r.amount_cents||0),0))}</b></td></tr><tr class="total-row"><td colspan="5">Of which revenue (per sale policy)</td><td class="num">${money(revenue)}</td></tr></table></div>`
+        /* nestly_v553 (TRUTH-001): this Total printed money(revenue) under a table that lists EVERY
+           row — reversals and non-revenue kinds included, amounts signed — so on a day with a
+           gift-card sale the rows summed to more than the printed Total (Cubbly 22 Jul: 9 rows,
+           SGD 450.00 listed, Total said 400.00). A table's total must total the table; the
+           revenue-policy subset is now its own labelled line, so both quantities are visible and
+           their difference is the non-revenue rows rather than a silent discrepancy. */
         :CUI.emptyState({iconName:'sales',title:'No sales recorded on this day',body:'Daily sales will appear here after staff record a sale for the selected date.'})}</div>`;
     /* reverse_sale stamps its row with occurred_at=now(), so a sale reversed on a LATER day is
        not in this day's rows and validVisitSales() over them alone would over-count against the
