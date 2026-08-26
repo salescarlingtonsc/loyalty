@@ -30,18 +30,6 @@ const MANIFEST_BLOCK = /<script type="application\/json" id="appSurfaceChunks">\
    on production. A head preload starts it with the first wave instead. It carries the SAME
    fingerprinted URL as the tag, which is why the stamper owns both: a preload one fingerprint
    behind the tag would fetch 178 KB twice and be slower than having none. */
-/* nestly_v538: THE CUSTOMER CHUNK'S HINT. Profiled on production: app-customer.js (189 KB) was
-   not requested until 677 ms, because route() awaits sb.auth.getSession() before it decides which
-   surface to load — so the biggest file on the customer critical path waited for app-core to
-   download (295->577), execute, and resolve a session.
-   It does not have to. appSurfaceForRouteV185 returns 'customer' for the bare root and for every
-   customer prefix WITHOUT consulting the session at all; only the remaining routes need it. So
-   for exactly those hashes the answer is knowable from the head, and this hint starts the
-   download with the first wave instead of after it.
-   The prefix list is READ OUT OF app.js by this stamper rather than retyped, so the hint cannot
-   drift from the router and start preloading 189 KB on a workspace route. */
-const CUSTOMER_PREFIXES = /const CUSTOMER_ROUTE_PREFIXES_V185=(\[[^\]]*\]);/;
-const SURFACE_HINT = /<script id="surfaceHintV538">[\s\S]*?<\/script>/;
 const CORE_PRELOAD = /<link rel="preload" as="script" href="\/app-core\.js(?:\?b=[0-9a-f]{12})?">/;
 
 export function fingerprint(text) {
@@ -56,24 +44,7 @@ export function chunkUrls(chunks) {
   return urls;
 }
 
-export function surfaceHint(customerUrl, prefixes) {
-  /* Deliberately tiny and dependency-free: it runs while the head is still parsing, before any
-     application code exists. It only ever ADDS a preload — it never changes which chunk the
-     router later loads, so a wrong answer here costs bandwidth, never correctness.
-     fetchPriority='low' is load-bearing, not decoration. At default priority the 189 KB chunk
-     competed with app-core.js for the same connection and PUSHED IT BACK — measured on
-     production, app-core finished at 797 ms instead of 577 ms and content went from ~850 to
-     925 ms. app-core has to execute before anything can use the customer chunk, so the chunk
-     must fill spare capacity rather than take app-core's. */
-  const list = JSON.stringify(prefixes);
-  return '<script id="surfaceHintV538">'
-    + `(function(){var h=(location.hash||'').split('?')[0];var p=${list};`
-    + "if(h===''||h==='#/'||p.some(function(x){return h===x.replace(/\\/$/,'')||h.indexOf(x)===0})){"
-    + `var l=document.createElement('link');l.rel='preload';l.as='script';l.fetchPriority='low';l.href=${JSON.stringify(customerUrl)};`
-    + 'document.head.appendChild(l);}})();</script>';
-}
-
-export function stampDocument(document, chunks, appSource = '') {
+export function stampDocument(document, chunks) {
   const urls = chunkUrls(chunks);
   if (!CORE_TAG.test(document)) throw new Error(`${DOCUMENT} does not contain the /app-core.js script tag`);
   if (!CORE_PRELOAD.test(document)) throw new Error(`${DOCUMENT} does not contain the /app-core.js preload link`);
@@ -84,17 +55,7 @@ export function stampDocument(document, chunks, appSource = '') {
     business: urls.business,
     i18n: urls.i18n
   });
-  const prefixMatch = appSource.match(CUSTOMER_PREFIXES);
-  if (appSource && !prefixMatch) {
-    throw new Error('stamp-app-bundle: CUSTOMER_ROUTE_PREFIXES_V185 could not be read from app/app.js');
-  }
-  const prefixes = prefixMatch ? JSON.parse(prefixMatch[1].replace(/'/g, '"')) : [];
-  if (!SURFACE_HINT.test(document)) {
-    throw new Error(`${DOCUMENT} does not contain the #surfaceHintV538 script`);
-  }
-
   return document
-    .replace(SURFACE_HINT, surfaceHint(urls.customer, prefixes))
     .replace(CORE_PRELOAD, `<link rel="preload" as="script" href="${urls.core}">`)
     .replace(CORE_TAG, `<script src="${urls.core}" defer></script>`)
     .replace(MANIFEST_BLOCK, `<script type="application/json" id="appSurfaceChunks">\n${manifest}\n</script>`);
@@ -104,7 +65,7 @@ export async function build(root = repoRoot) {
   const source = await readFile(path.join(root, 'app/app.js'), 'utf8');
   const chunks = renderChunks(source);
   const document = await readFile(path.join(root, DOCUMENT), 'utf8');
-  return { chunks, document, stamped: stampDocument(document, chunks, source) };
+  return { chunks, document, stamped: stampDocument(document, chunks) };
 }
 
 async function main() {
