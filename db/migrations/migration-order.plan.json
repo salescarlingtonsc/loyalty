@@ -2559,6 +2559,18 @@
       "path": "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql",
       "semanticVersion": "v517",
       "proposedDeployVersion": "20260826000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v518_capability_grants_and_quota.sql",
+      "semanticVersion": "v518",
+      "proposedDeployVersion": "20260826000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v518a_capability_unlimited_grant.sql",
+      "semanticVersion": "v518a",
+      "proposedDeployVersion": "20260826000003"
     }
   ]
 }

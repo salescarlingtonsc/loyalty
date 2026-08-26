@@ -2554,6 +2554,18 @@
       "version": "20260826000001",
       "name": "nestly_v517_whatsapp_foundations",
       "sourcePath": "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000002",
+      "name": "nestly_v518_capability_grants_and_quota",
+      "sourcePath": "db/migrations/20260826_nestly_v518_capability_grants_and_quota.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000003",
+      "name": "nestly_v518a_capability_unlimited_grant",
+      "sourcePath": "db/migrations/20260826_nestly_v518a_capability_unlimited_grant.sql"
     }
   ]
 }
