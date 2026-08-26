@@ -2577,6 +2577,12 @@
       "path": "db/migrations/20260826_nestly_v520_a_points_gift_can_expire.sql",
       "semanticVersion": "v520",
       "proposedDeployVersion": "20260826000004"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v521_redemption_off_is_a_decision.sql",
+      "semanticVersion": "v521",
+      "proposedDeployVersion": "20260826000005"
     }
   ]
 }

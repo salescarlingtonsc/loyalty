@@ -2572,6 +2572,12 @@
       "version": "20260826000004",
       "name": "nestly_v520_a_points_gift_can_expire",
       "sourcePath": "db/migrations/20260826_nestly_v520_a_points_gift_can_expire.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000005",
+      "name": "nestly_v521_redemption_off_is_a_decision",
+      "sourcePath": "db/migrations/20260826_nestly_v521_redemption_off_is_a_decision.sql"
     }
   ]
 }

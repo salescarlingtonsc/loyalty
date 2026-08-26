@@ -37,3 +37,23 @@ test('the guard actually catches the V200 bug shape', () => {
     'a reference with no declaration must be reported'
   );
 });
+
+test('nestly_v521 the guard understands an aliased destructure', () => {
+  /* `const {data: nameV999} = x` binds nameV999, not `data`. Before v521 the extractor kept only
+     the text left of the colon, so this shape reported a correctly-declared name as missing — a
+     false alarm that would push the next person to rename working code. */
+  const aliased = `
+    async function demoV999(){
+      const [{data:widgetV999,error:widgetErrorV999}] = await Promise.all([fetchIt()]);
+      return widgetErrorV999 ? null : widgetV999;
+    }`;
+  assert.deepEqual(findUndeclared(aliased).missing, [],
+    'an aliased binding is a declaration');
+
+  /* And the guard must still catch the real bug shape it exists for. */
+  const trulyMissing = `
+    function demoV998(){ return somethingNeverDeclaredV998; }`;
+  assert.deepEqual(findUndeclared(trulyMissing).missing.map(({ name }) => name),
+    ['somethingNeverDeclaredV998'],
+    'widening the extractor did not blind it');
+});

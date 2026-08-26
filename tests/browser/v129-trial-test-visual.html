@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2d59a52105407cf52a44f803227f2529b9e36ab0ac03b2bbcc24946dce0f041d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="107024d8c925ea08537b76ef4e2f38b12d158591a45e394ac39a8d9b61df32ce"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4641,7 +4641,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2d59a52105407cf52a44f803227f2529b9e36ab0ac03b2bbcc24946dce0f041d</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 107024d8c925ea08537b76ef4e2f38b12d158591a45e394ac39a8d9b61df32ce</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -13518,6 +13518,16 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
   const birthdayRequest=canRewards&&currentVersion
     ?sb.rpc('get_active_birthday_program',{p_business_id:S.biz.id})
     :Promise.resolve(none);
+  /* nestly_v521 (plan item C: "make it visible"). Whether customers can actually redeem is a
+     fact about THIS page's subject, and until now the only places that stated it were the legacy
+     Loyalty page and a Settings screen the owner does not open. That is how a firm ended up with
+     a programme it believed was live and a QR button its customers pressed for nothing — the
+     answer existed, on a surface nobody visits. It rides along with the reads this page already
+     makes, and fails soft: an error leaves the band undrawn rather than accusing a working firm
+     of being switched off. */
+  const capabilityRequestV521=canRewards
+    ?sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id})
+    :Promise.resolve(none);
   let draftRequest=Promise.resolve(none);
   if(canSetupGrow||(S.myRole==='owner'&&canWinback&&canWriteModule('retention'))){
     let query=sb.from('firm_config_versions').select('id,version_no,based_on_version_id,status,snapshot_hash')
@@ -13526,8 +13536,8 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     draftRequest=query.order('version_no',{ascending:false}).limit(1);
   }
   const [{data:retention,error:retentionError},{data:drafts,error:draftError},
-    {data:birthday,error:birthdayError}]
-    =await Promise.all([retentionRequest,draftRequest,birthdayRequest]);
+    {data:birthday,error:birthdayError},{data:capabilityV521,error:capabilityErrorV521}]
+    =await Promise.all([retentionRequest,draftRequest,birthdayRequest,capabilityRequestV521]);
   if(!isCurrent())return null;
   /* V268 (owner: "why inside after edit does not updated"). Until now this overview fetched the
      PUBLISHED catalogue plus the draft's header row only, so a saved edit had no representation
@@ -13562,6 +13572,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
     birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
     retention:retentionError?[]:retention||[],
+    /* nestly_v521: null when the read failed or the role cannot see it — the band below only
+       draws on an explicit false, never on an absence. */
+    customerRedemption:capabilityErrorV521?null:(capabilityV521?.redemption_enabled===true),
     referral:referralsError?null:(referrals||[])[0]||null,
     memberships:membershipsError?[]:memberships||[],
     promotions:promotionsError?[]:(Array.isArray(promotions?.items)?promotions.items:[]),
@@ -16914,6 +16927,26 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V343 (owner mockup, photo 4): a dashed placeholder card at the foot of the gift list, the
      same "Add a new gift" affordance the mockup shows — opens the SAME form/handler the header's
      own "Add gifts" button already does. */
+  /* nestly_v521 (plan item C — "make it visible"). THE BLIND SPOT, STATED WHERE IT HAPPENS.
+     A programme can be running in the workspace while its customers cannot redeem anything,
+     because the redemption capability lives on a Settings screen the owner never opens. That is
+     exactly how the owner's photo-1 dead QR happened: the workspace said On, the customer app
+     said nothing, and the only place holding the answer was somewhere else. This page now says it
+     itself, next to the gifts it is talking about, with the switch in reach.
+     THE BAND IS DRAWN ONLY ON AN EXPLICIT FALSE. `customerRedemption` is null when the read
+     failed or the role cannot see it, and a null must never accuse a working firm of being
+     switched off — a false warning here would send an owner to change a setting that was already
+     right. It also only appears when a programme is actually RUNNING: telling a firm that has not
+     started that its customers cannot redeem is noise, not news. */
+  const growRedemptionOffV521=canSetupGrow
+    && growPointsOnV326
+    && snapshot.customerRedemption===false;
+  const growRedemptionBandV521=growRedemptionOffV521?`<div class="notice warn" role="status" style="margin-top:12px" data-grow-redemption-off-v521>
+    <b>Your customers cannot claim these gifts yet</b>
+    <p class="muted small" style="margin-top:6px">${esc(growPointsRowLabelV326)} is on and your customers can see their ${esc(growPointsUnitV326)}s, but redeeming at the counter is switched off for this business \u2014 pressing &ldquo;Show QR at counter&rdquo; gives them nothing. Everything you have set up here is kept.</p>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-redemption-on-v521="1"${growRedemptionBusyV521?' disabled':''}>Let customers claim</button></div>
+    ${growRedemptionErrorV521?`<p class="err small" style="margin-top:8px">${esc(growRedemptionErrorV521)}</p>`:''}
+  </div>`:'';
   const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
     <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
     <b>Add reward</b>
@@ -17014,6 +17047,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growPointsEditingV326?'':growPointsAddFormV326}
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
+      ${growRedemptionBandV521}
       ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`
         :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">Showing gifts retired in the last ${GROW_HISTORY_WINDOW_YEARS_V375} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.</p></div>`}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
@@ -19053,6 +19087,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growEarnRewardExpirySelV464)growEarnRewardExpirySelV464.onchange=()=>{
     const wrap=outerMain.querySelector('[data-grow-earn-reward-expiry-days-v464]');
     if(wrap)wrap.hidden=growEarnRewardExpirySelV464.value==='none';
+  };
+  /* nestly_v521: the band's switch. It writes through business_set_customer_capabilities_v89 —
+     the SAME RPC the Settings screen uses, not a second write path — and that RPC takes all three
+     capabilities, so booking and appointment changes are read back from the snapshot and passed
+     through UNCHANGED. Sending a default for either would quietly switch off a surface the owner
+     had turned on, from a button that says nothing about bookings. */
+  const growRedemptionOn=outerMain.querySelector('[data-grow-redemption-on-v521]');
+  if(growRedemptionOn)growRedemptionOn.onclick=async()=>{
+    if(growRedemptionBusyV521)return;
+    growRedemptionBusyV521=true;growRedemptionErrorV521='';growRerenderV322({quiet:true});
+    const current=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
+    if(!isGrowCurrent())return;
+    if(current.error){
+      growRedemptionBusyV521=false;
+      growRedemptionErrorV521=ownerErrorText(current.error);
+      return growRerenderV322({quiet:true});
+    }
+    const {error}=await sb.rpc('business_set_customer_capabilities_v89',{
+      p_business:S.biz.id,
+      p_booking_enabled:current.data?.booking_enabled===true,
+      p_redemption_enabled:true,
+      p_appointment_changes_enabled:current.data?.appointment_changes_enabled===true
+    });
+    if(!isGrowCurrent())return;
+    growRedemptionBusyV521=false;
+    if(error){growRedemptionErrorV521=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    /* The write succeeded, so the snapshot this page is rendering from is now stale by exactly
+       one field. Correcting it in place and rerendering is what makes the band disappear — a bare
+       growRerenderV322 would repaint from the OLD snapshot and leave the warning standing over a
+       setting that is already fixed, which is worse than not showing it at all. */
+    snapshot.customerRedemption=true;
+    toast('Customers can claim their gifts at the counter now.');
+    growRerenderV322({quiet:true});
   };
   const growEarnSave=outerMain.querySelector('[data-grow-earn-save-v359]');
   if(growEarnSave)growEarnSave.onclick=async()=>{
@@ -28011,6 +28078,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'2d59a52105407cf52a44f803227f2529b9e36ab0ac03b2bbcc24946dce0f041d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'107024d8c925ea08537b76ef4e2f38b12d158591a45e394ac39a8d9b61df32ce',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

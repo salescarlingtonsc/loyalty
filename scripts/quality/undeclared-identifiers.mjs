@@ -55,8 +55,21 @@ function declarationsIn(source) {
   for (const pattern of patterns) {
     for (const match of source.matchAll(pattern)) {
       for (const part of String(match[1]).split(',')) {
-        const id = part.trim().replace(/^\.\.\./, '').split(/[=:\s]/)[0];
-        if (id) declared.add(id);
+        const raw = part.trim().replace(/^\.\.\./, '');
+        if (!raw) continue;
+        /* nestly_v521: an ALIASED destructure binds the name on the RIGHT of the colon.
+           `const [{data:capabilityV521,error:capabilityErrorV521}] = …` declares those two names,
+           but this loop only ever kept the text before the first colon — so it recorded `{data`
+           and reported the real bindings as undeclared. Aliases are rare enough that no versioned
+           name had hit it before, and common enough that it would keep happening.
+           Both halves are recorded: keeping the key preserves every declaration this function
+           already found, so widening it can only ever turn a red file green, never the reverse —
+           the same rule V373 followed when it taught this guard about array destructuring. */
+        const bound = raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw;
+        for (const candidate of [bound, raw]) {
+          const id = candidate.trim().replace(/^\.\.\./, '').split(/[=:\s{}[\]()]/)[0];
+          if (id) declared.add(id);
+        }
       }
     }
   }
