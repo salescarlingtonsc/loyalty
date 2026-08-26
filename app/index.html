@@ -18,6 +18,26 @@
 <!-- The Supabase client below is a RENDER-BLOCKING third-party script; warming the connection
      here removes its DNS + TCP + TLS cost from the critical path on a cold mobile network. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- nestly_v529: WARM THE BOOT CHAIN. Measured on production 26 Aug 2026: the four scripts below
+       are classic parser-blocking script tags in the body, so each one's bytes were not even
+       requested until the previous one had finished downloading AND executing — a staircase:
+         runtime-config 490->557, loader 558->622, customer-ui 623->793, supabase 798->1057,
+       and app-core.js, which every surface needs, therefore did not start until 1,065 ms.
+       These preloads change WHEN THE BYTES ARE FETCHED and nothing else. Execution order is still
+       decided by the parser, in the same sequence, with the same blocking semantics — which is why
+       this is safe on a boot chain where order genuinely matters, and why `defer` was NOT used
+       instead: defer would move execution to DOMContentLoaded and change when window.BRAND,
+       runtime config and CustomerUI exist.
+       The URLs must match the script tags byte for byte, query string included, or the browser
+       fetches each file twice. tests/quality/v528-* asserts exactly that.
+       The jsdelivr supabase tag is deliberately NOT preloaded: it carries an SRI integrity hash
+       without a crossorigin attribute, and adding a preload whose CORS mode does not match would
+       fetch 53 KB twice. It already benefits, because the staircase above it collapses. -->
+  <link rel="preload" as="script" href="/brand-config.js">
+  <link rel="preload" as="script" href="/runtime-config.js?v=2">
+  <link rel="preload" as="script" href="/runtime-config-loader.js?v=2">
+  <link rel="preload" as="script" href="/customer-ui.js?v=20260813-v298-caption-once">
+  <link rel="preload" as="script" href="/app-core.js?b=d72f193c865b">
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
      app/join.html still requests it separately and still uses it for its headings. -->

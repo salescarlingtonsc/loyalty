@@ -25,6 +25,12 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const DOCUMENT = 'app/index.html';
 const CORE_TAG = /<script src="\/app-core\.js(?:\?b=[0-9a-f]{12})?" defer><\/script>/;
 const MANIFEST_BLOCK = /<script type="application\/json" id="appSurfaceChunks">\n[\s\S]*?\n<\/script>/;
+/* nestly_v529: app-core.js is the biggest thing on the critical path and, being a <script defer>
+   in the BODY, its bytes were not requested until everything above it had finished — 1,013 ms in
+   on production. A head preload starts it with the first wave instead. It carries the SAME
+   fingerprinted URL as the tag, which is why the stamper owns both: a preload one fingerprint
+   behind the tag would fetch 178 KB twice and be slower than having none. */
+const CORE_PRELOAD = /<link rel="preload" as="script" href="\/app-core\.js(?:\?b=[0-9a-f]{12})?">/;
 
 export function fingerprint(text) {
   return createHash('sha256').update(text).digest('hex').slice(0, 12);
@@ -41,6 +47,7 @@ export function chunkUrls(chunks) {
 export function stampDocument(document, chunks) {
   const urls = chunkUrls(chunks);
   if (!CORE_TAG.test(document)) throw new Error(`${DOCUMENT} does not contain the /app-core.js script tag`);
+  if (!CORE_PRELOAD.test(document)) throw new Error(`${DOCUMENT} does not contain the /app-core.js preload link`);
   if (!MANIFEST_BLOCK.test(document)) throw new Error(`${DOCUMENT} does not contain the #appSurfaceChunks manifest`);
   const manifest = JSON.stringify({
     auth: urls.auth,
@@ -49,6 +56,7 @@ export function stampDocument(document, chunks) {
     i18n: urls.i18n
   });
   return document
+    .replace(CORE_PRELOAD, `<link rel="preload" as="script" href="${urls.core}">`)
     .replace(CORE_TAG, `<script src="${urls.core}" defer></script>`)
     .replace(MANIFEST_BLOCK, `<script type="application/json" id="appSurfaceChunks">\n${manifest}\n</script>`);
 }
