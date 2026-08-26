@@ -59,8 +59,13 @@ test('both wallet surfaces are watched', () => {
   /* nestly_v498: the refresh closure now carries a force flag — a doorbell ping bypasses the
      v333 fact-signature skip (a stamp-gift redemption moves no balance, so the eight facts can
      be unchanged while the Available list is stale); an idle tick never sets it. */
-  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,forceV498=>renderCustomerWallet\(null,\{silent:true,forceV498:forceV498===true\}\),\s*customerWalletHomePulseReaderV370\(\)\)/, 'Home');
-  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,forceV498=>renderCustomerWallet\(businessSlug,\{silent:true,forceV498:forceV498===true\}\),\s*customerWalletProgrammePulseReaderV370\(businessSlug,/, 'programme detail');
+  /* nestly_v524: each install now also DECLARES which wallet it speaks for, because
+     activeCustomerWalletCounterMomentV468 is one shared slot and closing a redemption QR calls it.
+     Whenever the slot held the Home closure while a business page was on screen, the close
+     repainted #walletBody with the home feed — the owner's "clicking out of rewards brings me back
+     to the home page". The fourth argument is what lets the counter moment stand down instead. */
+  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,forceV498=>renderCustomerWallet\(null,\{silent:true,forceV498:forceV498===true\}\),\s*customerWalletHomePulseReaderV370\(\),null\)/, 'Home, declared as the null slug');
+  assert.match(wallet, /watchCustomerWalletV295\(isWalletCurrent,forceV498=>renderCustomerWallet\(businessSlug,\{silent:true,forceV498:forceV498===true\}\),\s*customerWalletProgrammePulseReaderV370\(businessSlug,[^)]*\),\s*businessSlug\|\|null\)/, 'programme detail, declared as its own slug');
 });
 
 /* ---------- V370: poll amplification regressions (Supabase load audit 2026-08-17) ----------

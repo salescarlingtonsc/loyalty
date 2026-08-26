@@ -5316,6 +5316,16 @@ const CUSTOMER_WALLET_POLL_LIMIT_V295=9; // ≈3 minutes of active watching, the
    pulse reader), opened only by an explicit customer action at the till. */
 const CUSTOMER_WALLET_COUNTER_POLL_MS_V468=4000;
 const CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468=60000;
+/* nestly_v524: which wallet the customer is actually looking at, read from the route rather than
+   from any render-time variable — the route is the one thing a stale closure cannot be wrong
+   about. '#/wallet' is the Home wallet (null slug); '#/wallet/<slug>' is that business's page.
+   Any other route means no wallet is on screen, and nothing should repaint one. */
+function customerWalletSlugOnScreenV524(){
+  const hash=String(globalThis.location?.hash||'');
+  if(hash==='#/wallet')return null;
+  if(hash.startsWith('#/wallet/'))return decodeURIComponent(hash.slice(9))||null;
+  return undefined;
+}
 /* V370 (load audit 2026-08-17). The behaviour contract above is unchanged — the wallet still
    re-reads on foreground and still watches for ~3 minutes — but the COST of a tick is not.
 
@@ -5388,7 +5398,19 @@ function customerWalletHomePulseReaderV370(){
     return customerWalletPulseSignatureOfV370(result.data??null);
   };
 }
-function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
+/* nestly_v524 (owner, photo 1: "when i clicked out of rewards it should just brings me out of
+   this pop up — current set up is to bring me back to home page"). THE FOURTH ARGUMENT IS WHICH
+   WALLET THIS WATCHER SPEAKS FOR. activeCustomerWalletCounterMomentV468 is ONE module-level slot,
+   and both wallets install into it: the Home wallet installs a refresh bound to
+   renderCustomerWallet(null,…) and a business wallet one bound to its own slug. Closing a
+   redemption QR calls that slot. If the slot still holds the Home closure while the customer is
+   standing on a business page, the close repaints #walletBody with HOME — the customer taps ✕ on
+   a QR and lands on the home feed, which is exactly what the owner saw.
+   The epoch guard inside renderCustomerWallet does not catch this: it only refuses a render whose
+   own epoch is stale, and a Home closure installed after the business page rendered is not stale,
+   it is simply about a different page. So the watcher now records its slug and the counter moment
+   below refuses to paint when that is no longer the wallet on screen. */
+function watchCustomerWalletV295(isCurrent,refresh,pulse=null,walletSlugV524=null){
   activeCustomerWalletLiveCleanupV295();
   let ticks=0,timer=0,stopped=false,counterUntilV468=0;
   let signalChannelV479=null,lastSignalAtV479=0;
@@ -5454,6 +5476,11 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null){
      counter transaction is precisely what the budget exists to catch. */
   const counterMomentV468=async()=>{
     if(stopped)return;
+    /* nestly_v524: the wallet this watcher refreshes must still be the wallet on screen. A
+       mismatch means the slot was won by another page's watcher, and painting would replace what
+       the customer is looking at with something else. Doing nothing is right: the page they are
+       on has its OWN watcher, which is still armed. */
+    if(customerWalletSlugOnScreenV524()!==walletSlugV524)return;
     ticks=0;
     counterUntilV468=Date.now()+CUSTOMER_WALLET_COUNTER_WINDOW_MS_V468;
     /* nestly_v498: FORCED through the v333 fact-signature skip. A counter moment — a doorbell
@@ -5789,7 +5816,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        balances and booking counts from — and pays for the other three only when it moves. */
     rememberCustomerWalletPulseV370(data??null);
     if(!silent)watchCustomerWalletV295(isWalletCurrent,forceV498=>renderCustomerWallet(null,{silent:true,forceV498:forceV498===true}),
-      customerWalletHomePulseReaderV370());
+      customerWalletHomePulseReaderV370(),null);
     return;
   }
   const args={p_business_slug:businessSlug};
@@ -6172,7 +6199,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
      V370: a tick reads the actionable card alone (one RPC) and only pays for the full 12-read
      refresh when that card differs from what is on screen. */
   if(!silent)watchCustomerWalletV295(isWalletCurrent,forceV498=>renderCustomerWallet(businessSlug,{silent:true,forceV498:forceV498===true}),
-    customerWalletProgrammePulseReaderV370(businessSlug,customerFeatures.customer_actionable_wallet===true));
+    customerWalletProgrammePulseReaderV370(businessSlug,customerFeatures.customer_actionable_wallet===true),
+    businessSlug||null);
   /* Anti-review-gating (v53 migration invariant): the public-review link is derived from the
      business summary's own review_url and rendered in the feedback section footer REGARDLESS of
      rating; a high rating only adds an extra prominent share card. review_url rides the existing

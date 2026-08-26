@@ -28453,7 +28453,7 @@ async function customerIntelligencePage(){
         {expectedBranchId:selectedBranchId||null}
       )
       :'';
-    /* nestly_v522 (owner ruling 2026-08-26: "do not expose an evidence-gated placeholder as half
+    /* nestly_v524 (owner ruling 2026-08-26: "do not expose an evidence-gated placeholder as half
        of a newly enabled module"). Sector Economics stays behind the platform flag
        `economics_driver_policy_v109`, which is OFF in production — its three RPCs refuse with
        0A000 before touching data, and not one of their numbers has ever been reconciled. While

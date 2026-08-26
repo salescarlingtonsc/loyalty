@@ -271,7 +271,7 @@ const ROLE_CAPABILITIES={
    consult sites (the route guard and the nav filter) stay in place so a future packaging decision
    has one deny-list to fill instead of two hard-coded checks. */
 const HIDDEN_BUSINESS_SURFACES=new Set([]);
-/* nestly_v522: customerintel joins the finance set. Both surfaces behind it —
+/* nestly_v524: customerintel joins the finance set. Both surfaces behind it —
    get_revenue_truth_v106 and get_customer_intelligence_v83 — raise 42501 without
    app.has_perm(business,'view_finance'), which only owner, manager and bookkeeper hold.
    Without this entry the rail offered the row to an entitled staff/frontdesk user and the
