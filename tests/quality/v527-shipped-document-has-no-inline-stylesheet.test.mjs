@@ -29,21 +29,29 @@ test('V527 the generated pair is current — a stale one would ship yesterday\'s
     'run `npm run app-css` — the shipped document and stylesheet are behind app/index.html');
 });
 
-test('V527 the shipped document carries a fingerprinted link and no inline stylesheet', () => {
-  assert.equal((shippedHtml.match(/<style/g) || []).length, 0,
-    'not one <style> block may survive into the document customers download');
+test('V527 the shipped document links the stylesheet instead of carrying it', () => {
+  /* nestly_v530 added ONE deliberate inline block back: a ~10 KB critical subset in the head, so
+     the boot skeleton can paint without waiting for the whole 62 KB. That is the only <style>
+     allowed, and v530's own tests police what may be in it. The 504 KB stylesheet is still a
+     linked, fingerprinted, immutable file — which is what this test has always been about. */
+  const inline = [...shippedHtml.matchAll(/<style([^>]*)>/g)].map((m) => m[1]);
+  assert.deepEqual(inline, [' id="criticalCssV530"'],
+    'exactly one inline style block, and it is the critical set — nothing else may creep back in');
   const link = shippedHtml.match(/<link rel="stylesheet" href="\/app\.css\?b=([a-f0-9]{12})">/);
-  assert.ok(link, 'the document links the stylesheet instead');
+  assert.ok(link, 'the document links the stylesheet');
   assert.equal(link[1], fingerprint(shippedCss),
     'and the fingerprint matches the bytes — a mismatched one is a stale CDN copy served forever');
 });
 
 test('V527 the shipped document is a fraction of the source it came from', () => {
   assert.ok(source.length > 400_000, 'the source still holds the stylesheet and its comments');
-  assert.ok(shippedHtml.length < 20_000,
-    `the shipped document should be small; it is ${shippedHtml.length} bytes`);
+  /* v530 puts ~10 KB of critical CSS back into the head on purpose, so the ceiling moves up by
+     about that much. The ratio is what matters: the document is still a small fraction of a
+     source that carries the whole 504 KB stylesheet. */
+  assert.ok(shippedHtml.length < 32_000,
+    `the shipped document should stay small; it is ${shippedHtml.length} bytes`);
   assert.ok(shippedHtml.length * 20 < source.length,
-    'the whole point is that the document no longer carries the stylesheet');
+    'the whole point is that the document no longer carries the full stylesheet');
 });
 
 test('V527 stripping comments cannot change a single rule', () => {

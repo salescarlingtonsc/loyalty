@@ -33,6 +33,37 @@
  * RUN ORDER MATTERS. This reads the ALREADY-STAMPED index.html, so index.gen.html inherits the
  * JS chunk fingerprints:  split-app-bundle → stamp-app-bundle → extract-app-css.
  *
+ * nestly_v530 — AND THE SKELETON NO LONGER WAITS FOR THE WHOLE STYLESHEET.
+ *
+ * After v527 the document was 8 KB, but first paint still landed at ~556 ms because a
+ * <link rel="stylesheet"> in the head is RENDER-BLOCKING: the browser draws nothing at all until
+ * it has the entire 62 KB. Measured in Chrome across four variants, throttled to 900 kbps:
+ *
+ *   control (link in head)                      never painted before the sheet arrived
+ *   inline critical CSS + link still in head    never painted before the sheet arrived
+ *   inline critical CSS + link at end of body   first paint 532 ms
+ *   inline critical CSS + media=print swap      first paint 356 ms
+ *
+ * Inlining critical CSS on its own does NOTHING — that is the finding that decided the design.
+ * The blocking link has to move as well.
+ *
+ * END OF BODY was chosen over the media swap even though it is slower, because it keeps the
+ * browser's own guarantee: a stylesheet still blocks rendering of everything AFTER it, so the
+ * real app UI — which the router paints into #root long after boot — can never appear unstyled.
+ * The media=print trick makes the sheet fully non-blocking and puts that guarantee in the hands
+ * of a race between a 62 KB stylesheet and 1.5 MB of JavaScript. It also needs an inline event
+ * handler, which only works because script-src still allows 'unsafe-inline'.
+ *
+ * THE CRITICAL SET IS DERIVED, NOT HAND-WRITTEN. A rule is kept only if EVERY compound in its
+ * selector corresponds to something the boot skeleton's DOM actually contains (see
+ * SKELETON_TOKENS). The test renders the skeleton twice — once under the full stylesheet, once
+ * under the critical subset — and compares every computed property of every element. It is
+ * currently 9,955 bytes raw / 3.2 KB gzipped, and the diff is zero.
+ *
+ * The kept rules therefore appear TWICE: inline, and again in app.css. They are byte-identical
+ * and app.css comes later in document order, so it wins every tie with the same value. No
+ * conflict is possible, and the equivalence test is what proves it stays that way.
+ *
  * Usage: node scripts/quality/extract-app-css.mjs [--check|--write]
  */
 import { createHash } from 'node:crypto';
@@ -43,6 +74,84 @@ const repoRoot = new URL('../../', import.meta.url);
 export const sourceHtmlPath = new URL('app/index.html', repoRoot);
 export const generatedCssPath = new URL('app/app.css', repoRoot);
 export const generatedHtmlPath = new URL('app/index.gen.html', repoRoot);
+
+/* Every tag, class and id the boot skeleton's DOM contains. A rule can only match that DOM if
+   EVERY compound in its descendant chain corresponds to something here — the test is per-token,
+   not a substring search. `.customer-expiring-list a` is excluded because that class is not in
+   the skeleton; a bare `a { }` is kept because `a` is (the skip link). */
+export const SKELETON_TOKENS = new Set([
+  '*', ':root', 'html', 'body',
+  'a', 'div', 'p', 'span',
+  '.skip-link', '.sr-only',
+  '.wallet-shell', '.customer-surface', '.wallet-inner',
+  '.card', '.pf-skeleton', '.toast',
+  '#root', '#toast', '#appStatus', '#appAlert'
+]);
+
+/* Top-level blocks with their braces intact, string-aware so a `{` inside content:"" cannot
+   throw the depth count off. */
+function splitTopLevel(css) {
+  const out = []; let depth = 0, start = 0, inString = null;
+  for (let i = 0; i < css.length; i += 1) {
+    const c = css[i];
+    if (inString) { if (c === inString && css[i - 1] !== '\\') inString = null; continue; }
+    if (c === '"' || c === "'") { inString = c; continue; }
+    if (c === '{') depth += 1;
+    else if (c === '}') { depth -= 1; if (depth === 0) { out.push(css.slice(start, i + 1)); start = i + 1; } }
+    else if (depth === 0 && c === ';') { out.push(css.slice(start, i + 1)); start = i + 1; }
+  }
+  return out.map((block) => block.trim()).filter(Boolean);
+}
+
+/* The "key" of a compound: its tag if it has one, else its first class or id.
+   `.card[aria-busy]:hover` -> `.card`; `div.wallet-inner` -> `div`; `::before` -> ''. */
+export function compoundKey(compound) {
+  /* :root is checked BEFORE the pseudo-strip, which would otherwise erase it and leave the empty
+     "matches anything" key. The rules that define the design tokens hang off it, so it needs to
+     name itself rather than be waved through. */
+  if (compound.startsWith(':root')) return ':root';
+  const bare = compound.replace(/::?[a-z-]+(\([^)]*\))?/gi, '').trim();
+  if (!bare) return '';
+  const tag = bare.match(/^[a-zA-Z][\w-]*/);
+  if (tag) return tag[0].toLowerCase();
+  const first = bare.match(/^[.#][\w-]+/);
+  return first ? first[0] : bare;
+}
+
+export function selectorCanMatchSkeleton(selectorText) {
+  return selectorText.split(',').some((part) => {
+    const compounds = part.trim().split(/[\s>+~]+/).filter(Boolean);
+    if (!compounds.length) return false;
+    return compounds.every((compound) => {
+      const key = compoundKey(compound);
+      return key === '' || SKELETON_TOKENS.has(key);
+    });
+  });
+}
+
+export function criticalCssFor(css) {
+  const kept = [];
+  for (const block of splitTopLevel(css)) {
+    const at = block.match(/^@([a-z-]+)/i);
+    if (at) {
+      const name = at[1].toLowerCase();
+      if (name === 'media' || name === 'supports') {
+        const open = block.indexOf('{');
+        const inner = criticalCssFor(block.slice(open + 1, block.lastIndexOf('}')));
+        if (inner.trim()) kept.push(`${block.slice(0, open + 1)}${inner}}`);
+      } else if (['keyframes', 'font-face', 'property', 'charset', 'import', 'layer'].includes(name)) {
+        /* Scaffolding. The skeleton's shimmer is an animation, so dropping @keyframes would leave
+           it visibly static — and these are cheap. */
+        kept.push(block);
+      }
+      continue;
+    }
+    const open = block.indexOf('{');
+    if (open < 0) continue;
+    if (selectorCanMatchSkeleton(block.slice(0, open))) kept.push(block);
+  }
+  return kept.join('\n');
+}
 
 const STYLE_BLOCK = /<style(?![^>]*\bdata-keep-inline\b)[^>]*>([\s\S]*?)<\/style>/g;
 
@@ -68,14 +177,26 @@ export function buildArtifacts(sourceHtml) {
   }
   const css = stripCssComments(blocks.map((match) => match[1]).join('\n'));
   const hash = fingerprint(css);
-  const link = `<link rel="stylesheet" href="/app.css?b=${hash}">`;
+  const critical = criticalCssFor(css);
+  if (!critical.includes('.pf-skeleton')) {
+    throw new Error('extract-app-css: the critical set does not style the boot skeleton');
+  }
 
-  /* The FIRST style block becomes the link; the rest are removed. Their order is preserved inside
-     app.css, so the cascade is byte-identical to what the source produced. */
+  /* Head: paint-ready styles, and start the full stylesheet downloading at once. */
+  const head = `<style id="criticalCssV530">${critical}</style>`
+    + `<link rel="preload" as="style" href="/app.css?b=${hash}">`;
+  /* End of body: still a real render-blocking stylesheet, so nothing after it — which is all of
+     the app UI — can ever paint unstyled. */
+  const sheet = `<link rel="stylesheet" href="/app.css?b=${hash}">`;
+
   let replaced = 0;
-  const html = sourceHtml.replace(STYLE_BLOCK, () => (replaced++ === 0 ? link : ''));
+  let html = sourceHtml.replace(STYLE_BLOCK, () => (replaced++ === 0 ? head : ''));
+  if (!html.includes('</body>')) {
+    throw new Error('extract-app-css: app/index.html has no </body> to place the stylesheet before');
+  }
+  html = html.replace('</body>', `${sheet}\n</body>`);
 
-  return { css, html, hash, blockCount: blocks.length };
+  return { css, critical, html, hash, blockCount: blocks.length };
 }
 
 export async function readArtifacts() {
@@ -92,7 +213,7 @@ async function readOrNull(url) {
 }
 
 export async function checkArtifacts() {
-  const { css, html, hash, blockCount } = await readArtifacts();
+  const { css, html, hash, blockCount, critical } = await readArtifacts();
   const [currentCss, currentHtml] = await Promise.all([
     readOrNull(generatedCssPath),
     readOrNull(generatedHtmlPath)
@@ -100,7 +221,8 @@ export async function checkArtifacts() {
   const stale = [];
   if (currentCss !== css) stale.push('app/app.css');
   if (currentHtml !== html) stale.push('app/index.gen.html');
-  return { stale, hash, blockCount, cssBytes: css.length, htmlBytes: html.length };
+  return { stale, hash, blockCount, cssBytes: css.length, htmlBytes: html.length,
+    criticalBytes: critical.length };
 }
 
 async function main() {
@@ -108,7 +230,7 @@ async function main() {
   if (!['--check', '--write'].includes(option)) {
     throw new Error('Usage: node scripts/quality/extract-app-css.mjs [--check|--write]');
   }
-  const { css, html, hash, blockCount } = await readArtifacts();
+  const { css, html, hash, blockCount, critical } = await readArtifacts();
   const source = await readFile(sourceHtmlPath, 'utf8');
 
   if (option === '--write') {
@@ -117,6 +239,7 @@ async function main() {
     const saved = source.length - html.length;
     process.stdout.write(
       `app.css ${Math.round(css.length / 1024)}KB (b=${hash}) from ${blockCount} block(s) · `
+      + `critical ${Math.round(critical.length / 1024)}KB inline · `
       + `index.gen.html ${Math.round(html.length / 1024)}KB, ${Math.round(saved / 1024)}KB lighter than the source\n`
     );
     return;
