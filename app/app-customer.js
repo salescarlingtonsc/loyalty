@@ -4345,7 +4345,7 @@ function customerHeroRewardPagesV395(rewards=[],{balance=0,unit='points',current
           </div>
           ${photoV468?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV468)}" alt="" loading="lazy" decoding="async" data-hero-reward-photo-v468>`:''}
         </div>
-        ${/* nestly_v517 (owner, photo B vs photo C: "i will need photo B to follow the buttons
+        ${/* nestly_v518 (owner, photo B vs photo C: "i will need photo B to follow the buttons
              placement, example Redeem now at bottom left while Book now to be at bottom right").
              These two buttons used to sit INSIDE customer-hero-reward-copy-v468 — the narrow left
              column that shares its row with the gift photo — so the 1fr 1fr grid had half a card

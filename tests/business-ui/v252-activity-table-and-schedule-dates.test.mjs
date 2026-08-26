@@ -46,7 +46,15 @@ test('V378 activity history renders six headers in order, Earned among them', ()
 
 test('every cell is read from a structured field, never parsed out of a display sentence', () => {
   // The builder in clientDetail() emits kind / saleKind / staff / service / plan / amount.
-  assert.ok(historyTable.includes("h.saleKind||'sale'"));
+  /* nestly_v518: the sale's ITEM cell now names the goods (activityItemTextV267 -> the sale's own
+     sale_items rows), falling back to the note and then to the kind word. The kind fallback moved
+     into that helper; the rule this test exists for is unchanged and still holds — every one of
+     those three sources is a structured FIELD, and none is recovered by taking a rendered
+     sentence apart. */
+  assert.ok(historyTable.includes('activityItemTextV267(h)'),
+    'the ITEM cell is built by the helper, not by parsing text');
+  assert.ok(app.includes("const text=items||note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');"),
+    'and that helper reads structured fields in order: lines, note, kind');
   assert.ok(historyTable.includes("h.service||'general visit'"));
   assert.ok(historyTable.includes('cell.staff'));
   assert.ok(!/\.split\(['"`] · /.test(historyTable) && !historyTable.includes('.match(/ — /'),

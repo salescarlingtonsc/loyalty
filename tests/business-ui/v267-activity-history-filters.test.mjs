@@ -391,3 +391,87 @@ test('V270 the ITEM search exists, is labelled, and matches the text the ITEM ce
 test('V270 clearing the filters clears the ITEM search too', () => {
   assert.match(app, /\['actItem','actType','actStaff','actFrom','actTo'\]\.forEach\(controlId=>\{const el=\$\(controlId\);if\(el\)el\.value=''\}\);/);
 });
+
+/* ================ ITEM V518 — a sale row states what was actually sold ================
+   Owner, Customer 360 screenshot (2026-08-25): "quick sale" circled in the ITEM column and
+   "cart checkout (kernel)" circled in the notes — "should state item details".
+   Both were names for the MECHANISM. On production every one of the 91 sales carrying the
+   kernel note has lines behind it, and no other note in the table belongs to a sale that has
+   any — so naming the lines when they exist replaces exactly the machine wording and keeps
+   every note a person wrote. These assertions RENDER the page and read the cells; they do not
+   grep the source. */
+
+const V518_CART_ID = 'd1e2f3a4-5566-4777-8888-99aabbccddee';
+
+function fixtureV518() {
+  return [
+    {
+      /* The owner's row: a cart checkout. Lines arrive out of order on purpose — the cell must
+         print them in the order they were rung up, not the order PostgREST returned them. */
+      t: '2026-08-20T03:00:00Z', kind: 'sale', id: V518_CART_ID, saleKind: 'quick_sale',
+      note: 'cart checkout (kernel)', amount: 2350, is_reversal: false, staff: 'Bala',
+      items: [
+        { description: 'Kaya Toast Set', qty: 2, item_type: 'product', created_at: '2026-08-20T03:00:02Z' },
+        { description: 'Kopi Set', qty: 1, item_type: 'product', created_at: '2026-08-20T03:00:01Z' },
+      ],
+    },
+    {
+      /* A package session: one sales row, no lines, and a note that already says what it is. */
+      t: '2026-08-19T03:00:00Z', kind: 'sale', id: 'ab12cd34-5566-4777-8888-99aabbccdd01',
+      saleKind: 'service', note: 'package session used: 5x facial', amount: 0,
+      is_reversal: false, staff: 'Aisyah', items: [],
+    },
+    {
+      /* Neither lines nor a note — the kind word is all there is, and it must still be there. */
+      t: '2026-08-18T03:00:00Z', kind: 'sale', id: 'ab12cd34-5566-4777-8888-99aabbccdd02',
+      saleKind: 'quick_sale', amount: 900, is_reversal: false, staff: 'Bala',
+    },
+  ];
+}
+
+test('V518 a cart sale names its goods instead of naming the mechanism', () => {
+  setFilters({});
+  const rows = fixtureV518();
+  assert.equal(A.activityItemTextV267(rows[0]), 'Kopi Set, Kaya Toast Set ×2',
+    'the lines are printed in the order they were rung up, and ×1 is left off');
+  const text = visibleText(A.renderHistPage(rows, 50));
+  assert.ok(text.includes('Kopi Set, Kaya Toast Set ×2'), 'the ITEM cell states what was sold');
+  assert.ok(!text.includes('cart checkout (kernel)'),
+    'the kernel’s note about itself is gone once the goods are named');
+  assert.ok(!/\bquick sale\b/.test(text.slice(0, text.indexOf('package session'))),
+    'the cart row no longer describes itself by its mechanism');
+});
+
+test('V518 a sale with no lines keeps the note that describes it', () => {
+  setFilters({});
+  const text = visibleText(A.renderHistPage(fixtureV518(), 50));
+  assert.ok(text.includes('package session used: 5x facial'),
+    'a note a person or a package flow wrote is never suppressed');
+  assert.equal(A.activityItemTextV267(fixtureV518()[1]), 'package session used: 5x facial');
+});
+
+test('V518 a sale with neither lines nor a note still says what kind it was', () => {
+  assert.equal(A.activityItemTextV267(fixtureV518()[2]), 'quick sale');
+});
+
+test('V518 the ITEM search matches the goods, which is what the cell now prints', () => {
+  setFilters({ actItem: 'kaya' });
+  const kept = A.activityFilteredRowsV267(fixtureV518(), A.activityFilterStateV267());
+  assert.equal(kept.length, 1, 'typing a product name finds the sale that contained it');
+  assert.equal(kept[0].id, V518_CART_ID);
+  setFilters({});
+});
+
+test('V518 a very long line-up is truncated rather than overflowing the cell', () => {
+  const many = {
+    t: '2026-08-20T03:00:00Z', kind: 'sale', id: V518_CART_ID, saleKind: 'quick_sale',
+    note: 'cart checkout (kernel)', amount: 9900, is_reversal: false, staff: 'Bala',
+    items: Array.from({ length: 12 }, (_, i) => ({
+      description: `Kopi Connoisseur Prepaid Item ${i + 1}`, qty: 1, item_type: 'product',
+      created_at: `2026-08-20T03:00:${String(i).padStart(2, '0')}Z`,
+    })),
+  };
+  const text = A.activityItemTextV267(many);
+  assert.ok(text.length <= 64, `the cell text stays within its budget, got ${text.length}`);
+  assert.ok(text.endsWith('…'), 'and says plainly that it was cut');
+});

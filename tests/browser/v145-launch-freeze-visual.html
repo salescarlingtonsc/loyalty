@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2ab5d2126df805d387fedcf4739ef03230d71fa10573b3f4844184b4683887e2"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ee83e362d3bc5f4ba3651b35f8983bf7507f775ce0f8bed863b0a78effc15c42"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4641,7 +4641,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2ab5d2126df805d387fedcf4739ef03230d71fa10573b3f4844184b4683887e2</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · ee83e362d3bc5f4ba3651b35f8983bf7507f775ce0f8bed863b0a78effc15c42</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5758,7 +5758,15 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     canReadRetention?sb.rpc('staff_get_reward_entitlements_v99',{p_business:S.biz.id,p_client:id}):Promise.resolve({data:[]}),
     /* Full history — one unlimited paged fetch drives both the Customer 360 timeline and the
        net-visit/lifetime-spend totals below (the old duplicate 10-row summary query was unused). */
-    canReadSales?fetchAllRows(()=>sb.from('sales').select('*',{count:'exact'}).eq('client_id',id)
+    /* nestly_v518 (owner, Customer 360 screenshot: "quick sale" and "cart checkout (kernel)"
+       circled — "should state item details"). The lines come back with the sale on the SAME
+       round trip through the composite FK PostgREST already knows, so the timeline gains the
+       goods without a second query. The FK is named explicitly because this repo has been bitten
+       by PGRST201 before; sale_items has exactly one FK to sales today, and pinning it means a
+       future second one cannot silently break this read. */
+    canReadSales?fetchAllRows(()=>sb.from('sales')
+      .select('*,sale_items!sale_items_sale_business_fk(description,qty,item_type,created_at)',{count:'exact'})
+      .eq('client_id',id)
       .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})):Promise.resolve({data:[]}),
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
       p_business:S.biz.id,p_client:id
@@ -5872,7 +5880,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       reversal_reason:reversal.reversal_reason||null,reversed_at:reversal.occurred_at
     }:{is_reversal:false,net_amount_cents:Number(s.amount_cents||0)};
     return {...immutableRelation,...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
-      amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null};
+      amount:s.amount_cents,note:s.note,items:s.sale_items||[],staff:staffName[s.staff_id]||null};
   });
   /* V252: the STAFF column is read from the appointment's own staff_id through the same roster
      map the sale rows already use \u2014 the name is never recovered from a display sentence.
@@ -6847,11 +6855,42 @@ function activityWhenTextV267(iso){
   return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',
     hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(at);
 }
+/* nestly_v518: the note the CART KERNEL writes about itself. It is a machine marker, not
+   something a person typed — every one of the 91 rows carrying it on production is a cart
+   checkout, and none of the other notes in the table (till, package, appointment, membership,
+   gift card, reversal reasons) belongs to a sale that has lines. It is suppressed only where the
+   goods are named instead, so nothing a human wrote is ever hidden. */
+const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
+/* nestly_v518 (owner, Customer 360: "quick sale" and "cart checkout (kernel)" circled — "state
+   the item details"). What was actually sold, from the sale's own lines. Quantities are printed
+   only when they are more than one, because "Kopi Set ×1" is noise on every row. Returns '' when
+   the sale carries no lines — a package session, a membership charge, a gift card and an
+   appointment completion all record a single sales row with none, and their notes already say
+   what they are. */
+function activitySaleItemsTextV518(h){
+  const lines=Array.isArray(h&&h.items)?h.items:[];
+  if(!lines.length)return '';
+  return lines.slice()
+    .sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')))
+    .map(line=>{
+      const label=String((line&&line.description)||'').trim();
+      if(!label)return '';
+      const qty=Math.max(0,Math.round(Number(line&&line.qty)||0));
+      return qty>1?`${label} ×${qty}`:label;
+    })
+    .filter(Boolean).join(', ');
+}
 /* The human description of a sale row, used both in its own ITEM cell and when another row has
-   to refer to it. Never an id: the owner cannot act on a UUID. */
+   to refer to it. Never an id: the owner cannot act on a UUID.
+   v517: the goods outrank both the note and the kind word. A cart checkout used to describe
+   itself as "quick sale" here and "cart checkout (kernel)" in its notes — two ways of naming the
+   mechanism and none of naming what the customer bought. This also widens the ITEM search
+   (V270's rule: the filter matches the text the cell prints), so typing "kaya" now finds the
+   sale that contained it. */
 function activityItemTextV267(h){
+  const items=activitySaleItemsTextV518(h);
   const note=String((h&&h.note)||'').trim();
-  const text=note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
+  const text=items||note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
   return text.length>64?text.slice(0,61)+'…':text;
 }
 function activityFilterStateV267(){
@@ -7018,10 +7057,10 @@ function renderHistPage(history,n,offsetV468=0){
       const earnedV375=Number(activityEarnedBySaleV375.get(String(h.id)))||0;
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
         type:activityTypeOfV267(h),
-        item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
+        item:`<span data-merchant-content>${esc(activityItemTextV267(h))}</span>`,
         earned:activityEarnedCellV378(earnedV375),
         notes:[relation,
-          h.note?esc(h.note):'',
+          h.note&&!(activitySaleItemsTextV518(h)&&h.note===SALE_KERNEL_NOTE_V518)?esc(h.note):'',
           h.is_package_session?'Package session · reversal restores one session with no payment refund':'',
           h.reversal_sale_id?`Net ${money(Number(h.net_amount_cents||0))}`:'',
           action],
@@ -8323,7 +8362,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'2ab5d2126df805d387fedcf4739ef03230d71fa10573b3f4844184b4683887e2',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'ee83e362d3bc5f4ba3651b35f8983bf7507f775ce0f8bed863b0a78effc15c42',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

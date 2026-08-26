@@ -5138,7 +5138,11 @@ function customerBusinessGalleryMarkupV418(business={}){
          CHECK, and a payload that carried anything else is still not tappable on a phone.
          The caption is omitted when it would repeat the section heading directly above it. */''}
     ${links.length?`<div class="customer-business-links-v418">
-      ${photos.length?'<p class="customer-business-links-head-v468">Follow us here</p>':''}
+      ${/* nestly_v518 (owner, photo 7: a heart drawn beside "FOLLOW US HERE"). Decorative only —
+           aria-hidden, so a screen reader still reads the caption as "Follow us here" and does not
+           announce "red heart". The caption is uppercased by CSS; the emoji is unaffected by
+           text-transform, so it renders as drawn. */''}
+      ${photos.length?'<p class="customer-business-links-head-v468">Follow us here <span aria-hidden="true">\u2764\uFE0F</span></p>':''}
       ${links.map(item=>`<a class="customer-business-link-v418" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer"><span class="customer-business-link-label-v468">${esc(CUSTOMER_SOCIAL_LABELS_V418[item.platform])}</span><span class="customer-business-link-go-v468" aria-hidden="true">${CUI.icon('forward',{size:16})}</span></a>`).join('')}
     </div>`:''}
   </section>`;

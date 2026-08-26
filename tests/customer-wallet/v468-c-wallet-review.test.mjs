@@ -124,7 +124,7 @@ test('C1 · two photos on the page, the rest behind See all', () => {
 
 test('C1 · the links are a captioned Follow us here block, one row per configured platform', () => {
   const markup = renderGallery({ name: 'Cubbly SPA', gallery: [PHOTO(1)], social_links: LINKS });
-  assert.match(markup, /<p class="customer-business-links-head-v468">Follow us here<\/p>/);
+  assert.match(markup, /<p class="customer-business-links-head-v468">Follow us here <span aria-hidden="true">\u2764\uFE0F<\/span><\/p>/);
   for (const label of ['Website', 'Facebook', 'Instagram'])
     assert.match(markup, new RegExp(`<span class="customer-business-link-label-v468">${label}</span>`));
   assert.equal([...markup.matchAll(/class="customer-business-link-v418"/g)].length, 3,

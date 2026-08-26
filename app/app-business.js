@@ -241,7 +241,7 @@ const NAVGROUPS=[
      here have already", arrowing at the Team performance card on Business Insights. The nav entry
      is gone; the #/staffperf route, its page and that card's link are untouched, so deep links and
      history keep working. activeGroupKey() below maps the route back to this group. */
-  /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L with "delete this").
+  /* nestly_v518 (owner, photo 9: red crosses through Expenses and P&L with "delete this").
      Both come OUT OF THE NAV only — their routes, RPCs, tables and permissions are untouched, so
      nothing a firm has already recorded is lost and re-listing them here is a one-line change if
      the owner wants them back. Deliberately not deleted deeper than the menu: expenses feed the
@@ -4742,7 +4742,15 @@ async function clientDetail(id){
     canReadRetention?sb.rpc('staff_get_reward_entitlements_v99',{p_business:S.biz.id,p_client:id}):Promise.resolve({data:[]}),
     /* Full history — one unlimited paged fetch drives both the Customer 360 timeline and the
        net-visit/lifetime-spend totals below (the old duplicate 10-row summary query was unused). */
-    canReadSales?fetchAllRows(()=>sb.from('sales').select('*',{count:'exact'}).eq('client_id',id)
+    /* nestly_v518 (owner, Customer 360 screenshot: "quick sale" and "cart checkout (kernel)"
+       circled — "should state item details"). The lines come back with the sale on the SAME
+       round trip through the composite FK PostgREST already knows, so the timeline gains the
+       goods without a second query. The FK is named explicitly because this repo has been bitten
+       by PGRST201 before; sale_items has exactly one FK to sales today, and pinning it means a
+       future second one cannot silently break this read. */
+    canReadSales?fetchAllRows(()=>sb.from('sales')
+      .select('*,sale_items!sale_items_sale_business_fk(description,qty,item_type,created_at)',{count:'exact'})
+      .eq('client_id',id)
       .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})):Promise.resolve({data:[]}),
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
       p_business:S.biz.id,p_client:id
@@ -4856,7 +4864,7 @@ async function clientDetail(id){
       reversal_reason:reversal.reversal_reason||null,reversed_at:reversal.occurred_at
     }:{is_reversal:false,net_amount_cents:Number(s.amount_cents||0)};
     return {...immutableRelation,...(saleWorkflow[s.id]||{}),t:s.occurred_at,kind:'sale',id:s.id,saleKind:s.kind,
-      amount:s.amount_cents,note:s.note,staff:staffName[s.staff_id]||null};
+      amount:s.amount_cents,note:s.note,items:s.sale_items||[],staff:staffName[s.staff_id]||null};
   });
   /* V252: the STAFF column is read from the appointment's own staff_id through the same roster
      map the sale rows already use \u2014 the name is never recovered from a display sentence.
@@ -5831,11 +5839,42 @@ function activityWhenTextV267(iso){
   return new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',
     hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(at);
 }
+/* nestly_v518: the note the CART KERNEL writes about itself. It is a machine marker, not
+   something a person typed — every one of the 91 rows carrying it on production is a cart
+   checkout, and none of the other notes in the table (till, package, appointment, membership,
+   gift card, reversal reasons) belongs to a sale that has lines. It is suppressed only where the
+   goods are named instead, so nothing a human wrote is ever hidden. */
+const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
+/* nestly_v518 (owner, Customer 360: "quick sale" and "cart checkout (kernel)" circled — "state
+   the item details"). What was actually sold, from the sale's own lines. Quantities are printed
+   only when they are more than one, because "Kopi Set ×1" is noise on every row. Returns '' when
+   the sale carries no lines — a package session, a membership charge, a gift card and an
+   appointment completion all record a single sales row with none, and their notes already say
+   what they are. */
+function activitySaleItemsTextV518(h){
+  const lines=Array.isArray(h&&h.items)?h.items:[];
+  if(!lines.length)return '';
+  return lines.slice()
+    .sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')))
+    .map(line=>{
+      const label=String((line&&line.description)||'').trim();
+      if(!label)return '';
+      const qty=Math.max(0,Math.round(Number(line&&line.qty)||0));
+      return qty>1?`${label} ×${qty}`:label;
+    })
+    .filter(Boolean).join(', ');
+}
 /* The human description of a sale row, used both in its own ITEM cell and when another row has
-   to refer to it. Never an id: the owner cannot act on a UUID. */
+   to refer to it. Never an id: the owner cannot act on a UUID.
+   v517: the goods outrank both the note and the kind word. A cart checkout used to describe
+   itself as "quick sale" here and "cart checkout (kernel)" in its notes — two ways of naming the
+   mechanism and none of naming what the customer bought. This also widens the ITEM search
+   (V270's rule: the filter matches the text the cell prints), so typing "kaya" now finds the
+   sale that contained it. */
 function activityItemTextV267(h){
+  const items=activitySaleItemsTextV518(h);
   const note=String((h&&h.note)||'').trim();
-  const text=note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
+  const text=items||note||String((h&&h.saleKind)||'sale').replace(/_/g,' ');
   return text.length>64?text.slice(0,61)+'…':text;
 }
 function activityFilterStateV267(){
@@ -6002,10 +6041,10 @@ function renderHistPage(history,n,offsetV468=0){
       const earnedV375=Number(activityEarnedBySaleV375.get(String(h.id)))||0;
       return {tone:isRev?'reversal':'sale',icon:isRev?'retention':'sales',
         type:activityTypeOfV267(h),
-        item:`<span data-merchant-content>${esc((h.saleKind||'sale').replace('_',' '))}</span>`,
+        item:`<span data-merchant-content>${esc(activityItemTextV267(h))}</span>`,
         earned:activityEarnedCellV378(earnedV375),
         notes:[relation,
-          h.note?esc(h.note):'',
+          h.note&&!(activitySaleItemsTextV518(h)&&h.note===SALE_KERNEL_NOTE_V518)?esc(h.note):'',
           h.is_package_session?'Package session · reversal restores one session with no payment refund':'',
           h.reversal_sale_id?`Net ${money(Number(h.net_amount_cents||0))}`:'',
           action],
@@ -32604,7 +32643,7 @@ function customerInterfaceSampleRewardRowsV326(rewardUnit){
     <div class="wallet-rewards">${sample.map(r=>`<article class="wallet-reward">
       <div class="row"><b class="wallet-reward-trade"><span class="wallet-reward-cost">${esc(customerPointTotalV103(r.cost))} ${esc(customerUnitNounV429(r.unit||rewardUnit,r.cost))}</span><span class="wallet-reward-arrow" aria-hidden="true">→</span><span>${esc(r.name)}</span></b><span class="spacer"></span>${r.ready?'<span class="pill ok">Ready</span>':''}</div>
       <p class="small" style="margin-top:9px">Available at counter</p>
-      ${/* nestly_v517 (owner, photo 8: both preview buttons struck through, "remove this"). This
+      ${/* nestly_v518 (owner, photo 8: both preview buttons struck through, "remove this"). This
            is a PREVIEW of what the customer sees, and the button here was permanently disabled —
            it could never be pressed, so it taught the owner nothing and read as a broken control
            sitting under their own branding. The lede above already says how redemption works. The
