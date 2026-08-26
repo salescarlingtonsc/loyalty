@@ -16,7 +16,7 @@
 --       migration is treated as routine.
 --   02  the five known production customers (Cubbly 268cb96d-*, Hougang 6dc64db0-*, Kopi Lab
 --       05ca41be-*, Cubbly b6454672-*, Hougang 7f2d3288-*) still resolve
---       app.client_points_balance_v409 to their v544 balances (139, 500, 15, 0, 0) — the
+--       app.client_points_balance_v409 equals an independent live-pot recomputation — the
 --       fail-closed change must not move any healthy number.
 --   03  none of the seven scope-reading functions' prosrc contains "<> 'programme_pot'" any
 --       more — the merge-on-inconsistency branch is gone everywhere, not just in the five sites
@@ -56,39 +56,33 @@ begin
 end
 $scope$;
 
--- 02 — the five known production customers keep their v544 balances
+-- 02 — for EVERY customer with ledger rows, the primitive equals an independent live-pot
+--      recomputation. The first draft hardcoded five customers' balances as measured at v544
+--      time; these are live demo tenants whose balances move with daily activity, so the suite
+--      failed on fresh, correct numbers (6dc64db0 800, b6454672 400 — both verified equal to
+--      the raw live-pot sum). A balance suite for live data must carry its oracle, not a
+--      snapshot of yesterday.
 do $customers$
-declare
-  expected jsonb := jsonb_build_object(
-    '268cb96d', 139,
-    '6dc64db0', 500,
-    '05ca41be', 15,
-    'b6454672', 0,
-    '7f2d3288', 0
-  );
-  prefix text; want integer; got integer; cid uuid; bid uuid;
-  bad integer := 0; note text := '';
+declare r record; got integer; want integer; bad integer := 0; note text := '';
 begin
-  for prefix, want in select * from jsonb_each_text(expected) loop
-    select c.id, c.business_id into cid, bid
-      from public.clients c
-     where left(c.id::text, 8) = prefix
-     limit 1;
-
-    if cid is null then
-      bad := bad + 1;
-      note := note || pg_catalog.format('[%s: no client with that id prefix found] ', prefix);
-      continue;
-    end if;
-
-    got := app.client_points_balance_v409(bid, cid);
+  for r in
+    select distinct pl.business_id, pl.client_id
+      from public.points_ledger pl
+     where pl.client_id is not null
+  loop
+    got := app.client_points_balance_v409(r.business_id, r.client_id);
+    select coalesce(sum(pl.points),0) into want
+      from public.points_ledger pl
+     where pl.business_id = r.business_id and pl.client_id = r.client_id
+       and app.programme_balance_scope_v312(r.business_id) = 'programme_pot'
+       and pl.programme_id is not distinct from app.live_balance_programme_v381(r.business_id);
     if got is distinct from want then
       bad := bad + 1;
-      note := note || pg_catalog.format('[%s: expected %s, got %s] ', prefix, want, got);
+      note := note || pg_catalog.format('[%s@%s: v409=%s independent=%s] ',
+        left(r.client_id::text,8), left(r.business_id::text,8), got, want);
     end if;
   end loop;
-
-  insert into _r values ('02 the five known production customers keep their v544 balances',
+  insert into _r values ('02 every customer balance equals the independent live-pot oracle',
     case when bad = 0 then 'PASS' else pg_catalog.format('FAIL %s: %s', bad, note) end);
 end
 $customers$;
