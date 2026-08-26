@@ -2668,6 +2668,12 @@
       "version": "20260827000008",
       "name": "nestly_v551_top_share_denominator",
       "sourcePath": "db/migrations/20260827_nestly_v551_top_share_denominator.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000009",
+      "name": "nestly_v552_gated_evidence_isolation",
+      "sourcePath": "db/migrations/20260827_nestly_v552_gated_evidence_isolation.sql"
     }
   ]
 }

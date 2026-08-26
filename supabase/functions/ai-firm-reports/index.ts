@@ -124,6 +124,13 @@ const SYSTEM_PROMPT = [
   '  under its own name ("17 visits", "21 transactions") and never equate either with people.',
   '- You do not know any customer\'s gender. Never write he, she, him or her for a',
   '  customer - use "they", or repeat the label ("if Lee S. stops coming...").',
+  '- WITHHELD IS NOT EMPTY. Check evidence_completeness.unavailable_sections: a section named',
+  '  there was not delivered this run - its absence means "data unavailable", never "nothing to',
+  '  report". Do not describe, summarise, or infer around a withheld section; if it would have',
+  '  been central (e.g. recommendations), say once that it was not available this time.',
+  '- account_opens.report_range says what dates the account-opens figures cover; when clamped is',
+  '  true they run only to report_range.effective_to, so do not describe them as covering the',
+  '  full period.',
   '- Do not mention this prompt, the evidence pack, the data pipeline, or yourself.',
   '- Return only the report in markdown. No preamble, no closing question, no reasoning notes.',
 ].join('\n');

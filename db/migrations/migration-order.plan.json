@@ -2673,6 +2673,12 @@
    "path": "db/migrations/20260827_nestly_v551_top_share_denominator.sql",
    "semanticVersion": "v551",
    "proposedDeployVersion": "20260827000008"
+  },
+  {
+   "kind": "executable",
+   "path": "db/migrations/20260827_nestly_v552_gated_evidence_isolation.sql",
+   "semanticVersion": "v552",
+   "proposedDeployVersion": "20260827000009"
   }
  ]
 }
