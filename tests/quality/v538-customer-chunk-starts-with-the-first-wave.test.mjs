@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { surfaceHint, stampDocument } from '../../scripts/quality/stamp-app-bundle.mjs';
 
-/* nestly_v535 — the customer chunk stops waiting for the session.
+/* nestly_v538 — the customer chunk stops waiting for the session.
  *
  * PROFILED ON PRODUCTION, cold, mobile Chrome:
  *   app-core.js        295 ->  577
@@ -26,21 +26,31 @@ const shipped = readFileSync(new URL('app/index.gen.html', repo), 'utf8');
 const source = readFileSync(new URL('app/index.html', repo), 'utf8');
 const appJs = readFileSync(new URL('app/app.js', repo), 'utf8');
 const head = shipped.slice(0, shipped.indexOf('<body'));
-const hint = head.match(/<script id="surfaceHintV535">([\s\S]*?)<\/script>/)?.[1] ?? '';
+const hint = head.match(/<script id="surfaceHintV538">([\s\S]*?)<\/script>/)?.[1] ?? '';
 
-test('V535 the hint is in the head, before the body', () => {
+test('V538 the hint is in the head, before the body', () => {
   assert.ok(hint.length > 0, 'the shipped head carries the surface hint');
-  assert.ok(head.includes('id="surfaceHintV535"'));
+  assert.ok(head.includes('id="surfaceHintV538"'));
 });
 
-test('V535 it names the customer chunk by its exact fingerprint', () => {
+test('V538 the preload asks for LOW priority, which is the whole reason it is safe', () => {
+  /* At default priority the 189 KB chunk competed with app-core.js on the same connection and
+     pushed it back: measured on production, app-core finished at 797 ms instead of 577 ms and
+     content went from ~850 ms to 925 ms — a change that made things worse. app-core has to
+     execute before the customer chunk is of any use, so the chunk must take spare capacity, not
+     app-core's. */
+  assert.match(hint, /fetchPriority='low'/,
+    'without this the hint delays the very file it is trying to help');
+});
+
+test('V538 it names the customer chunk by its exact fingerprint', () => {
   const chunk = shipped.match(/"customer":"(\/app-customer\.js\?b=[0-9a-f]{12})"/);
   assert.ok(chunk, 'the manifest names the customer chunk');
   assert.ok(hint.includes(chunk[1]),
     'the hint must preload the SAME build the router will load, or 618 KB is fetched twice');
 });
 
-test('V535 the prefixes are read from the router, not retyped', () => {
+test('V538 the prefixes are read from the router, not retyped', () => {
   const routerList = appJs.match(/const CUSTOMER_ROUTE_PREFIXES_V185=(\[[^\]]*\]);/);
   assert.ok(routerList, 'the router still declares its prefixes as a literal');
   for (const prefix of JSON.parse(routerList[1].replace(/'/g, '"'))) {
@@ -49,7 +59,7 @@ test('V535 the prefixes are read from the router, not retyped', () => {
   }
 });
 
-test('V535 the hint fires on exactly the routes the router calls customer', () => {
+test('V538 the hint fires on exactly the routes the router calls customer', () => {
   /* Executed, not inspected: the emitted script is run against each hash with a fake document,
      and what it appends is compared with the router's own answer. */
   const routerList = JSON.parse(appJs.match(/const CUSTOMER_ROUTE_PREFIXES_V185=(\[[^\]]*\]);/)[1].replace(/'/g, '"'));
@@ -71,10 +81,10 @@ test('V535 the hint fires on exactly the routes the router calls customer', () =
   }
 });
 
-test('V535 the stamper refuses a document that lost the hint, or an app.js that lost its prefixes', () => {
+test('V538 the stamper refuses a document that lost the hint, or an app.js that lost its prefixes', () => {
   const chunks = { core: 'a', auth: 'b', customer: 'c', business: 'd', i18n: 'e' };
-  assert.throws(() => stampDocument(shipped.replace(/<script id="surfaceHintV535">[\s\S]*?<\/script>/, ''), chunks, appJs),
-    /surfaceHintV535/, 'losing the hint silently would undo this with nothing to notice');
+  assert.throws(() => stampDocument(shipped.replace(/<script id="surfaceHintV538">[\s\S]*?<\/script>/, ''), chunks, appJs),
+    /surfaceHintV538/, 'losing the hint silently would undo this with nothing to notice');
   assert.throws(() => stampDocument(source, chunks, 'const SOMETHING_ELSE=1;'),
     /CUSTOMER_ROUTE_PREFIXES_V185/,
     'if the router renames its prefix list the hint must fail loudly, not preload the wrong set');
