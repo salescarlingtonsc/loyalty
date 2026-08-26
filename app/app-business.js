@@ -28429,9 +28429,9 @@ async function customerIntelligencePage(){
       <p class="muted small" style="margin-top:12px">These rows cover identified customers only. They do not represent anonymous or total business revenue.</p>
       ${errorMarkup}
       ${lastCustomerError?'':`<div class="grid reports-grid" style="margin-top:16px">${forecastMarkup(data?.forecast||{},currency)}</div>
-      <section style="margin-top:16px"><div class="row"><div><h2>Identified customer records</h2><p class="muted small" style="margin-top:4px">Purchase, visit and linked-customer revenue facts open into the customer’s complete ledger.</p></div><span class="spacer"></span><span class="pill">${workspaceTemplateHtmlV97(completedCount===1?'completedTransaction':'completedTransactions',{count:completedCount})}</span></div>
+      <section style="margin-top:16px"><div class="row"><div><h2>Identified customer records</h2><p class="muted small" style="margin-top:4px">Purchase, visit and linked-customer revenue facts open into the customer’s complete ledger. <b>Paid visits</b> counts only visits that charged an amount, so it is deliberately lower than the Dashboard’s <b>Valid visits</b>, which also counts zero-price visits such as package sessions.</p></div><span class="spacer"></span><span class="pill">${workspaceTemplateHtmlV97(completedCount===1?'completedTransaction':'completedTransactions',{count:completedCount})}</span></div>
         ${data?.pagination?.has_more?`<div class="imp-note small"><div class="row"><span>${workspaceTemplateHtmlV97('scopeCustomers',{shown:customers.length,total:Number(data.pagination.total_customers||0)})}</span><span class="spacer"></span><button class="btn ghost sm" id="ciMore">Load more customers</button></div></div>`:''}
-        ${customers.length?`<div class="cui-table-wrap" role="region" aria-label="Identified customer records"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Repeat this period</th><th>Purchases</th><th>Visits</th><th>Identified customer revenue</th><th>Cash collected</th><th>Frequency</th><th>Last purchase</th><th></th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer"><b>${esc(customer.full_name||'Customer')}</b><br><span class="muted small">${esc(customer.phone||customer.email||'No contact shown')}</span></td><td data-label="Repeat this period"><span class="pill ${Number(customer.purchase_count||0)>=2?'ok':'off'}">${Number(customer.purchase_count||0)>=2?'2+ purchases':'Fewer than 2'}</span></td><td data-label="Purchases">${Number(customer.purchase_count||0)}</td><td data-label="Visits">${Number(customer.visit_count||0)}</td><td data-label="Identified customer revenue"><b>${esc(scopeMoney(customer.net_revenue_cents,currency))}</b></td><td data-label="Cash collected">${esc(scopeMoney(customer.cash_collected_cents,currency))}</td><td data-label="Frequency">${esc(frequency(customer.average_days_between_purchases))}</td><td data-label="Last purchase">${esc(customer.last_purchase_at?walletDate(customer.last_purchase_at,true):'No completed purchase')}</td><td data-label="Record"><a class="btn ghost sm" href="#/client/${encodeURIComponent(customer.client_id)}">Open ledger</a></td></tr>`).join('')}</tbody></table></div>`
+        ${customers.length?`<div class="cui-table-wrap" role="region" aria-label="Identified customer records"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Repeat this period</th><th>Purchases</th><th>Paid visits</th><th>Identified customer revenue</th><th>Cash collected</th><th>Frequency</th><th>Last purchase</th><th></th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer"><b>${esc(customer.full_name||'Customer')}</b><br><span class="muted small">${esc(customer.phone||customer.email||'No contact shown')}</span></td><td data-label="Repeat this period"><span class="pill ${Number(customer.purchase_count||0)>=2?'ok':'off'}">${Number(customer.purchase_count||0)>=2?'2+ purchases':'Fewer than 2'}</span></td><td data-label="Purchases">${Number(customer.purchase_count||0)}</td><td data-label="Paid visits">${Number(customer.visit_count||0)}</td><td data-label="Identified customer revenue"><b>${esc(scopeMoney(customer.net_revenue_cents,currency))}</b></td><td data-label="Cash collected">${esc(scopeMoney(customer.cash_collected_cents,currency))}</td><td data-label="Frequency">${esc(frequency(customer.average_days_between_purchases))}</td><td data-label="Last purchase">${esc(customer.last_purchase_at?walletDate(customer.last_purchase_at,true):'No completed purchase')}</td><td data-label="Record"><a class="btn ghost sm" href="#/client/${encodeURIComponent(customer.client_id)}">Open ledger</a></td></tr>`).join('')}</tbody></table></div>`
           :'<div class="empty">No completed sales linked to an identified customer in this scope yet.</div>'}
         <div id="ciExportStatus" role="status" aria-live="polite"></div>
       </section>`}
@@ -28453,7 +28453,23 @@ async function customerIntelligencePage(){
         {expectedBranchId:selectedBranchId||null}
       )
       :'';
-    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${window.NestlySectorEconomics.render(economicsView)}${customerRecordsMarkup(data)}`;
+    /* nestly_v522 (owner ruling 2026-08-26: "do not expose an evidence-gated placeholder as half
+       of a newly enabled module"). Sector Economics stays behind the platform flag
+       `economics_driver_policy_v109`, which is OFF in production — its three RPCs refuse with
+       0A000 before touching data, and not one of their numbers has ever been reconciled. While
+       that is true the section is not rendered AT ALL, rather than rendering its honest
+       "not enabled yet" card: a placeholder occupying a third of the screen is worse than an
+       absence on a module a tenant has just been given. The moment the flag is turned on the
+       RPCs stop refusing, this returns false, and the section appears with no further change —
+       and turning the flag on requires reconciling it first, plus adding it to
+       db/tests/executed/v422_customer_intelligence_scale.sql. */
+    const economicsGatedOffV522=(lastEconomicsBundle?.errors||[]).some(error=>
+      String(error?.code||'')==='0A000'
+      ||/economics and sector policy is not enabled/i.test(String(error?.message||'')));
+    const economicsMarkupV522=economicsGatedOffV522
+      ?''
+      :window.NestlySectorEconomics.render(economicsView);
+    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -28656,7 +28672,7 @@ async function customerIntelligencePage(){
     }
     if(!customers.length){button.disabled=false;button.textContent='Export customers CSV';return toast('No customer records to export')}
     const scope=lastPayload.scope||{};
-    const rows=[['customer','phone','email','returning','purchase_count','visit_count','net_revenue','cash_collected','average_revenue_per_purchase','average_days_between_purchases','first_purchase_at','last_purchase_at','days_since_last_purchase','branches_visited'],
+    const rows=[['customer','phone','email','returning','purchase_count','paid_visit_count','net_revenue','cash_collected','average_revenue_per_purchase','average_days_between_purchases','first_purchase_at','last_purchase_at','days_since_last_purchase','branches_visited'],
       ...customers.map(customer=>[
         customer.full_name||'',customer.phone||'',customer.email||'',customer.returning_customer?'yes':'no',
         customer.purchase_count||0,customer.visit_count||0,(Number(customer.net_revenue_cents||0)/100).toFixed(2),
@@ -31093,7 +31109,7 @@ async function settingsPage(){
         <span class="spacer"></span><select id="modulePerm-${s.id}-${module}" data-staff-module="${module}" data-perm-state-v382="${value==='off'?'off':'on'}" class="module-perm-select-v382" onchange="setModulePermissionV74('${s.id}','${module}',this.value)" ${sel.mode==='inherit'||financeDisabled?'disabled':''} style="width:auto;min-width:105px;padding:7px 30px 7px 10px">
           <option value="off" ${value==='off'?'selected':''}>Off</option><option value="r" ${value==='r'?'selected':''}>Read</option><option value="rw" ${value==='rw'?'selected':''}>Edit</option>
         </select>
-        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L and Staff performance require a finance-capable role.</span>`:''}
+        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L, Staff performance and Customer intelligence require a finance-capable role.</span>`:''}
       </div>`;
     }).join('');
   }
@@ -31386,7 +31402,7 @@ async function settingsPage(){
     if(error){fail(error);await loadTeam();return}
     const removedFinance=['expenses','pnl'].filter(module=>!Object.hasOwn(data?.module_perms||{},module));
     permissionStatusByStaff[id]=removedFinance.length&&['staff','frontdesk'].includes(role)
-      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L and Staff performance were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
+      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff performance and Customer intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
       :'<div class="imp-note small">Role updated and effective module access refreshed.</div>';
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();

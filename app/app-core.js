@@ -271,7 +271,14 @@ const ROLE_CAPABILITIES={
    consult sites (the route guard and the nav filter) stay in place so a future packaging decision
    has one deny-list to fill instead of two hard-coded checks. */
 const HIDDEN_BUSINESS_SURFACES=new Set([]);
-const FINANCE_MODULES=new Set(['expenses','pnl','staffperf']);
+/* nestly_v522: customerintel joins the finance set. Both surfaces behind it —
+   get_revenue_truth_v106 and get_customer_intelligence_v83 — raise 42501 without
+   app.has_perm(business,'view_finance'), which only owner, manager and bookkeeper hold.
+   Without this entry the rail offered the row to an entitled staff/frontdesk user and the
+   page then failed with a raw permission error: the UI entitlement and the server
+   capability model disagreed. Verified against production 2026-08-26 by calling both RPCs
+   as a real frontdesk user — both refused. */
+const FINANCE_MODULES=new Set(['expenses','pnl','staffperf','customerintel']);
 const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)

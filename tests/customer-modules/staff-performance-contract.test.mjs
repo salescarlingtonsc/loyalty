@@ -11,10 +11,18 @@ function section(start,end){
 }
 
 test('Staff performance is hidden from roles without the finance capability',()=>{
-  assert.match(app,/const FINANCE_MODULES=new Set\(\['expenses','pnl','staffperf'\]\)/);
+  /* nestly_v522: this pinned the exact membership literal, so adding a fourth finance module
+     failed it for the wrong reason. What the test is actually about is that staffperf is
+     finance-gated, so it asserts membership and leaves the set free to grow. */
+  const financeSet=app.match(/const FINANCE_MODULES=new Set\(\[([^\]]*)\]\)/);
+  assert.ok(financeSet,'FINANCE_MODULES is no longer a Set literal');
+  const members=financeSet[1].split(',').map(entry=>entry.trim().replace(/^'|'$/g,''));
+  for(const required of ['expenses','pnl','staffperf'])assert.ok(members.includes(required),
+    `${required} must stay finance-gated`);
   const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
-  assert.match(settings,/Expenses, P&amp;L and Staff performance require a finance-capable role/);
-  assert.match(settings,/Expenses, P&amp;L and Staff performance were removed because/);
+  /* The copy has to name every module the role actually loses, or it under-reports the change. */
+  assert.match(settings,/Expenses, P&amp;L, Staff performance and Customer intelligence require a finance-capable role/);
+  assert.match(settings,/Expenses, P&amp;L, Staff performance and Customer intelligence were removed because/);
 });
 
 test('Staff performance uses Singapore calendar boundaries and an exclusive end instant',()=>{

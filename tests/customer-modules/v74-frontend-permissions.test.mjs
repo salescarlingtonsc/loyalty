@@ -75,7 +75,9 @@ test('Team permissions initialize from module_perms and render Off Read Edit rat
   assert.match(settings,/Inherit all enabled modules/);
   assert.match(settings,/Set Off \/ Read \/ Edit explicitly/);
   assert.match(settings,/<option value="off"[\s\S]*>Off<\/option><option value="r"[\s\S]*>Read<\/option><option value="rw"[\s\S]*>Edit<\/option>/);
-  assert.match(settings,/Unavailable for \$\{esc\(ROLE_LABELS\[s\.role\]\|\|s\.role\)\}: Expenses, P&amp;L and Staff performance require a finance-capable role/);
+  /* nestly_v522: customerintel joined FINANCE_MODULES, so the copy names four modules. It has
+     to list every module the role actually loses, or it under-reports the consequence. */
+  assert.match(settings,/Unavailable for \$\{esc\(ROLE_LABELS\[s\.role\]\|\|s\.role\)\}: Expenses, P&amp;L, Staff performance and Customer intelligence require a finance-capable role/);
   assert.doesNotMatch(section('function modulePermissionGridHtml','function modPanelHtml'),/type="checkbox"/);
   assert.match(settings,/enabledAssignableModules[\s\S]*!OWNER_ONLY_MODULES\.has\(module\)/);
 });
@@ -102,7 +104,7 @@ test('role changes use v74 atomically and explain finance removal',()=>{
   const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
   assert.match(settings,/set_staff_role_v74',\{p_staff:id,p_role:role\}/);
   assert.match(settings,/if\(error\)\{fail\(error\);await loadTeam\(\);return\}/);
-  assert.match(settings,/Expenses, P&amp;L and Staff performance were removed because/);
+  assert.match(settings,/Expenses, P&amp;L, Staff performance and Customer intelligence were removed because/);
   assert.doesNotMatch(settings,/from\('staff'\)\.update\(\{role\}/);
 });
 

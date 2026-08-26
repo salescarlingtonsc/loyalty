@@ -370,7 +370,11 @@
     const identifiedHelper=truth.coverage.identityRevenuePct===null
       ?'Linked customer coverage cannot be calculated yet.'
       :'Revenue linked to a verified or known customer record.';
-    const anonymousHelper=truth.totals.anonymousRevenueCents===null
+    /* nestly_v522: this tested anonymousRevenueCents, a key buildViewModel never sets — it
+       sets anonymousRevenueMinor — so the "not supplied" branch was unreachable and a
+       missing figure was captioned as though it were a real recorded zero. The VALUE was
+       always honest (money(null) renders "Not available"); only the caption was wrong. */
+    const anonymousHelper=truth.totals.anonymousRevenueMinor===null
       ?'Unattributed revenue has not been supplied by the current contract.'
       :'Recorded revenue with no linked customer identity.';
     const coverageHelper=truth.coverage.identityRevenuePct===null
@@ -390,23 +394,33 @@
     </section>`;
   }
 
+  /* nestly_v522 — ONE canonical lifecycle presentation, and this is not it.
+     This block used to render five metric cards (existing returning, repeat purchasers,
+     reactivated, existing share, repeat rate) from get_customer_lifecycle_v107 — the exact same
+     RPC and the exact same metrics that Business Insights -> Customer Retention already renders,
+     but laid out differently and without the period-on-period comparison that tab carries. Two
+     visually different answers backed by one RPC is how a product ends up unable to say which
+     screen is right, so the full feature stays in Business Insights and Customer Intelligence
+     keeps a one-line summary plus the way there.
+     Anti-fabrication is unchanged: a null denominator says so instead of printing a zero. */
   function lifecycleMarkup(view){
     if(view.state==='permission'||view.state==='branch')return '';
-    const lifecycle=view.lifecycle,metrics=lifecycle.metrics;
-    const value=number=>number===null?'Not enough data':String(number);
-    const identifiedDenominator=metrics.transactingIdentifiedCustomers===null
-      ?'The identified-customer denominator was not supplied.'
-      :`Out of ${metrics.transactingIdentifiedCustomers} identified customers who purchased in this period.`;
+    const metrics=view.lifecycle.metrics;
+    const returned=metrics.existingReturningCustomers;
+    const transacting=metrics.transactingIdentifiedCustomers;
+    const summary=(returned===null||transacting===null||transacting===0)
+      ?'Not enough data to describe returning customers for this period.'
+      :`${returned} of ${transacting} identified customers who purchased in this period had bought before.`;
+    const rate=percentage(metrics.repeatInPeriodRatePct);
+    const rateLine=rate==='Not enough data'
+      ?'Repeat purchase rate: not enough data.'
+      :`Repeat purchase rate this period: ${rate}.`;
     return `<section class="revenue-truth-section" aria-labelledby="customerMeaningHeading">
-      <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Exact customer meanings</span>
+      <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Customer behaviour</span>
       <h2 id="customerMeaningHeading">Who came back</h2></div></div>
-      <div class="revenue-lifecycle-grid">
-        ${metricCard('Existing customers who returned',value(metrics.existingReturningCustomers),lifecycle.definitions.existingReturning)}
-        ${metricCard('Repeat purchasers this period',value(metrics.repeatPurchasersInPeriod),lifecycle.definitions.repeatInPeriod)}
-        ${metricCard('Reactivated customers',value(metrics.reactivatedCustomers),lifecycle.definitions.reactivated)}
-        ${metricCard('Existing customer share',percentage(metrics.existingCustomerSharePct),identifiedDenominator)}
-        ${metricCard('Repeat purchase rate this period',percentage(metrics.repeatInPeriodRatePct),identifiedDenominator)}
-      </div>
+      <p class="revenue-truth-lifecycle-summary">${escapeHtml(summary)} ${escapeHtml(rateLine)}</p>
+      <p class="revenue-truth-crosslink"><a href="#/reports">Full retention analysis, including the
+      comparison with the previous period, is in Business Insights &rarr; Customer Retention</a></p>
     </section>`;
   }
 

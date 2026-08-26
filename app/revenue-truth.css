@@ -91,8 +91,7 @@
   line-height:1.5;
   text-align:right;
 }
-.revenue-truth-metrics,
-.revenue-lifecycle-grid{
+.revenue-truth-metrics{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
   gap:10px;
@@ -315,9 +314,18 @@
   line-height:1.45;
 }
 
+/* nestly_v522: the lifecycle block is now a one-line canonical summary plus the way to the
+   full retention analysis in Business Insights, not a second grid of the same five metrics. */
+.revenue-truth-lifecycle-summary{
+  margin:12px 0 0;
+  color:var(--rt-ink,inherit);
+  max-width:68ch;
+}
+.revenue-truth-crosslink{margin:8px 0 0;font-size:.92em}
+.revenue-truth-crosslink a{color:inherit;text-underline-offset:3px}
+
 @media(max-width:900px){
   .revenue-truth-metrics,
-  .revenue-lifecycle-grid,
   .revenue-opportunity-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:620px){
@@ -331,7 +339,6 @@
   .revenue-opportunity--withheld{align-items:flex-start;flex-direction:column}
   .revenue-truth-asof{text-align:left}
   .revenue-truth-metrics,
-  .revenue-lifecycle-grid,
   .revenue-opportunity-facts,
   .revenue-opportunity-evidence ul{grid-template-columns:1fr}
   .revenue-truth-metric{min-height:0}

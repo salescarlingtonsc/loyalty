@@ -155,13 +155,23 @@ test('SQL null and blank fields stay unavailable instead of coercing to zero',()
   assert.doesNotMatch(html,/Existing customer share<\/span><strong>0%/);
 });
 
-test('uses exact returning meanings instead of the ambiguous Returning label',()=>{
+test('states the returning meaning exactly, and defers the full analysis to Business Insights',()=>{
+  /* nestly_v522 consolidation. This block used to render five lifecycle metric cards from
+     get_customer_lifecycle_v107 — the same RPC and the same metrics that Business Insights ->
+     Customer Retention renders, but laid out differently and without its period-on-period
+     comparison. Two visually different answers from one RPC is exactly the ambiguity this test
+     was written to prevent, so the cards are gone and a one-line summary points at the canonical
+     screen. The original intent is unchanged and still asserted: say precisely what "returned"
+     means, and never fall back on the bare "Returning customers" label. */
   const html=UI.render(UI.buildViewModel({truth:truth(),lifecycle:lifecycle(),briefing:briefing()}));
-  assert.match(html,/Existing customers who returned/);
-  assert.match(html,/Bought before this period and bought again during it/);
-  assert.match(html,/Repeat purchasers this period/);
-  assert.match(html,/Made at least two eligible purchases inside this period/);
+  assert.match(html,/identified customers who purchased in this period had bought before/);
+  assert.match(html,/Repeat purchase rate this period/);
+  assert.match(html,/href="#\/reports"/);
+  assert.match(html,/Business Insights &rarr; Customer Retention/);
   assert.doesNotMatch(html,/>Returning customers</);
+  /* The duplicated cards must not come back. */
+  assert.doesNotMatch(html,/Reactivated customers/);
+  assert.doesNotMatch(html,/Existing customer share/);
 });
 
 test('one ranked bring-back opportunity shows evidence, data quality, cost and a governed owner mount',()=>{

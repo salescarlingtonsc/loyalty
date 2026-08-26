@@ -97,7 +97,8 @@ test('V272 (C) the #/staffperf route and the Team performance card link both sur
   assert.match(js, /href="#\/staffperf">← Staff performance/);
   // Module metadata and permission wiring are untouched, so the route stays authorisable.
   assert.match(js, /staffperf:\['staff','Staff performance'\]/);
-  assert.match(js, /const FINANCE_MODULES=new Set\(\['expenses','pnl','staffperf'\]\)/);
+  /* nestly_v522: membership, not the exact literal — customerintel joined the set. */
+  assert.match(js, /const FINANCE_MODULES=new Set\(\[[^\]]*'staffperf'[^\]]*\]\)/);
   // With no nav entry of its own the rail still lights its group rather than going blank.
   assert.match(js, /pageKey==='staffperf'\?'reports'/);
 });
