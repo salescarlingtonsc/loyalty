@@ -408,13 +408,19 @@
     const metrics=view.lifecycle.metrics;
     const returned=metrics.existingReturningCustomers;
     const transacting=metrics.transactingIdentifiedCustomers;
+    /* nestly_v526: both halves must carry their MEANING, not just their number. Seen live on
+       2026-08-26: "0 of 6 ... had bought before. Repeat purchase rate this period: 66.7%" reads as
+       a contradiction, and is not one — nobody bought BEFORE the window (so 0 returned) while four
+       of six bought twice INSIDE it (so 66.7% repeat). The five cards this replaced each carried a
+       definition; condensing them dropped those, which is the one thing the block existed to
+       prevent. The wording now states each window explicitly. */
     const summary=(returned===null||transacting===null||transacting===0)
       ?'Not enough data to describe returning customers for this period.'
-      :`${returned} of ${transacting} identified customers who purchased in this period had bought before.`;
+      :`${returned} of ${transacting} identified customers who purchased in this period had also bought before it.`;
     const rate=percentage(metrics.repeatInPeriodRatePct);
     const rateLine=rate==='Not enough data'
-      ?'Repeat purchase rate: not enough data.'
-      :`Repeat purchase rate this period: ${rate}.`;
+      ?'How many bought twice within the period: not enough data.'
+      :`${rate} of them made two or more purchases within the period itself.`;
     return `<section class="revenue-truth-section" aria-labelledby="customerMeaningHeading">
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Customer behaviour</span>
       <h2 id="customerMeaningHeading">Who came back</h2></div></div>

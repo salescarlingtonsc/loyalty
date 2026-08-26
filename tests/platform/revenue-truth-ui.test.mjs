@@ -164,8 +164,8 @@ test('states the returning meaning exactly, and defers the full analysis to Busi
      screen. The original intent is unchanged and still asserted: say precisely what "returned"
      means, and never fall back on the bare "Returning customers" label. */
   const html=UI.render(UI.buildViewModel({truth:truth(),lifecycle:lifecycle(),briefing:briefing()}));
-  assert.match(html,/identified customers who purchased in this period had bought before/);
-  assert.match(html,/Repeat purchase rate this period/);
+  assert.match(html,/identified customers who purchased in this period had also bought before it/);
+  assert.match(html,/made two or more purchases within the period itself/);
   assert.match(html,/href="#\/reports"/);
   assert.match(html,/Business Insights &rarr; Customer Retention/);
   assert.doesNotMatch(html,/>Returning customers</);

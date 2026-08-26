@@ -105,8 +105,10 @@ const textOf=html=>String(html).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim
 
 test('V522 retention is summarised in one line and points at the canonical screen',()=>{
   const html=renderTruth(),text=textOf(html);
-  assert.match(text,/4 of 5 identified customers who purchased in this period had bought before/);
-  assert.match(text,/Repeat purchase rate this period: 80%/);
+  /* nestly_v526: each half names its own window, so two true metrics cannot read as a
+     contradiction (live example: 0 returned, 66.7% repeat — different windows, both correct). */
+  assert.match(text,/4 of 5 identified customers who purchased in this period had also bought before it/);
+  assert.match(text,/80% of them made two or more purchases within the period itself/);
   assert.match(html,/href="#\/reports"/,'the summary must lead to the full analysis');
   assert.match(text,/Business Insights (&rarr;|→) Customer Retention/);
 });
