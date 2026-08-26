@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="266c2c16490cfde46ee295c30e5c2d435f2812fd3895baeee385e798a2df2e87"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="9eb0304f2bcf886dfe4b23c60f2ab10f245f1caf38d12ee94e222e279cd999a0"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -4002,7 +4002,17 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
    page with no photo keeps both buttons side by side across the whole card, and page 1 is
    untouched entirely (its action row is a sibling of the body, not inside the narrow copy column,
    so it was never cramped). Below 380px everything already stacked and still does. */
-.customer-hero-has-photo-v468 .customer-business-summary-actions-v349{grid-template-columns:1fr!important}
+/* nestly_v532 (owner, photo 1 against photo 2: "i already told you to push the redeem now to
+   bottom left while book now at bottom right"). THE RULE ABOVE IS GONE, and its own reasoning is
+   why: it stacked the pair because the buttons sat INSIDE the 222px copy column beside the gift
+   photo, where two columns gave them 106px each. nestly_v517 moved that action row OUT of the copy
+   column to full card width — the same position page 1 has always used, which the v491 note itself
+   calls out as "untouched entirely ... it was never cramped". The premise disappeared; the rule
+   did not, so the swipe pages went on stacking with a whole card's width available.
+   RE-MEASURED at the width that matters: with the rule removed, 390px gives each button 158px —
+   above the 150px v491 was protecting — with Redeem now at x32 and Book now at x200, side by side.
+   The @media(max-width:380px) stack below is untouched and still catches genuinely narrow phones,
+   which is where 1fr belongs. */
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347,.customer-business-book-inline-v349{min-width:0!important;width:100%!important;min-height:var(--control-h)!important;border-radius:10px!important;font-size:13px!important}
 .customer-shell .card.customer-business-summary-v346 .customer-business-claim-v347{background:#fff!important;color:var(--brand-red-dark)!important;box-shadow:0 8px 18px rgba(83,26,21,.14)!important}
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
@@ -5759,6 +5769,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'266c2c16490cfde46ee295c30e5c2d435f2812fd3895baeee385e798a2df2e87',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'9eb0304f2bcf886dfe4b23c60f2ab10f245f1caf38d12ee94e222e279cd999a0',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
