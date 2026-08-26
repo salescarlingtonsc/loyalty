@@ -183,14 +183,61 @@ test('pending and failed sends are visually distinguished, not just annotated', 
   assert.match(render, /dashed/, 'a pending send must be visibly unfinished');
 });
 
-test('the thread keeps polling until every outbound message is terminal', () => {
-  const render = app.slice(app.indexOf('function supportRenderThreadV531'),
-                           app.indexOf('function supportNewIdemKeyV535'));
-  assert.match(render, /SUPPORT_TERMINAL_STATUS_V540/);
-  assert.match(render, /statusPoll=setInterval/);
-  /* And it must be cleaned up, or every thread a busy merchant opens leaks a timer. */
-  assert.match(render, /registerRouteDisposerV535\(\(\)=>\{clearInterval\(timer\);if\(statusPoll\)clearInterval\(statusPoll\)\;\}\)/);
+test('sent is NOT terminal — Meta still owes delivered and read', () => {
+  /* v540 asserted "poll UNTIL every outbound is terminal". v541 proved that
+     premise wrong: once everything went terminal the thread stopped watching and
+     a customer's next INBOUND message never appeared. Polling is now
+     unconditional (see the v541 tests below); what survives from v540 is the
+     terminal SET itself, which decides only how fast to poll. */
   const terminal = app.match(/const SUPPORT_TERMINAL_STATUS_V540=new Set\(\[([^\]]*)\]\)/)[1];
   assert.ok(!terminal.includes("'sent'"),
-    "'sent' is NOT terminal — Meta still owes us delivered/read, so polling must continue");
+    "'sent' is not terminal — Meta still owes delivered/read");
+  for (const t of ["'delivered'", "'read'", "'failed'"]) {
+    assert.ok(terminal.includes(t), `${t} must be terminal`);
+  }
+});
+
+/* nestly_v541 — an open thread must show messages that arrive while it is open. */
+const threadSrc = () => app.slice(app.indexOf('function supportRenderThreadV531'),
+                                  app.indexOf('function supportNewIdemKeyV535'));
+
+test('the thread polls UNCONDITIONALLY, not only while an outbound is in flight', () => {
+  const src = threadSrc();
+  /* v540 wrapped the poll in `if(inFlight...)`, so once every outbound went
+     terminal the thread stopped watching and a customer's next message never
+     appeared. Inbound arrival is the inbox's primary job. */
+  assert.match(src, /const statusPoll=setInterval\(/);
+  assert.doesNotMatch(src, /if\(inFlightV54[01]\(\)\)\{\s*statusPoll=setInterval/,
+    'polling must not be conditional on an unconfirmed outbound');
+  assert.match(src, /inFlightV541\(\)\?8000:15000/,
+    'it should merely poll FASTER while in flight');
+});
+
+test('a poll never destroys a half-typed reply', () => {
+  const src = threadSrc();
+  assert.match(src, /supportDraftV541\.set\(thread\.conversation_id/,
+    'the draft must be stashed before the re-render');
+  assert.match(src, /if\(bodyNode&&stashedV541&&stashedV541\.body\)bodyNode\.value=stashedV541\.body/,
+    'and restored after it');
+  assert.match(src, /if\(inFlight\)return;/,
+    'a poll must not re-render mid-send');
+});
+
+test('a resumed draft keeps its idempotency key', () => {
+  const src = threadSrc();
+  assert.match(src, /let idemKey=stashedV541\?\.key\|\|supportNewIdemKeyV535\(\)/,
+    'restoring the body without the key would turn one logical message into two');
+  assert.match(src, /supportDraftV541\.delete\(thread\.conversation_id\)/,
+    'a successful send must clear the stash');
+});
+
+test('composer state is declared before the poll closes over it', () => {
+  const src = threadSrc();
+  assert.ok(src.indexOf('let idemKey=') < src.indexOf('const statusPoll=setInterval'),
+    'the poll reads idemKey; declaring it afterwards is a temporal-dead-zone trap');
+});
+
+test('both timers are cleared when the route disposes', () => {
+  assert.match(threadSrc(),
+    /registerRouteDisposerV535\(\(\)=>\{clearInterval\(timer\);clearInterval\(statusPoll\);\}\)/);
 });

@@ -42231,6 +42231,20 @@ function supportRenderThreadV531(routeMain,thread){
   /* The countdown ticks off the STORED expiry, so a page left open all afternoon
      tells the truth. When it reaches zero the composer disables itself and says
      why — and the draft is left exactly where it is. */
+  /* ---- composer state FIRST, so the poll below closes over live bindings
+     rather than reaching forward into a temporal dead zone. ---- */
+  const bodyNode=$('supportReplyBodyV535'),sendNode=$('supportReplySendV535'),
+        statusNode=$('supportReplyStatusV535');
+  /* Restored if a poll re-rendered underneath the operator. The KEY comes back
+     with the body: reusing it is what makes a resumed draft the SAME logical
+     message rather than a second one. */
+  const stashedV541=supportDraftV541.get(thread.conversation_id);
+  let idemKey=stashedV541?.key||supportNewIdemKeyV535();
+  let keyedBody=stashedV541?.keyed??null;
+  let inFlight=false;
+  if(bodyNode&&stashedV541&&stashedV541.body)bodyNode.value=stashedV541.body;
+
+  /* ---- the service-window countdown ---- */
   const windowNode=$('supportWindowV535');
   const expiresAt=thread.service_window_expires_at;
   const tick=()=>{
@@ -42245,27 +42259,26 @@ function supportRenderThreadV531(routeMain,thread){
   };
   const timer=setInterval(tick,30000);tick();
 
-  /* nestly_v540: while any outbound message is still unconfirmed, re-read the
-     thread so 'Sending…' becomes 'Delivered' (or 'Not sent') on its own. The
-     merchant should never have to guess, and should never have to refresh to
-     find out that a send failed. Stops as soon as everything is terminal. */
-  const inFlightV540=()=>(thread.messages||[]).some(m=>
+  /* ---- nestly_v541: poll for as long as the thread is open ----
+     TWO things arrive on their own: the customer's next message, and Meta's
+     delivery callbacks. v540 polled only while an outbound was unconfirmed, so
+     once everything went terminal the thread stopped watching — and a customer
+     reply landed in the database but never on screen. That is the primary job of
+     an inbox, so it polls unconditionally now, just faster while in flight.
+     The draft is stashed before each re-render and restored after. */
+  const inFlightV541=()=>(thread.messages||[]).some(m=>
     m.direction==='outbound'&&!SUPPORT_TERMINAL_STATUS_V540.has(m.status));
-  let statusPoll=null;
-  if(inFlightV540()){
-    statusPoll=setInterval(()=>{
-      if(!routeMain.isConnected){clearInterval(statusPoll);return;}
-      supportInboxPageV531(thread.conversation_id).catch(()=>{});
-    },10000);
-  }
-  registerRouteDisposerV535(()=>{clearInterval(timer);if(statusPoll)clearInterval(statusPoll);});
+  const statusPoll=setInterval(()=>{
+    if(!routeMain.isConnected){clearInterval(statusPoll);return;}
+    if(inFlight)return;             // never re-render mid-send
+    const live=$('supportReplyBodyV535');
+    if(live)supportDraftV541.set(thread.conversation_id,
+      {body:live.value||'',key:idemKey,keyed:keyedBody});
+    supportInboxPageV531(thread.conversation_id).catch(()=>{});
+  },inFlightV541()?8000:15000);
+  registerRouteDisposerV535(()=>{clearInterval(timer);clearInterval(statusPoll);});
 
   if(!canReply)return;
-  const bodyNode=$('supportReplyBodyV535'),sendNode=$('supportReplySendV535'),
-        statusNode=$('supportReplyStatusV535');
-  let idemKey=supportNewIdemKeyV535();
-  let keyedBody=null;      // the body this key belongs to
-  let inFlight=false;
   sendNode.onclick=async()=>{
     if(inFlight)return;    // a double-click cannot start a second send
     const body=(bodyNode.value||'').trim();
@@ -42292,10 +42305,22 @@ function supportRenderThreadV531(routeMain,thread){
       return;
     }
     bodyNode.value='';keyedBody=null;idemKey=supportNewIdemKeyV535();
+    supportDraftV541.delete(thread.conversation_id);
     sendNode.textContent=SUPPORT_INBOX_COPY_V531.send;
     supportInboxPageV531(thread.conversation_id).catch(()=>{});
   };
 }
+
+/* nestly_v541. The thread must poll for INBOUND messages too, not only while an
+   outbound is in flight — a support inbox that does not show an arriving message
+   while staff are looking at it is broken for its primary purpose. v540 polled
+   only until every outbound was terminal, so a customer's reply landed in the
+   database and never on screen.
+   Polling re-renders, which would destroy a half-typed reply. So the draft and
+   its idempotency key live OUTSIDE the render, keyed by conversation, and are
+   restored afterwards. Losing a draft to a background refresh would be a worse
+   bug than the one being fixed. */
+const supportDraftV541=new Map();
 
 function supportNewIdemKeyV535(){
   const uuid=(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID()
