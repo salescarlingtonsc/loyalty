@@ -18694,7 +18694,7 @@ const DASHBOARD_INACTIVE_PAGE_V406=100;
    It is pure data — labels, definitions, routes, button copy, scope — with no closure dependency,
    so it belongs at module scope where BOTH readers can actually see it. */
 const DASHBOARD_METRIC_DEFINITIONS_V405={
-  visits:{label:'Valid visits',definition:'Original visit sales in this selected period that have not been reversed. Reversal rows are not counted as visits.',action:'View sales',buttonLabel:'View visits',scope:'branch'},
+  visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals. Each qualifying sale counts once — several sales by one customer in a day count separately, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v547: visits are sale records, not distinct physical visits — say so */
   revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
   new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',action:'View customers',buttonLabel:'See new customers',scope:'business'},
   /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
@@ -19029,7 +19029,7 @@ function tierBasisHelpV182(program){
   const basis=program?.tier_basis||'visits';
   if(basis==='spend')return 'Total amount this customer has spent with you, in dollars.';
   if(basis==='points_earned')return 'Total points this customer has earned, all time.';
-  return 'Number of visits this customer has made.';
+  return 'Number of visit-counted sale records for this customer. Several sales in one day count separately.';
 }
 async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
