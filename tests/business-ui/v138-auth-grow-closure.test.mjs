@@ -22,6 +22,12 @@ const nav=section('function navHtml(','function wireNav()');  // V250: the sub-n
 test('ordinary sign-in has no legal checkbox while owner signup remains consent-gated',()=>{
   assert.match(auth,/businessGoogleButtonHtml\('businessGoogleSignIn'\)/);
   assert.doesNotMatch(auth,/businessGoogleLegal|Google creates a new Peekaa account/);
+  /* nestly_v546 (owner markup 2026-08-27): the group gained gateOnly:true. This test's intent —
+     ONE consolidated destination family, no peer reward-module rows — is not weakened by that; it
+     is RESTORED by it. nestly_v538 had taught every `views` group to also render its module items
+     (correctly, for Customer Interface's WhatsApp Inbox), which silently put Loyalty, Retention,
+     Referrals and Memberships back in the rail as peer rows — exactly what V250 and V138 removed.
+     gateOnly says those four are entitlement keys, not rows. */
   assert.match(app,/id="applicationConsent" type="checkbox"/);
   assert.match(app,/if\(!\$\('applicationConsent'\)\.checked\)/);
 });
@@ -70,7 +76,7 @@ test('sidebar exposes consolidated Grow programme navigation instead of peer rew
   /* V294 (owner markup 2026-08-12): Programmes became a GROUP whose children are the page's
      own Overview / List / History views — still ONE consolidated destination family, still no
      peer reward-module rows. giftcards moved to Serve & sell with its card (item 7b). */
-  assert.match(app,/\{key:'grow',icon:'star',label:'Rewards & Offer',items:\['loyalty','retention','referrals','memberships'\],\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
+  assert.match(app,/\{key:'grow',icon:'star',label:'Rewards & Offer',items:\['loyalty','retention','referrals','memberships'\],\s*gateOnly:true,\s*views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]\}/);
   for(const label of ['Programmes list','Ongoing programmes','Pending setup','Available programmes','More settings'])
     assert.doesNotMatch(nav,new RegExp(`'${label}'`),`${label} was struck out of the nav`);
   assert.match(nav,/const href=g\.href\|\|`#\/\$\{target\}`/);

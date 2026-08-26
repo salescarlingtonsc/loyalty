@@ -214,7 +214,20 @@ const NAVGROUPS=[
      as the points engine. The two children now name that split, and 'offers' is a real routable
      view rather than a filter of the list, so it is linkable and back-button-safe like its
      siblings. Overview and History are untouched and still cover BOTH categories. */
+  /* nestly_v546 (owner markup 2026-08-27: Loyalty, Retention, Referrals and Memberships each
+     struck out of this rail group — "it is already inside rewards programme, dont bring it out").
+     They are: the Rewards Programme page renders every one of them as a card (Point system, Tier
+     membership, Welcome gift, Birthday benefit and the rest), so a rail row beside it was the same
+     destination advertised twice.
+     They appeared because nestly_v538 taught a `views` group to ALSO render its module items —
+     correctly, for Customer Interface, whose WhatsApp Inbox is a real module row that was being
+     dropped. This group's items were never rows: they are the entitlement keys that decide whether
+     the group appears at all, which is what the V294 comment above already says. `gateOnly` states
+     that distinction instead of leaving it implicit, so v538 keeps working where it was aimed.
+     The ROUTES are untouched — #/loyalty, #/retention, #/referrals and #/memberships all still
+     resolve, so bookmarks, history and Customer 360 hand-offs are never stranded. */
   {key:'grow',icon:'star',label:'Rewards & Offer',items:['loyalty','retention','referrals','memberships'],
+    gateOnly:true,
     views:[['Overview','#/grow/overview','reports'],['Rewards Programme','#/grow','star'],
       ['Limited Offer','#/grow/offers','tag'],['History','#/grow/history','waitlist']]},
   /* V243 (owner, arrow from the Settings tabs to the LEFT NAV): "shift these into a new module
@@ -1784,7 +1797,10 @@ function navHtml(page,idPrefix='nav'){
     const childRowsV294=(g.views||[]).length
       ?g.views.map(([label,href,iconName])=>{const on=navViewActiveV296(href);
         return `<a href="${href}" class="${on?'act':''}"${on?' aria-current="page"':''}><span class="ic">${CUI.icon(iconName||g.icon,{size:20})}</span><span class="nav-label">${label}</span></a>`}).join('')
-        +moduleChildRowsV538(g.items)
+        /* nestly_v546: a group may declare its items as ENTITLEMENT KEYS ONLY. They still gate
+           whether the group appears, and every route still resolves; they just are not rail rows,
+           because the group's own page already lists them. */
+        +(g.gateOnly?'':moduleChildRowsV538(g.items))
       :g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:20})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}${m==='appointments'?`<span data-appointments-badge-slot>${appointmentsNavBadgeHtml()}</span>`:''}</a>`).join('');
     return `<div class="navgroup">
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="${idPrefix}-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:20})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
