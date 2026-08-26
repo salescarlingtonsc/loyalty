@@ -74,6 +74,11 @@ const repoRoot = new URL('../../', import.meta.url);
 export const sourceHtmlPath = new URL('app/index.html', repoRoot);
 export const generatedCssPath = new URL('app/app.css', repoRoot);
 export const generatedHtmlPath = new URL('app/index.gen.html', repoRoot);
+/* nestly_v533: pwa.css is the OTHER render-blocking stylesheet in the head. It is small (3.4 KB)
+   but it is a separate round trip, and after v530 the first paint tracked its completion almost
+   exactly — 392->476, 328->376, 374->420 on production. It is not fingerprinted and it is not
+   generated, so it is read here purely to derive its own critical subset. */
+export const pwaCssPath = new URL('app/pwa.css', repoRoot);
 
 /* Every tag, class and id the boot skeleton's DOM contains. A rule can only match that DOM if
    EVERY compound in its descendant chain corresponds to something here — the test is per-token,
@@ -170,38 +175,51 @@ export function stripCssComments(css) {
     .replace(/\n{3,}/g, '\n\n');
 }
 
-export function buildArtifacts(sourceHtml) {
+export const PWA_LINK = '<link rel="stylesheet" href="/pwa.css">';
+
+export function buildArtifacts(sourceHtml, pwaCss = '') {
   const blocks = [...sourceHtml.matchAll(STYLE_BLOCK)];
   if (!blocks.length) {
     throw new Error('extract-app-css: app/index.html has no <style> block to extract');
   }
   const css = stripCssComments(blocks.map((match) => match[1]).join('\n'));
   const hash = fingerprint(css);
-  const critical = criticalCssFor(css);
+
+  /* nestly_v533: both head stylesheets contribute. Order mirrors the real cascade — pwa.css sat
+     first, app.css second, so app.css wins every tie. Keeping that order inside the inline block
+     means the critical styles resolve exactly as the full sheets will when they land. */
+  const critical = [criticalCssFor(pwaCss), criticalCssFor(css)].filter(Boolean).join('\n');
   if (!critical.includes('.pf-skeleton')) {
     throw new Error('extract-app-css: the critical set does not style the boot skeleton');
   }
 
-  /* Head: paint-ready styles, and start the full stylesheet downloading at once. */
   const head = `<style id="criticalCssV530">${critical}</style>`
+    + '<link rel="preload" as="style" href="/pwa.css">'
     + `<link rel="preload" as="style" href="/app.css?b=${hash}">`;
-  /* End of body: still a real render-blocking stylesheet, so nothing after it — which is all of
-     the app UI — can ever paint unstyled. */
-  const sheet = `<link rel="stylesheet" href="/app.css?b=${hash}">`;
+  /* End of body: both are still real render-blocking stylesheets, so nothing after them — which
+     is all of the app UI — can ever paint unstyled. pwa.css keeps its place ahead of app.css. */
+  const sheets = `${PWA_LINK}<link rel="stylesheet" href="/app.css?b=${hash}">`;
 
   let replaced = 0;
   let html = sourceHtml.replace(STYLE_BLOCK, () => (replaced++ === 0 ? head : ''));
-  if (!html.includes('</body>')) {
-    throw new Error('extract-app-css: app/index.html has no </body> to place the stylesheet before');
+  if (!html.includes(PWA_LINK)) {
+    throw new Error('extract-app-css: app/index.html no longer links /pwa.css where expected');
   }
-  html = html.replace('</body>', `${sheet}\n</body>`);
+  html = html.replace(PWA_LINK, '');          // out of the head
+  if (!html.includes('</body>')) {
+    throw new Error('extract-app-css: app/index.html has no </body> to place the stylesheets before');
+  }
+  html = html.replace('</body>', `${sheets}\n</body>`);
 
   return { css, critical, html, hash, blockCount: blocks.length };
 }
 
 export async function readArtifacts() {
-  const sourceHtml = await readFile(sourceHtmlPath, 'utf8');
-  return { sourceHtml, ...buildArtifacts(sourceHtml) };
+  const [sourceHtml, pwaCss] = await Promise.all([
+    readFile(sourceHtmlPath, 'utf8'),
+    readFile(pwaCssPath, 'utf8')
+  ]);
+  return { sourceHtml, pwaCss, ...buildArtifacts(sourceHtml, pwaCss) };
 }
 
 async function readOrNull(url) {

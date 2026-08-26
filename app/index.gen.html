@@ -41,7 +41,7 @@
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
      app/join.html still requests it separately and still uses it for its headings. -->
-<link rel="stylesheet" href="/pwa.css">
+
 <!-- V200: revenue-truth.css, growth-offers.css and sector-economics.css used to load here on every
      first paint, for every visitor. They style workspace and customer-offer surfaces that only
      exist once a surface chunk has been fetched, so they now arrive with that chunk
@@ -51,6 +51,16 @@
 <script src="/pwa.js?v=v321-no-self-refresh" defer></script>
 <script src="/customer-push.js" defer></script>
 <style id="criticalCssV530">:root{
+  --pwa-safe-top:env(safe-area-inset-top,0px);
+  --pwa-safe-right:env(safe-area-inset-right,0px);
+  --pwa-safe-bottom:env(safe-area-inset-bottom,0px);
+  --pwa-safe-left:env(safe-area-inset-left,0px);
+}
+html{min-height:100%;-webkit-text-size-adjust:100%}
+body{min-height:100dvh}
+:where(button,[role="button"],a.btn,input,select,textarea){touch-action:manipulation}
+@media(display-mode:standalone){body{min-height:100dvh}}
+:root{
   --bg:#F4F2EE; --card:#FFFFFF; --ink:#17161A; --ink2:#3D3B44; --muted:#6B6673;
   --line:#EAE6DF; --control-border:#817B88; --hair:rgba(23,22,26,.06);
   --brand-red:#C24135;           
@@ -185,7 +195,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     --coral:#fff;--ink:#fff;--muted:rgba(255,255,255,.82)}
 @media print{body{background:#fff}}
 @keyframes customerCelebrationInV468{from{opacity:0;transform:translateY(-14px) scale(.94)}
-  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/app.css?b=f3cd0e50b828">
+  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=f3cd0e50b828">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -257,6 +267,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 }catch(error){}})();
 </script>
 <script src="/app-core.js?b=522029b859ae" defer></script>
-<link rel="stylesheet" href="/app.css?b=f3cd0e50b828">
+<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=f3cd0e50b828">
 </body>
 </html>

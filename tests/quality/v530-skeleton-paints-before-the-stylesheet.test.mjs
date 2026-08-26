@@ -26,6 +26,7 @@ const repo = new URL('../../', import.meta.url);
 const shipped = readFileSync(new URL('app/index.gen.html', repo), 'utf8');
 const source = readFileSync(new URL('app/index.html', repo), 'utf8');
 const fullCss = readFileSync(new URL('app/app.css', repo), 'utf8');
+const pwaCss = readFileSync(new URL('app/pwa.css', repo), 'utf8');
 const head = shipped.slice(0, shipped.indexOf('<body'));
 const critical = shipped.match(/<style id="criticalCssV530">([\s\S]*?)<\/style>/)?.[1] ?? '';
 
@@ -76,8 +77,8 @@ test('V530 the inline rules are a byte-identical subset, so they cannot conflict
   const rules = critical.split('\n').filter((line) => line.includes('{') && !line.startsWith('@'));
   assert.ok(rules.length > 20, 'there are real rules to check');
   for (const rule of rules.slice(0, 200)) {
-    assert.ok(fullCss.includes(rule),
-      `inline rule is not present verbatim in app.css, so the two could disagree: ${rule.slice(0, 80)}`);
+    assert.ok(fullCss.includes(rule) || pwaCss.includes(rule),
+      `inline rule is not present verbatim in either stylesheet, so they could disagree: ${rule.slice(0, 80)}`);
   }
 });
 
@@ -101,8 +102,34 @@ test('V530 the extractor refuses to emit a set that cannot style the skeleton', 
 });
 
 test('V530 the critical set is a small fraction of the stylesheet', () => {
-  const derived = criticalCssFor(fullCss);
+  const derived = [criticalCssFor(pwaCss), criticalCssFor(fullCss)].filter(Boolean).join('\n');
   assert.ok(derived.length < fullCss.length / 10,
     `critical must stay a small subset: ${derived.length} of ${fullCss.length}`);
   assert.equal(derived, critical, 'and the document carries exactly what the extractor derives');
+});
+
+test('V533 pwa.css no longer blocks the first paint either', () => {
+  /* After v530, first paint tracked pwa.css's completion almost exactly on production —
+     392->476, 328->376, 374->420. It is only 3.4 KB, but it is a separate round trip in the head
+     and it was the last thing standing between the document arriving and the skeleton appearing.
+     Its four root-level rules (safe-area variables, html min-height and text-size-adjust, body
+     min-height) are the ones the skeleton actually reads; the other 38 selectors are PWA install
+     and update UI that the boot screen never shows. */
+  assert.ok(!head.includes('<link rel="stylesheet" href="/pwa.css">'),
+    'pwa.css must not be a blocking stylesheet in the head');
+  assert.ok(head.includes('<link rel="preload" as="style" href="/pwa.css">'),
+    'it is preloaded instead, so its download still starts immediately');
+  const body = shipped.slice(shipped.indexOf('<body'));
+  assert.ok(body.includes('<link rel="stylesheet" href="/pwa.css">'),
+    'and it is still a real stylesheet at the end of the body');
+  assert.ok(shipped.lastIndexOf('/pwa.css') < shipped.lastIndexOf('/app.css'),
+    'ahead of app.css, preserving the cascade order the head used to impose');
+  assert.ok(critical.includes('--pwa-safe-top'),
+    'the safe-area variables are inlined — the skeleton is laid out against them');
+});
+
+test('V533 the extractor refuses a document that stopped linking pwa.css', () => {
+  assert.throws(() => buildArtifacts(source.replace('<link rel="stylesheet" href="/pwa.css">', ''), pwaCss),
+    /no longer links \/pwa\.css/,
+    'if the link is renamed, the move must fail loudly rather than silently drop the stylesheet');
 });
