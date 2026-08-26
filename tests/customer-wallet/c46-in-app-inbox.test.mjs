@@ -256,7 +256,15 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and lau
      the device switch, and the gear was their only door, so the panel is simply always rendered —
      below the messages it governs. That is what is asserted instead. */
   assert.doesNotMatch(inbox, /customerInboxSettingsToggleV386/);
+  /* nestly_v548 (owner photo 2: the two settings blocks ringed, arrow to a button drawn in the
+     head — "move inside this button"). The panel collapses again, behind a new control. v417's
+     protection is what is asserted here, because it is the part that did NOT change: the panel is
+     always RENDERED, so renderPreferences has something to fill and the device card has somewhere
+     to be moved to. Only its visibility toggles. */
   assert.match(inbox, /id="customerInboxSettingsV386"/);
+  assert.match(inbox, /data-inbox-settings-v548/, 'the door the owner drew');
+  assert.match(inbox, /aria-controls','customerInboxSettingsV386'/,
+    'the button names the panel it owns, so a screen reader announces the pair');
   assert.match(inbox, /customerInAppInboxPreferences/);
   assert.match(inbox, /data-inbox-filter="unread"/);
   assert.match(inbox, /customerInboxSyncRetry/i);

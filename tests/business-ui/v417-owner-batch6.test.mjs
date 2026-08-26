@@ -152,13 +152,21 @@ test('v417 the "How rewards work" row is gone but its dismissal state is not orp
 
 /* ------------------------------------------------ photo 9: the Messages gear ----------------- */
 
-test('v417 the gear is gone and its settings are still reachable', () => {
-  assert.doesNotMatch(appJs, /customerInboxSettingsToggleV386/);
-  assert.match(appJs, /id="customerInboxSettingsV386" class="customer-inbox-settings-v386">/,
-    'rendered unconditionally — no hidden attribute left behind');
+/* nestly_v548 (owner photo 2, the two settings blocks ringed with an arrow to a button drawn in
+   the inbox head: "move inside this button"). The owner has reversed photo 9's ruling: the panel
+   is collapsed behind a control again. The half of v417 that was never about the button survives
+   verbatim and is what this test now guards — the gear was the panel's ONLY door, so deleting the
+   two together would have taken a real choice from customers under the heading of a cosmetic
+   tidy. A door that opens is not that. The panel is still rendered unconditionally; only its
+   visibility moves, which is what keeps renderPreferences and the moved device card working. */
+test('v417 the Messages settings are still reachable, now behind the v548 control', () => {
+  assert.doesNotMatch(appJs, /customerInboxSettingsToggleV386/, 'the v386 gear is not resurrected');
+  assert.match(appJs, /id="customerInboxSettingsV386" class="customer-inbox-settings-v386"/,
+    'still rendered unconditionally — only `hidden` toggles');
+  assert.match(appJs, /data-inbox-settings-v548/, 'and it has a door');
   assert.match(appJs, /customerInAppInboxPreferences/, 'the reminder preferences survive');
   assert.match(appJs, /customerInboxDeviceSlotV386/, 'and so does the device switch');
-  assert.doesNotMatch(appJs, /settingsOpenV395/, 'the open state died with the toggle');
+  assert.doesNotMatch(appJs, /settingsOpenV395/, 'the v395 open state stays dead — v548 keeps its own');
 });
 
 /* ------------------------------------------------ photo 11: the live preview ----------------- */

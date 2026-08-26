@@ -164,7 +164,7 @@ test('photo 7: the hero takes its shape from the business’s own programme spin
   assert.match(indexHtml,/\.customer-business-stamp-figure-v386 \.customer-programme-stamp-rings\{display:grid/);
 });
 
-test('photo 8: one message is one row, and the settings live behind the gear',()=>{
+test('photo 8: one message is one row, and the settings live behind a control',()=>{
   const inbox=app.slice(app.indexOf('async function renderCustomerInAppInbox'),app.indexOf('function renderWorkspaceAccessUnavailable'));
   assert.match(inbox,/customer-inbox-row-v386/);
   assert.match(inbox,/customer-inbox-avatar-v386/);
@@ -176,8 +176,12 @@ test('photo 8: one message is one row, and the settings live behind the gear',()
      the device switch, and the gear was their only door, so the panel is simply always rendered —
      below the messages it governs. That is what is asserted instead. */
   assert.doesNotMatch(inbox,/customerInboxSettingsToggleV386/);
-  assert.match(inbox,/id="customerInboxSettingsV386" class="customer-inbox-settings-v386">/,
-    'always open — no hidden attribute and no toggle');
+  /* nestly_v548 (owner photo 2): the collapse returns, behind a control drawn in the head. What
+     v417 was defending is unchanged and is what these next three lines check — the panel is always
+     RENDERED (only `hidden` moves), so the preferences and the device switch are never stranded. */
+  assert.match(inbox,/id="customerInboxSettingsV386" class="customer-inbox-settings-v386"/,
+    'still rendered unconditionally — visibility is the only thing that toggles');
+  assert.match(inbox,/data-inbox-settings-v548/,'and it has a door again');
   assert.match(inbox,/customerInAppInboxPreferences/,'the reminder preferences survive the gear');
   assert.match(inbox,/customerInboxDeviceSlotV386/);
   assert.match(inbox,/deviceSlotV386\.appendChild\(deviceSectionV386\)/,

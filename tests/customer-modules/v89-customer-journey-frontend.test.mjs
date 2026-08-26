@@ -204,10 +204,37 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
   assert.match(bookings,/customer_get_business_actions_v89/);
   assert.match(bookings,/response\.data\?\.booking\?\.enabled===true/);
   /* nestly_v509 (owner photo 3): the header "Rebook" button is GONE — it filed a brand-new
-     request while the old booking stayed. The header now carries only the Open programme link,
-     and re-timing an ongoing booking is the row's own Reschedule (replace semantics). */
+     request while the old booking stayed. Re-timing an ongoing booking is the row's own
+     Reschedule (replace semantics). */
   assert.doesNotMatch(bookings,/group\.bookingEnabled&&group\.business_slug\?`<button[^`]*Book again/);
-  assert.match(bookings,/group\.business_slug\?`<a class="btn ghost sm" href="#\/wallet\/\$\{encodeURIComponent\(group\.business_slug\)\}">\$\{esc\(ct\('Open programme'\)\)\}<\/a>`:''/);
+  /* nestly_v548 (owner photo 1: "Open programme" struck out — "redundant"). The group header
+     carries NO button at all now: the card is already inside the customer's own programme list,
+     and every action that belongs to this page lives on the appointment rows. What must stay true
+     is that the rows keep theirs — a header tidy is not permission to strip the page. */
+  assert.doesNotMatch(bookings,/>\$\{esc\(ct\('Open programme'\)\)\}<\/a>/,
+    'the redundant header link is gone');
+  assert.match(bookings,/customerBookingAppointmentRowV344\(group,item,changesFeatureEnabled\)/,
+    'the appointment rows — Reschedule / Book again — are untouched');
+  assert.match(bookings,/customerBookingRequestRowV344/,'and so is Withdraw on a pending request');
+});
+
+/* nestly_v548 (owner photo 1, the "Cubbly SPA / Book now" chip struck out: "remove this", then
+   "let customer press the search button to search for companies"). The standing chip list was a
+   second copy of the businesses already listed below it. The chips are not deleted — they remain
+   the only way to start a booking with a business that has nothing booked yet — they are simply
+   what the search box has always looked like it controlled. */
+test('v548 the booking chooser shows nothing until the customer searches',async()=>{
+  const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
+  const wire=section(app,'function wireCustomerBookingSearchV326','function customerBookingEmptyMarkupV183');
+  assert.match(wire,/const match=!!query&&String\(item\.dataset\.bookingSearchName\|\|''\)\.includes\(query\)/,
+    'an empty query matches NOTHING — this is the line that inverted');
+  assert.doesNotMatch(wire,/const match=!query\|\|/,'the old show-everything default is gone');
+  /* The chips still exist to be found, and the box still says what it is for when it is empty. */
+  const chooser=section(app,'function customerBookingChooserV291','function wireCustomerBookingSearchV326');
+  assert.match(chooser,/data-repeat-booking data-business-slug=/,'a bookable business is still one tap');
+  assert.match(chooser,/customerBookingSearchStatus" role="status">/,
+    'the status line is no longer born hidden — it carries the empty-query prompt');
+  assert.match(wire,/Search to book with any of your \$\{items\.length\}/);
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{

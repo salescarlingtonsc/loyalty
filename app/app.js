@@ -6516,7 +6516,7 @@ function customerBookingChooserV291(groups=[]){
      search pattern already used for the customer's reward-account list
      (wireCustomerProgrammeSearchV195/#customerProgrammeSearch) — filters what already
      rendered, no new request. */
-  const searchHead=`<div class="customer-booking-search"><label class="sr-only" for="customerBookingSearch">Search company name</label>${CUI.icon('search',{size:16})}<input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerBookingSearchStatus"></div><p class="muted small" id="customerBookingSearchStatus" role="status" hidden></p>`;
+  const searchHead=`<div class="customer-booking-search"><label class="sr-only" for="customerBookingSearch">Search company name</label>${CUI.icon('search',{size:16})}<input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name" aria-describedby="customerBookingSearchStatus"></div><p class="muted small" id="customerBookingSearchStatus" role="status"></p>`;
   const industries=[...new Set(businesses.map(group=>String(group.industry||'').trim()).filter(Boolean))];
   if(industries.length>1){
     const bySector=new Map();
@@ -6539,11 +6539,21 @@ function wireCustomerBookingSearchV326(host=document){
   const status=host.querySelector('#customerBookingSearchStatus');
   const items=[...host.querySelectorAll('[data-booking-search-item]')];
   const groups=[...host.querySelectorAll('[data-booking-search-group]')];
+  /* nestly_v548 (owner photo 1, the "Cubbly SPA / Book now" chip struck out: "remove this",
+     clarified as "let customer press the search button to search for companies"). The chips were
+     a standing list of every joined business, printed directly above a list of those same
+     businesses' bookings — on a one-programme account the page said "Cubbly SPA" three times
+     before showing a single appointment. They are not deleted, because they are still the only
+     way to START a booking with a business that has nothing booked yet (v291, and the owner's
+     own question "why does it only show me 1 company for booking?"). They are now what the
+     search box has always looked like it controlled: nothing until you type, matches after.
+     An empty query therefore hides every chip instead of showing all of them, which is the one
+     line of this filter that inverted. */
   const apply=()=>{
     const query=String(input.value||'').trim().toLowerCase();
     let shown=0;
     items.forEach(item=>{
-      const match=!query||String(item.dataset.bookingSearchName||'').includes(query);
+      const match=!!query&&String(item.dataset.bookingSearchName||'').includes(query);
       item.hidden=!match;
       if(match)shown++;
     });
@@ -6552,8 +6562,10 @@ function wireCustomerBookingSearchV326(host=document){
       group.hidden=!visible;
     });
     if(!status)return;
-    status.hidden=!query;
-    status.textContent=query?(shown?`${shown} of ${items.length} shown`:`No business matches “${query}”.`):'';
+    status.hidden=false;
+    status.textContent=query
+      ?(shown?`${shown} of ${items.length} shown`:`No business matches “${query}”.`)
+      :`Search to book with any of your ${items.length} ${items.length===1?'business':'businesses'}.`;
   };
   input.addEventListener('input',apply);
   apply();
@@ -6667,7 +6679,13 @@ async function renderCustomerBookings(){
     ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
        filed a brand-new request while the old booking stayed — two live bookings for one visit.
        Rebooking a PAST visit keeps its own "Book again" on history rows; an ONGOING booking is
-       re-timed through the row's Reschedule, which replaces rather than duplicates. */''}${group.business_slug?`<a class="btn ghost sm" href="#/wallet/${encodeURIComponent(group.business_slug)}">${esc(ct('Open programme'))}</a>`:''}</div>
+       re-timed through the row's Reschedule, which replaces rather than duplicates. */''}${/* nestly_v548 (owner photo 1, the button struck out: "remove", clarified as "'open
+       programme' is redundant"). The whole header is already a route to that programme — the
+       business name, its logo and the card itself sit inside a list the customer reached from
+       their own programmes, and the appointment rows below carry the actions that belong to this
+       page (Reschedule, Book again, Withdraw). A second general-purpose "go elsewhere" button
+       competed with them for the only prominent slot in the header. Nothing is stranded: the
+       programme page is one tap from Rewards, from Home, and from the row actions themselves. */''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
       ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
     </section>`).join('')}</div>`
@@ -11627,7 +11645,19 @@ function customerProgrammeDirectoryStatusV346(card){
     /* nestly_v429 (E): the reward's declared unit (v426), falling back to the card's. */
     unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card));
   /* nestly_v457 (B-REG-017): the literal 1. This surface holds one reward object, never a count. */
-  if(reward?.available_now===true)return customerRewardReadySignalV457();
+  /* nestly_v548 (owner photo 5, the pill ringed: "state how many rewards ready"). The card the
+     wallet RPC sends carries `ready_count` — Home's greeting has summed it since v465 and the
+     "Your Peekaa" rows have printed it per business since v465 — but THIS list, the one the
+     customer opens from the Rewards tab, was still on v457's number-free sentence. So the two
+     surfaces described the same business differently: "5 rewards ready" up top, "Reward ready"
+     here. Same source, same wording now, including v428's "Choose 1" for gifts that share a
+     stamp slot, and v465's rule that a count of 0 is NOT readiness — it falls through to the
+     progress lines below rather than re-asserting a readiness the catalogue has resolved away.
+     v457's sentence survives for exactly one case: a payload with no count at all. */
+  const readyCountV548=customerCardReadyCountV465(card);
+  if(readyCountV548!==null&&readyCountV548>0)
+    return customerCardReadyChooseOneV465(card)?'Choose 1 reward':customerRewardReadyLineV397(readyCountV548);
+  if(readyCountV548===null&&reward?.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to reward`;
   if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} session${Number(packages.sessions_remaining)===1?'':'s'} left`;
@@ -11636,7 +11666,12 @@ function customerProgrammeDirectoryStatusV346(card){
 }
 /* V392: the one status worth shouting about. Read from the SAME server flag the status line
    itself uses, so the emphasis can never disagree with the words. */
-function customerProgrammeRewardReadyV392(card){return card?.next_eligible_reward?.available_now===true}
+/* nestly_v548: that flag is no longer what the status line reads. customerCardRewardReadyV465 is
+   — the server's count where it exists, the old flag only where it does not — so the star and the
+   red pill now light up on exactly the cards whose words say a reward is ready. Left on
+   available_now, a card counted down to 0 would have kept the emphasis while the sentence under
+   it had already moved on to "3 stamps to reward". */
+function customerProgrammeRewardReadyV392(card){return customerCardRewardReadyV465(card)}
 function customerProgrammeTileMarkupV96(card){
   const business=card?.business||{},loyalty=card?.loyalty||{},reward=card?.next_eligible_reward||null;
   const accent=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
@@ -11785,7 +11820,14 @@ function customerHomeSummaryV343(cards=[]){
      needs: "Your Peekaa" directly below lists them by name. */
   const nearestV2B=rewardReadyV457?'':customerNearestGoalV2B(cards);
   return `<a class="customer-home-ready-card-v343${rewardReadyV457?' is-ready-v2b':''}" href="#/customer/programmes" aria-label="${rewardReadyV457?esc(readyLineV465):esc(nearestV2B||'No rewards ready yet')}">
-    <span class="customer-home-ready-gift-v343" aria-hidden="true">${CUI.icon('giftcard',{size:32})}</span>
+    ${/* nestly_v548 (owner photo 3, a present drawn onto the tile: "change to this"). CUI's
+         'giftcard' is a single-weight outline stroke, the same grey-on-tint mark every module row
+         and empty state uses — so the one card on Home that exists to say "something is waiting
+         for you" was drawn in the app's quietest possible register. A present reads as a present
+         at 30px without colour management, and the greeting one line above it already ships an
+         emoji (👋), so this introduces no new asset and no new convention. The tile keeps its
+         aria-hidden: the sentence beside it is what a screen reader announces. */''}
+    <span class="customer-home-ready-gift-v343" aria-hidden="true"><span class="customer-home-ready-emoji-v548">🎁</span></span>
     <span class="customer-home-ready-copy-v343">${rewardReadyV457?`<b>${esc(readyLineV465)}</b>`:nearestV2B?`<b>${esc(nearestV2B)}</b>`:`<b>No rewards ready yet</b>`}${expiringCount?`<em>${CUI.icon('appointments',{size:16})}<span>${esc(customerPointTotalV103(expiringCount))} expiring soon</span>${CUI.icon('forward',{size:16})}</em>`:''}</span>
     <span class="customer-home-ready-arrow-v343" aria-hidden="true">›</span>
   </a>`;
@@ -14239,6 +14281,10 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   const loyaltyUnit=actionableCard?.loyalty?.unit;
   const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
   let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
+  /* nestly_v548: survives the re-render that a filter change or a state change triggers, so a
+     customer who opened the settings panel to change a reminder does not have it shut under them
+     the moment they save. Same reason v395 kept the v386 gear's open state. */
+  let inboxSettingsOpenV548=false;
   /* nestly_v417 (owner, photo 9: "remove this button"). V395's open-state fix is retired WITH the
      gear it existed for: the panel is no longer collapsible, so there is no open state to keep and
      no way for a filter tap to collapse it. The defect V395 described cannot recur — the panel is
@@ -14324,14 +14370,49 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
            cosmetic tidy, so the panel is simply always shown, below the messages it governs,
            where the list it changes can be seen. The device-notification card inside it already
            has a second home on Profile; it keeps that too. */''}
+      ${/* nestly_v548 (owner photo 2: "Inbox reminders" and "Device notifications" ringed
+           together, with an arrow to a button drawn in the head — "move inside this button").
+           v417 opened this panel permanently rather than delete a real choice along with its
+           door; the cost was that Messages then opened on two paragraphs of settings copy under
+           a two-line list, and the settings were the taller half of the page. It goes back behind
+           a control — the SAME collapse, with the door drawn where the owner drew it. What v417
+           was protecting still holds and is why this is a toggle and not a deletion: the panel is
+           always in the DOM (renderPreferences fills it either way, and the device card is moved
+           into it by id, keeping the v296 push binding), so nothing here is unreachable. v397's
+           ruling is untouched: All/Unread are how you READ the list, not settings, and they stay
+           in the head. */''}
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
       ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386">
+      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" ${inboxSettingsOpenV548?'':'hidden'}>
         <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
         <div id="customerInboxDeviceSlotV386"></div>
       </div>`;
-    /* nestly_v417: no toggle to wire — the panel is always open now (photo 9). */
+    /* nestly_v548: the door. Sits in the section head opposite the filter, labelled for a screen
+       reader because the glyph alone says nothing, and reporting its own state through
+       aria-expanded/aria-controls so the panel it owns is announced as this button's. */
+    const settingsHeadV548=host.querySelector('.customer-inbox-head-v386');
+    if(settingsHeadV548&&!settingsHeadV548.querySelector('[data-inbox-settings-v548]')){
+      const toggleV548=document.createElement('button');
+      toggleV548.type='button';
+      toggleV548.className='customer-inbox-settings-toggle-v548';
+      toggleV548.dataset.inboxSettingsV548='1';
+      toggleV548.setAttribute('aria-controls','customerInboxSettingsV386');
+      toggleV548.setAttribute('aria-expanded',String(inboxSettingsOpenV548));
+      toggleV548.setAttribute('aria-label','Inbox reminder and notification settings');
+      toggleV548.title='Inbox reminder and notification settings';
+      toggleV548.textContent='!';
+      settingsHeadV548.appendChild(toggleV548);
+      toggleV548.onclick=()=>{
+        const panel=host.querySelector('#customerInboxSettingsV386');
+        if(!panel)return;
+        inboxSettingsOpenV548=!inboxSettingsOpenV548;
+        panel.hidden=!inboxSettingsOpenV548;
+        toggleV548.setAttribute('aria-expanded',String(inboxSettingsOpenV548));
+        toggleV548.classList.toggle('is-open-v548',inboxSettingsOpenV548);
+      };
+      toggleV548.classList.toggle('is-open-v548',inboxSettingsOpenV548);
+    }
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */
     const deviceSectionV386=$('customerMessagesNotifications'),deviceSlotV386=host.querySelector('#customerInboxDeviceSlotV386');
@@ -18694,7 +18775,7 @@ const DASHBOARD_INACTIVE_PAGE_V406=100;
    It is pure data — labels, definitions, routes, button copy, scope — with no closure dependency,
    so it belongs at module scope where BOTH readers can actually see it. */
 const DASHBOARD_METRIC_DEFINITIONS_V405={
-  visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals. Each qualifying sale counts once — several sales by one customer in a day count separately, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v547: visits are sale records, not distinct physical visits — say so */
+  visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals. Each qualifying sale counts once — several sales by one customer in a day count separately, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v548: visits are sale records, not distinct physical visits — say so */
   revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
   new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',action:'View customers',buttonLabel:'See new customers',scope:'business'},
   /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
