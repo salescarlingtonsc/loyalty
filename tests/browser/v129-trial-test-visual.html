@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2710f262907f49991ee483547798b76b32b1660823e74cd40f1cd117cb8f1d6d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="2d59a52105407cf52a44f803227f2529b9e36ab0ac03b2bbcc24946dce0f041d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4641,7 +4641,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2710f262907f49991ee483547798b76b32b1660823e74cd40f1cd117cb8f1d6d</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2d59a52105407cf52a44f803227f2529b9e36ab0ac03b2bbcc24946dce0f041d</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -16759,6 +16759,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      A gift whose date has PASSED says so in the past tense rather than reading as a live deadline
      — that gift has already left the customer's catalogue (app.reward_availability_v432 resolves
      it to 'ended'), and the row is the only place the owner can still find out why. */
+  /* nestly_v520: a gift that carries an expiry says so on its own row, so an owner scanning the
+     list sees which gifts have a clock without opening each one. A gift with no expiry draws
+     NOTHING — most have none, and "No expiry" on every row is noise rather than information,
+     the same rule nestly_v471 applied to the end-date line this sits beside. */
+  const growPointsGiftExpiryTextV520=reward=>{
+    const days=Math.max(0,Math.round(Number(reward&&reward.entitlement_expiry_days)||0));
+    return days?` · Use within ${days} day${days===1?'':'s'}`:'';
+  };
   const growPointsGiftEndsTextV476=reward=>{
     const raw=reward?.claim_available_until;
     const at=Date.parse(raw||'');
@@ -16774,7 +16782,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     /* V351 (owner: "the $ symbol makes the reward look like money/cash instead of a redeemable
        gift"): swapped for the same gift icon the Welcome offer editor and Stamp Card page use. */
     const thumb=`<span class="grow-points-gift-thumb-v343"${photoUrl?'':' data-empty="1"'}>${photoUrl?`<img src="${esc(photoUrl)}" alt="" loading="lazy">`:CUI.icon('giftcard',{size:20})}</span>`;
-    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:16})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}${growPointsGiftEndsTextV476(reward)}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
+    const meta=`<span class="grow-points-gift-body-v343"><b data-merchant-content>${esc(name)}</b><span class="muted small" data-merchant-content>${CUI.icon('giftcard',{size:16})} Gift · ${points} ${growPointsUnitV326}${points===1?'':'s'}${dateText?` · Added ${esc(dateText)}`:''}${growPointsGiftEndsTextV476(reward)}${growPointsGiftExpiryTextV520(reward)}</span>${reward.description?`<span class="muted small grow-points-gift-desc-v343" data-merchant-content>${esc(reward.description)}</span>`:''}</span>`;
     if(history)return `<li data-grow-points-giftrow-v326="${esc(reward.id)}" class="grow-points-gift-card-v343">${thumb}${meta}<span class="pill off">In history</span></li>`;
     const paused=reward.paused===true;
     const confirmOpen=growPointsDeletePendingV326===String(reward.id);
@@ -16859,6 +16867,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          placeholder IS the default, so an owner can see what a customer reads before deciding to
          change it, and clearing the box puts the default back rather than leaving a blank row. */''}
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddWhereV477">Where it works <span class="muted">(optional)</span></label><br><input id="growPointsAddWhereV477" class="grow-setup-input-v301" data-workspace-i18n maxlength="280" placeholder="${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}" value="${esc(growPointsAddDraftV326.whereItWorks||'')}"><br><span class="muted small">Leave blank and customers see &ldquo;${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}&rdquo;</span></p>
+    ${/* nestly_v520 (owner, photo 2 held against photo 3: "i need you to be like stamp rewards —
+         rewards needs to expiry xx days after earn (if selected)", then, asked which clock:
+         "for points it would be individual gifts expiry, if dont want to set expiry dont need to
+         indicate"). So the control is PER GIFT and optional, and blank is the default.
+         STAMPS DELIBERATELY DO NOT GET IT. The Stamp Card page already carries a programme-wide
+         "Reward expiry" (v464), and a second per-gift clock on the same gift is precisely what
+         nestly_v487 deleted when the owner struck out "Last day to redeem" as redundant. One
+         gift, one clock — so this field is drawn only where there is no other one.
+         The number written is entitlement_expiry_days, which the customer already reads as
+         "Use within N days of claiming" (v339) and the gift sheet as its claim window (v468). */''}
+    ${growPointsIsStampsV326?'':`<p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddExpiryV520">Expires after <span class="muted">(optional)</span></label><br><input id="growPointsAddExpiryV520" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.expiryDays||'')}" placeholder="e.g. 30"><br><span class="muted small">Days a customer has to use this gift once they take it. Leave blank and it never expires.</span></p>`}
     ${/* nestly_v472 (owner, batch 11: "Allow to add expiry date for each rewards and display in
          customer view"). The OFFERING window — after this date the gift is no longer offered.
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
@@ -18974,7 +18993,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the whole snapshot — same local-echo the tier-basis handler uses. */
     const modelAfterV354=growPointsIsStampsV326?'stamps':'classic';
     if(snapshot.loyalty)snapshot.loyalty.loyalty_model=modelAfterV354;else snapshot.loyalty={loyalty_model:modelAfterV354};
-    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:''};
+    growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};
     growRerenderV322({quiet:true});
   };
   outerMain.querySelectorAll('[data-grow-points-manage-tab-v326]').forEach(button=>button.onclick=()=>{
@@ -19104,7 +19123,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      them (querySelectorAll, not the single-match querySelector it used to be). */
   outerMain.querySelectorAll('[data-grow-points-add-v326]').forEach(el=>{
     const openAddForm=()=>{
-      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:''};
+      growPointsEditingV326=null;growPointsAddOpenV326='form';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
       growRerenderV322({quiet:true});
     };
@@ -19125,7 +19144,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          same +08:00 discipline sgt()/sgIso() imposed on every other date this app round-trips. */
       endsOn:growPointsEndDateInputV472(reward.claim_available_until),
       /* nestly_v477: the owner's own wording, or blank so the placeholder shows the default. */
-      whereItWorks:String(reward.where_it_works||'')};
+      whereItWorks:String(reward.where_it_works||''),
+      /* nestly_v520: blank means "no expiry", which is what a gift with a null column has. */
+      expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -19225,7 +19246,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       points:pointsField?.value??growPointsAddDraftV326.points??'',
       description:String(descField?.value??growPointsAddDraftV326.description??''),
       endsOn:'',
-      whereItWorks:String($('growPointsAddWhereV477')?.value??growPointsAddDraftV326.whereItWorks??'')
+      whereItWorks:String($('growPointsAddWhereV477')?.value??growPointsAddDraftV326.whereItWorks??''),
+      /* nestly_v520: the field is absent on the Stamp Card page, so ?? falls through to the draft
+         rather than clearing it — the same shape every other optional field here uses. */
+      expiryDays:String($('growPointsAddExpiryV520')?.value??growPointsAddDraftV326.expiryDays??'')
     };
   };
   const growPointsPhotoInput=outerMain.querySelector('[data-grow-points-addform-v326] #growPointsPhotoInputV343');
@@ -19256,9 +19280,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the owner can no longer see or change. */
     const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
-    growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477};
+    /* nestly_v520: only the points form draws this field. On the Stamp Card page the raw value is
+       '' and nothing is sent at all — NOT a clear — because a stamp gift's expiry, if it ever had
+       one, belongs to a rule this page does not own. */
+    const expiryRawV520=growPointsIsStampsV326?'':String($('growPointsAddExpiryV520')?.value||'').trim();
+    growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477,expiryDays:expiryRawV520};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
+    /* nestly_v520: caught here so the owner reads a sentence instead of the server's 22023. The
+       server refuses it too — this is the friendly half of the same rule, not the only one. */
+    const expiryDaysV520=expiryRawV520===''?null:Math.round(Number(expiryRawV520));
+    if(expiryRawV520!==''&&(!Number.isFinite(expiryDaysV520)||expiryDaysV520<=0)){
+      growPointsErrorV326='Expires after must be a whole number of days, at least 1. Leave it blank for no expiry.';
+      return growRerenderV322({quiet:true});
+    }
     /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
        the one remaining way into this form with a FREE stamp number — and their whole job is to
        move a gift back onto the card. A number above the maximum card length can never be reached
@@ -19300,7 +19335,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
            stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
            to be an explicit clear, and '' is what the writer reads as one. */
-        p_where_it_works:whereV477}));
+        p_where_it_works:whereV477,
+        /* nestly_v520: null says "keep what is stored"; an empty box on the points form is an
+           EXPLICIT clear, the same contract p_clear_end_date has. On the Stamp Card page neither
+           is sent, so a stamp gift's stored value is left exactly where it was. */
+        p_entitlement_expiry_days:expiryDaysV520,
+        p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
@@ -19308,7 +19348,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
         p_description:description||null,p_image_ref:imageRef||null,
         p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
-        p_where_it_works:whereV477||null}));
+        p_where_it_works:whereV477||null,
+        p_entitlement_expiry_days:expiryDaysV520}));
     }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
@@ -27970,6 +28011,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'2710f262907f49991ee483547798b76b32b1660823e74cd40f1cd117cb8f1d6d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'2d59a52105407cf52a44f803227f2529b9e36ab0ac03b2bbcc24946dce0f041d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

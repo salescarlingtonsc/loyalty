@@ -442,8 +442,12 @@ test('V326 the three new RPCs are called with the exact parameter names the migr
   /* nestly_v472 added the gift end date to both payloads (owner batch 11: "Allow to add expiry
      date for each rewards"). p_claim_available_until rides create; update carries it plus
      p_clear_end_date, because a null there means "leave it alone" and clearing has to be said. */
-  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_where_it_works:whereV477\|\|null\}\)\);/);
-  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_clear_end_date:!endsOnV472,[\s\S]*?p_where_it_works:whereV477\}\)\);/);
+  /* nestly_v520: the owner sets a points gift's own expiry from this page, so both writers
+     gained a parameter. The contract this test guards is unchanged — the CALL must name every
+     argument the migration declares, because a positional or misnamed argument is how the
+     v290 probe put a UUID in a text slot. The new names are pinned with the rest. */
+  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_where_it_works:whereV477\|\|null,\s*\r?\n?\s*p_entitlement_expiry_days:expiryDaysV520\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_clear_end_date:!endsOnV472,[\s\S]*?p_where_it_works:whereV477,[\s\S]*?p_entitlement_expiry_days:expiryDaysV520,\s*\r?\n?\s*p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''\}\)\);/);
 });
 
 test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {
@@ -455,4 +459,61 @@ test('V326 pausing/deleting/creating a gift never touches the network on open �
   const deleteOpenHandler = code.slice(code.indexOf("outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]')"),
     code.indexOf("outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]')") + 200);
   assert.doesNotMatch(deleteOpenHandler, /sb\.rpc/, 'opening the delete confirm must not itself call the delete RPC');
+});
+
+/* ============ nestly_v520 — a points gift carries its own optional expiry ============
+   Owner (2026-08-26), asked which clock "rewards expire xx days after earn" meant for points:
+   "for points it would be individual gifts expiry, if dont want to set expiry dont need to
+   indicate, if not can set individual expiry for points gift."
+
+   Per gift, optional, points only. These assertions EXECUTE the row helper and read the rendered
+   form, rather than grepping for the field's id — a grep would pass against a field that renders
+   on the Stamp Card page too, which is the one thing this must not do. */
+
+const growPointsGiftExpiryTextV520 = new Function(
+  `${slice('  const growPointsGiftExpiryTextV520=reward=>{', '  };')}
+   return growPointsGiftExpiryTextV520;`)();
+
+test('V520 a gift with an expiry says so on its row, and one without says nothing', () => {
+  assert.equal(growPointsGiftExpiryTextV520({ entitlement_expiry_days: 30 }), ' · Use within 30 days');
+  assert.equal(growPointsGiftExpiryTextV520({ entitlement_expiry_days: 1 }), ' · Use within 1 day',
+    'one day is singular');
+  assert.equal(growPointsGiftExpiryTextV520({ entitlement_expiry_days: null }), '',
+    'a gift with no expiry draws nothing — "No expiry" on every row is noise, not information');
+  assert.equal(growPointsGiftExpiryTextV520({}), '');
+  assert.equal(growPointsGiftExpiryTextV520({ entitlement_expiry_days: 0 }), '',
+    'zero is treated as no expiry, never as "expires immediately"');
+});
+
+test('V520 the expiry field is drawn on the points form and NOT on the Stamp Card form', () => {
+  /* The Stamp Card page already carries a programme-wide "Reward expiry" (v464). A second,
+     per-gift clock on the same gift is exactly what nestly_v487 deleted when the owner struck out
+     "Last day to redeem" as redundant. One gift, one clock. */
+  const form = app.slice(
+    app.indexOf('const growPointsAddFormV326=growPointsAddOpenV326'),
+    app.indexOf('const growPointsAddCardV343='));
+  assert.ok(form.includes('growPointsAddExpiryV520'), 'the field exists');
+  assert.match(form, /\$\{growPointsIsStampsV326\?''\:`<p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddExpiryV520"/,
+    'and it is drawn only when the page is NOT the Stamp Card');
+});
+
+test('V520 an empty box on the points form clears, and the Stamp Card form sends neither', () => {
+  /* v472 established the contract: null means "keep what is stored", so removing a value has to
+     be an explicit clear. The stamp branch must send NO clear — a stamp gift's expiry belongs to
+     a rule this page does not own, and clearing it here would delete it invisibly. */
+  assert.ok(app.includes("const expiryRawV520=growPointsIsStampsV326?'':String($('growPointsAddExpiryV520')?.value||'').trim();"),
+    'the stamp page reads the field as empty rather than reading a node that is not there');
+  assert.ok(app.includes("p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''"),
+    'so the clear can only ever be sent from the points page');
+});
+
+test('V520 the typed value survives a photo pick, and is restored when a gift is reopened', () => {
+  /* V349's rule: choosing a photo rerenders the form from the draft, so anything not captured
+     into the draft first is silently lost. The new field has to be captured with the rest. */
+  assert.ok(app.includes("expiryDays:String($('growPointsAddExpiryV520')?.value??growPointsAddDraftV326.expiryDays??'')"),
+    'the capture helper reads it');
+  assert.ok(app.includes("expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''"),
+    'and Edit prefills it from the stored gift');
+  assert.ok(!/\{name:'',points:'',description:'',endsOn:'',whereItWorks:''\}/.test(app),
+    'every draft literal carries the new key, so no reset leaves it undefined');
 });

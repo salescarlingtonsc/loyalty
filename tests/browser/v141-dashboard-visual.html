@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="62c2e1062897e16241472559002126cebd7447d376e1a3aad9a74a062cbed7e8"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="266c2c16490cfde46ee295c30e5c2d435f2812fd3895baeee385e798a2df2e87"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -5664,6 +5664,14 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
          and the old direct route can never drill into a different set of people. */
       if(key==='inactive')pendingCustomerInactivity='all_inactive';
       openDashboardMetricRowsV388({key,from,to,scopePayload,
+        /* nestly_v519: the branch ids the SERVER actually counted, taken from the summary payload
+           rather than re-derived here. get_dashboard_summary_v155 filters its sales with
+           `s.branch_id = any(v_scope_ids)`, where v_scope_ids comes from
+           app.resolve_reporting_branch_scope_v155 — so a second client-side reading of "which
+           branches am I looking at" is exactly the drift that let a SGD 0.00 tile open a list of
+           the whole business. Handing the resolved list down means the figure and its rows are
+           filtered by one and the same set, by construction. */
+        branchIdsV519:Array.isArray(d?.scope?.branch_ids)?d.scope.branch_ids:null,
         value:(metrics.find(metric=>metric.key===key)||{}).value||''});
     });
     if(loyalty){
@@ -5751,6 +5759,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'62c2e1062897e16241472559002126cebd7447d376e1a3aad9a74a062cbed7e8',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'266c2c16490cfde46ee295c30e5c2d435f2812fd3895baeee385e798a2df2e87',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

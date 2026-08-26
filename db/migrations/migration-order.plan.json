@@ -2571,6 +2571,12 @@
       "path": "db/migrations/20260826_nestly_v518a_capability_unlimited_grant.sql",
       "semanticVersion": "v518a",
       "proposedDeployVersion": "20260826000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v520_a_points_gift_can_expire.sql",
+      "semanticVersion": "v520",
+      "proposedDeployVersion": "20260826000004"
     }
   ]
 }

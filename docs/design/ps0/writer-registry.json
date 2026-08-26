@@ -418,7 +418,7 @@
    "id": "browser.rpc:app/app.js:business_create_reward_v326",
    "surface": "browser_rpc_binding",
    "rpc": "business_create_reward_v326",
-   "resolves_to": "business_create_reward_v326/9 (owner-only via app.c45_owner_loyalty_write; writes both loyalty_rewards AND a matching loyalty_reward_versions row). nestly_v505: the target version is the business's currently PUBLISHED config version when there is one \u2014 which is what makes the new gift immediately redeemable with no draft/publish step \u2014 and otherwise the business's own newest DRAFT (app.reward_draft_target_v505). Before v505 the null case raised XX001, so a business that had never gone live could not save its first gift at all; the draft case replies publish_status='pending' with a blocker so the browser cannot claim the gift is live.",
+   "resolves_to": "business_create_reward_v326/10 (owner-only via app.c45_owner_loyalty_write; writes both loyalty_rewards AND a matching loyalty_reward_versions row). nestly_v505: the target version is the business's currently PUBLISHED config version when there is one \u2014 which is what makes the new gift immediately redeemable with no draft/publish step \u2014 and otherwise the business's own newest DRAFT (app.reward_draft_target_v505). Before v505 the null case raised XX001, so a business that had never gone live could not save its first gift at all; the draft case replies publish_status='pending' with a blocker so the browser cannot claim the gift is live. nestly_v520: the signature gained p_entitlement_expiry_days (optional, per gift) and the old 9-arg form was DROPPED rather than left beside it \u2014 two overloads reachable by the same named arguments is PGRST203.",
    "call_site_finding": "none \u2014 validates non-empty name and positive points server-side; audit_log'd"
   },
   {
@@ -2103,36 +2103,36 @@
    "kernel_migratability": "unaffected - a projection refresh, not an economic write; nothing for the kernel to own",
    "call_site_finding": "OK - zero-argument call; v286 routed it through customerRpc (12s abort) which is what made the literal name discoverable. The call itself is unchanged since v177."
   },
- {
-  "id": "browser.rpc:app/app.js:customer_reschedule_appointment_v508",
-  "surface": "browser_rpc_binding",
-  "rpc": "customer_reschedule_appointment_v508",
-  "resolves_to": "customer_reschedule_appointment_v508/4 (authenticated customer, verified link derived from auth.uid(); nestly_v509 UI). ONE transaction: cancels the caller's own booked future appointment and inserts a fresh 'pending' booking_requests row plus the app.booking_management_tokens row that makes it visible/withdrawable — the owner's 2026-08-25 ruling that reschedule is a fresh request the business approves, never an amendment the old appointment waits on. Writes appointments.status, booking_requests, app.booking_management_tokens and audit_log; none is a VALUE_TABLE, so no value impact. Rides app.v89_customer_booking_gate (business booking switch + open workspace) on the request insert.",
-  "call_site_finding": "none — new time validated future server-side; atomicity is the idempotency (a replay finds the appointment no longer 'booked' and is refused already_actioned); 5-per-15-min throttle per client; audit_log'd"
- },
- {
-  "id": "browser.rpc:app/app.js:customer_create_gift_intent_v515",
-  "surface": "browser_rpc_binding",
-  "rpc": "customer_create_gift_intent_v515",
-  "resolves_to": "customer_create_gift_intent_v515/4 (authenticated customer; verified link derived from auth.uid(), never from an argument). nestly_v515, owner ruling \"all rewards and gifts must have a qrcode\". Mints ONE pending row in public.customer_gift_intents_v515 against a welcome / bring-back / referral grant id or a tier_benefits_v365 id, and returns the app.v89_redemption_token HMAC for it. Writes only that intent table, which is NOT a VALUE_TABLE: no value moves at mint, the gift is settled later by the counter's scan.",
-  "call_site_finding": "none \u2014 eligibility is re-run at mint (grant still 'granted' and unexpired; perk active, tier reached, birthday month, allowance unspent) so the customer is never handed a QR the counter would refuse; an UNLIMITED perk is refused outright because checkout already applies it; idempotency-keyed with replay-by-request-hash; one live QR per gift enforced by a partial unique index"
- },
- {
-  "id": "browser.rpc:app/app.js:staff_scan_gift_qr_v515",
-  "surface": "browser_rpc_binding",
-  "rpc": "staff_scan_gift_qr_v515",
-  "resolves_to": "staff_scan_gift_qr_v515/5 \u2014 see db.fn:public.staff_scan_gift_qr_v515/5. One scanner arm in openMerchantRedemptionScanner; the browser learns a single 'gift' kind and the server dispatches to the right redeemer.",
-  "call_site_finding": "none \u2014 the counter presents a token it scanned; branch and sale come from the till context; idempotency-keyed"
- },
- {
-  "id": "db.fn:public.staff_scan_gift_qr_v515/5",
-  "surface": "db_function",
-  "value_impact": true,
-  "rows_written": "customer_gift_intents_v515 (status/completion), and THROUGH its four callees: welcome_offer_grants_v215, bringback_grants_v361, referral_grants_v420, tier_benefit_issues_v365, plus the $0 sales rows v361/v420 write",
-  "latest_file": "20260825000014_nestly_v515_a_qr_on_every_gift.sql",
-  "resolves_to": "The gift dispatcher (nestly_v515). Adds NO permission logic of its own: it calls staff_redeem_welcome_offer_v215 / _bringback_v361 / _referral_v420 / staff_issue_tier_benefit_v365, each SECURITY DEFINER and each re-checking auth.uid() plus its own predicate (create_sales; till|loyalty; till|referrals; till|loyalty), so the three different authorisations survive definer nesting rather than being flattened.",
-  "call_site_finding": "none \u2014 advisory-locked on the token hash; a completed intent replays its stored result instead of redeeming twice; a tier perk re-checks the period key at scan so a QR minted before midnight cannot spend the next period; the intent id is passed as staff_issue_tier_benefit_v365's idempotency key because a NULL key there silently burns a second allowance"
- },
+  {
+   "id": "browser.rpc:app/app.js:customer_reschedule_appointment_v508",
+   "surface": "browser_rpc_binding",
+   "rpc": "customer_reschedule_appointment_v508",
+   "resolves_to": "customer_reschedule_appointment_v508/4 (authenticated customer, verified link derived from auth.uid(); nestly_v509 UI). ONE transaction: cancels the caller's own booked future appointment and inserts a fresh 'pending' booking_requests row plus the app.booking_management_tokens row that makes it visible/withdrawable \u2014 the owner's 2026-08-25 ruling that reschedule is a fresh request the business approves, never an amendment the old appointment waits on. Writes appointments.status, booking_requests, app.booking_management_tokens and audit_log; none is a VALUE_TABLE, so no value impact. Rides app.v89_customer_booking_gate (business booking switch + open workspace) on the request insert.",
+   "call_site_finding": "none \u2014 new time validated future server-side; atomicity is the idempotency (a replay finds the appointment no longer 'booked' and is refused already_actioned); 5-per-15-min throttle per client; audit_log'd"
+  },
+  {
+   "id": "browser.rpc:app/app.js:customer_create_gift_intent_v515",
+   "surface": "browser_rpc_binding",
+   "rpc": "customer_create_gift_intent_v515",
+   "resolves_to": "customer_create_gift_intent_v515/4 (authenticated customer; verified link derived from auth.uid(), never from an argument). nestly_v515, owner ruling \"all rewards and gifts must have a qrcode\". Mints ONE pending row in public.customer_gift_intents_v515 against a welcome / bring-back / referral grant id or a tier_benefits_v365 id, and returns the app.v89_redemption_token HMAC for it. Writes only that intent table, which is NOT a VALUE_TABLE: no value moves at mint, the gift is settled later by the counter's scan.",
+   "call_site_finding": "none \u2014 eligibility is re-run at mint (grant still 'granted' and unexpired; perk active, tier reached, birthday month, allowance unspent) so the customer is never handed a QR the counter would refuse; an UNLIMITED perk is refused outright because checkout already applies it; idempotency-keyed with replay-by-request-hash; one live QR per gift enforced by a partial unique index"
+  },
+  {
+   "id": "browser.rpc:app/app.js:staff_scan_gift_qr_v515",
+   "surface": "browser_rpc_binding",
+   "rpc": "staff_scan_gift_qr_v515",
+   "resolves_to": "staff_scan_gift_qr_v515/5 \u2014 see db.fn:public.staff_scan_gift_qr_v515/5. One scanner arm in openMerchantRedemptionScanner; the browser learns a single 'gift' kind and the server dispatches to the right redeemer.",
+   "call_site_finding": "none \u2014 the counter presents a token it scanned; branch and sale come from the till context; idempotency-keyed"
+  },
+  {
+   "id": "db.fn:public.staff_scan_gift_qr_v515/5",
+   "surface": "db_function",
+   "value_impact": true,
+   "rows_written": "customer_gift_intents_v515 (status/completion), and THROUGH its four callees: welcome_offer_grants_v215, bringback_grants_v361, referral_grants_v420, tier_benefit_issues_v365, plus the $0 sales rows v361/v420 write",
+   "latest_file": "20260825000014_nestly_v515_a_qr_on_every_gift.sql",
+   "resolves_to": "The gift dispatcher (nestly_v515). Adds NO permission logic of its own: it calls staff_redeem_welcome_offer_v215 / _bringback_v361 / _referral_v420 / staff_issue_tier_benefit_v365, each SECURITY DEFINER and each re-checking auth.uid() plus its own predicate (create_sales; till|loyalty; till|referrals; till|loyalty), so the three different authorisations survive definer nesting rather than being flattened.",
+   "call_site_finding": "none \u2014 advisory-locked on the token hash; a completed intent replays its stored result instead of redeeming twice; a tier perk re-checks the period key at scan so a QR minted before midnight cannot spend the next period; the intent id is passed as staff_issue_tier_benefit_v365's idempotency key because a NULL key there silently burns a second allowance"
+  },
   {
    "id": "browser.rpc:app/app.js:customer_withdraw_booking_request_v290",
    "surface": "browser_rpc_binding",
@@ -2261,7 +2261,7 @@
    "id": "browser.rpc:app/app.js:business_update_reward_v326",
    "surface": "browser_rpc_binding",
    "rpc": "business_update_reward_v326",
-   "resolves_to": "business_update_reward_v326/11 (owner-only via app.c45_owner_loyalty_write; V343). Writes public.loyalty_rewards, and since v423 also the reward's row in the PUBLISHED config version under the app.v423_reward_edit_version_id token the immutability guard checks, plus any undiverged draft clones. nestly_v505: when the business has never published there is no published row to sync, so the write lands in the business's own draft (app.reward_draft_target_v505) \u2014 previously the version write was skipped entirely, which would have let publish carry the pre-edit text live.",
+   "resolves_to": "business_update_reward_v326/13 (owner-only via app.c45_owner_loyalty_write; V343). Writes public.loyalty_rewards, and since v423 also the reward's row in the PUBLISHED config version under the app.v423_reward_edit_version_id token the immutability guard checks, plus any undiverged draft clones. nestly_v505: when the business has never published there is no published row to sync, so the write lands in the business's own draft (app.reward_draft_target_v505) \u2014 previously the version write was skipped entirely, which would have let publish carry the pre-edit text live. nestly_v520: gained p_entitlement_expiry_days + p_clear_expiry_days (null keeps the stored value, the clear flag removes it) and the old 11-arg form was DROPPED. app.reward_version_immutable_guard()'s owner-editable allowlist gained entitlement_expiry_days in the same migration, or every published gift would refuse the edit.",
    "call_site_finding": "none \u2014 the Points/Stamp pages re-read all fields from the row before every write, so a photo pick cannot discard a value typed a second earlier; non-empty name and positive points validated server-side; audit_log'd"
   },
   {
@@ -3353,14 +3353,14 @@
    "id": "browser.rpc:app/app.js:redeem_growth_offer_v108",
    "reason": "Post-sale, idempotent growth-entitlement workflow update. It validates an existing qualifying sale and changes only offer intent/entitlement/evidence state; it does not change the sale, payment, discount, points, stored value, package, gift-card, or other customer-value ledger."
   },
- {
-  "id": "browser.rpc:app/app.js:customer_get_gift_intent_v515",
-  "reason": "nestly_v515 read-only poll of the customer's OWN gift intent while the QR is on screen, scoped on auth.uid(). Returns label, status and expiry; writes nothing. The exact twin of customer_get_redemption_intent_v89 for the gift table."
- },
- {
-  "id": "browser.rpc:app/app.js:customer_cancel_gift_intent_v515",
-  "reason": "nestly_v515 customer-side exit from their OWN pending gift QR, scoped on auth.uid(). It only moves a pending intent to 'cancelled' and can never redeem, re-issue or alter a grant; a completed intent replays its stored result instead. The exact twin of customer_cancel_redemption_intent_v89."
- },
+  {
+   "id": "browser.rpc:app/app.js:customer_get_gift_intent_v515",
+   "reason": "nestly_v515 read-only poll of the customer's OWN gift intent while the QR is on screen, scoped on auth.uid(). Returns label, status and expiry; writes nothing. The exact twin of customer_get_redemption_intent_v89 for the gift table."
+  },
+  {
+   "id": "browser.rpc:app/app.js:customer_cancel_gift_intent_v515",
+   "reason": "nestly_v515 customer-side exit from their OWN pending gift QR, scoped on auth.uid(). It only moves a pending intent to 'cancelled' and can never redeem, re-issue or alter a grant; a completed intent replays its stored result instead. The exact twin of customer_cancel_redemption_intent_v89."
+  },
   {
    "id": "browser.rpc:app/app.js:customer_get_redemption_intent_v89",
    "reason": "browser RPC 'customer_get_redemption_intent_v89' is the authenticated, self-scoped, read-only status projection used to observe merchant completion of an existing redemption intent. It performs no DML and cannot move points, credit, cash, or other customer value."
