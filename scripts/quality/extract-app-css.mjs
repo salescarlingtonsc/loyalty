@@ -206,10 +206,22 @@ export function buildArtifacts(sourceHtml, pwaCss = '') {
     throw new Error('extract-app-css: app/index.html no longer links /pwa.css where expected');
   }
   html = html.replace(PWA_LINK, '');          // out of the head
-  if (!html.includes('</body>')) {
-    throw new Error('extract-app-css: app/index.html has no </body> to place the stylesheets before');
+
+  /* nestly_v534: the stylesheets go immediately BEFORE THE FIRST BODY SCRIPT — after the boot
+     skeleton, so it still paints from the inline block above, but as early in the body as
+     possible. At the very end of the body (v530/v533) they were discovered so late that the
+     deferred app-core.js, which cannot run until pending stylesheets resolve, was held up:
+     measured under throttling, paint was the same either way (200 vs 208 ms) but
+     DOMContentLoaded moved from 7,616 ms to 5,850 ms. That regression showed on production as
+     real content arriving ~220 ms later on a cold visit, and it is the reason this anchor is the
+     first script rather than </body>.
+     They are still real render-blocking stylesheets, so everything after them — every script and
+     everything the router paints — is covered. */
+  const firstBodyScript = html.indexOf('<script', html.indexOf('<body'));
+  if (firstBodyScript < 0) {
+    throw new Error('extract-app-css: app/index.html has no body script to place the stylesheets before');
   }
-  html = html.replace('</body>', `${sheets}\n</body>`);
+  html = html.slice(0, firstBodyScript) + sheets + '\n' + html.slice(firstBodyScript);
 
   return { css, critical, html, hash, blockCount: blocks.length };
 }

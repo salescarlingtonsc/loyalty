@@ -58,12 +58,18 @@ test('V530 no render-blocking stylesheet stands between the head and the skeleto
 test('V530 the full stylesheet still blocks the real UI, so nothing paints unstyled', () => {
   const sheet = shipped.match(/<link rel="stylesheet" href="(\/app\.css\?b=[0-9a-f]{12})">/);
   assert.ok(sheet, 'the real stylesheet link still exists');
-  assert.ok(shipped.lastIndexOf(sheet[0]) < shipped.lastIndexOf('</body>'),
-    'and sits at the end of the body');
-  assert.ok(shipped.indexOf('data-boot-skeleton') < shipped.lastIndexOf(sheet[0]),
-    'AFTER the skeleton, which is why the skeleton may paint first');
-  assert.ok(shipped.indexOf('id="root"') < shipped.lastIndexOf(sheet[0]),
-    'and before nothing that matters — #root is above it, so the router\'s output is covered');
+  const bodyAt = shipped.indexOf('<body');
+  const sheetAt = shipped.indexOf(sheet[0], bodyAt);
+  assert.ok(shipped.indexOf('data-boot-skeleton') < sheetAt,
+    'it sits AFTER the skeleton, which is why the skeleton may paint first');
+  /* nestly_v534: and BEFORE the first body script, not at </body>. Placed at the very end they
+     were discovered so late that deferred app-core.js — which cannot run while stylesheets are
+     pending — was held up: same paint (200 vs 208 ms throttled) but DOMContentLoaded 7,616 ms
+     against 5,850 ms, which showed on production as real content ~220 ms later on a cold visit. */
+  assert.ok(sheetAt < shipped.indexOf('<script src=', bodyAt),
+    'and BEFORE the first body script, or the deferred bundle waits on them');
+  assert.ok(shipped.indexOf('id="root"') < sheetAt,
+    'with #root above them, so everything the router paints is still covered');
   const preload = head.match(/<link rel="preload" as="style" href="(\/app\.css\?b=[0-9a-f]{12})">/);
   assert.equal(preload[1], sheet[1],
     'the preload and the stylesheet must name the same build, or the file is fetched twice');
