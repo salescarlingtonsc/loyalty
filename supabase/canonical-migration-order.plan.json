@@ -2650,6 +2650,12 @@
       "version": "20260827000005",
       "name": "nestly_v548_insights_partition_scope",
       "sourcePath": "db/migrations/20260827_nestly_v548_insights_partition_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000006",
+      "name": "nestly_v548_attention_list",
+      "sourcePath": "db/migrations/20260827_nestly_v548_attention_list.sql"
     }
   ]
 }

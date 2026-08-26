@@ -366,7 +366,11 @@ test('there is exactly one h1 and the heading order never skips a level', () => 
 });
 
 test('the page carries its SEO and social metadata', () => {
-  assert.match(landing, /<title>Peekaa — Customer loyalty and rewards platform for businesses in Singapore<\/title>/);
+  /* V548 (strategy ruling 2026-08-26): the page identifies as the retention outcome, never as
+     "a loyalty platform" — that phrase filed Peekaa into the category it out-builds. */
+  assert.match(landing, /<title>Peekaa — Turn first-time customers into regulars \| Singapore<\/title>/);
+  assert.ok(!/<title>[^<]*loyalty[^<]*platform/i.test(landing),
+    'the title must never self-label Peekaa as a loyalty platform again');
   assert.match(landing, /<meta name="description" content="[^"]{80,300}">/);
   assert.match(landing, /<link rel="canonical" href="https:\/\/www\.peekaa\.asia\/">/);
   for (const property of ['og:title', 'og:description', 'og:image', 'og:url', 'og:type']) {

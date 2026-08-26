@@ -19067,6 +19067,67 @@ async function loadDashboardBottlesV278(root,branchId=null){
   </section>`;
 }
 
+/* V548 — "Customers to bring back", the dashboard's attention list.
+   The strategy ruling (2026-08-26) is that Peekaa's first screen must answer the question no
+   competitor can: WHO is overdue against their own visit rhythm, and how much monthly revenue is
+   fading with them. The server (get_attention_list_v548) owns every judgement — median inter-visit
+   cadence, due/overdue/slipping bucketing, monthly value — this card only prints it. Rows carry
+   client names and phones, so the RPC is gated on the clients module scope and the card simply
+   stays absent for staff who cannot open Customers (same predicate, one server authority).
+   The per-row action is the staff-tap wa.me draft (the V330 pattern): outbound sending does not
+   exist yet platform-wide, and a button that opens the owner's own WhatsApp with a ready message
+   works today. When the WhatsApp engine lands, this button is what it replaces. */
+function attentionWhatsAppUrlV548(phone,name,businessName){
+  const digits=String(phone||'').replace(/\D/g,'');
+  const mobile=/^[89]\d{7}$/.test(digits)?`65${digits}`:/^65[89]\d{7}$/.test(digits)?digits:null;
+  if(!mobile)return null;
+  const first=String(name||'').trim().split(/\s+/)[0]||'';
+  const text=`Hi${first?` ${first}`:''}! It's ${String(businessName||'us').trim()} here — we haven't seen you in a while and we'd love to have you back. Come by this week!`;
+  return `https://wa.me/${mobile}?text=${encodeURIComponent(text)}`;
+}
+const ATTENTION_STATUS_V548={
+  due:{label:'Due back',tone:'#F0A35B'},
+  overdue:{label:'Overdue',tone:'#C24135'},
+  slipping:{label:'Slipping away',tone:'#8E2F26'}
+};
+async function loadDashboardAttentionV548(root,branchId=null){
+  const host=root?.querySelector('#dashboardAttentionV548');
+  if(!host)return;
+  host.innerHTML='';
+  if(S.myRole!=='owner'&&!canReadModule('clients'))return;
+  const {data,error}=await sb.rpc('get_attention_list_v548',{p_business:S.biz.id,p_branch:branchId,p_limit:8});
+  if(!root.isConnected||root!==$('dashboardView'))return;
+  if(error||!data)return;
+  const sum=data.summary||{};
+  const rows=Array.isArray(data.rows)?data.rows:[];
+  const fadingCount=(Number(sum.overdue)||0)+(Number(sum.slipping)||0);
+  const atRisk=Number(sum.monthly_at_risk_cents)||0;
+  const oneTime=Number(sum.one_time_count)||0;
+  /* A business with nothing to act on gets no card at all — an empty "attention" panel on the
+     first screen of the day would be noise, and a brand-new business would see it forever. */
+  if(!rows.length&&!oneTime)return;
+  const dayWord=n=>`${Number(n)||0}d`;
+  const attentionRowV548=r=>{
+    const st=ATTENTION_STATUS_V548[r.status]||ATTENTION_STATUS_V548.due;
+    const wa=attentionWhatsAppUrlV548(r.phone,r.full_name,S.biz?.name);
+    return `<li class="attention-row-v548" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line,#eee)">
+      <div style="flex:1;min-width:0">
+        <b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.full_name||'Customer')}</b>
+        <span class="muted small">Last visit ${dayWord(r.last_visit_days)} ago · usually every ~${esc(String(Math.round(Number(r.cadence_days)||0)))}d · ${esc(money(r.monthly_value_cents))}/mo</span>
+      </div>
+      <span class="pill" style="background:${st.tone}1A;color:${st.tone};font-weight:700;white-space:nowrap">${st.label}</span>
+      ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}
+    </li>`;
+  };
+  host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-bottom:18px">
+    <div class="cui-card-head">${CUI.icon('customers',{size:24})}<div><h2 id="dashboardAttentionTitleV548">Customers to bring back</h2><p>Each customer judged by their own visit rhythm, not a fixed rule.</p></div></div>
+    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${fadingCount} customer${fadingCount===1?'':'s'} overdue</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
+    <ul style="list-style:none;margin:8px 0 0;padding:0">${rows.map(attentionRowV548).join('')}</ul>
+    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${oneTime} customer${oneTime===1?'':'s'} visited once in the last year and never came back.</p>`:''}
+    <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/customers">Open Customers</a></div>
+  </section>`;
+}
+
 /* V180 (owner instruction: "I want have simple glance of calendar").
    The Today-schedule strip announced today's bookings but showed none of them — an owner had
    to leave the Dashboard to learn whether anyone was coming in. It now renders today's actual
@@ -19247,6 +19308,7 @@ async function dashboard(){
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
+    <div id="dashboardAttentionV548"></div>
     <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div>${/* V319: the period strip, moved here from the titlebar. It stays OUTSIDE the collapsible body
@@ -19329,6 +19391,7 @@ async function dashboard(){
   dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
+  loadDashboardAttentionV548(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser

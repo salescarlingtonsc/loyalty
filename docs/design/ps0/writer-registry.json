@@ -3599,6 +3599,10 @@
    "reason": "v244 read-only audience projection: aggregates counts_as_visit sales (validVisitSales reversal semantics) into lapsed-regular candidates entirely in SELECTs behind require_module_scope_v145(retention); no DML, no ledger or value write. Replaces the browser paging every client+sale via fetchAllRows."
   },
   {
+   "id": "browser.rpc:app/app.js:get_attention_list_v548",
+   "reason": "v548 read-only attention projection for the business dashboard: aggregates counts_as_visit sales (v108 reversal + residual semantics) into per-client cadence, due/overdue/slipping status and monthly value entirely in SELECTs behind require_module_scope_v145(clients); no DML, no ledger or value write."
+  },
+  {
    "id": "browser.rpc:app/app.js:customer_get_communication_preferences_v263",
    "reason": "v263 read-only projection of the customer's own marketing category x channel matrix, resolved through app.customer_communication_identity_v263() from auth.uid(). Pure SELECT over customer_communication_preferences_v263 plus the two immutable taxonomy functions; no DML, no ledger, no value table. It returns the EFFECTIVE value for every cell (absence = ON) precisely so the browser never reproduces the default rule and drifts apart from the send-path gate."
   },
