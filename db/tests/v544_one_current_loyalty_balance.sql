@@ -57,28 +57,32 @@ from (
                   where pl.business_id = c.business_id and pl.client_id = c.id)
 ) x;
 
--- 03 — the five customers the audit measured now read their live-pot balance, not the merged one
+-- 03 — the five customers the audit measured now read their live-pot balance, not the merged one.
+--      Clients are pinned by ID, not by name: Cubbly holds TWO rows called "Lee Chuan Seng" (the
+--      real customer 268cb96d and an empty duplicate a88f18a6 at 0), and a name join matched both,
+--      producing a spurious FAIL on the first run of this suite.
 insert into _r
-select '03 ' || b.name || ' / ' || c.full_name,
-  case when app.client_points_balance_v409(b.id, c.id) = x.expected
+select '03 ' || x.label,
+  case when app.client_points_balance_v409(x.bid, x.cid) = x.expected
        then 'PASS (' || x.expected || ', was ' || x.merged || ')'
-       else 'FAIL — primitive says ' || app.client_points_balance_v409(b.id, c.id)
-            || ', live pot holds ' || x.expected end
+       else 'FAIL — primitive says ' || app.client_points_balance_v409(x.bid, x.cid)
+            || ', expected ' || x.expected end
 from (values
-  ('8492e8d6-8888-4383-ada0-7e1ed69f0caa'::uuid, 'Lee Chuan Seng',       139, 940),
-  ('53677cf5-abb8-4a41-a17b-17cdc0bc06d4'::uuid, 'Jeffrey Tan Meng Lee', 500, 836),
-  ('8ad4a375-2d42-4e0d-b509-b0e4ed6ccf8c'::uuid, 'Steven Lim',            15, 131),
-  ('8492e8d6-8888-4383-ada0-7e1ed69f0caa'::uuid, 'Mumu',                   0,  13),
-  ('53677cf5-abb8-4a41-a17b-17cdc0bc06d4'::uuid, 'Yong Xiang',             0,  11)
-) x(bid, cname, expected, merged)
-join public.businesses b on b.id = x.bid
-join public.clients c on c.business_id = b.id and c.full_name = x.cname;
+  ('8492e8d6-8888-4383-ada0-7e1ed69f0caa'::uuid,'268cb96d-e6cc-4217-99f6-884b006ba7a3'::uuid,'Cubbly SPA / Lee Chuan Seng',      139, 940),
+  ('53677cf5-abb8-4a41-a17b-17cdc0bc06d4'::uuid,'6dc64db0-2370-490c-9e3f-fafe58a67fd4'::uuid,'Hougang ABC / Jeffrey Tan Meng Lee',500, 836),
+  ('8ad4a375-2d42-4e0d-b509-b0e4ed6ccf8c'::uuid,'05ca41be-60d9-4f1f-8f8f-d9532c41066a'::uuid,'QA Kopi Lab / Steven Lim',           15, 131),
+  ('8492e8d6-8888-4383-ada0-7e1ed69f0caa'::uuid,'b6454672-38a8-49cb-af4f-8e98fafae2ed'::uuid,'Cubbly SPA / Mumu',                   0,  13),
+  ('53677cf5-abb8-4a41-a17b-17cdc0bc06d4'::uuid,'7f2d3288-fe17-45ca-80c9-7429230a1bd8'::uuid,'Hougang ABC / Yong Xiang',            0,  11)
+) x(bid, cid, label, expected, merged);
 
--- 04 — a customer whose pots were never split must be untouched by the fix
+-- 04 — a customer whose only pot is the LIVE one must be untouched by the fix.
+--      The first draft asserted this of any single-pot customer, which is wrong: a customer whose
+--      sole pot is DORMANT should move to 0, and Yong Xiang (Hougang ABC, 11 dormant) duly did.
+--      That is the fix working, not a regression, so the population is narrowed to live-pot-only.
 insert into _r
-select '04 unaffected customers unchanged',
+select '04 live-pot-only customers unchanged',
   case when count(*) filter (where moved) = 0
-       then 'PASS (' || count(*) || ' single-pot clients checked)'
+       then 'PASS (' || count(*) || ' live-pot-only clients checked)'
        else 'FAIL — the fix moved ' || count(*) filter (where moved) || ' client(s) it should not have' end
 from (
   select app.client_points_balance_v409(c.business_id, c.id)
@@ -88,6 +92,9 @@ from (
     from public.clients c
    where 1 = (select count(distinct pl.programme_id) from public.points_ledger pl
                where pl.business_id = c.business_id and pl.client_id = c.id)
+     and exists (select 1 from public.points_ledger pl
+                  where pl.business_id = c.business_id and pl.client_id = c.id
+                    and pl.programme_id is not distinct from app.live_balance_programme_v381(c.business_id))
 ) x;
 
 -- 05 — the primitive stays internal; widening it would create a second public way to ask
