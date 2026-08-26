@@ -19116,7 +19116,7 @@ async function loadDashboardAttentionV548(root,branchId=null){
         <span class="muted small">Last visit ${dayWord(r.last_visit_days)} ago · usually every ~${esc(String(Math.round(Number(r.cadence_days)||0)))}d · ${esc(money(r.monthly_value_cents))}/mo</span>
       </div>
       <span class="pill" style="background:${st.tone}1A;color:${st.tone};font-weight:700;white-space:nowrap">${st.label}</span>
-      ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}
+      ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content data-attention-outreach="${esc(r.client_id)}" aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}
     </li>`;
   };
   host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-bottom:18px">
@@ -19126,6 +19126,15 @@ async function loadDashboardAttentionV548(root,branchId=null){
     ${oneTime?`<p class="muted small" style="margin:12px 0 0">${oneTime} customer${oneTime===1?'':'s'} visited once in the last year and never came back.</p>`:''}
     <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/customers">Open Customers</a></div>
   </section>`;
+  /* V550: a Message tap becomes evidence. The wa.me draft opens regardless; the record is
+     fire-and-forget (a failed write must never block the outreach itself), deduped server-side
+     to one row per customer per SG day, and it is what get_recovery_report_v550 attributes
+     "came back after being contacted" against. */
+  host.querySelectorAll('a[data-attention-outreach]').forEach(link=>{
+    link.addEventListener('click',()=>{
+      sb.rpc('record_attention_outreach_v550',{p_business:S.biz.id,p_client:link.dataset.attentionOutreach}).then(()=>{},()=>{});
+    });
+  });
 }
 
 /* V180 (owner instruction: "I want have simple glance of calendar").
@@ -45111,11 +45120,49 @@ function reportShareBarV297(entries,{format=value=>String(value)}={}){
     <ul class="report-share-legend-v297">${usable.map(([label,value],index)=>`<li><span class="report-share-dot-v297" aria-hidden="true" style="background:${colour(index)}"></span>${esc(label)} · <b>${esc(format(value))}</b> · ${Math.round(share(value))}%</li>`).join('')}</ul>
   </div>`;
 }
+/* V550 — the recovered-revenue report renderer, deliberately a PURE top-level function so a
+   test can execute it against a fixture payload. Every judgement (lapsed guard, attribution
+   window, baseline, net scaling) lives in get_recovery_report_v550; this only prints, and the
+   copy states the method rather than hiding it — in a market of inflated claims the audit trail
+   IS the feature. The report is business-wide: a bring-back voucher has no branch. */
+function recoveryReportHtmlV550(data){
+  const d=data&&typeof data==='object'?data:{};
+  const iv=d.interventions||{},ret=d.returned||{},rec=d.recovered||{},base=d.baseline||{},net=d.net||{};
+  const treated=Number(iv.treated)||0,excluded=Number(iv.excluded_not_lapsed)||0;
+  const monthly=Array.isArray(d.monthly)?d.monthly:[];
+  if(!treated&&!excluded){
+    return `<div class="card">${CUI.emptyState({iconName:'till',title:'No bring-back activity in this period',
+      body:'This report measures customers Peekaa helped bring back. It counts two kinds of contact: bring-back vouchers (Grow → Bring-back) and the Message buttons on the Dashboard\u2019s "Customers to bring back" list. Use either, and the recovered revenue appears here.'})}</div>`;
+  }
+  const pct=v=>v===null||v===undefined?'—':`${Number(v).toFixed(1)}%`;
+  const attrDays=Number(d.window?.attribution_days)||30;
+  const confidenceNote=d.low_confidence
+    ?`<div class="card" style="border-left:3px solid #F0A35B"><b>Small numbers, read with care.</b><p class="muted small" style="margin:6px 0 0">Fewer than 10 contacted customers or fewer than 10 comparison customers in this period — one person changes these percentages a lot.</p></div>`
+    :'';
+  return `<div class="card"><b>Recovered revenue (estimated)</b>
+      <div class="metric" style="margin-top:8px">${esc(money(net.cents))}</div>
+      <p class="muted small">Net of what would likely have happened anyway. Gross spend by customers who returned within ${attrDays} days of being contacted: <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
+      <p class="muted small">Method: ${esc(net.method||'')}</p></div>
+    ${confidenceNote}
+    <div class="card"><b>The funnel</b><table style="margin-top:8px">
+      <tr><td data-workspace-i18n>Customers contacted while lapsed</td><td class="num"><b>${treated}</b></td></tr>
+      <tr><td class="muted small" style="padding-left:14px">by bring-back voucher</td><td class="num">${Number(iv.vouchers)||0}</td></tr>
+      <tr><td class="muted small" style="padding-left:14px">by WhatsApp message</td><td class="num">${Number(iv.messages)||0}</td></tr>
+      <tr><td data-workspace-i18n>Came back within ${attrDays} days</td><td class="num"><b>${Number(ret.count)||0}</b> (${pct(ret.rate_pct)})</td></tr>
+      <tr><td data-workspace-i18n>Vouchers actually redeemed</td><td class="num">${Number(rec.redeemed_vouchers)||0} · ${esc(money(rec.redeemed_voucher_cents))}</td></tr></table>
+      ${excluded?`<p class="muted small" style="margin-top:8px">${excluded} contact${excluded===1?' was':'s were'} excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.</p>`:''}</div>
+    <div class="card"><b>What would have happened anyway</b>
+      <p class="muted small" style="margin-top:8px">Of <b>${Number(base.cohort)||0}</b> similar lapsed customers who received no contact, <b>${Number(base.returned)||0}</b> returned on their own (${pct(base.rate_pct)}). The net figure above removes that share.</p></div>
+    ${monthly.length?`<div class="card"><b>By month</b><table style="margin-top:8px">
+      <tr><th style="text-align:left">Month</th><th class="num">Contacted</th><th class="num">Returned</th><th class="num">Gross</th></tr>
+      ${monthly.map(m=>`<tr><td>${esc(m.month||'')}</td><td class="num">${Number(m.interventions)||0}</td><td class="num">${Number(m.returned)||0}</td><td class="num">${esc(money(m.gross_cents))}</td></tr>`).join('')}</table></div>`:''}`;
+}
 async function reportsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const moneyGate=createLatestRequestGate(isCurrent);
   const busyGate=createLatestRequestGate(isCurrent);
   const returningGate=createLatestRequestGate(isCurrent);
+  const recoveredGate=createLatestRequestGate(isCurrent);
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const canSeeReturningAnswer=canReadModule('clients')&&hasRoleCapability('view_finance');
   /* V260: the owner struck out the three "…answer" collapsibles that sat below the scope
@@ -45135,6 +45182,7 @@ async function reportsPage(){
     {key:'money',bodyId:'rbody',panelId:'reportPanelMoneyV294',icon:'reports',title:'Sales & Revenue',emptyBody:'Run the report for this period.'},
     canReadModule('appointments')&&{key:'busy',bodyId:'busyBody',panelId:'reportPanelBusyV294',icon:'appointments',title:'Efficiency',emptyBody:'Run the report for this period.'},
     canSeeReturningAnswer&&{key:'returning',bodyId:'returningBody',panelId:'reportPanelReturningV294',icon:'customers',title:'Customer Retention',emptyBody:'Run the report for this period.'},
+    canSeeReturningAnswer&&{key:'recovered',bodyId:'recoveredBody',panelId:'reportPanelRecoveredV550',icon:'till',title:'Recovered Revenue',emptyBody:'Run the report for this period.'},
     canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Team Performance'}
   ].filter(Boolean);
   /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
@@ -45193,9 +45241,9 @@ async function reportsPage(){
   const reportTabsRunV294=new Set();
   const invalidateAnswers=()=>{
     reportTabsRunV294.clear();
-    moneyGate.invalidate();busyGate.invalidate();returningGate.invalidate();lastScope=null;
+    moneyGate.invalidate();busyGate.invalidate();returningGate.invalidate();recoveredGate.invalidate();lastScope=null;
     const exportButton=$('rcsv');if(exportButton){exportButton.hidden=true;exportButton.disabled=true}
-    for(const [id,label] of [['rbody','Money'],['busyBody','Busy-time'],['returningBody','Returning-customer']]){
+    for(const [id,label] of [['rbody','Money'],['busyBody','Busy-time'],['returningBody','Returning-customer'],['recoveredBody','Recovered-revenue']]){
       const target=$(id);if(target)target.innerHTML=`<div class="card">${CUI.emptyState({iconName:'reports',title:`${label} report needs an update`,body:'Run the report again for this period and branch.'})}</div>`;
     }
   };
@@ -45526,10 +45574,37 @@ async function reportsPage(){
       <div class="card"><b>Repeat purchasing</b><div class="metric" style="margin-top:8px">${pct(cm.repeat_in_period_rate_pct)}</div>
         <p class="muted small">${Number(cm.repeat_purchasers_in_period||0)} customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.</p></div>`;
   }
+  async function runRecovered(){
+    const target=$('recoveredBody');if(!target)return;
+    const isLatest=recoveredGate.begin();
+    let scope;try{scope=answerRange()}catch(error){if(isLatest())target.innerHTML=`<div class="card"><div class="err">${esc(humanErrorV295(error))}</div></div>`;return}
+    target.innerHTML=CUI.skeletonGrid({cards:3,lines:4});
+    try{
+      const [reportsScope,clientsScope,salesScope]=await Promise.all([
+        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:scope.branchId,p_module:'reports'}),
+        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:scope.branchId,p_module:'clients'}),
+        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:scope.branchId,p_module:'sales'})
+      ]);
+      if(!isLatest())return;
+      const scopeError=reportsScope?.error||clientsScope?.error||salesScope?.error;
+      if(scopeError)throw scopeError;
+      /* p_to is exclusive, matching the returning report's to+1 convention. Branch is deliberately
+         NOT sent: a voucher grant has no branch, so the report is whole-business and says so. */
+      const {data,error}=await sb.rpc('get_recovery_report_v550',{p_business:S.biz.id,p_from:scope.from,p_to:shiftSgDateInput(scope.to,1)});
+      if(!isLatest())return;
+      if(error)throw error;
+      target.innerHTML=recoveryReportHtmlV550(data);
+    }catch(error){
+      if(isLatest()){
+        target.innerHTML=`<div class="card"><div class="err">Recovered-revenue answer is unavailable for this scope. <button class="btn ghost sm" id="recoveredRetry">Retry</button></div></div>`;
+        const retry=$('recoveredRetry');if(retry)retry.onclick=runRecovered;
+      }
+    }
+  }
   /* V294: the V260 <details> toggle listeners became tab selection. Selecting a tab shows its
      panel and lazily runs its report (once per range, like the old open-card behaviour); From/To
      + Run report + Export above apply to the open tab. Default tab: Sales & Revenue. */
-  const reportRunnersV294={money:runMoney,busy:runBusy,returning:runReturning};
+  const reportRunnersV294={money:runMoney,busy:runBusy,returning:runReturning,recovered:runRecovered};
   /* V297 gap sweep: the Export sales CSV button lives above the tab bar and is fed entirely by
      the Sales & Revenue read (lastScope plus its sales_export availability). Pressing Run report
      while another tab was open therefore left the export hidden for that range — the button is

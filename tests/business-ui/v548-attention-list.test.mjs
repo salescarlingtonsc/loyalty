@@ -28,7 +28,20 @@ assert.ok(block.includes('async function loadDashboardAttentionV548('), 'loader 
 
 function makeHarness({ rpcResult, role = 'owner', canRead = true }) {
   const calls = [];
-  const host = { innerHTML: '<!-- untouched -->' };
+  const outreachHandlers = [];
+  const host = {
+    innerHTML: '<!-- untouched -->',
+    /* V550: the loader wires a click recorder onto every Message link. The stub parses its own
+       innerHTML for the outreach ids and hands back capturing link stubs, so a test can fire the
+       captured handler and watch the RPC. */
+    querySelectorAll(sel) {
+      if (sel !== 'a[data-attention-outreach]') return [];
+      return [...host.innerHTML.matchAll(/data-attention-outreach="([^"]+)"/g)].map((m) => ({
+        dataset: { attentionOutreach: m[1] },
+        addEventListener: (event, fn) => outreachHandlers.push({ id: m[1], event, fn })
+      }));
+    }
+  };
   const domRoot = {
     isConnected: true,
     querySelector: (sel) => (sel === '#dashboardAttentionV548' ? host : null)
@@ -49,7 +62,7 @@ function makeHarness({ rpcResult, role = 'owner', canRead = true }) {
     block + '\n__exports.load = loadDashboardAttentionV548;\n__exports.wa = attentionWhatsAppUrlV548;',
     context
   );
-  return { load: exportsRef.load, wa: exportsRef.wa, host, domRoot, calls };
+  return { load: exportsRef.load, wa: exportsRef.wa, host, domRoot, calls, outreachHandlers };
 }
 
 const FIXTURE = {
@@ -128,6 +141,19 @@ test('V548 an RPC error leaves the dashboard silent rather than broken', async (
   const h = makeHarness({ rpcResult: { data: null, error: { message: 'boom' } } });
   await h.load(h.domRoot, null);
   assert.equal(h.host.innerHTML, '', 'errors render nothing');
+});
+
+
+test('V550 a Message tap records outreach evidence without blocking the wa.me navigation', async () => {
+  const h = makeHarness({ rpcResult: FIXTURE });
+  await h.load(h.domRoot, null);
+  // Jane and Amanda have phones; Michelle does not — exactly two recorders wired.
+  assert.equal(h.outreachHandlers.length, 2);
+  assert.ok(h.outreachHandlers.every((x) => x.event === 'click'));
+  h.outreachHandlers[0].fn();
+  const record = h.calls.find((c) => c.fn === 'record_attention_outreach_v550');
+  assert.ok(record, 'the tap issues the outreach-record RPC');
+  assert.deepEqual(JSON.parse(JSON.stringify(record.args)), { p_business: 'biz-1', p_client: 'c1' });
 });
 
 /* ---------------------------------------------------------------- wiring + server authority */

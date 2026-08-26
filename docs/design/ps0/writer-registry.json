@@ -3603,6 +3603,14 @@
    "reason": "v548 read-only attention projection for the business dashboard: aggregates counts_as_visit sales (v108 reversal + residual semantics) into per-client cadence, due/overdue/slipping status and monthly value entirely in SELECTs behind require_module_scope_v145(clients); no DML, no ledger or value write."
   },
   {
+   "id": "browser.rpc:app/app.js:get_recovery_report_v550",
+   "reason": "v550 read-only recovered-revenue report: joins bring-back grants and attention outreach to counts_as_visit sales entirely in SELECTs behind require_module_scope_v145(reports+clients+sales); no DML, no ledger or value write."
+  },
+  {
+   "id": "browser.rpc:app/app.js:record_attention_outreach_v550",
+   "reason": "v550 outreach evidence writer: inserts one immutable row per business/client/SG-day into attention_outreach_v550 (an evidence table, not a value table) behind require_module_scope_v145(clients) and a client-membership check; repeat taps collapse via on-conflict-do-nothing; it never touches a ledger, balance or entitlement."
+  },
+  {
    "id": "browser.rpc:app/app.js:customer_get_communication_preferences_v263",
    "reason": "v263 read-only projection of the customer's own marketing category x channel matrix, resolved through app.customer_communication_identity_v263() from auth.uid(). Pure SELECT over customer_communication_preferences_v263 plus the two immutable taxonomy functions; no DML, no ledger, no value table. It returns the EFFECTIVE value for every cell (absence = ON) precisely so the browser never reproduces the default rule and drifts apart from the send-path gate."
   },

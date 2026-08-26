@@ -2656,6 +2656,12 @@
       "version": "20260827000006",
       "name": "nestly_v548_attention_list",
       "sourcePath": "db/migrations/20260827_nestly_v548_attention_list.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000007",
+      "name": "nestly_v550_recovery_report",
+      "sourcePath": "db/migrations/20260827_nestly_v550_recovery_report.sql"
     }
   ]
 }

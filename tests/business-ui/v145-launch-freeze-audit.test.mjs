@@ -324,7 +324,9 @@ test('Reports loads only the answers the user opened', () => {
   /* V294 (owner markup 2026-08-12): the answer cards became tabs. The lazy-load guarantee is
      unchanged — a report runs when its tab is selected (or Run report is pressed), once per
      range, never all three at once. */
-  assert.match(reports,/const reportRunnersV294=\{money:runMoney,busy:runBusy,returning:runReturning\}/);
+  /* V550: the Recovered Revenue tab joins the same lazy registry — it runs when opened, once
+     per range, exactly like its siblings. */
+  assert.match(reports,/const reportRunnersV294=\{money:runMoney,busy:runBusy,returning:runReturning,recovered:runRecovered\}/);
   assert.match(reports,/if\(!reportTabsRunV294\.has\(key\)\)\{reportTabsRunV294\.add\(key\);runAnswer\(reportRunnersV294\[key\]\)\}/);
   assert.doesNotMatch(reports,/runAll\(|Promise\.all\(\[runMoney\(\),runBusy\(\),runReturning\(\)\]\)/);
   /* V272 owner instruction ("remove this", on the per-page branch select): the branch filter no

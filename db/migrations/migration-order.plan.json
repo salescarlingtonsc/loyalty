@@ -2661,6 +2661,12 @@
    "path": "db/migrations/20260827_nestly_v548_attention_list.sql",
    "semanticVersion": "v548",
    "proposedDeployVersion": "20260827000006"
+  },
+  {
+   "kind": "executable",
+   "path": "db/migrations/20260827_nestly_v550_recovery_report.sql",
+   "semanticVersion": "v550",
+   "proposedDeployVersion": "20260827000007"
   }
  ]
 }
