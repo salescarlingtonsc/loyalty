@@ -137,27 +137,37 @@ begin
       bad := bad + 1; note := note || format('[%s is missing the renamed field] ', b.name); continue;
     end if;
 
-    -- independent recomputation of the OLD expression from raw rows
-    with w as (
-      select s.client_id,
-             bool_and(c.first_visit_at >= (current_date - 30)::timestamptz) as is_new,
-             count(*) filter (where s.counts_as_visit) as visits
-        from public.sales s join public.clients c on c.id = s.client_id
-       where s.business_id = b.id and s.client_id is not null
-         and s.occurred_at >= (current_date - 30)::timestamptz
-         and s.occurred_at <  (current_date)::timestamptz
-       group by s.client_id
+    -- Independent recomputation of the pre-v545 expression from raw rows. This does NOT call
+    -- v179: it rebuilds the definition the field always had (a customer is "new" when their first
+    -- ever counts_as_visit sale falls inside the window), replicating v179's own reversal filter
+    -- and its Asia/Singapore bounds with an inclusive end date, so exact equality is demanded.
+    with ls as (
+      select s.client_id, s.occurred_at, s.counts_as_visit
+        from public.sales s
+       where s.business_id = b.id and s.reversal_of is null and s.client_id is not null
+         and not exists (select 1 from public.sales r
+                          where r.business_id = s.business_id and r.reversal_of = s.id)
+    ), first_seen as (
+      select client_id, min(occurred_at) filter (where counts_as_visit) as first_visit_at
+        from ls group by client_id
+    ), wc as (
+      select ls.client_id,
+             count(*) filter (where ls.counts_as_visit) as visits,
+             bool_and(first_seen.first_visit_at
+                      >= (current_date - 30)::timestamp at time zone 'Asia/Singapore') as is_new
+        from ls join first_seen on first_seen.client_id = ls.client_id
+       where ls.occurred_at >= (current_date - 30)::timestamp at time zone 'Asia/Singapore'
+         and ls.occurred_at <  (current_date + 1)::timestamp at time zone 'Asia/Singapore'
+       group by ls.client_id
     )
     select case when count(*) filter (where visits > 0) = 0 then null
                 else round(100.0 * count(*) filter (where not is_new and visits > 0)
                            / count(*) filter (where visits > 0), 1) end
-      into expected from w;
+      into expected from wc;
 
-    -- Tolerated divergence: the CTE above cannot see v179's reversal and branch filters, so it is
-    -- an ORDER-OF-MAGNITUDE oracle, not an exact one. A null-vs-value mismatch is still a failure.
-    if (expected is null) <> ((ev->>'existing_customer_return_rate_pct') is null) then
+    if (ev->>'existing_customer_return_rate_pct')::numeric is distinct from expected then
       bad := bad + 1;
-      note := note || format('[%s renamed field null-ness differs: got %s expected %s] ',
+      note := note || format('[%s renamed field=%s independently computed=%s] ',
         b.name, ev->>'existing_customer_return_rate_pct', expected);
     end if;
   end loop;
