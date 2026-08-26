@@ -42054,6 +42054,22 @@ const SUPPORT_REFUSAL_COPY_V535=Object.freeze({
   invalid_characters:'That message contains characters WhatsApp cannot send.',
   business_not_active:'This workspace is not active.'
 });
+/* nestly_v540. The thread used to print the raw status enum in grey beside the
+   timestamp — "16m ago · queued". That was HONEST (it never said "sent"), but a
+   busy merchant reads their own words in a chat bubble and assumes delivery.
+   The owner did. So the state is now named in plain words, and anything not yet
+   with the customer is visibly unfinished rather than quietly annotated. */
+const SUPPORT_DELIVERY_COPY_V540=Object.freeze({
+  queued:'Sending…', processing:'Sending…', sent:'Sent',
+  delivered:'Delivered', read:'Read', failed:'Not sent'
+});
+/* Terminal = Meta has spoken. Everything else keeps polling and keeps its
+   pending styling. */
+const SUPPORT_TERMINAL_STATUS_V540=new Set(['delivered','read','failed']);
+function supportDeliveryTextV540(status){
+  return SUPPORT_DELIVERY_COPY_V540[status]||status||'';
+}
+
 function supportRefusalTextV535(reason){
   return SUPPORT_REFUSAL_COPY_V535[reason]||'Could not send. Please try again.';
 }
@@ -42151,15 +42167,23 @@ function supportRenderListV531(routeMain,rows){
 
 function supportRenderThreadV531(routeMain,thread){
   const messages=(thread.messages||[]).map(message=>{
-    const failed=message.direction==='outbound'&&message.status==='failed';
+    const out=message.direction==='outbound';
+    const failed=out&&message.status==='failed';
+    const pending=out&&(message.status==='queued'||message.status==='processing');
+    /* A message Meta has not confirmed does not get to look like a delivered
+       one: pending is dimmed and dashed, failed is outlined in the danger
+       colour and carries the reason. */
+    const tint=failed?'border:1px solid var(--danger);'
+      :pending?'border:1px dashed var(--control-border);opacity:.72;':'';
     return `
-    <div class="card" style="margin-bottom:6px;${message.direction==='outbound'
-      ?'margin-left:22%':'margin-right:22%'}">
+    <div class="card" data-support-msg-status-v540="${esc(message.status||'')}"
+         style="margin-bottom:6px;${tint}${out?'margin-left:22%':'margin-right:22%'}">
       <div>${esc(message.body||'')}</div>
       <div class="muted small" style="margin-top:4px">
         ${esc(supportRelativeTimeV531(message.occurred_at))}
-        ${message.direction==='outbound'?' · '+esc(message.status||''):''}
-        ${failed?' · '+esc(supportRefusalTextV535(message.error_code)):''}
+        ${out?' · <b>'+esc(supportDeliveryTextV540(message.status))+'</b>':''}
+        ${failed?'<br><span style="color:var(--danger)">'
+          +esc(supportRefusalTextV535(message.error_code))+'</span>':''}
       </div>
     </div>`;}).join('');
 
@@ -42220,7 +42244,21 @@ function supportRenderThreadV531(routeMain,thread){
     }
   };
   const timer=setInterval(tick,30000);tick();
-  registerRouteDisposerV535(()=>clearInterval(timer));
+
+  /* nestly_v540: while any outbound message is still unconfirmed, re-read the
+     thread so 'Sending…' becomes 'Delivered' (or 'Not sent') on its own. The
+     merchant should never have to guess, and should never have to refresh to
+     find out that a send failed. Stops as soon as everything is terminal. */
+  const inFlightV540=()=>(thread.messages||[]).some(m=>
+    m.direction==='outbound'&&!SUPPORT_TERMINAL_STATUS_V540.has(m.status));
+  let statusPoll=null;
+  if(inFlightV540()){
+    statusPoll=setInterval(()=>{
+      if(!routeMain.isConnected){clearInterval(statusPoll);return;}
+      supportInboxPageV531(thread.conversation_id).catch(()=>{});
+    },10000);
+  }
+  registerRouteDisposerV535(()=>{clearInterval(timer);if(statusPoll)clearInterval(statusPoll);});
 
   if(!canReply)return;
   const bodyNode=$('supportReplyBodyV535'),sendNode=$('supportReplySendV535'),

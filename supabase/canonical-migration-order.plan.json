@@ -2632,6 +2632,12 @@
       "version": "20260827000002",
       "name": "nestly_v544_one_current_loyalty_balance",
       "sourcePath": "db/migrations/20260827_nestly_v544_one_current_loyalty_balance.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000003",
+      "name": "nestly_v539_dispatch_url_secret_name",
+      "sourcePath": "db/migrations/20260826_nestly_v539_dispatch_url_secret_name.sql"
     }
   ]
 }

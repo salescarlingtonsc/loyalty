@@ -162,3 +162,35 @@ test('MOBILE hides it for an unentitled tenant too', () => {
   const mobile = buildNav()(CONTROL, ['dashboard'], 'mobile-nav');
   assert.ok(!mobile.includes('WhatsApp Inbox'));
 });
+
+/* nestly_v540 — an unconfirmed send must not look delivered. */
+test('the thread names delivery state in words, not a raw enum', () => {
+  const copy = app.match(/const SUPPORT_DELIVERY_COPY_V540=Object\.freeze\(\{[\s\S]*?\}\);/);
+  assert.ok(copy, 'the delivery vocabulary must exist');
+  for (const state of ['queued','processing','sent','delivered','read','failed']) {
+    assert.match(copy[0], new RegExp(`\\b${state}:`), `${state} must have merchant-facing copy`);
+  }
+  /* The two states that mean "not with the customer yet" must not read as done. */
+  assert.match(copy[0], /queued:'Sending/);
+  assert.match(copy[0], /failed:'Not sent'/);
+});
+
+test('pending and failed sends are visually distinguished, not just annotated', () => {
+  const render = app.slice(app.indexOf('function supportRenderThreadV531'),
+                           app.indexOf('function supportNewIdemKeyV535'));
+  assert.match(render, /const pending=out&&\(message\.status==='queued'\|\|message\.status==='processing'\)/);
+  assert.match(render, /var\(--danger\)/, 'a failed send must carry the danger colour');
+  assert.match(render, /dashed/, 'a pending send must be visibly unfinished');
+});
+
+test('the thread keeps polling until every outbound message is terminal', () => {
+  const render = app.slice(app.indexOf('function supportRenderThreadV531'),
+                           app.indexOf('function supportNewIdemKeyV535'));
+  assert.match(render, /SUPPORT_TERMINAL_STATUS_V540/);
+  assert.match(render, /statusPoll=setInterval/);
+  /* And it must be cleaned up, or every thread a busy merchant opens leaks a timer. */
+  assert.match(render, /registerRouteDisposerV535\(\(\)=>\{clearInterval\(timer\);if\(statusPoll\)clearInterval\(statusPoll\)\;\}\)/);
+  const terminal = app.match(/const SUPPORT_TERMINAL_STATUS_V540=new Set\(\[([^\]]*)\]\)/)[1];
+  assert.ok(!terminal.includes("'sent'"),
+    "'sent' is NOT terminal — Meta still owes us delivered/read, so polling must continue");
+});
