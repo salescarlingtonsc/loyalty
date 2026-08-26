@@ -181,10 +181,12 @@ test('"/" is owned by edge middleware, and the rewrites cover only the app paths
      app path, and the one rewrite that must never fall through to the SPA shell. */
   assert.deepEqual(rewrites.map((r) => r.source), ['/app', '/o/:id', '/business', '/admin'],
     'no "/" rewrite may exist — it cannot fire and would misleadingly imply it does');
-  assert.deepEqual(rewrites[0], { source: '/app', destination: '/index.html' },
+  /* nestly_v527: /app now serves index.gen.html — the same document with its 512KB inline
+     stylesheet swapped for a fingerprinted <link>. app/index.html is still the SOURCE. */
+  assert.deepEqual(rewrites[0], { source: '/app', destination: '/index.gen.html' },
     "/app is the app's canonical path and the target of every forward");
   assert.ok(
-    rewrites.some((r) => r.source === '/business' && r.destination === '/index.html'),
+    rewrites.some((r) => r.source === '/business' && r.destination === '/index.gen.html'),
     '/business must keep serving the app'
   );
 });
@@ -229,6 +231,10 @@ test('every security header block survives the rewrite change untouched', () => 
     '/runtime-config.js',
     '/runtime-config-loader.js',
     '/app-:chunk.js',
+    /* nestly_v527: the extracted stylesheet is fingerprinted exactly like the surface chunks, so
+       it takes the same immutable rule. That rule IS the win — without it the stylesheet would
+       inherit the default and be revalidated on every visit, which is the state we just left. */
+    '/app.css',
     '/manifest.webmanifest'
   ]);
   const global = new Map(

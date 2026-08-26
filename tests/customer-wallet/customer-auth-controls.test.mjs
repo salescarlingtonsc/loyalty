@@ -77,5 +77,5 @@ test('auth-control cache identity changes with the versioned customer UI asset',
   /* V289: CACHE_VERSION moved again (guarded updates + a precached app shell). The invariant this
      test protects is the direction, not the string: the shell cache identity must never be older
      than the customer-ui.js token it caches, so bumping the asset always requires bumping this. */
-  assert.match(sw,/CACHE_VERSION='v19-20260819-b1b8'/);
+  assert.match(sw,/CACHE_VERSION='v20-20260826-css1'/);
 });

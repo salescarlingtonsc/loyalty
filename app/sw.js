@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v19-20260819-b1b8';
+const CACHE_VERSION='v20-20260826-css1';  /* nestly_v527: the shell document lost its inline stylesheet — existing installs must rebuild or they keep serving the 512KB one. */
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 /* V289 (audit A3, G3b): the app document itself is now part of the shell, so an offline
    navigation lands in Peekaa's own "you're offline" state instead of the standalone fallback
@@ -44,7 +44,12 @@ function isSensitive(request,url){
    everything it needs is cached too; if any asset fails, nothing is stored and offline
    navigation keeps returning offline.html exactly as before. */
 async function precacheShellDocumentsV289(cache){
-  const response=await fetch('/index.html',{cache:'reload'});
+  /* nestly_v527: fetch the SHIPPED document, which is /app (a rewrite of index.gen.html), not the
+     source index.html. The source still carries its stylesheet inline — 512KB of it — and caching
+     that would put the very bytes this change removed straight back into the offline shell. The
+     <link rel="stylesheet"> scan below already picks up the fingerprinted app.css, so the offline
+     shell gains the stylesheet as a cached asset rather than as document weight. */
+  const response=await fetch('/app',{cache:'reload'});
   if(!response.ok)throw new Error('shell document unavailable');
   const html=await response.text();
   const assets=new Set();

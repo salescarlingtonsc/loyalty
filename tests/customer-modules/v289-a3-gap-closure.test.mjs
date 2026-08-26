@@ -153,7 +153,7 @@ test('G3: activation notifies open pages but never re-navigates them', () => {
 });
 
 test('G3: the shell cache is versioned forward and the app document joins it', () => {
-  assert.match(sw, /const CACHE_VERSION='v19-20260819-b1b8'/);
+  assert.match(sw, /const CACHE_VERSION='v20-20260826-css1'/);
   assert.match(sw, /const SHELL_DOCUMENTS=Object\.freeze\(\['\/index\.html','\/app'\]\)/);
   assert.match(sw, /return \(await cache\.match\('\/index\.html'\)\)\|\|\(await cache\.match\('\/offline\.html'\)\)/,
     'offline navigation prefers the real shell and still falls back honestly');

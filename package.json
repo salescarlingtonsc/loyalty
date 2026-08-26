@@ -26,11 +26,13 @@
     "test:db:snapshot": "node scripts/db-tests/snapshot-schema.mjs",
     "test:browser": "node scripts/quality/run-browser-checks.mjs",
     "build": "node scripts/quality/build-static.mjs",
-    "validate": "npm run quality && npm run bundle-stamp:check && npm run runtime-config:check && npm run migration-manifest:check && npm run canonical-migrations:check && npm test && npm run build",
+    "validate": "npm run quality && npm run bundle-stamp:check && npm run app-css:check && npm run runtime-config:check && npm run migration-manifest:check && npm run canonical-migrations:check && npm test && npm run build",
     "bundle-stamp": "node scripts/quality/stamp-app-bundle.mjs --write",
     "bundle-stamp:check": "node scripts/quality/stamp-app-bundle.mjs --check",
     "workspace-copy": "node scripts/quality/generate-workspace-copy-v97.mjs --write",
-    "workspace-copy:check": "node scripts/quality/generate-workspace-copy-v97.mjs"
+    "workspace-copy:check": "node scripts/quality/generate-workspace-copy-v97.mjs",
+    "app-css": "node scripts/quality/extract-app-css.mjs --write",
+    "app-css:check": "node scripts/quality/extract-app-css.mjs --check"
   },
   "dependencies": {
     "@capacitor/android": "8.5.0",

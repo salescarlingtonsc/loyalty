@@ -49,13 +49,16 @@ test('root is customer-first and business sign-in is a separate clean entry path
      (edge middleware runs before the filesystem), which falls OPEN to the app on any failure.
      The two dead "/" rewrites are gone rather than left as misleading config. */
   const expectedRewrites=[
-    {source:'/app',destination:'/index.html'},
+    /* nestly_v527: these three now serve index.gen.html — the same document with its 512KB
+       inline stylesheet swapped for a fingerprinted <link href="/app.css">. app/index.html is
+       still the source this very file reads on line 6; only what customers download changed. */
+    {source:'/app',destination:'/index.gen.html'},
     /* v268: /o/<offer-id> is the server-rendered shared-offer page — the ONE route that must
        NOT fall through to the SPA shell, because link-preview crawlers never run JavaScript
        and can only read tags a server actually sent. */
     {source:'/o/:id',destination:'/api/offer-share?id=:id'},
-    {source:'/business',destination:'/index.html'},
-    {source:'/admin',destination:'/index.html'}
+    {source:'/business',destination:'/index.gen.html'},
+    {source:'/admin',destination:'/index.gen.html'}
   ];
   assert.deepEqual(vercel.rewrites,expectedRewrites);
   assert.deepEqual(vercelTemplate.rewrites,expectedRewrites);

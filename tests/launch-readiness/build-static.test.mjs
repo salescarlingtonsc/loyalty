@@ -11,6 +11,9 @@ import { repoRoot } from '../../scripts/quality/static-baseline.mjs';
 test('release artifact contract contains the public pages and offline fallback', () => {
   assert.deepEqual(requiredStaticHtmlEntries, [
     'data-request.html',
+    /* nestly_v527: /app serves this — index.html with its 512KB inline stylesheet swapped for a
+       fingerprinted <link>. index.html stays the source every test and fixture reads. */
+    'index.gen.html',
     'index.html',
     'join.html',
     'landing.html',

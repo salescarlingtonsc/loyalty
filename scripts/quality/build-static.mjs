@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 
 export const requiredStaticHtmlEntries = Object.freeze([
   'data-request.html',
+  'index.gen.html',  // nestly_v527: what /app actually serves — index.html minus its inline stylesheet
   'index.html',
   'join.html',
   // V274: the marketing landing page is what "/" now rewrites to; index.html moved to /app.

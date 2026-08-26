@@ -27,7 +27,7 @@
   "rewrites": [
     {
       "source": "/app",
-      "destination": "/index.html"
+      "destination": "/index.gen.html"
     },
     {
       "source": "/o/:id",
@@ -35,11 +35,11 @@
     },
     {
       "source": "/business",
-      "destination": "/index.html"
+      "destination": "/index.gen.html"
     },
     {
       "source": "/admin",
-      "destination": "/index.html"
+      "destination": "/index.gen.html"
     }
   ],
   "headers": [
@@ -109,6 +109,15 @@
     },
     {
       "source": "/app-:chunk.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/app.css",
       "headers": [
         {
           "key": "Cache-Control",
