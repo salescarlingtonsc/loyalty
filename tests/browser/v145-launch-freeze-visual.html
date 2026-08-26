@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="49363d1b2fca982ecf791c6bfb5ca9a5ef5d7e1327d257c43e5e61fbe31d4e05"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d615dc5948e3d5d9984aa97aaed98f2ab2a282e34bf50493b7f168f020c3f873"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3685,17 +3685,23 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-inbox-settings-toggle-v386{flex:0 0 auto}
 .customer-inbox-filter-row-v386{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .customer-inbox-settings-v386{padding:12px 0 4px;border-bottom:1px solid var(--hair)}
-/* nestly_v548 (owner photo 2): the door back onto the settings panel, drawn where the owner drew
-   it — the far end of the inbox head, opposite the All/Unread pair the same head carries. Pushed
-   there by margin-left:auto rather than a spacer element, because the head is the flex row the
-   filter group already lives in. 44px keeps it inside the tap-target floor the nav rail uses. */
-.customer-inbox-settings-toggle-v548{margin-left:auto;flex:none;display:grid;place-items:center;
-  width:44px;height:44px;border-radius:50%;border:1px solid var(--peekaa-red,var(--coral));
-  background:transparent;color:var(--peekaa-red,var(--coral));
+/* nestly_v548/v549 (owner photo 2): the door onto the settings, drawn where the owner drew it —
+   the far end of the inbox head, opposite the All/Unread pair the same head carries. Pushed there
+   by margin-left:auto rather than a spacer element, because the head is the flex row the filter
+   group already lives in. 44px keeps it inside the tap-target floor the nav rail uses.
+   v549: filled rather than outlined, matching the owner's second drawing of it, and it opens a
+   dialog now — so there is no open/closed state for it to carry. */
+.customer-inbox-settings-toggle-v549{margin-left:auto;flex:none;display:grid;place-items:center;
+  width:44px;height:44px;border-radius:50%;border:0;
+  background:var(--peekaa-red,var(--coral));color:#fff;
   font-family:var(--sf,inherit);font-size:22px;font-weight:750;line-height:1;cursor:pointer;
-  transition:background .14s var(--ease),color .14s}
-.customer-inbox-settings-toggle-v548:hover{background:var(--peekaa-red-soft,var(--tint))}
-.customer-inbox-settings-toggle-v548.is-open-v548{background:var(--peekaa-red,var(--coral));color:#fff}
+  transition:background .14s var(--ease)}
+.customer-inbox-settings-toggle-v549:hover{background:var(--peekaa-red-dark,var(--coral-hover))}
+/* Inside the dialog the panel is the whole content, so it drops the divider it wore as the last
+   block on a scrolling page, and the dialog scrolls if a customer has many programmes. */
+.customer-inbox-settings-card-v549{max-width:var(--dialog-w-md,520px)}
+.customer-inbox-settings-body-v549{max-height:min(66vh,560px);overflow-y:auto;margin-top:4px}
+.customer-inbox-settings-body-v549 .customer-inbox-settings-v386{padding:0;border-bottom:0}
 .customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
 .customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
@@ -4714,7 +4720,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 49363d1b2fca982ecf791c6bfb5ca9a5ef5d7e1327d257c43e5e61fbe31d4e05</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · d615dc5948e3d5d9984aa97aaed98f2ab2a282e34bf50493b7f168f020c3f873</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8236,10 +8242,12 @@ function renderHistPage(history,n,offsetV468=0){
   const loyaltyUnit=actionableCard?.loyalty?.unit;
   const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
   let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
-  /* nestly_v548: survives the re-render that a filter change or a state change triggers, so a
-     customer who opened the settings panel to change a reminder does not have it shut under them
-     the moment they save. Same reason v395 kept the v386 gear's open state. */
-  let inboxSettingsOpenV548=false;
+  /* nestly_v549 (owner: "clicking exclamation mark - opens up pop up instead of showing below").
+     v548 collapsed the settings in place; the owner wants them off the page entirely, in the
+     dialog pattern the rest of this surface already uses (customerExplainerModalV435 et al).
+     There is therefore no open STATE to keep any more — the modal is the state, and it is torn
+     down before any re-render so a filter tap can never leave it half-attached. */
+  let inboxSettingsDeactivateV549=null;
   /* nestly_v417 (owner, photo 9: "remove this button"). V395's open-state fix is retired WITH the
      gear it existed for: the panel is no longer collapsible, so there is no open state to keep and
      no way for a filter tap to collapse it. The defect V395 described cannot recur — the panel is
@@ -8261,7 +8269,52 @@ function renderHistPage(history,n,offsetV468=0){
     slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:20})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
     return {unread};
   };
+  /* nestly_v549. The panel and the device card are LIVE NODES with bindings on them —
+     renderPreferences fills #customerInAppInboxPreferences by id, and the v296 push wiring bound
+     #customerPushMessagesControl once at page render. So the modal BORROWS them rather than
+     rebuilding them, and hands them back when it closes. Anything else would either duplicate an
+     id or leave a bound control detached from the document. */
+  const inboxSettingsHomesV549=()=>({
+    panel:document.getElementById('customerInboxSettingsV386'),
+    panelHome:host.querySelector('#customerInboxSettingsHomeV549'),
+    device:document.getElementById('customerMessagesNotifications')
+  });
+  const returnInboxSettingsNodesV549=()=>{
+    const {panel,panelHome,device}=inboxSettingsHomesV549();
+    if(device){device.hidden=true;$('walletBody')?.appendChild(device)}
+    if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
+  };
+  const closeInboxSettingsModalV549=()=>{
+    const deactivate=inboxSettingsDeactivateV549;
+    inboxSettingsDeactivateV549=null;
+    returnInboxSettingsNodesV549();
+    if(deactivate)deactivate();
+    document.getElementById('customerInboxSettingsModalV549')?.remove();
+    document.querySelector('[data-inbox-settings-v549]')?.focus?.();
+  };
+  const openInboxSettingsModalV549=()=>{
+    if(inboxSettingsDeactivateV549)return;
+    const {panel,device}=inboxSettingsHomesV549();
+    if(!panel)return;
+    document.getElementById('customerInboxSettingsModalV549')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerInboxSettingsModalV549" role="dialog" aria-modal="true" aria-labelledby="customerInboxSettingsTitleV549" tabindex="-1"><div class="modal-card customer-inbox-settings-card-v549">
+      <div class="row"><h2 id="customerInboxSettingsTitleV549">Inbox settings</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerInboxSettingsCloseV549" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
+      <div id="customerInboxSettingsBodyV549" class="customer-inbox-settings-body-v549"></div>
+    </div></div>`);
+    const body=document.getElementById('customerInboxSettingsBodyV549');
+    panel.hidden=false;body.appendChild(panel);
+    if(device){device.hidden=false;device.style.marginTop='18px';body.appendChild(device)}
+    const modal=document.getElementById('customerInboxSettingsModalV549');
+    inboxSettingsDeactivateV549=CUI.activateDialog(modal,{onClose:closeInboxSettingsModalV549,initialFocus:'#customerInboxSettingsCloseV549'})||(()=>{});
+    document.getElementById('customerInboxSettingsCloseV549').onclick=closeInboxSettingsModalV549;
+    /* The preferences are per business and load lazily on <details> toggle, so opening the dialog
+       is still the same zero-extra-reads it was inline. */
+    renderPreferences();
+  };
   const render=()=>{
+    /* Before anything replaces the card's innards: a modal holding borrowed children of that card
+       would be left pointing at nodes this next line is about to discard. */
+    if(inboxSettingsDeactivateV549)closeInboxSettingsModalV549();
     const status=[
       items.some(item=>item?.state==='source_unavailable')?'Some programme updates are temporarily unavailable and cannot be opened.':''
     ].filter(Boolean).join(' ');
@@ -8339,42 +8392,41 @@ function renderHistPage(history,n,offsetV468=0){
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
       ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" ${inboxSettingsOpenV548?'':'hidden'}>
+      <div id="customerInboxSettingsHomeV549" hidden><div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" hidden>
         <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
         <div id="customerInboxDeviceSlotV386"></div>
-      </div>`;
-    /* nestly_v548: the door. Sits in the section head opposite the filter, labelled for a screen
-       reader because the glyph alone says nothing, and reporting its own state through
-       aria-expanded/aria-controls so the panel it owns is announced as this button's. */
-    const settingsHeadV548=host.querySelector('.customer-inbox-head-v386');
-    if(settingsHeadV548&&!settingsHeadV548.querySelector('[data-inbox-settings-v548]')){
-      const toggleV548=document.createElement('button');
-      toggleV548.type='button';
-      toggleV548.className='customer-inbox-settings-toggle-v548';
-      toggleV548.dataset.inboxSettingsV548='1';
-      toggleV548.setAttribute('aria-controls','customerInboxSettingsV386');
-      toggleV548.setAttribute('aria-expanded',String(inboxSettingsOpenV548));
-      toggleV548.setAttribute('aria-label','Inbox reminder and notification settings');
-      toggleV548.title='Inbox reminder and notification settings';
-      toggleV548.textContent='!';
-      settingsHeadV548.appendChild(toggleV548);
-      toggleV548.onclick=()=>{
-        const panel=host.querySelector('#customerInboxSettingsV386');
-        if(!panel)return;
-        inboxSettingsOpenV548=!inboxSettingsOpenV548;
-        panel.hidden=!inboxSettingsOpenV548;
-        toggleV548.setAttribute('aria-expanded',String(inboxSettingsOpenV548));
-        toggleV548.classList.toggle('is-open-v548',inboxSettingsOpenV548);
-      };
-      toggleV548.classList.toggle('is-open-v548',inboxSettingsOpenV548);
+      </div></div>`;
+    /* nestly_v549: the door. Sits in the section head opposite the filter, labelled for a screen
+       reader because the glyph alone says nothing, and declaring aria-haspopup="dialog" because
+       that is now what it opens. */
+    const settingsHeadV549=host.querySelector('.customer-inbox-head-v386');
+    if(settingsHeadV549&&!settingsHeadV549.querySelector('[data-inbox-settings-v549]')){
+      const toggleV549=document.createElement('button');
+      toggleV549.type='button';
+      toggleV549.className='customer-inbox-settings-toggle-v549';
+      toggleV549.dataset.inboxSettingsV549='1';
+      toggleV549.setAttribute('aria-haspopup','dialog');
+      toggleV549.setAttribute('aria-label','Inbox reminder and notification settings');
+      toggleV549.title='Inbox reminder and notification settings';
+      toggleV549.textContent='!';
+      settingsHeadV549.appendChild(toggleV549);
+      toggleV549.onclick=openInboxSettingsModalV549;
     }
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */
-    const deviceSectionV386=$('customerMessagesNotifications'),deviceSlotV386=host.querySelector('#customerInboxDeviceSlotV386');
-    if(deviceSectionV386&&deviceSlotV386&&!deviceSlotV386.contains(deviceSectionV386)){
-      deviceSectionV386.hidden=false;
-      deviceSectionV386.style.marginTop='18px';
-      deviceSlotV386.appendChild(deviceSectionV386);
+    /* nestly_v549 fixes a defect v386 shipped and v417/v548 carried: the device card was moved
+       INTO host, and every re-render does `host.innerHTML=`, which destroyed it. One tap on
+       Unread and the device-notification switch was gone from the page until the customer left
+       Messages and came back — `$('customerMessagesNotifications')` returned null on the next
+       pass, so the guard above simply skipped and nobody noticed. It stays where
+       renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
+       borrows it on open and hands it back on close. The node — and therefore the v296 push
+       binding that owns #customerPushMessagesControl — is never destroyed by a re-render again. */
+    const deviceSectionV549=$('customerMessagesNotifications');
+    if(deviceSectionV549&&!inboxSettingsDeactivateV549){
+      deviceSectionV549.hidden=true;
+      if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
+        $('walletBody')?.appendChild(deviceSectionV549);
     }
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
@@ -8543,7 +8595,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'49363d1b2fca982ecf791c6bfb5ca9a5ef5d7e1327d257c43e5e61fbe31d4e05',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'d615dc5948e3d5d9984aa97aaed98f2ab2a282e34bf50493b7f168f020c3f873',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

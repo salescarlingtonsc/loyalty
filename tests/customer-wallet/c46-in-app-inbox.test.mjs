@@ -256,15 +256,20 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and lau
      the device switch, and the gear was their only door, so the panel is simply always rendered —
      below the messages it governs. That is what is asserted instead. */
   assert.doesNotMatch(inbox, /customerInboxSettingsToggleV386/);
-  /* nestly_v548 (owner photo 2: the two settings blocks ringed, arrow to a button drawn in the
-     head — "move inside this button"). The panel collapses again, behind a new control. v417's
-     protection is what is asserted here, because it is the part that did NOT change: the panel is
-     always RENDERED, so renderPreferences has something to fill and the device card has somewhere
-     to be moved to. Only its visibility toggles. */
+  /* nestly_v548/v549 (owner photo 2: the two settings blocks ringed, arrow to a button drawn in
+     the head — "move inside this button", then "clicking exclamation mark opens up a pop up
+     instead of showing below"). The settings live in a dialog. v417's protection is what is
+     asserted here, because it is the part that did NOT change: the panel is always RENDERED, so
+     renderPreferences has something to fill; the dialog BORROWS that live node rather than
+     rebuilding it, which is why there can never be two of it. */
   assert.match(inbox, /id="customerInboxSettingsV386"/);
-  assert.match(inbox, /data-inbox-settings-v548/, 'the door the owner drew');
-  assert.match(inbox, /aria-controls','customerInboxSettingsV386'/,
-    'the button names the panel it owns, so a screen reader announces the pair');
+  assert.match(inbox, /data-inbox-settings-v549/, 'the door the owner drew');
+  assert.match(inbox, /id="customerInboxSettingsModalV549" role="dialog" aria-modal="true"/,
+    'and it opens a real dialog, not an inline panel');
+  assert.match(inbox, /aria-haspopup','dialog'/, 'the button says so before it is pressed');
+  assert.match(inbox, /body\.appendChild\(panel\)/, 'the dialog borrows the live panel');
+  assert.match(inbox, /if\(inboxSettingsDeactivateV549\)closeInboxSettingsModalV549\(\)/,
+    'a re-render tears the dialog down before it can be left holding discarded nodes');
   assert.match(inbox, /customerInAppInboxPreferences/);
   assert.match(inbox, /data-inbox-filter="unread"/);
   assert.match(inbox, /customerInboxSyncRetry/i);

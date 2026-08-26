@@ -176,16 +176,21 @@ test('photo 8: one message is one row, and the settings live behind a control',(
      the device switch, and the gear was their only door, so the panel is simply always rendered —
      below the messages it governs. That is what is asserted instead. */
   assert.doesNotMatch(inbox,/customerInboxSettingsToggleV386/);
-  /* nestly_v548 (owner photo 2): the collapse returns, behind a control drawn in the head. What
-     v417 was defending is unchanged and is what these next three lines check — the panel is always
-     RENDERED (only `hidden` moves), so the preferences and the device switch are never stranded. */
+  /* nestly_v548/v549 (owner photo 2): the settings moved off the page into a dialog. What v417
+     was defending is unchanged and is what these lines check — the panel is always RENDERED, so
+     the preferences are never stranded, and the dialog borrows the live node. */
   assert.match(inbox,/id="customerInboxSettingsV386" class="customer-inbox-settings-v386"/,
-    'still rendered unconditionally — visibility is the only thing that toggles');
-  assert.match(inbox,/data-inbox-settings-v548/,'and it has a door again');
+    'still rendered unconditionally');
+  assert.match(inbox,/data-inbox-settings-v549/,'and it has a door again');
   assert.match(inbox,/customerInAppInboxPreferences/,'the reminder preferences survive the gear');
-  assert.match(inbox,/customerInboxDeviceSlotV386/);
-  assert.match(inbox,/deviceSlotV386\.appendChild\(deviceSectionV386\)/,
-    'the device switch is MOVED, keeping the id its already-bound control was wired by');
+  /* nestly_v549: the device card is NO LONGER moved into the inbox card. v386 did that and every
+     re-render ran `host.innerHTML=` over it, so one tap on Unread destroyed the card AND the
+     control the v296 push wiring had bound — reproduced in Chrome before this changed. It now
+     stays a sibling in walletBody and the dialog borrows it. */
+  assert.doesNotMatch(inbox,/deviceSlotV386\.appendChild\(deviceSectionV386\)/,
+    'the destroy-on-re-render move is gone');
+  assert.match(inbox,/\$\('walletBody'\)\?\.appendChild\(device\)/,
+    'the device card is handed back to a parent no inbox re-render touches');
   assert.doesNotMatch(app,/<h1>Messages<\/h1><p class="muted">Customer-safe updates grouped by your separate business programmes\./);
   assert.match(indexHtml,/\.customer-inbox-row-main-v386\{/);
 });

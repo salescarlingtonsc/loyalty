@@ -15,6 +15,9 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png" id="favicon">
+<!-- nestly_v549: the tab picks the 32; bookmarks, new-tab tiles and the install prompt ask for
+     something larger and get a size where the wordmark is actually legible. -->
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/peekaa-192.png">
 <script>
 /* V460: the Peekaa mark pops and settles in the browser tab the instant the app loads — drawn
    as a few canvas frames from the existing static icon (no extra image assets), then handed
@@ -241,7 +244,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     --coral:#fff;--ink:#fff;--muted:rgba(255,255,255,.82)}
 @media print{body{background:#fff}}
 @keyframes customerCelebrationInV468{from{opacity:0;transform:translateY(-14px) scale(.94)}
-  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=77050a35f5d7">
+  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=ec6df42bced0">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -268,7 +271,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="appAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=77050a35f5d7">
+<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=ec6df42bced0">
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
@@ -298,7 +301,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=2b4290c3702d","business":"/app-business.js?b=9d5fb4c61bac","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=e25d1930e65f","business":"/app-business.js?b=9d5fb4c61bac","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

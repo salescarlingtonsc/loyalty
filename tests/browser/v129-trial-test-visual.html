@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="96e7f3c546a37df8d1fdf4761202081544b1372d3bb0d365ffcb578eea627a86"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="7bc26f4d82de91752aa89ead5ce0574b73a344e5cacdd5a0914c4c88f5230898"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3685,17 +3685,23 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-inbox-settings-toggle-v386{flex:0 0 auto}
 .customer-inbox-filter-row-v386{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .customer-inbox-settings-v386{padding:12px 0 4px;border-bottom:1px solid var(--hair)}
-/* nestly_v548 (owner photo 2): the door back onto the settings panel, drawn where the owner drew
-   it — the far end of the inbox head, opposite the All/Unread pair the same head carries. Pushed
-   there by margin-left:auto rather than a spacer element, because the head is the flex row the
-   filter group already lives in. 44px keeps it inside the tap-target floor the nav rail uses. */
-.customer-inbox-settings-toggle-v548{margin-left:auto;flex:none;display:grid;place-items:center;
-  width:44px;height:44px;border-radius:50%;border:1px solid var(--peekaa-red,var(--coral));
-  background:transparent;color:var(--peekaa-red,var(--coral));
+/* nestly_v548/v549 (owner photo 2): the door onto the settings, drawn where the owner drew it —
+   the far end of the inbox head, opposite the All/Unread pair the same head carries. Pushed there
+   by margin-left:auto rather than a spacer element, because the head is the flex row the filter
+   group already lives in. 44px keeps it inside the tap-target floor the nav rail uses.
+   v549: filled rather than outlined, matching the owner's second drawing of it, and it opens a
+   dialog now — so there is no open/closed state for it to carry. */
+.customer-inbox-settings-toggle-v549{margin-left:auto;flex:none;display:grid;place-items:center;
+  width:44px;height:44px;border-radius:50%;border:0;
+  background:var(--peekaa-red,var(--coral));color:#fff;
   font-family:var(--sf,inherit);font-size:22px;font-weight:750;line-height:1;cursor:pointer;
-  transition:background .14s var(--ease),color .14s}
-.customer-inbox-settings-toggle-v548:hover{background:var(--peekaa-red-soft,var(--tint))}
-.customer-inbox-settings-toggle-v548.is-open-v548{background:var(--peekaa-red,var(--coral));color:#fff}
+  transition:background .14s var(--ease)}
+.customer-inbox-settings-toggle-v549:hover{background:var(--peekaa-red-dark,var(--coral-hover))}
+/* Inside the dialog the panel is the whole content, so it drops the divider it wore as the last
+   block on a scrolling page, and the dialog scrolls if a customer has many programmes. */
+.customer-inbox-settings-card-v549{max-width:var(--dialog-w-md,520px)}
+.customer-inbox-settings-body-v549{max-height:min(66vh,560px);overflow-y:auto;margin-top:4px}
+.customer-inbox-settings-body-v549 .customer-inbox-settings-v386{padding:0;border-bottom:0}
 .customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
 .customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}
@@ -4714,7 +4720,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 96e7f3c546a37df8d1fdf4761202081544b1372d3bb0d365ffcb578eea627a86</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 7bc26f4d82de91752aa89ead5ce0574b73a344e5cacdd5a0914c4c88f5230898</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -28222,6 +28228,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'96e7f3c546a37df8d1fdf4761202081544b1372d3bb0d365ffcb578eea627a86',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'7bc26f4d82de91752aa89ead5ce0574b73a344e5cacdd5a0914c4c88f5230898',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

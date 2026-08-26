@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="092f57bedec6bb5f2042f6992da835622cef127528d31f1f19b5bad150cfd581"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="4394c9b8a2ac30a5d751e600ff47aa42175493c7fd0a840f00f787f5efa7fdc7"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3684,17 +3684,23 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-inbox-settings-toggle-v386{flex:0 0 auto}
 .customer-inbox-filter-row-v386{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .customer-inbox-settings-v386{padding:12px 0 4px;border-bottom:1px solid var(--hair)}
-/* nestly_v548 (owner photo 2): the door back onto the settings panel, drawn where the owner drew
-   it — the far end of the inbox head, opposite the All/Unread pair the same head carries. Pushed
-   there by margin-left:auto rather than a spacer element, because the head is the flex row the
-   filter group already lives in. 44px keeps it inside the tap-target floor the nav rail uses. */
-.customer-inbox-settings-toggle-v548{margin-left:auto;flex:none;display:grid;place-items:center;
-  width:44px;height:44px;border-radius:50%;border:1px solid var(--peekaa-red,var(--coral));
-  background:transparent;color:var(--peekaa-red,var(--coral));
+/* nestly_v548/v549 (owner photo 2): the door onto the settings, drawn where the owner drew it —
+   the far end of the inbox head, opposite the All/Unread pair the same head carries. Pushed there
+   by margin-left:auto rather than a spacer element, because the head is the flex row the filter
+   group already lives in. 44px keeps it inside the tap-target floor the nav rail uses.
+   v549: filled rather than outlined, matching the owner's second drawing of it, and it opens a
+   dialog now — so there is no open/closed state for it to carry. */
+.customer-inbox-settings-toggle-v549{margin-left:auto;flex:none;display:grid;place-items:center;
+  width:44px;height:44px;border-radius:50%;border:0;
+  background:var(--peekaa-red,var(--coral));color:#fff;
   font-family:var(--sf,inherit);font-size:22px;font-weight:750;line-height:1;cursor:pointer;
-  transition:background .14s var(--ease),color .14s}
-.customer-inbox-settings-toggle-v548:hover{background:var(--peekaa-red-soft,var(--tint))}
-.customer-inbox-settings-toggle-v548.is-open-v548{background:var(--peekaa-red,var(--coral));color:#fff}
+  transition:background .14s var(--ease)}
+.customer-inbox-settings-toggle-v549:hover{background:var(--peekaa-red-dark,var(--coral-hover))}
+/* Inside the dialog the panel is the whole content, so it drops the divider it wore as the last
+   block on a scrolling page, and the dialog scrolls if a customer has many programmes. */
+.customer-inbox-settings-card-v549{max-width:var(--dialog-w-md,520px)}
+.customer-inbox-settings-body-v549{max-height:min(66vh,560px);overflow-y:auto;margin-top:4px}
+.customer-inbox-settings-body-v549 .customer-inbox-settings-v386{padding:0;border-bottom:0}
 .customer-inbox-filter[aria-pressed="true"]{border-color:var(--coral);color:var(--coral)}
 .customer-inbox-actions .btn,.customer-inbox-filter{min-height:44px}.customer-inbox-group{margin:16px 0 5px;font-size:14px}
 .wallet-skeleton{height:58px;border-radius:6px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite}

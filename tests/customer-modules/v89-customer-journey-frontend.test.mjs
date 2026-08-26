@@ -223,18 +223,21 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
    second copy of the businesses already listed below it. The chips are not deleted — they remain
    the only way to start a booking with a business that has nothing booked yet — they are simply
    what the search box has always looked like it controlled. */
-test('v548 the booking chooser shows nothing until the customer searches',async()=>{
+test('v548/v549 the booking chooser shows nothing until the customer searches',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wire=section(app,'function wireCustomerBookingSearchV326','function customerBookingEmptyMarkupV183');
-  assert.match(wire,/const match=!!query&&String\(item\.dataset\.bookingSearchName\|\|''\)\.includes\(query\)/,
+  assert.match(wire,/const match=!!query&&\(terms\.includes\(query\)/,
     'an empty query matches NOTHING — this is the line that inverted');
   assert.doesNotMatch(wire,/const match=!query\|\|/,'the old show-everything default is gone');
+  /* nestly_v549: the behaviour of the keyword routes is EXECUTED in
+     tests/customer-wallet/v291-booking-chooser-and-filter.test.mjs, not asserted by regex here. */
+  assert.match(wire,/customerBusinessCategoryV122\(query\)/,'a sector word reaches its sector');
   /* The chips still exist to be found, and the box still says what it is for when it is empty. */
   const chooser=section(app,'function customerBookingChooserV291','function wireCustomerBookingSearchV326');
   assert.match(chooser,/data-repeat-booking data-business-slug=/,'a bookable business is still one tap');
   assert.match(chooser,/customerBookingSearchStatus" role="status">/,
     'the status line is no longer born hidden — it carries the empty-query prompt');
-  assert.match(wire,/Search to book with any of your \$\{items\.length\}/);
+  assert.match(wire,/Search by name, service or type/);
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{

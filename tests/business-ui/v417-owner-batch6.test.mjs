@@ -159,14 +159,15 @@ test('v417 the "How rewards work" row is gone but its dismissal state is not orp
    two together would have taken a real choice from customers under the heading of a cosmetic
    tidy. A door that opens is not that. The panel is still rendered unconditionally; only its
    visibility moves, which is what keeps renderPreferences and the moved device card working. */
-test('v417 the Messages settings are still reachable, now behind the v548 control', () => {
+test('v417 the Messages settings are still reachable, now behind the v549 dialog', () => {
   assert.doesNotMatch(appJs, /customerInboxSettingsToggleV386/, 'the v386 gear is not resurrected');
   assert.match(appJs, /id="customerInboxSettingsV386" class="customer-inbox-settings-v386"/,
-    'still rendered unconditionally — only `hidden` toggles');
-  assert.match(appJs, /data-inbox-settings-v548/, 'and it has a door');
+    'still rendered unconditionally, so the dialog has a live node to borrow');
+  assert.match(appJs, /data-inbox-settings-v549/, 'and it has a door');
   assert.match(appJs, /customerInAppInboxPreferences/, 'the reminder preferences survive');
-  assert.match(appJs, /customerInboxDeviceSlotV386/, 'and so does the device switch');
-  assert.doesNotMatch(appJs, /settingsOpenV395/, 'the v395 open state stays dead — v548 keeps its own');
+  assert.match(appJs, /id="customerMessagesNotifications"/, 'and so does the device switch');
+  assert.doesNotMatch(appJs, /settingsOpenV395/, 'the v395 open state stays dead');
+  assert.doesNotMatch(appJs, /inboxSettingsOpenV548/, 'and so does v548 inline open state');
 });
 
 /* ------------------------------------------------ photo 11: the live preview ----------------- */

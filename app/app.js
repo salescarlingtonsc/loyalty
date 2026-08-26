@@ -6503,8 +6503,28 @@ function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to
 function customerBookingChooserV291(groups=[]){
   const businesses=groups.filter(group=>group.business_slug);
   if(!businesses.length)return '';
+  /* nestly_v549 (owner: "search please allow for keywords search like if type salon or spa or
+     facial or hair etc"). Matching the company name alone meant the box could only find a
+     business the customer could already name, which is the opposite of what a search is for on a
+     page whose whole job is now "find someone to book with". Four honest sources, no new request:
+     the name, the sector the business declared, the category label the app already derives from
+     that sector, and the services this customer has actually booked or requested there — which is
+     what makes "facial" find the spa the owner booked a facial at.
+     The fifth route is the classifier itself, in reverse (see wireCustomerBookingSearchV326):
+     "salon" is not a word any of these fields contains, but customerBusinessCategoryV122 already
+     knows it means Beauty. Reusing that one vocabulary is deliberate — a second synonym list
+     maintained here would drift from the category headings the customer is reading. */
+  const searchTermsV549=group=>[
+    group.business_name,
+    group.industry,
+    customerBusinessCategoryV122(group.industry),
+    ...(Array.isArray(group.appointments)?group.appointments:[]).map(item=>item?.service_name),
+    ...(Array.isArray(group.requests)?group.requests:[]).map(item=>item?.service_name)
+  ].filter(Boolean).join(' ').trim().toLowerCase();
   const chip=group=>{
-    const searchAttr=`data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').trim().toLowerCase())}"`;
+    const searchAttr=`data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').trim().toLowerCase())}"`
+      +` data-booking-search-terms="${esc(searchTermsV549(group))}"`
+      +` data-booking-search-category="${esc(customerBusinessCategoryV122(group.industry))}"`;
     /* v327 (owner: "photo 1 - remove this icon (shaded)"): the blurry business-photo thumbnail
        came off the search-result chip — name and status text only now. */
     return group.bookingEnabled
@@ -6549,11 +6569,23 @@ function wireCustomerBookingSearchV326(host=document){
      search box has always looked like it controlled: nothing until you type, matches after.
      An empty query therefore hides every chip instead of showing all of them, which is the one
      line of this filter that inverted. */
+  /* nestly_v549: the query goes through the SAME classifier the category headings use, so a word
+     that names a sector rather than a business ("salon", "hair", "gym") reaches the businesses in
+     it. 'Other' is excluded deliberately — it is the classifier's I-don't-know answer and also the
+     bucket every unclassified business falls into, so honouring it would make a meaningless query
+     match everything unlabelled. */
+  const queryCategoryV549=query=>{
+    const category=customerBusinessCategoryV122(query);
+    return category==='Other'?'':category;
+  };
   const apply=()=>{
     const query=String(input.value||'').trim().toLowerCase();
+    const category=query?queryCategoryV549(query):'';
     let shown=0;
     items.forEach(item=>{
-      const match=!!query&&String(item.dataset.bookingSearchName||'').includes(query);
+      const terms=String(item.dataset.bookingSearchTerms||item.dataset.bookingSearchName||'');
+      const match=!!query&&(terms.includes(query)
+        ||(!!category&&String(item.dataset.bookingSearchCategory||'')===category));
       item.hidden=!match;
       if(match)shown++;
     });
@@ -6565,7 +6597,7 @@ function wireCustomerBookingSearchV326(host=document){
     status.hidden=false;
     status.textContent=query
       ?(shown?`${shown} of ${items.length} shown`:`No business matches “${query}”.`)
-      :`Search to book with any of your ${items.length} ${items.length===1?'business':'businesses'}.`;
+      :`Search by name, service or type — spa, facial, hair, cafe. ${items.length} ${items.length===1?'business':'businesses'} to book with.`;
   };
   input.addEventListener('input',apply);
   apply();
@@ -14281,10 +14313,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   const loyaltyUnit=actionableCard?.loyalty?.unit;
   const expiryReminderLabel=loyaltyUnit==='stamps'?'Stamps expiry reminders':loyaltyUnit==='points'?'Points expiry reminders':'Expiry reminders';
   let currentFilter='all',nextCursor=null,items=[],bell=null,refreshInbox;
-  /* nestly_v548: survives the re-render that a filter change or a state change triggers, so a
-     customer who opened the settings panel to change a reminder does not have it shut under them
-     the moment they save. Same reason v395 kept the v386 gear's open state. */
-  let inboxSettingsOpenV548=false;
+  /* nestly_v549 (owner: "clicking exclamation mark - opens up pop up instead of showing below").
+     v548 collapsed the settings in place; the owner wants them off the page entirely, in the
+     dialog pattern the rest of this surface already uses (customerExplainerModalV435 et al).
+     There is therefore no open STATE to keep any more — the modal is the state, and it is torn
+     down before any re-render so a filter tap can never leave it half-attached. */
+  let inboxSettingsDeactivateV549=null;
   /* nestly_v417 (owner, photo 9: "remove this button"). V395's open-state fix is retired WITH the
      gear it existed for: the panel is no longer collapsible, so there is no open state to keep and
      no way for a filter tap to collapse it. The defect V395 described cannot recur — the panel is
@@ -14306,7 +14340,52 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     slot.innerHTML=`<a class="customer-inbox-bell" href="#/customer/messages" aria-label="${unread?`Open messages, ${unread} unread`:'Open messages'}" title="${unread?`${unread} unread message${unread===1?'':'s'}`:'Open messages'}">${CUI.icon('bell',{size:20})}${unread?`<span class="customer-inbox-badge" aria-hidden="true">${unread>99?'99+':unread}</span>`:''}</a>`;
     return {unread};
   };
+  /* nestly_v549. The panel and the device card are LIVE NODES with bindings on them —
+     renderPreferences fills #customerInAppInboxPreferences by id, and the v296 push wiring bound
+     #customerPushMessagesControl once at page render. So the modal BORROWS them rather than
+     rebuilding them, and hands them back when it closes. Anything else would either duplicate an
+     id or leave a bound control detached from the document. */
+  const inboxSettingsHomesV549=()=>({
+    panel:document.getElementById('customerInboxSettingsV386'),
+    panelHome:host.querySelector('#customerInboxSettingsHomeV549'),
+    device:document.getElementById('customerMessagesNotifications')
+  });
+  const returnInboxSettingsNodesV549=()=>{
+    const {panel,panelHome,device}=inboxSettingsHomesV549();
+    if(device){device.hidden=true;$('walletBody')?.appendChild(device)}
+    if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
+  };
+  const closeInboxSettingsModalV549=()=>{
+    const deactivate=inboxSettingsDeactivateV549;
+    inboxSettingsDeactivateV549=null;
+    returnInboxSettingsNodesV549();
+    if(deactivate)deactivate();
+    document.getElementById('customerInboxSettingsModalV549')?.remove();
+    document.querySelector('[data-inbox-settings-v549]')?.focus?.();
+  };
+  const openInboxSettingsModalV549=()=>{
+    if(inboxSettingsDeactivateV549)return;
+    const {panel,device}=inboxSettingsHomesV549();
+    if(!panel)return;
+    document.getElementById('customerInboxSettingsModalV549')?.remove();
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerInboxSettingsModalV549" role="dialog" aria-modal="true" aria-labelledby="customerInboxSettingsTitleV549" tabindex="-1"><div class="modal-card customer-inbox-settings-card-v549">
+      <div class="row"><h2 id="customerInboxSettingsTitleV549">Inbox settings</h2><span class="spacer"></span><button type="button" class="btn ghost sm" id="customerInboxSettingsCloseV549" aria-label="Close">${CUI.icon('close',{size:20})}</button></div>
+      <div id="customerInboxSettingsBodyV549" class="customer-inbox-settings-body-v549"></div>
+    </div></div>`);
+    const body=document.getElementById('customerInboxSettingsBodyV549');
+    panel.hidden=false;body.appendChild(panel);
+    if(device){device.hidden=false;device.style.marginTop='18px';body.appendChild(device)}
+    const modal=document.getElementById('customerInboxSettingsModalV549');
+    inboxSettingsDeactivateV549=CUI.activateDialog(modal,{onClose:closeInboxSettingsModalV549,initialFocus:'#customerInboxSettingsCloseV549'})||(()=>{});
+    document.getElementById('customerInboxSettingsCloseV549').onclick=closeInboxSettingsModalV549;
+    /* The preferences are per business and load lazily on <details> toggle, so opening the dialog
+       is still the same zero-extra-reads it was inline. */
+    renderPreferences();
+  };
   const render=()=>{
+    /* Before anything replaces the card's innards: a modal holding borrowed children of that card
+       would be left pointing at nodes this next line is about to discard. */
+    if(inboxSettingsDeactivateV549)closeInboxSettingsModalV549();
     const status=[
       items.some(item=>item?.state==='source_unavailable')?'Some programme updates are temporarily unavailable and cannot be opened.':''
     ].filter(Boolean).join(' ');
@@ -14384,42 +14463,41 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       <p id="customerInboxStatus" class="muted small" role="status" aria-live="polite">${esc(status)}</p>
       <div id="customerInboxItems">${items.length?renderedItems:'<p class="muted small" style="padding:8px 0">No '+(currentFilter==='unread'?'unread ':'')+'inbox updates right now.</p>'}</div>
       ${nextCursor?`<button type="button" class="btn ghost sm" id="customerInboxMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}
-      <div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" ${inboxSettingsOpenV548?'':'hidden'}>
+      <div id="customerInboxSettingsHomeV549" hidden><div id="customerInboxSettingsV386" class="customer-inbox-settings-v386" hidden>
         <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
         <div id="customerInboxDeviceSlotV386"></div>
-      </div>`;
-    /* nestly_v548: the door. Sits in the section head opposite the filter, labelled for a screen
-       reader because the glyph alone says nothing, and reporting its own state through
-       aria-expanded/aria-controls so the panel it owns is announced as this button's. */
-    const settingsHeadV548=host.querySelector('.customer-inbox-head-v386');
-    if(settingsHeadV548&&!settingsHeadV548.querySelector('[data-inbox-settings-v548]')){
-      const toggleV548=document.createElement('button');
-      toggleV548.type='button';
-      toggleV548.className='customer-inbox-settings-toggle-v548';
-      toggleV548.dataset.inboxSettingsV548='1';
-      toggleV548.setAttribute('aria-controls','customerInboxSettingsV386');
-      toggleV548.setAttribute('aria-expanded',String(inboxSettingsOpenV548));
-      toggleV548.setAttribute('aria-label','Inbox reminder and notification settings');
-      toggleV548.title='Inbox reminder and notification settings';
-      toggleV548.textContent='!';
-      settingsHeadV548.appendChild(toggleV548);
-      toggleV548.onclick=()=>{
-        const panel=host.querySelector('#customerInboxSettingsV386');
-        if(!panel)return;
-        inboxSettingsOpenV548=!inboxSettingsOpenV548;
-        panel.hidden=!inboxSettingsOpenV548;
-        toggleV548.setAttribute('aria-expanded',String(inboxSettingsOpenV548));
-        toggleV548.classList.toggle('is-open-v548',inboxSettingsOpenV548);
-      };
-      toggleV548.classList.toggle('is-open-v548',inboxSettingsOpenV548);
+      </div></div>`;
+    /* nestly_v549: the door. Sits in the section head opposite the filter, labelled for a screen
+       reader because the glyph alone says nothing, and declaring aria-haspopup="dialog" because
+       that is now what it opens. */
+    const settingsHeadV549=host.querySelector('.customer-inbox-head-v386');
+    if(settingsHeadV549&&!settingsHeadV549.querySelector('[data-inbox-settings-v549]')){
+      const toggleV549=document.createElement('button');
+      toggleV549.type='button';
+      toggleV549.className='customer-inbox-settings-toggle-v549';
+      toggleV549.dataset.inboxSettingsV549='1';
+      toggleV549.setAttribute('aria-haspopup','dialog');
+      toggleV549.setAttribute('aria-label','Inbox reminder and notification settings');
+      toggleV549.title='Inbox reminder and notification settings';
+      toggleV549.textContent='!';
+      settingsHeadV549.appendChild(toggleV549);
+      toggleV549.onclick=openInboxSettingsModalV549;
     }
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */
-    const deviceSectionV386=$('customerMessagesNotifications'),deviceSlotV386=host.querySelector('#customerInboxDeviceSlotV386');
-    if(deviceSectionV386&&deviceSlotV386&&!deviceSlotV386.contains(deviceSectionV386)){
-      deviceSectionV386.hidden=false;
-      deviceSectionV386.style.marginTop='18px';
-      deviceSlotV386.appendChild(deviceSectionV386);
+    /* nestly_v549 fixes a defect v386 shipped and v417/v548 carried: the device card was moved
+       INTO host, and every re-render does `host.innerHTML=`, which destroyed it. One tap on
+       Unread and the device-notification switch was gone from the page until the customer left
+       Messages and came back — `$('customerMessagesNotifications')` returned null on the next
+       pass, so the guard above simply skipped and nobody noticed. It stays where
+       renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
+       borrows it on open and hands it back on close. The node — and therefore the v296 push
+       binding that owns #customerPushMessagesControl — is never destroyed by a re-render again. */
+    const deviceSectionV549=$('customerMessagesNotifications');
+    if(deviceSectionV549&&!inboxSettingsDeactivateV549){
+      deviceSectionV549.hidden=true;
+      if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
+        $('walletBody')?.appendChild(deviceSectionV549);
     }
     host.querySelectorAll('[data-inbox-filter]').forEach(button=>button.onclick=()=>{
       if(!walletSectionStillCurrent(host,isCurrent))return;currentFilter=button.dataset.inboxFilter||'all';load(null);
