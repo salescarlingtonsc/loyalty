@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 430,
-  "executableCount": 416,
+  "itemCount": 432,
+  "executableCount": 418,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -633,7 +633,7 @@
     },
     {
       "sourceDeployVersion": "20260826",
-      "count": 7,
+      "count": 9,
       "paths": [
         "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql",
         "db/migrations/20260826_nestly_v518_capability_grants_and_quota.sql",
@@ -641,7 +641,9 @@
         "db/migrations/20260826_nestly_v520_a_points_gift_can_expire.sql",
         "db/migrations/20260826_nestly_v521_redemption_off_is_a_decision.sql",
         "db/migrations/20260826_nestly_v523_customer_intelligence_follows_entitlement.sql",
-        "db/migrations/20260826_nestly_v528_whatsapp_webhook_retention.sql"
+        "db/migrations/20260826_nestly_v528_whatsapp_webhook_retention.sql",
+        "db/migrations/20260826_nestly_v530_support_inbox_foundations.sql",
+        "db/migrations/20260826_nestly_v531_support_inbound_router.sql"
       ]
     }
   ],
@@ -4085,6 +4087,22 @@
       "semanticVersion": "v528",
       "proposedDeployVersion": "20260826000007",
       "sha256": "94a2245a56a63ca8e355b679a1b888d19cc89134e1fa9f4ee4a4149df4ae2560"
+    },
+    {
+      "order": 431,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v530_support_inbox_foundations.sql",
+      "semanticVersion": "v530",
+      "proposedDeployVersion": "20260826000008",
+      "sha256": "cba2172c8ea6e80aaa3410e3efe659cb4b58aff7ed1c5fd704855038269b219e"
+    },
+    {
+      "order": 432,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v531_support_inbound_router.sql",
+      "semanticVersion": "v531",
+      "proposedDeployVersion": "20260826000009",
+      "sha256": "496dd67457a28a6d7577e0426e655a76739ab4ed8a03951f2e04e82671c4039a"
     }
   ]
 }

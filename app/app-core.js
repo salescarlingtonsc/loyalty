@@ -252,7 +252,7 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
   inventory:['inventory','Products'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
-  giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],staffperf:['staff','Staff performance'],
+  giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],support:['customers','WhatsApp Inbox'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
   staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
   /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar

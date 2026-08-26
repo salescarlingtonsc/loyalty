@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 386,
-  "itemCount": 431,
+  "pendingCount": 388,
+  "itemCount": 433,
   "items": [
     {
       "order": 1,
@@ -4317,6 +4317,26 @@
       "path": "supabase/migrations/20260826000007_nestly_v528_whatsapp_webhook_retention.sql",
       "octetLength": 4385,
       "sha256": "94a2245a56a63ca8e355b679a1b888d19cc89134e1fa9f4ee4a4149df4ae2560",
+      "provenance": "local-source"
+    },
+    {
+      "order": 432,
+      "kind": "pending",
+      "version": "20260826000008",
+      "name": "nestly_v530_support_inbox_foundations",
+      "path": "supabase/migrations/20260826000008_nestly_v530_support_inbox_foundations.sql",
+      "octetLength": 17129,
+      "sha256": "cba2172c8ea6e80aaa3410e3efe659cb4b58aff7ed1c5fd704855038269b219e",
+      "provenance": "local-source"
+    },
+    {
+      "order": 433,
+      "kind": "pending",
+      "version": "20260826000009",
+      "name": "nestly_v531_support_inbound_router",
+      "path": "supabase/migrations/20260826000009_nestly_v531_support_inbound_router.sql",
+      "octetLength": 22541,
+      "sha256": "496dd67457a28a6d7577e0426e655a76739ab4ed8a03951f2e04e82671c4039a",
       "provenance": "local-source"
     }
   ]

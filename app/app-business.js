@@ -174,7 +174,7 @@ const CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334=CUSTOMER_INTERFACE_VIEWS_V296
 const CUSTOMER_INTERFACE_TABS_V368=['appointment','actions'];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
-  {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
+  {key:'customers',icon:'customers',flat:'Customers',items:['clients','support']},
   /* V275 put Bottles inside Serve & sell; nestly_v488 (owner, photo 2: "i want the module
      'bottle' to be standalone - not under serve and sell") lifts it out into its own flat rail
      entry directly below the group it left. Flat like Home and Customers because it is one
@@ -2857,7 +2857,7 @@ function renderShell(page){
       EDITOR surface is untouched; only this top-level page redirects. */
       nav('#/grow/bringback');return Promise.resolve();},promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
-    waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,
+    waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,support:supportInboxPageV531,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
@@ -26371,6 +26371,152 @@ function ownerOnlyDeniedCardV285(title,iconName='settings'){
 /* Operations setup → Bottle keep. Two owner decisions and nothing else: how long a bottle is
    kept (owner amendment 2 — ONE number, adjustable per business) and where bottles live
    (amendment 3 — the bar defines its own list). */
+/* ============================================================================
+   V531 WHATSAPP INBOX (C5) — READ ONLY.
+   Owner ruling 2026-08-26: the internal permission key is 'support' and stays
+   channel-neutral; the merchant reads "WhatsApp Inbox". It lives inside the
+   existing Customers group — no new top-level sidebar module.
+
+   THIS PAGE CANNOT SEND ANYTHING. There is no reply control, and the server
+   agrees: business_support_get_thread_v531 returns can_reply=false with a named
+   reason, which this page RENDERS rather than assumes. When C6 ships, the
+   banner disappears because the server starts saying something different — the
+   page does not need to learn a new rule.
+
+   What is deliberately never rendered here: the Meta wamid (it base64-decodes to
+   the sender's phone number), WABA id, phone_number_id, webhook state, and the
+   routing token. None of them are even returned by the two RPCs this page calls,
+   so the omission is structural rather than a habit of this file.
+   ========================================================================== */
+const SUPPORT_INBOX_COPY_V531=Object.freeze({
+  title:'WhatsApp Inbox',
+  emptyTitle:'No conversations yet',
+  emptyBody:'When a customer messages your Peekaa WhatsApp link, the conversation appears here.',
+  unknownCustomer:'Not in your customers',
+  knownCustomer:'Customer',
+  readOnly:'Replying from Peekaa is not switched on yet. You can read everything here.',
+  windowOpen:'Can reply for',
+  windowShut:'24-hour reply window closed',
+  unassigned:'Unassigned',
+  back:'All conversations'
+});
+
+function supportRelativeTimeV531(value){
+  if(!value)return '';
+  const then=new Date(value).getTime();
+  if(!Number.isFinite(then))return '';
+  const mins=Math.max(0,Math.round((Date.now()-then)/60000));
+  if(mins<1)return 'just now';
+  if(mins<60)return mins+'m ago';
+  const hours=Math.round(mins/60);
+  if(hours<24)return hours+'h ago';
+  return Math.round(hours/24)+'d ago';
+}
+
+function supportWindowLabelV531(open,expiresAt){
+  if(!open)return SUPPORT_INBOX_COPY_V531.windowShut;
+  const left=Math.max(0,Math.round((new Date(expiresAt).getTime()-Date.now())/3600000));
+  return SUPPORT_INBOX_COPY_V531.windowOpen+' '+left+'h';
+}
+
+async function supportInboxPageV531(hashParam){
+  disposeCurrentRoute();
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  if(!canReadModule('support'))return routeMain.innerHTML=CUI.errorState({
+    title:SUPPORT_INBOX_COPY_V531.title,message:'You do not have access to this page.'});
+
+  const conversationId=String(hashParam||'').trim();
+  routeMain.innerHTML=CUI.loadingState({
+    title:SUPPORT_INBOX_COPY_V531.title,iconName:'customers',body:'Loading conversations…'});
+
+  if(conversationId){
+    const threadResultV531=await sb.rpc('business_support_get_thread_v531',
+      {p_business:S.biz.id,p_conversation:conversationId});
+    if(!isCurrent())return;
+    if(threadResultV531.error){
+      routeMain.innerHTML=CUI.errorState({title:SUPPORT_INBOX_COPY_V531.title,
+        message:ownerErrorText(threadResultV531.error)||'Please try again.'});
+      return;
+    }
+    return supportRenderThreadV531(routeMain,threadResultV531.data||{});
+  }
+
+  const listResultV531=await sb.rpc('business_support_list_conversations_v531',
+    {p_business:S.biz.id,p_state:'open',p_limit:100});
+  if(!isCurrent())return;
+  if(listResultV531.error){
+    routeMain.innerHTML=CUI.errorState({title:SUPPORT_INBOX_COPY_V531.title,
+      message:ownerErrorText(listResultV531.error)||'Please try again.'});
+    return;
+  }
+  supportRenderListV531(routeMain,(listResultV531.data||{}).conversations||[]);
+}
+
+function supportRenderListV531(routeMain,rows){
+  /* Classes are the ones this app already styles — card / row / muted / small /
+     pill. An earlier draft invented cui-list-* and cui-msg-*, none of which
+     exist in app/index.html, so the page would have rendered unstyled. */
+  const items=rows.map(row=>`
+    <button type="button" class="card cui-readonly-row" style="width:100%;text-align:left;display:block;margin-bottom:8px"
+            data-support-open-v531="${esc(row.conversation_id)}">
+      <div class="row" style="justify-content:space-between;align-items:baseline">
+        <b>${esc(row.display_name||'')}</b>
+        <span class="muted small">${esc(supportRelativeTimeV531(row.last_inbound_at))}</span>
+      </div>
+      <div class="muted small" style="margin:4px 0 6px">${esc(row.last_message||'')}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <span class="pill">${row.is_known_customer
+          ?esc(SUPPORT_INBOX_COPY_V531.knownCustomer)
+          :esc(SUPPORT_INBOX_COPY_V531.unknownCustomer)}</span>
+        <span class="pill">${esc(row.assigned_staff_name||SUPPORT_INBOX_COPY_V531.unassigned)}</span>
+        ${Number(row.unread_count)>0?`<span class="pill">${Number(row.unread_count)} new</span>`:''}
+      </div>
+    </button>`).join('');
+
+  routeMain.innerHTML=`<section id="supportInboxView">
+    <header class="v150-titlebar" data-workspace-i18n>
+      <div class="cui-page-title">${CUI.icon('customers',{size:24})}
+        <div><h1>${esc(SUPPORT_INBOX_COPY_V531.title)}</h1></div></div>
+    </header>
+    <p class="imp-note" data-support-readonly-v531="1">${esc(SUPPORT_INBOX_COPY_V531.readOnly)}</p>
+    ${rows.length?items:CUI.emptyState({iconName:'customers',
+        title:SUPPORT_INBOX_COPY_V531.emptyTitle,body:SUPPORT_INBOX_COPY_V531.emptyBody})}
+  </section>`;
+
+  routeMain.querySelectorAll('[data-support-open-v531]').forEach(node=>{
+    node.onclick=()=>nav('#/support/'+node.getAttribute('data-support-open-v531'));
+  });
+}
+
+function supportRenderThreadV531(routeMain,thread){
+  const messages=(thread.messages||[]).map(message=>`
+    <div class="card" style="margin-bottom:6px;${message.direction==='outbound'
+      ?'margin-left:22%':'margin-right:22%'}">
+      <div>${esc(message.body||'')}</div>
+      <div class="muted small" style="margin-top:4px">${esc(supportRelativeTimeV531(message.occurred_at))}</div>
+    </div>`).join('');
+
+  routeMain.innerHTML=`<section id="supportThreadView">
+    <header class="v150-titlebar" data-workspace-i18n>
+      <div class="cui-page-title">${CUI.icon('customers',{size:24})}
+        <div><h1>${esc(thread.display_name||'')}</h1>
+        <p class="muted small">${thread.is_known_customer
+          ?esc(SUPPORT_INBOX_COPY_V531.knownCustomer)
+          :esc(SUPPORT_INBOX_COPY_V531.unknownCustomer)}
+          · ${esc(supportWindowLabelV531(thread.service_window_open,thread.service_window_expires_at))}
+          · ${esc(thread.handoff_state||'')}</p></div></div>
+      <div>${CUI.action({id:'supportBackV531',label:SUPPORT_INBOX_COPY_V531.back,
+        iconName:'back',variant:'secondary',className:'sm'})}</div>
+    </header>
+    <p class="imp-note" data-support-readonly-v531="1">${esc(SUPPORT_INBOX_COPY_V531.readOnly)}</p>
+    ${messages||CUI.emptyState({iconName:'customers',title:SUPPORT_INBOX_COPY_V531.emptyTitle,
+        body:SUPPORT_INBOX_COPY_V531.emptyBody})}
+  </section>`;
+
+  const back=$('supportBackV531');
+  if(back)back.onclick=()=>nav('#/support');
+}
+
 async function bottleSetupPageV275(){
   disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;

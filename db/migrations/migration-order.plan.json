@@ -2595,6 +2595,18 @@
       "path": "db/migrations/20260826_nestly_v528_whatsapp_webhook_retention.sql",
       "semanticVersion": "v528",
       "proposedDeployVersion": "20260826000007"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v530_support_inbox_foundations.sql",
+      "semanticVersion": "v530",
+      "proposedDeployVersion": "20260826000008"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v531_support_inbound_router.sql",
+      "semanticVersion": "v531",
+      "proposedDeployVersion": "20260826000009"
     }
   ]
 }
