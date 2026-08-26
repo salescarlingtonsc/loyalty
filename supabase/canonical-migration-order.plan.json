@@ -2638,6 +2638,12 @@
       "version": "20260827000003",
       "name": "nestly_v539_dispatch_url_secret_name",
       "sourcePath": "db/migrations/20260826_nestly_v539_dispatch_url_secret_name.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000004",
+      "name": "nestly_v545_programme_aware_loyalty_evidence",
+      "sourcePath": "db/migrations/20260827_nestly_v545_programme_aware_loyalty_evidence.sql"
     }
   ]
 }

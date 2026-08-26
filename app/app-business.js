@@ -29094,7 +29094,7 @@ async function customerIntelligencePage(){
     }
     if(!customers.length){button.disabled=false;button.textContent='Export customers CSV';return toast('No customer records to export')}
     const scope=lastPayload.scope||{};
-    const rows=[['customer','phone','email','returning','purchase_count','paid_visit_count','net_revenue','cash_collected','average_revenue_per_purchase','average_days_between_purchases','first_purchase_at','last_purchase_at','days_since_last_purchase','branches_visited'],
+    const rows=[['customer','phone','email','repeat_in_period_2plus_purchases','purchase_count','paid_visit_count','net_revenue','cash_collected','average_revenue_per_purchase','average_days_between_purchases','first_purchase_at','last_purchase_at','days_since_last_purchase','branches_visited'],
       ...customers.map(customer=>[
         customer.full_name||'',customer.phone||'',customer.email||'',customer.returning_customer?'yes':'no',
         customer.purchase_count||0,customer.visit_count||0,(Number(customer.net_revenue_cents||0)/100).toFixed(2),
