@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="298582495833ccb50f213dba9c7213123bfbb3b24d05be479b6fb7f1644a93f1"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="3841afea2d26e75d6ae5a60be294730008b3aa49ba814ddebb00696ffe6a1d88"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -889,6 +889,20 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+/* V461 "Peekaa" — the bell peeks in and shakes when a fresh notification lands (wiggleBell()
+   in app.js). A rotation-only keyframe so it never nudges the profile chip beside it. */
+@keyframes peekaaBellWiggle{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-16deg)}
+  30%{transform:rotate(13deg)}
+  45%{transform:rotate(-10deg)}
+  60%{transform:rotate(7deg)}
+  75%{transform:rotate(-4deg)}
+  88%{transform:rotate(2deg)}
+}
+.bellbtn.peekaa-wiggle{animation:peekaaBellWiggle .65s cubic-bezier(.34,1.56,.64,1)}
+.bellbtn.peekaa-wiggle .dot{animation:pop .3s var(--spring) .1s backwards}
+@media(prefers-reduced-motion:reduce){.bellbtn.peekaa-wiggle,.bellbtn.peekaa-wiggle .dot{animation:none}}
 /* V450: same fix as .profile .menu below — this dropdown opens over the same dashboard figures and
    carried the same rgba(255,255,255,.86). It was not in the owner's report only because it needs
    unread notifications to open; the defect is identical, so it is fixed with its sibling rather
@@ -4668,7 +4682,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 298582495833ccb50f213dba9c7213123bfbb3b24d05be479b6fb7f1644a93f1</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 3841afea2d26e75d6ae5a60be294730008b3aa49ba814ddebb00696ffe6a1d88</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14335,7 +14349,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'298582495833ccb50f213dba9c7213123bfbb3b24d05be479b6fb7f1644a93f1',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'3841afea2d26e75d6ae5a60be294730008b3aa49ba814ddebb00696ffe6a1d88',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

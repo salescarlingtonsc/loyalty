@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="87823f3822126cac01028c9b199def895d05b09b7e0b6189028023589fbf42f6"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="cca6fe71859ee533db627997452b4605f4585bf1c521288f2cbd0ae7f1ed4a36"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -888,6 +888,20 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+/* V461 "Peekaa" — the bell peeks in and shakes when a fresh notification lands (wiggleBell()
+   in app.js). A rotation-only keyframe so it never nudges the profile chip beside it. */
+@keyframes peekaaBellWiggle{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-16deg)}
+  30%{transform:rotate(13deg)}
+  45%{transform:rotate(-10deg)}
+  60%{transform:rotate(7deg)}
+  75%{transform:rotate(-4deg)}
+  88%{transform:rotate(2deg)}
+}
+.bellbtn.peekaa-wiggle{animation:peekaaBellWiggle .65s cubic-bezier(.34,1.56,.64,1)}
+.bellbtn.peekaa-wiggle .dot{animation:pop .3s var(--spring) .1s backwards}
+@media(prefers-reduced-motion:reduce){.bellbtn.peekaa-wiggle,.bellbtn.peekaa-wiggle .dot{animation:none}}
 /* V450: same fix as .profile .menu below — this dropdown opens over the same dashboard figures and
    carried the same rgba(255,255,255,.86). It was not in the owner's report only because it needs
    unread notifications to open; the defect is identical, so it is fixed with its sibling rather

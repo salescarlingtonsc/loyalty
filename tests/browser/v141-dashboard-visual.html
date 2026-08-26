@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="00d1c9ce415b2f0e4a2f0af8b9d9d1035a2581e31f1ee2cb84cd9cfbc6e21999"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="ba39e87295ea84064998c1303c8d6631ae3b038b3ecaad3c371ee713821f89d9"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -890,6 +890,20 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+/* V461 "Peekaa" — the bell peeks in and shakes when a fresh notification lands (wiggleBell()
+   in app.js). A rotation-only keyframe so it never nudges the profile chip beside it. */
+@keyframes peekaaBellWiggle{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-16deg)}
+  30%{transform:rotate(13deg)}
+  45%{transform:rotate(-10deg)}
+  60%{transform:rotate(7deg)}
+  75%{transform:rotate(-4deg)}
+  88%{transform:rotate(2deg)}
+}
+.bellbtn.peekaa-wiggle{animation:peekaaBellWiggle .65s cubic-bezier(.34,1.56,.64,1)}
+.bellbtn.peekaa-wiggle .dot{animation:pop .3s var(--spring) .1s backwards}
+@media(prefers-reduced-motion:reduce){.bellbtn.peekaa-wiggle,.bellbtn.peekaa-wiggle .dot{animation:none}}
 /* V450: same fix as .profile .menu below — this dropdown opens over the same dashboard figures and
    carried the same rgba(255,255,255,.86). It was not in the owner's report only because it needs
    unread notifications to open; the defect is identical, so it is fixed with its sibling rather
@@ -5787,6 +5801,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'00d1c9ce415b2f0e4a2f0af8b9d9d1035a2581e31f1ee2cb84cd9cfbc6e21999',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'ba39e87295ea84064998c1303c8d6631ae3b038b3ecaad3c371ee713821f89d9',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

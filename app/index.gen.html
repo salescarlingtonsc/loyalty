@@ -14,7 +14,44 @@
 <title>Peekaa — Loyalty & retention for every business</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png" id="favicon">
+<script>
+/* V460: the Peekaa mark pops and settles in the browser tab the instant the app loads — drawn
+   as a few canvas frames from the existing static icon (no extra image assets), then handed
+   back to the static file. Decorative only: skipped under prefers-reduced-motion, and any
+   failure (canvas unavailable, image load error) just leaves the static icon that loaded. */
+(function animateFaviconOnLoadV460(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var link=document.getElementById('favicon');
+    if(!link) return;
+    var staticHref=link.getAttribute('href');
+    var img=new Image();
+    img.onload=function(){
+      var size=64,canvas=document.createElement('canvas');
+      canvas.width=size;canvas.height=size;
+      var ctx=canvas.getContext('2d');
+      if(!ctx) return;
+      var frames=[0.15,0.45,0.8,1.05,1.18,1.06,0.98,1.0];
+      var i=0;
+      function drawFrame(){
+        ctx.clearRect(0,0,size,size);
+        ctx.save();
+        ctx.translate(size/2,size/2);
+        ctx.scale(frames[i],frames[i]);
+        ctx.drawImage(img,-size/2,-size/2,size,size);
+        ctx.restore();
+        link.setAttribute('href',canvas.toDataURL());
+        i+=1;
+        if(i<frames.length){window.setTimeout(drawFrame,55);}
+        else{window.setTimeout(function(){link.setAttribute('href',staticHref);},260);}
+      }
+      drawFrame();
+    };
+    img.src=staticHref;
+  }catch(error){/* animated favicon is decorative only */}
+})();
+</script>
 <!-- The Supabase client below is a RENDER-BLOCKING third-party script; warming the connection
      here removes its DNS + TCP + TLS cost from the critical path on a cold mobile network. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -134,6 +171,15 @@ a{color:inherit;text-decoration:none}
 @media(max-width:768px){.toast{width:min(calc(100vw - 28px),520px);bottom:calc(78px + env(safe-area-inset-bottom));border-radius:18px;text-align:center}}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 @keyframes pop{from{opacity:0;transform:scale(.94) translateY(-6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes peekaaBellWiggle{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-16deg)}
+  30%{transform:rotate(13deg)}
+  45%{transform:rotate(-10deg)}
+  60%{transform:rotate(7deg)}
+  75%{transform:rotate(-4deg)}
+  88%{transform:rotate(2deg)}
+}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 button.grow-programme-row,a.grow-programme-row{cursor:pointer;transition:background .16s ease,box-shadow .16s ease}
 button.grow-programme-row:hover,a.grow-programme-row:hover{background:var(--tint)}
@@ -195,16 +241,25 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     --coral:#fff;--ink:#fff;--muted:rgba(255,255,255,.82)}
 @media print{body{background:#fff}}
 @keyframes customerCelebrationInV468{from{opacity:0;transform:translateY(-14px) scale(.94)}
-  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=9bea15dddace">
+  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=41b266c1c229">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <!-- Static boot skeleton: paints as soon as the styles arrive, long before the
      application script finishes compiling. The router replaces #root's content
-     on first route(). Tokens keep it correct in light and dark. -->
+     on first route(). Tokens keep it correct in light and dark.
+     V462: the boot moment is now the animated Peekaa logo (67KB Kling render,
+     autoplay/muted/looped — browsers allow muted autoplay without a gesture).
+     The poster is its own first frame, so the mark is on screen the instant the
+     HTML paints, before a single video byte arrives; if video is unavailable
+     the poster simply stays. Skeleton shimmer lines remain below as the
+     "content is coming" cue. -->
 <div id="root"><div class="wallet-shell customer-surface" data-boot-skeleton><div class="wallet-inner" style="padding-top:26px;max-width:560px">
   <div class="card" aria-busy="true" style="padding:22px"><p class="sr-only" role="status">Loading Peekaa…</p>
-    <div class="pf-skeleton" style="width:46%;height:30px"></div>
+    <video autoplay muted loop playsinline width="540" height="540" poster="/media/peekaa-loading-poster.png" aria-hidden="true"
+      style="display:block;width:min(210px,56vw);height:auto;margin:2px auto 16px;border-radius:18px">
+      <source src="/media/peekaa-loading.mp4" type="video/mp4">
+    </video>
     <div class="pf-skeleton"></div>
     <div class="pf-skeleton" style="width:72%"></div>
     <div class="pf-skeleton" style="width:58%;height:44px"></div>
@@ -213,7 +268,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 <div id="appStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="appAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=9bea15dddace">
+<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=41b266c1c229">
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
@@ -243,7 +298,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=9e3fdc155f42","business":"/app-business.js?b=2b3ab5bc17a5","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=9e3fdc155f42","business":"/app-business.js?b=a99c5a177afe","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

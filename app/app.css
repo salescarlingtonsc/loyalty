@@ -587,6 +587,18 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+@keyframes peekaaBellWiggle{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-16deg)}
+  30%{transform:rotate(13deg)}
+  45%{transform:rotate(-10deg)}
+  60%{transform:rotate(7deg)}
+  75%{transform:rotate(-4deg)}
+  88%{transform:rotate(2deg)}
+}
+.bellbtn.peekaa-wiggle{animation:peekaaBellWiggle .65s cubic-bezier(.34,1.56,.64,1)}
+.bellbtn.peekaa-wiggle .dot{animation:pop .3s var(--spring) .1s backwards}
+@media(prefers-reduced-motion:reduce){.bellbtn.peekaa-wiggle,.bellbtn.peekaa-wiggle .dot{animation:none}}
 .notif-menu{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-width:calc(100vw - 40px);
   background:var(--card,#fff);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border:1px solid var(--hair);border-radius:var(--r-sm);padding:8px;box-shadow:var(--shadow-lg);

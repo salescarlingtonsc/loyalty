@@ -2310,6 +2310,18 @@ function renderBell(page){
   wrap.outerHTML=bellHtml();
   wireBell(page);
 }
+/* V461 "Peekaa" — the bell peeks and wiggles the instant a fresh notification lands, so an
+   owner mid-service catches it from across the counter rather than noticing the badge cold
+   later. Applied to a live DOM node (never baked into bellHtml()), so it only ever plays on a
+   genuine realtime arrival — a route change or any other renderBell() call stays silent. */
+function wiggleBell(){
+  const btn=$('bellBtn');
+  if(!btn) return;
+  btn.classList.remove('peekaa-wiggle');
+  void btn.offsetWidth; // restart the animation even if one is already mid-flight
+  btn.classList.add('peekaa-wiggle');
+  btn.addEventListener('animationend',()=>btn.classList.remove('peekaa-wiggle'),{once:true});
+}
 /* Re-runs the currently-open page's own render fn (no hash change) so new booking activity
    shows up without the owner having to manually refresh — the #1 complaint this feature set
    is meant to fix. Only wired for the pages where booking/waitlist activity is visible. */
@@ -2355,6 +2367,7 @@ function ensureRealtimeChannel(){
       notifState.unread=(notifState.unread||0)+1;
       notifState.items=[payload.new,...(notifState.items||[])].slice(0,30);
       renderBell(currentPage);
+      wiggleBell();
       autoRefreshIfRelevant();
       if(S.biz.notify_new_bookings&&!muteAlerts) toast('🔔 '+(payload.new?.title||'New notification'));
     })

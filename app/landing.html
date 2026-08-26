@@ -42,7 +42,44 @@
 <meta name="twitter:description" content="Turn customers into regulars. Digital loyalty, customer rewards, promotions and retention, built for Singapore businesses.">
 <meta name="twitter:image" content="https://www.peekaa.asia/brand/peekaa-logo.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png" id="favicon">
+<script>
+/* The Peekaa mark pops and settles in the browser tab the instant the site loads — drawn as a
+   few canvas frames from the existing static icon (no extra image assets), then handed back
+   to the static file. Decorative only: skipped under prefers-reduced-motion, and any failure
+   (canvas unavailable, image load error) just leaves the static icon that already loaded. */
+(function animateFaviconOnLoadV460(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var link=document.getElementById('favicon');
+    if(!link) return;
+    var staticHref=link.getAttribute('href');
+    var img=new Image();
+    img.onload=function(){
+      var size=64,canvas=document.createElement('canvas');
+      canvas.width=size;canvas.height=size;
+      var ctx=canvas.getContext('2d');
+      if(!ctx) return;
+      var frames=[0.15,0.45,0.8,1.05,1.18,1.06,0.98,1.0];
+      var i=0;
+      function drawFrame(){
+        ctx.clearRect(0,0,size,size);
+        ctx.save();
+        ctx.translate(size/2,size/2);
+        ctx.scale(frames[i],frames[i]);
+        ctx.drawImage(img,-size/2,-size/2,size,size);
+        ctx.restore();
+        link.setAttribute('href',canvas.toDataURL());
+        i+=1;
+        if(i<frames.length){window.setTimeout(drawFrame,55);}
+        else{window.setTimeout(function(){link.setAttribute('href',staticHref);},260);}
+      }
+      drawFrame();
+    };
+    img.src=staticHref;
+  }catch(error){/* animated favicon is decorative only */}
+})();
+</script>
 <style>
 /* ============================================================================
    Peekaa marketing landing — V274
@@ -550,6 +587,12 @@ html.js .scene-step.on{opacity:1;transform:translate3d(6px,0,0);background:var(-
    A reveal never lands on an element that also carries a scroll layer. */
 html.js .reveal{opacity:0;transform:translate3d(0,12px,0);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 html.js .reveal.in{opacity:1;transform:translate3d(0,0,0)}
+/* V462: product mocks rise FROM DEPTH — scaled down and lower until they enter, then they
+   arrive at full size, so scrolling reads as flying forward through the page rather than
+   panning down it. Transition is slightly longer than the base reveal: bigger journey. */
+html.js .step-art.reveal,html.js .cx-art.reveal{opacity:0;transform:translate3d(0,36px,0) scale(.92);
+  transition:opacity .85s var(--ease),transform .85s var(--ease)}
+html.js .step-art.reveal.in,html.js .cx-art.reveal.in{opacity:1;transform:translate3d(0,0,0) scale(1)}
 html.js .reveal[data-delay="1"]{transition-delay:.06s}
 html.js .reveal[data-delay="2"]{transition-delay:.12s}
 html.js .reveal[data-delay="3"]{transition-delay:.18s}
@@ -571,6 +614,35 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 /* V283 — the hero reads left to right: BUSINESS DASHBOARD → PEEKAA → CUSTOMER.
    The hub in the middle is the product itself, and it is the only element that
    sits on top of both sides, so the eye is told what joins them. */
+/* ---------- V461 · interactive 3D tilt ----------
+   The hero composition sits in real 3D space, not just parallax: .hero-stage sets the
+   perspective, and each mock rests at a slight resting angle (an "open book" facing the
+   viewer) that deepens as the pointer moves across the stage — a classic tilt-card effect.
+   Lives on an INNER wrapper, never on .stage-dash/.stage-phone themselves, because those
+   two already own the scroll-parallax translate3d written by the depth engine below; two
+   scripts writing the same element's transform would fight each other. Pointer-driven only
+   (mousemove has no meaning on touch, so it simply never fires there), and switched off
+   entirely under reduced motion. */
+.hero-stage{perspective:1500px}
+/* V462: the fly-through dolly. As the page scrolls past the hero, the whole composition
+   scales up toward the camera and fades — the visitor flies THROUGH the hero into the
+   page, the reference-video move. One wrapper, one transform; the parallax children keep
+   their own transforms and simply ride inside it. Scripted in the depth engine below. */
+#heroDolly{transform-origin:50% 32%;will-change:transform,opacity}
+@media(prefers-reduced-motion:reduce){#heroDolly{transform:none!important;opacity:1!important}}
+
+/* V462: first-visit loader — the living logo on brand cream, gone in ≤1.4s. Session-once,
+   painted before any scripting via inline markup; removed entirely under reduced motion. */
+#pageLoader{position:fixed;inset:0;z-index:400;background:var(--bg);display:grid;place-items:center;
+  transition:opacity .45s var(--ease);pointer-events:none}
+#pageLoader.gone{opacity:0}
+#pageLoader video{width:min(200px,52vw);height:auto;border-radius:20px}
+@media(prefers-reduced-motion:reduce){#pageLoader{display:none}}
+.tilt3d{transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.tilt-dash{transform:rotateY(-6deg) rotateX(2deg)}
+.tilt-phone{transform:rotateY(7deg) rotateX(-2deg)}
+@media(prefers-reduced-motion:reduce){.tilt3d{transition:none;transform:none!important}}
+
 .stage{position:relative;display:grid;gap:18px;justify-items:center}
 .stage-dash{width:100%;max-width:560px;position:relative}
 .stage-phone{width:100%;max-width:250px;position:relative}
@@ -579,6 +651,9 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 .hub-badge{width:60px;height:60px;border-radius:20px;background:#fff;border:1px solid rgba(194,65,53,.2);
   box-shadow:0 6px 22px rgba(157,53,44,.16);display:grid;place-items:center;padding:10px}
 .hub-badge img{width:100%;height:auto}
+/* V462: the hub badge is the LIVING logo — the Kling-rendered loop (67KB). The video is a
+   square crop of the full mark on cream, so it fills the badge edge to edge. */
+.hub-badge video{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
 .hub-name{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--coral-deep)}
 .hub-arrows{display:flex;align-items:center;color:#C6BFB5}
 .hub-arrows svg{transform:rotate(90deg)}
@@ -616,6 +691,33 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
+
+<!-- V462 · first-visit loader: the living logo, once per session, gone in ≤1.4s. -->
+<div id="pageLoader" aria-hidden="true">
+  <video autoplay muted playsinline poster="/media/peekaa-loading-poster.png"><source src="/media/peekaa-loading.mp4" type="video/mp4"></video>
+</div>
+<script>
+(function pageLoaderV462(){
+  try{
+    var el=document.getElementById('pageLoader');
+    if(!el) return;
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce||window.sessionStorage.getItem('peekaaLoaderShown')){el.remove();return}
+    window.sessionStorage.setItem('peekaaLoaderShown','1');
+    var done=false;
+    function dismiss(){
+      if(done)return;done=true;
+      el.classList.add('gone');
+      window.setTimeout(function(){el.remove()},500);
+    }
+    window.setTimeout(dismiss,1400);
+    window.addEventListener('load',function(){window.setTimeout(dismiss,600)});
+  }catch(error){
+    var node=document.getElementById('pageLoader');
+    if(node)node.remove();
+  }
+})();
+</script>
 
 <!-- ══════════════════ V283 DEPTH FIELD ══════════════════
      One fixed field behind the whole document. Because it is fixed rather than
@@ -709,10 +811,12 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
         <span class="fpill hero-float g1 keep" aria-hidden="true" data-rate="1.34" data-max="230">+18 pts</span>
         <span class="fpill ok hero-float g2 keep" aria-hidden="true" data-rate="1.27" data-max="230">Came back</span>
         <span class="fpill plain hero-float g3" aria-hidden="true" data-min="1000" data-rate="1.38" data-max="230">−150 pts</span>
+        <div id="heroDolly">
         <div class="stage">
           <!-- L3 · 0.70–0.80x — the product composition, the main object. -->
           <div class="mock stage-dash" data-rate-sm="0.76" data-max-sm="70" data-rate="0.74" data-max="150">
             <div class="stage-cap">Business dashboard</div>
+            <div class="tilt3d tilt-dash">
             <div class="frame">
               <div class="frame-bar">
                 <span class="frame-dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -751,6 +855,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
                 </ul>
               </div>
             </div>
+            </div>
           </div>
 
           <!-- The product that joins the two sides. -->
@@ -759,7 +864,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </span>
             <span class="hub-core">
-              <span class="hub-badge"><img src="/brand/peekaa-mark.png" alt="" width="120" height="120"></span>
+              <span class="hub-badge"><video autoplay muted loop playsinline width="120" height="120" poster="/media/peekaa-loading-poster.png" aria-hidden="true"><source src="/media/peekaa-loading.mp4" type="video/mp4"></video></span>
               <span class="hub-name">Peekaa</span>
             </span>
             <span class="hub-arrows">
@@ -770,6 +875,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
           <!-- Customer wallet mock -->
           <div class="mock stage-phone" data-rate-sm="0.76" data-max-sm="70" data-rate="0.78" data-max="150">
             <div class="stage-cap">Customer experience</div>
+            <div class="tilt3d tilt-phone">
             <div class="phone">
               <div class="phone-screen">
                 <span class="phone-notch" aria-hidden="true"></span>
@@ -804,7 +910,9 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
                 </div>
               </div>
             </div>
+            </div>
           </div>
+        </div>
         </div>
         <p class="small muted" style="text-align:center;margin-top:22px" data-anchor data-rate-sm="0.76" data-max-sm="70" data-rate="0.74" data-max="150">Illustration of the Peekaa business dashboard and the customer's rewards wallet.</p>
       </div>
@@ -1540,6 +1648,8 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 
   var head=document.getElementById('siteHead');
   var fill=document.getElementById('scrollFill');
+  var dolly=document.getElementById('heroDolly');
+  var dollyLast='';
   var stuck='';
 
   if(reduce){
@@ -1643,6 +1753,21 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
     if(head&&next!==stuck){stuck=next;head.setAttribute('data-stuck',next)}
     if(fill)fill.style.transform='scaleX('+Math.min(1,Math.max(0,y/docMax)).toFixed(4)+')';
 
+    /* V462 · fly-through dolly: over the first ~1.15 viewports of scroll the hero
+       composition grows toward the camera and fades — eased quadratically so it
+       barely moves at first and accelerates as it passes. */
+    if(dolly){
+      var dp=y/(vh*1.15);
+      if(dp<0)dp=0;else if(dp>1)dp=1;
+      dp=dp*dp;
+      var dv='scale('+(1+0.5*dp).toFixed(4)+')';
+      if(dv!==dollyLast){
+        dollyLast=dv;
+        dolly.style.transform=dv;
+        dolly.style.opacity=(1-0.92*dp).toFixed(3);
+      }
+    }
+
     /* L1 + L2 — fixed layers. transform = -(y * rate), recycled over
        (viewport + own height) so the wrap always happens off-screen and the
        field never restarts at a section boundary. */
@@ -1721,6 +1846,43 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
   /* The reveals settle ~0.7s in and move the page by a few pixels; re-measure
      once so every y0 is taken against the final layout. */
   window.setTimeout(function(){measure();onScroll()},900);
+})();
+</script>
+<script>
+/* ============================================================================
+   V461 — interactive 3D tilt on the hero composition.
+   Pointer position over .hero-stage drives rotateY/rotateX on the two mocks'
+   inner .tilt3d wrappers (never the mocks themselves — see the CSS comment
+   above .hero-stage). Deliberately separate from the depth-engine IIFE above:
+   it targets different elements, needs no scroll listener, and only cares
+   about mousemove, so it can no-op cleanly under reduced motion or on touch.
+   ============================================================================ */
+(function heroTilt3DV461(){
+  'use strict';
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  }catch(error){}
+  var stageEl=document.querySelector('.hero-stage');
+  var dash=document.querySelector('.tilt-dash');
+  var phone=document.querySelector('.tilt-phone');
+  if(!stageEl||(!dash&&!phone)) return;
+  var raf=null;
+  function apply(dx,dy){
+    if(dash) dash.style.transform='rotateY('+(-6+dx*9).toFixed(2)+'deg) rotateX('+(2-dy*7).toFixed(2)+'deg)';
+    if(phone) phone.style.transform='rotateY('+(7+dx*11).toFixed(2)+'deg) rotateX('+(-2-dy*8).toFixed(2)+'deg)';
+  }
+  stageEl.addEventListener('mousemove',function(e){
+    var r=stageEl.getBoundingClientRect();
+    if(!r.width||!r.height) return;
+    var dx=((e.clientX-r.left)/r.width-0.5)*2;
+    var dy=((e.clientY-r.top)/r.height-0.5)*2;
+    if(raf) window.cancelAnimationFrame(raf);
+    raf=window.requestAnimationFrame(function(){apply(dx,dy)});
+  },{passive:true});
+  stageEl.addEventListener('mouseleave',function(){
+    if(dash) dash.style.transform='';
+    if(phone) phone.style.transform='';
+  });
 })();
 </script>
 </body>

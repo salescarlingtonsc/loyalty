@@ -14,7 +14,44 @@
 <title>Peekaa — Loyalty & retention for every business</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png" id="favicon">
+<script>
+/* V460: the Peekaa mark pops and settles in the browser tab the instant the app loads — drawn
+   as a few canvas frames from the existing static icon (no extra image assets), then handed
+   back to the static file. Decorative only: skipped under prefers-reduced-motion, and any
+   failure (canvas unavailable, image load error) just leaves the static icon that loaded. */
+(function animateFaviconOnLoadV460(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var link=document.getElementById('favicon');
+    if(!link) return;
+    var staticHref=link.getAttribute('href');
+    var img=new Image();
+    img.onload=function(){
+      var size=64,canvas=document.createElement('canvas');
+      canvas.width=size;canvas.height=size;
+      var ctx=canvas.getContext('2d');
+      if(!ctx) return;
+      var frames=[0.15,0.45,0.8,1.05,1.18,1.06,0.98,1.0];
+      var i=0;
+      function drawFrame(){
+        ctx.clearRect(0,0,size,size);
+        ctx.save();
+        ctx.translate(size/2,size/2);
+        ctx.scale(frames[i],frames[i]);
+        ctx.drawImage(img,-size/2,-size/2,size,size);
+        ctx.restore();
+        link.setAttribute('href',canvas.toDataURL());
+        i+=1;
+        if(i<frames.length){window.setTimeout(drawFrame,55);}
+        else{window.setTimeout(function(){link.setAttribute('href',staticHref);},260);}
+      }
+      drawFrame();
+    };
+    img.src=staticHref;
+  }catch(error){/* animated favicon is decorative only */}
+})();
+</script>
 <!-- The Supabase client below is a RENDER-BLOCKING third-party script; warming the connection
      here removes its DNS + TCP + TLS cost from the critical path on a cold mobile network. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -940,6 +977,20 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .bellbtn .dot{position:absolute;top:-3px;right:-3px;background:var(--coral);color:#fff;border-radius:999px;
   min-width:16px;height:16px;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 0 2px #fff}
+/* V461 "Peekaa" — the bell peeks in and shakes when a fresh notification lands (wiggleBell()
+   in app.js). A rotation-only keyframe so it never nudges the profile chip beside it. */
+@keyframes peekaaBellWiggle{
+  0%,100%{transform:rotate(0)}
+  15%{transform:rotate(-16deg)}
+  30%{transform:rotate(13deg)}
+  45%{transform:rotate(-10deg)}
+  60%{transform:rotate(7deg)}
+  75%{transform:rotate(-4deg)}
+  88%{transform:rotate(2deg)}
+}
+.bellbtn.peekaa-wiggle{animation:peekaaBellWiggle .65s cubic-bezier(.34,1.56,.64,1)}
+.bellbtn.peekaa-wiggle .dot{animation:pop .3s var(--spring) .1s backwards}
+@media(prefers-reduced-motion:reduce){.bellbtn.peekaa-wiggle,.bellbtn.peekaa-wiggle .dot{animation:none}}
 /* V450: same fix as .profile .menu below — this dropdown opens over the same dashboard figures and
    carried the same rgba(255,255,255,.86). It was not in the owner's report only because it needs
    unread notifications to open; the defect is identical, so it is fixed with its sibling rather
@@ -4723,10 +4774,19 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <a class="skip-link" href="#main">Skip to main content</a>
 <!-- Static boot skeleton: paints as soon as the styles arrive, long before the
      application script finishes compiling. The router replaces #root's content
-     on first route(). Tokens keep it correct in light and dark. -->
+     on first route(). Tokens keep it correct in light and dark.
+     V462: the boot moment is now the animated Peekaa logo (67KB Kling render,
+     autoplay/muted/looped — browsers allow muted autoplay without a gesture).
+     The poster is its own first frame, so the mark is on screen the instant the
+     HTML paints, before a single video byte arrives; if video is unavailable
+     the poster simply stays. Skeleton shimmer lines remain below as the
+     "content is coming" cue. -->
 <div id="root"><div class="wallet-shell customer-surface" data-boot-skeleton><div class="wallet-inner" style="padding-top:26px;max-width:560px">
   <div class="card" aria-busy="true" style="padding:22px"><p class="sr-only" role="status">Loading Peekaa…</p>
-    <div class="pf-skeleton" style="width:46%;height:30px"></div>
+    <video autoplay muted loop playsinline width="540" height="540" poster="/media/peekaa-loading-poster.png" aria-hidden="true"
+      style="display:block;width:min(210px,56vw);height:auto;margin:2px auto 16px;border-radius:18px">
+      <source src="/media/peekaa-loading.mp4" type="video/mp4">
+    </video>
     <div class="pf-skeleton"></div>
     <div class="pf-skeleton" style="width:72%"></div>
     <div class="pf-skeleton" style="width:58%;height:44px"></div>
@@ -4764,7 +4824,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=9e3fdc155f42","business":"/app-business.js?b=2b3ab5bc17a5","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cb3e46395579","customer":"/app-customer.js?b=9e3fdc155f42","business":"/app-business.js?b=a99c5a177afe","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
