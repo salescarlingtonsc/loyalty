@@ -201,3 +201,50 @@ test('V522 nothing here turns Sector Economics on',()=>{
   assert.ok(!/economics_driver_policy_v109\s*[:=]/.test(app),
     'the client assigns the platform flag');
 });
+
+/* ---- surface assets carry a hand-maintained cache key ------------------------------------- */
+
+test('V522 every surface asset cache key is at least as new as the file it serves',()=>{
+  /* app/index.html carries a per-surface asset list whose "?v=" tokens are written BY HAND, not
+     derived from content like the app chunks are. Editing revenue-truth.js without bumping its
+     token shipped the new file to the CDN under the old URL, so a returning browser kept the old
+     module — observed live on 2026-08-26: production served "Customer behaviour" while the page
+     still rendered the previous "Exact customer meanings".
+
+     The invariant: a file annotated with nestly_vNNN markers must not be served under a cache key
+     older than its newest marker. This is checkable, and it is exactly what was missed. */
+  const html=fs.readFileSync(path.join(repo,'app/index.html'),'utf8');
+  const assets=[...html.matchAll(/"\/([a-z0-9-]+\.(?:js|css))\?v=([^"]+)"/g)]
+    .map(([,file,key])=>({file,key}));
+  assert.ok(assets.length>0,'the surface asset list is gone');
+
+  /* KNOWN PRE-EXISTING, reported to the owner 2026-08-26 rather than fixed here: customer-ui.js
+     carries nestly_v396 markers but is still served under "20260813-v298-caption-once", so some
+     returning customer browsers may be running a stale copy of it. It is the same defect class
+     this test exists for, in the CUSTOMER surface — outside the Customer Intelligence mandate
+     this file belongs to, and a one-token fix somebody who owns that surface should make.
+     Remove the entry when the token is bumped; do not add to this list to make a build pass. */
+  const knownPreExisting=new Set(['customer-ui.js']);
+  const stale=[];
+  for(const {file,key} of assets){
+    const full=path.join(repo,'app',file);
+    if(!fs.existsSync(full))continue;
+    const source=fs.readFileSync(full,'utf8');
+    const markers=[...source.matchAll(/nestly_v(\d+)/g)].map(match=>Number(match[1]));
+    if(!markers.length||knownPreExisting.has(file))continue;
+    const newest=Math.max(...markers);
+    /* Keys look like 20260826-v522 or 20260819-w2c; only the -vNNN shape is comparable. */
+    const keyVersion=/-v(\d+)$/.exec(key);
+    if(!keyVersion){
+      /* A non-version key cannot be compared, so it must not be older than a versioned file.
+         Flag only when the file carries a marker newer than any key we can read. */
+      stale.push(`${file} carries nestly_v${newest} but its cache key "${key}" is unversioned`);
+      continue;
+    }
+    if(Number(keyVersion[1])<newest){
+      stale.push(`${file} carries nestly_v${newest} but is served as "?v=${key}"`);
+    }
+  }
+  assert.deepEqual(stale,[],
+    `bump the ?v= token in app/index.html for: ${stale.join('; ')}`);
+});
