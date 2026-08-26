@@ -14726,9 +14726,9 @@ function selfServeManualSwitchCardV542(onboarding){
   const businessId=String(onboarding?.business_id||'');
   if(!businessId)return '';
   return `<div class="card" style="margin-top:18px;text-align:left" data-self-serve-manual-v542>
-    <b>Prefer to pay another way?</b>
-    <p class="muted small" style="margin-top:6px">If you would rather settle by bank transfer or another arrangement than by card, ask us and we will raise an invoice for you. Your workspace stays closed until that payment is received — asking does not open it, and does not cancel the Stripe option if you change your mind.</p>
-    <button class="btn ghost" id="selfServeManualAskV542" style="width:100%;margin-top:14px">Ask to pay another way</button>
+    <b>Prefer bank transfer or another payment method?</b>
+    <p class="muted small" style="margin-top:6px">Request manual payment and our team will assist you with the payment details. Your account will be activated once payment is verified.</p>
+    <button class="btn ghost" id="selfServeManualAskV542" style="width:100%;margin-top:14px">Request manual payment</button>
     <p class="muted small" id="selfServeManualStatusV542" role="status" aria-live="polite" style="margin-top:8px"></p>
   </div>`;
 }
@@ -14737,11 +14737,11 @@ function wireSelfServeManualSwitchV542(onboarding){
   if(!button)return;
   const status=$('selfServeManualStatusV542');
   const businessId=String(onboarding?.business_id||'');
-  const settled=text=>{button.disabled=true;button.textContent='Request sent';if(status)status.textContent=text};
+  const settled=text=>{button.disabled=true;button.textContent='Manual payment requested';if(status)status.textContent=text};
   /* Show an existing request on arrival, so a returning owner is not invited to ask twice. */
   void sb.rpc('business_get_manual_payment_request_v542',{p_business:businessId}).then(({data,error})=>{
     if(error||!data||data.status!=='ok')return;
-    if(data.request_status==='open')settled('We have your request. Our team will send an invoice — your workspace opens once that payment is received.');
+    if(data.request_status==='open')settled('We’ve received your request. Our team will assist you with the payment details. You can still pay online below if you prefer.');
   });
   /* One key per screen, so a double tap is the same request rather than a second one. The server
      is idempotent either way; this simply keeps the two in agreement. */
@@ -14756,7 +14756,7 @@ function wireSelfServeManualSwitchV542(onboarding){
       if(status)status.textContent=ownerErrorText(error);
       return;
     }
-    if(data?.status==='ok')return settled('Request sent. Our team will send an invoice — your workspace opens once that payment is received. You can still pay by card above if you prefer.');
+    if(data?.status==='ok')return settled('We’ve received your request. Our team will assist you with the payment details. You can still pay online below if you prefer.');
     button.disabled=false;
     if(status)status.textContent='That request could not be sent. Please try again.';
   };

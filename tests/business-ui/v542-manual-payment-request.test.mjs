@@ -27,17 +27,21 @@ test('V542 the payment-pending screen offers a way to ask', () => {
   assert.ok(app.includes('${selfServeManualSwitchCardV542(onboarding)}'),
     'the card is rendered on the pending screen');
   assert.ok(app.includes('wireSelfServeManualSwitchV542(onboarding)'), 'and wired');
-  assert.match(card, /Ask to pay another way/);
+  assert.match(card, />Request manual payment</);
 });
 
-test('V542 the copy never implies the workspace opens or the payment is made', () => {
-  assert.match(card, /workspace stays closed until that payment is received/,
-    'an owner who believes they have switched and stops paying attention is the failure here');
-  assert.match(card, /asking does not open it/);
-  assert.match(card, /does not cancel the Stripe option/,
-    'Stripe must remain available — this is a second door, not a replacement');
+test('V543 the SME copy is exactly what the owner specified', () => {
+  /* Owner-supplied wording, 2026-08-27. Pinned verbatim because it is a billing screen: the
+     promise it makes about when the account opens is the thing a firm will hold us to. */
+  assert.match(card, /Prefer bank transfer or another payment method\?/);
+  assert.match(card, /Request manual payment and our team will assist you with the payment details\. Your account will be activated once payment is verified\./);
+  assert.match(card, />Request manual payment</, 'the button label');
+  const wire = app.slice(app.indexOf('function wireSelfServeManualSwitchV542'),
+    app.indexOf('function renderSelfServePaymentPendingV286'));
+  assert.match(wire, /Manual payment requested/, 'the settled button label');
+  assert.match(wire, /We\u2019ve received your request\. Our team will assist you with the payment details\. You can still pay online below if you prefer\./);
   assert.ok(!/switch(ed)? to manual/i.test(card),
-    'the button asks; it does not claim to switch anything');
+    'the button requests; it does not claim to switch anything');
 });
 
 test('V542 the client sends the request and nothing else', () => {
