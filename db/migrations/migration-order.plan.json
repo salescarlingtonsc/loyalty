@@ -2649,6 +2649,12 @@
       "path": "db/migrations/20260827_nestly_v545_programme_aware_loyalty_evidence.sql",
       "semanticVersion": "v545",
       "proposedDeployVersion": "20260827000004"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v548_insights_partition_scope.sql",
+      "semanticVersion": "v548",
+      "proposedDeployVersion": "20260827000005"
     }
   ]
 }
