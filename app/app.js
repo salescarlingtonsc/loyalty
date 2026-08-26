@@ -41870,8 +41870,40 @@ const SUPPORT_INBOX_COPY_V531=Object.freeze({
   windowOpen:'Can reply for',
   windowShut:'24-hour reply window closed',
   unassigned:'Unassigned',
-  back:'All conversations'
+  back:'All conversations',
+  /* V535 composer. The tenant prefix is NOT here: it is composed server-side
+     from the canonical business record and the browser never supplies one. */
+  placeholder:'Write a reply…',
+  send:'Send',
+  sending:'Sending…',
+  sendFailed:'Could not send. Your message is still here.',
+  retry:'Try again',
+  windowShutHint:'The 24-hour reply window has closed. You can still read this conversation.',
+  prefixNote:'Your business name is added automatically so the customer knows who is replying.'
 });
+
+/* V535 handoff/status vocabulary. The thread used to render the raw enum, so it
+   read "unassigned" in lower case beside "Unassigned" in the list. */
+const SUPPORT_HANDOFF_COPY_V535=Object.freeze({
+  unassigned:'Unassigned', assigned:'Assigned',
+  awaiting_customer:'Awaiting customer', resolved:'Resolved'
+});
+const SUPPORT_REFUSAL_COPY_V535=Object.freeze({
+  outbound_not_enabled:'Replying from Peekaa is not switched on yet.',
+  not_enabled:'Replying is not switched on for this business yet.',
+  no_support_write_permission:'You do not have permission to reply.',
+  service_window_closed:'The 24-hour reply window has closed.',
+  conversation_closed:'This conversation is closed.',
+  quota_exhausted:'Today\u2019s reply limit has been reached.',
+  module_not_enabled:'Replying is not available for this business.',
+  empty_message:'Write something first.',
+  message_too_long:'That message is too long.',
+  invalid_characters:'That message contains characters WhatsApp cannot send.',
+  business_not_active:'This workspace is not active.'
+});
+function supportRefusalTextV535(reason){
+  return SUPPORT_REFUSAL_COPY_V535[reason]||'Could not send. Please try again.';
+}
 
 function supportRelativeTimeV531(value){
   if(!value)return '';
@@ -41885,10 +41917,14 @@ function supportRelativeTimeV531(value){
   return Math.round(hours/24)+'d ago';
 }
 
+/* V535: precise to the minute, and recomputed from the stored expiry every tick
+   rather than once at render. The old label said "24h" for the whole first hour
+   and then went stale on any page left open. */
 function supportWindowLabelV531(open,expiresAt){
-  if(!open)return SUPPORT_INBOX_COPY_V531.windowShut;
-  const left=Math.max(0,Math.round((new Date(expiresAt).getTime()-Date.now())/3600000));
-  return SUPPORT_INBOX_COPY_V531.windowOpen+' '+left+'h';
+  const ms=new Date(expiresAt).getTime()-Date.now();
+  if(!open||!Number.isFinite(ms)||ms<=0)return SUPPORT_INBOX_COPY_V531.windowShut;
+  const mins=Math.floor(ms/60000),h=Math.floor(mins/60),m=mins%60;
+  return SUPPORT_INBOX_COPY_V531.windowOpen+' '+(h>0?h+'h '+m+'m':m+'m');
 }
 
 async function supportInboxPageV531(hashParam){
@@ -41961,12 +41997,38 @@ function supportRenderListV531(routeMain,rows){
 }
 
 function supportRenderThreadV531(routeMain,thread){
-  const messages=(thread.messages||[]).map(message=>`
+  const messages=(thread.messages||[]).map(message=>{
+    const failed=message.direction==='outbound'&&message.status==='failed';
+    return `
     <div class="card" style="margin-bottom:6px;${message.direction==='outbound'
       ?'margin-left:22%':'margin-right:22%'}">
       <div>${esc(message.body||'')}</div>
-      <div class="muted small" style="margin-top:4px">${esc(supportRelativeTimeV531(message.occurred_at))}</div>
-    </div>`).join('');
+      <div class="muted small" style="margin-top:4px">
+        ${esc(supportRelativeTimeV531(message.occurred_at))}
+        ${message.direction==='outbound'?' · '+esc(message.status||''):''}
+        ${failed?' · '+esc(supportRefusalTextV535(message.error_code)):''}
+      </div>
+    </div>`;}).join('');
+
+  const canReply=thread.can_reply===true;
+  /* V535: ONE durable idempotency key per composer session. It is generated
+     here, reused by every retry, and only replaced when the operator EDITS the
+     body — which the owner's ruling defines as a new logical send. This is what
+     makes a double-click, a refresh mid-flight or a Retry press incapable of
+     producing a second WhatsApp message. */
+  const composer=canReply?`
+    <div class="card" id="supportComposerV535" style="margin-top:10px">
+      <textarea id="supportReplyBodyV535" rows="3" style="width:100%" data-workspace-i18n
+        placeholder="${esc(SUPPORT_INBOX_COPY_V531.placeholder)}"></textarea>
+      <p class="muted small" style="margin:6px 0">${esc(SUPPORT_INBOX_COPY_V531.prefixNote)}</p>
+      <div class="row" style="justify-content:space-between;align-items:center;gap:8px">
+        <span class="muted small" id="supportReplyStatusV535" role="status" aria-live="polite"></span>
+        <button type="button" class="btn" id="supportReplySendV535">${esc(SUPPORT_INBOX_COPY_V531.send)}</button>
+      </div>
+    </div>`
+   :`<p class="imp-note">${esc(thread.reply_disabled_reason
+        ?supportRefusalTextV535(thread.reply_disabled_reason)
+        :SUPPORT_INBOX_COPY_V531.readOnly)}</p>`;
 
   routeMain.innerHTML=`<section id="supportThreadView">
     <header class="v150-titlebar" data-workspace-i18n>
@@ -41975,18 +42037,91 @@ function supportRenderThreadV531(routeMain,thread){
         <p class="muted small">${thread.is_known_customer
           ?esc(SUPPORT_INBOX_COPY_V531.knownCustomer)
           :esc(SUPPORT_INBOX_COPY_V531.unknownCustomer)}
-          · ${esc(supportWindowLabelV531(thread.service_window_open,thread.service_window_expires_at))}
-          · ${esc(thread.handoff_state||'')}</p></div></div>
-      <div>${CUI.action({id:'supportBackV531',label:SUPPORT_INBOX_COPY_V531.back,
+          · <span id="supportWindowV535">${esc(supportWindowLabelV531(
+              thread.service_window_open,thread.service_window_expires_at))}</span>
+          · ${esc(SUPPORT_HANDOFF_COPY_V535[thread.handoff_state]||thread.handoff_state||'')}</p></div></div>
+      <div>${CUI.action({id:'supportBackV535',label:SUPPORT_INBOX_COPY_V531.back,
         iconName:'back',variant:'secondary',className:'sm'})}</div>
     </header>
-    <p class="imp-note" data-support-readonly-v531="1">${esc(SUPPORT_INBOX_COPY_V531.readOnly)}</p>
     ${messages||CUI.emptyState({iconName:'customers',title:SUPPORT_INBOX_COPY_V531.emptyTitle,
         body:SUPPORT_INBOX_COPY_V531.emptyBody})}
+    ${composer}
   </section>`;
 
-  const back=$('supportBackV531');
+  const back=$('supportBackV535');
   if(back)back.onclick=()=>nav('#/support');
+
+  /* The countdown ticks off the STORED expiry, so a page left open all afternoon
+     tells the truth. When it reaches zero the composer disables itself and says
+     why — and the draft is left exactly where it is. */
+  const windowNode=$('supportWindowV535');
+  const expiresAt=thread.service_window_expires_at;
+  const tick=()=>{
+    if(!windowNode||!windowNode.isConnected)return;
+    const open=new Date(expiresAt).getTime()>Date.now();
+    windowNode.textContent=supportWindowLabelV531(open,expiresAt);
+    if(!open){
+      const send=$('supportReplySendV535'),status=$('supportReplyStatusV535');
+      if(send){send.disabled=true;}
+      if(status)status.textContent=SUPPORT_INBOX_COPY_V531.windowShutHint;
+    }
+  };
+  const timer=setInterval(tick,30000);tick();
+  registerRouteDisposerV535(()=>clearInterval(timer));
+
+  if(!canReply)return;
+  const bodyNode=$('supportReplyBodyV535'),sendNode=$('supportReplySendV535'),
+        statusNode=$('supportReplyStatusV535');
+  let idemKey=supportNewIdemKeyV535();
+  let keyedBody=null;      // the body this key belongs to
+  let inFlight=false;
+  sendNode.onclick=async()=>{
+    if(inFlight)return;    // a double-click cannot start a second send
+    const body=(bodyNode.value||'').trim();
+    if(!body){statusNode.textContent=supportRefusalTextV535('empty_message');return;}
+    /* Owner ruling 5: the SAME key on retry; a new key only if the body changed. */
+    if(keyedBody!==null&&keyedBody!==body)idemKey=supportNewIdemKeyV535();
+    keyedBody=body;
+    inFlight=true;sendNode.disabled=true;
+    statusNode.textContent=SUPPORT_INBOX_COPY_V531.sending;
+    const result=await sb.rpc('business_support_send_reply_v535',{
+      p_business:S.biz.id,p_conversation:thread.conversation_id,
+      p_body:body,p_idempotency_key:idemKey});
+    inFlight=false;sendNode.disabled=false;
+    if(result.error){
+      /* The draft is NEVER cleared on failure. */
+      statusNode.textContent=SUPPORT_INBOX_COPY_V531.sendFailed;
+      sendNode.textContent=SUPPORT_INBOX_COPY_V531.retry;
+      return;
+    }
+    const doc=result.data||{};
+    if(doc.status!=='ok'){
+      statusNode.textContent=supportRefusalTextV535(doc.reason);
+      sendNode.textContent=SUPPORT_INBOX_COPY_V531.retry;
+      return;
+    }
+    bodyNode.value='';keyedBody=null;idemKey=supportNewIdemKeyV535();
+    sendNode.textContent=SUPPORT_INBOX_COPY_V531.send;
+    supportInboxPageV531(thread.conversation_id).catch(()=>{});
+  };
+}
+
+function supportNewIdemKeyV535(){
+  const uuid=(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID()
+    :String(Date.now())+'-'+Math.floor(Math.random()*1e9);
+  return 'wa-reply-'+uuid;
+}
+
+/* Chains onto the module-level routeDispose that disposeCurrentRoute() invokes
+   between pages, so the countdown timer cannot outlive its screen — and so an
+   interval is not left running for every thread a busy staff member opens.
+   Chained rather than assigned: clobbering routeDispose would silently cancel
+   whatever the previous page registered. */
+function registerRouteDisposerV535(fn){
+  const previous=routeDispose;
+  routeDispose=options=>{
+    try{fn();}finally{if(typeof previous==='function')previous(options);}
+  };
 }
 
 async function bottleSetupPageV275(){

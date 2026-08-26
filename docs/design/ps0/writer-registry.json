@@ -2544,6 +2544,15 @@
       "rows_written": "NONE - stable reader. Writes nothing anywhere.",
       "call_site_finding": "OK - same module gate as the list reader, and business_id is part of the row predicate rather than merely trusted from the caller, so a conversation id belonging to another tenant simply does not match. Projects no provider_message_id. Returns can_reply=false with reply_disabled_reason='outbound_not_enabled' because C6 is gated; the page renders that answer instead of assuming it.",
       "kernel_migratability": "INDEPENDENT read surface; no value semantics."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_support_send_reply_v535",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_support_send_reply_v535",
+      "resolves_to": "business_support_send_reply_v535/4 -> app.support_reply_v535 (VOLATILE SECURITY DEFINER; the single outbound chokepoint)",
+      "rows_written": "public.support_messages_v530 (one outbound row, status 'queued'), public.support_conversations_v530 (last_outbound_at / handoff), and one public.capability_usage_v518 row via app.capability_consume_v518. No ledger append, no clients row, no Meta call from here.",
+      "call_site_finding": "OK - the browser supplies only a conversation id, a body and an idempotency key. business_id is in the row predicate rather than trusted, and the acting staff member is resolved server-side from auth.uid(). Eleven gates run in a fixed order before anything is written: workspace open, support module WRITE, staff of this business, conversation belongs to it, routed, open, service window (server clock), content validation, the platform whatsapp_outbound flag, then the per-firm capability + daily safety cap. The merchant identity prefix is composed inside the definer from businesses.name - the browser never passes one and cannot remove it. unique(conversation_id, idempotency_key) makes a duplicate customer message impossible, and a repeat returns the ORIGINAL message before any gate runs, so a retry after a client timeout cannot report failure for a message the customer already has.",
+      "kernel_migratability": "INDEPENDENT messaging surface; consumes the v518 capability kernel but writes no value ledger."
     }
   ],
   "allowlist": [

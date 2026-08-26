@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 432,
-  "executableCount": 418,
+  "itemCount": 435,
+  "executableCount": 421,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -633,7 +633,7 @@
     },
     {
       "sourceDeployVersion": "20260826",
-      "count": 9,
+      "count": 12,
       "paths": [
         "db/migrations/20260826_nestly_v517_whatsapp_foundations.sql",
         "db/migrations/20260826_nestly_v518_capability_grants_and_quota.sql",
@@ -643,7 +643,10 @@
         "db/migrations/20260826_nestly_v523_customer_intelligence_follows_entitlement.sql",
         "db/migrations/20260826_nestly_v528_whatsapp_webhook_retention.sql",
         "db/migrations/20260826_nestly_v530_support_inbox_foundations.sql",
-        "db/migrations/20260826_nestly_v531_support_inbound_router.sql"
+        "db/migrations/20260826_nestly_v531_support_inbound_router.sql",
+        "db/migrations/20260826_nestly_v535_support_reply_chokepoint.sql",
+        "db/migrations/20260826_nestly_v536_support_dispatch_driver.sql",
+        "db/migrations/20260826_nestly_v537_capability_module_gate_uses_effective_mode.sql"
       ]
     }
   ],
@@ -4102,7 +4105,31 @@
       "path": "db/migrations/20260826_nestly_v531_support_inbound_router.sql",
       "semanticVersion": "v531",
       "proposedDeployVersion": "20260826000009",
-      "sha256": "496dd67457a28a6d7577e0426e655a76739ab4ed8a03951f2e04e82671c4039a"
+      "sha256": "a89e8d91b55ed89c9aaaa656370d83d462b10ef63428f543db24fab79ec67496"
+    },
+    {
+      "order": 433,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v535_support_reply_chokepoint.sql",
+      "semanticVersion": "v535",
+      "proposedDeployVersion": "20260826000010",
+      "sha256": "4d24bb5142bf7bc98378d92ea192dd8c4dc2c47a24312ccd92d7e6aa75bbb7de"
+    },
+    {
+      "order": 434,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v536_support_dispatch_driver.sql",
+      "semanticVersion": "v536",
+      "proposedDeployVersion": "20260826000011",
+      "sha256": "a65cf4eee2632a00c4a7c1d83cac3a2b06eb357eb7b608b968b7c4443967a867"
+    },
+    {
+      "order": 435,
+      "kind": "executable",
+      "path": "db/migrations/20260826_nestly_v537_capability_module_gate_uses_effective_mode.sql",
+      "semanticVersion": "v537",
+      "proposedDeployVersion": "20260826000012",
+      "sha256": "38b54d3faa47ed37c7b5044d7cad50c35cc175420d006922ddb8f55a7b273854"
     }
   ]
 }

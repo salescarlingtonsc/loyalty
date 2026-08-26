@@ -2602,6 +2602,24 @@
       "version": "20260826000009",
       "name": "nestly_v531_support_inbound_router",
       "sourcePath": "db/migrations/20260826_nestly_v531_support_inbound_router.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000010",
+      "name": "nestly_v535_support_reply_chokepoint",
+      "sourcePath": "db/migrations/20260826_nestly_v535_support_reply_chokepoint.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000011",
+      "name": "nestly_v536_support_dispatch_driver",
+      "sourcePath": "db/migrations/20260826_nestly_v536_support_dispatch_driver.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260826000012",
+      "name": "nestly_v537_capability_module_gate_uses_effective_mode",
+      "sourcePath": "db/migrations/20260826_nestly_v537_capability_module_gate_uses_effective_mode.sql"
     }
   ]
 }

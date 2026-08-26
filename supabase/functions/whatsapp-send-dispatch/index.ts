@@ -1,0 +1,170 @@
+/* v536 — the ONLY thing in Peekaa that talks to Meta's send API.
+ *
+ * Cron pokes app.v536_run_support_dispatch(), which pg_net POSTs here with a
+ * shared secret. This function claims leased outbound rows, sends each one, and
+ * reports the outcome back through a SECURITY DEFINER RPC. The browser cannot
+ * reach graph.facebook.com — it can only enqueue, through one chokepoint.
+ *
+ * Every decision worth testing lives in _shared/whatsapp-send-boundaries.mjs
+ * (v517, already written and covered by 27 tests). This file is plumbing.
+ *
+ * NEVER LOGGED: the access token, the phone number id, the rendered body, the
+ * recipient number, and the wamid — which base64-decodes to the customer's
+ * phone number and is therefore PII, not an opaque key. Log lines carry message
+ * uuids and dispositions only.
+ */
+import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
+import {
+  buildTemplateSend,
+  classifyMetaResponse,
+  classifyTransportError,
+  resolveOutcome,
+  sendPath,
+  toE164,
+} from '../_shared/whatsapp-send-boundaries.mjs';
+
+const MAX_CLAIM = 20;
+const LEASE_SECONDS = 120;
+const GRAPH_HOST = 'https://graph.facebook.com';
+
+function env(name: string): string {
+  return Deno.env.get(name) || '';
+}
+
+function json(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+  });
+}
+
+function log(event: string, detail: Record<string, unknown> = {}): void {
+  console.log(JSON.stringify({ fn: 'whatsapp-send-dispatch', event, ...detail }));
+}
+
+/* Constant-time compare, same shape as pushDispatchAuthorized. */
+function authorized(req: Request): boolean {
+  const expected = env('WHATSAPP_DISPATCH_SECRET');
+  const supplied = req.headers.get('x-peekaa-whatsapp-dispatch-secret') || '';
+  if (expected.length < 32 || supplied.length !== expected.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i += 1) mismatch |= expected.charCodeAt(i) ^ supplied.charCodeAt(i);
+  return mismatch === 0;
+}
+
+function adminClient() {
+  const url = env('SUPABASE_URL');
+  const keys = env('SUPABASE_SECRET_KEYS');
+  const key = keys ? (JSON.parse(keys).default || '') : env('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !key) throw new Error('dispatcher unavailable');
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/* The single fetch, injected so tests can point it at a local server. */
+async function metaSend(phoneNumberId: string, token: string, body: unknown) {
+  const path = sendPath(phoneNumberId);
+  if (!path) throw new Error('phone_number_id_invalid');
+  return await fetch(`${GRAPH_HOST}${path}`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(20000),
+  });
+}
+
+Deno.serve(async (req) => {
+  if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
+  try {
+    if (!authorized(req)) return json(401, { error: 'dispatcher_authentication_required' });
+  } catch {
+    return json(503, { error: 'dispatcher_unavailable' });
+  }
+
+  const token = env('WHATSAPP_ACCESS_TOKEN');
+  const phoneNumberId = env('WHATSAPP_PHONE_NUMBER_ID');
+  if (!token || !phoneNumberId) {
+    /* Fail CLOSED and loudly, exactly like the webhook does for a missing app
+       secret. A half-configured dispatcher must not look like an idle one. */
+    log('rejected', { reason: 'send_credentials_unconfigured' });
+    return json(503, { error: 'send_credentials_unconfigured' });
+  }
+
+  const admin = adminClient();
+  const workerId = crypto.randomUUID();
+  const { data, error } = await admin.rpc('internal_support_claim_outbound_v535', {
+    p_worker_id: workerId, p_limit: MAX_CLAIM, p_lease_seconds: LEASE_SECONDS,
+  });
+  if (error || !Array.isArray(data)) {
+    log('claim_failed', { code: error?.code || null });
+    return json(503, { error: 'claim_failed' });
+  }
+  if (data.length === 0) return json(200, { claimed: 0, sent: 0 });
+
+  let sent = 0, retried = 0, failed = 0;
+
+  for (const lease of data as Array<Record<string, string | number>>) {
+    const messageId = String(lease.message_id);
+    const leaseToken = String(lease.lease_token);
+    const attempt = Number(lease.attempt_count || 0);
+
+    /* Pre-flight refusals are recorded as PERMANENT before the try-block, with a
+       named code. The push dispatcher learned this the hard way: an unrenderable
+       lease that fell into a catch masqueraded as a transport error and retried
+       forever, invisibly. */
+    const e164 = toE164(String(lease.recipient_phone_norm || ''));
+    const rendered = String(lease.rendered_body || '');
+    if (!e164 || !rendered) {
+      await admin.rpc('internal_support_report_outbound_v535', {
+        p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
+        p_error_code: !e164 ? 'recipient_not_normalisable' : 'rendered_body_missing',
+      });
+      failed += 1;
+      log('preflight_failed', { message_id: messageId });
+      continue;
+    }
+
+    /* C6 sends free-form text inside the 24h service window. Templates are out of
+       scope by owner ruling, so this is a `text` message, not a template. */
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: e164,
+      type: 'text',
+      text: { preview_url: false, body: rendered },
+    };
+    void buildTemplateSend; // template path intentionally unused in C6
+
+    let classification;
+    try {
+      const response = await metaSend(phoneNumberId, token, payload);
+      let parsed: unknown = null;
+      try { parsed = await response.json(); } catch { parsed = null; }
+      classification = classifyMetaResponse(response.status, parsed, response.headers);
+    } catch {
+      classification = classifyTransportError();
+    }
+
+    const outcome = resolveOutcome(classification, attempt);
+    const disposition = outcome.status === 'sent' ? 'sent'
+      : outcome.status === 'retry' ? 'retry' : 'failed';
+
+    await admin.rpc('internal_support_report_outbound_v535', {
+      p_message: messageId,
+      p_lease_token: leaseToken,
+      p_disposition: disposition,
+      p_provider_message_id: disposition === 'sent' ? classification.wamid : null,
+      p_error_code: disposition === 'sent' ? null : String(outcome.code || outcome.status),
+      p_http_status: null,
+      p_retry_in_seconds: outcome.retryInSeconds,
+    });
+
+    if (disposition === 'sent') sent += 1;
+    else if (disposition === 'retry') retried += 1;
+    else failed += 1;
+
+    /* No wamid, no body, no number — a uuid and a word. */
+    log('dispatched', { message_id: messageId, disposition });
+  }
+
+  return json(200, { claimed: data.length, sent, retried, failed });
+});
