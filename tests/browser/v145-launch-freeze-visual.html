@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="523443ce2fbdb15722128d4a2a5c6282802399e840f5400c6e294acb0fb4622f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ae3010fb067e5734652b999c410d794c21b9185054153d3768a71be65fcc1b04"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2580,6 +2580,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
 .c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+/* nestly_v541: the per-sale breakdown a row opens. Deliberately plain — it borrows .cui-table
+   so it inherits the responsive stacking the table above it already has, and adds only the
+   inset that separates it from the row it belongs to. */
+.c360-act-breakdown-row-v541>td{padding:0 0 12px 0;border-top:0}
+.c360-act-details-v541>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;
+  padding:6px 2px;font-size:13px;font-weight:650;color:var(--brand-red-dark,var(--ink))}
+.c360-act-details-v541[open]>summary{margin-bottom:4px}
+.c360-act-breakdown-v541{background:var(--neutral-bg,#f6f4f0);border-radius:12px;padding:10px 12px}
+.c360-act-breakdown-v541 table{margin:0;font-size:13px}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
 /* V375: the one-off amount field, on the first Record sale screen. */
@@ -4683,7 +4692,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 523443ce2fbdb15722128d4a2a5c6282802399e840f5400c6e294acb0fb4622f</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · ae3010fb067e5734652b999c410d794c21b9185054153d3768a71be65fcc1b04</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5815,7 +5824,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        by PGRST201 before; sale_items has exactly one FK to sales today, and pinning it means a
        future second one cannot silently break this read. */
     canReadSales?fetchAllRows(()=>sb.from('sales')
-      .select('*,sale_items!sale_items_sale_business_fk(description,qty,item_type,created_at)',{count:'exact'})
+      .select('*,sale_items!sale_items_sale_business_fk(description,qty,item_type,unit_cents,line_cents,created_at)',{count:'exact'})
       .eq('client_id',id)
       .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})):Promise.resolve({data:[]}),
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
@@ -6930,6 +6939,57 @@ function activitySaleItemsTextV518(h){
     })
     .filter(Boolean).join(', ');
 }
+/* nestly_v541 (owner, photo 1: a red box round one sale row — "i need to be able to click in the
+   line and open up the exact details like how much on what product and how much point per
+   product"). The money half is recorded per line and is shown exactly as stored.
+
+   THE POINTS HALF IS NOT RECORDED PER LINE, and this says so rather than inventing it. Checked on
+   production: a sale writes ONE points_ledger row whatever its line count — the owner's own
+   SGD 1,120 sale has two lines and one ledger entry of 1,120 points. Splitting that across lines
+   would be arithmetic dressed up as a record, and a per-item figure that disagreed with the
+   ledger is exactly the kind of number a counter argument is lost over. So each line shows its
+   SHARE of the sale's points, labelled a share, and the footer states where the points really
+   came from. */
+function activitySaleBreakdownV541(h,earnedPoints=0){
+  const lines=Array.isArray(h&&h.items)?h.items.slice():[];
+  if(!lines.length)return '';
+  lines.sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')));
+  const saleCents=Math.max(0,Number(h.amount??h.amount_cents)||0);
+  const earned=Math.max(0,Math.round(Number(earnedPoints)||0));
+  const rows=lines.map(line=>{
+    const qty=Math.max(1,Math.round(Number(line&&line.qty)||1));
+    const lineCents=Number(line&&line.line_cents);
+    const unitCents=Number(line&&line.unit_cents);
+    const has=Number.isFinite(lineCents);
+    /* Proportional to money, and only when there is money to be proportional to. A zero-value
+       sale (a package session, a comped item) gets no share rather than a misleading zero-of-zero. */
+    const share=earned&&has&&saleCents>0?Math.round(earned*(lineCents/saleCents)):null;
+    return `<tr>
+      <td data-label="Item"><span data-merchant-content>${esc(String(line&&line.description||'').trim()||'Item')}</span></td>
+      <td data-label="Qty" class="c360-act-amt-v252">${qty}</td>
+      <td data-label="Unit" class="c360-act-amt-v252">${Number.isFinite(unitCents)?esc(money(unitCents)):DASH_V541}</td>
+      <td data-label="Line total" class="c360-act-amt-v252">${has?esc(money(lineCents)):DASH_V541}</td>
+      <td data-label="Points share" class="c360-act-amt-v252">${share===null?DASH_V541:esc(customerPointTotalV103(share))}</td>
+    </tr>`;
+  }).join('');
+  const linesTotal=lines.reduce((a,line)=>a+(Number(line&&line.line_cents)||0),0);
+  /* The lines are not guaranteed to add up to the sale: a discount line, a rounding, or a sale
+     recorded with an amount typed over the cart would all differ. Saying so beats a silent gap. */
+  const mismatch=Number.isFinite(linesTotal)&&Math.abs(linesTotal-saleCents)>0
+    ?`<p class="muted small" style="margin-top:6px">The lines add up to ${esc(money(linesTotal))}, and this sale was recorded as ${esc(money(saleCents))}.</p>`
+    :'';
+  return `<div class="c360-act-breakdown-v541">
+    <table class="cui-table" data-responsive="true"><thead><tr>
+      <th>Item</th><th class="c360-act-amt-v252">Qty</th><th class="c360-act-amt-v252">Unit</th>
+      <th class="c360-act-amt-v252">Line total</th><th class="c360-act-amt-v252">Points share</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    ${mismatch}
+    <p class="muted small" style="margin-top:6px">${earned
+      ?`This sale earned ${esc(customerPointTotalV103(earned))} points on its total of ${esc(money(saleCents))}. Points are recorded once for the whole sale, so the figures above are each line's share of that, not separately recorded amounts.`
+      :'This sale earned no points.'}</p>
+  </div>`;
+}
+const DASH_V541='—';
 /* The human description of a sale row, used both in its own ITEM cell and when another row has
    to refer to it. Never an id: the owner cannot act on a UUID.
    v517: the goods outrank both the note and the kind word. A cart checkout used to describe
@@ -7164,6 +7224,14 @@ function renderHistPage(history,n,offsetV468=0){
   return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th><th>${esc(activityEarnedHeadV378())}</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
+    /* nestly_v541: a sale with lines gets a disclosure row beneath it. <details> rather than a
+       click handler on the <tr>: it opens with a keyboard, needs no JS wiring, survives every
+       rerender this table does, and leaves the row's existing Reverse button clickable. */
+    /* nestly_v541: the points figure is READ FROM THE LEDGER map here and handed over, rather than
+       stashed on the row. The row objects are the caller's data; a renderer that writes back into
+       them makes the next reader wonder which fields are server truth and which are ours. */
+    const breakdown=h.kind==='sale'
+      ?activitySaleBreakdownV541(h,Number(activityEarnedBySaleV375.get(String(h.id)))||0):'';
     return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:16})}</span><span>${esc(cell.type)}</span></span></td>
@@ -7171,7 +7239,9 @@ function renderHistPage(history,n,offsetV468=0){
       <td data-label="${esc(activityEarnedHeadV378())}" class="c360-act-earned-cell-v378">${cell.earned||DASH_V252}</td>
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
       <td data-label="Staff">${cell.staff||DASH_V252}</td>
-    </tr>`;
+    </tr>${breakdown?`<tr class="c360-act-breakdown-row-v541"><td colspan="6">
+      <details class="c360-act-details-v541"><summary>What was sold${h.items&&h.items.length>1?` · ${h.items.length} items`:''}</summary>${breakdown}</details>
+    </td></tr>`:''}`;
   }).join('')}</tbody></table></div>`;
 }
   async function reportsPage(){
@@ -8412,7 +8482,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'523443ce2fbdb15722128d4a2a5c6282802399e840f5400c6e294acb0fb4622f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'ae3010fb067e5734652b999c410d794c21b9185054153d3768a71be65fcc1b04',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="dfe50cb52725e6fdbc6bc3de718420a5493d9a0f5d5c936379fb550dad603fd3"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="a7fb672e509dbbcc15f23074631741611ffd266c2d6352cb604d8ce39dd715d5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2579,6 +2579,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
 .c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+/* nestly_v541: the per-sale breakdown a row opens. Deliberately plain — it borrows .cui-table
+   so it inherits the responsive stacking the table above it already has, and adds only the
+   inset that separates it from the row it belongs to. */
+.c360-act-breakdown-row-v541>td{padding:0 0 12px 0;border-top:0}
+.c360-act-details-v541>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;
+  padding:6px 2px;font-size:13px;font-weight:650;color:var(--brand-red-dark,var(--ink))}
+.c360-act-details-v541[open]>summary{margin-bottom:4px}
+.c360-act-breakdown-v541{background:var(--neutral-bg,#f6f4f0);border-radius:12px;padding:10px 12px}
+.c360-act-breakdown-v541 table{margin:0;font-size:13px}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
 /* V375: the one-off amount field, on the first Record sale screen. */

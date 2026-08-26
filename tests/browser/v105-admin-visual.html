@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="0a44d4b1cd6fe8314b5cb319ea70b6450c948053b4ac387b1563e2ad18ebb3f3">
+<meta name="v105-production-component-sha256" content="cf40c90ec823d54457801eb45241a84aa21f51e4750214619883a81f070b7218">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2586,6 +2586,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
 .c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+/* nestly_v541: the per-sale breakdown a row opens. Deliberately plain — it borrows .cui-table
+   so it inherits the responsive stacking the table above it already has, and adds only the
+   inset that separates it from the row it belongs to. */
+.c360-act-breakdown-row-v541>td{padding:0 0 12px 0;border-top:0}
+.c360-act-details-v541>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;
+  padding:6px 2px;font-size:13px;font-weight:650;color:var(--brand-red-dark,var(--ink))}
+.c360-act-details-v541[open]>summary{margin-bottom:4px}
+.c360-act-breakdown-v541{background:var(--neutral-bg,#f6f4f0);border-radius:12px;padding:10px 12px}
+.c360-act-breakdown-v541 table{margin:0;font-size:13px}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
 /* V375: the one-off amount field, on the first Record sale screen. */
@@ -5497,7 +5506,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 0a44d4b1cd6f</span>
+<span class="v105-provenance">v105 production-component harness · cf40c90ec823</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5622,7 +5631,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'0a44d4b1cd6fe8314b5cb319ea70b6450c948053b4ac387b1563e2ad18ebb3f3',
+  sourceHash:'cf40c90ec823d54457801eb45241a84aa21f51e4750214619883a81f070b7218',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

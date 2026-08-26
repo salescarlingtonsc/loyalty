@@ -172,6 +172,12 @@ test('v417 the live preview shows the programmes the firm actually runs', () => 
     'a stamp-card firm is not told its customers collect points');
   /* The hardcoded pair survives ONLY as the pre-load fallback. */
   assert.match(preview, /:\[\{kind:'points',customer_visible:true,active:true\},\{kind:'tiers'/);
-  assert.match(preview, /Your live programme setup, shown with a sample customer/,
-    'the badge says which half is real rather than disclaiming all of it');
+  /* nestly_v541 (owner, photo 2, the real app beside the preview: "there's no rewards in actual
+     customer app — why did you add it in?"). The badge changed with the section it described. The
+     preview passes rewardsHost:false, so the real renderer correctly draws NO reward list — and
+     v327 had bolted an invented one on at the bottom, at a position the customer app never uses.
+     With that gone the preview is the owner's live input plus the customer app's own renderer,
+     and the line now says that instead of promising a sample customer's balance and tier. */
+  assert.match(preview, /Your business profile as customers see it, drawn by the customer app/,
+    'the badge describes what the preview actually contains');
 });

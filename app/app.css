@@ -1732,6 +1732,12 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
 .c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+.c360-act-breakdown-row-v541>td{padding:0 0 12px 0;border-top:0}
+.c360-act-details-v541>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;
+  padding:6px 2px;font-size:13px;font-weight:650;color:var(--brand-red-dark,var(--ink))}
+.c360-act-details-v541[open]>summary{margin-bottom:4px}
+.c360-act-breakdown-v541{background:var(--neutral-bg,#f6f4f0);border-radius:12px;padding:10px 12px}
+.c360-act-breakdown-v541 table{margin:0;font-size:13px}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
 .till-manual-amount-v375{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:#fff}

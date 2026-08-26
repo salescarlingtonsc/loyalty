@@ -55,12 +55,15 @@ const workspaceTemplateAttributeV97 = (attribute, key, values = {}) => {
   return `data-workspace-i18n ${attribute}="${esc(text)}"`;
 };
 
-const A = new Function('$', 'esc', 'money', 'sgt', 'sgIso', 'CUI', 'campaignEntitlementDisplayV99', 'workspaceTemplateAttributeV97', `${spineStubV378}${earnedHelpersV378}
+const customerPointTotalV103 = (n) => Number(n || 0).toLocaleString('en-SG');
+const A = new Function('$', 'esc', 'money', 'sgt', 'sgIso', 'CUI', 'campaignEntitlementDisplayV99', 'workspaceTemplateAttributeV97', 'customerPointTotalV103', `${spineStubV378}${earnedHelpersV378}
   ${activityModule}
   return {renderHistPage,activityFilteredRowsV267,activityFilterStateV267,activityTypeOfV267,
     activityAmountCentsV267,activityRangeBoundV267,activityItemTextV267,activityWhenTextV267,
-    ACTIVITY_SORTS_V267,ACTIVITY_SORT_DEFAULT_V267,ACTIVITY_STAFF_NONE_V267};`)(
+    ACTIVITY_SORTS_V267,ACTIVITY_SORT_DEFAULT_V267,ACTIVITY_STAFF_NONE_V267,
+    activityEarnedBySaleV375,activitySaleBreakdownV541};`)(
   $, esc, money, sgt, sgIso, CUI, campaignEntitlementDisplayV99, workspaceTemplateAttributeV97,
+  customerPointTotalV103,
 );
 
 function setFilters(values = {}) {
@@ -434,7 +437,7 @@ test('V518 a cart sale names its goods instead of naming the mechanism', () => {
   const rows = fixtureV518();
   assert.equal(A.activityItemTextV267(rows[0]), 'Kopi Set, Kaya Toast Set ×2',
     'the lines are printed in the order they were rung up, and ×1 is left off');
-  const text = visibleText(A.renderHistPage(rows, 50));
+  const text = visibleText(A.renderHistPage(seedEarnedV541(rows), 50));
   assert.ok(text.includes('Kopi Set, Kaya Toast Set ×2'), 'the ITEM cell states what was sold');
   assert.ok(!text.includes('cart checkout (kernel)'),
     'the kernel’s note about itself is gone once the goods are named');
@@ -474,4 +477,86 @@ test('V518 a very long line-up is truncated rather than overflowing the cell', (
   const text = A.activityItemTextV267(many);
   assert.ok(text.length <= 64, `the cell text stays within its budget, got ${text.length}`);
   assert.ok(text.endsWith('…'), 'and says plainly that it was cut');
+});
+
+/* ============ ITEM V541 — a sale row opens its own breakdown ============
+   Owner, photo 1: a red box round one sale row — "i need to be able to click in the line and open
+   up the exact details like how much on what product and how much point per product".
+
+   The money half is recorded per line and is shown exactly as stored. THE POINTS HALF IS NOT.
+   Checked on production: a sale writes ONE points_ledger row whatever its line count — the
+   owner's own SGD 1,120 sale has two lines and a single 1,120-point entry. So each line shows its
+   SHARE, labelled a share, and the footer says where the points actually came from. A per-item
+   figure presented as recorded would be arithmetic dressed as a record, and the counter would
+   lose an argument over it. */
+
+function fixtureV541() {
+  return [{
+    t: '2026-08-25T14:16:00Z', kind: 'sale', id: V518_CART_ID, saleKind: 'quick_sale',
+    note: 'cart checkout (kernel)', amount: 112000, is_reversal: false, staff: 'Chuan',
+    earned_points: 1120,
+    items: [
+      { description: 'spa · Rainbow special', qty: 1, item_type: 'service',
+        unit_cents: 90000, line_cents: 90000, created_at: '2026-08-25T14:16:02Z' },
+      { description: 'facial · Rainbow special', qty: 1, item_type: 'service',
+        unit_cents: 22000, line_cents: 22000, created_at: '2026-08-25T14:16:01Z' }
+    ]
+  }];
+}
+
+/* The renderer reads the points figure from the LEDGER map, exactly as production does, so the
+   fixture seeds that map rather than setting a field on the row. */
+function seedEarnedV541(rows) {
+  A.activityEarnedBySaleV375?.clear?.();
+  for (const row of rows) {
+    if (row.kind === 'sale' && row.earned_points != null) {
+      A.activityEarnedBySaleV375.set(String(row.id), row.earned_points);
+    }
+  }
+  return rows;
+}
+
+test('V541 a sale row carries a breakdown of what was sold, in ring-up order', () => {
+  setFilters({});
+  const html = A.renderHistPage(seedEarnedV541(fixtureV541()), 50);
+  const text = visibleText(html);
+  assert.ok(html.includes('c360-act-details-v541'), 'the row opens a disclosure');
+  assert.ok(text.includes('What was sold'), 'with a label saying what it holds');
+  assert.ok(text.indexOf('facial · Rainbow special') < text.indexOf('spa · Rainbow special'),
+    'lines are listed in the order they were rung up, not the order the server returned them');
+  assert.ok(text.includes('SGD 220.00'), 'each line shows its own money');
+  assert.ok(text.includes('SGD 900.00'));
+});
+
+test('V541 the points column is a SHARE, and the row says so', () => {
+  const text = visibleText(A.renderHistPage(seedEarnedV541(fixtureV541()), 50));
+  assert.ok(text.includes('Points share'), 'the column is labelled a share, not "points earned"');
+  /* 1,120 points split by money: 900/1120 -> 900, 220/1120 -> 220. */
+  assert.ok(text.includes('900') && text.includes('220'));
+  assert.match(text, /Points are recorded once for the whole sale/,
+    'and the footer states the truth rather than letting the split imply a record');
+  assert.match(text, /earned 1,120 points on its total of SGD 1120\.00/);
+});
+
+test('V541 a sale that earned nothing does not invent shares', () => {
+  const rows = fixtureV541();
+  rows[0].earned_points = 0;
+  const text = visibleText(A.renderHistPage(seedEarnedV541(rows), 50));
+  assert.match(text, /This sale earned no points/);
+});
+
+test('V541 lines that do not add up to the sale are called out, not hidden', () => {
+  const rows = fixtureV541();
+  rows[0].amount = 100000;               // a discount, a rounding, or a typed-over amount
+  const text = visibleText(A.renderHistPage(seedEarnedV541(rows), 50));
+  assert.match(text, /The lines add up to SGD 1120\.00, and this sale was recorded as SGD 1000\.00/,
+    'a silent gap between the lines and the sale is how a reconciliation goes wrong');
+});
+
+test('V541 a sale with no lines opens nothing', () => {
+  const rows = [{ t: '2026-08-19T03:00:00Z', kind: 'sale', id: 'ab12cd34-5566-4777-8888-99aabbccdd01',
+    saleKind: 'service', note: 'package session used: 5x facial', amount: 0, staff: 'Aisyah', items: [] }];
+  const html = A.renderHistPage(rows, 50);
+  assert.ok(!html.includes('c360-act-details-v541'),
+    'a package session has no lines — an empty disclosure would be a dead control');
 });

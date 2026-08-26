@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="ffb59cbaef881a7d8fa3f3559ba0bb837467c063c2b8f42919e234e86edde1af"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="36f739d853b27bba39ad703c054cf73eeedd7027fd2bdee45971c3bf96222aa0"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2580,6 +2580,15 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-activity-table-v252 .c360-tl-when{margin-top:0;white-space:nowrap}
 .c360-act-type-v252{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13px}
 .c360-activity-table-v252 .c360-tl-ic{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+/* nestly_v541: the per-sale breakdown a row opens. Deliberately plain — it borrows .cui-table
+   so it inherits the responsive stacking the table above it already has, and adds only the
+   inset that separates it from the row it belongs to. */
+.c360-act-breakdown-row-v541>td{padding:0 0 12px 0;border-top:0}
+.c360-act-details-v541>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;
+  padding:6px 2px;font-size:13px;font-weight:650;color:var(--brand-red-dark,var(--ink))}
+.c360-act-details-v541[open]>summary{margin-bottom:4px}
+.c360-act-breakdown-v541{background:var(--neutral-bg,#f6f4f0);border-radius:12px;padding:10px 12px}
+.c360-act-breakdown-v541 table{margin:0;font-size:13px}
 .c360-act-note-v252{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
 .c360-act-note-v252 .btn{margin-top:3px}
 /* V375: the one-off amount field, on the first Record sale screen. */
@@ -4683,7 +4692,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · ffb59cbaef881a7d8fa3f3559ba0bb837467c063c2b8f42919e234e86edde1af</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 36f739d853b27bba39ad703c054cf73eeedd7027fd2bdee45971c3bf96222aa0</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -8179,7 +8188,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'ffb59cbaef881a7d8fa3f3559ba0bb837467c063c2b8f42919e234e86edde1af',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'36f739d853b27bba39ad703c054cf73eeedd7027fd2bdee45971c3bf96222aa0',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

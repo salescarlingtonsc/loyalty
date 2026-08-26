@@ -4781,7 +4781,7 @@ async function clientDetail(id){
        by PGRST201 before; sale_items has exactly one FK to sales today, and pinning it means a
        future second one cannot silently break this read. */
     canReadSales?fetchAllRows(()=>sb.from('sales')
-      .select('*,sale_items!sale_items_sale_business_fk(description,qty,item_type,created_at)',{count:'exact'})
+      .select('*,sale_items!sale_items_sale_business_fk(description,qty,item_type,unit_cents,line_cents,created_at)',{count:'exact'})
       .eq('client_id',id)
       .order('occurred_at',{ascending:false}).order('id')).then(data=>({data})):Promise.resolve({data:[]}),
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
@@ -5896,6 +5896,57 @@ function activitySaleItemsTextV518(h){
     })
     .filter(Boolean).join(', ');
 }
+/* nestly_v541 (owner, photo 1: a red box round one sale row — "i need to be able to click in the
+   line and open up the exact details like how much on what product and how much point per
+   product"). The money half is recorded per line and is shown exactly as stored.
+
+   THE POINTS HALF IS NOT RECORDED PER LINE, and this says so rather than inventing it. Checked on
+   production: a sale writes ONE points_ledger row whatever its line count — the owner's own
+   SGD 1,120 sale has two lines and one ledger entry of 1,120 points. Splitting that across lines
+   would be arithmetic dressed up as a record, and a per-item figure that disagreed with the
+   ledger is exactly the kind of number a counter argument is lost over. So each line shows its
+   SHARE of the sale's points, labelled a share, and the footer states where the points really
+   came from. */
+function activitySaleBreakdownV541(h,earnedPoints=0){
+  const lines=Array.isArray(h&&h.items)?h.items.slice():[];
+  if(!lines.length)return '';
+  lines.sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')));
+  const saleCents=Math.max(0,Number(h.amount??h.amount_cents)||0);
+  const earned=Math.max(0,Math.round(Number(earnedPoints)||0));
+  const rows=lines.map(line=>{
+    const qty=Math.max(1,Math.round(Number(line&&line.qty)||1));
+    const lineCents=Number(line&&line.line_cents);
+    const unitCents=Number(line&&line.unit_cents);
+    const has=Number.isFinite(lineCents);
+    /* Proportional to money, and only when there is money to be proportional to. A zero-value
+       sale (a package session, a comped item) gets no share rather than a misleading zero-of-zero. */
+    const share=earned&&has&&saleCents>0?Math.round(earned*(lineCents/saleCents)):null;
+    return `<tr>
+      <td data-label="Item"><span data-merchant-content>${esc(String(line&&line.description||'').trim()||'Item')}</span></td>
+      <td data-label="Qty" class="c360-act-amt-v252">${qty}</td>
+      <td data-label="Unit" class="c360-act-amt-v252">${Number.isFinite(unitCents)?esc(money(unitCents)):DASH_V541}</td>
+      <td data-label="Line total" class="c360-act-amt-v252">${has?esc(money(lineCents)):DASH_V541}</td>
+      <td data-label="Points share" class="c360-act-amt-v252">${share===null?DASH_V541:esc(customerPointTotalV103(share))}</td>
+    </tr>`;
+  }).join('');
+  const linesTotal=lines.reduce((a,line)=>a+(Number(line&&line.line_cents)||0),0);
+  /* The lines are not guaranteed to add up to the sale: a discount line, a rounding, or a sale
+     recorded with an amount typed over the cart would all differ. Saying so beats a silent gap. */
+  const mismatch=Number.isFinite(linesTotal)&&Math.abs(linesTotal-saleCents)>0
+    ?`<p class="muted small" style="margin-top:6px">The lines add up to ${esc(money(linesTotal))}, and this sale was recorded as ${esc(money(saleCents))}.</p>`
+    :'';
+  return `<div class="c360-act-breakdown-v541">
+    <table class="cui-table" data-responsive="true"><thead><tr>
+      <th>Item</th><th class="c360-act-amt-v252">Qty</th><th class="c360-act-amt-v252">Unit</th>
+      <th class="c360-act-amt-v252">Line total</th><th class="c360-act-amt-v252">Points share</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    ${mismatch}
+    <p class="muted small" style="margin-top:6px">${earned
+      ?`This sale earned ${esc(customerPointTotalV103(earned))} points on its total of ${esc(money(saleCents))}. Points are recorded once for the whole sale, so the figures above are each line's share of that, not separately recorded amounts.`
+      :'This sale earned no points.'}</p>
+  </div>`;
+}
+const DASH_V541='—';
 /* The human description of a sale row, used both in its own ITEM cell and when another row has
    to refer to it. Never an id: the owner cannot act on a UUID.
    v517: the goods outrank both the note and the kind word. A cart checkout used to describe
@@ -6130,6 +6181,14 @@ function renderHistPage(history,n,offsetV468=0){
   return `<div class="cui-table-wrap c360-activity-wrap-v252" tabindex="0" role="region" aria-label="Activity history"><table class="cui-table c360-activity-table-v252" data-responsive="true"><thead><tr>${sortHeadV267('date','Date')}<th>Type</th><th>Item</th><th>${esc(activityEarnedHeadV378())}</th>${sortHeadV267('amount','Amount')}${sortHeadV267('staff','Staff')}</tr></thead><tbody>${rows.map(h=>{
     const cell=cellsV252(h);
     const notes=cell.notes.filter(Boolean).map(note=>`<div class="c360-act-note-v252">${note}</div>`).join('');
+    /* nestly_v541: a sale with lines gets a disclosure row beneath it. <details> rather than a
+       click handler on the <tr>: it opens with a keyboard, needs no JS wiring, survives every
+       rerender this table does, and leaves the row's existing Reverse button clickable. */
+    /* nestly_v541: the points figure is READ FROM THE LEDGER map here and handed over, rather than
+       stashed on the row. The row objects are the caller's data; a renderer that writes back into
+       them makes the next reader wonder which fields are server truth and which are ours. */
+    const breakdown=h.kind==='sale'
+      ?activitySaleBreakdownV541(h,Number(activityEarnedBySaleV375.get(String(h.id)))||0):'';
     return `<tr${h.kind==='sale'&&h.id?` id="c360-act-sale-${esc(h.id)}" tabindex="-1"`:''}>
       <td data-label="Date"><span class="c360-tl-when">${esc(sgt(h.t)||'')}</span></td>
       <td data-label="Type"><span class="c360-act-type-v252"><span class="c360-tl-ic ${cell.tone}" aria-hidden="true">${CUI.icon(cell.icon,{size:16})}</span><span>${esc(cell.type)}</span></span></td>
@@ -6137,7 +6196,9 @@ function renderHistPage(history,n,offsetV468=0){
       <td data-label="${esc(activityEarnedHeadV378())}" class="c360-act-earned-cell-v378">${cell.earned||DASH_V252}</td>
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
       <td data-label="Staff">${cell.staff||DASH_V252}</td>
-    </tr>`;
+    </tr>${breakdown?`<tr class="c360-act-breakdown-row-v541"><td colspan="6">
+      <details class="c360-act-details-v541"><summary>What was sold${h.items&&h.items.length>1?` · ${h.items.length} items`:''}</summary>${breakdown}</details>
+    </td></tr>`:''}`;
   }).join('')}</tbody></table></div>`;
 }
 
@@ -33235,13 +33296,22 @@ function customerInterfaceLivePreviewMarkupV326(){
          programmes are running, and whether they count points or stamps, come off the spine. What
          stays invented is the CUSTOMER: a preview has nobody in it, so the balance and tier are
          still there for scale. Saying which half is which is the point of the line. */''}
-    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Your live programme setup, shown with a sample customer — the balance, tier and reward names are for scale.</p>
+    ${/* nestly_v541 (owner, photo 2, the real app beside the preview: "there's no rewards in
+         actual customer app — why did you add it in?"). THE SAMPLE REWARDS SECTION IS GONE.
+         It arrived in v327 under the heading "live preview shows the real wallet, not a
+         lookalike", and it was itself the lookalike: the customer app renders its reward list
+         INSIDE the points or stamp card near the top of the business page (#walletRewards lives
+         in customerProgrammePointsPanelV230 / customerProgrammeStampsCardV310), never as a
+         standalone card after the links. So the preview showed a section at a position the real
+         page has never had, with reward names invented for scale.
+         What remains is customerMerchantExperienceMarkupV95 — the SAME function the customer app
+         calls — plus the booking-policy note. Everything in this preview is now either the
+         owner's own live input or produced by the customer app's own renderer, which is what a
+         preview of the Business Profile form is for. Nothing was moved or restyled: one invented
+         section was removed. */''}
+    <p class="muted small ci-live-preview-sample-badge-v326" role="note">Your business profile as customers see it, drawn by the customer app's own renderer.</p>
     <div id="walletBody">${merchantExperience}
       ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
-      <section class="card customer-programme-card-v310" aria-label="Sample rewards">
-        <h2 class="customer-programme-card-head-v310">${CUI.icon('star',{size:16})}<span>Rewards</span></h2>
-        ${customerInterfaceSampleRewardRowsV326(previewUnitV417)}
-      </section>
     </div>
     ${customerPrimaryNavigation('programmes',{})}
   </div></div>`;

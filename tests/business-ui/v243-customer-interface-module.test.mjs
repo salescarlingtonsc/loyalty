@@ -341,7 +341,15 @@ test('V327 the preview calls the REAL wallet render function, not a hand-rolled 
      programmes appear, and whether they count points or stamps, come off the spine now; only the
      CUSTOMER is still invented, because a preview has nobody in it. The badge says which half is
      which rather than disclaiming the whole thing. */
-  assert.match(markup, /Your live programme setup, shown with a sample customer/);
+  /* nestly_v541 (owner, photo 2, the real app beside the preview: "there's no rewards in actual
+     customer app — why did you add it in?"). The badge changed with the section it described. The
+     preview passes rewardsHost:false, so the real renderer correctly draws NO reward list — and
+     v327 had bolted an invented one on at the bottom, at a position the customer app never uses.
+     With that gone the preview is the owner's live input plus the customer app's own renderer,
+     and the line now says that instead of promising a sample customer's balance and tier. */
+  assert.match(markup, /Your business profile as customers see it, drawn by the customer app/);
+  assert.ok(!markup.includes('aria-label="Sample rewards"'),
+    'the preview must not invent a rewards section the customer app never renders there');
   assert.match(app, /programmes:programmeSpineRowsV314\(\)/);
 });
 
