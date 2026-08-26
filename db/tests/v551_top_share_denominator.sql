@@ -140,7 +140,10 @@ begin
     select coalesce(sum(s.amount_cents), 0) into total_all
       from public.sales s
      where s.business_id = b.id
-       and s.client_id is not null
+       -- v551 fix to this suite itself: the first draft filtered client_id IS NOT NULL here,
+       -- rebuilding the identified population and calling it "total" - the exact defect this
+       -- wave exists to kill, reproduced inside the oracle. The total population has NO client
+       -- filter and NO clients join; anonymous sales belong in it.
        and s.reversal_of is null
        and s.occurred_at >= (current_date - 30)::timestamp at time zone 'Asia/Singapore'
        and s.occurred_at <  (current_date + 1)::timestamp at time zone 'Asia/Singapore'
