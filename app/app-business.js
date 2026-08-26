@@ -3542,6 +3542,9 @@ async function openDashboardMetricRowsV388(options){
      neither form as a declaration, so either one turns a correct edit into a red gate. Keeping the
      gate honest is worth more than the shorter signature — see [[undeclared-identifier-ships-silently]]. */
   const {key,from,to,scopePayload,value,loadRows}=options;
+  /* nestly_v519: see the call site — the resolved reporting branch ids, or null when the caller
+     supplies its own rows (the Daily report) and no branch filter is this function's business. */
+  const branchIdsV519=Array.isArray(options.branchIdsV519)?options.branchIdsV519:null;
   const subtitleV468=options.subtitle;
   const def=options.def||DASHBOARD_METRIC_DEFINITIONS_V405[key]||{};
   const periodTextV468=subtitleV468!==undefined
@@ -3635,11 +3638,19 @@ async function openDashboardMetricRowsV388(options){
       if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${DASHBOARD_INACTIVE_PAGE_V406}. Open Customers for the rest.</p>`);
       return;
     }
-    const {data,error}=await fetchAllRowsResult(()=>sb.from('sales')
-      .select('id,client_id,amount_cents,occurred_at,kind,counts_as_visit,counts_as_revenue,reversal_of,clients(full_name)')
-      .eq('business_id',S.biz.id)
-      .gte('occurred_at',sgDateBoundary(from)).lt('occurred_at',sgDateBoundary(to,1))
-      .order('occurred_at',{ascending:false}));
+    const {data,error}=await fetchAllRowsResult(()=>{
+      let query=sb.from('sales')
+        .select('id,client_id,amount_cents,occurred_at,kind,counts_as_visit,counts_as_revenue,reversal_of,clients(full_name)')
+        .eq('business_id',S.biz.id)
+        .gte('occurred_at',sgDateBoundary(from)).lt('occurred_at',sgDateBoundary(to,1));
+      /* nestly_v519: mirror the server's own `s.branch_id = any(v_scope_ids)`. Without this the
+         Visits and Revenue dialogs read the whole business while their tiles read one branch —
+         on Cubbly's empty Kopitiam 2 branch a SGD 0.00 tile opened 56 rows totalling SGD 4485.00.
+         An empty resolved list would mean "no authorised branches", which the RPC refuses
+         outright, so the tile never renders and this path is unreachable with []. */
+      if(branchIdsV519&&branchIdsV519.length)query=query.in('branch_id',branchIdsV519);
+      return query.order('occurred_at',{ascending:false});
+    });
     if(!stillOpen())return;
     if(error)return failed(ownerErrorText(error));
     const scoped=key==='visits'?validVisitSales(data||[]):(data||[]).filter(row=>row?.counts_as_revenue);
@@ -4124,6 +4135,14 @@ async function dashboard(){
          and the old direct route can never drill into a different set of people. */
       if(key==='inactive')pendingCustomerInactivity='all_inactive';
       openDashboardMetricRowsV388({key,from,to,scopePayload,
+        /* nestly_v519: the branch ids the SERVER actually counted, taken from the summary payload
+           rather than re-derived here. get_dashboard_summary_v155 filters its sales with
+           `s.branch_id = any(v_scope_ids)`, where v_scope_ids comes from
+           app.resolve_reporting_branch_scope_v155 — so a second client-side reading of "which
+           branches am I looking at" is exactly the drift that let a SGD 0.00 tile open a list of
+           the whole business. Handing the resolved list down means the figure and its rows are
+           filtered by one and the same set, by construction. */
+        branchIdsV519:Array.isArray(d?.scope?.branch_ids)?d.scope.branch_ids:null,
         value:(metrics.find(metric=>metric.key===key)||{}).value||''});
     });
     if(loyalty){
