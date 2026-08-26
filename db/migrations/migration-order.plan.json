@@ -2631,6 +2631,12 @@
       "path": "db/migrations/20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql",
       "semanticVersion": "v542",
       "proposedDeployVersion": "20260827000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v544_one_current_loyalty_balance.sql",
+      "semanticVersion": "v544",
+      "proposedDeployVersion": "20260827000002"
     }
   ]
 }

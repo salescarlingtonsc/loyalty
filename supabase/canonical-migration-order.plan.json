@@ -2626,6 +2626,12 @@
       "version": "20260827000001",
       "name": "nestly_v542_pending_business_may_ask_to_pay_manually",
       "sourcePath": "db/migrations/20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000002",
+      "name": "nestly_v544_one_current_loyalty_balance",
+      "sourcePath": "db/migrations/20260827_nestly_v544_one_current_loyalty_balance.sql"
     }
   ]
 }
