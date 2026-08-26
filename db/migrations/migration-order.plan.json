@@ -2691,6 +2691,18 @@
    "path": "db/migrations/20260827_nestly_v551_whatsapp_bringback_sends.sql",
    "semanticVersion": "v551",
    "proposedDeployVersion": "20260827000011"
+  },
+  {
+   "kind": "executable",
+   "path": "db/migrations/20260827_nestly_v555_business_pot_fails_closed.sql",
+   "semanticVersion": "v555",
+   "proposedDeployVersion": "20260827000012"
+  },
+  {
+   "kind": "executable",
+   "path": "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql",
+   "semanticVersion": "v556",
+   "proposedDeployVersion": "20260827000013"
   }
  ]
 }

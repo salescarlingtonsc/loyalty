@@ -4690,7 +4690,10 @@ async function clientsPage(){
   };
   const exportRetentionBucketV155=(key,bucket,loyaltyAvailable)=>{
     if(!bucket)return;
-    const rows=[['name','phone','last_visit','member_since','points','credit','consent'],
+    /* nestly_v557 (LOYALTY-009 remnant): the one place left that wrote a "points" column header
+       for a stamps business. The on-screen sites all resolve the unit (v378/v430); the CSV now
+       does too. */
+    const rows=[['name','phone','last_visit','member_since',liveBalanceUnitV378()==='stamps'?'stamps':'points','credit','consent'],
       ...bucket.customers.map(customer=>[customer.full_name,customer.phone||'',customer.last_visit_at||'Never visited',customer.created_at||'',loyaltyAvailable?Number(customer.points||0):'unavailable',loyaltyAvailable?(Number(customer.balance_cents||0)/100).toFixed(2):'unavailable',customer.marketing_consent?'yes':'no'])];
     const blob=new Blob([rows.map(row=>row.map(value=>String(value).replace(/,/g,';')).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${BRAND.downloadPrefix}-${key}-customers.csv`;a.click();toast('Retention CSV downloaded');

@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 446,
-  "executableCount": 432,
+  "itemCount": 448,
+  "executableCount": 434,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -652,7 +652,7 @@
     },
     {
       "sourceDeployVersion": "20260827",
-      "count": 10,
+      "count": 12,
       "paths": [
         "db/migrations/20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql",
         "db/migrations/20260827_nestly_v544_one_current_loyalty_balance.sql",
@@ -663,7 +663,9 @@
         "db/migrations/20260827_nestly_v551_top_share_denominator.sql",
         "db/migrations/20260827_nestly_v551_whatsapp_bringback_sends.sql",
         "db/migrations/20260827_nestly_v552_gated_evidence_isolation.sql",
-        "db/migrations/20260827_nestly_v554_v154_family_provenance.sql"
+        "db/migrations/20260827_nestly_v554_v154_family_provenance.sql",
+        "db/migrations/20260827_nestly_v555_business_pot_fails_closed.sql",
+        "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql"
       ]
     }
   ],
@@ -4235,6 +4237,22 @@
       "semanticVersion": "v551",
       "proposedDeployVersion": "20260827000011",
       "sha256": "6c4e248ec4e51513b805b6623dd45d52d8dfbf2e3ba13cdd1b5b0441e290f7d1"
+    },
+    {
+      "order": 447,
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v555_business_pot_fails_closed.sql",
+      "semanticVersion": "v555",
+      "proposedDeployVersion": "20260827000012",
+      "sha256": "80301cebccd5c5eb298bd97406fee8848a8221647aff40beb08c55fed1debd11"
+    },
+    {
+      "order": 448,
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql",
+      "semanticVersion": "v556",
+      "proposedDeployVersion": "20260827000013",
+      "sha256": "dc67b96cd7c0e66d32cb8a461d8cfb03e7851b87595e40ce6fac684c7581509b"
     }
   ]
 }

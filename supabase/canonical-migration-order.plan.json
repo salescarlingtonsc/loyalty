@@ -2686,6 +2686,18 @@
       "version": "20260827000011",
       "name": "nestly_v551_whatsapp_bringback_sends",
       "sourcePath": "db/migrations/20260827_nestly_v551_whatsapp_bringback_sends.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000012",
+      "name": "nestly_v555_business_pot_fails_closed",
+      "sourcePath": "db/migrations/20260827_nestly_v555_business_pot_fails_closed.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000013",
+      "name": "nestly_v556_policy_read_is_strict",
+      "sourcePath": "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql"
     }
   ]
 }
