@@ -64,8 +64,8 @@ function buildNav() {
     .filter(([name]) => !new RegExp(`(?:const|let|var|function)\\s+${name}\\b`).test(extracted))
     .map(([, code]) => code).join('\n');
 
-  return new Function('MODULES_UNDER_TEST', 'PAGE_UNDER_TEST',
-    `${harness}\n${modules}\n${navgroups}\n${activeGroup}\n${navFn}\nreturn navHtml(PAGE_UNDER_TEST);`);
+  return new Function('MODULES_UNDER_TEST', 'PAGE_UNDER_TEST', 'ID_PREFIX',
+    `${harness}\n${modules}\n${navgroups}\n${activeGroup}\n${navFn}\nreturn navHtml(PAGE_UNDER_TEST, ID_PREFIX||'nav');`);
 }
 
 /* Exactly what public.get_my_modules returns for Cubbly SPA in production, which
@@ -135,4 +135,30 @@ test('the rail never leaks a Meta internal', () => {
   for (const forbidden of ['wamid', 'graph.facebook', 'WHATSAPP_', 'phone_number_id', 'PK-']) {
     assert.ok(!html.includes(forbidden), `${forbidden} must not appear in the rail`);
   }
+});
+
+test('MOBILE renders the same row — the drawer calls the same navHtml', () => {
+  /* app/app.js:16110 builds the mobile "More workspace modules" drawer with
+     navHtml(page,'mobile-nav'), so the rail and the drawer are one code path.
+     Asserting it rather than assuming it: a second mobile-only module list is
+     exactly the kind of thing that would silently diverge. */
+  const desktop = buildNav()(CUBBLY, ['dashboard'], 'nav');
+  const mobile = buildNav()(CUBBLY, ['dashboard'], 'mobile-nav');
+  assert.match(mobile, /WhatsApp Inbox/, 'the mobile drawer must carry the Inbox');
+  assert.match(mobile, /href="#\/support"/);
+  /* Same items either way; only element ids differ. */
+  /* idPrefix is the ONLY intended difference, and it lands in id, for and
+     aria-controls. Normalise all three; anything else that differs is a real
+     divergence between the two surfaces. */
+  const strip = html => html
+    .replace(/\bid="[^"]*"/g, '')
+    .replace(/\bfor="[^"]*"/g, '')
+    .replace(/\baria-controls="[^"]*"/g, '');
+  assert.equal(strip(mobile), strip(desktop),
+    'desktop and mobile must render an identical module list');
+});
+
+test('MOBILE hides it for an unentitled tenant too', () => {
+  const mobile = buildNav()(CONTROL, ['dashboard'], 'mobile-nav');
+  assert.ok(!mobile.includes('WhatsApp Inbox'));
 });
