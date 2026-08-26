@@ -36,6 +36,11 @@ verify_jwt = false
 [functions.whatsapp-webhook]
 verify_jwt = false
 
+# v536 outbound dispatcher. Woken by pg_net from app.v536_run_support_dispatch
+# with a shared secret; it presents no Supabase JWT.
+[functions.whatsapp-send-dispatch]
+verify_jwt = false
+
 [functions.sme-document-signer]
 verify_jwt = true
 

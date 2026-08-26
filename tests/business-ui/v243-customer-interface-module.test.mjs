@@ -177,7 +177,15 @@ test('V243 Customer Interface is a top-level rail entry beside Programmes', () =
      children instead of a flat link — the same shape V294 gave Programmes. */
   /* V334 (owner markup, photo 9: hide Preview/Done/Customer programme from nav): the sidebar now
      maps the filtered VISIBLE list, not the full array — routes/hashes stay intact elsewhere. */
-  assert.match(groups, /\{key:'customerui',icon:'customers',label:'Customer Interface',items:\['customer-interface'\],\s*views:CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334\.map\(view=>\[view\[1\],view\[2\],view\[3\]\]\)\}/);
+  /* nestly_v538: the group now also carries module-backed items alongside its
+     declared views — 'support' (WhatsApp Inbox) is the first. The assertion keeps
+     what it was actually guarding (a top-level GROUP whose children come from
+     CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334, sitting directly after Programmes) and
+     stops pinning the exact contents of `items`, which is now a gated list rather
+     than a fixed one. The per-item gating is covered by
+     tests/whatsapp/v538-inbox-navigation.test.mjs, which executes the real
+     navHtml and asserts an unentitled tenant gets no row. */
+  assert.match(groups, /\{key:'customerui',icon:'customers',label:'Customer Interface',items:\[[^\]]*'customer-interface'[^\]]*\],\s*views:CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334\.map\(view=>\[view\[1\],view\[2\],view\[3\]\]\)\}/);
   const order = [...groups.matchAll(/\{key:'([a-z]+)'/g)].map((m) => m[1]);
   assert.equal(order[order.indexOf('grow') + 1], 'customerui', 'it sits directly after Programmes');
 });

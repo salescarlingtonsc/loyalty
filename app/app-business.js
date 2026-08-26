@@ -174,7 +174,7 @@ const CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334=CUSTOMER_INTERFACE_VIEWS_V296
 const CUSTOMER_INTERFACE_TABS_V368=['appointment','actions'];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
-  {key:'customers',icon:'customers',flat:'Customers',items:['clients','support']},
+  {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
   /* V275 put Bottles inside Serve & sell; nestly_v488 (owner, photo 2: "i want the module
      'bottle' to be standalone - not under serve and sell") lifts it out into its own flat rail
      entry directly below the group it left. Flat like Home and Customers because it is one
@@ -229,7 +229,13 @@ const NAVGROUPS=[
      other three. Same shape as the V294 Programmes group: `views` are routable children of ONE
      surface, `items` still gates the group. Every child hash resolves in customerInterfacePageV243,
      and the bare '#/customer-interface' keeps landing on the preview exactly as before. */
-  {key:'customerui',icon:'customers',label:'Customer Interface',items:['customer-interface'],
+  /* nestly_v538: 'support' joins this group's items so navModuleVisible gates it
+     exactly like every other module — a firm without the support entitlement
+     simply never grows the row. It is an ITEM, not a `views` entry, because
+     views are the destination page's own tabs and the Inbox is its own surface.
+     The child-row builder below now renders declared views AND module-backed
+     items, so one group can carry both. */
+  {key:'customerui',icon:'customers',label:'Customer Interface',items:['customer-interface','support'],
     views:CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334.map(view=>[view[1],view[2],view[3]])},
   /* V206 (owner: "allow firms to reverse the transactions if needed to easily at ease").
      Reversing already worked — every row of this list carries Reverse and Correct amount — so
@@ -1769,9 +1775,16 @@ function navHtml(page,idPrefix='nav'){
         return CUSTOMER_INTERFACE_TABS_V368.includes(String(page[1]||''));
       return String(page[1]||'')===routeView;
     };
+    /* nestly_v538: a `views` group used to render ONLY its declared views, so a
+       module-backed item inside such a group was silently dropped. Both are now
+       rendered — views first (they are the host page's tabs), then any module
+       items navModuleVisible let through. Groups with no module items are
+       byte-identical to before, because the second list is empty for them. */
+    const moduleChildRowsV538=items=>items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:20})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}${m==='appointments'?`<span data-appointments-badge-slot>${appointmentsNavBadgeHtml()}</span>`:''}</a>`).join('');
     const childRowsV294=(g.views||[]).length
       ?g.views.map(([label,href,iconName])=>{const on=navViewActiveV296(href);
         return `<a href="${href}" class="${on?'act':''}"${on?' aria-current="page"':''}><span class="ic">${CUI.icon(iconName||g.icon,{size:20})}</span><span class="nav-label">${label}</span></a>`}).join('')
+        +moduleChildRowsV538(g.items)
       :g.items.filter(m=>MODULES[m]).map(m=>`<a href="#/${m}" class="${activeKey===m?'act':''}"${activeKey===m?' aria-current="page"':''}><span class="ic">${CUI.icon(MODULES[m][0],{size:20})}</span><span class="nav-label">${MODULES[m][1]}</span>${m==='waitlist'?`<span data-waitlist-badge-slot>${waitlistBadgeHtml()}</span>`:''}${m==='appointments'?`<span data-appointments-badge-slot>${appointmentsNavBadgeHtml()}</span>`:''}</a>`).join('');
     return `<div class="navgroup">
       <button type="button" class="navhead ${g.key===activeGrp?'act':''}" data-grp="${g.key}" aria-expanded="${isOpen}" aria-controls="${idPrefix}-${g.key}"><span class="ic">${CUI.icon(g.icon,{size:20})}</span>${g.label}<span class="chev" aria-hidden="true">${isOpen?'−':'+'}</span></button>
