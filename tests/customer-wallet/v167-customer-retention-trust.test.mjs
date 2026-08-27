@@ -79,7 +79,10 @@ test('customer account trust controls use positioned UI and shared capability tr
   assert.match(passkeys,/Keep passkey/);
   assert.match(push,/function visible\(/);
   assert.match(push,/button\.hidden=!visible\(value\)/);
-  assert.match(push,/setting\.hidden=!visible\(value\)/);
+  /* nestly_v571: the painter still drives the section from push state — it just no longer
+     overrides a page that has deliberately PARKED the card off screen (Messages keeps it in
+     reserve for its settings modal, and the painter was putting it back). */
+  assert.match(push,/setting\.hidden=setting\.hasAttribute\('data-push-parked-v571'\)\|\|!visible\(value\)/);
 });
 
 test('security readiness is explicit instead of allowing a silent sign-in no-op',async()=>{

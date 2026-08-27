@@ -271,7 +271,11 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   assert.match(indexHtml,/\.customer-business-offers-head-v349 h2\{font-family:var\(--sf\)/);
   assert.doesNotMatch(indexHtml,/font-family:Georgia/, 'the customer app carries one font family');
   assert.match(indexHtml,/\.customer-shell \.card\.customer-business-summary-v346\{[^}]*linear-gradient\(145deg,var\(--brand-red\) 0%,var\(--brand-red-dark\) 100%\)/);
-  assert.match(indexHtml,/\.customer-business-balance-v347\{[^}]*font-size:56px!important/);
+  /* nestly_v571 (owner, two photos: "number can be smaller", and 77,877 overflowing the
+     Business Profile live preview). The figure is capped below the old fixed 56px and scales with
+     its container; what this line protects — that the hero figure is sized deliberately and with
+     !important, against the shell's cascade — is unchanged. */
+  assert.match(indexHtml,/\.customer-business-balance-v347\{[^}]*font-size:clamp\(30px,8\.5vw,44px\)!important/);
   assert.match(indexHtml,/\.customer-business-summary-actions-v349\{[^}]*grid-template-columns:1fr 1fr!important/);
   assert.match(indexHtml,/\.customer-referral-code-row\{[^}]*grid-template-columns:1fr 1fr!important/);
 });

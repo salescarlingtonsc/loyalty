@@ -223,11 +223,16 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
    second copy of the businesses already listed below it. The chips are not deleted — they remain
    the only way to start a booking with a business that has nothing booked yet — they are simply
    what the search box has always looked like it controlled. */
-test('v548/v549 the booking chooser shows nothing until the customer searches',async()=>{
+/* nestly_v571 (owner, Bookings photo): v548's "nothing until you search" default is replaced by
+   the three most recently booked businesses. What v548 actually removed — the standing list of
+   EVERY joined business, sitting above the same businesses listed below it — stays removed, and
+   that is what the doesNotMatch below still pins. */
+test('v571 the booking chooser shows the recent three until the customer searches',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wire=section(app,'function wireCustomerBookingSearchV326','function customerBookingEmptyMarkupV183');
-  assert.match(wire,/const match=!!query&&\(terms\.includes\(query\)/,
-    'an empty query matches NOTHING — this is the line that inverted');
+  assert.match(wire,/:recentItemsV571\.has\(item\)/,
+    'an empty query falls back to the recent set, never to every business');
+  assert.match(wire,/const RECENT_BOOKING_CHIPS_V571=3/);
   assert.doesNotMatch(wire,/const match=!query\|\|/,'the old show-everything default is gone');
   /* nestly_v549: the behaviour of the keyword routes is EXECUTED in
      tests/customer-wallet/v291-booking-chooser-and-filter.test.mjs, not asserted by regex here. */
@@ -236,8 +241,9 @@ test('v548/v549 the booking chooser shows nothing until the customer searches',a
   const chooser=section(app,'function customerBookingChooserV291','function wireCustomerBookingSearchV326');
   assert.match(chooser,/data-repeat-booking data-business-slug=/,'a bookable business is still one tap');
   assert.match(chooser,/customerBookingSearchStatus" role="status">/,
-    'the status line is no longer born hidden — it carries the empty-query prompt');
-  assert.match(wire,/Search by name, service or type/);
+    'the status line still exists — it reports how much a SEARCH has hidden');
+  assert.doesNotMatch(wire,/Search by name, service or type/,
+    'nestly_v571: the owner struck out the standing prompt');
 });
 
 test('loyalty owner can enable customer QR redemption without a bookings module',async()=>{

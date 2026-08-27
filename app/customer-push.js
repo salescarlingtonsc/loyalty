@@ -253,7 +253,10 @@
     const paint=value=>{
       button.hidden=!visible(value);
       const setting=button.closest?.('.customer-push-setting');
-      if(setting)setting.hidden=!visible(value);
+      /* nestly_v571: a parked section is one the page has deliberately taken off screen (Messages
+         keeps this card in reserve for its settings modal). Painting it visible from push state
+         alone put it back on a page that had just removed it, so the park wins here. */
+      if(setting)setting.hidden=setting.hasAttribute('data-push-parked-v571')||!visible(value);
       button.dataset.pushState=value.state;
       button.setAttribute('aria-pressed',value.state==='enabled'?'true':'false');
       button.querySelector('[data-push-label]')?.replaceChildren(buttonLabel(value));

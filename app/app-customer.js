@@ -1874,9 +1874,22 @@ function customerBookingChooserV291(groups=[]){
     ...(Array.isArray(group.appointments)?group.appointments:[]).map(item=>item?.service_name),
     ...(Array.isArray(group.requests)?group.requests:[]).map(item=>item?.service_name)
   ].filter(Boolean).join(' ').trim().toLowerCase();
+  /* nestly_v571 (owner, Bookings photo: an arrow at the chip row — "show recent 3 last booked
+     businesses only"). The most recent moment this customer had anything booked with the
+     business: a real appointment or a request, whichever is later. Rows with no date at all sort
+     last rather than being dropped — a business the customer is linked to is still bookable. */
+  const bookingLastAtV571=group=>{
+    const stamps=[
+      ...(Array.isArray(group.appointments)?group.appointments:[]),
+      ...(Array.isArray(group.requests)?group.requests:[])
+    ].map(item=>Date.parse(item?.starts_at||item?.preferred_at||item?.created_at||''))
+     .filter(value=>Number.isFinite(value));
+    return stamps.length?Math.max(...stamps):0;
+  };
   const chip=group=>{
     const searchAttr=`data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').trim().toLowerCase())}"`
       +` data-booking-search-terms="${esc(searchTermsV549(group))}"`
+      +` data-booking-last-at="${esc(String(bookingLastAtV571(group)))}"`
       +` data-booking-search-category="${esc(customerBusinessCategoryV122(group.industry))}"`;
     /* v327 (owner: "photo 1 - remove this icon (shaded)"): the blurry business-photo thumbnail
        came off the search-result chip — name and status text only now. */
@@ -1931,14 +1944,23 @@ function wireCustomerBookingSearchV326(host=document){
     const category=customerBusinessCategoryV122(query);
     return category==='Other'?'':category;
   };
+  /* nestly_v571: with no query the chooser shows the three businesses this customer booked with
+     most recently. v549 showed nothing at all and explained itself in a sentence the owner has
+     now struck out — so the default state has to be useful rather than explained. Typing still
+     searches everything; this only decides what stands there before anyone types. */
+  const RECENT_BOOKING_CHIPS_V571=3;
+  const recentItemsV571=new Set([...items]
+    .sort((a,b)=>Number(b.dataset.bookingLastAt||0)-Number(a.dataset.bookingLastAt||0))
+    .slice(0,RECENT_BOOKING_CHIPS_V571));
   const apply=()=>{
     const query=String(input.value||'').trim().toLowerCase();
     const category=query?queryCategoryV549(query):'';
     let shown=0;
     items.forEach(item=>{
       const terms=String(item.dataset.bookingSearchTerms||item.dataset.bookingSearchName||'');
-      const match=!!query&&(terms.includes(query)
-        ||(!!category&&String(item.dataset.bookingSearchCategory||'')===category));
+      const match=query
+        ?(terms.includes(query)||(!!category&&String(item.dataset.bookingSearchCategory||'')===category))
+        :recentItemsV571.has(item);
       item.hidden=!match;
       if(match)shown++;
     });
@@ -1947,10 +1969,14 @@ function wireCustomerBookingSearchV326(host=document){
       group.hidden=!visible;
     });
     if(!status)return;
-    status.hidden=false;
+    /* nestly_v571 (owner, Bookings photo: the helper sentence scribbled out, "remove this"). The
+       field's own placeholder already says what to type, and the chips below already show what is
+       there to book with. The line survives only where it says something the screen cannot: how
+       many of the businesses a search has just hidden. */
+    status.hidden=!query;
     status.textContent=query
       ?(shown?`${shown} of ${items.length} shown`:`No business matches “${query}”.`)
-      :`Search by name, service or type — spa, facial, hair, cafe. ${items.length} ${items.length===1?'business':'businesses'} to book with.`;
+      :'';
   };
   input.addEventListener('input',apply);
   apply();
@@ -2036,7 +2062,8 @@ async function renderCustomerBookings(){
       .reduce((sum,group)=>sum+group.tabRequests.length+group.tabAppointments.length,0);
     const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingRange);
     const emptyCopy=(CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[2]||'Nothing here yet.';
-    const requestHeading=currentBookingTab==='bookings'?'Awaiting the business':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
+    /* nestly_v571 (owner, Bookings photo: "the business" struck out, "confirmation" written in). */
+    const requestHeading=currentBookingTab==='bookings'?'Awaiting confirmation':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
     const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
     const partialMessages=[
       walletResult.error?'Confirmed appointments could not be discovered from your programmes.':'',
@@ -7635,7 +7662,13 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
   });
   const returnInboxSettingsNodesV549=()=>{
     const {panel,panelHome,device}=inboxSettingsHomesV549();
-    if(device){device.hidden=true;$('walletBody')?.appendChild(device)}
+    /* nestly_v571 (owner, Messages photo: the Device notifications card struck out, "remove this
+       section"). It was never meant to be on this page — v549 parks it in walletBody, hidden, and
+       the settings modal borrows it. What put it back on screen is customer-push.js's own painter,
+       which sets `.customer-push-setting`.hidden from the push state on every reconcile and so
+       un-hid a card the page had deliberately parked. The park is now declared with an attribute
+       the painter honours, so visibility is decided in one place instead of two racing ones. */
+    if(device){device.hidden=true;device.setAttribute('data-push-parked-v571','');$('walletBody')?.appendChild(device)}
     if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
   };
   const closeInboxSettingsModalV549=()=>{
@@ -7657,7 +7690,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     </div></div>`);
     const body=document.getElementById('customerInboxSettingsBodyV549');
     panel.hidden=false;body.appendChild(panel);
-    if(device){device.hidden=false;device.style.marginTop='18px';body.appendChild(device)}
+    if(device){device.removeAttribute('data-push-parked-v571');device.hidden=false;device.style.marginTop='18px';body.appendChild(device)}
     const modal=document.getElementById('customerInboxSettingsModalV549');
     inboxSettingsDeactivateV549=CUI.activateDialog(modal,{onClose:closeInboxSettingsModalV549,initialFocus:'#customerInboxSettingsCloseV549'})||(()=>{});
     document.getElementById('customerInboxSettingsCloseV549').onclick=closeInboxSettingsModalV549;
@@ -7686,7 +7719,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       const state=String(item?.state||'read'),isResolved=state==='resolved',isUnavailable=state==='source_unavailable',business=item?.business||null;
       const routeSlug=global?business?.slug:businessSlug;
       const name=String(business?.name||'').trim()||(global?'Business programme':'This business');
-      const when=item?.deadline_at||item?.created_at||'';
+      /* nestly_v571 (owner, Messages photo, the dates ringed: "date put posted date"). This
+         printed deadline_at when there was one, so a promotion inbox row about an offer running
+         until 31 Dec showed 31 Dec — a future date sitting where every messaging app puts the
+         moment the message arrived. The posted date leads now; the deadline is the fallback for
+         rows that carry no created_at. */
+      const when=item?.created_at||item?.deadline_at||'';
       const openable=item?.action_available===true&&!isResolved&&item?.route_key==='wallet_business'&&!!routeSlug;
       const monogram=(name[0]||'B').toUpperCase();
       const line=String(item?.title||'Inbox update').trim();
@@ -7778,7 +7816,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        binding that owns #customerPushMessagesControl — is never destroyed by a re-render again. */
     const deviceSectionV549=$('customerMessagesNotifications');
     if(deviceSectionV549&&!inboxSettingsDeactivateV549){
-      deviceSectionV549.hidden=true;
+      deviceSectionV549.hidden=true;deviceSectionV549.setAttribute('data-push-parked-v571','');
       if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
         $('walletBody')?.appendChild(deviceSectionV549);
     }

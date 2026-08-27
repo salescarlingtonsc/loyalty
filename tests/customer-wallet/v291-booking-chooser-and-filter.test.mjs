@@ -104,6 +104,8 @@ function runSearch(groups, query) {
       bookingSearchName: pick('data-booking-search-name'),
       bookingSearchTerms: pick('data-booking-search-terms'),
       bookingSearchCategory: pick('data-booking-search-category'),
+      /* nestly_v571: the recency stamp the empty-query default sorts on. */
+      bookingLastAt: pick('data-booking-last-at'),
     }, hidden: false };
   });
   assert.equal(items.length, groups.length, 'every business rendered a searchable chip');
@@ -119,13 +121,22 @@ function runSearch(groups, query) {
   return { shown: items.filter((item) => !item.hidden).map((item) => item.dataset.bookingSearchName), status };
 }
 
+/* nestly_v571: the fixture carries dates now, because the empty-query default is an ORDERING —
+   the three most recently booked businesses — and a fleet with no dates could not tell a correct
+   implementation from one that simply takes the first three in render order. */
 const FLEET = [
   { business_slug: 'a', business_name: 'Cubbly SPA', industry: 'beauty', bookingEnabled: true,
-    appointments: [{ service_name: 'facial' }], requests: [] },
+    appointments: [{ service_name: 'facial', starts_at: '2026-08-20T02:00:00Z' }], requests: [] },
   { business_slug: 'b', business_name: 'QA Kaya Toast', industry: 'cafe', bookingEnabled: true,
-    appointments: [], requests: [{ service_name: 'kopi tasting' }] },
+    appointments: [], requests: [{ service_name: 'kopi tasting', preferred_at: '2026-08-26T02:00:00Z' }] },
   { business_slug: 'c', business_name: 'Iron Gym', industry: 'fitness', bookingEnabled: false,
     appointments: [], requests: [] },
+];
+/* A fourth business, booked longest ago, so the cap of three actually excludes somebody. */
+const FLEET_OF_FOUR = [
+  ...FLEET,
+  { business_slug: 'd', business_name: 'Old Barber', industry: 'beauty', bookingEnabled: true,
+    appointments: [{ service_name: 'cut', starts_at: '2026-01-02T02:00:00Z' }], requests: [] },
 ];
 
 test('v549 a sector word finds the businesses in that sector, not just a matching name', () => {
@@ -153,8 +164,22 @@ test('v549 the name still works, and a meaningless query still matches nothing',
   assert.deepEqual(runSearch(unlabelled, 'zzzz').shown, []);
 });
 
-test('v549 an empty query shows nothing and says what the box is for', () => {
-  const { shown, status } = runSearch(FLEET, '');
-  assert.deepEqual(shown, [], 'v548: the chips are behind the search, not standing above it');
-  assert.match(status.textContent, /spa, facial, hair, cafe/, 'the prompt names the kind of word that works');
+/* nestly_v571 (owner, Bookings photo: the helper sentence struck out, and an arrow at the chips —
+   "show recent 3 last booked businesses only"). v549's empty state showed no chips and explained
+   itself in prose; with the prose gone the default has to carry its own meaning, so it is now the
+   three businesses this customer booked with most recently. Typing still searches all of them. */
+test('v571 an empty query shows the three most recently booked businesses', () => {
+  const { shown, status } = runSearch(FLEET_OF_FOUR, '');
+  /* WHICH three, not in what order: the chips stay grouped by sector, which is the chooser's own
+     ordering and not something recency should fight. Iron Gym has never been booked, so it is the
+     one the cap drops even though it renders before Old Barber. */
+  assert.deepEqual([...shown].sort(), ['cubbly spa', 'old barber', 'qa kaya toast']);
+  assert.ok(!shown.includes('iron gym'), 'the business with no booking at all is not one of the three');
+  assert.equal(status.textContent, '', 'the struck-out prompt is gone');
+  assert.equal(status.hidden, true, 'and its line does not hold empty space');
+});
+
+test('v571 typing still searches every business, not just the recent three', () => {
+  assert.deepEqual(runSearch(FLEET_OF_FOUR, 'iron').shown, ['iron gym'],
+    'a business outside the recent three is still reachable by name');
 });

@@ -48,7 +48,11 @@ test('the scanner spotlight shadow is clipped to the video frame',()=>{
    inside a template literal. */
 test('the customer surface is multilingual and the scanner sheet is routed through ct()',()=>{
   assert.match(js,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
-  assert.match(js,/title\.textContent=ct\('Scan the business QR'\)/);
+  /* nestly_v571 (owner, both QR sheets: the heading struck out, the eyebrow ringed "move to
+     middle"). The heading is gone, so the eyebrow carries the mode name — and the dialog's
+     accessible name with it. Still ct()-routed, which is what this test guards. */
+  assert.match(js,/kicker\.textContent=ct\('addProgramme'\)/);
+  assert.match(js,/kicker\.textContent=ct\('My Peekaa QR'\)/);
   assert.match(js,/status\.textContent=ct\(DECODER_LOAD_FAILURE\)/);
   assert.match(js,/status\.textContent=ct\('Point the camera at the business QR\.'\)/);
 });

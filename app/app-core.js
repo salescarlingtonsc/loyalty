@@ -2969,8 +2969,13 @@ function openCustomerJoinScanner(){
   const overlay=document.createElement('div');
   overlay.className='modal customer-surface appointment-detail-modal customer-scan-modal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-  overlay.setAttribute('aria-labelledby','customerJoinScannerTitle');
-  overlay.innerHTML=`<section class="modal-card"><div class="row"><div><p class="customer-quest-kicker" id="customerScanSheetKicker">${esc(ct('My Peekaa QR'))}</p><h2 id="customerJoinScannerTitle" style="margin-top:5px">${esc(ct('My Peekaa QR'))}</h2><p class="muted small" id="customerScanSheetSubtitle" style="margin-top:5px">${esc(ct('Show this at any Peekaa business to be recognised as you.'))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:20})}</button></div>
+  /* nestly_v571 (owner, both QR sheets: the big heading struck out, the eyebrow ringed with
+     "move to middle", the explanatory line scribbled out). The heading was the dialog's
+     accessible name, so the eyebrow — which carries the same words — takes that role rather
+     than the sheet losing its name along with its heading. */
+  overlay.setAttribute('aria-labelledby','customerScanSheetKicker');
+  overlay.innerHTML=`<section class="modal-card"><div class="row"><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:20})}</button></div>
+    <p class="customer-quest-kicker" id="customerScanSheetKicker" style="text-align:center;margin:0 0 12px">${esc(ct('My Peekaa QR'))}</p>
     <div id="customerMyQrPanelV329" aria-busy="true">
       <div class="customer-my-qr-stage-v344"><span class="customer-qr-sparkle-v344 s1" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s2" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s3" aria-hidden="true">✦</span><div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div><span class="customer-qr-heart-v344" aria-hidden="true"><span>•ᴗ•</span></span></div>
       <p id="customerMyQrStatusV329" class="muted small" role="status" aria-live="polite"></p>
@@ -2978,7 +2983,6 @@ function openCustomerJoinScanner(){
     </div>
     <div id="customerJoinScanPanelV329" hidden>
       <button class="btn ghost sm" id="customerMyQrSwitchToMine" type="button" style="width:100%;margin-bottom:12px">${CUI.icon('scan',{size:16})}<span>${esc(ct('Show my QR instead'))}</span></button>
-      <p class="muted small">${esc(ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.'))}</p>
       <div class="scanner-frame" id="customerJoinScannerFrame" hidden><video class="scanner-video" id="customerJoinScannerVideo" playsinline muted aria-label="${esc(ct('Camera preview for business join QR'))}"></video></div>
       <button class="btn" id="customerJoinScannerCamera" type="button" style="width:100%;margin-top:16px">${CUI.icon('scan',{size:20})}<span>${esc(ct('Open camera'))}</span></button>
       <p id="customerJoinScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p>
@@ -3000,17 +3004,14 @@ function openCustomerJoinScanner(){
   const myQrPanel=overlay.querySelector('#customerMyQrPanelV329');
   const scanPanel=overlay.querySelector('#customerJoinScanPanelV329');
   const kicker=overlay.querySelector('#customerScanSheetKicker');
-  const subtitle=overlay.querySelector('#customerScanSheetSubtitle');
-  const title=overlay.querySelector('#customerJoinScannerTitle');
+  /* The eyebrow is the whole header now — it names the mode and, via aria-labelledby, the dialog. */
   const showMyQr=()=>{
     myQrPanel.hidden=false;scanPanel.hidden=true;
-    title.textContent=ct('My Peekaa QR');kicker.textContent=ct('My Peekaa QR');
-    subtitle.textContent=ct('Show this at any Peekaa business to be recognised as you.');
+    kicker.textContent=ct('My Peekaa QR');
   };
   const showScan=()=>{
     myQrPanel.hidden=true;scanPanel.hidden=false;
-    title.textContent=ct('Scan the business QR');kicker.textContent=ct('addProgramme');
-    subtitle.textContent=ct('Use the Peekaa QR displayed by the business. A scan never joins an unrelated business.');
+    kicker.textContent=ct('addProgramme');
     startCamera();
   };
   overlay.querySelector('#customerMyQrSwitchToScan').onclick=showScan;

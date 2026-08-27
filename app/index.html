@@ -77,7 +77,7 @@
   <link rel="preload" as="script" href="/runtime-config.js?v=2">
   <link rel="preload" as="script" href="/runtime-config-loader.js?v=2">
   <link rel="preload" as="script" href="/customer-ui.js?v=20260813-v298-caption-once">
-  <link rel="preload" as="script" href="/app-core.js?b=db9564f76441">
+  <link rel="preload" as="script" href="/app-core.js?b=9c95440d955b">
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
      app/join.html still requests it separately and still uses it for its headings. -->
@@ -3788,6 +3788,13 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
   font-family:var(--sf,inherit);font-size:22px;font-weight:750;line-height:1;cursor:pointer;
   transition:background .14s var(--ease)}
 .customer-inbox-settings-toggle-v549:hover{background:var(--peekaa-red-dark,var(--coral-hover))}
+/* nestly_v571 (owner, Messages photo: the round red control ringed — "smaller and don't want red
+   color"). Red is the brand's ACTION colour; a settings door painted in it read louder than the
+   messages it sits over. Neutral surface, quieter glyph, smaller footprint — still a 40px target. */
+.customer-inbox-settings-toggle-v549{width:40px;height:40px;font-size:18px;font-weight:700;
+  background:var(--surface-2,#f2efe9);color:var(--ink-2,#5c5750);
+  border:1px solid var(--line,#e6e1d8)}
+.customer-inbox-settings-toggle-v549:hover{background:var(--surface-3,#e9e4dc)}
 /* Inside the dialog the panel is the whole content, so it drops the divider it wore as the last
    block on a scrolling page, and the dialog scrolls if a customer has many programmes. */
 .customer-inbox-settings-card-v549{max-width:var(--dialog-w-md,520px)}
@@ -4135,7 +4142,12 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* W3-4: the standing is the one thing on this page that is EARNED, so it is the one thing that
    gets the gold. Every other chip on the hero stays translucent white on red. */
 .customer-shell .card.customer-business-summary-v346 .customer-business-tier-pill-v347{background:var(--gold-bg)!important;color:var(--warn)!important;border:1px solid color-mix(in srgb,var(--gold) 60%,#fff)!important;font-weight:800!important;letter-spacing:.06em!important}
-.customer-business-balance-v347{display:flex!important;align-items:flex-end!important;gap:7px!important;max-width:100%!important;font-size:56px!important;line-height:.86!important;letter-spacing:-.035em!important;white-space:nowrap!important;font-family:var(--sf)!important;font-weight:760!important}
+/* nestly_v571 (owner, two photos: the hero figure ringed on the customer home — "number can be
+   smaller" — and again on the Business Profile live preview, where 77,877 ran past its card). It
+   was a fixed 56px, so a five-digit balance overflowed the narrow preview and a three-digit one
+   dwarfed everything around it. It scales with the container now and is capped well below the
+   old size. */
+.customer-business-balance-v347{display:flex!important;align-items:flex-end!important;gap:7px!important;max-width:100%!important;font-size:clamp(30px,8.5vw,44px)!important;line-height:.86!important;letter-spacing:-.035em!important;white-space:nowrap!important;font-family:var(--sf)!important;font-weight:760!important}
 .customer-business-balance-v347 span{padding-bottom:5px!important;font-size:14px!important;line-height:1!important;font-weight:700!important;letter-spacing:0!important;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif!important}
 /* W3-4: the same dots/track the wallet cards draw, recoloured for the red ground — the filled part
    in gold so the progression cue and the tier pill read as one accent, not two. */
@@ -4177,7 +4189,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
 .customer-referral-card-v300{padding:16px!important}.customer-referral-card-v300 .wallet-section-head h2{font-size:17px!important;line-height:1.08!important}.customer-referral-card-v300 .wallet-section-head p{max-width:100%;font-size:12.5px!important;line-height:1.28!important}
 .customer-referral-code-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;align-items:stretch!important;width:100%!important}.customer-referral-code{grid-column:1/-1;justify-content:center;max-width:100%;min-width:0!important;font-size:18px!important;letter-spacing:.16em!important}.customer-referral-code-row .btn{width:100%;min-width:0!important;justify-content:center}
-@media(max-width:380px){.customer-business-balance-v347{font-size:48px!important}.customer-business-summary-actions-v349{grid-template-columns:1fr!important}.customer-referral-code{font-size:16px!important}}
+@media(max-width:380px){.customer-business-balance-v347{font-size:clamp(28px,8vw,38px)!important}.customer-business-summary-actions-v349{grid-template-columns:1fr!important}.customer-referral-code{font-size:16px!important}}
 /* V364: optical alignment fixes for compact customer cards and pills. */
 .customer-home-offer-countdown,.customer-offer-new{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;white-space:nowrap!important}
 .customer-home-offer-countdown{min-height:26px!important;padding:0 12px!important}
@@ -4875,7 +4887,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=4effdff0cf3a","business":"/app-business.js?b=31079b486f6a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=82b3b582f518","business":"/app-business.js?b=31079b486f6a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -4899,6 +4911,6 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=db9564f76441" defer></script>
+<script src="/app-core.js?b=9c95440d955b" defer></script>
 </body>
 </html>
