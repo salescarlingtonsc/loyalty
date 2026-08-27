@@ -513,3 +513,26 @@ test('nestly_v428 item 9: a stamps balance never prints as points because the un
   assert.equal(customerHomeBusinessBalanceV345({ loyalty: { balance: 758 } }), '758 pts',
     'a server that does not send the unit yet renders exactly as it did before');
 });
+
+/* ------------------------------------------------ nestly_v562: the photo column is never a hole */
+
+/* Owner (KKY demo, 2026-08-27): a ring round the empty right-hand side of the stamp hero — the
+   next gift had no photo and v475 rendered one column, which on this card reads as a hole. v487's
+   ruling for the points hero ("if no photo put [gift] logo") now covers the stamp card too. */
+test('v562: a next gift without a photo draws the gift glyph, not an empty right-hand side', () => {
+  const html = harness.customerHeroStampCardV422(quest(5, 0, [
+    { slot: 5, name: 'Free upsize', stamps_to_go: 5, claimed_this_cycle: false }
+  ]));
+  assert.match(html, /customer-hero-stamp-has-photo-v475/,
+    'the two-column layout must engage for the glyph exactly as it does for a photo');
+  assert.match(html, /data-hero-stamp-gift-fallback-v562/);
+  assert.doesNotMatch(html, /data-hero-stamp-photo-v475/, 'no photo means no <img>');
+});
+
+test('v562: a card with every milestone claimed still renders one column — no gift, no picture', () => {
+  const html = harness.customerHeroStampCardV422(quest(5, 5, [
+    { slot: 5, name: 'Free upsize', stamps_to_go: 0, claimed_this_cycle: true }
+  ]));
+  assert.doesNotMatch(html, /customer-hero-stamp-has-photo-v475/);
+  assert.doesNotMatch(html, /data-hero-stamp-gift-fallback-v562/);
+});

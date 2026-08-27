@@ -10035,6 +10035,18 @@ function customerHeroStampCardV422(quest){
      for the swipe and the same gift named on the card cannot look like two different products.
      A milestone with no photo renders one column and the card is byte-identical to before. */
   const photoV475=customerMediaUrlV95(next?.imageRef);
+  /* nestly_v562 (owner, KKY demo photo: a ring drawn round the empty right-hand side of the
+     stamp hero — "why does it not show the next rewards image?"). The gift ("Free upsize") had
+     no photo, and v475 deliberately rendered one column then — which reads as a hole on a card
+     whose right side was BUILT to carry the reward's picture. v487 already settled this exact
+     question for the points hero ("if no photo put [gift] logo": a real photo when one is known,
+     the gift glyph when it is not, never an empty hole). The stamp card now keeps the same
+     bargain, reusing v487's fallback class so the two heroes cannot drift apart. The column
+     appears whenever there is a NEXT gift to work toward; a card with every milestone claimed
+     still renders one column, because there is no gift to picture. */
+  const photoColumnV562=photoV475
+    ?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`
+    :next?`<span class="customer-hero-gift-fallback-v487" data-hero-stamp-gift-fallback-v562>${CUI.icon('giftcard',{size:34})}</span>`:'';
   /* nestly_v478: the same control the reward pages carry, over the gift this card is working
      toward. A card with every milestone claimed has no `next` and so draws no "?" — a rules sheet
      about nothing is a button that lies. Keyed by nothing: the sheet is built from the milestone
@@ -10045,7 +10057,7 @@ function customerHeroStampCardV422(quest){
      the contents of an image. It is a labelled group now, so the progress summary is still
      announced AND the gift buttons inside it can be reached. */
   const gridV475=`<div class="customer-hero-stamp-grid-v422" role="group" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
-  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoV475?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
+  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoColumnV562?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
     ${helpV478?`<div class="customer-hero-stamp-help-v478">${helpV478}</div>`:''}
     <div class="customer-hero-stamp-body-v475">
       <div class="customer-hero-stamp-copy-v475">
@@ -10055,7 +10067,7 @@ function customerHeroStampCardV422(quest){
              moment the wallet draws it, so the hero shows the NEXT card with the excess already
              on it (owner, photo 1). */''}
       </div>
-      ${photoV475?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`:''}
+      ${photoColumnV562}
     </div>
   </div>`;
 }
