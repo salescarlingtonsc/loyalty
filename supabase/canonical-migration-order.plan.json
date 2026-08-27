@@ -2710,6 +2710,12 @@
       "version": "20260827000015",
       "name": "nestly_v559_publish_never_flips_loyalty_off",
       "sourcePath": "db/migrations/20260827_nestly_v559_publish_never_flips_loyalty_off.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000016",
+      "name": "nestly_v560_welcome_and_birthday_reach_customers",
+      "sourcePath": "db/migrations/20260827_nestly_v560_welcome_and_birthday_reach_customers.sql"
     }
   ]
 }

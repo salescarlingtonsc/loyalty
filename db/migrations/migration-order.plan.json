@@ -2715,6 +2715,12 @@
       "path": "db/migrations/20260827_nestly_v559_publish_never_flips_loyalty_off.sql",
       "semanticVersion": "v559",
       "proposedDeployVersion": "20260827000015"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v560_welcome_and_birthday_reach_customers.sql",
+      "semanticVersion": "v560",
+      "proposedDeployVersion": "20260827000016"
     }
   ]
 }
