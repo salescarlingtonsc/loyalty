@@ -1,6 +1,9 @@
 /* v557 — one-purpose admin plane: create/check the two C7 utility templates.
  *
- * Owner approved the exact wording 2026-08-27. The definitions live HERE, in
+ * Owner approved the wording 2026-08-27; amended same day because Meta forbids a
+ * template body that STARTS with a variable (subcode 2388299) — the business
+ * name moved inside the sentence. Submitted 2026-08-27, template ids
+ * 3613779478780236 / 1602528361431069. The definitions live HERE, in
  * code, so nothing outside this function can submit arbitrary templates to
  * Meta. Callable only with the internal dispatch secret (same trust plane as
  * the sender); the browser has no path to this function.
@@ -17,7 +20,7 @@ const TEMPLATES = [
     category: 'UTILITY',
     components: [{
       type: 'BODY',
-      text: '{{1}}: Your appointment is confirmed — {{2}} on {{3}}. Reply to this chat if you need to change it.',
+      text: 'Your appointment with {{1}} is confirmed — {{2}} on {{3}}. Reply to this chat if you need to change it.',
       example: { body_text: [['Cubbly SPA', 'Relax Massage 60 min', 'Fri 29 Aug, 3:00 PM']] },
     }],
   },
@@ -27,7 +30,7 @@ const TEMPLATES = [
     category: 'UTILITY',
     components: [{
       type: 'BODY',
-      text: '{{1}}: Reminder — {{2}} tomorrow at {{3}}. See you soon! Reply here to reschedule.',
+      text: 'Reminder from {{1}} — {{2}} tomorrow at {{3}}. See you soon! Reply here to reschedule.',
       example: { body_text: [['Cubbly SPA', 'Relax Massage 60 min', '3:00 PM']] },
     }],
   },
