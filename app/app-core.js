@@ -4442,6 +4442,12 @@ function customerHeroStampCardV422(quest){
      for the swipe and the same gift named on the card cannot look like two different products.
      A milestone with no photo renders one column and the card is byte-identical to before. */
   const photoV475=customerMediaUrlV95(next?.imageRef);
+  /* nestly_v562a: this comment exists to move the core chunk's content hash. The first v562
+     deploy's fingerprinted URL was probed through the CDN before Vercel had finished building,
+     and Cloudflare cached the pre-deploy answer under the new URL with max-age=31536000,
+     immutable — poisoning the SIN POP for that exact URL. A new hash is a new URL no POP has
+     seen. Rule recorded in memory: verify /api/build reports the new sha FIRST; probe chunk
+     URLs at the Vercel origin, never through the CDN, until it does. */
   /* nestly_v562 (owner, KKY demo photo: a ring drawn round the empty right-hand side of the
      stamp hero — "why does it not show the next rewards image?"). The gift ("Free upsize") had
      no photo, and v475 deliberately rendered one column then — which reads as a hole on a card
