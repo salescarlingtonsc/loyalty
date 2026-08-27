@@ -1,0 +1,8 @@
+[
+  {
+    "check_id": "D13",
+    "business_id": "8492e8d6-8888-4383-ada0-7e1ed69f0caa",
+    "reason": "Cubbly SPA is the deliberate WhatsApp Inbox pilot tenant: platform_module_overrides_v94 forces module_key='support' ON (mode='rw') against an enabled_modules array that does not list it. The override is intentional platform state, not tenant drift. Waives this pair only - any OTHER business tripping D13 still blocks.",
+    "added": "2026-08-28"
+  }
+]

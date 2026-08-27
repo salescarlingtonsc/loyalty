@@ -7,6 +7,9 @@
     "node": ">=22"
   },
   "scripts": {
+    "tenant-gate": "node scripts/ops/tenant-consistency-gate.mjs",
+    "tenant-gate:prove": "node scripts/ops/tenant-consistency-gate.mjs --prove-detection",
+    "certify-tenant": "node scripts/ops/tenant-consistency-gate.mjs --certify",
     "quality": "node scripts/quality/static-baseline.mjs",
     "runtime-config:check": "node scripts/runtime-config/generate.mjs --config config/runtime/production.json --check",
     "migration-manifest:check": "node scripts/migrations/generate-manifest.mjs --check",
