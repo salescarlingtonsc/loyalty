@@ -763,7 +763,7 @@
   {
    "id": "db.fn:public.customer_activate_birthday_benefit/2",
    "surface": "db_function",
-   "latest_file": "20260822000004_nestly_v424_birthday_window_honoured.sql",
+   "latest_file": "20260827000016_nestly_v560_welcome_and_birthday_reach_customers.sql",
    "rows_written": "customer_birthday_activation_operations:INSERT, customer_birthday_entitlements:INSERT",
    "detected_signals": "idem-signal, for-update, config-version",
    "entry_point": "customer_activate_birthday_benefit(p_business,...)",
