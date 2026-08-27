@@ -281,9 +281,17 @@ test('customer sign-up join URL is a safe 44px target without 390px overflow',()
 
 test('foreign workspace denials expose a focused main landmark and page heading',()=>{
   const routing=section('async function route()','/* ---------- customer wallet ---------- */');
-  assert.equal((routing.match(/<h1 id="workspaceUnavailableTitle"/g)||[]).length,2);
-  assert.equal((routing.match(/<main class="center-wrap" id="main" tabindex="-1">/g)||[]).length,2);
-  assert.equal((routing.match(/\$\('main'\)\.focus\(\)/g)||[]).length,2);
+  /* nestly_v569: this pinned the literal count 2 — the number of denial cards that happened to
+     exist — so adding the two cards a staff member awaiting (or refused) approval now gets made
+     an accessibility test fail for a reason that had nothing to do with accessibility. The
+     PROPERTY it exists to hold is per-card, so it is asserted per-card: every centred denial
+     card in the router carries a page heading and takes focus, however many there are. */
+  const mains=(routing.match(/<main class="center-wrap" id="main" tabindex="-1">/g)||[]).length;
+  const headings=(routing.match(/<h1 id="workspaceUnavailableTitle"/g)||[]).length;
+  const focuses=(routing.match(/\$\('main'\)\.focus\(\)/g)||[]).length;
+  assert.ok(mains>=2,`expected the router's denial cards, found ${mains}`);
+  assert.equal(headings,mains,'every centred denial card needs its own page heading');
+  assert.equal(focuses,mains,'every centred denial card must take focus when it renders');
 });
 
 test('progressive enhancement covers every workspace route',()=>{

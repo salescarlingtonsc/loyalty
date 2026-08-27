@@ -264,6 +264,10 @@ and approval only to the risk exceptions listed in `AGENTS.md`, scoped to the
 specific risky action. Production remains `gadpooereceldfpfxsod`; never use the
 retired project `kyzovonwnscrzmkvocid`.
 
+Every production bug follows the Peekaa Permanent Bug-Closure Protocol in
+`AGENTS.md` ("Peekaa Permanent Bug-Closure Protocol" section) — fix, root
+cause, regression, scanner, lifecycle certification, estate-wide check.
+
 ## Design direction (owner-confirmed; updated 2026-07-18 post-launch)
 - **Grouped navigation (Cubbly reference, owner screenshot 2026-07-18):** a handful of
   top-level headers, NOT a long flat rail. Owner's words: "too many modules… modules will

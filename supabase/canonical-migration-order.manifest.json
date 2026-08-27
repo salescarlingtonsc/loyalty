@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 412,
-  "itemCount": 457,
+  "pendingCount": 413,
+  "itemCount": 458,
   "items": [
     {
       "order": 1,
@@ -4577,6 +4577,16 @@
       "path": "supabase/migrations/20260828000001_nestly_v568_survivor_arm_stays_in_its_pot.sql",
       "octetLength": 17331,
       "sha256": "4d54ef01886c2e9dcdd1fc682fcad7953ede04ad5f0151117858e8c53e673c4f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 458,
+      "kind": "pending",
+      "version": "20260828000002",
+      "name": "nestly_v569_login_active_only_when_approved",
+      "path": "supabase/migrations/20260828000002_nestly_v569_login_active_only_when_approved.sql",
+      "octetLength": 8522,
+      "sha256": "eaccd04dec96a1ab84e935aa4b4f51dce9f4466336e5cf05e8f04b1e29ee3f2c",
       "provenance": "local-source"
     }
   ]

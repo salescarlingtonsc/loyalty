@@ -2746,6 +2746,12 @@
       "version": "20260828000001",
       "name": "nestly_v568_survivor_arm_stays_in_its_pot",
       "sourcePath": "db/migrations/20260828_nestly_v568_survivor_arm_stays_in_its_pot.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828000002",
+      "name": "nestly_v569_login_active_only_when_approved",
+      "sourcePath": "db/migrations/20260828_nestly_v569_login_active_only_when_approved.sql"
     }
   ]
 }

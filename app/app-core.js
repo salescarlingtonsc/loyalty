@@ -1438,6 +1438,46 @@ async function route(){
         wireAccountDeletionButton();
         $('workspaceHome').onclick=()=>nav(personas?.default_route||'#/');return;
       }
+      /* nestly_v569: a teammate whose access_state is not yet 'approved' used to fall through to
+         the "Workspace unavailable" card below — RLS hides the business row from them, so the
+         read simply failed and the screen said nothing was there. That reads as "you were never
+         invited" when the truth is "your owner has not pressed Approve yet". get_my_personas now
+         ships access_state alongside workspace_access, so the wait can be named. Only a persona
+         that genuinely exists reaches this point, so the not-a-member case above is untouched. */
+      const personaAccessStateV569=String(workspaceStaffPersona.access_state||'approved');
+      if(personaAccessStateV569!=='approved'){
+        const businessNameV569=esc(workspaceStaffPersona.business_name||workspaceSlug||'this business');
+        /* A declined teammate has nothing to retry: only a fresh invite changes this answer,
+           so this card carries no button that would just re-read the same refusal. */
+        if(personaAccessStateV569==='rejected'){
+          root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Access not granted</h1><p class="muted small" style="margin-top:8px">${businessNameV569} did not approve app access for this account. Ask them to send you a new invite if this is wrong.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+          $('main').focus();
+          wireAccountDeletionButton();
+          return;
+        }
+        /* get_my_personas is memoised for BOOTSTRAP_CACHE_TTL_V370.personas, so an owner could
+           approve and the teammate would still be told to wait until that cache expired — the same
+           "told one thing, experiencing another" this fix exists to end. Check again forces the
+           re-read (loadPersonasV370's own {refresh:true} bypass) and only routes on a genuinely
+           approved answer; a still-pending answer stays on this card rather than flashing success. */
+        const renderWaitingV569=note=>{
+          root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Waiting for approval</h1><p class="muted small" style="margin-top:8px">${businessNameV569} has been asked to approve your access. You will get in as soon as they grant it.</p>${note?`<p class="muted small" id="workspaceApprovalNote" style="margin-top:8px">${esc(note)}</p>`:''}<button class="btn" id="workspaceApprovalRetry" style="margin-top:16px">Check again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+          $('main').focus();
+          wireAccountDeletionButton();
+          $('workspaceApprovalRetry').onclick=async()=>{
+            const retryButton=$('workspaceApprovalRetry');
+            if(retryButton)retryButton.disabled=true;
+            const {data:refreshedPersonas,error:refreshError}=await loadPersonasV370({refresh:true});
+            if(!isRouteCurrent())return;
+            if(refreshError)return renderPersonaResolutionUnavailable();
+            const refreshedPersona=(refreshedPersonas?.staff||[]).find(p=>p.business_slug===workspaceSlug);
+            if(refreshedPersona&&String(refreshedPersona.access_state||'approved')==='approved')return route();
+            renderWaitingV569('Still waiting — your owner has not approved this yet.');
+          };
+        };
+        renderWaitingV569('');
+        return;
+      }
       /* V370: a POSITIVE answer is final and user-scoped — record it so a business switch (which
          resets S.hasCustomerPersona along with S.biz) does not re-resolve it. A negative stays
          null here on purpose: customer_get_profile below is still allowed to discover a

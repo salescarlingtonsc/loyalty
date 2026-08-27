@@ -1062,6 +1062,57 @@ exception when others then
   insert into _r values ('18f the parked pot lends nothing to the live programme','FAIL: '||sqlerrm);
 end $s18f$;
 
+-- ============ 18g a teammate's login is only live once the owner approves it =================
+-- nestly_v569 (owner, 2026-08-28): public.accept_invite always writes access_state='pending' and
+-- the owner releases it with decide_staff_access_v207. Until v569 three readers ignored that
+-- state — the roster called the teammate active, get_my_personas routed her into a workspace RLS
+-- refused, and she was billed as a seat. Tenant creation IS a lifecycle scenario, so the shape
+-- is certified here: pending is refused everywhere and unbilled; approval releases access, the
+-- persona answer and the seat together.
+do $s18g$
+declare
+  v_biz uuid := '1abe0e00-0000-4000-8000-000000000001';
+  v_owner uuid := '1abe0e00-0000-4000-8000-0000000000a1';
+  v_mate uuid := '1abe0e00-0000-4000-8000-0000000000f1';
+  v_staff_mate uuid;
+  v_access boolean; v_state text; v_seats_pending integer; v_seats_after integer; v_res jsonb;
+begin
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,
+                         email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_mate,'authenticated','authenticated',
+          'lc-teammate-'||v_mate||'@example.test','',now(),now(),now());
+  insert into public.staff(business_id, user_id, role, full_name, active, access_state)
+  values (v_biz, v_mate, 'staff', 'LC teammate', true, 'pending') returning id into v_staff_mate;
+
+  perform pg_temp.lc_as(v_mate);
+  select (persona->>'workspace_access')::boolean, persona->>'access_state'
+    into v_access, v_state
+    from jsonb_array_elements(public.get_my_personas()->'staff') persona
+   where (persona->>'business_id')::uuid = v_biz;
+  perform pg_temp.lc_as(null);
+  select app.billable_seats(v_biz) into v_seats_pending;
+
+  perform pg_temp.lc_as(v_owner);
+  v_res := public.decide_staff_access_v207(v_biz, v_staff_mate, true);
+  perform pg_temp.lc_as(v_mate);
+  select (persona->>'workspace_access')::boolean
+    into v_access
+    from jsonb_array_elements(public.get_my_personas()->'staff') persona
+   where (persona->>'business_id')::uuid = v_biz;
+  perform pg_temp.lc_as(null);
+  select app.billable_seats(v_biz) into v_seats_after;
+
+  insert into _r values ('18g a login is live only once the owner approves it',
+    case when v_state is distinct from 'pending' then 'FAIL: the persona hid access_state'
+         when v_res->>'access_state' is distinct from 'approved' then 'FAIL: approval said '||coalesce(v_res::text,'?')
+         when v_access is not true then 'FAIL: still refused after approval'
+         when v_seats_after <> v_seats_pending + 1
+           then 'FAIL: seats went '||v_seats_pending||' -> '||v_seats_after||' (approval should add exactly one)'
+         else 'OK' end);
+exception when others then
+  insert into _r values ('18g a login is live only once the owner approves it','FAIL: '||sqlerrm);
+end $s18g$;
+
 -- ============ 19 two-path equivalence ========================================================
 -- Tenant A reached its final state through Grow (draft -> publish). Tenant B reaches the SAME
 -- state through Settings first (business_set_loyalty_model_v353 as the very first touch). The

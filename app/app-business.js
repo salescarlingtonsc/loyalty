@@ -32108,7 +32108,9 @@ async function settingsPage(){
        sub:'Full access to every module. Cannot be restricted.',
        match:row=>['owner','manager'].includes(row.role)},
       {key:'access',title:'Team with app access',
-       sub:'They can sign in. Each active login is a billable seat.',
+       /* nestly_v569: app.billable_seats now counts only access_state='approved' logins, so the
+          old copy overcharged in the reader's head for anyone still waiting on approval. */
+       sub:'Each login you have approved is a billable seat. Nobody is billed while they wait.',
        match:row=>!['owner','manager'].includes(row.role)&&!!row.user_id},
       /* V294 (owner markup 2026-08-12): "Roster only" -> "Team members". The description below
          already says what the group means, so only the heading changes. */
@@ -32119,7 +32121,23 @@ async function settingsPage(){
     const staffRowV209=s=>{
       const explicitCount=s.module_perms&&typeof s.module_perms==='object'?Object.keys(s.module_perms).length:0;
       const modPill=s.role==='owner'?'':(s.module_perms===null?'<span class="pill on">Inherits enabled modules</span>':`<span class="pill off">${explicitCount} explicit module${explicitCount===1?'':'s'}</span>`);
-      const accessPill=s.user_id?'<span class="pill ok">App access active</span>':'<span class="pill off">No app access</span>';
+      /* nestly_v569: the pill used to read straight off user_id, so the SECOND a teammate
+         accepted an invite the roster said "App access active" — while accept_invite had parked
+         them at access_state='pending' and app.is_salon_member (which demands 'approved') kept
+         refusing them at every sign-in. The roster was lying about the one fact the owner needed
+         to act on, and decide_staff_access_v207 — the RPC that resolves it — had no caller
+         anywhere in this file. The pill now reports the real state and the pending row carries
+         the decision. NULL access_state (rows predating the column) is read as approved so an
+         established team is not mass-flagged as waiting. */
+      const accessStateV569=String(s.access_state||(s.user_id?'approved':''));
+      /* 'rejected' is read BEFORE user_id: decide_staff_access_v207 detaches user_id when it
+         declines, so a declined teammate looks identical to a never-invited one on user_id
+         alone — and the owner would have no way to see the decision they just made. */
+      const accessPendingV569=!!s.user_id&&accessStateV569==='pending';
+      const accessPill=accessStateV569==='rejected'?'<span class="pill off">App access declined</span>'
+        :!s.user_id?'<span class="pill off">No app access</span>'
+        :accessPendingV569?'<span class="pill warn">Waiting for your approval</span>'
+        :'<span class="pill ok">App access active</span>';
       /* V180 (owner instruction): one line per teammate — name, email, phone, team and
          commission — and the row itself opens an editable profile. Previously the row showed
          only a name while email, phone and commission lived in separate cards further down
@@ -32151,7 +32169,9 @@ async function settingsPage(){
                however much this particular row's pills+buttons happen to take up. -->
           <div class="staff-row-actions">
             ${accessPill}${modPill}<span class="spacer"></span>
-            ${s.role!=='owner'?`${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+            ${s.role!=='owner'?`${accessPendingV569?`<button class="btn sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',true,this)">Approve access</button>
+            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',false,this)">Decline</button>`:''}
+            ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
             <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
             <!-- V285: Remove used to be a hard DELETE, which is the wrong default for a person.
                  Deactivating is what a shop actually does when somebody leaves: access stops at
@@ -32161,6 +32181,7 @@ async function settingsPage(){
             <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="setStaffActiveV285('${s.id}',${s.active===false?'true':'false'},this)">${s.active===false?'Reactivate':'Deactivate'}</button>
             <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Delete</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
           </div>
+          ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}">${esc(s.full_name||'This teammate')} has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
         </div>
         ${openProfileId===s.id?staffProfilePanelHtml(s):''}
         ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
@@ -32236,6 +32257,23 @@ async function settingsPage(){
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();
     if(id===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
+  };
+  /* nestly_v569: the owner's half of the invite handshake. accept_invite deliberately parks a
+     new teammate at access_state='pending' so a stolen or forwarded code cannot walk straight
+     into the workspace — but nothing in this file ever called decide_staff_access_v207, so
+     'pending' was a dead end: the teammate saw "Workspace unavailable" for ever and the owner
+     saw a green pill. Declining detaches the login and keeps the person on the rota, which is
+     why it warns rather than deletes. */
+  window.decideStaffAccessV569=async(id,approve,button)=>{
+    const name=button?.dataset?.name||'this teammate';
+    if(!approve&&!await confirmActionV386(`Decline app access for ${name}? Their sign-in is disconnected, they stay on your team list, and you can send them a new invite later.`))return;
+    if(button)button.disabled=true;
+    const {error}=await sb.rpc('decide_staff_access_v207',{p_business:S.biz.id,p_staff:id,p_approve:approve});
+    if(button)button.disabled=false;
+    if(error)return fail(error);
+    invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
+    toast(approve?`${name} can now sign in`:'App access declined');
+    await loadTeam();
   };
   window.setStaffActiveV285=async(id,active,button)=>{
     const name=button?.dataset?.name||'this teammate';

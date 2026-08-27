@@ -169,6 +169,64 @@ select s.business_id, s.business_name, 'D06', 'RUNTIME-DANGEROUS',
         and coalesce((select fcv.status from public.firm_config_versions fcv
                        where fcv.id=s.active_config_version_id),'<missing>') <> 'published');
 
+-- D17 (nestly_v569) — the READER-vs-AUTHORITY check for staff logins, and the operational
+-- follow-up beside it. The canonical rule is app.is_salon_member: workspace open AND staff active
+-- AND access_state='approved'.
+--
+-- D17 is the DANGEROUS half: public.get_my_personas' own workspace_access answer must equal what
+-- the authority would grant that same account. It was not, which is how a teammate was shown as
+-- active, refused at every read, routed to a dead end and billed for an unusable login. Note this
+-- is deliberately reader-vs-AUTHORITY, never reader-vs-reader: two readers agreeing on a wrong
+-- answer is exactly the shape nestly_v568 taught us a consistency check cannot see.
+do $d17$
+declare r record; v_reported boolean; v_bad text := '';
+begin
+  for r in
+    select s.id, s.business_id, b.name as business_name, s.user_id, s.full_name, s.access_state,
+           (app.business_workspace_open_v94(s.business_id) and s.active
+             and s.access_state='approved') as authority
+      from public.staff s
+      join public.businesses b on b.id=s.business_id
+     where s.user_id is not null and s.active
+  loop
+    perform set_config('request.jwt.claims',
+      json_build_object('sub',r.user_id,'role','authenticated','aud','authenticated')::text,true);
+    begin
+      select coalesce((select (persona->>'workspace_access')::boolean
+                         from jsonb_array_elements(public.get_my_personas()->'staff') persona
+                        where (persona->>'business_id')::uuid = r.business_id), false)
+        into v_reported;
+    exception when others then
+      insert into _scan values (r.business_id, r.business_name, 'D17', 'RUNTIME-DANGEROUS',
+        'the persona reader could not be evaluated for '||coalesce(r.full_name,'?')||': '||sqlerrm);
+      continue;
+    end;
+    if v_reported is distinct from r.authority then
+      insert into _scan values (r.business_id, r.business_name, 'D17', 'RUNTIME-DANGEROUS',
+        coalesce(r.full_name,'?')||' ['||coalesce(r.access_state,'?')||']: the persona reader says '
+        ||v_reported::text||' while the membership authority says '||r.authority::text);
+    end if;
+  end loop;
+  perform set_config('request.jwt.claims','',true);
+end
+$d17$;
+
+-- D17b — the OPERATIONAL half, deliberately non-blocking. A teammate who has accepted their
+-- invite sits at access_state='pending' until the owner approves them, which is the intended
+-- security posture (public.accept_invite always writes 'pending'). It is legitimate and often
+-- transient, so it must never redden the gate — but it is a person waiting to be let in, so it
+-- is surfaced with its age rather than left silent, which is how the recorded case sat unnoticed.
+insert into _scan
+select s.business_id, b.name, 'D17b', 'HISTORICAL-ONLY',
+       count(*)||' teammate(s) waiting for the owner to approve their login: '
+       ||string_agg(coalesce(s.full_name,'?')||' (waiting '
+                    ||greatest(0,(current_date - s.created_at::date))||'d)', '; '
+                    order by s.full_name)
+  from public.staff s
+  join public.businesses b on b.id=s.business_id
+ where s.user_id is not null and s.active and s.access_state='pending'
+ group by s.business_id, b.name;
+
 -- D16 (nestly_v568) — the CORE's own answer, audited against the platform's own rule rather
 -- than against another reader. D07 asks "do the two readers agree?"; after v566 made the
 -- presentation delegate to app.reward_availability_v432, that question became tautological and
@@ -444,7 +502,7 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
   from (values
     ('D01','RUNTIME-DANGEROUS'),('D01b','RUNTIME-DANGEROUS'),('D02','RUNTIME-DANGEROUS'),
     ('D03','RUNTIME-DANGEROUS'),('D04','RUNTIME-DANGEROUS'),('D05','RUNTIME-DANGEROUS'),
-    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),
+    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
     ('D15','RUNTIME-DANGEROUS')
