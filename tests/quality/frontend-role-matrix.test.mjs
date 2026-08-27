@@ -112,7 +112,7 @@ test('global appointment, setup, and booking decision controls match their mutat
   assert.match(global,/const canViewAppts=canReadModule\('appointments'\)/);
   assert.match(global,/const canNewAppt=canWriteModule\('appointments'\)/);
   assert.match(global,/const canQuickEarn=canReadModule\('till'\)&&canReadModule\('clients'\)&&hasRoleCapability\('create_sales'\)/);
-  assert.match(global,/canNewAppt\?'New appointment':'View calendar'/);
+  assert.match(global,/canNewAppt\?'Appointment':'View calendar'/);
   assert.match(route,/pageKey==='setup'&&S\.myRole!=='owner'/);
   assert.match(profile,/S\.myRole==='owner'\?`<a href="#\/setup"/);
   /* V288 (audit A2 HIGH 1): RETARGETED, not deleted. Confirming a booking request is a

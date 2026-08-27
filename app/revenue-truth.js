@@ -342,6 +342,10 @@
   };
 
   function stateBanner(view){
+    /* nestly_v571 (owner mark): the all-clear banner ("Your revenue picture is ready") repeated
+       what the figures underneath already state, so it is suppressed. Every other state is a
+       caveat the owner must see before trusting a number — those still render. */
+    if(view.state==='ready'&&!view.errorMessage)return '';
     const copy=statusCopy[view.state]||statusCopy.insufficient;
     const action=['stale','error'].includes(view.state)
       ?'<button class="btn ghost sm revenue-truth-retry" type="button" data-revenue-truth-action="retry">Try again</button>'
@@ -388,7 +392,7 @@
         ${metricCard('Peekaa recorded revenue',truth.totals.knownRevenueMinor===null?'Not available':money(truth.totals.knownRevenueMinor,currency),recordedHelper,{tone:'caution'})}
         ${metricCard('Identified customer revenue',money(truth.totals.identifiedRevenueMinor,currency),identifiedHelper)}
         ${metricCard('Anonymous / unattributed revenue',money(truth.totals.anonymousRevenueMinor,currency),anonymousHelper)}
-        ${metricCard('Customer revenue coverage',percentage(truth.coverage.identityRevenuePct),coverageHelper,{tone:truth.coverage.identityRevenuePct===null?'caution':'neutral'})}
+        ${metricCard('Member revenue coverage',percentage(truth.coverage.identityRevenuePct),coverageHelper,{tone:truth.coverage.identityRevenuePct===null?'caution':'neutral'})}
       </div>
       ${truth.limitations.length?`<details class="revenue-truth-limitations"><summary>Coverage notes</summary><ul>${truth.limitations.slice(0,5).map(item=>`<li>${escapeHtml(item)}</li>`).join('')}</ul></details>`:''}
     </section>`;

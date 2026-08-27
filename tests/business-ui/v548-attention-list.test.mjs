@@ -24,13 +24,18 @@ const blockStart = app.indexOf('function attentionWhatsAppUrlV548(');
 const blockEnd = app.indexOf('/* V180 (owner instruction', blockStart);
 assert.ok(blockStart > -1 && blockEnd > blockStart, 'the V548 block must sit before the V180 schedule comment');
 const block = app.slice(blockStart, blockEnd);
-assert.ok(block.includes('async function loadDashboardAttentionV548('), 'loader must live in the extracted block');
+assert.ok(block.includes('async function loadAttentionListV571('), 'loader must live in the extracted block');
 
 function makeHarness({ rpcResult, role = 'owner', canRead = true }) {
   const calls = [];
   const outreachHandlers = [];
   const host = {
     innerHTML: '<!-- untouched -->',
+    /* nestly_v571: the loader's staleness guard is now `host.isConnected` — it can no longer
+       assume the dashboard root, because the card mounts inside the Bring-back view. A real node
+       carries this; the stub must too, or every render assertion below silently reads the
+       untouched placeholder. */
+    isConnected: true,
     /* V550: the loader wires a click recorder onto every Message link. The stub parses its own
        innerHTML for the outreach ids and hands back capturing link stubs, so a test can fire the
        captured handler and watch the RPC. */
@@ -44,7 +49,7 @@ function makeHarness({ rpcResult, role = 'owner', canRead = true }) {
   };
   const domRoot = {
     isConnected: true,
-    querySelector: (sel) => (sel === '#dashboardAttentionV548' ? host : null)
+    querySelector: (sel) => (sel === '#growBbAttentionV571' ? host : null)
   };
   const sandbox = {
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
@@ -53,13 +58,13 @@ function makeHarness({ rpcResult, role = 'owner', canRead = true }) {
     canReadModule: () => canRead,
     S: { myRole: role, biz: { id: 'biz-1', name: 'Kaya & Co', currency: 'SGD' } },
     sb: { rpc: async (fn, args) => { calls.push({ fn, args }); return rpcResult; } },
-    $: (id) => (id === 'dashboardView' ? domRoot : null)
+    $: () => null
   };
   const context = vm.createContext(sandbox);
   const exportsRef = {};
   context.__exports = exportsRef;
   vm.runInContext(
-    block + '\n__exports.load = loadDashboardAttentionV548;\n__exports.wa = attentionWhatsAppUrlV548;',
+    block + '\n__exports.load = loadAttentionListV571;\n__exports.wa = attentionWhatsAppUrlV548;',
     context
   );
   return { load: exportsRef.load, wa: exportsRef.wa, host, domRoot, calls, outreachHandlers };
@@ -158,10 +163,15 @@ test('V550 a Message tap records outreach evidence without blocking the wa.me na
 
 /* ---------------------------------------------------------------- wiring + server authority */
 
-test('V548 the dashboard hosts the card and calls the loader at first paint', () => {
-  assert.ok(app.includes('<div id="dashboardAttentionV548"></div>'), 'the dashboard markup hosts the card');
-  assert.ok(app.includes('loadDashboardAttentionV548(dashboardRoot,appliedDashboardScopeV141.branchId)'),
-    'first paint loads the card with the same branch scope as its siblings');
+/* nestly_v571 (owner ruling): the card left the Dashboard for the Bring-back module in Rewards
+   Programme, where the vouchers this audience is being argued for are configured. These assertions
+   move with it — and the Dashboard one is kept as a negative, so the card cannot drift back. */
+test('V571 the Bring-back module hosts the card and calls the loader at first paint', () => {
+  assert.ok(app.includes('<div id="growBbAttentionV571"></div>'), 'the Bring-back view markup hosts the card');
+  assert.ok(app.includes('loadAttentionListV571(outerMain,null)'),
+    'the Bring-back view loads the card business-wide, not narrowed by the header branch picker');
+  assert.ok(!app.includes('dashboardAttentionV548'),
+    'the Dashboard no longer hosts or loads the attention card');
 });
 
 test('V548 the browser never re-derives the server judgement', () => {

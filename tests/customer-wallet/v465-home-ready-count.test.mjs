@@ -129,9 +129,13 @@ test('R1: a count of zero is not readiness — the card falls through to its pro
     'the old flag said ready, the server said none; the card must not claim readiness');
 });
 
-test('R1: nestly_v428 "Choose 1" still outranks the count, exactly as on the business page', () => {
+/* nestly_v571 (owner mark on My Rewards: "Choose 1 reward" struck out, "state how many rewards
+   ready" written beside it). v428's phrasing hid the number on exactly the cards where several
+   gifts share one stamp slot, so the same business read "5 rewards ready" in the greeting and
+   "Choose 1 reward" on its own row. The count now wins on every surface, shared slot or not. */
+test('R1: nestly_v571 the count is printed whether or not the gifts share one stamp slot', () => {
   assert.equal(H.customerHomeBusinessStatusV345(card({ready: 2, chooseOne: true})),
-    'Choose 1 reward');
+    '2 rewards ready');
   assert.equal(H.customerHomeBusinessStatusV345(card({ready: 2, chooseOne: false})),
     '2 rewards ready');
 });

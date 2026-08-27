@@ -465,14 +465,17 @@ test('nestly_v428 item 6: two gifts on ONE stamp slot are a choice, not two rewa
   ], 'stamps'), false);
 });
 
-test('nestly_v428 item 6: the tile says how many the customer may TAKE, not how many exist', () => {
+/* nestly_v571 (owner mark): the tile prints the count on both branches now — see the v571 note
+   in tests/customer-wallet/v465-home-ready-count.test.mjs. The shared-slot wording survives only
+   where it has room to explain itself, in the rewards sheet asserted at the end of this test. */
+test('nestly_v571: the tile prints the ready count on both branches', () => {
   const { customerRewardReadyCountApplyV397 } = harness;
   const node = () => ({ textContent: '', dataset: { rewardReadyFallbackV397: 'Collect stamps here' } });
   const root = target => ({ querySelectorAll: () => [target] });
 
   const choice = node();
   customerRewardReadyCountApplyV397(2, root(choice), { chooseOneV428: true });
-  assert.equal(choice.textContent, 'Choose 1 reward');
+  assert.equal(choice.textContent, '2 rewards ready');
 
   // Independent rewards keep the count — two really are claimable.
   const independent = node();

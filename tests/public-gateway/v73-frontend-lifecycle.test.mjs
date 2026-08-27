@@ -61,7 +61,7 @@ test('owners cannot see or mutate a disabled module while owner-only special pag
   }
   assert.match(route,/if\(pageKey==='storedvalue'\)[\s\S]*Stored value is not available for launch/);
   const global=section('function globalActionsHtml(){','function wireGlobalActions(){');
-  assert.match(global,/canViewAppts\?`<button[\s\S]*canNewAppt\?'New appointment':'View calendar'/);
+  assert.match(global,/canViewAppts\?`<button[\s\S]*canNewAppt\?'Appointment':'View calendar'/);
 });
 
 test('staff-only multi-workspace business entry and shell use the same complete stable list',()=>{
@@ -114,7 +114,10 @@ test('linked waitlist decisions never directly mutate queue status or claim a se
   assert.match(waitlist,/if\(row\?\.booking_request_id\)\{[\s\S]*must be decided with Confirm or Decline/);
   assert.match(waitlist,/w\.booking_request_id\?'<span class="pill new">Linked booking/);
   assert.match(waitlist,/Linked booking requests must be confirmed into a real appointment/);
-  assert.match(waitlist,/Appointment form opened — the walk-in is still waiting until a booking is completed/);
+  /* nestly_v571 (owner, Waitlist photo): the copy changed with the button — Book now promises
+     that the row clears when the appointment SAVES. The invariant below is untouched and is the
+     one that matters: opening the form still never marks the walk-in booked. */
+  assert.match(waitlist,/The walk-in clears once the appointment saves/);
   assert.doesNotMatch(waitlist,/window\.wlBook=[\s\S]{0,240}updateWl\(id,'booked'\)/);
 });
 

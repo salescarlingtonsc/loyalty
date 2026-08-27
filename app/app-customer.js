@@ -4210,7 +4210,7 @@ function customerRewardReadyCountApplyV397(count,root=document,{chooseOneV428=fa
     /* nestly_v428 (item 6): when the claimable set is several gifts on ONE stamp slot, the tile
        says how many the customer may take rather than how many exist. */
     node.textContent=ready>0
-      ?(chooseOneV428?'Choose 1 reward':customerRewardReadyLineV397(ready))
+      ?customerRewardReadyLineV397(ready)
       :String(node.dataset.rewardReadyFallbackV397||'');
   });
   return nodes.length;
@@ -4990,7 +4990,7 @@ function customerProgrammeDirectoryStatusV346(card){
      v457's sentence survives for exactly one case: a payload with no count at all. */
   const readyCountV548=customerCardReadyCountV465(card);
   if(readyCountV548!==null&&readyCountV548>0)
-    return customerCardReadyChooseOneV465(card)?'Choose 1 reward':customerRewardReadyLineV397(readyCountV548);
+    return customerRewardReadyLineV397(readyCountV548);
   if(readyCountV548===null&&reward?.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to reward`;
   if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
@@ -5157,15 +5157,14 @@ function customerHomeBusinessStatusV345(card){
     /* nestly_v429 (E): the reward's own unit (v426) with the v428 balance rules as the fallback. */
     unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card)),remaining=Math.max(0,Number(reward.remaining_units)||0);
   /* nestly_v465 (owner ruling R1): the real per-business number, straight off the card the wallet
-     RPC sent. nestly_v428's "Choose 1" wins over the count for the same reason it does on the
-     business page — several gifts on one stamp slot are claimable, but only one may be taken.
+     RPC sent. nestly_v571 (owner mark, "state how many rewards ready"): the count is printed
+     even when the claimable gifts share one stamp slot — v428's "Choose 1 reward" hid the number
+     the owner asked to see, and every other surface prints it.
      v457's number-free sentence survives for exactly one case: a payload with no count at all.
      A count of 0 is NOT readiness, so it falls through to the progress lines below. */
   const readyCountV465=customerCardReadyCountV465(card);
   if(readyCountV465!==null&&readyCountV465>0)
-    return customerCardReadyChooseOneV465(card)
-      ?'Choose 1 reward'
-      :customerRewardReadyLineV397(readyCountV465);
+    return customerRewardReadyLineV397(readyCountV465);
   if(readyCountV465===null&&reward.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to go`;
   if(unit==='stamps')return 'Stamp card';

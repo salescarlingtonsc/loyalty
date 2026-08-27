@@ -762,6 +762,11 @@ let pendingTillPhone='';
 let pendingNotificationFocusV206='';
 let pendingTillRedemptionScan=false;
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
+/* nestly_v571 (owner, Waitlist photo: "Seat now" renamed "Book", "will go to appointment to set
+   date & time"). The walk-in whose Book button was pressed. The appointments page resolves this
+   row to 'booked' the moment an appointment actually saves — never merely because the form was
+   opened, which is the mistake V288's "Start booking" was written to avoid. Consumed once. */
+let pendingWaitlistBookIdV571='';
 /* V217. Owner: "new appointment here does not work (in the header - beside record sale)".
    It navigated to #/appointments and stopped there, with the booking form still collapsed
    behind its own button — so a control labelled "New appointment" produced a calendar and no
@@ -1733,7 +1738,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -10304,7 +10309,7 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
   /* nestly_v457's number-free wording survives only where no count arrived; nestly_v428's
      "Choose 1" outranks the count, exactly as it does after loadRewards. */
   const readySublineV465=readyCountV465!==null&&readyCountV465>0
-    ?(readyChooseOne===true?'Choose 1 reward':customerRewardReadyLineV397(readyCountV465))
+    ?customerRewardReadyLineV397(readyCountV465)
     :customerRewardReadySignalV457();
   const subline=rewardReady?readySublineV465:progressSublineV465;
   const heroLabel=tierLabel?tierLabel.toUpperCase():membership.active===true?'MEMBER':unit==='stamps'?'STAMPS':'POINTS';
@@ -10633,7 +10638,7 @@ function customerRewardReadyCountApplyV397(count,root=document,{chooseOneV428=fa
     /* nestly_v428 (item 6): when the claimable set is several gifts on ONE stamp slot, the tile
        says how many the customer may take rather than how many exist. */
     node.textContent=ready>0
-      ?(chooseOneV428?'Choose 1 reward':customerRewardReadyLineV397(ready))
+      ?customerRewardReadyLineV397(ready)
       :String(node.dataset.rewardReadyFallbackV397||'');
   });
   return nodes.length;
@@ -11899,7 +11904,7 @@ function customerProgrammeDirectoryStatusV346(card){
      v457's sentence survives for exactly one case: a payload with no count at all. */
   const readyCountV548=customerCardReadyCountV465(card);
   if(readyCountV548!==null&&readyCountV548>0)
-    return customerCardReadyChooseOneV465(card)?'Choose 1 reward':customerRewardReadyLineV397(readyCountV548);
+    return customerRewardReadyLineV397(readyCountV548);
   if(readyCountV548===null&&reward?.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to reward`;
   if(remaining>0)return `${customerPointTotalV103(remaining)} ${ct('points')} to reward`;
@@ -12082,15 +12087,14 @@ function customerHomeBusinessStatusV345(card){
     /* nestly_v429 (E): the reward's own unit (v426) with the v428 balance rules as the fallback. */
     unit=customerRewardUnitV429(reward,customerBalanceUnitV428(card)),remaining=Math.max(0,Number(reward.remaining_units)||0);
   /* nestly_v465 (owner ruling R1): the real per-business number, straight off the card the wallet
-     RPC sent. nestly_v428's "Choose 1" wins over the count for the same reason it does on the
-     business page — several gifts on one stamp slot are claimable, but only one may be taken.
+     RPC sent. nestly_v571 (owner mark, "state how many rewards ready"): the count is printed
+     even when the claimable gifts share one stamp slot — v428's "Choose 1 reward" hid the number
+     the owner asked to see, and every other surface prints it.
      v457's number-free sentence survives for exactly one case: a payload with no count at all.
      A count of 0 is NOT readiness, so it falls through to the progress lines below. */
   const readyCountV465=customerCardReadyCountV465(card);
   if(readyCountV465!==null&&readyCountV465>0)
-    return customerCardReadyChooseOneV465(card)
-      ?'Choose 1 reward'
-      :customerRewardReadyLineV397(readyCountV465);
+    return customerRewardReadyLineV397(readyCountV465);
   if(readyCountV465===null&&reward.available_now===true)return customerRewardReadySignalV457();
   if(unit==='stamps'&&remaining>0)return `${customerPointTotalV103(remaining)} ${customerUnitNounV429('stamps',remaining)} to go`;
   if(unit==='stamps')return 'Stamp card';
@@ -16589,7 +16593,7 @@ function globalActionsHtml(){
     </div>`:''}
     <div class="global-quick">
       ${canQuickEarn?`<button type="button" class="btn sm global-act" id="globalQuickEarn" title="Record sale"><span class="ic" aria-hidden="true">${CUI.icon('till',{size:16})}</span><span>Record sale</span></button>`:''}
-      ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'New appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:16})}</span><span>${canNewAppt?'New appointment':'View calendar'}</span></button>`:''}
+      ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'Appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:16})}</span><span>${canNewAppt?'Appointment':'View calendar'}</span></button>`:''}
     </div>
   </div>`;
 }
@@ -19313,13 +19317,18 @@ const ATTENTION_STATUS_V548={
   overdue:{label:'Overdue',tone:'#C24135'},
   slipping:{label:'Slipping away',tone:'#8E2F26'}
 };
-async function loadDashboardAttentionV548(root,branchId=null){
-  const host=root?.querySelector('#dashboardAttentionV548');
+/* nestly_v571 (owner ruling): this list left the Dashboard and now lives inside the Bring-back
+   module in Rewards Programme, where the vouchers it is arguing for are configured. The renderer
+   is unchanged — only the mount point and the staleness guard, which can no longer assume the
+   dashboard root. `host.isConnected` is the honest test: any re-render of the host page replaces
+   the node, so a late RPC cannot paint into a screen the owner has already left. */
+async function loadAttentionListV571(root,branchId=null,hostId='growBbAttentionV571'){
+  const host=root?.querySelector(`#${hostId}`);
   if(!host)return;
   host.innerHTML='';
   if(S.myRole!=='owner'&&!canReadModule('clients'))return;
   const {data,error}=await sb.rpc('get_attention_list_v548',{p_business:S.biz.id,p_branch:branchId,p_limit:8});
-  if(!root.isConnected||root!==$('dashboardView'))return;
+  if(!host.isConnected)return;
   if(error||!data)return;
   const sum=data.summary||{};
   const rows=Array.isArray(data.rows)?data.rows:[];
@@ -19342,7 +19351,7 @@ async function loadDashboardAttentionV548(root,branchId=null){
       ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content data-attention-outreach="${esc(r.client_id)}" aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}
     </li>`;
   };
-  host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-bottom:18px">
+  host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-top:12px">
     <div class="cui-card-head">${CUI.icon('customers',{size:24})}<div><h2 id="dashboardAttentionTitleV548">Customers to bring back</h2><p>Each customer judged by their own visit rhythm, not a fixed rule.</p></div></div>
     ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${fadingCount} customer${fadingCount===1?'':'s'} overdue</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
     <ul style="list-style:none;margin:8px 0 0;padding:0">${rows.map(attentionRowV548).join('')}</ul>
@@ -19540,7 +19549,6 @@ async function dashboard(){
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
-    <div id="dashboardAttentionV548"></div>
     <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div>${/* V319: the period strip, moved here from the titlebar. It stays OUTSIDE the collapsible body
@@ -19623,7 +19631,6 @@ async function dashboard(){
   dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
-  loadDashboardAttentionV548(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -21544,6 +21551,26 @@ function activityWhenTextV267(iso){
    gift card, reversal reasons) belongs to a sale that has lines. It is suppressed only where the
    goods are named instead, so nothing a human wrote is ever hidden. */
 const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
+/* nestly_v571 — the Sales & refunds "Item" cell.
+
+   What was sold lives in public.sale_items, and that table is readable by the OWNER ROLE ONLY
+   (sale_items_owner_read, v51). A manager or front-desk can open this ledger but gets zero item
+   rows back, so printing an empty cell for them would read as "nothing was sold" — a blank that
+   lies. Non-owners are told the truth instead: the lines exist, their role cannot see them.
+
+   Sales with no lines at all are ordinary and not a fault — a package session, a membership
+   charge, an appointment completion and every pre-v51 row carry their meaning in `note`, not in
+   line items. Those fall back to the note, minus the kernel's own bookkeeping string, which is
+   machinery rather than anything a person sold. */
+function salesItemCellV571(sale){
+  const text=activitySaleItemsTextV518({items:sale&&sale.sale_items});
+  if(text)return `<span class="sales-item-v571">${esc(text)}</span>`;
+  if(S.myRole!=='owner')
+    return '<span class="muted small" title="Line items are visible to the owner role only.">Owner access required</span>';
+  const note=String((sale&&sale.note)||'').trim();
+  if(note&&note!==SALE_KERNEL_NOTE_V518)return `<span class="muted small">${esc(note)}</span>`;
+  return '<span class="muted small">—</span>';
+}
 /* nestly_v518 (owner, Customer 360: "quick sale" and "cart checkout (kernel)" circled — "state
    the item details"). What was actually sold, from the sale's own lines. Quantities are printed
    only when they are more than one, because "Kopi Set ×1" is noise on every row. Returns '' when
@@ -24999,7 +25026,10 @@ async function salesPage(){
     const applyButton=$('salesApply');
     if(applyButton)CUI.setButtonBusy(applyButton,{busy:true,label:'Applying…'});
     try{
-    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
+    /* nestly_v571 (owner, Sales & refunds photo: the blank column ringed, "I need to see sales
+       detail / what product/service sold"). The lines are embedded with the page rather than
+       fetched per row — one round trip, and the ledger already reads a row per sale. */
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name), sale_items(description,qty,created_at)').eq('business_id',S.biz.id);
     /* V266: the To boundary was built as `<date>T23:59`, which drops the final 59 seconds of
        the chosen day — a sale recorded at 23:59:30 SGT fell outside a range that named its own
        date. Singapore calendar days are half-open instants: [From 00:00 SGT, To+1 day 00:00 SGT). */
@@ -25055,8 +25085,9 @@ async function salesPage(){
     const host=$('recent');if(!host)return;
     const rows=salesFilteredRowsV291,W=salesWorkflowV291;
     const shown=rows.slice(0,salesVisibleCountV291);
-    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
       ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
+        <td>${salesItemCellV571(s)}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
@@ -32033,6 +32064,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
       <div id="growBbWhatsappStripV551"></div>
+      <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
            to give programmes to customer inactive for > 30 days / > 60 days / > 90 days"). The old
@@ -33747,6 +33779,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
   loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
+  /* nestly_v571: business-wide on purpose — a bring-back campaign is configured for the whole
+     firm, so the audience it is aimed at must not be narrowed by the header's branch picker. */
+  loadAttentionListV571(outerMain,null).catch(()=>{});
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
     growBbDraftV361={name:'',reward:'',away:'',expiry:''};
@@ -41384,6 +41419,15 @@ async function appointmentsPage(){
         });
         return;
       }
+      /* nestly_v571: the waitlist row that sent us here is resolved HERE and nowhere earlier —
+         an appointment now exists, so the walk-in is genuinely no longer waiting. Consume-once,
+         and fire-and-forget: the appointment is already saved, so a failed queue update must not
+         be reported as a failed booking. It simply leaves the row for staff to clear by hand. */
+      if(pendingWaitlistBookIdV571){
+        const waitlistIdV571=pendingWaitlistBookIdV571;pendingWaitlistBookIdV571='';
+        sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
+          .eq('business_id',S.biz.id).then(()=>{},()=>{});
+      }
       bookingAttempt=null;$('an').value='';$('scheduleSuggestion').innerHTML='';
       toast(data?.replayed?'Appointment already booked — no duplicate created':workspaceTemplateTextV97('bookedWith',{staff:data?.staff_name||staffName[data?.staff_id]||workspaceTranslationV97('staff')}));
       closeNewAppointmentForm();
@@ -44204,7 +44248,7 @@ async function waitlistPage(){
   waitlistTableTypesV291=tableTypesV291;
 
   routeMain.innerHTML=
-    CUI.pageHeader({title:'Waitlist',subtitle:"Catch demand you can't seat now — win it back when a spot frees up.",iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
+    CUI.pageHeader({title:'Waitlist',iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
     +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'kpi-skel-plain'})).join('')}</div>`
     +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
         <div class="wl-add-grid">
@@ -44236,11 +44280,6 @@ async function waitlistPage(){
     };
   }
 
-  const tillLocalMobile=raw=>{ // mirror Customer 360: fold to an 8-digit SG local the till accepts
-    const d=String(raw||'').replace(/\D/g,'');
-    const local=d.length===10&&d.startsWith('65')?d.slice(2):d.slice(-8);
-    return /^[89]\d{7}$/.test(local)?local:'';
-  };
   const waitLabel=m=>m<1?'just now':m<60?`${m}m waited`:`${Math.floor(m/60)}h${m%60?' '+(m%60)+'m':''} waited`;
   const paintWaits=()=>document.querySelectorAll('#wlist .wl-wait[data-since]').forEach(el=>{
     const m=Math.max(0,Math.round((Date.now()-new Date(el.dataset.since).getTime())/60000));
@@ -44258,30 +44297,27 @@ async function waitlistPage(){
     if(error){fail(error);return false}
     return true;
   }
-  /* Seat now → resolve to 'booked' and, when the phone is a usable SG mobile and the role can
-     ring a sale, deep-link into Record sale pre-filled (consume-once pendingTillPhone). */
-  window.wlSeat=async id=>{
-    const row=currentRows.find(r=>r.id===id);
-    const local=tillLocalMobile(row?.phone);
-    const canTill=!!local&&canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales');
-    if(!(await updateWl(id,'booked')))return;
-    if(canTill){pendingTillPhone=local;toast('Seated — ring them up');nav('#/till');return}
-    toast('Seated');loadWl();
-  };
-  /* Start booking keeps a standalone walk-in in the queue until a real appointment is created.
-     The appointment form is pre-filled when the row is linked to a client; this page deliberately
-     does not claim "booked" merely because staff opened that form. */
+  /* nestly_v571: Book opens the appointment form to set a date and time. The row STAYS waiting
+     while that form is open — V288's rule, unchanged and still right: opening a form is not a
+     booking. What is new is the other half the owner asked for ("row clears on save"): the id is
+     handed to the appointments page, which resolves this row to 'booked' only once
+     book_appointment_smart_v47 actually returns an appointment. A linked booking request is
+     excluded here for the same reason updateWl excludes it — those are decided in Bookings. */
   window.wlBook=async id=>{
     const row=currentRows.find(r=>r.id===id);
-    if(canBook){
-      if(seatedWithoutAppointmentsV288){
-        toast('Bookings opened — the walk-in is still waiting until a booking is confirmed.');
-        nav('#/bookings');return;
-      }
-      if(row?.client_id){pendingApptClientId=row.client_id;toast('Appointment form opened — the walk-in is still waiting until a booking is completed.');nav('#/appointments');return}
-      toast('Add the customer and create an appointment. The walk-in remains waiting.');nav('#/appointments');return;
+    if(!canBook)return toast(seatedWithoutAppointmentsV288?'Bookings write access is required.':'Appointment write access is required.');
+    if(row?.booking_request_id)return toast('Linked booking requests must be decided with Confirm or Decline.');
+    if(seatedWithoutAppointmentsV288){
+      pendingWaitlistBookIdV571=id;
+      toast('Bookings opened — the walk-in stays waiting until a booking is confirmed.');
+      nav('#/bookings');return;
     }
-    toast(seatedWithoutAppointmentsV288?'Bookings write access is required.':'Appointment write access is required.');
+    pendingWaitlistBookIdV571=id;
+    if(row?.client_id)pendingApptClientId=row.client_id;
+    toast(row?.client_id
+      ?'Set the date and time. The walk-in clears once the appointment saves.'
+      :'Add the customer, then set the date and time. The walk-in clears once the appointment saves.');
+    nav('#/appointments');
   };
   window.wlCalled=async id=>{if(await updateWl(id,'contacted')){toast('Marked called');loadWl()}};
   /* V291 (audit A2 leftover): a walk-in row could only be seated, called or removed. The two
@@ -44350,19 +44386,25 @@ async function waitlistPage(){
       return confirm+decline||(canReadModule('bookings')?'<a class="btn ghost sm" href="#/bookings">View in Bookings</a>':'<span class="muted small">Decision access required</span>');
     }
     if(!canWrite)return '';
-    const seat=`<button class="btn sm" onclick="wlSeat('${w.id}')" title="Seat now — record their sale"><span>Seat now</span></button>`;
-    /* V288: two whole static buttons rather than one with an interpolated title — a dynamic
-       accessibility attribute has to be classified through the v97 template machinery, and a
-       fixed string per branch is the simpler honest answer. */
+    /* nestly_v571 (owner, Waitlist photo). Three marks on this row, one shape:
+         - "Seat now" → "Book", annotated "will go to appointment to set date & time". Booking a
+           time IS the resolution now, so the old seat-and-ring-them-up path is gone with it.
+         - "Start booking" struck out — it was the same journey behind a second, weaker button.
+         - "Called" → "Call", annotated "can call customer": a past-tense status became the act.
+       Book is the only primary here, so the row has one obvious next step instead of two. */
     const book=!canBook?''
-      :seatedWithoutAppointmentsV288
-        ?`<button class="btn ghost sm" onclick="wlBook('${w.id}')" title="Open Bookings; queue status stays waiting">${CUI.icon('bookings',{size:16})}<span>Start booking</span></button>`
-        :`<button class="btn ghost sm" onclick="wlBook('${w.id}')" title="Open the appointment form; queue status stays waiting">${CUI.icon('appointments',{size:16})}<span>Start booking</span></button>`;
-    const called=w.status==='waiting'?`<button class="btn ghost sm" onclick="wlCalled('${w.id}')" title="Mark as called"><span>Called</span></button>`:'';
+      :`<button class="btn sm" onclick="wlBook('${w.id}')" title="Open the appointment form to set a date and time"><span>Book</span></button>`;
+    /* Call dials AND records the contact, so a tap is never a silent no-op on the queue. A row
+       with no usable number keeps the plain status button — there is nothing to dial. */
+    const callable=String(w.phone||'').replace(/[^\d+]/g,'');
+    const called=w.status!=='waiting'?''
+      :callable
+        ?`<a class="btn ghost sm" href="tel:${esc(callable)}" onclick="wlCalled('${w.id}')" title="Call this customer">${CUI.icon('bell',{size:16})}<span>Call</span></a>`
+        :`<button class="btn ghost sm" onclick="wlCalled('${w.id}')" title="Mark as called"><span>Called</span></button>`;
     /* V291: the correction control, next to the actions that already change this row. */
     const edit=`<button class="btn ghost sm" onclick="wlEdit('${w.id}')" title="Change party size or note"><span>${editingWaitlistIdV291===w.id?'Close':'Edit'}</span></button>`;
     const remove=`<button class="btn ghost sm wl-x" onclick="wlRemove('${w.id}')" title="Remove from waitlist" ${workspaceTemplateAttributeV97('aria-label','removeFromWaitlist',{customer:w.name})}><span aria-hidden="true">×</span></button>`;
-    return seat+edit+book+called+remove;
+    return book+edit+called+remove;
   }
   function rowHtml(w,pos){
     const mins=Math.max(0,Math.round((Date.now()-new Date(w.created_at).getTime())/60000));
@@ -44410,13 +44452,12 @@ async function waitlistPage(){
       const rb=$('wlRetry');if(rb)rb.onclick=loadWl;
       return;
     }
-    const {queue,added,bookedToday}=waitlistTodaySummary(rows,dayStartMs);
+    const {queue,bookedToday}=waitlistTodaySummary(rows,dayStartMs);
     setWaitlistBadgeCount(queue.length);
     currentRows=queue;
     if(kpis)kpis.innerHTML=`
       <div class="card kpi"><div class="l">Waiting now</div><div class="v">${queue.length}</div></div>
-      <div class="card kpi"><div class="l">Added today</div><div class="v">${added}</div></div>
-      <div class="card kpi"><div class="l">Resolved as booked today</div><div class="v">${bookedToday}</div><div class="muted small">Terminal booked rows added today; this does not prove physical seating.</div></div>
+      <div class="card kpi"><div class="l">Resolved as booked today</div><div class="v">${bookedToday}</div></div>
       `;
     if(!queue.length){
       wlist.innerHTML=CUI.emptyState({iconName:'waitlist',title:'No waiting customers',
@@ -45732,10 +45773,9 @@ async function reportsPage(){
     const d=data||{},byKind=d.revenue_by_kind||{},nonRevByKind=d.non_revenue_by_kind||{},pt=d.points_by_type||{};
     lastScope={...scope,clientsAvailable:d.availability?.clients_export===true};
     const creditLiabilityAvailable=d.availability?.credit_liability===true;
-    const liab=creditLiabilityAvailable?d.credit_liability_cents:null,gcOut=d.gift_card_liability_cents||0,actMs=d.active_memberships||0;
+    const liab=creditLiabilityAvailable?d.credit_liability_cents:null,gcOut=d.gift_card_liability_cents||0;
     const loyaltyAvailable=d.availability?.loyalty===true;
     const giftCardsAvailable=d.availability?.gift_cards===true;
-    const membershipsAvailable=d.availability?.memberships===true;
     const reconciliation=d.reversal_reconciliation||{};
     const reversalRows=Number(reconciliation.compensating_rows||0);
     const reversedCents=Number(reconciliation.reversed_revenue_cents||0);
@@ -45800,10 +45840,7 @@ async function reportsPage(){
         ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
         <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
-      ${membershipsAvailable?`<div class="card"><b>Memberships</b><table style="margin-top:8px">
-        <tr><td>Active members (business-wide, now)</td><td class="num"><b>${actMs}</b></td></tr>
-        <tr><td>Membership revenue (selected period/branch)</td><td class="num"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`:
-        '<div class="card"><b>Memberships</b><p class="muted small" style="margin-top:8px">Unavailable because complete Memberships access could not be confirmed. No zero is inferred.</p></div>'}`;
+`;
   }
   const appointmentSummary=rows=>{
     const active=rows.filter(row=>!['cancelled','canceled','no_show','no-show'].includes(row.status));
@@ -46870,7 +46907,6 @@ async function dailyReportPage(){
         ${dailyMetricTileV468('revenue',dailyMetricValuesV468.revenue)}
         ${dailyMetricTileV468('visits',dailyMetricValuesV468.visits)}
         ${dailyMetricTileV468('customers',dailyMetricValuesV468.customers)}
-        ${dailyMetricTileV468('giftcards',dailyMetricValuesV468.giftcards)}
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
@@ -48717,7 +48753,7 @@ async function loadSignupConfig(host){
          the state sentence) and the disabled button points at it with title + aria-describedby,
          because a disabled control that gives no reason reads as a broken one. */
   wrap.innerHTML=`<b>My Business QR</b>
-    <p class="muted small" id="joinQrLeadV456" style="margin:6px 0 10px">Your counter QR is how a customer joins this business. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
+    <p class="muted small" id="joinQrLeadV456" style="margin:6px 0 10px">Your counter QR is how a customer joins this business.</p>
     <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
     ${/* nestly_v558 (owner, UI/UX photo: "Revoke all QRs" running off the right edge of the
@@ -48749,7 +48785,7 @@ async function loadSignupConfig(host){
     $('cpJoin').disabled=false;$('dlQr').disabled=false;if($('shareJoin'))$('shareJoin').disabled=false;
     /* nestly_v456: there is now a QR on screen, so the lead may say "print it" and revoking is a
        real act with a real consequence. */
-    setJoinQrLeadV456('Print this QR for your counter. Older slug links such as join.html?s=… are retired and cannot enrol a customer.');
+    setJoinQrLeadV456('Print this QR for your counter.');
     setRevokeAvailableV456(true);
     $('createJoinQr').querySelector('span').textContent='Replace join QR';
     const expires=data.expires_at?sgt(data.expires_at):'',replaced=Number(data.replaced_count||0);
@@ -49915,7 +49951,7 @@ function customerInterfaceSectionHeadingV269(id,label,hint){
    business_set_customer_capabilities_v89 call reading all three checkboxes by id, and both Save
    buttons run it, so the two panes can never save contradictory halves. */
 function customerCapabilitiesAppointmentCardHtmlV375(){
-  return `<section class="card" id="businessCustomerCapabilitiesAppointmentV375" style="margin-top:16px"><div class="row"><div><b>What customers may do with appointments</b><p class="muted small" style="margin-top:5px">Turning one off keeps existing bookings and history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilitiesAppointmentV375" type="button" disabled>Save</button></div>
+  return `<section class="card" id="businessCustomerCapabilitiesAppointmentV375" style="margin-top:16px"><div class="row"><div><b>What customers may do with appointments</b><p class="muted small" style="margin-top:5px">Turning one off keeps existing bookings and history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilitiesAppointmentV375" type="button" style="display:none" disabled>Save</button></div>
     <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
     <!-- v294 (owner: "Why only one company showed when i already enable qrcode?" — the ticked
          box was real but INERT: booking is only offered to customers when at least one active
@@ -49930,7 +49966,7 @@ function customerInterfaceSectionsHtmlV243(){
          operation set up"). These switches govern what a customer may do in their own app.
          V375 moved the two appointment ones to Appointment Setting; the redemption QR is not
          about appointments, so it stays here with the section's status line. -->
-    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" disabled>Save</button></div>
+    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" style="display:none" disabled>Save</button></div>
       <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
     </div>`;

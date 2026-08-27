@@ -77,7 +77,7 @@
   <link rel="preload" as="script" href="/runtime-config.js?v=2">
   <link rel="preload" as="script" href="/runtime-config-loader.js?v=2">
   <link rel="preload" as="script" href="/customer-ui.js?v=20260813-v298-caption-once">
-  <link rel="preload" as="script" href="/app-core.js?b=7ccffa4ec3bb">
+  <link rel="preload" as="script" href="/app-core.js?b=db9564f76441">
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
      app/join.html still requests it separately and still uses it for its headings. -->
@@ -293,7 +293,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      initial load is optional: the native bridge, PWA, push and brand/runtime config all run at
      load time, and customer-ui.js is read while the core boots. -->
 <script type="application/json" id="appSurfaceAssets">
-{"auth":{"js":[],"css":[]},"customer":{"js":["/growth-offers.js?v=20260807-v200"],"css":["/growth-offers.css?v=20260819-w1tokens"]},"business":{"js":["/grow-recommender.js?v=20260807-v200","/v95-media-sync.js?v=20260728-atomic-media","/revenue-truth.js?v=20260826-v526","/growth-offers.js?v=20260807-v200","/sector-economics.js?v=20260807-v200"],"css":["/revenue-truth.css?v=20260826-v522","/growth-offers.css?v=20260819-w1tokens","/sector-economics.css?v=20260819-w1tokens"]}}
+{"auth":{"js":[],"css":[]},"customer":{"js":["/growth-offers.js?v=20260807-v200"],"css":["/growth-offers.css?v=20260819-w1tokens"]},"business":{"js":["/grow-recommender.js?v=20260807-v200","/v95-media-sync.js?v=20260728-atomic-media","/revenue-truth.js?v=20260828-v571","/growth-offers.js?v=20260807-v200","/sector-economics.js?v=20260807-v200"],"css":["/revenue-truth.css?v=20260826-v522","/growth-offers.css?v=20260819-w1tokens","/sector-economics.css?v=20260819-w1tokens"]}}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.min.js" integrity="sha384-BmlQlKlDvXvKoxkn5OQuUo/aJQCTXeB+Kls6EccBmG4Kf8AXvp89RtO9MtPxP/r5" crossorigin="anonymous"></script>
 <!-- v185: app/app.js is split by surface at build time. The core loads here; the auth, customer or
@@ -301,7 +301,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=c2dd5a13a4ed","business":"/app-business.js?b=e2b31c6c8818","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=4effdff0cf3a","business":"/app-business.js?b=31079b486f6a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -325,6 +325,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=7ccffa4ec3bb" defer></script>
+<script src="/app-core.js?b=db9564f76441" defer></script>
 </body>
 </html>

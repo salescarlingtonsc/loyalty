@@ -82,7 +82,12 @@ test('renders exact SQL-shaped recorded revenue without calling it total busines
   assert.match(html,/Peekaa recorded revenue/);
   assert.match(html,/Identified customer revenue/);
   assert.match(html,/Anonymous \/ unattributed revenue/);
-  assert.match(html,/Customer revenue coverage/);
+  /* nestly_v571 (owner mark: "Customer" struck out, "Member" written above it). */
+  assert.match(html,/Member revenue coverage/);
+  /* nestly_v571 (owner mark: the whole "Your revenue picture is ready" banner struck out). The
+     all-clear said nothing the figures beneath it did not; every OTHER state is a caveat and is
+     asserted still to render by the fail-closed test below. */
+  assert.doesNotMatch(html,/Your revenue picture is ready/);
   assert.match(html,/SGD(?:\s|&nbsp;)*1,000\.00/);
   assert.match(html,/total business revenue remains unavailable/);
   assert.doesNotMatch(html,/>Total business revenue</);

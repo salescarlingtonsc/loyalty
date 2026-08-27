@@ -205,7 +205,10 @@ test('V291 a waiting walk-in can be corrected without losing their place in the 
   assert.match(save,/sb\.from\('waitlist'\)\s*\n?\s*\.update\(patch\)/);
   // created_at orders the queue and is never rewritten.
   assert.doesNotMatch(save,/created_at/);
-  assert.match(code,/return seat\+edit\+book\+called\+remove;/);
+  /* nestly_v571 (owner, Waitlist photo): "Seat now" became "Book" and absorbed the separate
+     "Start booking", so the row composes three actions plus remove. Edit — the control this test
+     exists for — is still one of them. */
+  assert.match(code,/return book\+edit\+called\+remove;/);
 });
 
 test('V375 the custom customer-field editor is gone, and no stored answer was touched',()=>{

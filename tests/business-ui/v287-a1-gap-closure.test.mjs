@@ -164,7 +164,10 @@ test('V287 the Sales page no longer pulls the whole customer table it never read
   assert.doesNotMatch(sales, /\{data:cl,error:clientError\}/);
   assert.doesNotMatch(sales, /clientError/);
   // Customer names still arrive embedded on the sale rows, which is what the filter reads.
-  assert.match(sales, /select\('\*, clients\(full_name\), staff\(full_name\)'\)/);
+  /* nestly_v571 (owner mark: "I need to see sales detail / what product/service sold"). The Item
+     column embeds sale_items on the SAME query — the point of this test, that the ledger does not
+     go back for a second table it can join, is unchanged. */
+  assert.match(sales, /select\('\*, clients\(full_name\), staff\(full_name\), sale_items\(description,qty,created_at\)'\)/);
   assert.match(sales, /const salesLoadError=staffError;/);
 });
 

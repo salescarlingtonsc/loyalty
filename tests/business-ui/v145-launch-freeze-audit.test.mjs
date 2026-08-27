@@ -282,7 +282,12 @@ test('Reports states the period, branch and business-wide scopes without claimin
   assert.doesNotMatch(reports, /All answers below use this same period and branch/);
   assert.match(reports, /Loyalty flow \(business-wide, selected period\)/);
   assert.match(reports, /Liabilities \(business-wide, now\)/);
-  assert.match(reports, /Active members \(business-wide, now\)/);
+  /* nestly_v571 (owner mark: the whole Memberships card struck out on Business Insights). The
+     scope-honesty rule this test defends is unchanged — it is asserted by the two cards above,
+     which still name their own scope. The removed card is pinned as absent so it cannot return
+     unlabelled. */
+  assert.doesNotMatch(reports, /Active members \(business-wide, now\)/);
+  assert.doesNotMatch(reports, /Membership revenue \(selected period\/branch\)/);
   assert.match(reports, /const busyGate=createLatestRequestGate/);
   assert.match(reports, /const returningGate=createLatestRequestGate/);
   assert.match(reports, /const canSeeReturningAnswer=canReadModule\('clients'\)&&hasRoleCapability\('view_finance'\)/);
@@ -630,8 +635,12 @@ test('waitlist terminal booked rows are labelled as conversions, never proven se
   assert.equal(summary.bookedToday,2,'the shared terminal state cannot distinguish physical seating from future booking');
   const waitlist=section('async function waitlistPage(){','/* ---------- inventory ---------- */');
   assert.match(waitlist,/Resolved as booked today/);
-  assert.match(waitlist,/Terminal booked rows added today; this does not prove physical seating/);
-  assert.doesNotMatch(waitlist,/Seated today|<div class="l">Converted<\/div>/);
+  /* nestly_v571 (owner mark: the disclaimer sentence scribbled out, "remove this wording"). The
+     invariant it existed to protect is that the tile must never claim physical seating — that is
+     what the doesNotMatch below has always enforced, and it still does. The prose is gone; the
+     label states a booking and nothing more. */
+  assert.doesNotMatch(waitlist,/does not prove physical seating/);
+  assert.doesNotMatch(waitlist,/Seated today|Seated now|<div class="l">Converted<\/div>/);
 });
 
 test('Grow rollback history has no silent twenty-version cap', () => {

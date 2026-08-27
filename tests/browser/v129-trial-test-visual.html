@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="c780b34cafb69eceaebceb27fbbc8a23282c6c72881e46cd8622118fe0b31802"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="82491516aa7ac947451ac5121096fde05935c3acaf9c114834e4621f76c0d84d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4731,7 +4731,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c780b34cafb69eceaebceb27fbbc8a23282c6c72881e46cd8622118fe0b31802</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 82491516aa7ac947451ac5121096fde05935c3acaf9c114834e4621f76c0d84d</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6886,6 +6886,26 @@ function activityWhenTextV267(iso){
    gift card, reversal reasons) belongs to a sale that has lines. It is suppressed only where the
    goods are named instead, so nothing a human wrote is ever hidden. */
 const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
+/* nestly_v571 — the Sales & refunds "Item" cell.
+
+   What was sold lives in public.sale_items, and that table is readable by the OWNER ROLE ONLY
+   (sale_items_owner_read, v51). A manager or front-desk can open this ledger but gets zero item
+   rows back, so printing an empty cell for them would read as "nothing was sold" — a blank that
+   lies. Non-owners are told the truth instead: the lines exist, their role cannot see them.
+
+   Sales with no lines at all are ordinary and not a fault — a package session, a membership
+   charge, an appointment completion and every pre-v51 row carry their meaning in `note`, not in
+   line items. Those fall back to the note, minus the kernel's own bookkeeping string, which is
+   machinery rather than anything a person sold. */
+function salesItemCellV571(sale){
+  const text=activitySaleItemsTextV518({items:sale&&sale.sale_items});
+  if(text)return `<span class="sales-item-v571">${esc(text)}</span>`;
+  if(S.myRole!=='owner')
+    return '<span class="muted small" title="Line items are visible to the owner role only.">Owner access required</span>';
+  const note=String((sale&&sale.note)||'').trim();
+  if(note&&note!==SALE_KERNEL_NOTE_V518)return `<span class="muted small">${esc(note)}</span>`;
+  return '<span class="muted small">—</span>';
+}
 /* nestly_v518 (owner, Customer 360: "quick sale" and "cart checkout (kernel)" circled — "state
    the item details"). What was actually sold, from the sale's own lines. Quantities are printed
    only when they are more than one, because "Kopi Set ×1" is noise on every row. Returns '' when
@@ -10341,7 +10361,10 @@ async function salesPage(){
     const applyButton=$('salesApply');
     if(applyButton)CUI.setButtonBusy(applyButton,{busy:true,label:'Applying…'});
     try{
-    let query=sb.from('sales').select('*, clients(full_name), staff(full_name)').eq('business_id',S.biz.id);
+    /* nestly_v571 (owner, Sales & refunds photo: the blank column ringed, "I need to see sales
+       detail / what product/service sold"). The lines are embedded with the page rather than
+       fetched per row — one round trip, and the ledger already reads a row per sale. */
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name), sale_items(description,qty,created_at)').eq('business_id',S.biz.id);
     /* V266: the To boundary was built as `<date>T23:59`, which drops the final 59 seconds of
        the chosen day — a sale recorded at 23:59:30 SGT fell outside a range that named its own
        date. Singapore calendar days are half-open instants: [From 00:00 SGT, To+1 day 00:00 SGT). */
@@ -10397,8 +10420,9 @@ async function salesPage(){
     const host=$('recent');if(!host)return;
     const rows=salesFilteredRowsV291,W=salesWorkflowV291;
     const shown=rows.slice(0,salesVisibleCountV291);
-    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
       ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
+        <td>${salesItemCellV571(s)}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
@@ -17375,6 +17399,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
       <div id="growBbWhatsappStripV551"></div>
+      <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
            to give programmes to customer inactive for > 30 days / > 60 days / > 90 days"). The old
@@ -19089,6 +19114,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
   loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
+  /* nestly_v571: business-wide on purpose — a bring-back campaign is configured for the whole
+     firm, so the audience it is aimed at must not be narrowed by the header's branch picker. */
+  loadAttentionListV571(outerMain,null).catch(()=>{});
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
     growBbDraftV361={name:'',reward:'',away:'',expiry:''};
@@ -28454,6 +28482,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'c780b34cafb69eceaebceb27fbbc8a23282c6c72881e46cd8622118fe0b31802',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'82491516aa7ac947451ac5121096fde05935c3acaf9c114834e4621f76c0d84d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

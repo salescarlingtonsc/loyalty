@@ -147,5 +147,7 @@ test('V217 the header New appointment button opens the booking form', () => {
      carries todaySg. See tests/business-ui/v218-appointments-tdz.test.mjs. */
   assert.match(app, /if\(apptOpenFormV217&&!apptPrefillClient\)openNewAppointmentForm\(\{\}\)/);
   // Reset alongside the other consume-once deep-link vars.
-  assert.match(app, /pendingApptClientId='';pendingOpenApptFormV217=false;/);
+  /* nestly_v571: pendingWaitlistBookIdV571 joined the same consume-once reset line — Waitlist's
+     Book hands a row id to the appointments page exactly as Customer 360 hands a client id. */
+  assert.match(app, /pendingApptClientId='';pendingWaitlistBookIdV571='';pendingOpenApptFormV217=false;/);
 });

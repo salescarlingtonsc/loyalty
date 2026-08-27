@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="a4f46e60a97cf656855a9efe0de997072465f2218ee7a5a264c4e726eb5cf184"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="00095c2cef0762458925c0925f772edf1ed87bd452d46446b314e007ed9a1ff8"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4731,7 +4731,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · a4f46e60a97cf656855a9efe0de997072465f2218ee7a5a264c4e726eb5cf184</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 00095c2cef0762458925c0925f772edf1ed87bd452d46446b314e007ed9a1ff8</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5449,7 +5449,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       </div>
       <div class="dashboard-schedule-today" id="dashboardScheduleToday" aria-live="polite"></div>
     </section>
-    <div id="dashboardAttentionV548"></div>
     <div id="dashboardBottlesV278"></div>
     <section class="card performance-panel" aria-labelledby="performanceTitle">
       <header class="performance-heading ux154-collapsible-head">${CUI.icon('reports',{size:24})}<div><h2 id="performanceTitle">Performance</h2><p class="muted small" id="dashboardPerformancePeriod" role="status" aria-live="polite">${dashboardScheduleDayLabelV252(d30)} to ${dashboardScheduleDayLabelV252(today)}</p></div>${/* V319: the period strip, moved here from the titlebar. It stays OUTSIDE the collapsible body
@@ -5532,7 +5531,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
-  loadDashboardAttentionV548(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -6980,6 +6978,26 @@ function activityWhenTextV267(iso){
    gift card, reversal reasons) belongs to a sale that has lines. It is suppressed only where the
    goods are named instead, so nothing a human wrote is ever hidden. */
 const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
+/* nestly_v571 — the Sales & refunds "Item" cell.
+
+   What was sold lives in public.sale_items, and that table is readable by the OWNER ROLE ONLY
+   (sale_items_owner_read, v51). A manager or front-desk can open this ledger but gets zero item
+   rows back, so printing an empty cell for them would read as "nothing was sold" — a blank that
+   lies. Non-owners are told the truth instead: the lines exist, their role cannot see them.
+
+   Sales with no lines at all are ordinary and not a fault — a package session, a membership
+   charge, an appointment completion and every pre-v51 row carry their meaning in `note`, not in
+   line items. Those fall back to the note, minus the kernel's own bookkeeping string, which is
+   machinery rather than anything a person sold. */
+function salesItemCellV571(sale){
+  const text=activitySaleItemsTextV518({items:sale&&sale.sale_items});
+  if(text)return `<span class="sales-item-v571">${esc(text)}</span>`;
+  if(S.myRole!=='owner')
+    return '<span class="muted small" title="Line items are visible to the owner role only.">Owner access required</span>';
+  const note=String((sale&&sale.note)||'').trim();
+  if(note&&note!==SALE_KERNEL_NOTE_V518)return `<span class="muted small">${esc(note)}</span>`;
+  return '<span class="muted small">—</span>';
+}
 /* nestly_v518 (owner, Customer 360: "quick sale" and "cart checkout (kernel)" circled — "state
    the item details"). What was actually sold, from the sale's own lines. Quantities are printed
    only when they are more than one, because "Kopi Set ×1" is noise on every row. Returns '' when
@@ -7430,10 +7448,9 @@ function renderHistPage(history,n,offsetV468=0){
     const d=data||{},byKind=d.revenue_by_kind||{},nonRevByKind=d.non_revenue_by_kind||{},pt=d.points_by_type||{};
     lastScope={...scope,clientsAvailable:d.availability?.clients_export===true};
     const creditLiabilityAvailable=d.availability?.credit_liability===true;
-    const liab=creditLiabilityAvailable?d.credit_liability_cents:null,gcOut=d.gift_card_liability_cents||0,actMs=d.active_memberships||0;
+    const liab=creditLiabilityAvailable?d.credit_liability_cents:null,gcOut=d.gift_card_liability_cents||0;
     const loyaltyAvailable=d.availability?.loyalty===true;
     const giftCardsAvailable=d.availability?.gift_cards===true;
-    const membershipsAvailable=d.availability?.memberships===true;
     const reconciliation=d.reversal_reconciliation||{};
     const reversalRows=Number(reconciliation.compensating_rows||0);
     const reversedCents=Number(reconciliation.reversed_revenue_cents||0);
@@ -7498,10 +7515,7 @@ function renderHistPage(history,n,offsetV468=0){
         ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
         <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
-      ${membershipsAvailable?`<div class="card"><b>Memberships</b><table style="margin-top:8px">
-        <tr><td>Active members (business-wide, now)</td><td class="num"><b>${actMs}</b></td></tr>
-        <tr><td>Membership revenue (selected period/branch)</td><td class="num"><b>${money(byKind.membership||0)}</b></td></tr></table></div>`:
-        '<div class="card"><b>Memberships</b><p class="muted small" style="margin-top:8px">Unavailable because complete Memberships access could not be confirmed. No zero is inferred.</p></div>'}`;
+`;
   }
   const appointmentSummary=rows=>{
     const active=rows.filter(row=>!['cancelled','canceled','no_show','no-show'].includes(row.status));
@@ -7959,7 +7973,6 @@ function renderHistPage(history,n,offsetV468=0){
         ${dailyMetricTileV468('revenue',dailyMetricValuesV468.revenue)}
         ${dailyMetricTileV468('visits',dailyMetricValuesV468.visits)}
         ${dailyMetricTileV468('customers',dailyMetricValuesV468.customers)}
-        ${dailyMetricTileV468('giftcards',dailyMetricValuesV468.giftcards)}
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
@@ -8662,7 +8675,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'a4f46e60a97cf656855a9efe0de997072465f2218ee7a5a264c4e726eb5cf184',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'00095c2cef0762458925c0925f772edf1ed87bd452d46446b314e007ed9a1ff8',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
