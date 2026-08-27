@@ -2716,6 +2716,12 @@
       "version": "20260827000016",
       "name": "nestly_v560_welcome_and_birthday_reach_customers",
       "sourcePath": "db/migrations/20260827_nestly_v560_welcome_and_birthday_reach_customers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000017",
+      "name": "nestly_v563_stamps_publish_needs_length",
+      "sourcePath": "db/migrations/20260827_nestly_v563_stamps_publish_needs_length.sql"
     }
   ]
 }

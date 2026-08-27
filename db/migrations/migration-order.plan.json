@@ -2721,6 +2721,12 @@
       "path": "db/migrations/20260827_nestly_v560_welcome_and_birthday_reach_customers.sql",
       "semanticVersion": "v560",
       "proposedDeployVersion": "20260827000016"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v563_stamps_publish_needs_length.sql",
+      "semanticVersion": "v563",
+      "proposedDeployVersion": "20260827000017"
     }
   ]
 }
