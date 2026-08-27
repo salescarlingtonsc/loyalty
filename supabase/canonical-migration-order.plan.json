@@ -2740,6 +2740,12 @@
       "version": "20260827000020",
       "name": "nestly_v566_one_claimable_answer",
       "sourcePath": "db/migrations/20260827_nestly_v566_one_claimable_answer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828000001",
+      "name": "nestly_v568_survivor_arm_stays_in_its_pot",
+      "sourcePath": "db/migrations/20260828_nestly_v568_survivor_arm_stays_in_its_pot.sql"
     }
   ]
 }

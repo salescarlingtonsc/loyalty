@@ -169,6 +169,44 @@ select s.business_id, s.business_name, 'D06', 'RUNTIME-DANGEROUS',
         and coalesce((select fcv.status from public.firm_config_versions fcv
                        where fcv.id=s.active_config_version_id),'<missing>') <> 'published');
 
+-- D16 (nestly_v568) — the CORE's own answer, audited against the platform's own rule rather
+-- than against another reader. D07 asks "do the two readers agree?"; after v566 made the
+-- presentation delegate to app.reward_availability_v432, that question became tautological and
+-- could not see a defect INSIDE the shared core — which is exactly how the v568 survivor-arm
+-- leak (a parked pot's gift offered as a stamp gift) survived a green D07. This check states the
+-- rule directly: a reward may only be OFFERED to a customer if its own programme is running.
+do $d16$
+declare r record; v_names text;
+begin
+  for r in
+    select distinct on (link.business_id)
+           link.business_id, b.name as business_name, link.client_id
+      from public.customer_links link
+      join public.businesses b on b.id=link.business_id
+     where link.state='verified'
+     order by link.business_id, link.created_at, link.id
+  loop
+    begin
+      select string_agg(distinct lr.customer_name||' ['||coalesce(sp.kind,'no programme')||']', ', ')
+        into v_names
+        from app.reward_availability_v432(r.business_id, r.client_id, now()) core
+        join public.loyalty_rewards lr on lr.id=core.reward_id
+        left join public.business_programmes sp on sp.id=lr.programme_id
+       where not exists (select 1 from public.business_programmes sp2
+                          where sp2.id=lr.programme_id and sp2.active);
+    exception when others then
+      insert into _scan values (r.business_id, r.business_name, 'D16', 'RUNTIME-DANGEROUS',
+        'the availability core could not be evaluated: '||sqlerrm);
+      continue;
+    end;
+    if v_names is not null then
+      insert into _scan values (r.business_id, r.business_name, 'D16', 'RUNTIME-DANGEROUS',
+        'reward(s) offered from a switched-off programme: '||v_names);
+    end if;
+  end loop;
+end
+$d16$;
+
 -- D07 — the two readers disagree, measured by EXECUTING both readers (nestly_v566 made the
 -- presentation delegate to app.reward_availability_v432, so the honest check is no longer a
 -- data predicate — rewards legitimately PARKED on a switched-off programme still exist in
@@ -406,7 +444,7 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
   from (values
     ('D01','RUNTIME-DANGEROUS'),('D01b','RUNTIME-DANGEROUS'),('D02','RUNTIME-DANGEROUS'),
     ('D03','RUNTIME-DANGEROUS'),('D04','RUNTIME-DANGEROUS'),('D05','RUNTIME-DANGEROUS'),
-    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),
+    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
     ('D15','RUNTIME-DANGEROUS')

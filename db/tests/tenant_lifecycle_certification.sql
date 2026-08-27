@@ -1031,6 +1031,37 @@ exception when others then
   insert into _r values ('18e both readers follow the switch back, and the catalogue swaps with it','FAIL: '||sqlerrm);
 end $s18e$;
 
+-- ============ 18f the parked pot may not lend its gifts to the live card ======================
+-- nestly_v568 (owner, KKY demo 2026-08-28): tenant A now runs POINTS with a PARKED stamp card
+-- behind it, and both pots carry a gift priced 5. The survivor arm of app.reward_availability_v432
+-- used to admit any reward version in the closed cycle's config whose cost fitted the card,
+-- whatever pot it belonged to — so the parked pot's gift was offered as a stamp gift the
+-- redemption core would then refuse. The certification carries the shape from here on: a gift
+-- may only be offered when its OWN programme is running.
+do $s18f$
+declare
+  v_biz uuid := '1abe0e00-0000-4000-8000-000000000001';
+  v_client uuid := '1abe0e00-0000-4000-8000-0000000000b4';
+  v_offered text; v_offside text;
+begin
+  select string_agg(distinct lr.customer_name||' ['||coalesce(sp.kind,'none')||']', ', ')
+    into v_offside
+    from app.reward_availability_v432(v_biz, v_client, now()) core
+    join public.loyalty_rewards lr on lr.id=core.reward_id
+    left join public.business_programmes sp on sp.id=lr.programme_id
+   where not exists (select 1 from public.business_programmes sp2
+                      where sp2.id=lr.programme_id and sp2.active);
+  select string_agg(distinct core.unit, ', ') into v_offered
+    from app.reward_availability_v432(v_biz, v_client, now()) core;
+  insert into _r values ('18f the parked pot lends nothing to the live programme',
+    case when v_offside is not null then 'FAIL: offered from a parked pot: '||v_offside
+         when v_offered is distinct from 'points'
+           then 'FAIL: the live unit should be points only, got '||coalesce(v_offered,'<none>')
+         else 'OK' end);
+exception when others then
+  insert into _r values ('18f the parked pot lends nothing to the live programme','FAIL: '||sqlerrm);
+end $s18f$;
+
 -- ============ 19 two-path equivalence ========================================================
 -- Tenant A reached its final state through Grow (draft -> publish). Tenant B reaches the SAME
 -- state through Settings first (business_set_loyalty_model_v353 as the very first touch). The

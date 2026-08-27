@@ -2745,6 +2745,12 @@
       "path": "db/migrations/20260827_nestly_v566_one_claimable_answer.sql",
       "semanticVersion": "v566",
       "proposedDeployVersion": "20260827000020"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v568_survivor_arm_stays_in_its_pot.sql",
+      "semanticVersion": "v568",
+      "proposedDeployVersion": "20260828000001"
     }
   ]
 }
