@@ -43,11 +43,13 @@ test('V466 (a) UNVERIFIED_MODULES_V466 exists and lists exactly the two gated mo
 test('V466 (b) the router refuses a typed #/memberships with a toast, mirroring the giftcards guard', () => {
   // Pin the pre-existing giftcards refusal FIRST — Agent A's line numbers had already drifted
   // once before this change; this is the anchor a future drift check should re-derive from.
-  assert.match(route, /if\(pageKey==='giftcards'\)\{\s*toast\('Gift cards are no longer part of this workspace\.'\);\s*return nav\('#\/dashboard'\);\s*\}/);
-  // The new memberships guard sits directly after it, same shape: toast, then nav('#/dashboard').
+  assert.match(route, /if\(pageKey==='giftcards'\)\{\s*toast\('Gift cards are no longer part of this workspace\.'\);\s*return nav\(firstPermittedPageV570\(\)\);\s*\}/);
+  // The new memberships guard sits directly after it, same shape: toast, then the bounce.
+  // nestly_v570: the bounce is firstPermittedPageV570() now — #/dashboard became deniable, so a
+  // refusal that names it can land a dashboard-denied staff member back on a refusal, forever.
   // /mn and /plist are element ids inside membershipsPage(), not separate routes, so gating the
   // bare 'memberships' pageKey covers both deep links without a separate check.
-  assert.match(route, /if\(pageKey==='memberships'\)\{\s*toast\('Memberships are not part of this workspace yet\.'\);\s*return nav\('#\/dashboard'\);\s*\}/);
+  assert.match(route, /if\(pageKey==='memberships'\)\{\s*toast\('Memberships are not part of this workspace yet\.'\);\s*return nav\(firstPermittedPageV570\(\)\);\s*\}/);
   // The guard must appear in the router BEFORE the generic MODULES/module-permission dispatch,
   // i.e. before the giftcards guard's own known downstream neighbour, so a typed hash is refused
   // and never reaches membershipsPage() at all.

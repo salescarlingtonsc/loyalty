@@ -1749,6 +1749,23 @@ const brandWordmark=()=>{
 };
 const money=c=>(S.biz?.currency||'SGD')+' '+((c||0)/100).toFixed(2);
 const canReadModule=module=>S.myModules?.includes(module)===true&&roleCanUseModule(S.myRole,module);
+/* nestly_v570: the router used to bounce every refusal to #/dashboard, on the assumption —
+   written into the route guard as a literal `pageKey!=='dashboard'` exemption — that the
+   dashboard is reachable by everyone. It is not: app.can_module(business,'dashboard') is a real
+   answer, and an owner who switches a staff member's Dashboard permission to Off means it. Once
+   the dashboard is deniable, a denied staff member bounced TO it is bounced again, forever, so
+   every refusal needs a landing page this account can actually open.
+   The order is "where would this person have started their shift?": the till first (a frontline
+   staff member's whole job), then the customer book, then the day's ledger and diary. Only
+   modules that pass canReadModule are considered, so the answer is always openable — the same
+   guard that sent us here cannot refuse it. If NOTHING is permitted (a role resolved with an
+   empty module list, which the persona check above allows) we do not guess: #/no-access renders
+   the existing "workspace access unavailable" card, which is the honest statement. */
+const SAFE_LANDING_PAGES_V570=['dashboard','till','clients','sales','appointments','bookings'];
+const firstPermittedPageV570=()=>{
+  const permitted=SAFE_LANDING_PAGES_V570.find(module=>canReadModule(module));
+  return permitted?`#/${permitted}`:'#/no-access';
+};
 const canWriteModule=module=>S.myModules?.includes(module)===true
   &&roleCanUseModule(S.myRole,module)
   &&(S.myRole==='owner'||S.myModulePerms?.[module]==='rw');
@@ -3465,6 +3482,12 @@ async function route(){
     if(h.startsWith('#/workspace/')){
       const workspaceParts=h.slice(12).split('/');
       const workspaceSlug=decodeURIComponent(workspaceParts[0]||'');
+      /* nestly_v570: this default deliberately stays the literal 'dashboard' rather than calling
+         firstPermittedPageV570(). S.myModules is nulled a few lines below and only resolved by
+         the get_my_modules block further down, so asking the helper HERE would answer from the
+         previous workspace's permissions. Leaving it means a dashboard-denied staff member
+         opening '#/workspace/<slug>' resolves to 'dashboard' and is then corrected in one hop by
+         the module guard, which by that point holds this workspace's real answer. */
       const requestedModule=decodeURIComponent(workspaceParts[1]||'dashboard');
       const {data:personas,error:personaError}=await loadPersonasV370();
       if(!isRouteCurrent())return;
@@ -3655,16 +3678,40 @@ async function route(){
       customerPersonaResolvedV370={userId:String(S.user?.id||''),value:S.hasCustomerPersona===true};
     }
     const frontlineDefault=!workspacePage&&h==='#/'&&['staff','frontdesk'].includes(S.myRole)&&S.myModules.includes('till');
-    const page=workspacePage?[workspacePage]:frontlineDefault?['till']:(h.replace('#/','')||'dashboard').split('/');
+    /* nestly_v570: a bare '#/' used to resolve to 'dashboard' unconditionally. Now that the
+       dashboard is deniable, that would land a denied staff member on the one page the guard
+       below is about to refuse — a bounce on every single sign-in. firstPermittedPageV570()
+       returns #/dashboard whenever it is permitted, so nothing changes for anyone who has it,
+       and frontlineDefault above still wins for till-capable frontline staff. S.myModules is
+       resolved by this point (the get_my_modules block above), so the answer is the real one. */
+    const page=workspacePage?[workspacePage]:frontlineDefault?['till']:(h.replace('#/','')||firstPermittedPageV570().replace('#/','')).split('/');
     if(frontlineDefault)history.replaceState(null,'',`${location.pathname}${location.search}#/till`);
     /* Route guard: a restricted employee must not reach a page by typing the URL, not
        just by it being hidden from nav. 'client' maps to the 'clients' module key, same
        as activeGroupKey() does for the sidebar. dashboard/setup are always reachable. */
     const pageKey=page[0]==='client'?'clients':page[0];
+    /* nestly_v570: the terminal answer firstPermittedPageV570() gives when an account holds no
+       openable module at all. It is a route rather than an inline render so the refusals below
+       can all bounce to a hash, and it MUST be intercepted here: it has no MODULES entry and no
+       page function, so renderShell would answer "That page has moved" and bounce again. The
+       card itself is the existing workspace-access one — the same sentence, for the same
+       situation: the owner has not granted this login anything to open. */
+    if(pageKey==='no-access'){
+      history.replaceState(null,'',`${location.pathname}${location.search}#/no-access`);
+      return renderWorkspaceAccessUnavailable();
+    }
     const growModuleKeys=['loyalty','retention','referrals','memberships','giftcards'];
+    /* nestly_v570: every refusal below bounces to firstPermittedPageV570() rather than the
+       literal '#/dashboard' it used to name. A dashboard-denied staff member can trip any of
+       them — the owner-only ones included, since typing the hash is exactly what they guard
+       against — and bouncing such an account to a page it may not open trades one refusal for
+       an endless one. The two bounces NOT changed are deliberate: #/storedvalue still bounces to
+       #/loyalty (a real alternative surface, and if loyalty is denied the module guard answers
+       it once), and the workspace-switch / invite-accept navigations outside this router still
+       ask for #/dashboard, which this guard then resolves correctly in one hop. */
     if(pageKey==='grow'&&!growModuleKeys.some(module=>canReadModule(module))){
       toast('You don\'t have access to Grow.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* Settings is owner-only. Hiding the nav link is not a guard — anyone can type the
        hash. The DB is the real boundary (every write in here is RLS/RPC owner-gated), but
@@ -3672,11 +3719,11 @@ async function route(){
        it to staff at all. */
     if(pageKey==='settings'&&S.myRole!=='owner'){
       toast('Only the owner can open Settings.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     if(pageKey==='branches'&&S.myRole!=='owner'){
       toast('Only the owner can manage branches.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* V243: same guard as Settings, for the same reason — this page IS the Settings tabs that
        used to be owner-gated, so hiding the rail link is not the boundary. It has no MODULES
@@ -3684,18 +3731,18 @@ async function route(){
        below never sees it and this explicit check is what fails closed for a typed hash. */
     if(pageKey==='customer-interface'&&S.myRole!=='owner'){
       toast('Only the owner can open Customer Interface.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     if(pageKey==='setup'&&S.myRole!=='owner'){
       toast('Only the owner can open Get started.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* Program Studio is owner-only authoring (get_programs_overview is owner-gated). It has no
        MODULES key — it is config authoring like the loyalty/retention editors — so the module
        guard below never sees it; this explicit owner check fails closed for a typed #/studio. */
     if(pageKey==='studio'&&S.myRole!=='owner'){
       toast('Only the owner can open Program Studio.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* Stored value has no launch-live business authority. Keep the existing foundation and audit
        records, but do not expose its test/cutover controls as an ordinary launch feature. */
@@ -3711,7 +3758,7 @@ async function route(){
        balances or their ledger rows changes. */
     if(pageKey==='giftcards'){
       toast('Gift cards are no longer part of this workspace.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* V466 (owner ruling 2026-08-23, R4: "hide memberships and gift cards until verified").
        Same shape as the giftcards refusal immediately above — a typed #/memberships (or its
@@ -3725,7 +3772,7 @@ async function route(){
        UNVERIFIED_MODULES_V466 below for the one-line un-gate when the module is verified. */
     if(pageKey==='memberships'){
       toast('Memberships are not part of this workspace yet.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* Promotions are customer-facing publishing authority, not an ordinary staff module.
        Keep the authoring surface owner-only in the client and enforce the same boundary in
@@ -3733,32 +3780,40 @@ async function route(){
        receiving content-publishing authority. */
     if(pageKey==='promotions'&&S.myRole!=='owner'){
       toast('Only the owner can publish promotions.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     if(pageKey==='platform'&&!S.isSA){
       toast('Not authorized.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     if(HIDDEN_BUSINESS_SURFACES.has(pageKey)){
       toast('This area is not available in the business workspace.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* V223: hiding the nav link is not a guard — anyone can type the hash. Waitlist is refused
        outright without Bookings, for the same reason it is hidden. */
     if(pageKey==='waitlist'&&!canReadModule('bookings')){
       toast('Waitlist works with Bookings. Turn on Bookings first.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     /* V275: the bottle surfaces are exempt from the generic bounce. A non-bar tenant that
        follows a bookmarked #/bottles link gets a plain "not available for this business type"
        card from the page itself; being thrown to the dashboard with a toast reads as a broken
        app rather than as an answer. The page re-checks the sector and the module before it
        renders anything, and the RPCs refuse independently. */
-    if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)&&pageKey!=='dashboard'
+    /* nestly_v570: the `pageKey!=='dashboard'` exemption that used to sit in this condition is
+       gone. It made an explicit Dashboard=Off in the per-staff module editor a no-op — the staff
+       member typed (or was bounced to) #/dashboard and the page rendered revenue and visit
+       counts the owner had just switched off. app.can_module() is the authority and it already
+       answers 'dashboard' correctly: an owner always passes, a staff row with modules IS NULL
+       inherits and passes, and only an explicit denial fails. Setup keeps its always-reachable
+       status by a different route — it is in OWNER_ONLY_MODULES and has its own owner guard
+       above — so nothing un-configured is locked out by this. */
+    if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)
        &&!BOTTLE_SURFACES_V275.has(pageKey)
        &&!canReadModule(pageKey)){
       toast('You don\'t have access to that.');
-      return nav('#/dashboard');
+      return nav(firstPermittedPageV570());
     }
     if(!isRouteCurrent())return;
     await loadWorkspaceLocaleV97(isRouteCurrent);
@@ -16393,7 +16448,13 @@ function navHtml(page,idPrefix='nav'){
      appointments, a deep link or a Customer 360 hand-off is never stranded — the irrelevant
      module just stops being advertised. */
   const sectorHidesAppointmentsV246=sectorHidesAppointmentsV276();
-  const navModuleVisible=m=>m==='dashboard'
+  /* nestly_v570: 'dashboard' used to be an unconditional TRUE here — the one module key the rail
+     advertised no matter what the owner had granted. So an owner who set Dashboard to Off in the
+     per-staff module editor still saw the row in that staff member's rail, and the row still
+     opened. It participates in the same `enabled.includes(m)` test as every other module now,
+     which is all it ever needed: 'dashboard' is a real key in ALLMODS, in every sector bundle
+     and in staff_module_perms, so an inheriting staff member and every owner keep the row. */
+  const navModuleVisible=m=>(m==='dashboard'&&enabled.includes('dashboard'))
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
@@ -18388,7 +18449,7 @@ function renderShell(page){
   const pageFn=page[0]?P[page[0]]:dashboard;
   if(!pageFn){
     toast('That page has moved.');
-    return nav('#/dashboard');
+    return nav(firstPermittedPageV570());
   }
   const pageResult=pageFn(...page.slice(1));
   Promise.resolve(pageResult).catch(error=>{

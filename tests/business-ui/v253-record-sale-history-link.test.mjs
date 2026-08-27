@@ -39,7 +39,11 @@ test("the button's visibility gate matches the destination route's own access gu
      their own "not available for this business type" card instead of bouncing to the dashboard.
      'sales' is not one of them, so the condition this test cares about is byte-for-byte the same
      for the /sales route. */
-  assert.match(app,/if\(MODULES\[pageKey\]&&!OWNER_ONLY_MODULES\.has\(pageKey\)&&pageKey!=='dashboard'\s*\n(?:\s*&&!BOTTLE_SURFACES_V275\.has\(pageKey\)\s*\n)?\s*&&!canReadModule\(pageKey\)\)\{/);
+  /* nestly_v570 removed the `pageKey!=='dashboard'` exemption that used to sit on the first
+     line: an owner who switched a staff member's Dashboard permission Off meant it, and the
+     exemption made that a no-op. 'sales' was never the exempted key, so the condition this test
+     cares about is still byte-for-byte the same for the /sales route. */
+  assert.match(app,/if\(MODULES\[pageKey\]&&!OWNER_ONLY_MODULES\.has\(pageKey\)\s*\n(?:\s*&&!BOTTLE_SURFACES_V275\.has\(pageKey\)\s*\n)?\s*&&!canReadModule\(pageKey\)\)\{/);
   assert.ok(!app.includes("OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','sales'"),
     'sales must not be owner-only, or the route guard and this button\'s gate would diverge');
 });

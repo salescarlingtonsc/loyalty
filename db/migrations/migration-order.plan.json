@@ -2757,6 +2757,12 @@
       "path": "db/migrations/20260828_nestly_v569_login_active_only_when_approved.sql",
       "semanticVersion": "v569",
       "proposedDeployVersion": "20260828000002"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v570_dashboard_off_means_off.sql",
+      "semanticVersion": "v570",
+      "proposedDeployVersion": "20260828000003"
     }
   ]
 }

@@ -169,6 +169,49 @@ select s.business_id, s.business_name, 'D06', 'RUNTIME-DANGEROUS',
         and coalesce((select fcv.status from public.firm_config_versions fcv
                        where fcv.id=s.active_config_version_id),'<missing>') <> 'published');
 
+-- D18 (nestly_v570) — a module permission the owner set that the server does not enforce. The
+-- canonical rule for "may this account use module X" is app.can_module; a reader that gates only
+-- on a ROLE permission serves the data anyway, which is how a teammate whose Dashboard was set to
+-- Off still read the firm's revenue (every 'staff' role carries view_sales by definition).
+-- This is deliberately a CORRECTNESS check against the authority, not a reader-vs-reader compare:
+-- it calls the real dashboard reader as each staff account and asserts the answer agrees with
+-- app.can_module. A refusal for a denied account is the CORRECT outcome and is not flagged; a
+-- SUCCESS for a denied account is the defect.
+do $d18$
+declare r record; v_branch uuid; v_served boolean;
+begin
+  for r in
+    select s.user_id, s.full_name, s.business_id, b.name as business_name
+      from public.staff s
+      join public.businesses b on b.id=s.business_id
+     where s.active and s.user_id is not null and s.access_state='approved'
+  loop
+    select br.id into v_branch from public.branches br
+     where br.business_id=r.business_id and br.active
+     order by br.created_at limit 1;
+    continue when v_branch is null;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub',r.user_id,'role','authenticated','aud','authenticated')::text,true);
+    if app.can_module(r.business_id,'dashboard') then
+      continue;  -- permitted: nothing to check
+    end if;
+    v_served := true;
+    begin
+      perform public.get_dashboard_summary_v155(r.business_id, current_date-30, current_date,
+                                                'current', array[]::uuid[], v_branch);
+    exception when others then
+      v_served := false;  -- refused, by this gate or an earlier one: correct
+    end;
+    if v_served then
+      insert into _scan values (r.business_id, r.business_name, 'D18', 'RUNTIME-DANGEROUS',
+        coalesce(r.full_name,'?')||' is denied the Dashboard module but the dashboard reader '
+        ||'still served them the firm''s revenue and visits');
+    end if;
+  end loop;
+  perform set_config('request.jwt.claims','',true);
+end
+$d18$;
+
 -- D17 (nestly_v569) — the READER-vs-AUTHORITY check for staff logins, and the operational
 -- follow-up beside it. The canonical rule is app.is_salon_member: workspace open AND staff active
 -- AND access_state='approved'.
@@ -502,7 +545,7 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
   from (values
     ('D01','RUNTIME-DANGEROUS'),('D01b','RUNTIME-DANGEROUS'),('D02','RUNTIME-DANGEROUS'),
     ('D03','RUNTIME-DANGEROUS'),('D04','RUNTIME-DANGEROUS'),('D05','RUNTIME-DANGEROUS'),
-    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
+    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D18','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
     ('D15','RUNTIME-DANGEROUS')

@@ -471,7 +471,11 @@ test('V243/V325 EXECUTING: ciWithPreviewV325 really nests the form and the phone
 
 test('V243 the module is owner-only on exactly the terms Settings is', () => {
   // Route guard: hiding the rail link is not a boundary — anyone can type the hash.
-  assert.match(app, /if\(pageKey==='customer-interface'&&S\.myRole!=='owner'\)\{\s*\n\s*toast\('Only the owner can open Customer Interface\.'\);\s*\n\s*return nav\('#\/dashboard'\);/);
+  /* nestly_v570: the bounce target is firstPermittedPageV570() rather than a literal
+     '#/dashboard'. A non-owner CAN trip this guard by typing the hash — that is what it guards
+     against — and the dashboard is now a deniable module, so naming it here could bounce a
+     dashboard-denied staff member straight into another refusal. The guard itself is unchanged. */
+  assert.match(app, /if\(pageKey==='customer-interface'&&S\.myRole!=='owner'\)\{\s*\n\s*toast\('Only the owner can open Customer Interface\.'\);\s*\n\s*return nav\(firstPermittedPageV570\(\)\);/);
   assert.match(app, /if\(pageKey==='settings'&&S\.myRole!=='owner'\)\{/);
   // Rail visibility, on the same terms as the other owner-only structural surface.
   const nav = app.slice(app.indexOf('const navModuleVisible='), app.indexOf('const visGroups='));

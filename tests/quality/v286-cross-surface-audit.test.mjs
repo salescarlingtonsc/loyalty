@@ -75,7 +75,11 @@ test('a hash with no page is refused out loud instead of silently showing the da
   const dispatch = between('const pageFn=', 'const pageResult=');
   assert.match(dispatch, /const pageFn=page\[0\]\?P\[page\[0\]\]:dashboard;/);
   assert.match(dispatch, /toast\('That page has moved\.'\)/);
-  assert.match(dispatch, /return nav\('#\/dashboard'\)/);
+  /* nestly_v570: the correction still happens, it just no longer names #/dashboard. That page is
+     a deniable module now, so a staff member whose Dashboard permission is Off would have been
+     corrected onto a page the route guard immediately refuses — a refusal loop instead of an
+     answer. firstPermittedPageV570() returns #/dashboard whenever the account holds it. */
+  assert.match(dispatch, /return nav\(firstPermittedPageV570\(\)\)/);
 });
 
 test('the customer nav badge cache is cleared with the session', () => {

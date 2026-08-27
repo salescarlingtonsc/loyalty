@@ -1113,6 +1113,48 @@ exception when others then
   insert into _r values ('18g a login is live only once the owner approves it','FAIL: '||sqlerrm);
 end $s18g$;
 
+-- ============ 18h a module switched Off is off at the reader, not just in the rail ============
+-- nestly_v570 (owner, 2026-08-28): an owner set a teammate's Dashboard module to Off and the
+-- teammate still read the firm's revenue — the router exempted the dashboard by name, the rail
+-- listed it, and the reader gated on the ROLE permission view_sales, which every 'staff' role
+-- carries. "OFF means OFF everywhere" is a guarantee this certification already makes for
+-- programmes; it is made here for module permissions too, at the reader, because that is the
+-- boundary a hidden nav entry is not.
+do $s18h$
+declare
+  v_biz uuid := '1abe0e00-0000-4000-8000-000000000001';
+  v_mate uuid := '1abe0e00-0000-4000-8000-0000000000f2';
+  v_staff uuid; v_branch uuid; v_served boolean := true; v_permitted boolean := false;
+begin
+  select id into v_branch from public.branches where business_id=v_biz and active order by created_at limit 1;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,
+                         email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_mate,'authenticated','authenticated',
+          'lc-denied-'||v_mate||'@example.test','',now(),now(),now());
+  -- an allowlist that grants the till and omits the dashboard: the owner's explicit Off
+  insert into public.staff(business_id,user_id,role,full_name,active,access_state,modules)
+  values (v_biz,v_mate,'staff','LC denied teammate',true,'approved',array['till','clients'])
+  returning id into v_staff;
+  insert into public.staff_branches(business_id, staff_id, branch_id)
+  values (v_biz, v_staff, v_branch);
+
+  perform pg_temp.lc_as(v_mate);
+  v_permitted := app.can_module(v_biz,'dashboard');
+  begin
+    perform public.get_dashboard_summary_v155(v_biz, current_date-30, current_date,
+                                              'current', array[]::uuid[], v_branch);
+  exception when others then v_served := false;
+  end;
+  perform pg_temp.lc_as(null);
+
+  insert into _r values ('18h a module set Off is refused at the reader, not just hidden',
+    case when v_permitted then 'FAIL: the module authority still grants the denied teammate'
+         when v_served then 'FAIL: the reader served a dashboard the owner switched off'
+         else 'OK' end);
+exception when others then
+  insert into _r values ('18h a module set Off is refused at the reader, not just hidden','FAIL: '||sqlerrm);
+end $s18h$;
+
 -- ============ 19 two-path equivalence ========================================================
 -- Tenant A reached its final state through Grow (draft -> publish). Tenant B reaches the SAME
 -- state through Settings first (business_set_loyalty_model_v353 as the very first touch). The

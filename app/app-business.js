@@ -1751,7 +1751,13 @@ function navHtml(page,idPrefix='nav'){
      appointments, a deep link or a Customer 360 hand-off is never stranded — the irrelevant
      module just stops being advertised. */
   const sectorHidesAppointmentsV246=sectorHidesAppointmentsV276();
-  const navModuleVisible=m=>m==='dashboard'
+  /* nestly_v570: 'dashboard' used to be an unconditional TRUE here — the one module key the rail
+     advertised no matter what the owner had granted. So an owner who set Dashboard to Off in the
+     per-staff module editor still saw the row in that staff member's rail, and the row still
+     opened. It participates in the same `enabled.includes(m)` test as every other module now,
+     which is all it ever needed: 'dashboard' is a real key in ALLMODS, in every sector bundle
+     and in staff_module_perms, so an inheriting staff member and every owner keep the row. */
+  const navModuleVisible=m=>(m==='dashboard'&&enabled.includes('dashboard'))
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
@@ -2923,7 +2929,7 @@ function renderShell(page){
   const pageFn=page[0]?P[page[0]]:dashboard;
   if(!pageFn){
     toast('That page has moved.');
-    return nav('#/dashboard');
+    return nav(firstPermittedPageV570());
   }
   const pageResult=pageFn(...page.slice(1));
   Promise.resolve(pageResult).catch(error=>{
