@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 405,
-  "itemCount": 450,
+  "pendingCount": 406,
+  "itemCount": 451,
   "items": [
     {
       "order": 1,
@@ -4507,6 +4507,16 @@
       "path": "supabase/migrations/20260827000014_nestly_v557_whatsapp_appointment_notifications.sql",
       "octetLength": 35501,
       "sha256": "b1c68b7d387c6a79652bc7a38dd0cbb8b4abea1d9ced83f06b91befa409f3144",
+      "provenance": "local-source"
+    },
+    {
+      "order": 451,
+      "kind": "pending",
+      "version": "20260827000015",
+      "name": "nestly_v559_publish_never_flips_loyalty_off",
+      "path": "supabase/migrations/20260827000015_nestly_v559_publish_never_flips_loyalty_off.sql",
+      "octetLength": 16300,
+      "sha256": "cac26054207cf162e72acd61a8ed265d4309dd05a4ff2853830c0b43d4473087",
       "provenance": "local-source"
     }
   ]
