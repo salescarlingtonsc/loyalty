@@ -123,8 +123,15 @@ test('V322 R6 the wizard publish sends the SCOPE, and the referral write is scop
     /writeProgrammeSwitchesV314\(S\.biz\.id,\s*programmeScopeSwitchesV322\(state\.switches,\{paused:state\.keepPaused===true\}\)/);
   assert.doesNotMatch(stripComments(apply), /\{\.\.\.state\.switches\}/,
     'the all-four-keys payload is the defect itself and must not survive anywhere in this function');
-  assert.match(apply, /if\(state\.switches\.referral!==true\)\{[^}]*return true\}/,
+  /* nestly_v567: the scope test kept its meaning and got a name, so the hoisted turning-ON write
+     (which now runs BEFORE the spine, because the server refuses a switch-on with no
+     referral_programs row) is gated by the identical condition rather than a second copy of it. */
+  assert.match(apply, /const referralInScopeV567=state\.switches\.referral===true;/,
     'a run that never went near referral must leave referral_programs alone');
+  assert.match(apply, /if\(!referralInScopeV567\)\{[^}]*return true\}/,
+    'and the early return is still the thing that guarantees it');
+  assert.match(apply, /referralNeedsWriteV567=referralInScopeV567&&/,
+    'every referral write, on either side of the spine call, is gated by that same scope test');
 });
 
 /* =================================================================================================

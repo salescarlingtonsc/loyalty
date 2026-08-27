@@ -243,7 +243,7 @@ test('business profile shortcuts are relationship-specific, not static decoratio
   /* nestly_v465 (owner ruling R1): the hero also takes the SERVER's per-business ready count off
      the same actionable card Home reads, so the pill on this page and the line on Home start from
      one number instead of agreeing only after loadRewards. */
-  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities,readyCount:customerCardReadyCountV465\(actionableCard\),readyChooseOne:customerCardReadyChooseOneV465\(actionableCard\)\}\)/);
+  assert.match(collapsed,/customerBusinessRelationshipSummaryV346\(\{loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities,readyCount:customerCardReadyCountV465\(actionableCard\),readyChooseOne:customerCardReadyChooseOneV465\(actionableCard\),stampSlots:stampSlotsV567\}\)/);
   assert.match(collapsed,/customerRewardOfferSwipeMarkupV339\(\{reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'\}\)/);
   assert.match(collapsed,/customerBusinessReferralDetailMarkupV362\(\)/);
   /* v386 (owner photo 4, the whole card struck through): "Earn more points → Visit and spend

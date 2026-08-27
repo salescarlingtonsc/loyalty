@@ -4030,9 +4030,39 @@ function customerRewardProgressMarkupV310({loyalty={},reward=null}={}){
    that would make N a stored fact is W6. The upper bound is a legibility limit, not a guess — past
    it the row stops being readable at 390px and the plain number is the honest figure. */
 const PROGRAMME_STACK_RING_LIMIT_V310=24;
-function customerStampTargetV310(reward){
+/* nestly_v567 — THE SERVER KNOWS HOW LONG THE CARD IS. SAY WHAT IT SAID.
+   The gift-derived length above was written when no reader carried the card's own length, and
+   nestly_v563 is the bill for it: a live stamps tenant whose loyalty_programs.stamp_target was
+   NULL had an editor drawing 15 slots while this function told the customer "0 of 5" — 5 being
+   the next gift's cost, a number the business never chose as a card length. v563 fixed the
+   server (a stamps tenant can no longer publish without a length) and
+   customer_get_stamp_card_v323 reports it as `slots`, which stampQuestNormaliseV323 already
+   carries.
+   So: the server's slots are the PRIMARY source wherever the caller has them, and the gift's
+   cost_units survives only as the last resort for a caller that has heard nothing from the
+   stamp-card reader yet (the first paint, before loadStampCardV323 answers).
+   THE >24 CLIFF IS GONE FROM THE SERVER-BACKED PATH. Returning 0 for a real 40-stamp card made
+   the surface forget a length the server had stated outright. PROGRAMME_STACK_RING_LIMIT_V310 is
+   a LEGIBILITY limit on DRAWING rings, and it now lives where the rings are drawn
+   (customerProgrammeStampRingsV310), exactly as customerStampQuestRingsV323 has always applied
+   it — so a card too long to draw falls back to the honest count instead of to no length at all.
+   The cap stays on the gift-derived guess, which is a guess and should not be stretched. */
+function customerStampTargetV310(reward,serverSlots){
+  const slots=Math.floor(Number(serverSlots)||0);
+  if(slots>0)return slots;
   const cost=Math.floor(Number(reward?.cost_units)||0);
   return cost>0&&cost<=PROGRAMME_STACK_RING_LIMIT_V310?cost:0;
+}
+/* nestly_v567 — the one place a server-confirmed card length is remembered for this session.
+   customer_get_stamp_card_v323 answers AFTER the first paint, and the wallet repaints without
+   re-reading it (customerWalletCanSkipRepaintV333 does not carry the stamp card in its
+   signature), so every repaint used to fall back to the gift-derived guess and undo the
+   correction the customer had already been shown. This map only ever holds a number the SERVER
+   sent, keyed by the business it was sent for — it never seeds, defaults or infers a length. */
+const CUSTOMER_STAMP_SLOTS_V567=new Map();
+function customerStampSlotsKnownV567(slug){
+  const key=String(slug||'').trim();
+  return key?(CUSTOMER_STAMP_SLOTS_V567.get(key)||0):0;
 }
 /* Pure CSS/SVG, no image. Filled rings are a solid fill AND a tick; empty ones a dashed outline —
    so the row survives greyscale and colour blindness exactly as the v186 ladder does. The single
@@ -4040,7 +4070,11 @@ function customerStampTargetV310(reward){
    prefers-reduced-motion is honoured in the stylesheet. */
 function customerProgrammeStampRingsV310(collected,target){
   const total=Math.max(0,Math.floor(Number(target)||0));
-  if(!total)return '';
+  /* nestly_v567: the legibility rail lives here now rather than inside customerStampTargetV310,
+     so a card the server says is 40 stamps long keeps its LENGTH (the "N of 40" line is true)
+     while the row of rings, which stops being readable at 390px past this many, is simply not
+     drawn. customerStampQuestRingsV323 has applied the identical rail since v323. */
+  if(!total||total>PROGRAMME_STACK_RING_LIMIT_V310)return '';
   const filled=Math.max(0,Math.min(total,Math.floor(Number(collected)||0)));
   return `<div class="customer-programme-stamp-rings" role="img" aria-label="${esc(`${filled} of ${total} stamps collected`)}">${
     Array.from({length:total},(unused,index)=>`<span class="customer-programme-stamp-ring${index<filled?' is-filled':''}${index===total-1?' is-goal':''}" aria-hidden="true">${
@@ -4051,10 +4085,12 @@ function customerProgrammeStampRingsV310(collected,target){
    figure, and when N is unknown the plain count stands in. It deliberately does not use
    .customer-programme-balance: that class is the stack's single hero and belongs to the Points
    card (see the one-hero rule below). */
-function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false}){
+function customerProgrammeStampsCardV310({loyalty={},presentation={},reward=null,entry=null,rewardsHost=false,stampSlots=0}){
   const paused=entry?.active===false;
   const collected=Number(loyalty.balance??presentation.balance??0);
-  const target=paused?0:customerStampTargetV310(reward);
+  /* nestly_v567: stampSlots is the server's own card length when this session has already heard
+     it (see customerStampSlotsKnownV567). The gift's cost_units stays as the pre-read fallback. */
+  const target=paused?0:customerStampTargetV310(reward,stampSlots);
   const rings=customerProgrammeStampRingsV310(collected,target);
   const gift=String(reward?.name||'').trim();
   const remaining=Math.max(0,Number(reward?.remaining_units??0));
@@ -4179,7 +4215,7 @@ function customerClaimableStripMarkupV310(facts){
 function customerMemberCodeSlotMarkupV310(){
   return '<div id="customerMemberCodeSlotV310" class="customer-member-code-slot" hidden></div>';
 }
-function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false,expiry=null}={}){
+function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentation={},reward=null,rewardsHost=false,birthday=null,suppressPointsCardV337=false,suppressRewardFactV337=false,deferReferralSlotV339=false,expiry=null,stampSlots=0}={}){
   const entries=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
     .map(kind=>[kind,programmeStackEntryV310(programmes,kind)]));
   const show=Object.fromEntries(PROGRAMME_STACK_ORDER_V310
@@ -4207,7 +4243,7 @@ function customerProgrammeStackV310({programmes=[],tier={},loyalty={},presentati
     /* v333: the paint order IS PROGRAMME_STACK_ORDER_V310 — tier first. The gifts host below is
        unaffected: it is decided by which accruing card is present, never by which is on top. */
     show.tiers&&!tierPausedV326?customerProgrammeTierCardV310({tier,entry:entries.tiers,pointsCardPresent:show.points}):'',
-    show.stamps&&!cardPausedV386('stamps')?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost}):'',
+    show.stamps&&!cardPausedV386('stamps')?customerProgrammeStampsCardV310({loyalty,presentation,reward,entry:entries.stamps,rewardsHost:stampsHost,stampSlots}):'',
     /* v338 (owner: v337's red hero + reward banner duplicated this same points balance and
        "ready to claim" fact a second time on the same screen). The card stays — it is still the
        mount point for the rewards list (rewardsHost/#walletRewards) — but its own balance/
@@ -4500,7 +4536,7 @@ function customerHeroGiftArtV487(reward){
       ?`<img class="customer-hero-reward-photo-v468" src="${esc(photoV487)}" alt="" loading="lazy" decoding="async" data-hero-gift-photo-v487>`
       :`<span class="customer-hero-gift-fallback-v487">${CUI.icon('giftcard',{size:34})}</span>`}</div>`;
 }
-function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false}={}){
+function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={},presentation={},packages={},membership={},bookingEnabled=false,business={},programmeCapabilities={},readyCount=null,readyChooseOne=false,stampSlots=0}={}){
   const unitLabel=ct(presentation.unit||loyalty.unit||'points');
   const balance=Math.max(0,Number(loyalty.balance)||0);
   /* v393: loyalty.tier is the SERVER's tier snapshot (app.customer_live_loyalty_v384 →
@@ -4577,7 +4613,11 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      same helper the stamps card uses, so the two can never disagree about how long the card is;
      when the server gives no reward (nothing to aim at yet) there is no length to draw and the
      plain count stands in, exactly as customerProgrammeStampsCardV310 does. */
-  const stampTargetV386=modeV386==='stamps'?customerStampTargetV310(reward):0;
+  /* nestly_v567: the server's own slots lead here. This is the figure the owner photographed
+     saying "0 of 5" on a 15-stamp card (nestly_v563); once customer_get_stamp_card_v323 has
+     answered once this session, its length is what this hero draws on every later paint, and the
+     next-gift guess is only what stands in before that first answer. */
+  const stampTargetV386=modeV386==='stamps'?customerStampTargetV310(reward,stampSlots):0;
   const stampRingsV386=stampTargetV386?customerProgrammeStampRingsV310(balance,stampTargetV386):'';
   /* TIERS-ONLY: no spendable balance exists, so the hero states the standing and the distance to
      the next rung. tier.progress_percent is the server's own figure — the same one
@@ -4624,7 +4664,10 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
      whole card (customerHeroStampCardV422) the moment the real slots and milestones arrive. When
      that read never answers, this is what stays on screen, so nothing regresses. */
   const figureV386=modeV386==='stamps'
-    ?`<div class="customer-business-stamp-figure-v386" data-hero-stamp-slot-host-v422>${stampRingsV386
+    ?`<div class="customer-business-stamp-figure-v386" data-hero-stamp-slot-host-v422>${stampTargetV386
+        /* nestly_v567: the "N of M" line is driven by whether a LENGTH is known, not by whether
+           the rings could be drawn. A 40-stamp card is past the ring rail but its length is a
+           fact the server stated, and dropping to a bare count threw it away. */
         ?`${stampRingsV386}
       <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
         :`<b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(balance))}<span>stamps</span></b>`}</div>`
@@ -4866,6 +4909,9 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
      [data-company-detail] wiring — nothing about that click path changed. "Other branch" from
      the mockup is left out: this surface has no branch list loaded to link to. */
   const accentV326=esc(contrastSafeBrandColor(presentation.heroColor));
+  /* nestly_v567: the server-confirmed stamp-card length for THIS business, or 0 when
+     customer_get_stamp_card_v323 has not answered yet this session. Never a default. */
+  const stampSlotsV567=customerStampSlotsKnownV567(business.slug);
   /* v338: both duplication fixes below key off the SAME visibility checks the hero/banner
      themselves already use — customerPointsHeroVisibleV337 for the points-summary duplicate,
      reward.available_now for the reward-ready duplicate — so a business where the hero/banner
@@ -4930,7 +4976,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
          The chip stays as the tap target for the details sheet; this line is the address itself,
          filled by the same contact read that fills the chip and hidden until it arrives. */''}
     <p class="customer-business-address-line-v386" data-company-address-line-v386 hidden></p>
-    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities,readyCount:customerCardReadyCountV465(actionableCard),readyChooseOne:customerCardReadyChooseOneV465(actionableCard)})}
+    ${customerBusinessRelationshipSummaryV346({loyalty,reward,tier,presentation,packages,membership,bookingEnabled,business,programmeCapabilities,readyCount:customerCardReadyCountV465(actionableCard),readyChooseOne:customerCardReadyChooseOneV465(actionableCard),stampSlots:stampSlotsV567})}
     ${customerBusinessDashboardModulesV347({reward,tier,packages,membership,loyalty,capabilities:programmeCapabilities})}
     ${customerRewardOfferSwipeMarkupV339({reward,items:offers,status:offersStatus,business,bookingEnabled,includeReward:false,title:'Limited offers'})}
     ${customerBusinessReferralDetailMarkupV362()}
@@ -4945,7 +4991,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
            gifts sub-page, which HIDES that hero. The one place the balance was printed was
            therefore invisible on the one screen named after it. The suppression is lifted for
            this layout only; the pre-v347 path below still passes the hero-derived flag. */
-        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard?.expiry||null})
+        ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:false,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:true,expiry:actionableCard?.expiry||null,stampSlots:stampSlotsV567})
         :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
       ${/* nestly_v417 (photo 8): the explainer row is struck out. */''}
     </section>
@@ -4970,7 +5016,7 @@ function customerMerchantExperienceMarkupV95({presentation,business,actionableCa
       ${bookingEnabled?`<a class="btn sm customer-programme-book customer-programme-contact-item-v337 customer-programme-contact-item-book-v337" href="#/b/${encodeURIComponent(business.slug||'')}" data-repeat-booking data-business-slug="${esc(business.slug||'')}">${CUI.icon('bookings',{size:20})}<span>${esc(ct('bookNow'))}</span></a>`:''}
     </div>
     ${programmeStackV310(programmeCapabilities)
-      ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:collapsedHeaderV339})
+      ?customerProgrammeStackV310({programmes:programmeStackV310(programmeCapabilities),tier,loyalty,presentation,reward,rewardsHost,birthday:actionableCard?.birthday_benefit||null,suppressPointsCardV337:pointsHeroVisibleV338,suppressRewardFactV337:rewardBannerVisibleV338,deferReferralSlotV339:collapsedHeaderV339,stampSlots:stampSlotsV567})
       :customerProgrammeSummaryTabsV194({tier,loyalty,presentation,reward,rewardsHost,capabilities:programmeCapabilities})}
     ${/* v339/v362: the older non-collapsed preview path still renders the referral slot near this
           tail. The collapsed customer app renders its referral slot in customerBusinessReferralDetailV362

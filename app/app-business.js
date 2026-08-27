@@ -542,6 +542,18 @@ function programmeSwitchSetV314(selection,{paused=false}={}){
    ten production programmes still read 'classic' and the check constraint still permits it — so
    every read normalises it to the catalogue model instead, which is what those firms now get. */
 const normaliseLoyaltyModelV375=value=>String(value||'')==='classic'?'points_tiers':String(value||'');
+/* nestly_v567 — ONE default loyalty model, and only where a default is legitimate.
+   Three separate places invented a different model for the same missing field: 'points_tiers'
+   in the loyalty editor, 'classic' in its own "what are customers on right now" line, and
+   'points' (which is not even a stored loyalty_model value) in the owner reward journey. All
+   three were placeholders read only through `=== 'stamps'`, so each one silently asserted "this
+   firm is NOT on a stamp card" about a field the server never sent.
+   The rule the platform now holds: a UI default may SEED A NEW DRAFT, but it must never
+   masquerade as saved runtime state. So the three readers of saved state fail closed — an
+   unreadable model normalises to '' and no model is claimed — and the one genuine seeding site
+   (the setup wizard's fresh draft, where nothing is stored yet and the owner is about to choose)
+   uses this single named constant instead of a bare literal. */
+const LOYALTY_MODEL_NEW_DRAFT_DEFAULT_V567='points_tiers';
 /* V378 (owner, photos 1 and 2: "off point rewards and switched to stamps should reflect stamps
    instead of points"). The unit a balance is counted in follows the LIVE accruing programme, the
    same rule nestly_v378 applies server-side when it picks which pot to read. Falls back to points
@@ -5251,9 +5263,28 @@ async function clientDetail(id){
   }else if(prog&&prog.active){
     const unit=prog.unit==='stamps'?'stamps':'points';
     const stamps=unit==='stamps';
+    /* nestly_v567 (owner rule: a UI default may seed a NEW DRAFT, but it must never masquerade as
+       saved runtime state). This line read `money(prog.stamp_per_cents||500)` and
+       `Number(prog.earn_points_per_dollar)||0`, so a programme whose earn rate the server did not
+       send was reported to the person at the counter as a confident "1 stamp for every $5.00" —
+       a rate nobody at this business ever set — or, worse, as "0 points for every SGD 1", which
+       states the exact opposite of the truth: it says the customer earns nothing.
+       The house discipline is `loyaltyFactsAvailable` a few lines up, which refuses to print zero
+       in place of a balance it could not read. The earn rate gets the same treatment, in the two
+       shapes each unit can honestly take:
+         * stamps — no rate, no sentence. The whole Earn line is suppressed rather than invented.
+         * points — an explicit em-dash carrying a "not set" title, the way DASH_V252 / DASH_V541
+           already mark a cell the server left empty elsewhere on this page. */
+    const stampCentsV567=Number(prog.stamp_per_cents);
+    const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
-      ?`1 stamp for every ${money(prog.stamp_per_cents||500)} spent`
-      :`${Number(prog.earn_points_per_dollar)||0} points for every SGD 1 spent`;
+      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
+      :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?`${earnPerDollarV567} points for every SGD 1 spent`:'');
+    const earnLineV567=earnCopy
+      ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
+      :stamps
+        ?''
+        :`<p class="small" style="margin-top:5px" data-c360-earn-unset-v567><b>Earn:</b> <span class="muted" title="No earn rate is saved for this programme yet. Peekaa is not guessing one.">${DASH_V541}</span></p>`;
     let nextCopy='No reward milestone has been added yet.';
     if(!redemptionEnabled)nextCopy='Customer redemption is switched off. Turn it on under Customer Interface → Customer Action.';
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
@@ -5288,7 +5319,7 @@ async function clientDetail(id){
         ${/* V319 put spendable credit here so hiding the zero-value row above never put the figure
              out of reach. V320 removed it with the row (owner: "i do not want spendable credits to
              exist in the app") — there is no longer a figure to keep reachable. */''}
-        <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
+        ${earnLineV567}
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:16})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct ${esc(unit==="stamps"?"stamp":"points")} balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited. ${/* nestly_v512: the control writes to whichever programme is RUNNING, so the word has to follow it — on a stamp card this said "points" over a control that now moves stamps. */""}</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
@@ -10697,7 +10728,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const birthdayProgram=birthdayPrograms[0]||null;
   const publishedBirthdayProgram=publishedBirthdayPrograms[0]||null;
   const rewards=rw||[],tiers=tr||[];
-  const model=normaliseLoyaltyModelV375(modelOverride||p?.loyalty_model)||'points_tiers';
+  /* nestly_v567: no `||'points_tiers'`. This renders the SAVED programme (or the owner's live
+     preview override), and `model` is consulted only through `model==='stamps'` — so the literal
+     never showed anywhere, it just answered "not stamps" on behalf of a server that said nothing.
+     An unreadable model is now '' and every downstream test fails closed exactly as before,
+     without a fabricated model sitting in the variable for the next reader to trust. */
+  const model=normaliseLoyaltyModelV375(modelOverride||p?.loyalty_model);
   /* V230 (owner: "can just change to Points Redemption / Tiered Membership / stamp card (only 1
      can be live at any go)"). One three-way choice. Underneath, 'redeem' and 'tiers' share the
      points engine (loyalty_model classic/points_tiers) and differ by businesses.points_mode —
@@ -10725,7 +10761,10 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const loyaltyActiveV235=loyaltyStatusDraftV235===null
     ?(programmeSpineRunningV314()??Boolean(p?.active)):loyaltyStatusDraftV235;
   /* The saved model, ignoring any preview — this is what customers are on right now. */
-  const liveLoyaltySelectionV235=(p?.loyalty_model||'classic')==='stamps'?'stamps'
+  /* nestly_v567: the invented 'classic' is gone. A programme row with no model is not a classic
+     programme — it is a programme whose model this client could not read, and the only question
+     asked here is "is it stamps?", which fails closed on ''. */
+  const liveLoyaltySelectionV235=normaliseLoyaltyModelV375(p?.loyalty_model)==='stamps'?'stamps'
     :loyaltySelectionForModeV240(programmePointsModeV314()||S.biz.points_mode||'redeem');
   /* V296 (owner markup 2026-08-12: "redemption" struck through, "System" written above it).
      Label only — the stored model keys ('redeem' here, 'classic' on loyalty_programs.loyalty_model)
@@ -12393,9 +12432,14 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
         :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
-    ${!draftVersionId&&history.length>1?`<div class="row" style="margin-top:12px"><label for="retentionRollback" style="margin:0">Restore prior version</label>
-      <select id="retentionRollback" style="max-width:240px">${history.filter(v=>v.id!==currentVersion).map(v=>`<option value="${v.id}">Version ${v.version_no} · ${v.status}</option>`).join('')}</select>
-      <button class="btn ghost sm" id="createRetentionRollback">Create rollback draft</button></div>`:''}
+    ${/* nestly_v567: the "Create rollback draft" control is WITHDRAWN, not restyled. It based a
+         draft on a PRIOR version, which nestly_v564's stale-draft guard now refuses to publish —
+         and it was already dishonest about its own promise: it never copied
+         retention_program_versions (the thing its label offered to restore) while silently
+         reverting the tier ladder and, before v564, the loyalty numbers. A real restore feature
+         must mint a FRESH draft based on the live pointer and copy the historical CONTENT into
+         it; that is a designed feature, not a one-line button, and is recorded in the backlog.
+         The version history list above stays — reading history was never the problem. */''}
     </div>`:'';
   routeMain.innerHTML=`${CUI.pageHeader({title:'Retention programs',subtitle:'Return-visit rules customers actually experience, with reward behavior and grant history intact.',iconName:'retention',canWrite:isOwner,moduleLabel:'Retention configuration'})}
     ${draftVersionId?'':'<section id="comebackHost" aria-label="Gone quiet and who came back" style="margin-bottom:18px"></section><section id="pbHost" aria-label="Bring-back playbooks" style="margin-bottom:18px"></section>'}
@@ -12550,7 +12594,8 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
   };
   if(isOwner&&!draftVersionId){
     if($('beginRetentionDraft'))$('beginRetentionDraft').onclick=async()=>{const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:currentVersion,p_source:'owner_retention_editor'});if(!isRetentionCurrent())return;if(error)return fail(error);nav(`#/retention/${data.version_id}`)};
-    if($('createRetentionRollback'))$('createRetentionRollback').onclick=async()=>{const base=$('retentionRollback').value;if(!base)return toast('Choose a prior version');const {data,error}=await sb.rpc('create_loyalty_config_draft',{p_business:S.biz.id,p_based_on:base,p_source:'retention_rollback'});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Rollback draft created — review before publishing');nav(`#/retention/${data.version_id}`)};
+    /* nestly_v567: the createRetentionRollback handler left with its button (see the markup
+       comment above) — a based-on-prior draft is exactly what v564 forbids publishing. */
   }
   renderRetentionListV332();
   if(isOwner&&draftVersionId&&exactProgramMissing){
@@ -13199,7 +13244,11 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   };
 }
 function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyModel=null,asOf=null,programmes=null}={}){
-  const model=normaliseLoyaltyModelV375(loyalty?.loyalty_model||loyaltyModel)||'points';
+  /* nestly_v567: `||'points'` invented a model that loyalty_programs.loyalty_model has never
+     been allowed to hold ('classic' | 'points_tiers' | 'stamps'), purely so the `==='stamps'`
+     test below would answer false. It fails closed on '' instead, and `unit` keeps its own
+     explicit points default — which is a WORD for a figure, not a claim about the programme. */
+  const model=normaliseLoyaltyModelV375(loyalty?.loyalty_model||loyaltyModel);
   const unit=model==='stamps'?'stamps':'points';
   /* V314 (W6 increment 1): the owner's Live/paused pill asks the SPINE. loyalty_programs.active
      stopped being the switch at v314 — it is the published setting, and the engine reads
@@ -16677,6 +16726,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          Comment inside the expression, not its own ${''} slot: see the grid's "+" above. */
       canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
   </div>`:'';
+  /* nestly_v567 — THE CANVAS MUST NOT PRETEND TO BE A SAVED CARD.
+     GROW_STAMPS_DEFAULT_LEN_V416 (15) is a fine way to SEED a card nobody has set up yet: the
+     owner is about to choose, the grid is a blank sheet, and the first tap on the stepper or a
+     stamp WRITES a real length. It stops being fine the moment the programme is LIVE, because
+     then the 15 slots are not a proposal — they read as the card the firm's customers are
+     filling in. That is the nestly_v563 defect from the owner's side of the glass: the editor
+     drew 15 while loyalty_programs.stamp_target was NULL, and the customer's hero drew 5.
+     So: the seeded canvas survives only while the spine says stamps is NOT running. When stamps
+     IS running for customers and the length is missing, the grid is replaced by the same warning
+     band the stranded gifts already use (growStampsStrandedNoteV416 above) — an explicit refusal
+     to draw a card the live configuration cannot vouch for. The length CONTROLS stay: using one
+     writes a real number, which is exactly the way out. */
+  const growStampsNoLengthLiveV567=growPointsIsStampsV326&&growPointsOnV326&&growStampsTargetV416===0;
+  /* nestly_v567: the band that stands in for the canvas. Same .imp-note vehicle as the stranded
+     note above, so no new component and no new stylesheet rule — the owner already reads this
+     shape as "something on this card needs your attention". It names the one fact that is
+     missing and the one control that fixes it, and it deliberately does NOT propose a number:
+     proposing 15 here is how the drawn card and the engine came apart in the first place. */
+  const growStampsNoLengthBandV567=growStampsNoLengthLiveV567?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-nolength-v567>
+    <b>This card has no length saved</b>
+    <p class="muted small" style="margin-top:6px">Stamp Card is switched on for your customers, but how many stamps fill one card has not been saved. Peekaa will not draw a card it cannot vouch for — the picture would show one length while your customers collect against another. Set the length with the − / + controls above (or type it in) and the card appears.</p>
+  </div>`:'';
 
   /* V356 (owner mockup, photo 1): a summary card for the stamp card as a whole. Deliberately does
      NOT carry the mockup's "Duplicate" button: a firm has exactly one stamps programme row on the
@@ -16830,9 +16901,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <p class="muted small" style="margin-top:2px">Tap any stamp to put a gift on it, or to change the gift that is already there. Customers fill the card in order, and it starts again when they finish it.</p>
           ${growEarnEditOpenV359?`<ul class="grow-setup-rewardlist-v301" style="margin:10px 0">${growEarnRuleFormV359}</ul>`:''}
           ${growStampsCardLengthBarV416}
-          ${growStampsGridV416}
+          ${/* nestly_v567: the canvas OR the refusal, never both — and never the canvas alone on a
+               live stamps programme with no saved length. The customer preview goes with it: it is
+               a second drawing of the same unverified card, and showing the owner what customers
+               "see" from a number the server never stored is the same fabrication twice. */''}
+          ${growStampsNoLengthLiveV567?growStampsNoLengthBandV567:`${growStampsGridV416}
           ${growStampsStrandedNoteV416}
-          ${growStampsCustomerPreviewV472}
+          ${growStampsCustomerPreviewV472}`}
           ${growPointsAddOpenV326==='form'?`<ul class="grow-setup-rewardlist-v301" style="margin-top:10px">${growPointsAddFormV326}</ul>`:''}
         </div>
       </div>
@@ -18946,32 +19021,58 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the second fails, the message says the programme is not paying and to press Save again.
        The spine is only touched when the switch actually MOVED — a settings-only save must not put
        a write on a programme row nobody asked about. */
-    if(wantOnV558!==(snapshot.referral?.enabled===true)){
+    /* nestly_v567 — WHICH WRITE GOES FIRST DEPENDS ON WHICH DIRECTION THE SWITCH IS MOVING.
+       v558 fixed the order at spine-then-row for both directions. The server is being tightened
+       to REFUSE switching referral on when public.referral_programs holds no row for the firm —
+       a spine row saying "referral is running" over a table with nothing to pay out is a
+       programme that looks live and pays nothing, which is the exact split v558 set out to close.
+       save_referral_program_v421 is the writer that CREATES that row, so turning referral ON must
+       run it first: the row exists, then the spine is allowed to announce it. Turning OFF keeps
+       v558's order — the spine stops presenting it, then the row records the owner's answer —
+       because there the row's absence is not what blocks anything.
+       Every guard v558 wrote is carried through unchanged, including the isGrowCurrent() check
+       after each await and the two distinct failure messages; only the sequence moves. */
+    const referralSwitchMovedV567=wantOnV558!==(snapshot.referral?.enabled===true);
+    const referralFailV567=message=>{
+      growReferralBusyV364=false;
+      growReferralErrorV364=message;
+      growRerenderV322({quiet:true});
+      return false;
+    };
+    /* The spine is only touched when the switch actually MOVED — a settings-only save must not put
+       a write on a programme row nobody asked about. */
+    const referralSpineWriteV567=async()=>{
+      if(!referralSwitchMovedV567)return true;
       const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
-      if(!isGrowCurrent())return;
-      if(!spine.ok){
-        growReferralBusyV364=false;
-        growReferralErrorV364=`Referrals could not be turned ${wantOnV558?'on':'off'} — ${ownerErrorText(spine.error)}`;
-        return growRerenderV322({quiet:true});
-      }
-    }
+      if(!isGrowCurrent())return null;
+      return spine.ok?true
+        :referralFailV567(`Referrals could not be turned ${wantOnV558?'on':'off'} — ${ownerErrorText(spine.error)}`);
+    };
     /* v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
-    const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
-      p_enabled:wantOnV558,p_reward_kind:kind,
-      p_reward_points:kind==='voucher'?null:points,
-      p_reward_label:kind==='voucher'?gift:null,
-      p_min_spend_cents:Math.round(amount*100),
-      p_friend_enabled:friendOn,
-      p_friend_reward_points:kind==='voucher'?null:friendPoints,
-      p_friend_reward_label:kind==='voucher'?(friendGift||null):null});
-    if(!isGrowCurrent())return;
+    const referralRowWriteV567=async()=>{
+      const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
+        p_enabled:wantOnV558,p_reward_kind:kind,
+        p_reward_points:kind==='voucher'?null:points,
+        p_reward_label:kind==='voucher'?gift:null,
+        p_min_spend_cents:Math.round(amount*100),
+        p_friend_enabled:friendOn,
+        p_friend_reward_points:kind==='voucher'?null:friendPoints,
+        p_friend_reward_label:kind==='voucher'?(friendGift||null):null});
+      if(!isGrowCurrent())return null;
+      /* nestly_v429 (B2): v425 refuses a reward type whose pot is not running, and the refusal
+         names the switch to turn on ("referral reward type \"points\" needs the Point system
+         switched on"). That sentence is the whole answer, so it is shown as written rather than
+         replaced by a generic "could not be saved" — ownerErrorText passes owner-authored prose
+         through. */
+      return error?referralFailV567(ownerErrorText(error)):true;
+    };
+    for(const stepV567 of (wantOnV558
+      ?[referralRowWriteV567,referralSpineWriteV567]
+      :[referralSpineWriteV567,referralRowWriteV567])){
+      if(await stepV567()!==true)return;
+    }
     growReferralBusyV364=false;
-    /* nestly_v429 (B2): v425 refuses a reward type whose pot is not running, and the refusal names
-       the switch to turn on ("referral reward type \"points\" needs the Point system switched
-       on"). That sentence is the whole answer, so it is shown as written rather than replaced by a
-       generic "could not be saved" — ownerErrorText passes owner-authored prose through. */
-    if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growReferralEditOpenV364=false;
     /* nestly_v558: the toast says which of the two states the firm is now in, because "saved" on a
        screen that carries a switch does not answer the question the owner just asked. */
@@ -20921,7 +21022,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     /* V322 (R2/R3): the kind awaiting the owner's confirmation that turning it on switches the
        other accrual side off. Null except between the press and the confirm. */
     pendingExclusiveV322:null,
-    model:baseModel||'points_tiers',
+    /* nestly_v567: this IS the new-draft seeding context — nothing is stored, the owner is about
+       to choose, and the wizard writes this value into the draft. It takes the one shared named
+       default rather than a fourth bare literal. */
+    model:baseModel||LOYALTY_MODEL_NEW_DRAFT_DEFAULT_V567,
     versionId:snapshot?.draft?.id||null,
     snapshotHash:snapshot?.draft?.snapshot_hash||null,
     basedOn:snapshot?.currentVersion||null,
@@ -22608,6 +22712,44 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   async function applyProgrammeSwitchesV314(fromRetry){
     if(fromRetry){state.modeError='';render()}
     if(!fromRetry||!state.switchKeyV314)state.switchKeyV314=crypto.randomUUID();
+    /* nestly_v567 — THE REFERRAL ROW IS CREATED BEFORE THE SPINE IS ALLOWED TO ANNOUNCE IT.
+       The server is being tightened to REFUSE switching referral on when public.referral_programs
+       holds no row for the firm, and save_referral_program_v421 is the writer that creates it.
+       So on a Go-live that is turning referral ON, the row write below is hoisted ahead of the
+       spine write; every other case keeps the original order, because there the row's absence is
+       not what blocks anything. Nothing about WHEN the row is written relative to publish changes
+       — both writes still happen here, after publish, for the reasons the block below records.
+       "Moved" is still measured against state.referralEnabledW6I2 (captured when the wizard
+       opened) for exactly the reason spelled out below; hoisting the row write does not touch
+       that, because the row write is what UPDATES that captured value, not what reads the spine. */
+    const referralInScopeV567=state.switches.referral===true;
+    const referralWanted=state.keepPaused!==true;
+    const referralWasOn=state.referralEnabledW6I2===true;
+    const referralNeedsWriteV567=referralInScopeV567&&(state.referralDirty||referralWanted!==referralWasOn);
+    const referralRowWriteV567=async()=>{
+      const carried=state.referralConfigV429||{};
+      const carriedKind=growReferralKindV425(carried.reward_kind);
+      const {error:referralError}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
+        p_enabled:referralWanted,
+        p_reward_kind:carriedKind,
+        p_reward_points:carriedKind==='voucher'?null:Math.max(0,Math.round(Number(state.referralReward)||0)),
+        p_reward_label:carriedKind==='voucher'?(carried.reward_label||null):null,
+        p_friend_enabled:carried.friend_enabled!==false,
+        p_friend_reward_points:carriedKind==='voucher'?null:(carried.friend_reward_points??null),
+        p_friend_reward_label:carriedKind==='voucher'?(carried.friend_reward_label||null):null,
+        p_min_spend_cents:Math.round(Math.max(0,Number(state.referralMinSpend)||0)*100)});
+      if(!isCurrent())return false;
+      if(referralError){
+        state.modeError=`Published. The referral settings could not be saved — ${ownerErrorText(referralError)} Press retry.`;
+        render();return false;
+      }
+      state.referralDirty=false;
+      /* The live row now says what the switch says. A retry after a FAILED save never reaches this
+         line, so the guard above still fires on the next attempt. */
+      state.referralEnabledW6I2=referralWanted;
+      return true;
+    };
+    if(referralNeedsWriteV567&&referralWanted&&!await referralRowWriteV567())return false;
     const {ok,error}=await writeProgrammeSwitchesV314(S.biz.id,
       programmeScopeSwitchesV322(state.switches,{paused:state.keepPaused===true}),
       {paused:false,key:state.switchKeyV314});
@@ -22643,31 +22785,10 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
        state.referralConfigV429 (captured when the wizard opened); only the two numbers this wizard
        actually collects are new. A voucher firm's amount is ignored by the saver, so a wizard run
        cannot convert a free-gift referral into a points one behind the owner's back. */
-    if(state.switches.referral!==true){state.modeError='';if(fromRetry)render();return true}
-    const referralWanted=state.keepPaused!==true;
-    const referralWasOn=state.referralEnabledW6I2===true;
-    if(state.referralDirty||referralWanted!==referralWasOn){
-      const carried=state.referralConfigV429||{};
-      const carriedKind=growReferralKindV425(carried.reward_kind);
-      const {error:referralError}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
-        p_enabled:referralWanted,
-        p_reward_kind:carriedKind,
-        p_reward_points:carriedKind==='voucher'?null:Math.max(0,Math.round(Number(state.referralReward)||0)),
-        p_reward_label:carriedKind==='voucher'?(carried.reward_label||null):null,
-        p_friend_enabled:carried.friend_enabled!==false,
-        p_friend_reward_points:carriedKind==='voucher'?null:(carried.friend_reward_points??null),
-        p_friend_reward_label:carriedKind==='voucher'?(carried.friend_reward_label||null):null,
-        p_min_spend_cents:Math.round(Math.max(0,Number(state.referralMinSpend)||0)*100)});
-      if(!isCurrent())return false;
-      if(referralError){
-        state.modeError=`Published. The referral settings could not be saved — ${ownerErrorText(referralError)} Press retry.`;
-        render();return false;
-      }
-      state.referralDirty=false;
-      /* The live row now says what the switch says. A retry after a FAILED save never reaches this
-         line, so the guard above still fires on the next attempt. */
-      state.referralEnabledW6I2=referralWanted;
-    }
+    if(!referralInScopeV567){state.modeError='';if(fromRetry)render();return true}
+    /* nestly_v567: the turning-ON case already ran above, ahead of the spine write; this is the
+       turning-OFF / settings-only case, which keeps the original spine-then-row order. */
+    if(referralNeedsWriteV567&&!referralWanted&&!await referralRowWriteV567())return false;
     state.modeError='';
     if(fromRetry)render();
     return true;
@@ -33568,6 +33689,26 @@ async function loadBusinessProfilePreviewLiveV486(){
   refreshCustomerInterfaceLivePreviewV326();
 }
 function customerInterfaceLivePreviewMarkupV326(){
+  /* nestly_v567 — A PREVIEW MAY NOT INVENT THE PROGRAMME STACK IT IS PREVIEWING.
+     v417 read the stack off the spine (programmeSpineRowsV314) and kept a hardcoded
+     [{points,active},{tiers,active}] pair plus a client-minted programmes_contract:'v310' as the
+     fallback "so the preview is never blank". That fallback is the one thing this screen must not
+     do: an owner running a stamp card and no tiers was shown a points programme and a tier ladder
+     and told, in the badge under it, that this is what their customers see. A generic picture is
+     not better than no picture when the picture is the answer to the question being asked.
+     Fail closed: when the spine has not been read, the preview says so and offers the retry —
+     and renders NO programme cards at all. The spine cache is business-scoped and refreshed by
+     refreshProgrammeSpineV314(), which is what the retry calls. */
+  const spineRowsV567=programmeSpineRowsV314();
+  if(spineRowsV567===null){
+    return `<div class="wallet-shell customer-shell customer-surface ci-live-preview-inner-v326"><div class="wallet-inner">
+      <div class="imp-note" role="alert" style="margin:12px">
+        <b>Could not load your live programme state</b>
+        <p class="muted small" style="margin-top:6px">This preview draws your customer app from the programmes you actually have running. That could not be read just now, so nothing is drawn — Peekaa will not show you a made-up programme stack and call it what your customers see.</p>
+        <div class="row" style="margin-top:10px"><button type="button" class="btn sm" data-ci-preview-spine-retry-v567>Retry</button></div>
+      </div>
+    </div></div>`;
+  }
   const logoImg=document.querySelector('#workspaceLogoPreviewV96 img');
   const logoUrl=logoImg?.getAttribute('src')||'';
   /* V375: the cover photo and the brand colour are both gone (owner, photo 17), so the preview
@@ -33639,10 +33780,12 @@ function customerInterfaceLivePreviewMarkupV326(){
          from, so a programme the owner has switched off stops appearing here too.
          The hardcoded pair survives only as the fallback for a session whose spine read has not
          landed: a preview that renders nothing at all would be worse than one that is generic. */
-      programmes:programmeSpineRowsV314()
-        ?programmeSpineRowsV314().filter(row=>row&&row.active===true)
-          .map(row=>({kind:row.kind,customer_visible:true,active:true}))
-        :[{kind:'points',customer_visible:true,active:true},{kind:'tiers',customer_visible:true,active:true}],
+      /* nestly_v567: no fallback pair. spineRowsV567 is non-null by the guard at the top of this
+         function, so this is always the firm's own spine and never an invented stack. The
+         contract marker still declares which SHAPE of `programmes` this object is — that is a
+         statement about the client's own payload, not a claim about the server's version. */
+      programmes:spineRowsV567.filter(row=>row&&row.active===true)
+        .map(row=>({kind:row.kind,customer_visible:true,active:true})),
       programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true
     }
   });
@@ -33681,6 +33824,16 @@ function customerInterfaceLivePreviewMarkupV326(){
 function refreshCustomerInterfaceLivePreviewV326(){
   const markup=customerInterfaceLivePreviewMarkupV326();
   document.querySelectorAll('.ci-live-preview-body-v326').forEach(el=>{el.innerHTML=markup});
+  /* nestly_v567: the fail-closed band's retry. Wired here rather than in wireCustomerInterface-
+     PreviewV243 because this function replaces the markup on every keystroke in the profile form,
+     so a handler attached once at wire time would be thrown away with the first re-render. */
+  document.querySelectorAll('[data-ci-preview-spine-retry-v567]').forEach(button=>{
+    button.onclick=async()=>{
+      button.disabled=true;
+      try{await refreshProgrammeSpineV314()}catch{}
+      refreshCustomerInterfaceLivePreviewV326();
+    };
+  });
 }
 function customerInterfacePreviewSideCardHtmlV325(){
   return `<div class="card customer-preview-v243 customer-preview-side-v325">

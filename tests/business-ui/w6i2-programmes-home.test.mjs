@@ -343,7 +343,16 @@ test('W6I2 B4 the referral rail writes referral_programs at Go-live, never on a 
      longer names a programme the owner did not select, so its companion live-table write must not
      either — a wizard run that never went near the referral screens leaves referral_programs
      exactly as it found it, which is the same promise R6 makes about the spine row. */
-  assert.match(switchApply, /if\(state\.switches\.referral!==true\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
+  /* nestly_v567: the scope guard is unchanged in MEANING and moved in FORM — the same
+     state.switches.referral===true test, named once at the top of the function so the hoisted
+     turning-ON write can share it, and still the thing that returns before any referral write. */
+  assert.match(switchApply, /const referralInScopeV567=state\.switches\.referral===true;/);
+  assert.match(switchApply, /if\(!referralInScopeV567\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
+  /* nestly_v567: turning referral ON creates the referral_programs row BEFORE the spine is told
+     to announce it, because the server refuses the switch-on when no row exists. Turning off (or
+     a settings-only save) keeps v558's spine-first order. */
+  assert.match(switchApply, /if\(referralNeedsWriteV567&&referralWanted&&!await referralRowWriteV567\(\)\)return false;\s*\n\s*const \{ok,error\}=await writeProgrammeSwitchesV314\(/);
+  assert.match(switchApply, /if\(referralNeedsWriteV567&&!referralWanted&&!await referralRowWriteV567\(\)\)return false;/);
   /* The spine row and referral_programs.enabled must agree: the spine gates presentation and the
      engine's referral block still reads `enabled`, so a switch-on that left `enabled` false would
      be a programme that looks live and pays nothing. Under R6 the `switches.referral===true` half
@@ -352,7 +361,9 @@ test('W6I2 B4 the referral rail writes referral_programs at Go-live, never on a 
   assert.match(switchApply, /const referralWanted=state\.keepPaused!==true;/);
   assert.match(switchApply, /p_enabled:referralWanted,/);
   // A no-op write is still a write, and this one lands on a live table.
-  assert.match(switchApply, /if\(state\.referralDirty\|\|referralWanted!==referralWasOn\)\{/);
+  /* nestly_v567: same "did it move, or did the owner touch it" test, hoisted into a named
+     constant so it can gate the write from either side of the spine call. */
+  assert.match(switchApply, /const referralNeedsWriteV567=referralInScopeV567&&\(state\.referralDirty\|\|referralWanted!==referralWasOn\);/);
 });
 
 /* ================= C. D3, and the half of it the server has not shipped ================= */

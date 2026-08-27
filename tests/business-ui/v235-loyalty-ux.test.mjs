@@ -36,8 +36,12 @@ test('(a) the model choice is a three-way segmented toggle that marks what is li
   // Pressed state is programmatic, not colour-only, and the live model carries a text tag.
   assert.match(loyalty, /aria-pressed="\$\{loyaltySelectionV230===key\?'true':'false'\}"/);
   assert.match(loyalty, /liveLoyaltySelectionV235===key\?'<span class="pill on loyalty-seg-live-v235">Live<\/span>':''/);
-  // The live model is derived from the SAVED stores, never from the preview override.
-  assert.match(loyalty, /const liveLoyaltySelectionV235=\(p\?\.loyalty_model\|\|'classic'\)==='stamps'\?'stamps'/);
+  /* The live model is derived from the SAVED stores, never from the preview override.
+     nestly_v567: and never from an invented one either — the `||'classic'` placeholder that used
+     to sit here answered "not stamps" on behalf of a server that had said nothing. An unreadable
+     model now normalises to '' and the test below fails closed with it. */
+  assert.match(loyalty, /const liveLoyaltySelectionV235=normaliseLoyaltyModelV375\(p\?\.loyalty_model\)==='stamps'\?'stamps'/);
+  assert.doesNotMatch(loyalty, /p\?\.loyalty_model\|\|'classic'/);
   // The buttons drive the existing #lm state, so preview-then-Save semantics are unchanged.
   assert.match(loyalty, /select\.value=button\.dataset\.loyaltyModelV235;\s*\n\s*select\.dispatchEvent\(new Event\('change'\)\);/);
   assert.match(loyalty, /id="lm" class="loyalty-seg-state-v235"/);

@@ -151,3 +151,61 @@ test('V249 the scan sentence is gone and the scanner button sits under the rewar
   assert.ok(rewards.indexOf('Open Record sale scanner') < rewards.indexOf('Coming up'),
     'and precedes everything the collapsibles used to sit below');
 });
+
+/* ---------- nestly_v567: the Earn line never invents a rate the business never set ---------- */
+
+/* EXECUTED, not grepped. This block printed "1 stamp for every $5.00" and "0 points for every
+   SGD 1" over a programme whose earn rate the server had not sent — the first a rate nobody
+   chose, the second the exact opposite of the truth. Its neighbour `loyaltyFactsAvailable`
+   already refuses to print zero in place of an unread balance; this is the same discipline one
+   field over, so it is proved by running it. */
+const earnLine = (prog, stamps) => new Function('prog', 'stamps', 'esc', 'money', 'DASH_V541', `
+  ${(() => {
+    const from = app.indexOf('    const stampCentsV567=Number(prog.stamp_per_cents);');
+    const end = "Peekaa is not guessing one.\">${DASH_V541}</span></p>`;";
+    const to = app.indexOf(end, from);
+    assert.ok(from >= 0 && to > from, 'the v567 earn-line block was found');
+    return app.slice(from, to + end.length);
+  })()}
+  return {earnCopy, earnLineV567};`)(
+  prog, stamps,
+  v => String(v ?? '').replace(/[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+  c => 'SGD ' + ((c || 0) / 100).toFixed(2),
+  '\u2014');
+
+test('nestly_v567 a stamps programme with no spend-per-stamp says nothing at all', () => {
+  for (const missing of [{}, { stamp_per_cents: null }, { stamp_per_cents: 0 },
+    { stamp_per_cents: 'later' }, { stamp_per_cents: -100 }]) {
+    const out = earnLine(missing, true);
+    assert.equal(out.earnCopy, '', `no invented rate for ${JSON.stringify(missing)}`);
+    assert.equal(out.earnLineV567, '', 'and no Earn line at all');
+  }
+  /* The $5.00 the old `||500` produced must not be reachable from an unset field. */
+  assert.doesNotMatch(earnLine({ stamp_per_cents: null }, true).earnLineV567 || '', /5\.00/);
+});
+
+test('nestly_v567 a real spend-per-stamp still prints exactly as it always did', () => {
+  const out = earnLine({ stamp_per_cents: 800 }, true);
+  assert.equal(out.earnCopy, '1 stamp for every SGD 8.00 spent');
+  assert.match(out.earnLineV567, /<b>Earn:<\/b> 1 stamp for every SGD 8\.00 spent/);
+});
+
+test('nestly_v567 a missing points rate is an em-dash with a reason, never the number 0', () => {
+  for (const missing of [{}, { earn_points_per_dollar: null }, { earn_points_per_dollar: 0 },
+    { earn_points_per_dollar: 'x' }]) {
+    const out = earnLine(missing, false);
+    assert.equal(out.earnCopy, '');
+    assert.match(out.earnLineV567, /data-c360-earn-unset-v567/);
+    assert.match(out.earnLineV567, /\u2014/, 'the em-dash the rest of this page uses for an empty cell');
+    assert.match(out.earnLineV567, /title="No earn rate is saved for this programme yet\./);
+    assert.doesNotMatch(out.earnLineV567, /0 points for every/,
+      '"0 points for every SGD 1" tells the counter the customer earns nothing');
+  }
+});
+
+test('nestly_v567 a real points rate still prints exactly as it always did', () => {
+  const out = earnLine({ earn_points_per_dollar: 2 }, false);
+  assert.equal(out.earnCopy, '2 points for every SGD 1 spent');
+  assert.doesNotMatch(out.earnLineV567, /data-c360-earn-unset-v567/);
+});

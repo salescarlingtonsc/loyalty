@@ -2722,6 +2722,24 @@
       "version": "20260827000017",
       "name": "nestly_v563_stamps_publish_needs_length",
       "sourcePath": "db/migrations/20260827_nestly_v563_stamps_publish_needs_length.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000018",
+      "name": "nestly_v564_draft_cannot_time_machine",
+      "sourcePath": "db/migrations/20260827_nestly_v564_draft_cannot_time_machine.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000019",
+      "name": "nestly_v565_every_business_born_the_same",
+      "sourcePath": "db/migrations/20260827_nestly_v565_every_business_born_the_same.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260827000020",
+      "name": "nestly_v566_one_claimable_answer",
+      "sourcePath": "db/migrations/20260827_nestly_v566_one_claimable_answer.sql"
     }
   ]
 }

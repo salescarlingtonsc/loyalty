@@ -3907,6 +3907,11 @@ function wireCustomerProgrammeTabsV194(host=document){
   });
 }
 
+function customerStampSlotsRememberV567(slug,slots){
+  const key=String(slug||'').trim();
+  const value=Math.floor(Number(slots)||0);
+  if(key&&value>0)CUSTOMER_STAMP_SLOTS_V567.set(key,value);
+}
 /* ====== V323 — OWNER RULING R5: THE STAMP CARD IS A QUEST, AND CLAIMING DOES NOT RESET IT ======
    "stamps is like a quest - complete one set of quest (3 stamp = xx rewards, 5 stamp = xx rewards,
     8 stamp = xx rewards) … Milestones are non-consuming: reaching 5 does not reset progress toward
@@ -6402,6 +6407,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
     if(!isWalletCurrent())return;
     if(error)return;
     const quest=stampQuestNormaliseV323(data);
+    /* nestly_v567: the ONE moment this session learns the card's real length from the server.
+       Remembered so a later repaint of the hero/card does not fall back to the next gift's cost
+       and undo the correction the customer has already been shown (nestly_v563). */
+    if(quest)customerStampSlotsRememberV567(businessSlug,quest.slots);
     if(!card&&pointsCardV435&&pointsCardV435.isConnected&&quest&&!quest.running&&quest.filled>0
        &&!quest.potMigrated&&!document.querySelector('[data-stamps-kept-note-v435]')){
       pointsCardV435.insertAdjacentHTML('afterend',

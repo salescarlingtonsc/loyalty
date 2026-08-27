@@ -174,13 +174,20 @@ test('v417 the Messages settings are still reachable, now behind the v549 dialog
 
 test('v417 the live preview shows the programmes the firm actually runs', () => {
   const preview = statement('function customerInterfaceLivePreviewMarkupV326(', '\n}');
-  assert.match(preview, /programmes:programmeSpineRowsV314\(\)/);
+  assert.match(preview, /const spineRowsV567=programmeSpineRowsV314\(\);/);
+  assert.match(preview, /programmes:spineRowsV567/);
   assert.match(preview, /\.filter\(row=>row&&row\.active===true\)/,
     'a programme the owner switched off stops appearing here too');
   assert.match(preview, /liveBalanceUnitV378\(\)==='stamps'\?'stamps':'points'/,
     'a stamp-card firm is not told its customers collect points');
-  /* The hardcoded pair survives ONLY as the pre-load fallback. */
-  assert.match(preview, /:\[\{kind:'points',customer_visible:true,active:true\},\{kind:'tiers'/);
+  /* nestly_v567: the hardcoded pair is GONE, fallback and all. v417 kept it "so the preview is
+     never blank", which meant a stamps-only firm whose spine had not loaded was shown a points
+     programme and a tier ladder under a badge saying this is what their customers see. An
+     unreadable spine now fails closed: an explicit band, a retry, and no programme cards. */
+  assert.doesNotMatch(preview, /\[\{kind:'points',customer_visible:true,active:true\},\{kind:'tiers'/);
+  assert.match(preview, /if\(spineRowsV567===null\)\{/);
+  assert.match(preview, /Could not load your live programme state/);
+  assert.match(preview, /data-ci-preview-spine-retry-v567/);
   /* nestly_v541 (owner, photo 2, the real app beside the preview: "there's no rewards in actual
      customer app — why did you add it in?"). The badge changed with the section it described. The
      preview passes rewardsHost:false, so the real renderer correctly draws NO reward list — and

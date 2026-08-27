@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="53bb3ccc1d636f3bda396851a0123fd06570ff5a70452e233181b1a764753a71"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="a4f46e60a97cf656855a9efe0de997072465f2218ee7a5a264c4e726eb5cf184"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4731,7 +4731,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 53bb3ccc1d636f3bda396851a0123fd06570ff5a70452e233181b1a764753a71</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · a4f46e60a97cf656855a9efe0de997072465f2218ee7a5a264c4e726eb5cf184</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6231,9 +6231,28 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   }else if(prog&&prog.active){
     const unit=prog.unit==='stamps'?'stamps':'points';
     const stamps=unit==='stamps';
+    /* nestly_v567 (owner rule: a UI default may seed a NEW DRAFT, but it must never masquerade as
+       saved runtime state). This line read `money(prog.stamp_per_cents||500)` and
+       `Number(prog.earn_points_per_dollar)||0`, so a programme whose earn rate the server did not
+       send was reported to the person at the counter as a confident "1 stamp for every $5.00" —
+       a rate nobody at this business ever set — or, worse, as "0 points for every SGD 1", which
+       states the exact opposite of the truth: it says the customer earns nothing.
+       The house discipline is `loyaltyFactsAvailable` a few lines up, which refuses to print zero
+       in place of a balance it could not read. The earn rate gets the same treatment, in the two
+       shapes each unit can honestly take:
+         * stamps — no rate, no sentence. The whole Earn line is suppressed rather than invented.
+         * points — an explicit em-dash carrying a "not set" title, the way DASH_V252 / DASH_V541
+           already mark a cell the server left empty elsewhere on this page. */
+    const stampCentsV567=Number(prog.stamp_per_cents);
+    const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
-      ?`1 stamp for every ${money(prog.stamp_per_cents||500)} spent`
-      :`${Number(prog.earn_points_per_dollar)||0} points for every SGD 1 spent`;
+      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
+      :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?`${earnPerDollarV567} points for every SGD 1 spent`:'');
+    const earnLineV567=earnCopy
+      ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
+      :stamps
+        ?''
+        :`<p class="small" style="margin-top:5px" data-c360-earn-unset-v567><b>Earn:</b> <span class="muted" title="No earn rate is saved for this programme yet. Peekaa is not guessing one.">${DASH_V541}</span></p>`;
     let nextCopy='No reward milestone has been added yet.';
     if(!redemptionEnabled)nextCopy='Customer redemption is switched off. Turn it on under Customer Interface → Customer Action.';
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
@@ -6268,7 +6287,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         ${/* V319 put spendable credit here so hiding the zero-value row above never put the figure
              out of reach. V320 removed it with the row (owner: "i do not want spendable credits to
              exist in the app") — there is no longer a figure to keep reachable. */''}
-        <p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>
+        ${earnLineV567}
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:16})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
       ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct ${esc(unit==="stamps"?"stamp":"points")} balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited. ${/* nestly_v512: the control writes to whichever programme is RUNNING, so the word has to follow it — on a stamp card this said "points" over a control that now moves stamps. */""}</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
@@ -8643,7 +8662,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'53bb3ccc1d636f3bda396851a0123fd06570ff5a70452e233181b1a764753a71',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'a4f46e60a97cf656855a9efe0de997072465f2218ee7a5a264c4e726eb5cf184',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -979,7 +979,16 @@ test('W6I2 (g) turning a programme on NEVER deletes: the wizard writes through a
   /* V322 (OWNER RULING R6): and it is reached only when referral is IN SCOPE. The spine payload no
      longer names a programme the owner did not select, so its companion write must not either — a
      run that never went near the referral screens leaves referral_programs exactly as it found it. */
-  assert.match(switchApply, /if\(state\.switches\.referral!==true\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
+  /* nestly_v567: the scope guard is unchanged in MEANING and moved in FORM — the same
+     state.switches.referral===true test, named once at the top of the function so the hoisted
+     turning-ON write can share it, and still the thing that returns before any referral write. */
+  assert.match(switchApply, /const referralInScopeV567=state\.switches\.referral===true;/);
+  assert.match(switchApply, /if\(!referralInScopeV567\)\{state\.modeError='';if\(fromRetry\)render\(\);return true\}/);
+  /* nestly_v567: turning referral ON creates the referral_programs row BEFORE the spine is told
+     to announce it, because the server refuses the switch-on when no row exists. Turning off (or
+     a settings-only save) keeps v558's spine-first order. */
+  assert.match(switchApply, /if\(referralNeedsWriteV567&&referralWanted&&!await referralRowWriteV567\(\)\)return false;\s*\n\s*const \{ok,error\}=await writeProgrammeSwitchesV314\(/);
+  assert.match(switchApply, /if\(referralNeedsWriteV567&&!referralWanted&&!await referralRowWriteV567\(\)\)return false;/);
   const referralBranch = wizard.slice(wizard.indexOf("if(kind==='referral')return withBusy"),
     wizard.indexOf("if(kind==='reward'||kind==='stampGift')return withBusy"));
   assert.ok(referralBranch.length > 80, 'the referral branch was found and sliced');

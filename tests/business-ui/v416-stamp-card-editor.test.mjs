@@ -258,3 +258,55 @@ test('v416 the grid is styled from the same vocabulary as the customer preview',
   assert.match(html, /\.grow-stamps-editcell-v416\.is-past-v416\{[^}]*var\(--warn\)/,
     'an unclaimable stamp is drawn as a warning, not as a normal one');
 });
+
+/* ------------- nestly_v567: a live stamps card with no saved length draws NO canvas ----------- */
+
+/* The v567 flag and its band, EXECUTED with the three facts they read injected — the spine's
+   answer for stamps, whether this page is the stamp page at all, and the length the engine
+   actually holds. They live just outside the grid block above (the grid harness slices up to the
+   stranded note), so they get their own rig rather than a grep. */
+const noLengthV567 = ({ isStamps = true, spineOn = true, stampTarget = 0 } = {}) => new Function(
+  'growPointsIsStampsV326', 'growPointsOnV326', 'growStampsTargetV416', `
+  ${statement('  const growStampsNoLengthLiveV567=', "  </div>`:'';")}
+  return {growStampsNoLengthLiveV567, growStampsNoLengthBandV567};`)(isStamps, spineOn, stampTarget);
+
+test('v567 a LIVE stamps programme with no saved length gets the band, not a 15-slot canvas', () => {
+  const live = noLengthV567({ isStamps: true, spineOn: true, stampTarget: 0 });
+  assert.equal(live.growStampsNoLengthLiveV567, true);
+  assert.match(live.growStampsNoLengthBandV567, /data-grow-stamps-nolength-v567/);
+  assert.match(live.growStampsNoLengthBandV567, /This card has no length saved/);
+  /* It must not propose a number. Proposing 15 here is exactly how the drawn card and the engine
+     came apart on the owner's KKY tenant (nestly_v563). */
+  assert.doesNotMatch(live.growStampsNoLengthBandV567, /\b15\b/);
+});
+
+test('v567 the seeded 15-slot canvas survives while the programme is NOT live for customers', () => {
+  /* A card nobody has set up yet is a blank sheet the owner is about to fill in — a default may
+     seed a new draft. It is only the LIVE case where 15 slots masquerade as saved state. */
+  assert.equal(noLengthV567({ isStamps: true, spineOn: false, stampTarget: 0 })
+    .growStampsNoLengthLiveV567, false);
+  assert.equal(noLengthV567({ isStamps: true, spineOn: false, stampTarget: 0 })
+    .growStampsNoLengthBandV567, '');
+});
+
+test('v567 a saved length, or the points page, never sees the band', () => {
+  assert.equal(noLengthV567({ isStamps: true, spineOn: true, stampTarget: 10 })
+    .growStampsNoLengthLiveV567, false, 'a real length is a real card');
+  assert.equal(noLengthV567({ isStamps: false, spineOn: true, stampTarget: 0 })
+    .growStampsNoLengthLiveV567, false, 'the Point system page has no stamp card to refuse');
+});
+
+test('v567 the band REPLACES the grid and the customer preview, and the controls stay', () => {
+  /* The stepper and the typed field are the way out — using one writes a real length — so they
+     are deliberately outside the swap. The two drawings of the unverified card are not. */
+  const page = statement('          ${growStampsCardLengthBarV416}', '${growStampsCustomerPreviewV472}`}');
+  assert.match(page,
+    /\$\{growStampsNoLengthLiveV567\?growStampsNoLengthBandV567:`\$\{growStampsGridV416\}/);
+  assert.ok(page.indexOf('${growStampsCardLengthBarV416}')
+    < page.indexOf('${growStampsNoLengthLiveV567?'), 'the length controls are not swapped away');
+  for (const swapped of ['${growStampsGridV416}', '${growStampsStrandedNoteV416}',
+    '${growStampsCustomerPreviewV472}']) {
+    assert.ok(page.indexOf(swapped) > page.indexOf('${growStampsNoLengthLiveV567?'),
+      `${swapped} must sit inside the replaced branch`);
+  }
+});

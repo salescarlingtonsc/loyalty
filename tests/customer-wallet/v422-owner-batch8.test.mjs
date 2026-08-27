@@ -65,13 +65,20 @@ const harness = new Function('esc', 'CUI', `
   ${/* nestly_v428: the three helpers the go-live review changed, executed here rather than
         grepped — two of them decide what a customer is TOLD they can claim. */''}
   ${section('function customerRewardProgressMarkupV310(', '/* How many rings the card draws.')}
+  ${/* nestly_v567: the card-length resolver, its session memo of the server's own slots, and the
+        ring drawer that now carries the legibility rail. Executed, not grepped — this is the
+        function that told a 15-stamp card's customer "0 of 5" (nestly_v563). */''}
+  ${section('const PROGRAMME_STACK_RING_LIMIT_V310=', 'function customerProgrammeStampsCardV310(')}
   ${section('const customerRewardReadyLineV397=', '/* nestly_v399. The final swipe page')}
   ${section('function customerRewardReadyCountApplyV397(', '/* nestly_v399. The customer-facing words')}
   return {stampQuestNormaliseV323, customerHeroStampCardV422,
     customerProgrammeDirectoryMetricV346, customerProgrammeDirectoryStatusV346,
     customerHomeBusinessBalanceV345, HERO_STAMP_COMPACT_FROM_V422,
     customerRewardProgressMarkupV310, customerStampChooseOneSlotV428,
-    customerRewardReadyCountApplyV397};`)(esc, CUI);
+    customerRewardReadyCountApplyV397,
+    customerStampTargetV310, customerProgrammeStampRingsV310,
+    customerStampSlotsRememberV567, customerStampSlotsKnownV567,
+    PROGRAMME_STACK_RING_LIMIT_V310};`)(esc, CUI);
 
 const quest = (slots, filled, milestones = []) => harness.stampQuestNormaliseV323({
   enabled: true, contract: 'v323', running: true, ready: true,
@@ -535,4 +542,53 @@ test('v562: a card with every milestone claimed still renders one column — no 
   ]));
   assert.doesNotMatch(html, /customer-hero-stamp-has-photo-v475/);
   assert.doesNotMatch(html, /data-hero-stamp-gift-fallback-v562/);
+});
+
+/* ----------------------------------- nestly_v567: the card's length is the SERVER's answer ----- */
+
+test('nestly_v567: the server\'s slots beat the next gift\'s cost', () => {
+  const { customerStampTargetV310: target } = harness;
+  /* The nestly_v563 shape exactly: a 15-slot card whose cheapest unclaimed gift sits on stamp 5.
+     Before v567 the customer was told the card was 5 long — a number no owner ever set. */
+  assert.equal(target({ cost_units: 5 }, 15), 15);
+  /* And the reverse: a gift priced above the card does not stretch it. */
+  assert.equal(target({ cost_units: 40 }, 10), 10);
+});
+
+test('nestly_v567: the gift-derived length is the LAST resort, never the first', () => {
+  const { customerStampTargetV310: target } = harness;
+  /* Nothing from the server yet (first paint, before customer_get_stamp_card_v323 answers). */
+  assert.equal(target({ cost_units: 8 }, 0), 8);
+  assert.equal(target({ cost_units: 8 }), 8);
+  assert.equal(target({ cost_units: 8 }, null), 8);
+  /* The legibility cap still bounds the GUESS, because a guess should not be stretched. */
+  assert.equal(target({ cost_units: harness.PROGRAMME_STACK_RING_LIMIT_V310 + 1 }, 0), 0);
+  /* No gift and no server answer is no length at all — not a default. */
+  assert.equal(target(null, 0), 0);
+  assert.equal(target({}, 0), 0);
+});
+
+test('nestly_v567: a long card the SERVER stated keeps its length; only the rings drop out', () => {
+  const { customerStampTargetV310: target, customerProgrammeStampRingsV310: rings } = harness;
+  const long = harness.PROGRAMME_STACK_RING_LIMIT_V310 + 16;
+  /* The old >24 cliff returned 0 here, so the surface forgot a length the server had sent. */
+  assert.equal(target({ cost_units: 5 }, long), long);
+  /* The rail moved to the drawing function, exactly where customerStampQuestRingsV323 keeps it. */
+  assert.equal(rings(3, long), '');
+  assert.match(rings(3, harness.PROGRAMME_STACK_RING_LIMIT_V310), /customer-programme-stamp-ring/);
+  assert.equal(rings(3, 0), '');
+});
+
+test('nestly_v567: the slots memo only ever holds what the server sent, per business', () => {
+  const { customerStampSlotsRememberV567: remember, customerStampSlotsKnownV567: known } = harness;
+  assert.equal(known('kopi-lab'), 0, 'an unheard-of business has no length, not a default');
+  remember('kopi-lab', 15);
+  assert.equal(known('kopi-lab'), 15);
+  assert.equal(known('kaya-toast'), 0, 'one business\'s card length never leaks into another');
+  /* A card the server reports as having no slots is not a length — it must not be remembered as
+     one, or the next repaint would print it. */
+  remember('kaya-toast', 0);
+  assert.equal(known('kaya-toast'), 0);
+  remember('', 12);
+  assert.equal(known(''), 0);
 });

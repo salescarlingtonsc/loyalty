@@ -43,7 +43,12 @@ test('V226 Customer 360 leads with what this customer can redeem now', () => {
     'redeemable rewards come before the scheme facts');
   assert.match(block, /<summary>Balance and earning<\/summary>/);
   assert.match(block, /<b>Balance:<\/b>/);
-  assert.match(block, /<b>Earn:<\/b>/);
+  /* nestly_v567: the Earn sentence is built ABOVE this block now (earnLineV567), because a
+     missing rate must suppress or dash the line instead of inventing "$5.00" / "0 points" —
+     the block renders it via the interpolation, and the literal lives with the fail-closed
+     logic. Both halves are asserted so neither can silently leave. */
+  assert.match(block, /\$\{earnLineV567\}/);
+  assert.match(app, /<b>Earn:<\/b>/);
   // Not-yet-earned rewards are secondary, and the empty case still says how far off.
   assert.match(block, /<summary>Coming up · \$\{pendingRewards\.length\}<\/summary>/);
   assert.match(block, /Nothing ready to redeem yet/);

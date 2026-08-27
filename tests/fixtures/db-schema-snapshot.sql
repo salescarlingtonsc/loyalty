@@ -92350,8 +92350,8 @@ COPY app.business_google_oauth_attempts_v138 (token_sha256, idempotency_key, req
 --
 
 COPY app.customer_legal_documents (document_key, document_version, document_sha256, published_at, active, created_at, updated_at) FROM stdin;
-terms	2026-08-04	012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5	2026-08-04 09:00:00+00	t	2026-08-21 23:35:53.863023+00	2026-08-04 09:00:00+00
-privacy	2026-08-10	960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f	2026-08-21 23:35:57.354618+00	t	2026-08-21 23:35:53.863023+00	2026-08-21 23:35:57.354618+00
+terms	2026-08-04	012e09a4a7b6df2a5acc9da3b6512c1cfeb42e903fd8306f6ff09866a9f1e4a5	2026-08-04 09:00:00+00	t	2026-08-27 16:12:21.914944+00	2026-08-04 09:00:00+00
+privacy	2026-08-10	960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f	2026-08-27 16:12:25.171931+00	t	2026-08-27 16:12:21.914944+00	2026-08-27 16:12:25.171931+00
 \.
 
 --
@@ -92366,23 +92366,23 @@ COPY app.loyalty_tier_default_operations_v143 (operation_id, business_id, actor_
 --
 
 COPY app.platform_feature_flags (feature_key, enabled, changed_at, changed_by) FROM stdin;
-customer_identity	f	2026-08-21 23:35:52.28245+00	\N
-customer_claims	f	2026-08-21 23:35:52.310234+00	\N
-customer_wallet	f	2026-08-21 23:35:52.344358+00	\N
-customer_actions	f	2026-08-21 23:35:52.344358+00	\N
-customer_notifications	f	2026-08-21 23:35:52.344358+00	\N
-customer_email_otp	f	2026-08-21 23:35:52.520552+00	\N
-customer_phone_otp	f	2026-08-21 23:35:52.608377+00	\N
-customer_whatsapp_otp	f	2026-08-21 23:35:52.608377+00	\N
-customer_phone_registration	f	2026-08-21 23:35:52.608377+00	\N
-customer_phone_claims	f	2026-08-21 23:35:52.608377+00	\N
-customer_actionable_wallet	f	2026-08-21 23:35:52.636485+00	\N
-customer_birthday_benefits	f	2026-08-21 23:35:52.655542+00	\N
-customer_in_app_inbox	f	2026-08-21 23:35:52.698291+00	\N
-customer_qr_join	t	2026-08-21 23:35:54.373446+00	\N
-customer_qr_redemption	t	2026-08-21 23:35:54.373446+00	\N
-growth_closed_loop_v108	f	2026-08-21 23:35:54.916413+00	\N
-economics_driver_policy_v109	f	2026-08-21 23:35:54.968157+00	\N
+customer_identity	f	2026-08-27 16:12:20.617966+00	\N
+customer_claims	f	2026-08-27 16:12:20.651785+00	\N
+customer_wallet	f	2026-08-27 16:12:20.688471+00	\N
+customer_actions	f	2026-08-27 16:12:20.688471+00	\N
+customer_notifications	f	2026-08-27 16:12:20.688471+00	\N
+customer_email_otp	f	2026-08-27 16:12:20.85543+00	\N
+customer_phone_otp	f	2026-08-27 16:12:20.935392+00	\N
+customer_whatsapp_otp	f	2026-08-27 16:12:20.935392+00	\N
+customer_phone_registration	f	2026-08-27 16:12:20.935392+00	\N
+customer_phone_claims	f	2026-08-27 16:12:20.935392+00	\N
+customer_actionable_wallet	f	2026-08-27 16:12:20.959328+00	\N
+customer_birthday_benefits	f	2026-08-27 16:12:20.977225+00	\N
+customer_in_app_inbox	f	2026-08-27 16:12:21.014707+00	\N
+customer_qr_join	t	2026-08-27 16:12:22.381976+00	\N
+customer_qr_redemption	t	2026-08-27 16:12:22.381976+00	\N
+growth_closed_loop_v108	f	2026-08-27 16:12:22.868034+00	\N
+economics_driver_policy_v109	f	2026-08-27 16:12:22.916114+00	\N
 \.
 
 --
@@ -92432,8 +92432,8 @@ COPY app.staff_blocked_time_operations_v120 (business_id, actor, operation_type,
 --
 
 COPY app.v89_token_secrets (secret_key, secret_value, created_at) FROM stdin;
-customer_redemption	\\xedf1885e25da5c1d129d15fe21ebc2e36aba828fba26355b93de96142f55f10a	2026-08-21 23:35:54.373446+00
-growth_redemption_v108	\\x5b7378dd54744d96786a30583eb91a3a4103d08d3402d55f285070d71aaf56a4	2026-08-21 23:35:54.916413+00
+customer_redemption	\\x87e39fabe5b6c941baf6fd1b975fb9b2ee074cfd2b0fff814ee0a1b370286936	2026-08-27 16:12:22.381976+00
+growth_redemption_v108	\\x7af5b80f28654f3bacd6ea3d25a75c3640785be0f18100997497c1b717ffae9d	2026-08-27 16:12:22.868034+00
 \.
 
 --
@@ -92476,10 +92476,10 @@ COPY public.appointments (id, business_id, client_id, staff_id, starts_at, ends_
 --
 
 COPY public.audit_log (id, business_id, actor, action, entity, entity_id, detail, created_at) FROM stdin;
-f8fc2f4f-e2e3-4ce8-8679-30db8e9ee54c	\N	\N	SALES_BACKFILL_WINDOW_OPEN	sales	\N	{"scope": "columns added after v10.1 only; all v10.1-era columns incl. the policy snapshot remain frozen", "reason": "populate the new sales.branch_id column on pre-branch historical rows", "db_user": "postgres", "migration": "frenly_v11a_branches_staff_services", "opened_at": "2026-08-21T23:35:51.432109+00:00"}	2026-08-21 23:35:51.432109+00
-7dab2792-ce15-4479-bea0-e0368affb9c2	\N	\N	SALES_BACKFILL_WINDOW_CLOSE	sales	\N	{"db_user": "postgres", "closed_at": "2026-08-21T23:35:51.432629+00:00", "migration": null}	2026-08-21 23:35:51.432629+00
-f77933d3-ae9b-444f-b86f-58aeb3f14d14	\N	\N	SALES_BACKFILL_WINDOW_OPEN	sales	\N	{"scope": "columns added after v10.1 only; all v10.1-era columns incl. the policy snapshot remain frozen", "reason": "populate the new sales.commission_rate_bps / commission_resolved_at snapshot on pre-v12 historical rows", "db_user": "postgres", "migration": "frenly_v12_commission_snapshot", "opened_at": "2026-08-21T23:35:51.548104+00:00"}	2026-08-21 23:35:51.548104+00
-0a10f162-b28b-4add-8eed-db50e67d1a71	\N	\N	SALES_BACKFILL_WINDOW_CLOSE	sales	\N	{"db_user": "postgres", "closed_at": "2026-08-21T23:35:51.549324+00:00", "migration": null}	2026-08-21 23:35:51.549324+00
+2d3f99c7-07f6-44a7-abd7-54f07364b3de	\N	\N	SALES_BACKFILL_WINDOW_OPEN	sales	\N	{"scope": "columns added after v10.1 only; all v10.1-era columns incl. the policy snapshot remain frozen", "reason": "populate the new sales.branch_id column on pre-branch historical rows", "db_user": "postgres", "migration": "frenly_v11a_branches_staff_services", "opened_at": "2026-08-27T16:12:19.821516+00:00"}	2026-08-27 16:12:19.821516+00
+46bc440a-c1a2-450b-9ebf-d9b57f164098	\N	\N	SALES_BACKFILL_WINDOW_CLOSE	sales	\N	{"db_user": "postgres", "closed_at": "2026-08-27T16:12:19.822213+00:00", "migration": null}	2026-08-27 16:12:19.822213+00
+c9f3dcda-c6a4-4d05-bf2d-639b90509699	\N	\N	SALES_BACKFILL_WINDOW_OPEN	sales	\N	{"scope": "columns added after v10.1 only; all v10.1-era columns incl. the policy snapshot remain frozen", "reason": "populate the new sales.commission_rate_bps / commission_resolved_at snapshot on pre-v12 historical rows", "db_user": "postgres", "migration": "frenly_v12_commission_snapshot", "opened_at": "2026-08-27T16:12:19.911336+00:00"}	2026-08-27 16:12:19.911336+00
+c12db0be-953d-47a2-b553-ffd692f6ac00	\N	\N	SALES_BACKFILL_WINDOW_CLOSE	sales	\N	{"db_user": "postgres", "closed_at": "2026-08-27T16:12:19.912521+00:00", "migration": null}	2026-08-27 16:12:19.912521+00
 \.
 
 --
@@ -93173,8 +93173,8 @@ COPY public.consultant_commission_attributions (id, consultant_id, prospect_id, 
 --
 
 COPY public.consultant_commission_policies (id, tier, version, effective_from, effective_to, first_year_bps, anniversary_bonus_bps, renewal_bps, basis_rule, setup_fee_included, reason, created_by, created_at) FROM stdin;
-09899dea-26b5-473a-a36d-c0a1a36ce084	senior	1	-infinity	\N	3000	1000	1500	net_cash_collected_ex_gst_refunds_chargebacks	t	owner seed: first-year base 30%, year-one service bonus 10%, renewals 15%	\N	2026-08-21 23:35:54.074792+00
-fe907c5d-2ba5-4536-b41f-9b5ac7e2f56d	junior	1	-infinity	\N	2000	500	500	net_cash_collected_ex_gst_refunds_chargebacks	t	owner seed: first-year base 20%, year-one service bonus 5%, renewals 5%	\N	2026-08-21 23:35:54.074792+00
+64d2353b-0614-4779-964c-5d0c6c453276	senior	1	-infinity	\N	3000	1000	1500	net_cash_collected_ex_gst_refunds_chargebacks	t	owner seed: first-year base 30%, year-one service bonus 10%, renewals 15%	\N	2026-08-27 16:12:22.111084+00
+948184bd-cb18-44c8-9aff-ae5fbb5e3511	junior	1	-infinity	\N	2000	500	500	net_cash_collected_ex_gst_refunds_chargebacks	t	owner seed: first-year base 20%, year-one service bonus 5%, renewals 5%	\N	2026-08-27 16:12:22.111084+00
 \.
 
 --
@@ -93672,7 +93672,7 @@ COPY public.growth_deliveries_v108 (id, execution_id, execution_member_id, busin
 --
 
 COPY public.growth_delivery_backoff_policies_v112 (version_no, max_attempts, delays_seconds, effective_from, policy_hash, created_at) FROM stdin;
-1	5	{60,300,900,3600}	-infinity	bdcd5a80e13314c3d4a922038e431a09543b9b591c0815b53b8162854f20e6eb	2026-08-21 23:35:55.088833+00
+1	5	{60,300,900,3600}	-infinity	bdcd5a80e13314c3d4a922038e431a09543b9b591c0815b53b8162854f20e6eb	2026-08-27 16:12:23.025718+00
 \.
 
 --
@@ -93953,29 +93953,29 @@ COPY public.merchant_payment_commands_v142 (id, business_id, actor, action, live
 --
 
 COPY public.module_registry (module_key, label, requires_modules, recommended_modules, sort_order, updated_at) FROM stdin;
-dashboard	Dashboard	{}	{}	10	2026-08-21 23:35:52.10888+00
-till	Till	{clients,sales}	{loyalty}	20	2026-08-21 23:35:52.10888+00
-clients	Customers	{}	{loyalty}	30	2026-08-21 23:35:52.10888+00
-appointments	Appointments	{clients,services}	{branches}	40	2026-08-21 23:35:52.10888+00
-sales	Sales	{}	{clients,inventory}	50	2026-08-21 23:35:52.10888+00
-services	Services	{}	{}	60	2026-08-21 23:35:52.10888+00
-bookings	Bookings	{appointments,clients,services}	{waitlist}	70	2026-08-21 23:35:52.10888+00
-waitlist	Waitlist	{clients,services}	{appointments}	80	2026-08-21 23:35:52.10888+00
-inventory	Inventory	{}	{sales}	90	2026-08-21 23:35:52.10888+00
-packages	Packages	{clients,services,sales}	{}	100	2026-08-21 23:35:52.10888+00
-branches	Branches	{}	{}	110	2026-08-21 23:35:52.10888+00
-loyalty	Loyalty	{clients,sales}	{retention}	120	2026-08-21 23:35:52.10888+00
-retention	Retention	{clients,sales}	{loyalty}	130	2026-08-21 23:35:52.10888+00
-referrals	Referrals	{clients,sales}	{loyalty}	140	2026-08-21 23:35:52.10888+00
-memberships	Memberships	{clients,sales}	{}	150	2026-08-21 23:35:52.10888+00
-giftcards	Gift cards	{clients,sales}	{}	160	2026-08-21 23:35:52.10888+00
-reports	Reports	{sales}	{}	170	2026-08-21 23:35:52.10888+00
-staffperf	Staff performance	{sales}	{}	180	2026-08-21 23:35:52.10888+00
-dailyreport	Daily report	{sales}	{}	190	2026-08-21 23:35:52.10888+00
-pnl	P&L	{sales,expenses}	{inventory}	200	2026-08-21 23:35:52.10888+00
-expenses	Expenses	{}	{}	210	2026-08-21 23:35:52.10888+00
-customerintel	Customer intelligence	{sales,clients}	{reports}	175	2026-08-21 23:35:56.021602+00
-bottles	Bottles	{clients,sales}	{}	105	2026-08-21 23:35:57.452209+00
+dashboard	Dashboard	{}	{}	10	2026-08-27 16:12:20.444986+00
+till	Till	{clients,sales}	{loyalty}	20	2026-08-27 16:12:20.444986+00
+clients	Customers	{}	{loyalty}	30	2026-08-27 16:12:20.444986+00
+appointments	Appointments	{clients,services}	{branches}	40	2026-08-27 16:12:20.444986+00
+sales	Sales	{}	{clients,inventory}	50	2026-08-27 16:12:20.444986+00
+services	Services	{}	{}	60	2026-08-27 16:12:20.444986+00
+bookings	Bookings	{appointments,clients,services}	{waitlist}	70	2026-08-27 16:12:20.444986+00
+waitlist	Waitlist	{clients,services}	{appointments}	80	2026-08-27 16:12:20.444986+00
+inventory	Inventory	{}	{sales}	90	2026-08-27 16:12:20.444986+00
+packages	Packages	{clients,services,sales}	{}	100	2026-08-27 16:12:20.444986+00
+branches	Branches	{}	{}	110	2026-08-27 16:12:20.444986+00
+loyalty	Loyalty	{clients,sales}	{retention}	120	2026-08-27 16:12:20.444986+00
+retention	Retention	{clients,sales}	{loyalty}	130	2026-08-27 16:12:20.444986+00
+referrals	Referrals	{clients,sales}	{loyalty}	140	2026-08-27 16:12:20.444986+00
+memberships	Memberships	{clients,sales}	{}	150	2026-08-27 16:12:20.444986+00
+giftcards	Gift cards	{clients,sales}	{}	160	2026-08-27 16:12:20.444986+00
+reports	Reports	{sales}	{}	170	2026-08-27 16:12:20.444986+00
+staffperf	Staff performance	{sales}	{}	180	2026-08-27 16:12:20.444986+00
+dailyreport	Daily report	{sales}	{}	190	2026-08-27 16:12:20.444986+00
+pnl	P&L	{sales,expenses}	{inventory}	200	2026-08-27 16:12:20.444986+00
+expenses	Expenses	{}	{}	210	2026-08-27 16:12:20.444986+00
+customerintel	Customer intelligence	{sales,clients}	{reports}	175	2026-08-27 16:12:23.967976+00
+bottles	Bottles	{clients,sales}	{}	105	2026-08-27 16:12:25.262954+00
 \.
 
 --
@@ -94146,7 +94146,7 @@ COPY public.platform_billing_event_preparations_v156 (event_pk, event_id, status
 --
 
 COPY public.platform_billing_profiles_v156 (id, version, effective_from, brand_name, legal_name, uen, registered_address, billing_email, currency, gst_status, gst_registration_number, gst_rate_bps, default_payment_terms, logo_object_path, authorised_signature_object_path, bank_account_name, bank_name, bank_code, branch_code, swift_code, bank_account_number, bank_account_location, billing_contact_name, billing_contact_mobile, internal_copy_email, customer_reminders_enabled, annual_reminder_days, created_by, created_at, operation_key, request_hash) FROM stdin;
-9482ff22-6db2-4447-88e5-77d502338539	1	2026-08-21 23:35:55.757612+00	Peekaa	NESTLY TECHNOLOGIES PTE. LTD.	202634502E	\N	\N	SGD	unconfigured	\N	0	\N	\N	\N	NESTLY TECHNOLOGIES PTE. LTD.	Standard Chartered Bank (Singapore) Limited	9496	001	SCBLSG22	7897246357	Singapore	Lee Chuan Seng	+65 8186 3833	\N	f	{30,14,7}	\N	2026-08-21 23:35:55.757613+00	\N	\N
+f7d6c907-882b-4b01-8c35-50480c355ad1	1	2026-08-27 16:12:23.707393+00	Peekaa	NESTLY TECHNOLOGIES PTE. LTD.	202634502E	\N	\N	SGD	unconfigured	\N	0	\N	\N	\N	NESTLY TECHNOLOGIES PTE. LTD.	Standard Chartered Bank (Singapore) Limited	9496	001	SCBLSG22	7897246357	Singapore	Lee Chuan Seng	+65 8186 3833	\N	f	{30,14,7}	\N	2026-08-27 16:12:23.707394+00	\N	\N
 \.
 
 --
@@ -94154,7 +94154,7 @@ COPY public.platform_billing_profiles_v156 (id, version, effective_from, brand_n
 --
 
 COPY public.platform_billing_tax_policy_v125 (singleton, operator_legal_name, operator_uen, gst_registered, tax_collection_enabled, provider_price_tax_behavior, effective_from, reviewed_at) FROM stdin;
-t	NESTLY TECHNOLOGIES PTE. LTD.	202634502E	f	f	exclusive	2026-07-31 16:00:00+00	2026-08-21 23:35:55.332824+00
+t	NESTLY TECHNOLOGIES PTE. LTD.	202634502E	f	f	exclusive	2026-07-31 16:00:00+00	2026-08-27 16:12:23.273203+00
 \.
 
 --
@@ -94329,31 +94329,31 @@ COPY public.pos_payment_attempts_v142 (id, business_id, branch_id, client_id, st
 --
 
 COPY public.product_adoption_event_taxonomy_v100 (event_name, source_authority, actor_scope, required_module, required_mode, business_scope_required, economic_event, description, created_at) FROM stdin;
-merchant.workspace_viewed	client	merchant	dashboard	r	t	f	Authenticated merchant opened the workspace home.	2026-08-21 23:35:54.765569+00
-merchant.grow_opened	client	merchant	\N	\N	t	f	Authenticated merchant opened the unified Grow workspace.	2026-08-21 23:35:54.765569+00
-merchant.grow_draft_started	client	merchant	retention	rw	t	f	Authorized merchant began a Grow configuration draft.	2026-08-21 23:35:54.765569+00
-merchant.counter_action_opened	client	merchant	till	r	t	f	Authorized merchant opened a counter action.	2026-08-21 23:35:54.765569+00
-merchant.counter_action_started	client	merchant	till	rw	t	f	Authorized merchant began a counter action without asserting completion.	2026-08-21 23:35:54.765569+00
-merchant.redemption_scan_started	client	merchant	loyalty	rw	t	f	Authorized merchant opened the customer redemption scanner.	2026-08-21 23:35:54.765569+00
-customer.programme_viewed	client	customer	\N	\N	t	f	Verified customer opened a linked business programme.	2026-08-21 23:35:54.765569+00
-customer.qr_join_completed	server	customer	\N	\N	t	f	Canonical QR join audit evidence recorded a completed relationship.	2026-08-21 23:35:54.765569+00
-customer.booking_submitted	server	system	\N	\N	t	f	Canonical booking request was inserted.	2026-08-21 23:35:54.765569+00
-sale.recorded	server	system	\N	\N	t	t	Canonical non-reversal sale was inserted.	2026-08-21 23:35:54.765569+00
-sale.reversed	server	system	\N	\N	t	t	Canonical reversal sale was inserted.	2026-08-21 23:35:54.765569+00
-loyalty.redemption_completed	server	system	\N	\N	t	t	Canonical loyalty redemption was inserted.	2026-08-21 23:35:54.765569+00
-billing.invoice_paid	server	system	\N	\N	t	t	Canonical billing invoice first became normalized paid truth.	2026-08-21 23:35:54.765569+00
-campaign.exposure_verified	server	merchant	\N	\N	t	f	Immutable v99 campaign exposure evidence was recorded.	2026-08-21 23:35:54.765569+00
-campaign.return_attributed	server	merchant	\N	\N	t	t	Immutable post-exposure campaign return evidence was recorded.	2026-08-21 23:35:54.765569+00
-customer.account_open	server	customer	\N	\N	t	f	Canonical per-day evidence that a customer opened their firm account.	2026-08-21 23:35:56.16836+00
-customer.session_started	client	customer	\N	\N	t	f	Verified customer began an application session on a linked programme.	2026-08-21 23:35:57.215602+00
-customer.surface_viewed	client	customer	\N	\N	t	f	Verified customer opened a customer application surface.	2026-08-21 23:35:57.215602+00
-merchant.surface_viewed	client	merchant	\N	\N	t	f	Authenticated merchant opened a workspace surface.	2026-08-21 23:35:57.215602+00
-customer.promotion_viewed	client	customer	\N	\N	t	f	Verified customer saw a promotion in a linked programme.	2026-08-21 23:35:57.215602+00
-customer.promotion_opened	client	customer	\N	\N	t	f	Verified customer opened a promotion detail view.	2026-08-21 23:35:57.215602+00
-customer.reward_viewed	client	customer	\N	\N	t	f	Verified customer opened a reward in a linked programme.	2026-08-21 23:35:57.215602+00
-customer.notification_opened	client	customer	\N	\N	t	f	Verified customer opened an in-app notification.	2026-08-21 23:35:57.215602+00
-customer.explore_searched	client	customer	\N	\N	f	f	Customer ran a discovery search. Only the query shape is recorded.	2026-08-21 23:35:57.215602+00
-customer.promotion_shared	client	customer	\N	\N	t	f	Verified customer chose a channel to share a promotion. Records the business and the channel only — never the recipient, the message, or whether the post was completed.	2026-08-21 23:35:57.34062+00
+merchant.workspace_viewed	client	merchant	dashboard	r	t	f	Authenticated merchant opened the workspace home.	2026-08-27 16:12:22.724621+00
+merchant.grow_opened	client	merchant	\N	\N	t	f	Authenticated merchant opened the unified Grow workspace.	2026-08-27 16:12:22.724621+00
+merchant.grow_draft_started	client	merchant	retention	rw	t	f	Authorized merchant began a Grow configuration draft.	2026-08-27 16:12:22.724621+00
+merchant.counter_action_opened	client	merchant	till	r	t	f	Authorized merchant opened a counter action.	2026-08-27 16:12:22.724621+00
+merchant.counter_action_started	client	merchant	till	rw	t	f	Authorized merchant began a counter action without asserting completion.	2026-08-27 16:12:22.724621+00
+merchant.redemption_scan_started	client	merchant	loyalty	rw	t	f	Authorized merchant opened the customer redemption scanner.	2026-08-27 16:12:22.724621+00
+customer.programme_viewed	client	customer	\N	\N	t	f	Verified customer opened a linked business programme.	2026-08-27 16:12:22.724621+00
+customer.qr_join_completed	server	customer	\N	\N	t	f	Canonical QR join audit evidence recorded a completed relationship.	2026-08-27 16:12:22.724621+00
+customer.booking_submitted	server	system	\N	\N	t	f	Canonical booking request was inserted.	2026-08-27 16:12:22.724621+00
+sale.recorded	server	system	\N	\N	t	t	Canonical non-reversal sale was inserted.	2026-08-27 16:12:22.724621+00
+sale.reversed	server	system	\N	\N	t	t	Canonical reversal sale was inserted.	2026-08-27 16:12:22.724621+00
+loyalty.redemption_completed	server	system	\N	\N	t	t	Canonical loyalty redemption was inserted.	2026-08-27 16:12:22.724621+00
+billing.invoice_paid	server	system	\N	\N	t	t	Canonical billing invoice first became normalized paid truth.	2026-08-27 16:12:22.724621+00
+campaign.exposure_verified	server	merchant	\N	\N	t	f	Immutable v99 campaign exposure evidence was recorded.	2026-08-27 16:12:22.724621+00
+campaign.return_attributed	server	merchant	\N	\N	t	t	Immutable post-exposure campaign return evidence was recorded.	2026-08-27 16:12:22.724621+00
+customer.account_open	server	customer	\N	\N	t	f	Canonical per-day evidence that a customer opened their firm account.	2026-08-27 16:12:24.095102+00
+customer.session_started	client	customer	\N	\N	t	f	Verified customer began an application session on a linked programme.	2026-08-27 16:12:25.035935+00
+customer.surface_viewed	client	customer	\N	\N	t	f	Verified customer opened a customer application surface.	2026-08-27 16:12:25.035935+00
+merchant.surface_viewed	client	merchant	\N	\N	t	f	Authenticated merchant opened a workspace surface.	2026-08-27 16:12:25.035935+00
+customer.promotion_viewed	client	customer	\N	\N	t	f	Verified customer saw a promotion in a linked programme.	2026-08-27 16:12:25.035935+00
+customer.promotion_opened	client	customer	\N	\N	t	f	Verified customer opened a promotion detail view.	2026-08-27 16:12:25.035935+00
+customer.reward_viewed	client	customer	\N	\N	t	f	Verified customer opened a reward in a linked programme.	2026-08-27 16:12:25.035935+00
+customer.notification_opened	client	customer	\N	\N	t	f	Verified customer opened an in-app notification.	2026-08-27 16:12:25.035935+00
+customer.explore_searched	client	customer	\N	\N	f	f	Customer ran a discovery search. Only the query shape is recorded.	2026-08-27 16:12:25.035935+00
+customer.promotion_shared	client	customer	\N	\N	t	f	Verified customer chose a channel to share a promotion. Records the business and the channel only — never the recipient, the message, or whether the post was completed.	2026-08-27 16:12:25.158601+00
 \.
 
 --
@@ -94578,20 +94578,20 @@ COPY public.reward_grants (id, business_id, program_id, client_id, period_index,
 --
 
 COPY public.rule_condition_allowlist (id, schema_version, event_type, field, value_type, operators, catalog_kind) FROM stdin;
-3856787a-4e1c-4500-8d66-0c69725e5c9e	1	sale.completed	amount_cents	integer	{eq,neq,gt,gte,lt,lte,between}	\N
-e21c1afa-8e5e-49c6-af71-cede4a3272ce	1	sale.completed	kind	text	{eq,neq,in,not_in}	\N
-df3882a2-ecb4-4bb2-a24e-e2a9ec948b32	1	sale.completed	branch_id	catalog_ref	{eq,in}	branch
-905e1654-243b-473c-837a-bd043f88f8f7	1	sale.completed	staff_id	catalog_ref	{eq,in}	staff
-81350c32-8c6c-417c-9cda-f690d4782fe6	1	sale.completed	counts_as_visit	boolean	{eq}	\N
-7e1d8871-6938-49f5-98f2-ba5414ccebfe	1	sale.completed	earns_points	boolean	{eq}	\N
-7f18769c-37e2-44ea-9c16-6e5ea868376b	1	points.redeemed	reward_id	catalog_ref	{eq,in}	reward
-0ad5ef11-c73e-4193-8039-e177ae44e3ce	1	points.redeemed	points_spent	integer	{eq,gt,gte,lt,lte,between}	\N
-506e5c81-7659-4813-a47e-afa6e3da3e37	1	points.redeemed	credit_cents	integer	{eq,gte,lte}	\N
-84238daf-2302-47dd-8f67-2217f7bdd12a	1	birthday.activated	birthday_year	integer	{eq,gte,lte}	\N
-0151a85c-d9c5-472a-a1b3-70f13e5f8357	1	birthday.activated	fulfillment_kind	text	{eq,in}	\N
-86098958-eaca-4eaa-a141-29e8389fa07b	1	referral.qualified	reward_cents	integer	{eq,gte,lte}	\N
-9f7822a7-9365-4336-845b-4be5201ad4e0	1	membership.renewed	plan_id	catalog_ref	{eq,in}	membership_plan
-10b6ed5b-bdb3-41e7-9bcd-a0e07e26df94	1	membership.renewed	credit_cents	integer	{eq,gte,lte}	\N
+c834b70c-299b-41af-9daf-f954025fb5d6	1	sale.completed	amount_cents	integer	{eq,neq,gt,gte,lt,lte,between}	\N
+cb0510d1-a8f9-4ab8-a822-b14cc725feb1	1	sale.completed	kind	text	{eq,neq,in,not_in}	\N
+a5317e34-b29e-473b-be30-1f1891a30d5e	1	sale.completed	branch_id	catalog_ref	{eq,in}	branch
+679f0ce6-c71a-4dec-9da8-cce9f4f6aacc	1	sale.completed	staff_id	catalog_ref	{eq,in}	staff
+75a9679f-bb0a-4992-bc30-c903e0faf5fb	1	sale.completed	counts_as_visit	boolean	{eq}	\N
+ed636688-4f96-48a3-b964-f03bebac5c86	1	sale.completed	earns_points	boolean	{eq}	\N
+541e4fb7-be2b-4023-8bc0-5de0ad58e2e9	1	points.redeemed	reward_id	catalog_ref	{eq,in}	reward
+538d82f1-31fa-48fa-89d4-8976b3813c21	1	points.redeemed	points_spent	integer	{eq,gt,gte,lt,lte,between}	\N
+5a275759-29c6-4a99-8f73-0eda783d0c33	1	points.redeemed	credit_cents	integer	{eq,gte,lte}	\N
+6814b558-98b4-48b5-88fe-8fe30b6ac326	1	birthday.activated	birthday_year	integer	{eq,gte,lte}	\N
+18bfbab0-c0a5-4ee4-8ffc-928509d539fd	1	birthday.activated	fulfillment_kind	text	{eq,in}	\N
+585c682d-66d3-473a-ab71-91b7c41822f0	1	referral.qualified	reward_cents	integer	{eq,gte,lte}	\N
+263868a1-bb1e-46cb-a5ad-a6f72b0ebfea	1	membership.renewed	plan_id	catalog_ref	{eq,in}	membership_plan
+690276f5-bcd2-4cfc-8b86-d4bbe9b9855a	1	membership.renewed	credit_cents	integer	{eq,gte,lte}	\N
 \.
 
 --
@@ -94599,30 +94599,30 @@ df3882a2-ecb4-4bb2-a24e-e2a9ec948b32	1	sale.completed	branch_id	catalog_ref	{eq,
 --
 
 COPY public.rule_effect_allowlist (id, schema_version, event_type, effect_type, requires_catalog_ref, catalog_kind, moves_value) FROM stdin;
-fe5f5b65-fd07-42ec-9e96-771bdffa9795	1	sale.completed	earn_bonus_points	f	\N	t
-4da73e9d-56c3-44b5-931d-7c7225fc00d7	1	sale.completed	earn_bonus_stamps	f	\N	t
-b4244f96-9370-45b7-8006-bf0e18e323a8	1	sale.completed	grant_credit	f	\N	t
-2c916d80-0452-4ae8-81d2-c2cdd1d227f6	1	sale.completed	apply_discount_pct	f	\N	t
-7a5d5f3d-9f3e-41ff-b4f1-570f12c6e487	1	sale.completed	apply_discount_amount	f	\N	t
-a9de49ee-71bd-4122-af03-c91cdb036273	1	sale.completed	grant_free_item	t	\N	t
-fc324130-02f1-4c3d-a2bb-ab04778a5683	1	sale.completed	tier_multiplier	f	\N	t
-76a87419-09de-4c9c-ba65-35bb7a2d2d22	1	sale.completed	display_perk	f	\N	f
-360bdea0-a202-483c-97c8-8c466e0f1915	1	sale.completed	send_notification	f	\N	f
-36e93311-1291-422e-8cdd-143ea805042b	1	points.redeemed	grant_credit	f	\N	t
-0e93553b-3d3f-4dd5-ba75-6d034504d1b4	1	points.redeemed	grant_free_item	t	\N	t
-8719b4cf-7ebf-4fdd-bce9-3c7b82c923bc	1	points.redeemed	display_perk	f	\N	f
-590ef599-2714-4539-8d05-c74bdff04809	1	points.redeemed	send_notification	f	\N	f
-544d50c6-8a63-47c4-8f37-df652cd01e8a	1	birthday.activated	grant_credit	f	\N	t
-458eedee-6b9d-481e-ae5d-e7d66635436d	1	birthday.activated	apply_discount_pct	f	\N	t
-9bfbd096-94ab-473b-9166-2758d32b8011	1	birthday.activated	grant_free_item	t	\N	t
-1bbfdb96-f84f-4bbb-a260-1177059a11bf	1	birthday.activated	display_perk	f	\N	f
-bcb20570-68ba-42e4-899b-087a8211a168	1	birthday.activated	send_notification	f	\N	f
-087b418d-d09f-454c-a47f-f6aa03e2e1a0	1	referral.qualified	grant_credit	f	\N	t
-ff8fff62-2d7d-4ce1-8082-9930287cdc62	1	referral.qualified	display_perk	f	\N	f
-f099eb46-a61f-4409-9eb9-3e7db19e0e5c	1	referral.qualified	send_notification	f	\N	f
-15919e46-ca28-45ba-8d92-0708a982b7e5	1	membership.renewed	grant_credit	f	\N	t
-29594154-59cc-47fe-bc25-339294a512e9	1	membership.renewed	display_perk	f	\N	f
-c1f2cac5-0820-4e2f-a1a7-b0e2fd313196	1	membership.renewed	send_notification	f	\N	f
+ae58f333-5a26-4ae4-8d60-60af754a2f8f	1	sale.completed	earn_bonus_points	f	\N	t
+f4247c4f-fd4e-49eb-84c2-8dd0e1cadb43	1	sale.completed	earn_bonus_stamps	f	\N	t
+48580028-4158-42d1-87b9-04cb4bc0f02d	1	sale.completed	grant_credit	f	\N	t
+fd12d48a-0718-45cf-bd9f-b67502c7763f	1	sale.completed	apply_discount_pct	f	\N	t
+c06e9034-5555-4cb9-a6c6-1670edac84fa	1	sale.completed	apply_discount_amount	f	\N	t
+b0128de5-b677-4997-8699-d434ab5ae3df	1	sale.completed	grant_free_item	t	\N	t
+1b6aa6d7-12f1-42b5-a61b-b26f372f9ef4	1	sale.completed	tier_multiplier	f	\N	t
+50629e67-2964-4f99-a8f7-531de98b274f	1	sale.completed	display_perk	f	\N	f
+32448b08-d7eb-4538-973d-02def03db38e	1	sale.completed	send_notification	f	\N	f
+6797573b-077e-492f-8fa2-a904e3bcee36	1	points.redeemed	grant_credit	f	\N	t
+8cb2e7b7-b612-4018-bc87-7ce8a2b93416	1	points.redeemed	grant_free_item	t	\N	t
+55dab0f6-c8d4-4972-8228-18ff7f2a47aa	1	points.redeemed	display_perk	f	\N	f
+9bd72595-9f53-4ab1-a879-83d977344498	1	points.redeemed	send_notification	f	\N	f
+5445b3a4-521a-4db8-acef-4c37025bfd2f	1	birthday.activated	grant_credit	f	\N	t
+ae951e03-9e45-47d8-b8d5-8f18e4ca7d2f	1	birthday.activated	apply_discount_pct	f	\N	t
+07384011-f274-4434-8f04-a125cac4c819	1	birthday.activated	grant_free_item	t	\N	t
+66768853-4fec-4a9b-b18b-f6bf590837aa	1	birthday.activated	display_perk	f	\N	f
+453dc773-6264-4873-9b67-ba7fb25ad350	1	birthday.activated	send_notification	f	\N	f
+3711a183-fff7-406a-9ede-5ed3d76a7d71	1	referral.qualified	grant_credit	f	\N	t
+62055ae5-3325-4669-9b0c-0a1b4ac68baf	1	referral.qualified	display_perk	f	\N	f
+dd698afa-4ee4-420c-923c-f057495864d0	1	referral.qualified	send_notification	f	\N	f
+34717219-8cc3-4fdb-8548-859592e2e298	1	membership.renewed	grant_credit	f	\N	t
+0383502b-0d89-411c-865d-6e4c4e0c277c	1	membership.renewed	display_perk	f	\N	f
+bfa9809f-7508-4105-b9b7-955300c6b6cf	1	membership.renewed	send_notification	f	\N	f
 \.
 
 --
@@ -94637,7 +94637,7 @@ COPY public.rule_effect_log (id, business_id, event_id, rule_id, effect_index, e
 --
 
 COPY public.rule_schema_versions (schema_version, status, notes, created_at) FROM stdin;
-1	active	PS-1A initial studio rule payload vocabulary	2026-08-21 23:35:53.104736+00
+1	active	PS-1A initial studio rule payload vocabulary	2026-08-27 16:12:21.341366+00
 \.
 
 --
@@ -94694,15 +94694,15 @@ COPY public.sales (id, business_id, client_id, kind, amount_cents, occurred_at, 
 --
 
 COPY public.sector_bundle_versions (id, sector_key, version, label, status, modules, created_by, created_at, published_at, retired_at) FROM stdin;
-96adf3f2-a741-46ca-81c7-e88ef17c40b4	fnb	1	F&B / Café core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,loyalty,retention,referrals,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-0929d3db-b668-4ed6-89a3-c05310b8b6c0	salon	1	Hair Salon core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-dbe1b1f0-c50f-46ba-b5e7-dc129b2d554f	facial	1	Facial / Spa core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-f7cd70b9-607b-4ee2-8613-2ae4aac047b3	massage	1	Massage core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-5f53b184-1022-4903-9363-1d38d6946202	fitness	1	Fitness core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-4e3227ac-8c43-47cc-a029-c18ddf72c12d	retail	1	Retail core	published	{dashboard,till,clients,sales,services,inventory,packages,loyalty,retention,referrals,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-b8e6ef27-6e90-481f-aacf-fadc0edc7885	other	1	Other core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:53.939526+00	2026-08-21 23:35:53.939526+00	\N
-26408e94-0b65-45e1-b00a-7d1a940fb70b	bar	1	Bar core	retired	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,bottles,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-21 23:35:57.452209+00	2026-08-21 23:35:57.452209+00	2026-08-21 23:35:57.592249+00
-f613aeec-a85b-4e07-bebd-a35fa4a11d19	bar	2	Bar core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,bottles,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel,packages}	\N	2026-08-21 23:35:57.592249+00	2026-08-21 23:35:57.592249+00	\N
+85bd00f7-5c5c-4b44-9273-2cbe994396c1	fnb	1	F&B / Café core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,loyalty,retention,referrals,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+0097a50a-5760-42f7-a97e-25c47ddce8ad	salon	1	Hair Salon core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+ad172db3-1d97-4b8f-bc41-97ab02b2d0cf	facial	1	Facial / Spa core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+69c69fc4-7e1a-41d3-9983-180345079e91	massage	1	Massage core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+cc94a199-1759-45e2-8908-79fed2a404bb	fitness	1	Fitness core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+5a7b1fc9-5f7c-4bb8-a37a-32967eac7132	retail	1	Retail core	published	{dashboard,till,clients,sales,services,inventory,packages,loyalty,retention,referrals,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+7f8b3d90-4cf0-4172-b523-490ce9ffacf1	other	1	Other core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,packages,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:21.985353+00	2026-08-27 16:12:21.985353+00	\N
+b951b59b-8257-4340-be16-e2d1489c6559	bar	1	Bar core	retired	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,bottles,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel}	\N	2026-08-27 16:12:25.262954+00	2026-08-27 16:12:25.262954+00	2026-08-27 16:12:25.392274+00
+cec6e784-2b96-46fe-8878-07aef2dfc5ff	bar	2	Bar core	published	{dashboard,till,clients,appointments,sales,services,bookings,waitlist,inventory,bottles,loyalty,retention,referrals,memberships,giftcards,reports,staffperf,dailyreport,pnl,expenses,customerintel,packages}	\N	2026-08-27 16:12:25.392274+00	2026-08-27 16:12:25.392274+00	\N
 \.
 
 --
@@ -94710,13 +94710,13 @@ f613aeec-a85b-4e07-bebd-a35fa4a11d19	bar	2	Bar core	published	{dashboard,till,cl
 --
 
 COPY public.sector_policy_versions_v109 (id, sector_key, policy_key, version_no, effective_from, effective_to, status, evidence_basis, parameters, fallback_policy, suppression_rules, limitations, created_by, created_at) FROM stdin;
-9decb743-4327-4805-844d-07f450393b99	other	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Fallback registry entry; firm-specific cadence evidence is required", "No cross-sector churn number is supplied"]	{"minimum_audience": 20, "cadence_multiplier": 2.00, "minimum_lapse_days": 30, "minimum_prior_visits": 4}	{"when": "individual_cadence_unavailable", "action": "do_not_classify"}	["insufficient_history", "sector_not_specialized", "low_identity_coverage", "audience_below_minimum"]	["use only until a reviewed sector policy exists", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
-a5967e85-9912-4890-8f7e-29f66ebf79fa	fnb	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; validate against each firm's observed visit cadence", "No external benchmark or universal churn probability is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 1.75, "minimum_lapse_days": 14, "minimum_prior_visits": 4}	{"when": "individual_cadence_unavailable", "action": "use_sector_minimum_only_after_minimum_history"}	["insufficient_history", "low_identity_coverage", "audience_below_minimum"]	["meal and beverage occasions vary by concept and location", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
-a15ea930-6356-44a1-9e21-2aa0f7febace	facial	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; treatment intervals must be checked against each firm's services", "No universal salon or spa churn threshold is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 1.50, "minimum_lapse_days": 30, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_service_history_is_sufficient"}	["insufficient_history", "unknown_service_cadence", "low_identity_coverage", "audience_below_minimum"]	["service plans and treatment cycles differ", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
-d35a8e44-eac2-417c-949d-d99b53cf29e3	salon	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; haircut and treatment cadence must be learned per firm", "No universal salon churn threshold is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 1.60, "minimum_lapse_days": 28, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_service_history_is_sufficient"}	["insufficient_history", "unknown_service_cadence", "low_identity_coverage", "audience_below_minimum"]	["appointment type materially changes cadence", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
-9ebac45a-b350-477b-bb31-cdbc252c4f81	fitness	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; attendance cadence is learned from the firm's own visits", "No universal fitness churn probability is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 2.00, "minimum_lapse_days": 14, "minimum_prior_visits": 5}	{"when": "individual_cadence_unavailable", "action": "suppress_until_attendance_history_is_sufficient"}	["insufficient_history", "membership_state_unknown", "low_identity_coverage", "audience_below_minimum"]	["class packs and memberships need separate interpretation", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
-dadb8f45-8964-418e-b679-6e719cbb7cd8	retail	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; repeat-purchase cadence is learned from firm history", "No universal retail churn threshold is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 2.00, "minimum_lapse_days": 30, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_repeat_purchase_history_is_sufficient"}	["insufficient_history", "product_cycle_unknown", "low_identity_coverage", "audience_below_minimum"]	["replenishment cycles differ by assortment", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
-9267f008-244e-419b-a557-88ea96404239	massage	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; treatment cadence is learned from the firm's own completed visits", "No universal massage or wellness churn threshold is inferred"]	{"minimum_audience": 20, "cadence_multiplier": 1.50, "minimum_lapse_days": 30, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_service_history_is_sufficient"}	["insufficient_history", "unknown_service_cadence", "low_identity_coverage", "audience_below_minimum"]	["treatment plans and service cadence differ", "owner must review before activation"]	\N	2026-08-21 23:35:54.968157+00
+cfcccde4-bdcd-43aa-8f77-053da6c345c2	other	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Fallback registry entry; firm-specific cadence evidence is required", "No cross-sector churn number is supplied"]	{"minimum_audience": 20, "cadence_multiplier": 2.00, "minimum_lapse_days": 30, "minimum_prior_visits": 4}	{"when": "individual_cadence_unavailable", "action": "do_not_classify"}	["insufficient_history", "sector_not_specialized", "low_identity_coverage", "audience_below_minimum"]	["use only until a reviewed sector policy exists", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
+dc66d2cc-eee1-4732-8c5c-b4033d5f4aa9	fnb	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; validate against each firm's observed visit cadence", "No external benchmark or universal churn probability is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 1.75, "minimum_lapse_days": 14, "minimum_prior_visits": 4}	{"when": "individual_cadence_unavailable", "action": "use_sector_minimum_only_after_minimum_history"}	["insufficient_history", "low_identity_coverage", "audience_below_minimum"]	["meal and beverage occasions vary by concept and location", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
+d715f73c-528d-417c-87c0-5467d5c5c3cf	facial	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; treatment intervals must be checked against each firm's services", "No universal salon or spa churn threshold is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 1.50, "minimum_lapse_days": 30, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_service_history_is_sufficient"}	["insufficient_history", "unknown_service_cadence", "low_identity_coverage", "audience_below_minimum"]	["service plans and treatment cycles differ", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
+3e00840f-2f5f-40f9-996a-d95ac1b0b8fc	salon	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; haircut and treatment cadence must be learned per firm", "No universal salon churn threshold is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 1.60, "minimum_lapse_days": 28, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_service_history_is_sufficient"}	["insufficient_history", "unknown_service_cadence", "low_identity_coverage", "audience_below_minimum"]	["appointment type materially changes cadence", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
+86180a66-b92c-41e6-905e-f044a52671f4	fitness	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; attendance cadence is learned from the firm's own visits", "No universal fitness churn probability is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 2.00, "minimum_lapse_days": 14, "minimum_prior_visits": 5}	{"when": "individual_cadence_unavailable", "action": "suppress_until_attendance_history_is_sufficient"}	["insufficient_history", "membership_state_unknown", "low_identity_coverage", "audience_below_minimum"]	["class packs and memberships need separate interpretation", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
+77c8b0ef-0c79-45e9-9783-01617fb014d0	retail	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; repeat-purchase cadence is learned from firm history", "No universal retail churn threshold is asserted"]	{"minimum_audience": 20, "cadence_multiplier": 2.00, "minimum_lapse_days": 30, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_repeat_purchase_history_is_sufficient"}	["insufficient_history", "product_cycle_unknown", "low_identity_coverage", "audience_below_minimum"]	["replenishment cycles differ by assortment", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
+bb648106-6207-447b-8639-f1a4ea17b4bb	massage	lapse_detection	1	2026-07-29 00:00:00+00	\N	published	["Peekaa pilot starting policy; treatment cadence is learned from the firm's own completed visits", "No universal massage or wellness churn threshold is inferred"]	{"minimum_audience": 20, "cadence_multiplier": 1.50, "minimum_lapse_days": 30, "minimum_prior_visits": 3}	{"when": "individual_cadence_unavailable", "action": "suppress_until_service_history_is_sufficient"}	["insufficient_history", "unknown_service_cadence", "low_identity_coverage", "audience_below_minimum"]	["treatment plans and service cadence differ", "owner must review before activation"]	\N	2026-08-27 16:12:22.916114+00
 \.
 
 --
@@ -94724,14 +94724,14 @@ dadb8f45-8964-418e-b679-6e719cbb7cd8	retail	lapse_detection	1	2026-07-29 00:00:0
 --
 
 COPY public.sector_profiles (sector_key, label, active, created_at) FROM stdin;
-fnb	F&B / Café	t	2026-08-21 23:35:53.939526+00
-salon	Hair Salon	t	2026-08-21 23:35:53.939526+00
-facial	Facial / Spa	t	2026-08-21 23:35:53.939526+00
-massage	Massage	t	2026-08-21 23:35:53.939526+00
-fitness	Fitness	t	2026-08-21 23:35:53.939526+00
-retail	Retail	t	2026-08-21 23:35:53.939526+00
-other	Other	t	2026-08-21 23:35:53.939526+00
-bar	Bar / Pub	t	2026-08-21 23:35:57.452209+00
+fnb	F&B / Café	t	2026-08-27 16:12:21.985353+00
+salon	Hair Salon	t	2026-08-27 16:12:21.985353+00
+facial	Facial / Spa	t	2026-08-27 16:12:21.985353+00
+massage	Massage	t	2026-08-27 16:12:21.985353+00
+fitness	Fitness	t	2026-08-27 16:12:21.985353+00
+retail	Retail	t	2026-08-27 16:12:21.985353+00
+other	Other	t	2026-08-27 16:12:21.985353+00
+bar	Bar / Pub	t	2026-08-27 16:12:25.262954+00
 \.
 
 --
@@ -94774,37 +94774,37 @@ COPY public.sme_activity_detail_versions (id, activity_id, version, contact_id, 
 --
 
 COPY public.sme_categories (id, sector_id, parent_category_id, category_key, label, sort_order, active, created_at) FROM stdin;
-9f63c587-9d64-4f95-b694-3aaba4e974c5	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	\N	fnb_food_services	Food Services	10	t	2026-08-21 23:35:57.98139+00
-843b2c9e-de52-48c5-ac9a-988c68f6ac69	5c02a7cc-360e-4fa7-b610-2e7f1710bae6	\N	beauty_personal_care	Personal Care	10	t	2026-08-21 23:35:57.98139+00
-f6c701e4-f1a4-4d34-ac61-34b8e7ec7a1f	ca07cf20-89b6-4514-a09a-547f2e2c55a1	\N	healthcare_medical	Medical	10	t	2026-08-21 23:35:57.98139+00
-fe249abc-5a08-483d-8820-d398e0fcc3d8	335910cd-8305-47c5-8fc9-805938182a9a	\N	fitness_training	Fitness	10	t	2026-08-21 23:35:57.98139+00
-88b59240-04a2-490a-8326-ea58ff504e88	744ecccc-1315-428c-ab31-1360e9d3ac84	\N	home_trades	Home Trades	10	t	2026-08-21 23:35:57.98139+00
-42ffabce-c483-450f-9650-b23642da175d	071e693a-a188-4582-a829-2440bba6ac39	\N	retail_general	Retail	10	t	2026-08-21 23:35:57.98139+00
-43419840-0f6d-477d-bbc6-5bf58df7fd8b	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_restaurant	Restaurant	10	t	2026-08-21 23:35:57.98139+00
-07af03c9-2981-4e01-81f9-9bcd338ca15c	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_cafe	Cafe	20	t	2026-08-21 23:35:57.98139+00
-ba2fe2e6-31ca-4585-a801-98e71a73ff17	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_bakery	Bakery	30	t	2026-08-21 23:35:57.98139+00
-82e23c11-b0a4-494f-a24c-6d363303ed44	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_hawker	Hawker	40	t	2026-08-21 23:35:57.98139+00
-851011f7-3224-4e6f-914b-7c3115b6edab	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_fast_food	Fast Food	50	t	2026-08-21 23:35:57.98139+00
-22dc8978-9196-4cb7-bfbe-06395c56cb8f	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_bar	Bar	60	t	2026-08-21 23:35:57.98139+00
-334ed0ce-8b56-414c-bba6-80743181807f	acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	9f63c587-9d64-4f95-b694-3aaba4e974c5	fnb_dessert	Dessert	70	t	2026-08-21 23:35:57.98139+00
-2dfc2241-829d-463b-afc9-2d0d228e7d06	5c02a7cc-360e-4fa7-b610-2e7f1710bae6	843b2c9e-de52-48c5-ac9a-988c68f6ac69	beauty_hair_salon	Hair Salon	10	t	2026-08-21 23:35:57.98139+00
-749452ee-854d-49c9-b5b8-e96425ae71ed	5c02a7cc-360e-4fa7-b610-2e7f1710bae6	843b2c9e-de52-48c5-ac9a-988c68f6ac69	beauty_nail_salon	Nail Salon	20	t	2026-08-21 23:35:57.98139+00
-14587e02-d419-41b1-876d-56baa695adac	5c02a7cc-360e-4fa7-b610-2e7f1710bae6	843b2c9e-de52-48c5-ac9a-988c68f6ac69	beauty_spa	Spa	30	t	2026-08-21 23:35:57.98139+00
-95405ca0-d439-4809-9c78-c28714c58e1f	5c02a7cc-360e-4fa7-b610-2e7f1710bae6	843b2c9e-de52-48c5-ac9a-988c68f6ac69	beauty_aesthetic	Aesthetic	40	t	2026-08-21 23:35:57.98139+00
-78bfd464-3f9d-434b-b187-94274c61242b	ca07cf20-89b6-4514-a09a-547f2e2c55a1	f6c701e4-f1a4-4d34-ac61-34b8e7ec7a1f	healthcare_dental	Dental	10	t	2026-08-21 23:35:57.98139+00
-f3509543-506c-4ecb-aad1-5f2f3c2dba4e	ca07cf20-89b6-4514-a09a-547f2e2c55a1	f6c701e4-f1a4-4d34-ac61-34b8e7ec7a1f	healthcare_clinic	Clinic	20	t	2026-08-21 23:35:57.98139+00
-4dbfcaad-57a9-4e4c-8e2d-eb8b3df97793	ca07cf20-89b6-4514-a09a-547f2e2c55a1	f6c701e4-f1a4-4d34-ac61-34b8e7ec7a1f	healthcare_physio	Physiotherapy	30	t	2026-08-21 23:35:57.98139+00
-21188cd2-0697-4e37-8a36-4a0096da7a5b	335910cd-8305-47c5-8fc9-805938182a9a	fe249abc-5a08-483d-8820-d398e0fcc3d8	fitness_gym	Gym	10	t	2026-08-21 23:35:57.98139+00
-2981be6d-d1d6-42f3-9b2a-ae32cb35c208	335910cd-8305-47c5-8fc9-805938182a9a	fe249abc-5a08-483d-8820-d398e0fcc3d8	fitness_pilates	Pilates	20	t	2026-08-21 23:35:57.98139+00
-34228902-805e-4beb-99c0-94eac3689083	335910cd-8305-47c5-8fc9-805938182a9a	fe249abc-5a08-483d-8820-d398e0fcc3d8	fitness_yoga	Yoga	30	t	2026-08-21 23:35:57.98139+00
-8551fd01-d31a-492a-be1e-1c91dab5200c	335910cd-8305-47c5-8fc9-805938182a9a	fe249abc-5a08-483d-8820-d398e0fcc3d8	fitness_personal	Personal Training	40	t	2026-08-21 23:35:57.98139+00
-bdd08bdb-ed12-4e60-9c1a-62d1ebeec0b9	744ecccc-1315-428c-ab31-1360e9d3ac84	88b59240-04a2-490a-8326-ea58ff504e88	home_renovation	Renovation	10	t	2026-08-21 23:35:57.98139+00
-2a330659-f5bc-4a3b-a68f-7720b97c5aae	744ecccc-1315-428c-ab31-1360e9d3ac84	88b59240-04a2-490a-8326-ea58ff504e88	home_cleaning	Cleaning	20	t	2026-08-21 23:35:57.98139+00
-ec0631d7-b4b2-4cf9-931a-defaa01cacfe	744ecccc-1315-428c-ab31-1360e9d3ac84	88b59240-04a2-490a-8326-ea58ff504e88	home_plumbing	Plumbing	30	t	2026-08-21 23:35:57.98139+00
-bf61b4d9-1573-4179-8e9b-c17322fd52ab	744ecccc-1315-428c-ab31-1360e9d3ac84	88b59240-04a2-490a-8326-ea58ff504e88	home_electrical	Electrical	40	t	2026-08-21 23:35:57.98139+00
-dc7e5091-f7e7-4e73-b48a-ce4c7541307e	071e693a-a188-4582-a829-2440bba6ac39	42ffabce-c483-450f-9650-b23642da175d	retail_fashion	Fashion	10	t	2026-08-21 23:35:57.98139+00
-8434e64d-103a-4095-ba06-cbff5bb10da3	071e693a-a188-4582-a829-2440bba6ac39	42ffabce-c483-450f-9650-b23642da175d	retail_electronics	Electronics	20	t	2026-08-21 23:35:57.98139+00
-a41949db-a03e-4447-a17a-ff1e45c47595	071e693a-a188-4582-a829-2440bba6ac39	42ffabce-c483-450f-9650-b23642da175d	retail_specialty	Specialty Retail	30	t	2026-08-21 23:35:57.98139+00
+178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fe039fc6-e01a-4696-949a-5f3acd289df1	\N	fnb_food_services	Food Services	10	t	2026-08-27 16:12:25.754932+00
+7a3621bc-bfe5-4991-a38a-ec78c350175c	0ba4af96-49f3-4246-bcd8-402f17eaaecf	\N	beauty_personal_care	Personal Care	10	t	2026-08-27 16:12:25.754932+00
+77be85da-89ce-429a-8106-b12fb63d3f07	de5fd6a1-bb28-439b-9348-32af4deb1a7c	\N	healthcare_medical	Medical	10	t	2026-08-27 16:12:25.754932+00
+9a6cdbfd-ad39-412e-a6c8-4d562762793b	82a66afe-07a7-4a1b-b9bb-87ec0b8347ac	\N	fitness_training	Fitness	10	t	2026-08-27 16:12:25.754932+00
+b6f22d5a-8523-4111-8d7a-6295285724eb	4223d9c7-b80c-4246-b6c5-7941023ef485	\N	home_trades	Home Trades	10	t	2026-08-27 16:12:25.754932+00
+e473f29b-5464-4644-b949-2acdf273c094	0892f2a7-9aae-4087-a9e1-e24357a6fb47	\N	retail_general	Retail	10	t	2026-08-27 16:12:25.754932+00
+939ff36f-2aa2-4330-ad1f-8df8ed9efe1f	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_restaurant	Restaurant	10	t	2026-08-27 16:12:25.754932+00
+11ef59d5-5cee-4f3f-88e5-037a2eb78513	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_cafe	Cafe	20	t	2026-08-27 16:12:25.754932+00
+320dc2c2-934d-4780-815b-0cf53aedd554	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_bakery	Bakery	30	t	2026-08-27 16:12:25.754932+00
+1b9e857d-f07d-4dcc-a862-d7c1269e81df	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_hawker	Hawker	40	t	2026-08-27 16:12:25.754932+00
+7fd8bc31-a0f3-4e3f-9dba-467b6b090819	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_fast_food	Fast Food	50	t	2026-08-27 16:12:25.754932+00
+64188b33-5b38-4ded-a004-1ba0839d0425	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_bar	Bar	60	t	2026-08-27 16:12:25.754932+00
+cee0be56-c86a-40c7-af0a-a9f6338d9180	fe039fc6-e01a-4696-949a-5f3acd289df1	178f0daf-e118-4b3e-a71b-42cfb1fa5fb4	fnb_dessert	Dessert	70	t	2026-08-27 16:12:25.754932+00
+aeded9b9-61e0-4382-a324-c99d6bc7b12e	0ba4af96-49f3-4246-bcd8-402f17eaaecf	7a3621bc-bfe5-4991-a38a-ec78c350175c	beauty_hair_salon	Hair Salon	10	t	2026-08-27 16:12:25.754932+00
+6b77d0d3-d213-4b57-9297-683a07b7237d	0ba4af96-49f3-4246-bcd8-402f17eaaecf	7a3621bc-bfe5-4991-a38a-ec78c350175c	beauty_nail_salon	Nail Salon	20	t	2026-08-27 16:12:25.754932+00
+b1344ab5-7183-451f-9eb6-b7427a7d9d4c	0ba4af96-49f3-4246-bcd8-402f17eaaecf	7a3621bc-bfe5-4991-a38a-ec78c350175c	beauty_spa	Spa	30	t	2026-08-27 16:12:25.754932+00
+5d86a5dc-9cde-4520-9b50-e7bbc092015a	0ba4af96-49f3-4246-bcd8-402f17eaaecf	7a3621bc-bfe5-4991-a38a-ec78c350175c	beauty_aesthetic	Aesthetic	40	t	2026-08-27 16:12:25.754932+00
+1fd853a2-af82-4bd6-9e05-de8eb0c49c4e	de5fd6a1-bb28-439b-9348-32af4deb1a7c	77be85da-89ce-429a-8106-b12fb63d3f07	healthcare_dental	Dental	10	t	2026-08-27 16:12:25.754932+00
+37db44a8-461e-42a3-9a2b-95f95f757d67	de5fd6a1-bb28-439b-9348-32af4deb1a7c	77be85da-89ce-429a-8106-b12fb63d3f07	healthcare_clinic	Clinic	20	t	2026-08-27 16:12:25.754932+00
+12d1deae-a795-4b99-8fff-dceb353b1efb	de5fd6a1-bb28-439b-9348-32af4deb1a7c	77be85da-89ce-429a-8106-b12fb63d3f07	healthcare_physio	Physiotherapy	30	t	2026-08-27 16:12:25.754932+00
+4359bcae-8779-49cb-b720-bcec4bbdf948	82a66afe-07a7-4a1b-b9bb-87ec0b8347ac	9a6cdbfd-ad39-412e-a6c8-4d562762793b	fitness_gym	Gym	10	t	2026-08-27 16:12:25.754932+00
+70972ced-941e-439a-8ec0-cc5be15a5769	82a66afe-07a7-4a1b-b9bb-87ec0b8347ac	9a6cdbfd-ad39-412e-a6c8-4d562762793b	fitness_pilates	Pilates	20	t	2026-08-27 16:12:25.754932+00
+e33eb412-f7db-438b-947a-794f0859e428	82a66afe-07a7-4a1b-b9bb-87ec0b8347ac	9a6cdbfd-ad39-412e-a6c8-4d562762793b	fitness_yoga	Yoga	30	t	2026-08-27 16:12:25.754932+00
+3456987f-02ae-416b-b6bc-72b1ebe9eb5e	82a66afe-07a7-4a1b-b9bb-87ec0b8347ac	9a6cdbfd-ad39-412e-a6c8-4d562762793b	fitness_personal	Personal Training	40	t	2026-08-27 16:12:25.754932+00
+f3a77a23-a88e-432d-88db-ddc659d24788	4223d9c7-b80c-4246-b6c5-7941023ef485	b6f22d5a-8523-4111-8d7a-6295285724eb	home_renovation	Renovation	10	t	2026-08-27 16:12:25.754932+00
+19abcc90-b8b4-4c2b-b3b7-c259a221b5ce	4223d9c7-b80c-4246-b6c5-7941023ef485	b6f22d5a-8523-4111-8d7a-6295285724eb	home_cleaning	Cleaning	20	t	2026-08-27 16:12:25.754932+00
+c6ca378f-299c-41b7-a5a6-9ea2420d6356	4223d9c7-b80c-4246-b6c5-7941023ef485	b6f22d5a-8523-4111-8d7a-6295285724eb	home_plumbing	Plumbing	30	t	2026-08-27 16:12:25.754932+00
+3b39a851-af6c-4b93-b57a-835ebfa632f3	4223d9c7-b80c-4246-b6c5-7941023ef485	b6f22d5a-8523-4111-8d7a-6295285724eb	home_electrical	Electrical	40	t	2026-08-27 16:12:25.754932+00
+f3493f38-2ea6-418a-bb16-d60b7fa03437	0892f2a7-9aae-4087-a9e1-e24357a6fb47	e473f29b-5464-4644-b949-2acdf273c094	retail_fashion	Fashion	10	t	2026-08-27 16:12:25.754932+00
+55be8182-5104-4fae-9862-459d09abb6ab	0892f2a7-9aae-4087-a9e1-e24357a6fb47	e473f29b-5464-4644-b949-2acdf273c094	retail_electronics	Electronics	20	t	2026-08-27 16:12:25.754932+00
+c5de4ae5-60de-4a49-9b71-09ab4f94d184	0892f2a7-9aae-4087-a9e1-e24357a6fb47	e473f29b-5464-4644-b949-2acdf273c094	retail_specialty	Specialty Retail	30	t	2026-08-27 16:12:25.754932+00
 \.
 
 --
@@ -95154,12 +95154,12 @@ COPY public.sme_saved_filters (id, user_id, name, filter_config, created_at, upd
 --
 
 COPY public.sme_sectors (id, sector_key, label, sort_order, active, created_at) FROM stdin;
-acc8ba61-5c1d-4f3b-bad1-b150ab94f4d7	fnb	F&B	10	t	2026-08-21 23:35:57.98139+00
-5c02a7cc-360e-4fa7-b610-2e7f1710bae6	beauty	Beauty	20	t	2026-08-21 23:35:57.98139+00
-ca07cf20-89b6-4514-a09a-547f2e2c55a1	healthcare	Healthcare	30	t	2026-08-21 23:35:57.98139+00
-335910cd-8305-47c5-8fc9-805938182a9a	fitness	Fitness	40	t	2026-08-21 23:35:57.98139+00
-744ecccc-1315-428c-ab31-1360e9d3ac84	home_services	Home Services	50	t	2026-08-21 23:35:57.98139+00
-071e693a-a188-4582-a829-2440bba6ac39	retail	Retail	60	t	2026-08-21 23:35:57.98139+00
+fe039fc6-e01a-4696-949a-5f3acd289df1	fnb	F&B	10	t	2026-08-27 16:12:25.754932+00
+0ba4af96-49f3-4246-bcd8-402f17eaaecf	beauty	Beauty	20	t	2026-08-27 16:12:25.754932+00
+de5fd6a1-bb28-439b-9348-32af4deb1a7c	healthcare	Healthcare	30	t	2026-08-27 16:12:25.754932+00
+82a66afe-07a7-4a1b-b9bb-87ec0b8347ac	fitness	Fitness	40	t	2026-08-27 16:12:25.754932+00
+4223d9c7-b80c-4246-b6c5-7941023ef485	home_services	Home Services	50	t	2026-08-27 16:12:25.754932+00
+0892f2a7-9aae-4087-a9e1-e24357a6fb47	retail	Retail	60	t	2026-08-27 16:12:25.754932+00
 \.
 
 --
@@ -95174,21 +95174,21 @@ COPY public.sme_stage_entry_evidence (id, prospect_id, stage_key, prospect_versi
 --
 
 COPY public.sme_stage_entry_requirements (stage_key, evidence_schema_version, required_keys, system_managed, terminal_confirmation, description, updated_at) FROM stdin;
-new_lead	1	{source}	f	f	Company name or registration number, source and created timestamp	2026-08-21 23:35:54.269925+00
-account_created	1	{conversion_id}	t	f	Transactional v79 conversion evidence	2026-08-21 23:35:54.269925+00
-activated	1	{activation_event_id}	t	t	Evidence-backed v79 activation	2026-08-21 23:35:54.269925+00
-lost	1	{reason_code,context,recontact_permission}	f	t	Structured loss evidence and recontact ruling	2026-08-21 23:35:54.269925+00
-assigned	1	{}	f	f	Assigned to a consultant	2026-08-21 23:35:58.262509+00
-contacted	1	{}	f	f	A contact attempt was made	2026-08-21 23:35:58.262509+00
-interested	1	{}	f	f	The business expressed interest	2026-08-21 23:35:58.262509+00
-appointment	1	{}	f	f	A meeting is scheduled	2026-08-21 23:35:58.262509+00
-not_interested	1	{}	f	t	Declined the offer	2026-08-21 23:35:58.262509+00
-no_response	1	{}	f	t	No answer after repeated attempts	2026-08-21 23:35:58.262509+00
-invalid_contact	1	{}	f	t	Contact details do not work	2026-08-21 23:35:58.262509+00
-closed_business	1	{}	f	t	The business has closed down	2026-08-21 23:35:58.262509+00
-do_not_contact	1	{}	f	t	Asked not to be contacted again	2026-08-21 23:35:58.262509+00
-client	1	{explicit_confirmation}	t	t	Accepted commercial snapshot and explicit confirmation	2026-08-21 23:35:54.269925+00
-onboarding	1	{checklist_id}	f	f	Evidence-backed v79 onboarding checklist	2026-08-21 23:35:54.269925+00
+new_lead	1	{source}	f	f	Company name or registration number, source and created timestamp	2026-08-27 16:12:22.286649+00
+account_created	1	{conversion_id}	t	f	Transactional v79 conversion evidence	2026-08-27 16:12:22.286649+00
+activated	1	{activation_event_id}	t	t	Evidence-backed v79 activation	2026-08-27 16:12:22.286649+00
+lost	1	{reason_code,context,recontact_permission}	f	t	Structured loss evidence and recontact ruling	2026-08-27 16:12:22.286649+00
+assigned	1	{}	f	f	Assigned to a consultant	2026-08-27 16:12:26.013856+00
+contacted	1	{}	f	f	A contact attempt was made	2026-08-27 16:12:26.013856+00
+interested	1	{}	f	f	The business expressed interest	2026-08-27 16:12:26.013856+00
+appointment	1	{}	f	f	A meeting is scheduled	2026-08-27 16:12:26.013856+00
+not_interested	1	{}	f	t	Declined the offer	2026-08-27 16:12:26.013856+00
+no_response	1	{}	f	t	No answer after repeated attempts	2026-08-27 16:12:26.013856+00
+invalid_contact	1	{}	f	t	Contact details do not work	2026-08-27 16:12:26.013856+00
+closed_business	1	{}	f	t	The business has closed down	2026-08-27 16:12:26.013856+00
+do_not_contact	1	{}	f	t	Asked not to be contacted again	2026-08-27 16:12:26.013856+00
+client	1	{explicit_confirmation}	t	t	Accepted commercial snapshot and explicit confirmation	2026-08-27 16:12:22.286649+00
+onboarding	1	{checklist_id}	f	f	Evidence-backed v79 onboarding checklist	2026-08-27 16:12:22.286649+00
 \.
 
 --

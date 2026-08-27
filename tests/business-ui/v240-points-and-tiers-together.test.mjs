@@ -36,7 +36,9 @@ test('V240 the v239 migration file records the rule V256 later removed', () => {
 test('V240 the editor offers a fourth model and derives the selection from it', () => {
   assert.match(app, /const loyaltySelectionForModeV240=mode=>mode==='tiers'\?'tiers':mode==='both'\?'both':'redeem';/);
   assert.match(app, /loyaltySelectionV230=model==='stamps'\?'stamps':loyaltySelectionForModeV240\(loyaltyModeV230\)/);
-  assert.match(app, /liveLoyaltySelectionV235=\(p\?\.loyalty_model\|\|'classic'\)==='stamps'\?'stamps'\s*\n\s*:loyaltySelectionForModeV240/);
+  /* nestly_v567: the invented 'classic' placeholder is gone — an unreadable model normalises to
+     '' and fails closed to the points/tiers branch, instead of a model nobody saved. */
+  assert.match(app, /liveLoyaltySelectionV235=normaliseLoyaltyModelV375\(p\?\.loyalty_model\)==='stamps'\?'stamps'\s*\n\s*:loyaltySelectionForModeV240/);
   // V258: the line no longer names a basis, because every basis is now selectable under 'both'.
   assert.match(app, /both:\{name:'Points \+ tiers',line:'Customers spend points on rewards, and separately climb tiers — the two never affect each other\.'\}/);
   assert.match(app, /\$\{\['redeem','tiers','both','stamps'\]\.map\(key=>/);
