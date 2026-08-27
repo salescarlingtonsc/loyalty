@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="be11f4cd60643f298b9112334aeedbff7f2d57ec8ea303b1a4e4a471f4ce7718">
+<meta name="v105-production-component-sha256" content="f064e213309f7b6e183530da3d2168b12e25efce0b4a915094b3d338c6079b6d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -4548,6 +4548,17 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   background:var(--peekaa-card,#fff)}
 .customer-business-links-head-v468{margin:10px 0 2px;font-size:12px;font-weight:800;
   letter-spacing:.06em;text-transform:uppercase;color:var(--peekaa-text-secondary,var(--muted))}
+/* nestly_v561: a photo-less section's H2 wears the caption's clothes (owner: Cubbly's
+   "FOLLOW US HERE ❤️" is the correct version). The !importants are not enthusiasm — the shared
+   group-head h2 rules (v346/v343 line, and the wallet-sections override) set font-family and
+   font-size with !important, so matching weight is the only way this class can win. The emoji is
+   untouched by text-transform and renders as drawn. */
+h2.customer-business-links-head-v561,
+.wallet-sections h2.customer-business-links-head-v561,
+.customer-business-shortcut-content-v348 h2.customer-business-links-head-v561{
+  font-family:inherit!important;font-size:12px!important;
+  line-height:1.3!important;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--peekaa-text-secondary,var(--muted))}
 .customer-business-link-v418{display:flex;align-items:center;justify-content:space-between;gap:10px;
   width:100%;min-height:46px;padding:0;border:0;border-radius:0;background:none;
   color:var(--peekaa-text,#17161A);font-size:15px;font-weight:650;text-decoration:none}
@@ -5534,7 +5545,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · be11f4cd6064</span>
+<span class="v105-provenance">v105 production-component harness · f064e213309f</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5659,7 +5670,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'be11f4cd60643f298b9112334aeedbff7f2d57ec8ea303b1a4e4a471f4ce7718',
+  sourceHash:'f064e213309f7b6e183530da3d2168b12e25efce0b4a915094b3d338c6079b6d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

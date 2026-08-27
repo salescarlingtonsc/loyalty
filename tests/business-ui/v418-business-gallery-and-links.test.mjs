@@ -28,6 +28,7 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g,
 /* The customer-facing segment, evaluated as it ships. */
 const segment = business => new Function('esc', 'CUI', 'customerMediaUrlV95', `
   ${statement('const CUSTOMER_SOCIAL_LABELS_V418=', '\n});')}
+  ${statement('function customerLinkIsOwnAppV561(', '\n}')}
   ${statement('function customerBusinessGalleryMarkupV418(', '\n}')}
   return customerBusinessGalleryMarkupV418;`)(
   esc, { icon: () => '<svg></svg>' },
@@ -186,4 +187,35 @@ test('v418 photos use the one card shape v417 unified everything else to', () =>
   /* ...and opening one shows it whole, the same bargain v417 struck. */
   const viewer = statement('function openCustomerGalleryPhotoV418(', '\n}');
   assert.match(viewer, /object-fit:contain/);
+});
+
+/* nestly_v561 (owner, two photos: Cubbly's captioned one-row block vs a new tenant listing all
+   eight platforms, every URL the brand editor's own address). Same backend, different rows —
+   browser autofill had filled every field with the page's own URL and Save stored them. Two
+   rules close it: the customer renderer never draws a link that points back at Peekaa itself,
+   and a photo-less section's heading wears the caption's small-caps-plus-heart look the owner
+   ruled correct, instead of the plain full-size H2. */
+test('v561 a link pointing back at Peekaa itself is never drawn', () => {
+  const out = segment({ name: 'KKY', social_links: [
+    { platform: 'website', url: 'https://www.peekaa.asia/business#/customer-interface/brand' },
+    { platform: 'instagram', url: 'https://instagram.com/kky' }] });
+  assert.match(out, /Instagram/);
+  assert.doesNotMatch(out, /Website/);
+  /* All-junk rows leave nothing behind at all — the section only exists for real content. */
+  assert.equal(segment({ name: 'KKY', social_links: [
+    { platform: 'website', url: 'https://peekaa.asia/x' },
+    { platform: 'tiktok', url: 'https://loyalty-pi-seven.vercel.app/y' }] }), '');
+});
+
+test('v561 a photo-less section heads itself like the caption, heart included', () => {
+  const out = segment({ name: 'KKY', social_links: [
+    { platform: 'instagram', url: 'https://instagram.com/kky' }] });
+  assert.match(out, /customer-business-links-head-v561/);
+  assert.match(out, /Follow us here <span aria-hidden="true">\u2764\uFE0F<\/span>/u);
+  /* With photos the heading stays Gallery and the v468 caption keeps the heart — unchanged. */
+  const withPhotos = segment({ name: 'Cubbly', gallery: [{ image_ref: PHOTO }],
+    social_links: [{ platform: 'website', url: 'https://cubbly.sg/' }] });
+  assert.match(withPhotos, />Gallery</);
+  assert.match(withPhotos, /customer-business-links-head-v468/);
+  assert.doesNotMatch(withPhotos, /customer-business-links-head-v561/);
 });

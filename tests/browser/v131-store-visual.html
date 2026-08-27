@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="4394c9b8a2ac30a5d751e600ff47aa42175493c7fd0a840f00f787f5efa7fdc7"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="2693cf3cdc9c50c37b881739592db00ba23fb7a83055135d81750dd9b3176250"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4541,6 +4541,17 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   background:var(--peekaa-card,#fff)}
 .customer-business-links-head-v468{margin:10px 0 2px;font-size:12px;font-weight:800;
   letter-spacing:.06em;text-transform:uppercase;color:var(--peekaa-text-secondary,var(--muted))}
+/* nestly_v561: a photo-less section's H2 wears the caption's clothes (owner: Cubbly's
+   "FOLLOW US HERE ❤️" is the correct version). The !importants are not enthusiasm — the shared
+   group-head h2 rules (v346/v343 line, and the wallet-sections override) set font-family and
+   font-size with !important, so matching weight is the only way this class can win. The emoji is
+   untouched by text-transform and renders as drawn. */
+h2.customer-business-links-head-v561,
+.wallet-sections h2.customer-business-links-head-v561,
+.customer-business-shortcut-content-v348 h2.customer-business-links-head-v561{
+  font-family:inherit!important;font-size:12px!important;
+  line-height:1.3!important;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--peekaa-text-secondary,var(--muted))}
 .customer-business-link-v418{display:flex;align-items:center;justify-content:space-between;gap:10px;
   width:100%;min-height:46px;padding:0;border:0;border-radius:0;background:none;
   color:var(--peekaa-text,#17161A);font-size:15px;font-weight:650;text-decoration:none}

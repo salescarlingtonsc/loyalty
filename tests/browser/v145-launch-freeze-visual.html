@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e90471efade3d27ed78851c80e1e901183666bc99e0999c7c6a5fc936b5bbf8d"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="53bb3ccc1d636f3bda396851a0123fd06570ff5a70452e233181b1a764753a71"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4542,6 +4542,17 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   background:var(--peekaa-card,#fff)}
 .customer-business-links-head-v468{margin:10px 0 2px;font-size:12px;font-weight:800;
   letter-spacing:.06em;text-transform:uppercase;color:var(--peekaa-text-secondary,var(--muted))}
+/* nestly_v561: a photo-less section's H2 wears the caption's clothes (owner: Cubbly's
+   "FOLLOW US HERE ❤️" is the correct version). The !importants are not enthusiasm — the shared
+   group-head h2 rules (v346/v343 line, and the wallet-sections override) set font-family and
+   font-size with !important, so matching weight is the only way this class can win. The emoji is
+   untouched by text-transform and renders as drawn. */
+h2.customer-business-links-head-v561,
+.wallet-sections h2.customer-business-links-head-v561,
+.customer-business-shortcut-content-v348 h2.customer-business-links-head-v561{
+  font-family:inherit!important;font-size:12px!important;
+  line-height:1.3!important;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--peekaa-text-secondary,var(--muted))}
 .customer-business-link-v418{display:flex;align-items:center;justify-content:space-between;gap:10px;
   width:100%;min-height:46px;padding:0;border:0;border-radius:0;background:none;
   color:var(--peekaa-text,#17161A);font-size:15px;font-weight:650;text-decoration:none}
@@ -4720,7 +4731,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e90471efade3d27ed78851c80e1e901183666bc99e0999c7c6a5fc936b5bbf8d</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 53bb3ccc1d636f3bda396851a0123fd06570ff5a70452e233181b1a764753a71</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8632,7 +8643,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'e90471efade3d27ed78851c80e1e901183666bc99e0999c7c6a5fc936b5bbf8d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'53bb3ccc1d636f3bda396851a0123fd06570ff5a70452e233181b1a764753a71',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

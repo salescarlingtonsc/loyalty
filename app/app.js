@@ -11389,6 +11389,24 @@ const CUSTOMER_SOCIAL_LABELS_V418=Object.freeze({
   website:'Website',instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',
   whatsapp:'WhatsApp',youtube:'YouTube',telegram:'Telegram',xiaohongshu:'Xiaohongshu'
 });
+/* nestly_v561 (owner, two photos: Cubbly's links block with one real Website row against a new
+   tenant listing all EIGHT platforms — every saved URL was
+   https://www.peekaa.asia/business#/customer-interface/brand, the brand editor's own address,
+   the classic browser-autofill fill-every-URL-field accident). A "social link" that points back
+   at Peekaa itself is never what a customer should be sent to — v471 already recorded that a
+   same-origin link hijacks the installed PWA's own window. One predicate, used in BOTH
+   directions: the customer renderer drops such rows (so tenants already carrying them heal
+   without a data migration), and the workspace editor refuses to save new ones with a message
+   that says what happened. The page's own host is included so previews and any future domain
+   behave the same as the two named production hosts. */
+function customerLinkIsOwnAppV561(url){
+  try{
+    const host=new URL(String(url)).hostname.toLowerCase();
+    const own=new Set(['peekaa.asia','www.peekaa.asia','loyalty-pi-seven.vercel.app',
+      String(globalThis.location?.hostname||'').toLowerCase()].filter(Boolean));
+    return own.has(host);
+  }catch{return false}
+}
 /* Tapping a gallery photo shows it whole. Same bargain v417 struck for offer cards: framed in the
    list so the row reads evenly, complete when you open it. A plain dialog rather than a new
    viewer — one image, a close button, and the caption if there is one. */
@@ -11543,7 +11561,9 @@ function customerBusinessGalleryMarkupV418(business={}){
     .map(item=>({platform:String(item?.platform||''),url:String(item?.url||'').trim()}))
     /* https only, mirroring the table CHECK. A payload that somehow carried anything else is not
        rendered as a tappable link on a customer's phone. */
-    .filter(item=>CUSTOMER_SOCIAL_LABELS_V418[item.platform]&&/^https:\/\/\S+$/i.test(item.url));
+    .filter(item=>CUSTOMER_SOCIAL_LABELS_V418[item.platform]&&/^https:\/\/\S+$/i.test(item.url)
+      /* nestly_v561: rows pointing back at Peekaa itself are never drawn — see the predicate. */
+      &&!customerLinkIsOwnAppV561(item.url));
   if(!photos.length&&!links.length)return '';
   /* V468-C1, three marks on the owner's photo 1.
      (a) THE HEADING. It printed the business NAME — "Cubbly SPA" — on a customer's own page for
@@ -11565,8 +11585,15 @@ function customerBusinessGalleryMarkupV418(business={}){
         <img src="${esc(item.url)}" alt="${esc(item.caption||'')}" loading="lazy" decoding="async">
         ${item.caption?`<span class="customer-business-gallery-caption-v418">${esc(item.caption)}</span>`:''}
       </button>`;
+  /* nestly_v561 (owner: "photo 1: cubblySPA - correct version ... why no heart shape?").
+     The two presentations of this section came from one branch: WITH photos the heading is
+     "Gallery" and the links carry the small-caps "FOLLOW US HERE \u2764\uFE0F" caption; with NO
+     photos the heading became a plain full-size H2 and the caption was suppressed as a
+     duplicate (V468). The owner has ruled the captioned look is the correct one, so a
+     photo-less section now styles its own heading exactly like the caption — same element for
+     assistive tech, Cubbly's look for everyone. The heart stays aria-hidden. */
   return `<section class="customer-business-group-v346 customer-business-gallery-v418" aria-labelledby="customerBusinessGalleryTitleV418">
-    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418">${esc(headingV468)}</h2>
+    <div class="customer-business-group-head-v346"><h2 id="customerBusinessGalleryTitleV418"${photos.length?'':' class="customer-business-links-head-v561"'}>${esc(headingV468)}${photos.length?'':' <span aria-hidden="true">\u2764\uFE0F</span>'}</h2>
       ${overflowV468.length?`<button type="button" class="customer-gallery-seeall-v468" data-gallery-see-all-v468>See all<span aria-hidden="true">${CUI.icon('forward',{size:15})}</span></button>`:''}</div>
     ${photos.length?`<div class="customer-business-gallery-grid-v418" role="list">
       ${[...shownV468,...overflowV468].map(cellV468).join('')}
@@ -17755,6 +17782,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v471: the https rule is no longer the owner's problem — a bare domain is given the
      scheme it meant. What is left to report is a value that is not a web address at all. */
   linkNotAWebAddressV471:Object.freeze({en:'The {platform} link is not a web address. Try something like instagram.com/yourshop.','zh-CN':'{platform} 链接不是网址。请尝试 instagram.com/yourshop 这样的格式。',ms:'Pautan {platform} bukan alamat web. Cuba sesuatu seperti instagram.com/kedaianda.'}),
+  /* nestly_v561: the field holds Peekaa's own address — almost always browser autofill. */
+  linkIsOwnAppV561:Object.freeze({en:'The {platform} link points at Peekaa itself — customers are already here. Paste the real address instead.','zh-CN':'{platform} 链接指向 Peekaa 本身——顾客已经在这里了。请改为粘贴真实地址。',ms:'Pautan {platform} menghala ke Peekaa sendiri — pelanggan sudah berada di sini. Tampal alamat sebenar.'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
   completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
   completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
@@ -17917,7 +17946,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
-  'savedNotLive','stampCardLength','linkNotAWebAddressV471','referralGiftGiven',
+  'savedNotLive','stampCardLength','linkNotAWebAddressV471','linkIsOwnAppV561','referralGiftGiven',
   /* nestly_v453: the three reasons a length stepper can refuse. Each is shown twice — as the
      disabled button's title and as the line of text under the bar — from this one source, so the
      two can never disagree in any locale. */
@@ -48982,6 +49011,11 @@ function wireBusinessProfileExtrasV418(){
        missing; what reaches here as null is a word, a handle, or a scheme we refuse to publish. */
     const bad=form.links.find(item=>!item.url);
     if(bad)return toast(workspaceTemplateTextV97('linkNotAWebAddressV471',{platform:bad.platform}));
+    /* nestly_v561: the Peekaa app's own address is not a social link — customers tapping it are
+       thrown into the business workspace (or the PWA's own window, v471). Refused by name so the
+       owner knows which field autofill grabbed. */
+    const selfV561=form.links.find(item=>customerLinkIsOwnAppV561(item.url));
+    if(selfV561)return toast(workspaceTemplateTextV97('linkIsOwnAppV561',{platform:selfV561.platform}));
     /* Only the normalised url is sent; `typed` exists so the message above can name the field. */
     const linksToSaveV471=form.links.map(item=>({platform:item.platform,url:item.url}));
     businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();

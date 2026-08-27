@@ -33202,6 +33202,11 @@ function wireBusinessProfileExtrasV418(){
        missing; what reaches here as null is a word, a handle, or a scheme we refuse to publish. */
     const bad=form.links.find(item=>!item.url);
     if(bad)return toast(workspaceTemplateTextV97('linkNotAWebAddressV471',{platform:bad.platform}));
+    /* nestly_v561: the Peekaa app's own address is not a social link — customers tapping it are
+       thrown into the business workspace (or the PWA's own window, v471). Refused by name so the
+       owner knows which field autofill grabbed. */
+    const selfV561=form.links.find(item=>customerLinkIsOwnAppV561(item.url));
+    if(selfV561)return toast(workspaceTemplateTextV97('linkIsOwnAppV561',{platform:selfV561.platform}));
     /* Only the normalised url is sent; `typed` exists so the message above can name the field. */
     const linksToSaveV471=form.links.map(item=>({platform:item.platform,url:item.url}));
     businessProfileExtrasBusyV418=true;businessProfileExtrasErrorV418='';renderBusinessProfileExtrasV418();

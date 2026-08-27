@@ -365,7 +365,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      every key must have a render path, and normalising the scheme removed that message's last
      caller — a reviewed string nothing can print is exactly the drift this inventory exists to
      catch. Both name an owner's own field ({platform}), so both are reviewed copy. */
-  assert.equal(keys.length,147,'mixed-interface interpolation inventory changed without review');
+  /* 147 -> 148: nestly_v561 adds linkIsOwnAppV561 — the specific refusal when a social-link
+     field holds Peekaa's own address (browser autofill filling every URL field with the brand
+     editor's own page, which is exactly what production tenant KKY demo carried: all eight
+     platforms pointing at /business#/customer-interface/brand). The generic
+     linkNotAWebAddressV471 would mislead here — the value IS a web address, just the one address
+     a customer must never be sent to. Names the owner's own field ({platform}); reviewed copy in
+     all three locales. */
+  assert.equal(keys.length,148,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

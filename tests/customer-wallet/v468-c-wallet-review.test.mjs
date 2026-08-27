@@ -72,6 +72,8 @@ const canRedeemSrc = extractFunction(app, 'customerRewardCanRedeem');
 const helpButtonSrcV471 = extractFunction(app, 'customerRewardHelpButtonV468');
 const endsLineSrcV471 = extractFunction(app, 'customerRewardEndsLineV471');
 const socialLabelsSrc = extractConst(app, 'CUSTOMER_SOCIAL_LABELS_V418');
+/* nestly_v561: the renderer now calls the own-app predicate, so the harness carries it too. */
+const ownAppSrc = extractFunction(app, 'customerLinkIsOwnAppV561');
 const gallerySrc = extractFunction(app, 'customerBusinessGalleryMarkupV418');
 const walletDateSrc = extractFunction(app, 'walletDate');
 
@@ -84,6 +86,7 @@ const renderGallery = new Function('CUI', `
   ${escSrc}
   ${MEDIA_STUB}
   ${socialLabelsSrc}
+  ${ownAppSrc}
   ${gallerySrc}
   return customerBusinessGalleryMarkupV418;`)(CUI_STUB);
 
@@ -149,7 +152,9 @@ test('C1 · each single-sided section still reads deliberately, and an empty one
   /* Links but no photos: the section IS the links block, so its heading is that block's and the
      caption is not printed twice. */
   const linksOnly = renderGallery({ name: 'Cubbly SPA', gallery: [], social_links: [LINKS[0]] });
-  assert.match(linksOnly, /<h2 id="customerBusinessGalleryTitleV418">Follow us here<\/h2>/);
+  /* nestly_v561: the heading now wears the caption's small-caps look, heart included (owner:
+     Cubbly's captioned block is the correct version) — same id, same single printing. */
+  assert.match(linksOnly, /<h2 id="customerBusinessGalleryTitleV418" class="customer-business-links-head-v561">Follow us here <span aria-hidden="true">\u2764\uFE0F<\/span><\/h2>/u);
   assert.equal([...linksOnly.matchAll(/Follow us here/g)].length, 1);
   assert.doesNotMatch(linksOnly, /customer-business-gallery-grid-v418/);
   /* Photos but no links: Gallery, and no empty box promising links. */

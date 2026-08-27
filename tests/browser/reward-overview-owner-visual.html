@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="970f8b03d6f1b8e7389345c01019b72b7c78d53fd7e310a8cff0af253a25293a"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="9401d891410a5c2cf3cb156887036309f931994dc1cf773868f20d2d8e804d63"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4542,6 +4542,17 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   background:var(--peekaa-card,#fff)}
 .customer-business-links-head-v468{margin:10px 0 2px;font-size:12px;font-weight:800;
   letter-spacing:.06em;text-transform:uppercase;color:var(--peekaa-text-secondary,var(--muted))}
+/* nestly_v561: a photo-less section's H2 wears the caption's clothes (owner: Cubbly's
+   "FOLLOW US HERE ❤️" is the correct version). The !importants are not enthusiasm — the shared
+   group-head h2 rules (v346/v343 line, and the wallet-sections override) set font-family and
+   font-size with !important, so matching weight is the only way this class can win. The emoji is
+   untouched by text-transform and renders as drawn. */
+h2.customer-business-links-head-v561,
+.wallet-sections h2.customer-business-links-head-v561,
+.customer-business-shortcut-content-v348 h2.customer-business-links-head-v561{
+  font-family:inherit!important;font-size:12px!important;
+  line-height:1.3!important;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--peekaa-text-secondary,var(--muted))}
 .customer-business-link-v418{display:flex;align-items:center;justify-content:space-between;gap:10px;
   width:100%;min-height:46px;padding:0;border:0;border-radius:0;background:none;
   color:var(--peekaa-text,#17161A);font-size:15px;font-weight:650;text-decoration:none}
@@ -4719,7 +4730,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 970f8b03d6f1b8e7389345c01019b72b7c78d53fd7e310a8cff0af253a25293a</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 9401d891410a5c2cf3cb156887036309f931994dc1cf773868f20d2d8e804d63</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14457,7 +14468,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'970f8b03d6f1b8e7389345c01019b72b7c78d53fd7e310a8cff0af253a25293a',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'9401d891410a5c2cf3cb156887036309f931994dc1cf773868f20d2d8e804d63',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
