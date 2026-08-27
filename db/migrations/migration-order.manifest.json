@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 448,
-  "executableCount": 434,
+  "itemCount": 449,
+  "executableCount": 435,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -652,7 +652,7 @@
     },
     {
       "sourceDeployVersion": "20260827",
-      "count": 12,
+      "count": 13,
       "paths": [
         "db/migrations/20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql",
         "db/migrations/20260827_nestly_v544_one_current_loyalty_balance.sql",
@@ -665,7 +665,8 @@
         "db/migrations/20260827_nestly_v552_gated_evidence_isolation.sql",
         "db/migrations/20260827_nestly_v554_v154_family_provenance.sql",
         "db/migrations/20260827_nestly_v555_business_pot_fails_closed.sql",
-        "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql"
+        "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql",
+        "db/migrations/20260827_nestly_v557_whatsapp_appointment_notifications.sql"
       ]
     }
   ],
@@ -4253,6 +4254,14 @@
       "semanticVersion": "v556",
       "proposedDeployVersion": "20260827000013",
       "sha256": "dc67b96cd7c0e66d32cb8a461d8cfb03e7851b87595e40ce6fac684c7581509b"
+    },
+    {
+      "order": 449,
+      "kind": "executable",
+      "path": "db/migrations/20260827_nestly_v557_whatsapp_appointment_notifications.sql",
+      "semanticVersion": "v557",
+      "proposedDeployVersion": "20260827000014",
+      "sha256": "b1c68b7d387c6a79652bc7a38dd0cbb8b4abea1d9ced83f06b91befa409f3144"
     }
   ]
 }

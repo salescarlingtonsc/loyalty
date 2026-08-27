@@ -3416,6 +3416,61 @@
       'Metrics appear once a business has an onboarding checklist.':'Metrik akan dipaparkan sebaik sahaja perniagaan mempunyai senarai semak penerimaan.'
     })
   });
+  // C7: WhatsApp capabilities panel (System health / #/platform/automation).
+  const PLATFORM_COPY_C7=Object.freeze({
+    'zh-CN':Object.freeze({
+      'WhatsApp capabilities':'WhatsApp 权限',
+      'Per-business WhatsApp send permissions, limits and usage this period. Every change is recorded with a note.':'按商户设置的 WhatsApp 发送权限、限额和本期用量。每次更改都会记录一条注释。',
+      'WhatsApp capability grants':'WhatsApp 权限授予',
+      'No WhatsApp capability grants':'暂无 WhatsApp 权限授予',
+      'No businesses have a WhatsApp capability grant recorded yet.':'尚未有任何商户记录 WhatsApp 权限授予。',
+      'Capability':'权限',
+      'Limit':'限额',
+      'Used this period':'本期已用',
+      'Support reply':'客服回复',
+      'Appointment notification':'预约通知',
+      'On':'开启',
+      'Unlimited':'不限量',
+      'No limit set':'未设置限额',
+      'month':'月','day':'天',
+      '{count} / {period}':'每{period} {count} 次',
+      'Edit WhatsApp capability':'编辑 WhatsApp 权限',
+      'Save capability':'保存权限',
+      'Enabled':'已启用',
+      'Unlimited (no cap)':'不限量（无上限）',
+      'Limit count':'限额数量',
+      'Limit period':'限额周期',
+      'Daily':'每日','Monthly':'每月',
+      'Used this period: {count}':'本期已用：{count}',
+      'WhatsApp capability updated.':'WhatsApp 权限已更新。'
+    }),
+    ms:Object.freeze({
+      'WhatsApp capabilities':'Keupayaan WhatsApp',
+      'Per-business WhatsApp send permissions, limits and usage this period. Every change is recorded with a note.':'Kebenaran hantar WhatsApp, had dan penggunaan tempoh ini bagi setiap perniagaan. Setiap perubahan direkodkan dengan nota.',
+      'WhatsApp capability grants':'Kebenaran keupayaan WhatsApp',
+      'No WhatsApp capability grants':'Tiada kebenaran keupayaan WhatsApp',
+      'No businesses have a WhatsApp capability grant recorded yet.':'Belum ada perniagaan yang mempunyai kebenaran keupayaan WhatsApp direkodkan.',
+      'Capability':'Keupayaan',
+      'Limit':'Had',
+      'Used this period':'Digunakan tempoh ini',
+      'Support reply':'Balasan sokongan',
+      'Appointment notification':'Notifikasi temujanji',
+      'On':'Hidup',
+      'Unlimited':'Tanpa had',
+      'No limit set':'Tiada had ditetapkan',
+      'month':'bulan','day':'hari',
+      '{count} / {period}':'{count} setiap {period}',
+      'Edit WhatsApp capability':'Sunting keupayaan WhatsApp',
+      'Save capability':'Simpan keupayaan',
+      'Enabled':'Diaktifkan',
+      'Unlimited (no cap)':'Tanpa had (tiada siling)',
+      'Limit count':'Bilangan had',
+      'Limit period':'Tempoh had',
+      'Daily':'Harian','Monthly':'Bulanan',
+      'Used this period: {count}':'Digunakan tempoh ini: {count}',
+      'WhatsApp capability updated.':'Keupayaan WhatsApp dikemas kini.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3436,6 +3491,7 @@
       ??PLATFORM_COPY_V312[platformLocale]?.[key]
       ??PLATFORM_COPY_V511[platformLocale]?.[key]
       ??PLATFORM_COPY_V513[platformLocale]?.[key]
+      ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3713,7 +3769,7 @@
     '[data-approve-accrual]','[data-add-payout-line]','[data-approve-payout]',
     '[data-record-payout]','[data-automation-write]',
     '#platformNewWorkItem','[data-work-claim]','[data-work-start]','[data-work-wait]',
-    '[data-work-block]','[data-work-done]'
+    '[data-work-block]','[data-work-done]','[data-capability-edit]'
   ].join(',');
 
   function escapeHtml(value) {
@@ -12143,16 +12199,139 @@
       onSubmit:async(form,controls)=>{const preview={consultant_id:consultantId,departed_at:new Date(form.get('departed_at')).toISOString(),reason:form.get('reason')};controls.close();previewThenConfirm({title:'Confirm commission forfeiture',preview,CUI,onConfirm:async confirmControls=>{await rpc(sb,'forfeit_consultant_open_commission_v78',{p_consultant:consultantId,p_departed_at:preview.departed_at,p_reason:preview.reason});confirmControls.close();await renderCommission(context);CUI.announce('Open commission forfeited.')}})}});
   }
 
+  // --------------------------------------------------------------------------
+  // C7: WhatsApp capabilities panel — per-business send permissions, limits
+  // and usage for public.platform_list_capability_grants_v557 /
+  // public.platform_set_capability_grant_v518. Visible to super admins only;
+  // every write requires a note and is optimistic-concurrency guarded on the
+  // row's own version (v518's p_expected_version).
+  // --------------------------------------------------------------------------
+  function whatsappCapabilityLabel(key) {
+    return {
+      whatsapp_support_reply:'Support reply',
+      whatsapp_appointment_notification:'Appointment notification',
+      whatsapp_retention:'Retention'
+    }[key]||platformStatus(key);
+  }
+  function whatsappCapabilityLimitText(row) {
+    if(row?.limit_unlimited)return pt('Unlimited');
+    const count=row?.limit_count;
+    if(count===null||count===undefined||count==='')return pt('No limit set');
+    const period=row?.limit_period==='monthly'?pt('month'):pt('day');
+    return pt('{count} / {period}',{count,period});
+  }
+  function whatsappCapabilityRowHtml(row,CUI,canWrite) {
+    return [
+      `<b>${escapeHtml(row.business_name||row.business_id||'—')}</b>`,
+      escapeHtml(pt(whatsappCapabilityLabel(row.capability_key))),
+      CUI.status(row.enabled?pt('On'):pt('Off'),row.enabled?'ok':'off'),
+      escapeHtml(whatsappCapabilityLimitText(row)),
+      String(row.used_this_period??0),
+      canWrite
+        ?`<button type="button" class="btn ghost sm" data-automation-write data-capability-edit="${escapeHtml(row.business_id)}" data-capability-key="${escapeHtml(row.capability_key)}">${escapeHtml(pt('Edit'))}</button>`
+        :''
+    ];
+  }
+  function whatsappCapabilitiesPanelHtml(rows,CUI,canWrite) {
+    const grants=asArray(rows);
+    const body=grants.length?CUI.table({
+      caption:'WhatsApp capability grants',
+      headers:['Business','Capability','Status','Limit','Used this period',''],
+      rows:grants.map(row=>whatsappCapabilityRowHtml(row,CUI,canWrite))
+    }):CUI.emptyState({
+      iconName:'retention',title:'No WhatsApp capability grants',
+      body:'No businesses have a WhatsApp capability grant recorded yet.'
+    });
+    return CUI.card({
+      title:'WhatsApp capabilities',
+      description:'Per-business WhatsApp send permissions, limits and usage this period. Every change is recorded with a note.',
+      body
+    });
+  }
+  // Renders '' for any role other than super_admin — the capability grant
+  // list is platform-wide, cross-tenant data that no other console role may
+  // see, let alone edit.
+  function whatsappCapabilitiesSectionHtml(rows,CUI,access) {
+    if(access?.role!=='super_admin')return'';
+    return whatsappCapabilitiesPanelHtml(rows,CUI,true);
+  }
+  // Pure payload builder so the exact RPC arguments (including which version
+  // was sent as the optimistic-concurrency guard) can be asserted without a
+  // DOM or a live Supabase client.
+  function whatsappCapabilityGrantPayload(row,changes={}) {
+    const limitUnlimited=Boolean(changes.limitUnlimited);
+    const limitCountRaw=changes.limitCount;
+    const limitCount=limitUnlimited||limitCountRaw===''||limitCountRaw===null||limitCountRaw===undefined
+      ?null:Number(limitCountRaw);
+    // The setter's CHECK accepts only the canonical v518 vocabulary
+    // (day|week|month|year|ever); the panel and the reader's display field
+    // speak daily/monthly. Fold display words to canonical here so the RPC
+    // never sees a value the constraint would 22023.
+    const periodRaw=String(changes.limitPeriod||row.limit_period_key||row.limit_period||'daily');
+    const periodCanonical={daily:'day',monthly:'month'}[periodRaw]||periodRaw;
+    return{
+      p_business:row.business_id,
+      p_capability:row.capability_key,
+      p_enabled:Boolean(changes.enabled),
+      p_limit_count:limitCount,
+      p_limit_period:periodCanonical,
+      p_note:String(changes.note||'').trim(),
+      p_expected_version:row.version,
+      p_limit_unlimited:limitUnlimited
+    };
+  }
+  async function submitWhatsappCapabilityGrant(sb,row,changes) {
+    return rpc(sb,'platform_set_capability_grant_v518',whatsappCapabilityGrantPayload(row,changes));
+  }
+  function whatsappCapabilityGrantModal(row,context,refresh) {
+    const {CUI,sb}=context;
+    modal({
+      title:pt('Edit WhatsApp capability'),submitLabel:pt('Save capability'),CUI,
+      body:`<p class="muted small">${escapeHtml(row.business_name||row.business_id)} · ${escapeHtml(pt(whatsappCapabilityLabel(row.capability_key)))}</p>
+        <label class="row" style="align-items:center;gap:10px"><input type="checkbox" name="enabled" value="yes"${row.enabled?' checked':''}><span>${escapeHtml(pt('Enabled'))}</span></label>
+        <label class="row" style="align-items:center;gap:10px"><input type="checkbox" name="limit_unlimited" value="yes"${row.limit_unlimited?' checked':''}><span>${escapeHtml(pt('Unlimited (no cap)'))}</span></label>
+        ${CUI.field({id:'capabilityLimitCount',label:'Limit count',type:'number',value:row.limit_unlimited?'':(row.limit_count??''),attributes:'name="limit_count" min="0" step="1"'})}
+        ${CUI.field({id:'capabilityLimitPeriod',label:'Limit period',control:'select',options:[
+          {value:'daily',label:pt('Daily'),selected:row.limit_period!=='monthly'},
+          {value:'monthly',label:pt('Monthly'),selected:row.limit_period==='monthly'}
+        ],attributes:'name="limit_period"'})}
+        <p class="muted small">${escapeHtml(pt('Used this period: {count}',{count:row.used_this_period??0}))}</p>
+        ${CUI.field({id:'capabilityNote',label:'Note',control:'textarea',required:true,hint:'This note is retained in the platform audit trail.',attributes:'name="note" rows="3" minlength="3" maxlength="1000"'})}`,
+      onSubmit:async(form,controls)=>{
+        await submitWhatsappCapabilityGrant(sb,row,{
+          enabled:form.get('enabled')==='yes',
+          limitUnlimited:form.get('limit_unlimited')==='yes',
+          limitCount:form.get('limit_count'),
+          limitPeriod:form.get('limit_period'),
+          note:form.get('note')
+        });
+        controls.close();await refresh();CUI.announce(pt('WhatsApp capability updated.'));
+      }
+    });
+  }
+  function wireWhatsappCapabilitiesPanel(main,context,capabilityRows,refresh) {
+    main.querySelectorAll('[data-capability-edit]').forEach(button=>{
+      const businessId=button.dataset.capabilityEdit,capabilityKey=button.dataset.capabilityKey;
+      const row=asArray(capabilityRows).find(item=>item.business_id===businessId&&item.capability_key===capabilityKey);
+      if(row)button.onclick=()=>whatsappCapabilityGrantModal(row,context,refresh);
+    });
+  }
+
   async function renderAutomation(context,deletionPage={offset:0,rows:[]}) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'System health','Loading reconciliation and billing event health…','retention');
     try{
-      const [reconciliation,billing,deletionResult]=await Promise.all([
+      const isSuperAdmin=context.access?.role==='super_admin';
+      const [reconciliation,billing,deletionResult,capabilityGrants]=await Promise.all([
         rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
         rpc(sb,'platform_get_automation_billing_v89',{p_business:null,p_limit:250}),
         rpc(sb,'platform_list_account_deletion_requests_v133',{p_status:null,p_limit:100,p_offset:deletionPage.offset})
-          .then(value=>({value,error:null})).catch(error=>({value:null,error}))
+          .then(value=>({value,error:null})).catch(error=>({value:null,error})),
+        isSuperAdmin
+          ?rpc(sb,'platform_list_capability_grants_v557',{}).catch(()=>[])
+          :Promise.resolve([])
       ]);
+      const capabilityRows=asArray(capabilityGrants);
       const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing),privacyPageRows=asArray(deletionResult.value);
       const privacyRows=deletionResult.error&&deletionPage.rows.length
         ?deletionPage.rows
@@ -12164,10 +12343,12 @@
         <section class="platform-health-grid"><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('retention',{size:17})}<span>${escapeHtml(pt('Reconciliation runs'))}</span></div><div class="platform-kpi-value">${runs.length}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Failed billing events'))}</span></div><div class="platform-kpi-value">${failedEvents}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Reconciliation items'))}</span></div><div class="platform-kpi-value">${items.length}</div></article></section>
         ${CUI.card({title:'Reconciliation exceptions',body:items.length?items.map(item=>`<article class="platform-action-item" tabindex="-1" data-incident-id="${escapeHtml(item.id||item.provider_object_id||item.created_at||'')}"><div><b>${escapeHtml(platformStatus(item.object_type||'provider object'))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))}</p></div>${CUI.status(platformStatus(item.result||item.status||'exception'),item.result==='matched'?'ok':'no')}</article>`).join(''):localizedEmptyHtml('No reconciliation exceptions were returned.')})}
         ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}
+        ${whatsappCapabilitiesSectionHtml(capabilityRows,CUI,context.access)}
         <div id="platformDeletionQueue">${accountDeletionQueueHtml(privacyRows,CUI,{error:Boolean(deletionResult.error)&&!deletionPage.rows.length,hasMore,loadError:Boolean(deletionResult.error)&&Boolean(deletionPage.rows.length)})}</div>`;
       main.querySelectorAll('[data-deletion-claim]').forEach(button=>button.onclick=()=>claimAccountDeletionRequest(button.dataset.deletionClaim,context));
       main.querySelectorAll('[data-deletion-resolve]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionResolve,context));
       main.querySelectorAll('[data-deletion-review]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionReview,context,'retention_review'));
+      if(isSuperAdmin)wireWhatsappCapabilitiesPanel(main,context,capabilityRows,()=>renderAutomation(context,deletionPage));
       const deletionRetry=main.querySelector('[data-deletion-retry]');
       if(deletionRetry)deletionRetry.onclick=()=>renderAutomation(context);
       const deletionMore=main.querySelector('[data-deletion-more]');
@@ -13946,7 +14127,9 @@
     v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,
     v513ReviewFacts,v513NextActorLabel,v513NextActorTone,v513ReadinessHtml,
     v513ReviewUnavailableHtml,v513NextActorChip,hydrateOnboardingReviewV513,
-    renderOnboardingMetricsV513
+    renderOnboardingMetricsV513,
+    whatsappCapabilityLabel,whatsappCapabilityLimitText,whatsappCapabilitiesPanelHtml,
+    whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -13980,7 +14163,9 @@
     v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,
     v513ReviewFacts,v513NextActorLabel,v513NextActorTone,v513ReadinessHtml,
     v513ReviewUnavailableHtml,v513NextActorChip,hydrateOnboardingReviewV513,
-    renderOnboardingMetricsV513
+    renderOnboardingMetricsV513,
+    whatsappCapabilityLabel,whatsappCapabilityLimitText,whatsappCapabilitiesPanelHtml,
+    whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

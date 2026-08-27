@@ -2703,6 +2703,12 @@
    "path": "db/migrations/20260827_nestly_v556_policy_read_is_strict.sql",
    "semanticVersion": "v556",
    "proposedDeployVersion": "20260827000013"
+  },
+  {
+   "kind": "executable",
+   "path": "db/migrations/20260827_nestly_v557_whatsapp_appointment_notifications.sql",
+   "semanticVersion": "v557",
+   "proposedDeployVersion": "20260827000014"
   }
  ]
 }

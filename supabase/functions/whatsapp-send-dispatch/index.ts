@@ -98,8 +98,10 @@ Deno.serve(async (req) => {
     log('claim_failed', { code: error?.code || null });
     return json(503, { error: 'claim_failed' });
   }
-  if (data.length === 0) return json(200, { claimed: 0, sent: 0 });
-
+  /* No early return on an empty support queue: since v557 this worker ALSO
+     drains the template queue below, and the empty-support case is the NORMAL
+     state when a reminder is due. Returning here would strand every template
+     send at 'queued' forever. */
   let sent = 0, retried = 0, failed = 0;
 
   for (const lease of data as Array<Record<string, string | number>>) {
@@ -132,7 +134,6 @@ Deno.serve(async (req) => {
       type: 'text',
       text: { preview_url: false, body: rendered },
     };
-    void buildTemplateSend; // template path intentionally unused in C6
 
     let classification;
     try {
@@ -166,5 +167,93 @@ Deno.serve(async (req) => {
     log('dispatched', { message_id: messageId, disposition });
   }
 
-  return json(200, { claimed: data.length, sent, retried, failed });
+  /* Template queue: same worker, same lease semantics, a second RPC pair.
+     Kept as a separate claim rather than merged with the support queue because
+     the two lease shapes and report RPCs differ (template_name/language_code/
+     parameters vs rendered_body) — merging them would mean branching on shape
+     inside one loop instead of two readable ones. */
+  let templateClaimed = 0, templateSent = 0, templateRetried = 0, templateFailed = 0;
+
+  const { data: templateData, error: templateError } = await admin.rpc(
+    'internal_whatsapp_claim_template_sends_v557',
+    { p_worker_id: workerId, p_limit: MAX_CLAIM, p_lease_seconds: LEASE_SECONDS },
+  );
+  if (templateError || !Array.isArray(templateData)) {
+    log('template_claim_failed', { code: templateError?.code || null });
+  } else {
+    templateClaimed = templateData.length;
+
+    for (const lease of templateData as Array<Record<string, unknown>>) {
+      const messageId = String(lease.message_id);
+      const leaseToken = String(lease.lease_token);
+      const attempt = Number(lease.attempt_count || 0);
+
+      /* Same preflight discipline as the support queue: a permanent refusal
+         found before any network call is reported as 'failed' with a named
+         code, never allowed to fall into the catch block and masquerade as
+         transient. */
+      const e164 = toE164(String(lease.recipient_phone_norm || ''));
+      if (!e164) {
+        await admin.rpc('internal_whatsapp_report_template_send_v557', {
+          p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
+          p_error_code: 'recipient_not_normalisable', p_http_status: null, p_retry_in_seconds: null,
+        });
+        templateFailed += 1;
+        log('template_preflight_failed', { message_id: messageId });
+        continue;
+      }
+
+      const built = buildTemplateSend({
+        toE164: e164,
+        templateName: String(lease.template_name || ''),
+        languageCode: String(lease.language_code || ''),
+        parameters: Array.isArray(lease.parameters) ? lease.parameters : [],
+      });
+      if (!built.ok) {
+        await admin.rpc('internal_whatsapp_report_template_send_v557', {
+          p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
+          p_error_code: built.reason, p_http_status: null, p_retry_in_seconds: null,
+        });
+        templateFailed += 1;
+        log('template_preflight_failed', { message_id: messageId });
+        continue;
+      }
+
+      let classification;
+      try {
+        const response = await metaSend(phoneNumberId, token, built.body);
+        let parsed: unknown = null;
+        try { parsed = await response.json(); } catch { parsed = null; }
+        classification = classifyMetaResponse(response.status, parsed, response.headers);
+      } catch {
+        classification = classifyTransportError();
+      }
+
+      const outcome = resolveOutcome(classification, attempt);
+      const disposition = outcome.status === 'sent' ? 'sent'
+        : outcome.status === 'retry' ? 'retry' : 'failed';
+
+      await admin.rpc('internal_whatsapp_report_template_send_v557', {
+        p_message: messageId,
+        p_lease_token: leaseToken,
+        p_disposition: disposition,
+        p_provider_message_id: disposition === 'sent' ? classification.wamid : null,
+        p_error_code: disposition === 'sent' ? null : String(outcome.code || outcome.status),
+        p_http_status: null,
+        p_retry_in_seconds: outcome.retryInSeconds,
+      });
+
+      if (disposition === 'sent') templateSent += 1;
+      else if (disposition === 'retry') templateRetried += 1;
+      else templateFailed += 1;
+
+      log('template_dispatched', { message_id: messageId, disposition });
+    }
+  }
+
+  return json(200, {
+    claimed: data.length, sent, retried, failed,
+    template_claimed: templateClaimed, template_sent: templateSent,
+    template_retried: templateRetried, template_failed: templateFailed,
+  });
 });

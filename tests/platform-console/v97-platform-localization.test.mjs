@@ -326,8 +326,17 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // through runChecklistButton's shared message parameter, the same
   // non-literal-argument shape every other v79 action confirmation already
   // uses, so it was never part of this audited set.
-  assert.equal(explicit.length,1050,'update the audited explicit-copy inventory when adding runtime UI');
-  assert.equal(metadata.length,825,'update the audited CUI metadata inventory when adding UI metadata'); // V513
+  // C7 (WhatsApp capabilities panel, System health route): +14 distinct explicit
+  // pt() strings (Unlimited, No limit set, month, day, the '{count} / {period}'
+  // limit template, On, the edit-modal title and submit label, Enabled,
+  // 'Unlimited (no cap)', Daily, Monthly, the used-this-period template, and the
+  // save confirmation). +7 distinct metadata strings (the panel card's title and
+  // description, the table caption, the empty-state title/body pair, and the
+  // Limit count / Limit period field labels). Announcement inventory is
+  // unchanged — the panel's only CUI.announce() call reuses the same
+  // 'WhatsApp capability updated.' string already counted in explicit.
+  assert.equal(explicit.length,1064,'update the audited explicit-copy inventory when adding runtime UI');
+  assert.equal(metadata.length,832,'update the audited CUI metadata inventory when adding UI metadata'); // C7
   assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
