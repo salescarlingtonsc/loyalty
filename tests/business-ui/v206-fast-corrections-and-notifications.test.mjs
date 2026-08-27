@@ -22,7 +22,12 @@ test('an amount may be negative, and only zero is refused', () => {
 });
 
 test('the note is optional and the screen says what a minus does', () => {
-  assert.match(app, /<label for="tCustomReason">Note \(optional\)<\/label>/);
+  /* nestly_v558 (owner, photos 1+2): the field is the line's NAME now — what is typed becomes the
+     sale line's description and is what the customer's Activity history prints — so the label asks
+     what it was instead of calling it a note. It stays OPTIONAL, which is the property this test
+     exists to hold: a blank one still adds the line, under the fallback name. */
+  assert.match(app, /<label for="tCustomReason">What was it\? \(optional\)<\/label>/);
+  assert.match(app, /const customLineLabelV558=reason=>\{/);
   assert.match(app, /if\(reason\.length>200\)/);
   // scoped to the till's custom-line modal: Program Studio and stored value still REQUIRE a
   // reason, and should — those are rare, high-stakes actions, not a queue-clearing correction

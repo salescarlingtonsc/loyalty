@@ -7396,9 +7396,22 @@ async function tillPage(){
   // evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates both.
   // The amount may be negative — a correction the other way — and the server refuses to let one
   // take the sale to zero or below.
+  /* nestly_v558 (owner, photos 1+2: "Special Service" typed into "What was it?", then the customer's
+     Activity history row reading "Other item" — "should show 'special service' not other item").
+     What the counter typed IS the name of the thing sold. It is sent as the line's `description`,
+     which is the column public.sale_items stores and activitySaleItemsTextV518 reads back, so the
+     one word the owner typed is the one word every later surface prints. 'Other item' survives only
+     as the fallback for a line nobody named — the server refuses a description under 3 characters,
+     and a blank name on a receipt is worse than a generic one. The provenance `reason` is still
+     sent separately and unchanged: it is the audit half, frozen in the evaluation token. */
+  const customLineLabelV558=reason=>{
+    const named=String(reason||'').trim();
+    return named.length>=3?named.slice(0,200):'Other item';
+  };
   function addCustomLine(cents,reason){
     if(cartLocked())return;
-    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
+    const label=customLineLabelV558(reason);
+    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label,unit_cents:cents,qty:1,reason});
     CUI.announce('Item added');onSaleLinesChanged();
   }
   /* Package/membership lines use qty 1 and a stable per-line uuid key minted at
@@ -8348,7 +8361,10 @@ async function tillPage(){
           <input id="tillManualReasonV375" type="text" maxlength="120" placeholder="e.g. touch-up" ${cartLocked()?'disabled':''}></div>
         <button type="button" class="btn sm" id="tillManualAddV375" ${cartLocked()?'disabled':''}>Add</button>
       </div>
-      <p class="muted small" style="margin-top:6px">Adds a one-off line to this sale. It earns whatever your programmes award, the same as any other item.</p>
+      ${/* nestly_v558: what is typed here becomes the line's NAME — on the receipt and on the
+           customer's Activity history — so the sentence says so rather than leaving the counter to
+           discover it after the sale. Left blank the line is called "Other item", as it always was. */''}
+      <p class="muted small" style="margin-top:6px">Adds a one-off line to this sale. What you type becomes its name on the receipt and in the customer's history; leave it blank and it is called "Other item". It earns whatever your programmes award, the same as any other item.</p>
     </div>`;
   }
   function wireTillManualAmountV375(root){
@@ -8478,7 +8494,10 @@ async function tillPage(){
     const locked=cartLocked();
     if(!saleLines.length)return '';
     return `<ul class="till-cart-lines">${saleLines.map(l=>{
-      const badge=l.type==='custom'?`<span class="till-cart-line-sub">Other item${l.reason?` · ${esc(l.reason)}`:''}</span>`:'';
+      /* nestly_v558: the line now carries the typed name in its LABEL, so repeating the note here
+         printed the same words twice. The sub-line says what kind of line it is instead — a
+         one-off charge that came from nobody's catalogue — which is the thing the label cannot say. */
+      const badge=l.type==='custom'?`<span class="till-cart-line-sub">One-off item</span>`:'';
       const qtyCtl=locked?'':`<div class="till-cart-qty">
         <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
         <output aria-label="Quantity">${l.qty}</output>
@@ -8852,8 +8871,9 @@ async function tillPage(){
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
       <p class="muted small" style="margin-top:6px">Use a minus for a correction the other way — <b>-5.00</b> takes $5 off and reduces the points earned to match.</p>
-      <label for="tCustomReason">Note (optional)</label>
-      <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
+      ${/* nestly_v558: this is the line's NAME now, not a note filed beside it. */''}
+      <label for="tCustomReason">What was it? (optional)</label>
+      <input id="tCustomReason" maxlength="200" placeholder='Leave blank and it is called "Other item"'>
       <div id="tCustomErr"></div>
       <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:16})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
@@ -14879,7 +14899,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        Ongoing programmes grid. Limited Offer already covers this surface from its own nav entry;
        publishedPromotions/promotionDrafts computations stay in scope above for that page. */
     {key:'referrals',icon:'referrals',title:'Referrals',blurb:'Let customers refer friends and earn rewards.',
-      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?[STATUS_WORDS.on,'on']:referralConfigured?['Paused','warn']:['Not set up','warn']),
+      /* nestly_v558 (owner: "turn on / off - no pause"). A configured referral that is not running
+         is OFF, the same word the birthday gift and the welcome offer use for the same state. */
+      status:growTileStatusV371('referrals',!modules.includes('referrals')?['Not included','off']:referralLive?[STATUS_WORDS.on,'on']:referralConfigured?[STATUS_WORDS.off,'warn']:['Not set up','warn']),
       summary:referralLive?'Earning for successful introductions':'Set the qualifying sale and reward'},
     /* V294 (owner markup 2026-08-12, combined "Memberships & gift cards" card crossed out:
        "remove this programme"). Memberships stands alone as its own card ("Do membership for
@@ -17101,6 +17123,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
       <b>Referral settings</b>
       <dl class="appointment-detail-list" style="margin-top:8px">
+        ${/* nestly_v558: the summary leads with the on/off, the way the birthday gift's read-only
+             card does — a page that lists what a programme pays without saying whether it is
+             running has answered the second question and not the first. */''}
+        <div><dt>Status</dt><dd><span class="pill ${referralLive?'on':'off'}">${esc(statusOnOff(referralLive))}</span>${referralLive?'':' <span class="muted small">Nothing is paid while this is off.</span>'}</dd></div>
         ${/* nestly_v420: the summary read the points column whatever the programme paid, so a firm
              on a gift was told "Not set yet" while its referrals paid out a Free Coffee. */''}
         <div><dt>Reward for the referrer</dt><dd>${esc(growReferralRewardWordV421(snapshot.referral?.reward_kind,snapshot.referral?.reward_points,snapshot.referral?.reward_label))}</dd></div>
@@ -17119,6 +17145,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
       <b>Referral settings</b>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
+      ${/* nestly_v558: the on/off the owner asked for, in the same toggle-row shape the birthday
+           gift and the welcome offer already use, so the three read as one family. It is applied by
+           Save together with the settings below it — a switch that wrote on its own would leave a
+           programme live with whatever half-typed reward was on screen when it was tapped. */''}
+      <label class="welcome-offer-togglerow-v350" style="margin-top:12px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('referrals',{size:16})}</span><b>Let customers refer friends</b><input type="checkbox" id="growReferralOnV558" ${growReferralOnV558?'checked':''}></label>
+      <p class="muted small" style="margin-top:6px" id="growReferralOnHintV558">${growReferralOnV558
+        ?'On — a referral that qualifies is paid straight away.'
+        :'Off — codes can still be quoted, and nothing is paid until this is on.'}</p>
       ${/* nestly_v420 (owner, photo 4: "referral why only points option? can also be free gift").
            referral_programs.reward_kind has allowed 'voucher' since the column existed and
            app.on_sale_recorded had no branch for it, so the value paid out NOTHING and the
@@ -17388,7 +17422,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </div>`:''}
       ${topicOnV229('referrals')?`
       <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
-        ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:20}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'The referral programme is currently paused.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?'Live':snapshot.referral?'Paused':'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
+        ${/* nestly_v558 (owner, photo 3): "Paused" is gone from this row. Referrals is either ON for
+             customers or OFF, and the row says which — the switch that changes it is in the
+             settings panel this row's own Edit opens. */''}
+        ${programmeRow({kind:'referrals',icon:CUI.icon('referrals',{size:20}),title:'Referrals',copy:!modules.includes('referrals')?'Referrals are not included in this workspace.':snapshot.overviewErrors?.referrals?'Status could not be confirmed.':referralLive?'Customers can earn for successful introductions.':referralConfigured?'Set up, but switched off — turn it on in the settings.':'Set the qualifying sale and referrer reward.',status:!modules.includes('referrals')?'Not included':snapshot.overviewErrors?.referrals?'Unavailable':referralLive?STATUS_WORDS.on:snapshot.referral?STATUS_WORDS.off:'Not set up',statusTone:referralLive?'on':'off',canWrite:isOwner&&modules.includes('referrals')&&canWriteModule('referrals')&&!snapshot.overviewErrors?.referrals,readOnly:modules.includes('referrals')&&!(isOwner&&canWriteModule('referrals')),editKind:'referralSettingsV364',actionLabel:referralConfigured?'Edit':'Set up'})}
         ${growReferralSummaryV375}${growReferralSettingsPanelV364}
       </div></div>
       `:''}
@@ -18835,6 +18872,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   outerMain.querySelectorAll('input[name="growReferralKindV420"]').forEach(radio=>radio.onchange=()=>{
     /* nestly_v429 (B1): three kinds now, normalised through the one helper. */
     growReferralKindV420=growReferralKindV425(radio.value);
+    /* nestly_v558: the on/off is captured on the same tap, for the reason every other field on
+       this form is — growRerenderV322 rebuilds the panel from these variables, so anything left
+       only in the DOM is thrown away by a radio click. */
+    growReferralOnV558=$('growReferralOnV558')?$('growReferralOnV558').checked:growReferralOnV558;
     growReferralGiftV420=String($('growReferralGiftV420')?.value||growReferralGiftV420||'');
     /* nestly_v421: the friend's half of the form is captured on the same tap, for the same reason
        — a re-render must not eat what has already been typed into it. */
@@ -18846,9 +18887,22 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growReferralFriendToggleV421=outerMain.querySelector('#growReferralFriendOnV421');
   if(growReferralFriendToggleV421)growReferralFriendToggleV421.onchange=()=>{
     growReferralFriendOnV421=growReferralFriendToggleV421.checked;
+    growReferralOnV558=$('growReferralOnV558')?$('growReferralOnV558').checked:growReferralOnV558;
     growReferralFriendPointsV421=String($('growReferralFriendPointsV421')?.value??growReferralFriendPointsV421??'');
     growReferralFriendGiftV421=String($('growReferralFriendGiftV421')?.value??growReferralFriendGiftV421??'');
     growRerenderV322({quiet:true});
+  };
+  /* nestly_v558: this one updates its hint IN PLACE. V324's ruling on the old switchboard applies
+     here too — "when pressing on or off just pop up a confirm or cancel — not refreshing the entire
+     website" — and growRerenderV322 is a full growPage() re-fetch. Nothing else on the panel
+     depends on the switch, so there is nothing else to repaint. */
+  const growReferralOnToggleV558=outerMain.querySelector('#growReferralOnV558');
+  if(growReferralOnToggleV558)growReferralOnToggleV558.onchange=()=>{
+    growReferralOnV558=growReferralOnToggleV558.checked;
+    const hint=outerMain.querySelector('#growReferralOnHintV558');
+    if(hint)hint.textContent=growReferralOnV558
+      ?'On — a referral that qualifies is paid straight away.'
+      :'Off — codes can still be quoted, and nothing is paid until this is on.';
   };
   const growReferralSaveV364=outerMain.querySelector('[data-grow-referral-save-v364]');
   if(growReferralSaveV364)growReferralSaveV364.onclick=async()=>{
@@ -18874,16 +18928,37 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         :"The friend's points must be zero or more, or blank for the same as the referrer.";
       return growRerenderV322({quiet:true});
     }
+    /* nestly_v558: the switch is read from the DOM for the same reason every other field here is
+       — the panel is re-rendered by growRerenderV322 and state is what survives it. */
+    const wantOnV558=$('growReferralOnV558')?$('growReferralOnV558').checked:growReferralOnV558;
+    growReferralOnV558=wantOnV558;
     growReferralGiftV420=gift;
     growReferralFriendOnV421=friendOn;
     growReferralFriendPointsV421=friendPointsRaw;
     growReferralFriendGiftV421=friendGift;
     growReferralBusyV364=true;growReferralErrorV364='';growRerenderV322({quiet:true});
-    /* `enabled` is handed straight back rather than decided here — see the panel's own comment.
-       v420's saver, NOT v322's: adding parameters to the old one would have created an overload
+    /* nestly_v558: `enabled` is now the owner's answer, and it has TWO homes that must agree.
+       app.on_sale_recorded gates the referral payout on public.referral_programs.enabled while the
+       spine row (public.business_programmes) gates what every surface says is running — the split
+       W6I2 defect 3 named and the wizard closes at Go-live. This is the second door onto it, so it
+       writes both halves in the wizard's own order: the spine first, then the live row. If the
+       spine write fails nothing has been switched on yet and the owner is told; if it succeeds and
+       the second fails, the message says the programme is not paying and to press Save again.
+       The spine is only touched when the switch actually MOVED — a settings-only save must not put
+       a write on a programme row nobody asked about. */
+    if(wantOnV558!==(snapshot.referral?.enabled===true)){
+      const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
+      if(!isGrowCurrent())return;
+      if(!spine.ok){
+        growReferralBusyV364=false;
+        growReferralErrorV364=`Referrals could not be turned ${wantOnV558?'on':'off'} — ${ownerErrorText(spine.error)}`;
+        return growRerenderV322({quiet:true});
+      }
+    }
+    /* v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
     const {error}=await sb.rpc('save_referral_program_v421',{p_business:S.biz.id,
-      p_enabled:snapshot.referral?.enabled===true,p_reward_kind:kind,
+      p_enabled:wantOnV558,p_reward_kind:kind,
       p_reward_points:kind==='voucher'?null:points,
       p_reward_label:kind==='voucher'?gift:null,
       p_min_spend_cents:Math.round(amount*100),
@@ -18898,7 +18973,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        generic "could not be saved" — ownerErrorText passes owner-authored prose through. */
     if(error){growReferralErrorV364=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growReferralEditOpenV364=false;
-    toast('Referral settings saved');
+    /* nestly_v558: the toast says which of the two states the firm is now in, because "saved" on a
+       screen that carries a switch does not answer the question the owner just asked. */
+    toast(wantOnV558?'Referrals saved and on for customers':'Referrals saved and switched off');
     growRerenderV322({quiet:true});
   };
   const growTiersAddOpen=outerMain.querySelector('[data-grow-tiers-add-v331]');
@@ -19152,6 +19229,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         growReferralFriendOnV421=snapshot.referral?.friend_enabled!==false;
         growReferralFriendPointsV421=snapshot.referral?.friend_reward_points==null?'':String(snapshot.referral.friend_reward_points);
         growReferralFriendGiftV421=String(snapshot.referral?.friend_reward_label||'');
+        /* nestly_v558: seeded from referral_programs.enabled — the column app.on_sale_recorded
+           actually gates the payout on — not from the spine row, which is presentation. A firm
+           with no referral row at all opens OFF, because nothing is running yet. */
+        growReferralOnV558=snapshot.referral?.enabled===true;
       }
       growReferralEditOpenV364=!growReferralEditOpenV364;growReferralErrorV364='';
       return growRerenderV322({quiet:true});
@@ -32497,7 +32578,11 @@ async function loadSignupConfig(host){
     <p class="muted small" id="joinQrLeadV456" style="margin:6px 0 10px">Your counter QR is how a customer joins this business. Older slug links such as <code>join.html?s=…</code> are retired and cannot enrol a customer.</p>
     <div id="joinQr" style="width:180px;min-height:180px;margin:0 auto;display:grid;place-items:center"><span class="muted small">Generate a QR to begin</span></div>
     <p class="small portal-link-row" id="joinQrLink" style="margin-top:12px"></p>
-    <div class="row" style="margin-top:10px"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:16})}<span>Generate join QR</span></button>
+    ${/* nestly_v558 (owner, UI/UX photo: "Revoke all QRs" running off the right edge of the
+         dialog). .row is a plain flex row with no wrap, so four or five buttons — five when the
+         native Share is present — overflowed the modal card and the last one, the DESTRUCTIVE one,
+         was the half that got clipped. It wraps now, and the buttons keep their own widths. */''}
+    <div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn sm" id="createJoinQr">${CUI.icon('scan',{size:16})}<span>Generate join QR</span></button>
     <button class="btn ghost sm" id="cpJoin" disabled>Copy link</button>
     <button class="btn ghost sm" id="dlQr" disabled>Download QR</button>
     ${window.NestlyNativeBridge?.isNative?'<button class="btn ghost sm" id="shareJoin" disabled>Share link</button>':''}

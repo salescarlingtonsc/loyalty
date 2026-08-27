@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="eb95f69d5504f3f3cf2001d45418899f33af48b53d78c6f8059fdf053a9880f2"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="98af70c4a23c1f430aaf3d40d131a0da1840418d05cff46460e780723b08bd53"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4720,7 +4720,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · eb95f69d5504f3f3cf2001d45418899f33af48b53d78c6f8059fdf053a9880f2</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 98af70c4a23c1f430aaf3d40d131a0da1840418d05cff46460e780723b08bd53</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6302,9 +6302,22 @@ async function tillPage(){
   // evaluate_checkout / record_cart_sale as amount_cents + reason; the server validates both.
   // The amount may be negative — a correction the other way — and the server refuses to let one
   // take the sale to zero or below.
+  /* nestly_v558 (owner, photos 1+2: "Special Service" typed into "What was it?", then the customer's
+     Activity history row reading "Other item" — "should show 'special service' not other item").
+     What the counter typed IS the name of the thing sold. It is sent as the line's `description`,
+     which is the column public.sale_items stores and activitySaleItemsTextV518 reads back, so the
+     one word the owner typed is the one word every later surface prints. 'Other item' survives only
+     as the fallback for a line nobody named — the server refuses a description under 3 characters,
+     and a blank name on a receipt is worse than a generic one. The provenance `reason` is still
+     sent separately and unchanged: it is the audit half, frozen in the evaluation token. */
+  const customLineLabelV558=reason=>{
+    const named=String(reason||'').trim();
+    return named.length>=3?named.slice(0,200):'Other item';
+  };
   function addCustomLine(cents,reason){
     if(cartLocked())return;
-    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label:'Other item',unit_cents:cents,qty:1,reason});
+    const label=customLineLabelV558(reason);
+    cart.push({lineId:crypto.randomUUID(),type:'custom',ref:null,label,unit_cents:cents,qty:1,reason});
     CUI.announce('Item added');onSaleLinesChanged();
   }
   /* Package/membership lines use qty 1 and a stable per-line uuid key minted at
@@ -7254,7 +7267,10 @@ async function tillPage(){
           <input id="tillManualReasonV375" type="text" maxlength="120" placeholder="e.g. touch-up" ${cartLocked()?'disabled':''}></div>
         <button type="button" class="btn sm" id="tillManualAddV375" ${cartLocked()?'disabled':''}>Add</button>
       </div>
-      <p class="muted small" style="margin-top:6px">Adds a one-off line to this sale. It earns whatever your programmes award, the same as any other item.</p>
+      ${/* nestly_v558: what is typed here becomes the line's NAME — on the receipt and on the
+           customer's Activity history — so the sentence says so rather than leaving the counter to
+           discover it after the sale. Left blank the line is called "Other item", as it always was. */''}
+      <p class="muted small" style="margin-top:6px">Adds a one-off line to this sale. What you type becomes its name on the receipt and in the customer's history; leave it blank and it is called "Other item". It earns whatever your programmes award, the same as any other item.</p>
     </div>`;
   }
   function wireTillManualAmountV375(root){
@@ -7384,7 +7400,10 @@ async function tillPage(){
     const locked=cartLocked();
     if(!saleLines.length)return '';
     return `<ul class="till-cart-lines">${saleLines.map(l=>{
-      const badge=l.type==='custom'?`<span class="till-cart-line-sub">Other item${l.reason?` · ${esc(l.reason)}`:''}</span>`:'';
+      /* nestly_v558: the line now carries the typed name in its LABEL, so repeating the note here
+         printed the same words twice. The sub-line says what kind of line it is instead — a
+         one-off charge that came from nobody's catalogue — which is the thing the label cannot say. */
+      const badge=l.type==='custom'?`<span class="till-cart-line-sub">One-off item</span>`:'';
       const qtyCtl=locked?'':`<div class="till-cart-qty">
         <button type="button" class="btn ghost" data-qty="-1" data-line="${l.lineId}" aria-label="Reduce quantity">−</button>
         <output aria-label="Quantity">${l.qty}</output>
@@ -7758,8 +7777,9 @@ async function tillPage(){
       <label for="tCustomAmt">Amount (${S.biz.currency||'SGD'})</label>
       <input id="tCustomAmt" inputmode="decimal" placeholder="0.00" style="font-size:22px;text-align:center;height:52px">
       <p class="muted small" style="margin-top:6px">Use a minus for a correction the other way — <b>-5.00</b> takes $5 off and reduces the points earned to match.</p>
-      <label for="tCustomReason">Note (optional)</label>
-      <input id="tCustomReason" maxlength="200" placeholder="Leave blank if you are in a hurry">
+      ${/* nestly_v558: this is the line's NAME now, not a note filed beside it. */''}
+      <label for="tCustomReason">What was it? (optional)</label>
+      <input id="tCustomReason" maxlength="200" placeholder='Leave blank and it is called "Other item"'>
       <div id="tCustomErr"></div>
       <div class="row" style="margin-top:16px"><button type="button" class="btn" id="tCustomConfirm">${CUI.icon('add',{size:16})} Add item</button><button type="button" class="btn ghost sm" id="tCustomCancel">Cancel</button></div>
     </div></div>`);
@@ -8216,7 +8236,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'eb95f69d5504f3f3cf2001d45418899f33af48b53d78c6f8059fdf053a9880f2',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'98af70c4a23c1f430aaf3d40d131a0da1840418d05cff46460e780723b08bd53',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -93,7 +93,13 @@ test('overview reads enough server state to label programme status without inven
   assert.match(grow,/const overview=retentionOverviewState\(program\);/);
   assert.match(grow,/state:program\.active===false\?'retired':overview\.status==='Live'\?'live':'scheduled'/);
   assert.match(grow,/title:['"]Bring-back rewards['"][\s\S]*status:['"]Not set up['"]/);
-  assert.match(grow,/snapshot\.referral\?['"]Paused['"]:['"]Not set up['"]/);
+  /* nestly_v558 (owner, photo 3: "turn on / off - no pause"). The referral row no longer has a
+     "Paused" state — a configured programme that is not running reads OFF, the same word the
+     birthday gift and the welcome offer use — and the owner turns it back on from the settings
+     panel's own switch. The property under test is unchanged: the label is READ from the snapshot
+     row, never invented. */
+  assert.match(grow,/snapshot\.referral\?STATUS_WORDS\.off:['"]Not set up['"]/);
+  assert.doesNotMatch(grow,/referralConfigured\?['"]Paused['"]/);
   assert.match(grow,/snapshot\.memberships\.length\?['"]Paused['"]:['"]Not set up['"]/);
   /* V301: overviewErrors.giftcards left with the read it reported on — there is no longer a
      retry banner to keep honest. */

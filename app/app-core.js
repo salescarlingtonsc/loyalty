@@ -363,6 +363,14 @@ let growPointsEditingV326=null;
 let growPointsPhotoFileV343=null;
 let growPointsRemovePhotoV343=false;
 let growReferralEditOpenV364=false;
+/* nestly_v558 (owner, photos 3+4: the Referrals row reading "Paused" with an Edit link and no way
+   to start it — "after setting up referral program - must be the same as other rewards. turn on /
+   off - no pause"). Every other programme on this page owns its own on/off (the birthday gift and
+   the welcome offer each carry one in their editor); referrals was the one that did not, because
+   V334 struck out the shared switchboard that used to hold it and nothing replaced it for this
+   programme. Held here, like the rest of the form, so a re-render does not throw the choice away
+   before Save writes it. */
+let growReferralOnV558=false;
 let growReferralErrorV364='';
 let growReferralBusyV364=false;
 let growTiersManageTabV331='published';
@@ -730,7 +738,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
