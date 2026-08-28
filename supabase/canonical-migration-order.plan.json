@@ -2776,6 +2776,12 @@
       "version": "20260828010858",
       "name": "nestly_v573_module_off_reaches_the_rpcs",
       "sourcePath": "db/migrations/20260828_nestly_v573_module_off_reaches_the_rpcs.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828020000",
+      "name": "nestly_v572_retention_safety_hardening",
+      "sourcePath": "db/migrations/20260828_nestly_v572_retention_safety_hardening.sql"
     }
   ]
 }
