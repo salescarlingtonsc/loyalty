@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 469,
-  "executableCount": 455,
+  "itemCount": 472,
+  "executableCount": 458,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -677,7 +677,7 @@
     },
     {
       "sourceDeployVersion": "20260828",
-      "count": 14,
+      "count": 17,
       "paths": [
         "db/migrations/20260828_nestly_v568_survivor_arm_stays_in_its_pot.sql",
         "db/migrations/20260828_nestly_v569_login_active_only_when_approved.sql",
@@ -692,7 +692,10 @@
         "db/migrations/20260828_nestly_v577_publish_preserves_tier_identity.sql",
         "db/migrations/20260828_nestly_v579_inbox_backfill_promotion_ref.sql",
         "db/migrations/20260828_nestly_v580_appointment_send_follows_the_appointment.sql",
-        "db/migrations/20260828_nestly_v581_appointment_branch_address.sql"
+        "db/migrations/20260828_nestly_v581_appointment_branch_address.sql",
+        "db/migrations/20260828_nestly_v581_short_notice_and_reschedule.sql",
+        "db/migrations/20260828_nestly_v582_whatsapp_feeds_recovery_attribution.sql",
+        "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql"
       ]
     }
   ],
@@ -4448,6 +4451,30 @@
       "semanticVersion": "v581",
       "proposedDeployVersion": "20260828140000",
       "sha256": "ec3a9b917502217c83af493c03cc2dcfdf47d9443cffc02c2a4a4c4c84c51f1f"
+    },
+    {
+      "order": 470,
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v581_short_notice_and_reschedule.sql",
+      "semanticVersion": "v581",
+      "proposedDeployVersion": "20260828170000",
+      "sha256": "6d23f3fd1e4604675de2b519291f976bb7262eead52cc41f669c935b6faf7c23"
+    },
+    {
+      "order": 471,
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v582_whatsapp_feeds_recovery_attribution.sql",
+      "semanticVersion": "v582",
+      "proposedDeployVersion": "20260828180000",
+      "sha256": "2074de12383fe12ed8e229a37d2835485b367bcf459e8a56d97648ae3b2c6a8f"
+    },
+    {
+      "order": 472,
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql",
+      "semanticVersion": "v583",
+      "proposedDeployVersion": "20260828190000",
+      "sha256": "d2888d68f814a633822889aad7edc60eb1218f44e8ee88745176d61930c3167a"
     }
   ]
 }

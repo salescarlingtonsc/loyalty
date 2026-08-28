@@ -28,6 +28,7 @@ const SERVER_REASONS = [
   'cooldown_active', 'platform_hold', 'business_not_active',
   'demo_business_marketing', 'platform_channel_off', 'business_not_eligible',
   'synthetic_business', 'stale_unsent', 'consent_withdrawn',
+  'automation_off_for_business',
 ];
 
 const RAW_SNAKE_CASE = /^[a-z0-9_]+$/;

@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 425,
-  "itemCount": 470,
+  "pendingCount": 428,
+  "itemCount": 473,
   "items": [
     {
       "order": 1,
@@ -4707,6 +4707,36 @@
       "path": "supabase/migrations/20260828140000_nestly_v581_appointment_branch_address.sql",
       "octetLength": 3084,
       "sha256": "ec3a9b917502217c83af493c03cc2dcfdf47d9443cffc02c2a4a4c4c84c51f1f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 471,
+      "kind": "pending",
+      "version": "20260828170000",
+      "name": "nestly_v581_short_notice_and_reschedule",
+      "path": "supabase/migrations/20260828170000_nestly_v581_short_notice_and_reschedule.sql",
+      "octetLength": 18930,
+      "sha256": "6d23f3fd1e4604675de2b519291f976bb7262eead52cc41f669c935b6faf7c23",
+      "provenance": "local-source"
+    },
+    {
+      "order": 472,
+      "kind": "pending",
+      "version": "20260828180000",
+      "name": "nestly_v582_whatsapp_feeds_recovery_attribution",
+      "path": "supabase/migrations/20260828180000_nestly_v582_whatsapp_feeds_recovery_attribution.sql",
+      "octetLength": 18675,
+      "sha256": "2074de12383fe12ed8e229a37d2835485b367bcf459e8a56d97648ae3b2c6a8f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 473,
+      "kind": "pending",
+      "version": "20260828190000",
+      "name": "nestly_v583_owner_automation_toggles",
+      "path": "supabase/migrations/20260828190000_nestly_v583_owner_automation_toggles.sql",
+      "octetLength": 21291,
+      "sha256": "d2888d68f814a633822889aad7edc60eb1218f44e8ee88745176d61930c3167a",
       "provenance": "local-source"
     }
   ]

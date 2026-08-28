@@ -32736,6 +32736,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="grow-tiers-page-v343">
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
+      <div id="growWaAutomationCardV583"></div>
       <div id="growBbWhatsappStripV551"></div>
       <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
@@ -34451,6 +34452,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     };
   });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
+  loadGrowWaAutomationCardV583(outerMain).catch(()=>{});
   loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
   /* nestly_v571: business-wide on purpose — a bring-back campaign is configured for the whole
      firm, so the audience it is aimed at must not be narrowed by the header's branch picker. */
@@ -46353,7 +46355,7 @@ async function loadGrowBbWhatsappStripV551(root){
   if(!host.isConnected)return;
   const n=k=>Number(data[k])||0;
   const reasons=data.suppressed_reasons&&typeof data.suppressed_reasons==='object'?data.suppressed_reasons:{};
-  const reasonLabelV551={outbound_off:'messaging is off platform-wide',retention_sends_off:'WhatsApp offers are not switched on yet',capability_disabled:'WhatsApp offers are not enabled for this business',synthetic_client:'demo customers are never messaged',consent_missing:'the customer has not consented to offers',consent_withdrawn:'the customer opted out',whatsapp_consent_absent:'the customer has not opted in to WhatsApp offers yet',whatsapp_consent_withdrawn:'the customer withdrew WhatsApp consent',preference_opt_out:'the customer turned offers off in their app',no_phone:'no valid mobile number on file',customer_opted_out:'the customer replied STOP',stale_unsent:'the offer aged out before sending',cooldown_active:'Peekaa waits 30 days between offers to the same customer',platform_hold:'paused by Peekaa for a safety review',business_not_active:'your workspace is not active',demo_business_marketing:'demo businesses are never messaged',platform_channel_off:'WhatsApp is switched off platform-wide',business_not_eligible:'this business is not eligible for WhatsApp offers',synthetic_business:'this is a demo business — never messaged'};
+  const reasonLabelV551={outbound_off:'messaging is off platform-wide',retention_sends_off:'WhatsApp offers are not switched on yet',capability_disabled:'WhatsApp offers are not enabled for this business',synthetic_client:'demo customers are never messaged',consent_missing:'the customer has not consented to offers',consent_withdrawn:'the customer opted out',whatsapp_consent_absent:'the customer has not opted in to WhatsApp offers yet',whatsapp_consent_withdrawn:'the customer withdrew WhatsApp consent',preference_opt_out:'the customer turned offers off in their app',no_phone:'no valid mobile number on file',customer_opted_out:'the customer replied STOP',stale_unsent:'the offer aged out before sending',cooldown_active:'Peekaa waits 30 days between offers to the same customer',automation_off_for_business:'you switched this message off in WhatsApp automation',platform_hold:'paused by Peekaa for a safety review',business_not_active:'your workspace is not active',demo_business_marketing:'demo businesses are never messaged',platform_channel_off:'WhatsApp is switched off platform-wide',business_not_eligible:'this business is not eligible for WhatsApp offers',synthetic_business:'this is a demo business — never messaged'};
   const reasonBits=Object.entries(reasons).map(([k,v])=>`${Number(v)||0} — ${reasonLabelV551[k]||'not sent — held by a safety check'}`);
   const pending=data.template_status&&data.template_status!=='approved';
   const total=n('queued')+n('sent')+n('delivered')+n('read')+n('failed')+n('suppressed');
@@ -46368,6 +46370,89 @@ async function loadGrowBbWhatsappStripV551(root){
     </div>`:''}
     ${reasonBits.length?`<p class="muted small" style="margin-top:8px">Not sent because: ${esc(reasonBits.join(' · '))}.</p>`:''}
   </section>`;
+}
+/* nestly_v583 — the owner's automation control surface.
+   Peekaa cannot charge a shop for automation the shopkeeper can neither see nor
+   switch off, so every lane that sends on the business's behalf gets a row here
+   with plain wording for what the CUSTOMER receives — never how it is delivered.
+   Deliberately a PURE top-level function (same posture as recoveryReportHtmlV550)
+   so a test can execute it against a fixture and read the real HTML.
+
+   The platform capability is the CEILING and the switch is the floor: a row whose
+   capability is not granted renders as unavailable rather than as a toggle that
+   would flip a column and still send nothing. A ceiling the owner cannot see is
+   indistinguishable, from behind the counter, from a broken product. */
+function growWaAutomationCardHtmlV583(state){
+  const s=state&&typeof state==='object'?state:{};
+  const biz=s.business&&typeof s.business==='object'?s.business:{};
+  const caps=s.capabilities&&typeof s.capabilities==='object'?s.capabilities:{};
+  const canEdit=s.canEdit===true;
+  /* Rows are declared here rather than at module scope so the whole surface is
+     one extractable block for the test harness. */
+  const rows=[
+    {key:'wa_confirmation_enabled',cap:'appointments',title:'Booking confirmation',
+     note:'The moment a booking is made, the customer gets a message with the day and time. If the appointment is later moved, they are told the new time the same way.'},
+    {key:'wa_reminder_24h_enabled',cap:'appointments',title:'Appointment reminder',
+     note:'The day before, the customer gets a short reminder of when to come in.'},
+    {key:'wa_reminder_short_enabled',cap:'appointments',title:'Short-notice reminder',
+     note:'When a booking is made less than a day ahead, the customer gets one reminder about two hours before.'},
+    {key:'wa_bringback_enabled',cap:'bringback',title:'Bring back quiet customers',
+     note:'A customer who has not been in for a while gets their bring-back voucher, once per absence.'}
+  ];
+  const body=rows.map(row=>{
+    const granted=caps[row.cap]===true;
+    const on=biz[row.key]===true;
+    const control=!granted
+      ?`<span class="pill off" data-wa-auto-unavailable-v583="${esc(row.key)}">Not included in your plan yet</span>`
+      :canEdit
+      ?`<button type="button" class="tglsw ${on?'on':''}" data-workspace-i18n data-wa-auto-toggle-v583="${esc(row.key)}" aria-label="${esc(row.title)}" aria-pressed="${on?'true':'false'}"></button>`
+      :`<span class="pill ${on?'on':'off'}" data-wa-auto-readonly-v583="${esc(row.key)}">${on?'On':'Off'}</span>`;
+    return `<div class="switchrow grow-wa-auto-row-v583" data-wa-auto-row-v583="${esc(row.key)}" style="align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--hair)">
+      <span style="flex:1;min-width:min(100%,200px)"><b>${esc(row.title)}</b>
+        <p class="muted small" style="margin:2px 0 0">${esc(row.note)}</p>
+        ${!granted?`<p class="muted small" style="margin:4px 0 0">Ask Peekaa to add it and this switch turns on.</p>`:''}</span>
+      ${control}</div>`;
+  }).join('');
+  return `<section class="card" style="margin-top:12px" aria-labelledby="growWaAutoTitleV583">
+    <b id="growWaAutoTitleV583">WhatsApp automation</b>
+    <p class="muted small" style="margin-top:6px">Messages Peekaa sends to your customers on your behalf. Switch one off and Peekaa stops sending it — nothing else about your shop changes.</p>
+    ${canEdit?'':`<p class="muted small" style="margin-top:6px">Only an owner can change these.</p>`}
+    <div style="margin-top:8px">${body}</div>
+  </section>`;
+}
+async function loadGrowWaAutomationCardV583(root){
+  const host=(root||document).querySelector('#growWaAutomationCardV583');
+  if(!host)return;
+  host.innerHTML='';
+  /* Two reads, one round trip — the appointment lanes and the bring-back lane are
+     separate grants, and the owner must see each ceiling for what it is. */
+  const [apptCap,bbCap]=await Promise.all([
+    sb.rpc('business_get_capability_v518',{p_business:S.biz.id,p_capability:'whatsapp_appointment_notification'}),
+    sb.rpc('business_get_capability_v518',{p_business:S.biz.id,p_capability:'whatsapp_retention'})
+  ]);
+  if(!host.isConnected)return;
+  const grantedV583=res=>!res?.error&&res?.data&&res.data.allowed===true;
+  const capsV583={appointments:grantedV583(apptCap),bringback:grantedV583(bbCap)};
+  const wire=()=>{
+    host.querySelectorAll('[data-wa-auto-toggle-v583]').forEach(el=>el.onclick=async()=>{
+      const key=el.dataset.waAutoToggleV583,to=!S.biz[key];
+      el.disabled=true;
+      /* Same write shape as every other business setting (see wireBookingRulesV325):
+         a direct owner-scoped update, guarded by salons_update RLS. */
+      invalidateBusinessRecordCacheV370();
+      const {error}=await sb.from('businesses').update({[key]:to}).eq('id',S.biz.id);
+      if(!host.isConnected)return;
+      if(error){el.disabled=false;return fail(error)}
+      S.biz[key]=to;
+      render();
+      toast(to?'Switched on — Peekaa will send this.':'Switched off — Peekaa will not send this.');
+    });
+  };
+  const render=()=>{
+    host.innerHTML=growWaAutomationCardHtmlV583({business:S.biz,capabilities:capsV583,canEdit:S.myRole==='owner'});
+    wire();
+  };
+  render();
 }
 /* V550 — the recovered-revenue report renderer, deliberately a PURE top-level function so a
    test can execute it against a fixture payload. Every judgement (lapsed guard, attribution

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="cee52b246d9d537e061111d48106af5780dbc596cdc23be4a882eaa15cb4b6b0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="1fc5192f252dd269fcfc903d37877953abb04d2dd4f10a2b8c1f34dea3620ea3"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5125,7 +5125,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · cee52b246d9d537e061111d48106af5780dbc596cdc23be4a882eaa15cb4b6b0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 1fc5192f252dd269fcfc903d37877953abb04d2dd4f10a2b8c1f34dea3620ea3</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -12019,6 +12019,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="grow-tiers-page-v343">
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
+      <div id="growWaAutomationCardV583"></div>
       <div id="growBbWhatsappStripV551"></div>
       <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
@@ -13734,6 +13735,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     };
   });
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
+  loadGrowWaAutomationCardV583(outerMain).catch(()=>{});
   loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
   /* nestly_v571: business-wide on purpose — a bring-back campaign is configured for the whole
      firm, so the audience it is aimed at must not be narrowed by the header's branch picker. */
@@ -15032,7 +15034,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'cee52b246d9d537e061111d48106af5780dbc596cdc23be4a882eaa15cb4b6b0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'1fc5192f252dd269fcfc903d37877953abb04d2dd4f10a2b8c1f34dea3620ea3',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

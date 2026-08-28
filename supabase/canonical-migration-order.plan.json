@@ -2824,6 +2824,24 @@
       "version": "20260828140000",
       "name": "nestly_v581_appointment_branch_address",
       "sourcePath": "db/migrations/20260828_nestly_v581_appointment_branch_address.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828170000",
+      "name": "nestly_v581_short_notice_and_reschedule",
+      "sourcePath": "db/migrations/20260828_nestly_v581_short_notice_and_reschedule.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828180000",
+      "name": "nestly_v582_whatsapp_feeds_recovery_attribution",
+      "sourcePath": "db/migrations/20260828_nestly_v582_whatsapp_feeds_recovery_attribution.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828190000",
+      "name": "nestly_v583_owner_automation_toggles",
+      "sourcePath": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql"
     }
   ]
 }

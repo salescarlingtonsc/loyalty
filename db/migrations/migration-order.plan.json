@@ -2829,6 +2829,24 @@
       "path": "db/migrations/20260828_nestly_v581_appointment_branch_address.sql",
       "semanticVersion": "v581",
       "proposedDeployVersion": "20260828140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v581_short_notice_and_reschedule.sql",
+      "semanticVersion": "v581",
+      "proposedDeployVersion": "20260828170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v582_whatsapp_feeds_recovery_attribution.sql",
+      "semanticVersion": "v582",
+      "proposedDeployVersion": "20260828180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql",
+      "semanticVersion": "v583",
+      "proposedDeployVersion": "20260828190000"
     }
   ]
 }

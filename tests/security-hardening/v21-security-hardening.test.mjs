@@ -17,9 +17,30 @@ function rpcNames(source) {
   return new Set([...source.matchAll(/\.rpc\(\s*'([a-z0-9_]+)'/gi)].map((item) => item[1]));
 }
 
+// A handful of RPCs are granted to `anon` ON PURPOSE — the unauthenticated
+// entry points (OAuth signup, the Turnstile-gated public gateway). They are a
+// real third category, not an omission, and they have their own guard: the
+// "runtime catalog test rejects anonymous definer RPCs" case below. Naming them
+// here explicitly is what stops a parser bug from silently covering them, which
+// is exactly how an over-greedy match used to let them pass unexamined.
+function anonGrantNames(source) {
+  const names = new Set();
+  for (const grant of source.matchAll(/grant execute on function\s+([\s\S]*?)\s+to\s+([a-z_][a-z0-9_,\s]*?)\s*;/gi)) {
+    const roles = grant[2].split(',').map((role) => role.trim());
+    if (!roles.includes('anon')) continue;
+    for (const item of grant[1].matchAll(/public\.([a-z0-9_]+)\s*\(/gi)) names.add(item[1]);
+  }
+  return names;
+}
+
 function authenticatedGrantNames(source) {
   const names = new Set();
-  for (const grant of source.matchAll(/grant execute on function\s+([\s\S]*?)\s+to authenticated\s*;/gi)) {
+  // Matches "to authenticated;" AND "to authenticated, service_role;" (or any
+  // other comma-separated role list that includes authenticated) — a grant
+  // naming several roles still grants authenticated.
+  for (const grant of source.matchAll(/grant execute on function\s+([\s\S]*?)\s+to\s+([a-z_][a-z0-9_,\s]*?)\s*;/gi)) {
+    const roles = grant[2].split(',').map((role) => role.trim());
+    if (!roles.includes('authenticated')) continue;
     for (const item of grant[1].matchAll(/public\.([a-z0-9_]+)\s*\(/gi)) names.add(item[1]);
   }
   return names;
@@ -70,10 +91,11 @@ test('authenticated RPC allowlist plus every exact pending forward grant cover t
   );
   const allowlist = sqlArray(migration, 'v_authenticated_rpc_names');
   const forward = new Set(forwardMigrations.flatMap((source) => [...authenticatedGrantNames(source)]));
+  const anonForward = new Set(forwardMigrations.flatMap((source) => [...anonGrantNames(source)]));
   const required = rpcNames(app);
   for (const rpc of required) {
-    assert.ok(allowlist.has(rpc) || forward.has(rpc),
-      `shipped app RPC ${rpc} is missing from v21 or its exact forward migration grants`);
+    assert.ok(allowlist.has(rpc) || forward.has(rpc) || anonForward.has(rpc),
+      `shipped app RPC ${rpc} is granted to nobody: absent from v21, from every forward authenticated grant, and from every deliberate anon grant`);
   }
   assert.ok(allowlist.has('set_staff_modules'),
     'the legacy staff-module compatibility name must remain registered');
