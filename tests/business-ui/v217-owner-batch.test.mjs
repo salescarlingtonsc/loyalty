@@ -145,9 +145,12 @@ test('V217 the header New appointment button opens the booking form', () => {
   /* V218 corrected this: addDays is a const declared later in appointmentsPage, so computing a
      date here threw during the render and took the page down. No date is passed — #ad already
      carries todaySg. See tests/business-ui/v218-appointments-tdz.test.mjs. */
-  assert.match(app, /if\(apptOpenFormV217&&!apptPrefillClient\)openNewAppointmentForm\(\{\}\)/);
+  /* nestly_v575: plus a third term for Waitlist's Book prefill — see the note in
+     tests/business-ui/v218-appointments-tdz.test.mjs. The header deep-link still opens an
+     EMPTY form, which is what this line is here to hold. */
+  assert.match(app, /if\(apptOpenFormV217&&!apptPrefillClient&&!apptPrefillV575\)openNewAppointmentForm\(\{\}\)/);
   // Reset alongside the other consume-once deep-link vars.
   /* nestly_v571: pendingWaitlistBookIdV571 joined the same consume-once reset line — Waitlist's
      Book hands a row id to the appointments page exactly as Customer 360 hands a client id. */
-  assert.match(app, /pendingApptClientId='';pendingWaitlistBookIdV571='';pendingOpenApptFormV217=false;/);
+  assert.match(app, /pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;/);
 });

@@ -1321,6 +1321,22 @@ function staffPerformanceAggregation(rows,staffRows){
    and defaults to +infinity, which reproduces the shipped today-onwards behaviour exactly for
    every caller that passes one argument. The QUEUE is deliberately not filtered: somebody
    sitting in the shop waiting must never disappear because staff were looking at yesterday. */
+/* nestly_v575 — what the walk-in actually asked for. `preferred_at` is the instant Book hands
+   to the appointment form; `preferred` is the free text every row written before v575 carries,
+   and it is still PRINTED so no existing queue loses its note. Only the new column is written. */
+function waitlistWantedTextV575(row){
+  const at=row&&row.preferred_at;
+  if(at){const text=sgt(at);if(text)return text}
+  return String((row&&row.preferred)||'').trim();
+}
+/* The same instant as a <input type=datetime-local> value, Singapore time. A legacy row has no
+   instant, so its field opens empty rather than guessing a date out of "weekday eve". */
+function waitlistWantedInputValueV575(row){
+  const at=row&&row.preferred_at;
+  if(!at)return '';
+  const text=sgt(at);
+  return text?text.replace(' ','T'):'';
+}
 function waitlistTodaySummary(rows,windowStartMs,windowEndMs=Infinity){
   const all=Array.isArray(rows)?rows:[];
   const queue=all.filter(row=>row.status==='waiting'||row.status==='contacted');
@@ -9614,11 +9630,13 @@ async function salesPage(){
     const host=$('recent');if(!host)return;
     const rows=salesFilteredRowsV291,W=salesWorkflowV291;
     const shown=rows.slice(0,salesVisibleCountV291);
-    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Item</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
       ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
-        <td>${salesItemCellV571(s)}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
+        ${/* nestly_v575 (owner photo 1): Item sits between Record status and Gross — beside the
+             money it explains, rather than out on the far left away from it. */''}
+        <td data-label="Item">${salesItemCellV571(s)}</td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
@@ -24985,6 +25003,7 @@ async function appointmentsPage(){
   // Customer 360 hand-off: capture the prefilled customer once, up front, so it can never leak
   // into a later visit even if this page early-returns (no branch / read-only).
   const apptPrefillClient=pendingApptClientId;pendingApptClientId='';
+  const apptPrefillV575=pendingApptPrefillV575;pendingApptPrefillV575=null;
   const apptOpenFormV217=pendingOpenApptFormV217;pendingOpenApptFormV217=false;
   let canWrite=false,canComplete=false;
   routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
@@ -25568,11 +25587,18 @@ async function appointmentsPage(){
        down this function — this line runs during the synchronous render, before that binding
        exists, so it threw "Cannot access 'addDays' before initialization" and took the whole
        Appointments page down. Passing no date leaves #ad's own value untouched. */
-    if(apptOpenFormV217&&!apptPrefillClient)openNewAppointmentForm({});
-    if(apptPrefillClient){
-      openNewAppointmentForm({date:todaySg});
+    if(apptOpenFormV217&&!apptPrefillClient&&!apptPrefillV575)openNewAppointmentForm({});
+    /* nestly_v575: Waitlist's Book arrives with the wanted date, time and service. It may arrive
+       WITHOUT a client (a walk-in who is not a customer record yet), so the form is opened from
+       the prefill whether or not there is a client to select. */
+    if(apptPrefillClient||apptPrefillV575){
+      openNewAppointmentForm({
+        date:apptPrefillV575?.date||todaySg,
+        time:apptPrefillV575?.time||'',
+        serviceId:apptPrefillV575?.serviceId||''
+      });
       const clientSelect=$('ac');
-      if(clientSelect&&[...clientSelect.options].some(o=>o.value===apptPrefillClient)){
+      if(apptPrefillClient&&clientSelect&&[...clientSelect.options].some(o=>o.value===apptPrefillClient)){
         clientSelect.value=apptPrefillClient;
       }
     }
@@ -28454,7 +28480,12 @@ async function waitlistPage(){
           <div class="wl-fld" style="flex:1 1 180px"><label for="wn">Name</label><input id="wn" autocomplete="off"></div>
           <div class="wl-fld"><label for="wp">Phone</label><input id="wp" placeholder="+65" inputmode="tel" autocomplete="off"></div>
           <div class="wl-fld"><label for="ws">Service</label><select id="ws"><option value="">—</option>${svOpts}</select></div>
-          <div class="wl-fld"><label for="ww">Preferred window</label><input id="ww" placeholder="e.g. weekday eve"></div>
+          ${/* nestly_v575 (owner: "isn't waitlist supposed to indicate date & time... so when
+                press book — straight away can push to appointment and minimal clicking"). It was
+                free text ("weekday eve"), which no form can act on, so Book could only open an
+                empty appointment. A real instant means Book arrives with the date, the time and
+                the service already set and only the team member left to choose. */''}
+          <div class="wl-fld" style="flex:1 1 210px"><label for="ww">Wanted date &amp; time</label><input type="datetime-local" id="ww"></div>
           <div class="wl-fld" style="flex:2 1 200px"><label for="wo">Notes</label><input id="wo" placeholder="optional"></div>
           <button class="btn" id="wgo" style="flex:0 0 auto">${CUI.icon('add',{size:16})}<span>Add</span></button>
         </div></section>`:'')
@@ -28494,7 +28525,7 @@ async function waitlistPage(){
       const btn=$('wgo');CUI.setButtonBusy(btn,{busy:true,label:'Adding…'});
       const {error}=await sb.from('waitlist').insert({business_id:S.biz.id,name,
         phone:$('wp').value.trim()||null,service_id:$('ws').value||null,
-        preferred:$('ww').value.trim()||null,notes:$('wo').value.trim()||null});
+        preferred_at:sgIso($('ww').value)||null,notes:$('wo').value.trim()||null});
       if(!isCurrent())return;
       CUI.setButtonBusy(btn,{busy:false});
       if(error)return fail(error);
@@ -28539,9 +28570,18 @@ async function waitlistPage(){
     }
     pendingWaitlistBookIdV571=id;
     if(row?.client_id)pendingApptClientId=row.client_id;
-    toast(row?.client_id
-      ?'Set the date and time. The walk-in clears once the appointment saves.'
-      :'Add the customer, then set the date and time. The walk-in clears once the appointment saves.');
+    /* nestly_v575: hand over everything the queue already holds. A row with no wanted time (a
+       legacy free-text one, or a walk-in added without one) simply hands over less — the form
+       still opens, it just opens on today rather than on a time nobody recorded. */
+    const wantedV575=waitlistWantedInputValueV575(row);
+    pendingApptPrefillV575={
+      date:wantedV575?wantedV575.slice(0,10):'',
+      time:wantedV575?wantedV575.slice(11,16):'',
+      serviceId:row?.service_id||''
+    };
+    toast(wantedV575
+      ?'Choose the team member. The walk-in clears once the appointment saves.'
+      :'Set the date and time. The walk-in clears once the appointment saves.');
     nav('#/appointments');
   };
   window.wlCalled=async id=>{if(await updateWl(id,'contacted')){toast('Marked called');loadWl()}};
@@ -28558,14 +28598,14 @@ async function waitlistPage(){
   async function saveWaitlistEditV291(id,button){
     const row=currentRows.find(item=>item.id===id);
     if(!row)return;
-    const preferred=String($('wlEditPreferredV291')?.value||'').trim();
+    const preferredAt=String($('wlEditPreferredV291')?.value||'').trim();
     const notes=String($('wlEditNotesV291')?.value||'').trim();
     const host=$('wlEditErrV291');
     if(host){host.textContent='';host.hidden=true}
     /* Party size is not a column on a waitlist row; the TABLE TYPE is where this product records
        how many people a waiting group needs seats for, and it is the same list Bookings uses.
        Inventing a party_size field here would be a number nothing else in the product reads. */
-    const patch={preferred:preferred||null,notes:notes||null};
+    const patch={preferred_at:sgIso(preferredAt)||null,notes:notes||null};
     if(waitlistTableTypesV291.length)patch.table_type_id=$('wlEditTableV291')?.value||null;
     CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
     const {error}=await sb.from('waitlist')
@@ -28638,7 +28678,8 @@ async function waitlistPage(){
     if(w.phone)bits.push(esc(w.phone));
     if(svc)bits.push(esc(svc));
     const pill=w.booking_request_id?'<span class="pill new">Linked booking</span>':w.status==='contacted'?'<span class="pill off">Called</span>':'<span class="pill new">Walk-in</span>';
-    const detail=[w.preferred?`Wants: ${esc(w.preferred)}`:'',w.notes?esc(w.notes):''].filter(Boolean).join(' · ');
+    const wantedV575=waitlistWantedTextV575(w);
+    const detail=[wantedV575?`Wants: ${esc(wantedV575)}`:'',w.notes?esc(w.notes):''].filter(Boolean).join(' · ');
     return `<li class="wl-row ${w.status}">
       <div class="wl-rank" aria-hidden="true">${pos}</div>
       <div class="wl-main">
@@ -28647,7 +28688,7 @@ async function waitlistPage(){
         ${detail?`<div class="wl-notes muted small" data-merchant-content>${detail}</div>`:''}
         ${canWrite&&editingWaitlistIdV291===w.id?`<div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:10px">
           ${waitlistTableTypesV291.length?`<div style="flex:1 1 160px"><label for="wlEditTableV291">Party size (table)</label><select id="wlEditTableV291"><option value="">No preference</option>${waitlistTableTypesV291.map(type=>`<option value="${esc(type.id)}" ${w.table_type_id===type.id?'selected':''}>${esc(type.name)}${type.pax?` \u00b7 ${type.pax} seats`:''}</option>`).join('')}</select></div>`:''}
-          <div style="flex:1 1 160px"><label for="wlEditPreferredV291">Preferred window</label><input id="wlEditPreferredV291" value="${esc(w.preferred||'')}"></div>
+          <div style="flex:1 1 210px"><label for="wlEditPreferredV291">Wanted date &amp; time</label><input type="datetime-local" id="wlEditPreferredV291" value="${esc(waitlistWantedInputValueV575(w))}"></div>
           <div style="flex:2 1 200px"><label for="wlEditNotesV291">Note</label><input id="wlEditNotesV291" value="${esc(w.notes||'')}"></div>
           <button class="btn sm" type="button" data-wl-save-v291="${w.id}">Save changes</button>
           <button class="btn ghost sm" type="button" data-wl-cancel-v291="1">Cancel</button>

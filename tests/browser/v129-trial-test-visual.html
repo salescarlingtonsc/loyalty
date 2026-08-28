@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="138a70d218194835ebd8b7b9d74c6733e4a5f5680e105ee0e433086ab81dd11e"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="8ae1388539312b231d2d917fc6beb74c5af4b72165d6a3983d6aeb1e36bd8a78"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4784,7 +4784,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 138a70d218194835ebd8b7b9d74c6733e4a5f5680e105ee0e433086ab81dd11e</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 8ae1388539312b231d2d917fc6beb74c5af4b72165d6a3983d6aeb1e36bd8a78</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -10524,11 +10524,13 @@ async function salesPage(){
     const host=$('recent');if(!host)return;
     const rows=salesFilteredRowsV291,W=salesWorkflowV291;
     const shown=rows.slice(0,salesVisibleCountV291);
-    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th>Record status</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
+    host.innerHTML=(rows&&rows.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Sales ledger"><table data-responsive="true"><tr><th>When</th><th>Customer</th><th>Team member</th><th>Record status</th><th>Item</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr>
       ${shown.map(s=>{const w=W[s.id]||{},when=sgLedgerDateV154(s.occurred_at),status=saleRecordStatusV154(s,w);return `<tr><td><span class="sales-date-v154"><b>${esc(when.date)}</b><span>${esc(when.time)}</span></span></td><td>${esc(s.clients?.full_name||'Walk-in')}</td>
-        <td>${salesItemCellV571(s)}</td>
         <td>${esc(s.staff?.full_name||'Unattributed')}</td>
         <td><span class="pill ${status.tone} record-status">${esc(status.label)}</span>${w.is_package_session?'<br><span class="muted small" data-workspace-i18n>Package session · no payment refund</span>':''}<details class="sales-audit-details"><summary>Audit details</summary><p class="muted small">${esc(status.details)}${w.refusal_reason?` ${esc(w.refusal_reason)}`:''}</p></details></td>
+        ${/* nestly_v575 (owner photo 1): Item sits between Record status and Gross — beside the
+             money it explains, rather than out on the far left away from it. */''}
+        <td data-label="Item">${salesItemCellV571(s)}</td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
@@ -28586,6 +28588,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'138a70d218194835ebd8b7b9d74c6733e4a5f5680e105ee0e433086ab81dd11e',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'8ae1388539312b231d2d917fc6beb74c5af4b72165d6a3983d6aeb1e36bd8a78',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

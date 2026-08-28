@@ -2794,6 +2794,12 @@
       "version": "20260828050000",
       "name": "nestly_v574_retention_control_plane",
       "sourcePath": "db/migrations/20260828_nestly_v574_retention_control_plane.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828060000",
+      "name": "nestly_v575_waitlist_preferred_at",
+      "sourcePath": "db/migrations/20260828_nestly_v575_waitlist_preferred_at.sql"
     }
   ]
 }

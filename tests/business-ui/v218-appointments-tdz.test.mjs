@@ -30,8 +30,11 @@ assert.notEqual(pageStart, -1, 'appointmentsPage must exist');
 const pageEnd = lines.findIndex((l, i) => i > pageStart && /^(?:async\s+)?function\s/.test(l));
 const body = lines.slice(pageStart, pageEnd === -1 ? lines.length : pageEnd);
 
+/* nestly_v575: the guard gained a third term — Waitlist's Book now also arrives with a prefill,
+   and it must not be overwritten by the bare header deep-link. What V218 protects is unchanged:
+   this branch still opens the form with NO computed date. */
 test('V218 arriving with the form requested computes no date at render time', () => {
-  const open = body.find((l) => l.includes('if(apptOpenFormV217&&!apptPrefillClient)'));
+  const open = body.find((l) => l.includes('if(apptOpenFormV217&&!apptPrefillClient&&!apptPrefillV575)'));
   assert.ok(open, 'the header deep-link must still open the form');
   // No date at all: #ad already carries todaySg from its own markup, so nothing needs computing
   // before the page's own date helpers exist.
@@ -42,7 +45,7 @@ test('V218 arriving with the form requested computes no date at render time', ()
 
 test('V218 addDays is still declared after the render path, so the guard stays meaningful', () => {
   const declLine = body.findIndex((l) => /\bconst\s+addDays\s*=/.test(l));
-  const useLine = body.findIndex((l) => l.includes('if(apptOpenFormV217&&!apptPrefillClient)'));
+  const useLine = body.findIndex((l) => l.includes('if(apptOpenFormV217&&!apptPrefillClient&&!apptPrefillV575)'));
   assert.notEqual(declLine, -1, 'addDays must still be a const in appointmentsPage');
   assert.ok(useLine < declLine,
     'if addDays were moved above the render path this test would stop proving anything — ' +

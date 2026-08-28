@@ -200,7 +200,11 @@ test('V291 a table type can be renamed and re-counted, not only switched off',()
 
 test('V291 a waiting walk-in can be corrected without losing their place in the queue',()=>{
   const save=section('async function saveWaitlistEditV291(','function actionsHtml(w){');
-  assert.match(save,/const patch=\{preferred:preferred\|\|null,notes:notes\|\|null\};/);
+  /* nestly_v575 (owner: the waitlist should carry a real date & time so Book can push straight
+     into an appointment). The free-text window became `preferred_at`, a timestamp. What V291
+     protects — that an edit corrects the row IN PLACE and never rewrites created_at, so the
+     walk-in keeps their place in the queue — is unchanged. */
+  assert.match(save,/const patch=\{preferred_at:sgIso\(preferredAt\)\|\|null,notes:notes\|\|null\};/);
   assert.match(save,/patch\.table_type_id=\$\('wlEditTableV291'\)\?\.value\|\|null;/);
   assert.match(save,/sb\.from\('waitlist'\)\s*\n?\s*\.update\(patch\)/);
   // created_at orders the queue and is never rewritten.

@@ -2799,6 +2799,12 @@
       "path": "db/migrations/20260828_nestly_v574_retention_control_plane.sql",
       "semanticVersion": "v574",
       "proposedDeployVersion": "20260828050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v575_waitlist_preferred_at.sql",
+      "semanticVersion": "v575",
+      "proposedDeployVersion": "20260828060000"
     }
   ]
 }
