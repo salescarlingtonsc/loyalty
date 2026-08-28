@@ -2826,9 +2826,27 @@ function customerMediaUrlV95(value){
      CDN cache after the first render. GIFs are exempt: resizing one costs its animation. The
      validation stays exactly as it was; only the serving endpoint changes, and only for paths
      that already passed it. */
+  /* nestly_v577 (owner marks, photos 16 and 18: the same offer artwork ringed on the Home rail
+     and again in its detail dialog — "why you crop photo?", "photo cropped? please solve").
+
+     v576's speed fix is right and stays; the missing parameter is `resize`. Supabase's image
+     renderer defaults to resize=cover, and cover with a width and NO height does not scale the
+     picture — it CROPS it to that width at the original height. Measured against the owner's own
+     offer artwork (1054x1492) on production storage:
+
+       ?width=780&quality=75                 -> 780 x 1492   (sides cut off, aspect 0.706 -> 0.523)
+       ?width=780&quality=75&resize=contain  -> 780 x 1104   (aspect 0.706 preserved)
+
+     That is why the crop looked identical on two differently-sized surfaces and why no amount of
+     CSS explained it: every surface already had object-fit:contain and was faithfully rendering an
+     image the SERVER had cropped before sending. This was not confined to offers — customerMedia
+     UrlV95 serves every logo, reward, product, service, benefit and gallery photo in the customer
+     app, so all of them have been centre-cropped since v576. `contain` scales to fit inside the
+     width and never crops, which is the V173/V421 rule ("never cropped and never painted over")
+     applied at the point the bytes are actually produced. */
   const servedMediaUrlV576=objectPath=>/\.gif$/i.test(objectPath)
     ?`${origin}${publicPrefix}${objectPath}`
-    :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75`;
+    :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75&resize=contain`;
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return servedMediaUrlV576(relative);
   const absolutePrefix=origin+publicPrefix;

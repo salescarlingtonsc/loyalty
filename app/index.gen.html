@@ -58,6 +58,15 @@
 <!-- The Supabase client below is a RENDER-BLOCKING third-party script; warming the connection
      here removes its DNS + TCP + TLS cost from the critical path on a cold mobile network. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- nestly_v577 (owner, photo 22: "those title font can change to cuter font like this", with an
+     arrow from the ringed customer titles to the peekaa wordmark). Baloo 2 is the closest Google
+     face to that wordmark's soft, slightly heavy geometric letterforms. Loaded from the two hosts
+     the CSP already allows (style-src fonts.googleapis.com, font-src fonts.gstatic.com), and
+     every rule that uses it keeps the existing --sf stack behind it, so a blocked or slow font
+     download degrades to exactly what the page renders today rather than to a serif fallback. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
   <!-- nestly_v529: WARM THE BOOT CHAIN. Measured on production 26 Aug 2026: the four scripts below
        are classic parser-blocking script tags in the body, so each one's bytes were not even
        requested until the previous one had finished downloading AND executing — a staircase:
@@ -77,7 +86,7 @@
   <link rel="preload" as="script" href="/runtime-config.js?v=2">
   <link rel="preload" as="script" href="/runtime-config-loader.js?v=2">
   <link rel="preload" as="script" href="/customer-ui.js?v=20260813-v298-caption-once">
-  <link rel="preload" as="script" href="/app-core.js?b=d01b038d201a">
+  <link rel="preload" as="script" href="/app-core.js?b=ddaf63a3b900">
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
      app/join.html still requests it separately and still uses it for its headings. -->
@@ -246,7 +255,9 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     --coral:#fff;--ink:#fff;--muted:rgba(255,255,255,.82)}
 @media print{body{background:#fff}}
 @keyframes customerCelebrationInV468{from{opacity:0;transform:translateY(-14px) scale(.94)}
-  to{opacity:1;transform:none}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=6c8453d59db7">
+  to{opacity:1;transform:none}}
+:root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
+@keyframes boot-wait-dot-v577{0%,60%,100%{opacity:.15}30%{opacity:1}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=ab234b8eec00">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -261,19 +272,24 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      "content is coming" cue. -->
 <div id="root"><div class="wallet-shell customer-surface" data-boot-skeleton><div class="wallet-inner" style="padding-top:26px;max-width:560px">
   <div aria-busy="true" data-boot-panel><p class="sr-only" role="status">Loading Peekaa…</p>
-    <video autoplay muted loop playsinline width="540" height="540" poster="/media/peekaa-loading-poster.png" aria-hidden="true"
-      style="display:block;width:min(210px,56vw);height:auto;margin:2px auto 16px">
+    <video class="boot-mark-v577" autoplay muted loop playsinline width="540" height="540" poster="/media/peekaa-loading-poster.png" aria-hidden="true">
       <source src="/media/peekaa-loading.mp4" type="video/mp4">
     </video>
-    <div class="pf-skeleton"></div>
-    <div class="pf-skeleton" style="width:72%"></div>
-    <div class="pf-skeleton" style="width:58%;height:44px"></div>
+    <!-- nestly_v577 (owner, photo 14). Three marks on the boot screen:
+         · the three shimmer bars ringed — "don't want this loading bar" — so they are gone;
+         · "put wording animation" beside the words "wait me ...", which this line now is;
+         · "background colour different" against the logo tile, fixed in CSS (see .boot-mark-v577).
+         The bars carried no information a customer could use, and the wording replaces them as
+         the visible "something is happening" cue. The sr-only status line above is unchanged and
+         is still what a screen reader announces, so this text is aria-hidden to avoid saying it
+         twice. -->
+    <p class="boot-wait-v577" aria-hidden="true">wait me<span class="boot-wait-dots-v577"><span>.</span><span>.</span><span>.</span></span></p>
   </div></div></div></div>
 <div id="toast" class="toast" aria-hidden="true"></div>
 <div id="appStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="appAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=6c8453d59db7">
+<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=ab234b8eec00">
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
@@ -303,7 +319,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=224d5f6a8705","business":"/app-business.js?b=c9516c710805","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=2f0bce5b8c2f","business":"/app-business.js?b=6d02de8da370","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -327,6 +343,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=d01b038d201a" defer></script>
+<script src="/app-core.js?b=ddaf63a3b900" defer></script>
 </body>
 </html>

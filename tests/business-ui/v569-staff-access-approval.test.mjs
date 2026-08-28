@@ -90,10 +90,20 @@ test('only a pending row offers the decision, and it explains what approving doe
   assert.match(pending, /decideStaffAccessV569\('s2',false,this\)">Decline</);
   assert.match(pending, /waiting for you to let them in/);
   assert.match(pending, /modules already set/);
-  /* Approve does not replace the row's existing actions. */
-  assert.match(pending, /toggleModPanel\('s2'\)/);
-  assert.match(pending, /setStaffActiveV285\('s2'/);
-  assert.match(pending, /rmStaff\('s2'/);
+  /* Approve does not replace the row's other actions — nestly_v577 (owner mark, photo 12: all
+     four row buttons ringed, "all move into edit button") moved those behind Edit, so the row
+     offers Approve / Decline / Edit and the four actions live in the panel Edit opens. Approve
+     and Decline deliberately stayed on the row: they are a request waiting on the owner, and the
+     owner did not ring them. */
+  assert.match(pending, /toggleStaffProfile\('s2'\)/);
+  assert.doesNotMatch(pending, /toggleModPanel\('s2'\)/);
+  assert.doesNotMatch(pending, /setStaffActiveV285\('s2'/);
+  assert.doesNotMatch(pending, /rmStaff\('s2'/);
+  /* …and they are genuinely still reachable, in staffProfileActionsHtmlV577. */
+  const actionsPanel = app.slice(app.indexOf('function staffProfileActionsHtmlV577'));
+  for (const action of [/toggleModPanel\('\$\{s\.id\}'\)/, /setStaffActiveV285\('\$\{s\.id\}'/, /rmStaff\('\$\{s\.id\}'/, /staffReferenceCodeV217\('\$\{s\.id\}'/]) {
+    assert.match(actionsPanel.slice(0, 1600), action);
+  }
 
   for (const settled of [
     { id: 's1', role: 'staff', user_id: 'u1', access_state: 'approved' },

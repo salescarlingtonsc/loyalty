@@ -2800,6 +2800,12 @@
       "version": "20260828060000",
       "name": "nestly_v575_waitlist_preferred_at",
       "sourcePath": "db/migrations/20260828_nestly_v575_waitlist_preferred_at.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828070000",
+      "name": "nestly_v577_publish_preserves_tier_identity",
+      "sourcePath": "db/migrations/20260828_nestly_v577_publish_preserves_tier_identity.sql"
     }
   ]
 }

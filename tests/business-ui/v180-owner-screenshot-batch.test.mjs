@@ -72,7 +72,10 @@ test('staff row carries every detail on one line and opens an editable profile',
 
 test('blank commission stays NULL and 0% stays 0 — they mean different things', () => {
   const i = app.indexOf('window.saveStaffProfile=');
-  const src = app.slice(i, i + 1400);
+  /* nestly_v577: widened from 1400. saveStaffProfile now also writes the photo-13 branch ticks
+     before the role hand-off, which pushed window.chRole past the old window — the assertion was
+     failing on the size of the slice, not on anything about the code it checks. */
+  const src = app.slice(i, i + 3200);
   assert.ok(src.includes("if(raw==='')return null"),
     'blank must persist as NULL ("not decided"), never coerced to 0');
   assert.ok(src.includes('Math.round(n*100)'), 'percent must convert to bps');

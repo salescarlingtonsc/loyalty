@@ -44,7 +44,9 @@ test('Home drops the crossed-out page-head title block and keeps Scan to join in
 });
 
 test('the offers shelf is titled Limited offers and keeps its kicker',()=>{
-  assert.match(app,/<h2 id="customerHomeOffersTitle" class="customer-home-offers-title">[\s\S]{0,200}Limited offers<\/span><\/h2>/u);
+  /* nestly_v577 (owner mark, photo 17: "add this" against a ✨ beside the heading). The title
+     itself is unchanged; the emoji is a decorative, aria-hidden sibling after it. */
+  assert.match(app,/<h2 id="customerHomeOffersTitle" class="customer-home-offers-title">[\s\S]{0,200}Limited offers<\/span> <span class="customer-home-head-emoji-v577" aria-hidden="true">✨<\/span><\/h2>/u);
   assert.doesNotMatch(app,/Worth coming back for/,'v183: the owner struck the kicker out');
   assert.doesNotMatch(app,/Offers for you/);
 });

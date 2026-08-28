@@ -133,9 +133,18 @@ test('V373 changed the screen, not the money: every write path and guard is inta
   assert.match(composer, /closeTillAddSheetV373\(\);\n\s*cart=\[\];catalog=null;catalogError=null;clearCheckoutState\(\{abandon:true\}\);/);
   // The client still never prices anything: no local total, no local discount.
   assert.doesNotMatch(composer, /total_cents\s*[-+*]\s*discount/);
-  // Points are the server's answer at finalise time; this screen must not preview a number
-  // evaluate_checkout does not return.
-  assert.match(composer, /Points are worked out when the sale is recorded/);
+  /* Points are the server's answer at finalise time; this screen must not preview a number
+     evaluate_checkout does not return. nestly_v577 (owner mark, photo 1) struck the sentence that
+     SAID so — the invariant it described is unchanged and is what is asserted here: the review
+     stage still names no points figure at all. */
+  assert.doesNotMatch(composer, /Points are worked out when the sale is recorded/);
+  const review = section('function tillReviewStageHtmlV373', 'function tillCartLinesHtmlV373');
+  /* The distinction that matters: evalResult is the PRE-finalise price check, which returns no
+     points at all, so no figure may be derived from it. saleResult.pointsEarned is the server's
+     answer AFTER record_cart_sale committed, and printing that is reporting, not previewing —
+     which is why it is still there in the post-commit panel. */
+  assert.doesNotMatch(review, /evalResult[^;]{0,40}points/i,
+    'the review stage must not derive a points figure from the price check');
 });
 
 test('V374 the three sections are three tabs, and only the selected one renders', () => {

@@ -230,18 +230,23 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
 test('v571 the booking chooser shows the recent three until the customer searches',async()=>{
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   const wire=section(app,'function wireCustomerBookingSearchV326','function customerBookingEmptyMarkupV183');
-  assert.match(wire,/:recentItemsV571\.has\(item\)/,
-    'an empty query falls back to the recent set, never to every business');
-  assert.match(wire,/const RECENT_BOOKING_CHIPS_V571=3/);
-  assert.doesNotMatch(wire,/const match=!query\|\|/,'the old show-everything default is gone');
+  /* nestly_v577 (owner mark, photo 21: the business directory crossed out, "remove this"). v571's
+     three-most-recent default belonged to that directory — with no query it showed three chips to
+     book with. The same filter now runs over the customer's own booking CARDS, where hiding all
+     but three until they type would eat the page, so an empty query shows everything again. */
+  assert.doesNotMatch(wire,/recentItemsV571/);
+  assert.doesNotMatch(wire,/const RECENT_BOOKING_CHIPS_V571=3/);
   /* nestly_v549: the behaviour of the keyword routes is EXECUTED in
      tests/customer-wallet/v291-booking-chooser-and-filter.test.mjs, not asserted by regex here. */
   assert.match(wire,/customerBusinessCategoryV122\(query\)/,'a sector word reaches its sector');
-  /* The chips still exist to be found, and the box still says what it is for when it is empty. */
-  const chooser=section(app,'function customerBookingChooserV291','function wireCustomerBookingSearchV326');
-  assert.match(chooser,/data-repeat-booking data-business-slug=/,'a bookable business is still one tap');
-  assert.match(chooser,/customerBookingSearchStatus" role="status">/,
+  /* The search box moved to the Bookings header row and keeps its status line, which still
+     reports how much a SEARCH has hidden. Booking with a business the customer has nothing booked
+     with is now reached from the empty state (customerBookingEmptyMarkupV183), which is where the
+     book-with actions have always also lived. */
+  const searchBox=section(app,'function customerBookingSearchMarkupV577','function wireCustomerBookingSearchV326');
+  assert.match(searchBox,/customerBookingSearchStatus" role="status"/,
     'the status line still exists — it reports how much a SEARCH has hidden');
+  assert.match(app,/data-repeat-booking data-business-slug=/,'a bookable business is still one tap');
   assert.doesNotMatch(wire,/Search by name, service or type/,
     'nestly_v571: the owner struck out the standing prompt');
 });

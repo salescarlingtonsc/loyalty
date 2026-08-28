@@ -71,9 +71,14 @@ test('merchant names and sectors are escaped and marked as merchant content', ()
 
 test('the chooser opens the Ongoing tab and the empty state no longer duplicates its buttons', () => {
   const paint = section('const paintBookings', 'async function renderCustomerMessages');
-  assert.match(paint, /\$\{currentBookingTab==='bookings'\?customerBookingChooserV291\(allGroups\):''\}/);
-  assert.match(paint, /customerBookingEmptyMarkupV183\(currentBookingTab,emptyCopy,currentBookingTab==='bookings'\?\[\]:allGroups\)/,
-    'the chooser owns the book-with actions on the default tab');
+  /* nestly_v577 (owner mark, photo 21: the whole business directory crossed out, "remove this",
+     and the search box arrowed up onto the header row, "shift here"). The chooser card is gone;
+     the search that used to sit inside it is now on the page header and filters the booking cards.
+     The empty state keeps the book-with actions it always had — with the chooser removed, it is
+     now the only place they appear, so the third argument is the groups on every tab. */
+  assert.doesNotMatch(paint, /customerBookingChooserV291\(allGroups\)/);
+  assert.match(paint, /customerBookingSearchMarkupV577\(\)/);
+  assert.match(paint, /customerBookingEmptyMarkupV183\(currentBookingTab,emptyCopy,currentBookingTab==='bookings'\?\[\]:allGroups\)/);
   const grouping = section('function composeCustomerBookingGroups', 'function customerBookingRequestTabV178');
   assert.match(grouping, /group\.industry=String\(business\.industry\|\|''\)/);
 });
@@ -164,22 +169,21 @@ test('v549 the name still works, and a meaningless query still matches nothing',
   assert.deepEqual(runSearch(unlabelled, 'zzzz').shown, []);
 });
 
-/* nestly_v571 (owner, Bookings photo: the helper sentence struck out, and an arrow at the chips —
-   "show recent 3 last booked businesses only"). v549's empty state showed no chips and explained
-   itself in prose; with the prose gone the default has to carry its own meaning, so it is now the
-   three businesses this customer booked with most recently. Typing still searches all of them. */
-test('v571 an empty query shows the three most recently booked businesses', () => {
+/* nestly_v577 supersedes v571 here (owner, photo 21: the business directory crossed out —
+   "remove this" — and the search box arrowed onto the header row, "shift here"). v571's
+   three-most-recent default was a property of that directory: with no query it stood there
+   offering three businesses to book with. The same filter now runs over the customer's own
+   BOOKING CARDS, and a filter that hides all but three of someone's bookings until they type is a
+   filter that eats the page. An empty query therefore shows everything again. Typing is
+   unchanged, which is what the tests above and below this one cover. */
+test('v577 an empty query shows every business, not a recent-three subset', () => {
   const { shown, status } = runSearch(FLEET_OF_FOUR, '');
-  /* WHICH three, not in what order: the chips stay grouped by sector, which is the chooser's own
-     ordering and not something recency should fight. Iron Gym has never been booked, so it is the
-     one the cap drops even though it renders before Old Barber. */
-  assert.deepEqual([...shown].sort(), ['cubbly spa', 'old barber', 'qa kaya toast']);
-  assert.ok(!shown.includes('iron gym'), 'the business with no booking at all is not one of the three');
-  assert.equal(status.textContent, '', 'the struck-out prompt is gone');
-  assert.equal(status.hidden, true, 'and its line does not hold empty space');
+  assert.deepEqual([...shown].sort(), ['cubbly spa', 'iron gym', 'old barber', 'qa kaya toast']);
+  assert.equal(status.textContent, '', 'the struck-out prompt is still gone');
+  assert.equal(status.hidden, true, 'and its line still does not hold empty space');
 });
 
-test('v571 typing still searches every business, not just the recent three', () => {
+test('v571 typing still searches every business', () => {
   assert.deepEqual(runSearch(FLEET_OF_FOUR, 'iron').shown, ['iron gym'],
-    'a business outside the recent three is still reachable by name');
+    'a business is reachable by name');
 });

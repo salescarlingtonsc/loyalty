@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 421,
-  "itemCount": 466,
+  "pendingCount": 422,
+  "itemCount": 467,
   "items": [
     {
       "order": 1,
@@ -4667,6 +4667,16 @@
       "path": "supabase/migrations/20260828060000_nestly_v575_waitlist_preferred_at.sql",
       "octetLength": 1598,
       "sha256": "91f3c54b39d92af83db72b672784c32410d421eb82a26a283f81f457148e99bb",
+      "provenance": "local-source"
+    },
+    {
+      "order": 467,
+      "kind": "pending",
+      "version": "20260828070000",
+      "name": "nestly_v577_publish_preserves_tier_identity",
+      "path": "supabase/migrations/20260828070000_nestly_v577_publish_preserves_tier_identity.sql",
+      "octetLength": 13138,
+      "sha256": "2f9ab71b8531a4be91a13eb2e1aad05728675b42611cf3c6f87351142168ab3c",
       "provenance": "local-source"
     }
   ]

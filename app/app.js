@@ -5691,9 +5691,27 @@ function customerMediaUrlV95(value){
      CDN cache after the first render. GIFs are exempt: resizing one costs its animation. The
      validation stays exactly as it was; only the serving endpoint changes, and only for paths
      that already passed it. */
+  /* nestly_v577 (owner marks, photos 16 and 18: the same offer artwork ringed on the Home rail
+     and again in its detail dialog — "why you crop photo?", "photo cropped? please solve").
+
+     v576's speed fix is right and stays; the missing parameter is `resize`. Supabase's image
+     renderer defaults to resize=cover, and cover with a width and NO height does not scale the
+     picture — it CROPS it to that width at the original height. Measured against the owner's own
+     offer artwork (1054x1492) on production storage:
+
+       ?width=780&quality=75                 -> 780 x 1492   (sides cut off, aspect 0.706 -> 0.523)
+       ?width=780&quality=75&resize=contain  -> 780 x 1104   (aspect 0.706 preserved)
+
+     That is why the crop looked identical on two differently-sized surfaces and why no amount of
+     CSS explained it: every surface already had object-fit:contain and was faithfully rendering an
+     image the SERVER had cropped before sending. This was not confined to offers — customerMedia
+     UrlV95 serves every logo, reward, product, service, benefit and gallery photo in the customer
+     app, so all of them have been centre-cropped since v576. `contain` scales to fit inside the
+     width and never crops, which is the V173/V421 rule ("never cropped and never painted over")
+     applied at the point the bytes are actually produced. */
   const servedMediaUrlV576=objectPath=>/\.gif$/i.test(objectPath)
     ?`${origin}${publicPrefix}${objectPath}`
-    :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75`;
+    :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75&resize=contain`;
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return servedMediaUrlV576(relative);
   const absolutePrefix=origin+publicPrefix;
@@ -6537,6 +6555,10 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
        the shop's own mark than by reading a name. Falls back to the initial when a business has
        not uploaded a logo — never a placeholder image pretending to be theirs. */
     if(!group.business_logo)group.business_logo=String(business.logo_url||'');
+    /* nestly_v577 (owner, photo 20: "business address here" written into each history row). Read
+       from the same programme summary the logo and name come from, so a business that has not set
+       one simply has no address line rather than an empty placeholder. */
+    if(!group.business_address)group.business_address=String(business.address||'');
   }
   const seenRequests=new Set();
   for(const request of Array.isArray(requestPayload?.items)?requestPayload.items:[]){
@@ -6705,6 +6727,47 @@ function customerBookingAppointmentRowV344(group,item,changesFeatureEnabled=fals
       :`<span class="pill ${tab==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
   return `<div class="wallet-appt customer-booking-appointment-row-v344">${customerBookingDateTileV344(item.starts_at)}<div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${action}</div>`;
 }
+/* nestly_v577 (owner mark, photo 20). The History tab was crossed through and redrawn: instead
+   of one card per business holding that business's past visits, the owner drew a flat list of
+   rows ordered by date — "history don't based on business, but based on latest appointment date"
+   — each row carrying the company logo, the business name, the item detail, the business address
+   and a Book button.
+
+   Only History changes. Ongoing and Cancelled stay grouped by business, because those are lists
+   of things still to act on and the business is the unit you act against; History is a record,
+   and a record reads by when it happened.
+
+   The row reuses the same date tile and the same Book-again handler (data-repeat-booking, with
+   the appointment id) the grouped rows already used, so rebooking from here is the identical
+   path — this is a re-layout, not a second booking route. */
+function customerBookingHistoryRowV577(group,item){
+  const logo=customerBookingBusinessLogoV195(group);
+  const name=String(group.business_name||'').trim()||'Business';
+  const detail=[item.service_name,item.branch_name].map(part=>String(part||'').trim()).filter(Boolean).join(' · ');
+  const address=String(group.business_address||group.address||'').trim();
+  const bookable=group.bookingEnabled&&group.business_slug;
+  return `<article class="card customer-history-row-v577" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+    ${customerBookingDateTileV344(item.starts_at)}
+    <div class="customer-history-copy-v577">
+      <div class="customer-history-who-v577">${logo}<b data-merchant-content>${esc(name)}</b></div>
+      <p class="customer-history-when-v577">${esc(walletDate(item.starts_at,true)||'Time unavailable')}</p>
+      ${detail?`<p class="muted small customer-history-detail-v577" data-merchant-content>${esc(detail)}</p>`:''}
+      ${address?`<p class="muted small customer-history-address-v577" data-merchant-content>${esc(address)}</p>`:''}
+    </div>
+    ${bookable
+      ?`<button class="btn ghost sm customer-history-book-v577" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
+      :`<span class="pill ok customer-history-book-v577">${esc(ct('Appointment'))}</span>`}
+  </article>`;
+}
+/* Every past appointment across every business, newest first. Requests are appended with their
+   own row renderer inside their business card below — they are not appointments and have no
+   appointment date to sort by. */
+function customerBookingHistoryListV577(groups=[]){
+  const rows=[];
+  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item})));
+  rows.sort((a,b)=>String(b.item.starts_at||'').localeCompare(String(a.item.starts_at||'')));
+  return rows.map(({group,item})=>customerBookingHistoryRowV577(group,item)).join('');
+}
 function customerBookingRequestRowV344(item){
   return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
 }
@@ -6788,9 +6851,24 @@ function customerBookingChooserV291(groups=[]){
   }
   return `<section class="card customer-booking-chooser">${searchHead}<div class="customer-booking-chips">${businesses.map(chip).join('')}</div></section>`;
 }
+/* nestly_v577 (owner, photo 21): the search box, on the Bookings header row beside the date
+   chip. Same id and same wiring as before — only its home and what it filters changed. */
+function customerBookingSearchMarkupV577(){
+  return `<div class="customer-booking-search customer-booking-search-v577">
+    <label class="sr-only" for="customerBookingSearch">Search company name</label>
+    ${CUI.icon('search',{size:16})}
+    <input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name">
+    <span class="sr-only" id="customerBookingSearchStatus" role="status" aria-live="polite" hidden></span>
+  </div>`;
+}
 /* v326: filters the chips customerBookingChooserV291 already rendered — same shape as
    wireCustomerProgrammeSearchV195, kept as its own function since it targets a different
-   input/host and groups by sector wrapper instead of category section. */
+   input/host and groups by sector wrapper instead of category section.
+   nestly_v577: the chooser those chips lived in is gone (owner, photo 21), so the same filter now
+   runs over the booking CARDS on the page. Two consequences follow from that and are handled
+   below: there are no [data-booking-search-group] sector wrappers left to collapse, and an empty
+   query must show EVERYTHING rather than v571's three most-recent chips — hiding a customer's own
+   bookings until they type would be a filter that eats the page. */
 function wireCustomerBookingSearchV326(host=document){
   const input=host.querySelector('#customerBookingSearch');
   if(!input)return;
@@ -6820,10 +6898,7 @@ function wireCustomerBookingSearchV326(host=document){
      most recently. v549 showed nothing at all and explained itself in a sentence the owner has
      now struck out — so the default state has to be useful rather than explained. Typing still
      searches everything; this only decides what stands there before anyone types. */
-  const RECENT_BOOKING_CHIPS_V571=3;
-  const recentItemsV571=new Set([...items]
-    .sort((a,b)=>Number(b.dataset.bookingLastAt||0)-Number(a.dataset.bookingLastAt||0))
-    .slice(0,RECENT_BOOKING_CHIPS_V571));
+  /* nestly_v577: superseded — see the note on this function. An empty query shows every card. */
   const apply=()=>{
     const query=String(input.value||'').trim().toLowerCase();
     const category=query?queryCategoryV549(query):'';
@@ -6832,7 +6907,7 @@ function wireCustomerBookingSearchV326(host=document){
       const terms=String(item.dataset.bookingSearchTerms||item.dataset.bookingSearchName||'');
       const match=query
         ?(terms.includes(query)||(!!category&&String(item.dataset.bookingSearchCategory||'')===category))
-        :recentItemsV571.has(item);
+        :true;
       item.hidden=!match;
       if(match)shown++;
     });
@@ -6949,7 +7024,15 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange,bookingRangePanelOpenV3)}</header>
+    /* nestly_v577 (owner mark, photo 21). Two marks on one screen: the "Search company name"
+         box ringed with an arrow up to the row holding the date chip ("shift here"), and the whole
+         business directory below it — FACIAL / SALON / FNB and their "Book now" chips — crossed
+         out ("remove this"). The search moves onto the header row, and now filters the booking
+         cards on this page by company instead of a directory that is no longer here. Nothing is
+         stranded: photo 20's history rows carry their own Book button, which is the route the
+         directory's "Book now" chips used to be, and the empty state still offers the customer's
+         linked businesses through customerBookingEmptyMarkupV183 below. */
+    $('walletBody').innerHTML=`<header class="customer-page-head customer-booking-head-v577"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingSearchMarkupV577()}${customerBookingFilterMarkupV195(currentBookingRange,bookingRangePanelOpenV3)}</header>
     ${partialMessages.length?`<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div>
       <!-- v286 (audit): these six sentences were computed and then thrown away — only
            partialMessages.length was read. A customer whose appointment feed failed saw a list
@@ -6957,10 +7040,14 @@ async function renderCustomerBookings(){
            gap is the difference between "something broke" and "your appointments are missing". -->
       <ul class="muted small" style="margin:8px 0 0 18px">${partialMessages.map(message=>`<li>${esc(message)}</li>`).join('')}</ul></div>`:''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
-    ${currentBookingTab==='bookings'?customerBookingChooserV291(allGroups):''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
+    ${groups.length?(currentBookingTab==='history'
+      ? /* nestly_v577 (owner, photo 20): History is a flat, date-ordered list. Any history-tab
+           request rows keep their business card below the appointments, so nothing is dropped. */
+        `<div class="customer-booking-list customer-history-list-v577">${customerBookingHistoryListV577(groups)}</div>
+         ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
+      : `<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
        filed a brand-new request while the old booking stayed — two live bookings for one visit.
        Rebooking a PAST visit keeps its own "Book again" on history rows; an ONGOING booking is
        re-timed through the row's Reschedule, which replaces rather than duplicates. */''}${/* nestly_v548 (owner photo 1, the button struck out: "remove", clarified as "'open
@@ -6972,7 +7059,7 @@ async function renderCustomerBookings(){
        programme page is one tap from Rewards, from Home, and from the row actions themselves. */''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
       ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
-    </section>`).join('')}</div>`
+    </section>`).join('')}</div>`)
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
@@ -8421,7 +8508,7 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
      stacked kicker read as filler above the real title. One icon-led title line instead. */
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:20})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:20})}</span><span>Limited offers</span> <span class="customer-home-head-emoji-v577" aria-hidden="true">✨</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -12450,7 +12537,7 @@ function customerHomeBusinessCardV345(card){
 function customerHomeBusinessRailV343(cards=[]){
   const rows=(Array.isArray(cards)?cards:[]).slice(0,8);
   if(!rows.length)return '';
-  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa</span></h2><a href="#/customer/programmes">See all</a></div>
+  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa <span class="customer-home-head-emoji-v577" aria-hidden="true">👀</span></h2><a href="#/customer/programmes">See all</a></div>
     <div class="customer-home-business-track-v343">${rows.map(customerHomeBusinessCardV345).join('')}</div></section>`;
 }
 function customerHomeBookingTimeV345(value){
@@ -14924,9 +15011,14 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        which sets `.customer-push-setting`.hidden from the push state on every reconcile and so
        un-hid a card the page had deliberately parked. The park is now declared with an attribute
        the painter honours, so visibility is decided in one place instead of two racing ones.
-       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
-       it back visible — no more park attribute, no more forced hidden. */
-    if(device){device.removeAttribute('data-push-parked-v571');$('walletBody')?.appendChild(device)}
+       nestly_v577 (owner mark, photo 15: the Device notifications card struck through again,
+       "remove this"). v576 read an earlier photo as "put the switch on the page"; this one is
+       unambiguous, so the card goes back to being PARKED — hidden on Messages, and reachable
+       (and fully working) inside the gear's Inbox settings, which is the v571 arrangement. It is
+       parked rather than deleted on purpose: the node carries the live v296 push binding that
+       owns #customerPushMessagesControl, deleting it would take the customer's only way to turn
+       device notifications on with it, and the push-permission tests read it by id. */
+    if(device){device.setAttribute('data-push-parked-v571','');device.hidden=true;$('walletBody')?.appendChild(device)}
     if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
   };
   const closeInboxSettingsModalV549=()=>{
@@ -15080,11 +15172,13 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
        borrows it on open and hands it back on close. The node — and therefore the v296 push
        binding that owns #customerPushMessagesControl — is never destroyed by a re-render again.
-       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
-       it back visible — it no longer gets hidden or parked here. */
+       nestly_v577 (owner, photo 15): parked again — see the note in returnInboxSettingsNodesV549.
+       The re-render rescue below is unchanged and still matters: the node must be moved out of
+       `host` before the next `host.innerHTML=` destroys it and the push binding with it. */
     const deviceSectionV549=$('customerMessagesNotifications');
     if(deviceSectionV549&&!inboxSettingsDeactivateV549){
-      deviceSectionV549.removeAttribute('data-push-parked-v571');
+      deviceSectionV549.setAttribute('data-push-parked-v571','');
+      deviceSectionV549.hidden=true;
       if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
         $('walletBody')?.appendChild(deviceSectionV549);
     }
@@ -15094,7 +15188,18 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     host.querySelectorAll('[data-inbox-open]').forEach(button=>button.onclick=async()=>{
       const item=items.find(entry=>entry?.event_id===button.dataset.inboxOpen);const slug=global?item?.business?.slug:businessSlug;
       if(!item||!slug||!walletSectionStillCurrent(host,isCurrent))return;
-      button.disabled=true;await setState(item,'read');if(!isCurrent())return;nav('#/wallet/'+encodeURIComponent(slug));
+      button.disabled=true;await setState(item,'read');if(!isCurrent())return;
+      /* nestly_v577 (owner mark, photo 15: a bracket down the whole message list — "i want see
+         promo details"). Opening a promotion row landed on the programme page and left the
+         customer to hunt for the offer it was about. The row knows which offer it is: v577's
+         inbox RPCs now return offer_id (the event's source_ref_id, which they already resolved
+         to fetch offer_title). Handing it to customerOfferFocusV167 is the SAME mechanism a tap
+         on the Home rail uses — the programme page scrolls that promotion into view and focuses
+         it — so there is one "open this offer" path, not a second one for messages.
+         A row with no offer_id (every non-promotion message, and every promotion message written
+         before this migration) simply navigates as it always did. */
+      customerOfferFocusV167=item.offer_id||null;
+      nav('#/wallet/'+encodeURIComponent(slug));
     });
     host.querySelectorAll('[data-inbox-state]').forEach(button=>button.onclick=async()=>{
       const item=items.find(entry=>entry?.event_id===button.dataset.inboxState);if(!item)return;
@@ -17583,7 +17688,11 @@ function bookingRequestsBadgeWrapHtml(){
   const n=pendingBookingRequestCountV329;
   /* No separate aria-label: the visible text ("N awaiting confirmation") already is the
      button's accessible name, so there is no second, unreviewed dynamic string to translate. */
-  return `<span id="bookingRequestsBadgeWrapV329">${n>0?`<button type="button" class="btn ghost sm booking-requests-badge-v329" id="bookingRequestsBadgeV329">${CUI.icon('bookings',{size:16})} ${n} awaiting confirmation</button>`:''}</span>`;
+  /* nestly_v577: no longer mounted in the header (owner, photo 2). Kept as an empty wrap rather
+     than deleted so refreshPendingBookingRequestCountNowV370's `if(wrap)` re-render stays a
+     harmless no-op and the count/badge plumbing above it is untouched. */
+  void n;
+  return '';
 }
 function wireBookingRequestsBadgeV329(){
   const button=$('bookingRequestsBadgeV329');
@@ -18748,7 +18857,11 @@ function renderShell(page){
              menu's top workspace section (see profileHtml), reachable at every width — the
              narrow-header media query used to hide this control entirely rather than relocate
              it, so this also closes that gap. -->
-        ${canReadModule('bookings')?bookingRequestsBadgeWrapHtml():''}
+        ${/* nestly_v577 (owner mark, photo 2: "remove this from interface"). The "N awaiting
+             confirmation" chip is gone from the header. The count itself is NOT gone — the same
+             pendingBookingRequestCountV329 still drives the Appointments rail badge the owner
+             asked for in v375 and did not strike here, and refreshPendingBookingRequestCountNowV370
+             still keeps that badge current; only this header button no longer renders. */''}
         ${bellHtml()}
         ${profileHtml()}
       </header>
@@ -21957,9 +22070,40 @@ const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
    charge, an appointment completion and every pre-v51 row carry their meaning in `note`, not in
    line items. Those fall back to the note, minus the kernel's own bookkeeping string, which is
    machinery rather than anything a person sold. */
+/* nestly_v577 (owner mark, photo 3: "ABC" and "BDC" ringed in the Item column — "maximise /
+   minimise to see each item price"). The cell printed the joined line NAMES and nothing else, so a
+   multi-item sale showed what was sold but never what each part of it cost; only the row's Gross
+   and Net were visible. The names stay exactly as they were and become the summary of a <details>
+   — the same disclosure the Audit details cell beside it already uses — which opens a per-line
+   qty / unit / line-total list. Every figure is read straight from that sale's own sale_items row
+   as stored; nothing here is derived, and a line whose money was never recorded shows a dash
+   rather than a computed guess. Points are deliberately NOT split per line: they are recorded once
+   for the whole sale (see activitySaleBreakdownV541), and inventing a per-item figure that
+   disagreed with the ledger is exactly the number an argument is lost over. */
+function salesItemLinesPanelV577(lines){
+  const rows=lines.slice()
+    .sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')))
+    .map(line=>{
+      const qty=Math.max(1,Math.round(Number(line&&line.qty)||1));
+      const unit=Number(line&&line.unit_cents),total=Number(line&&line.line_cents);
+      return `<li class="sales-item-line-v577">
+        <span class="sales-item-line-name-v577" data-merchant-content>${esc(String(line&&line.description||'').trim()||'Item')}${qty>1?` ×${qty}`:''}</span>
+        <span class="sales-item-line-unit-v577">${Number.isFinite(unit)?esc(money(unit)):'—'}${qty>1?' each':''}</span>
+        <span class="sales-item-line-total-v577">${Number.isFinite(total)?esc(money(total)):'—'}</span>
+      </li>`;
+    }).join('');
+  return `<ul class="sales-item-lines-v577">${rows}</ul>`;
+}
 function salesItemCellV571(sale){
   const text=activitySaleItemsTextV518({items:sale&&sale.sale_items});
-  if(text)return `<span class="sales-item-v571">${esc(text)}</span>`;
+  if(text){
+    const lines=Array.isArray(sale&&sale.sale_items)?sale.sale_items:[];
+    /* One line has nothing to break down — its price IS the row's Gross — so it stays plain text
+       and the counter is not given a disclosure that reveals what it already read. */
+    if(lines.length<2)return `<span class="sales-item-v571">${esc(text)}</span>`;
+    return `<details class="sales-item-details-v577"><summary><span class="sales-item-v571">${esc(text)}</span></summary>
+      ${salesItemLinesPanelV577(lines)}</details>`;
+  }
   if(S.myRole!=='owner')
     return '<span class="muted small" title="Line items are visible to the owner role only.">Owner access required</span>';
   const note=String((sale&&sale.note)||'').trim();
@@ -23810,7 +23954,13 @@ async function tillPage(){
         ${/* V378 (owner, photo 4: this line struck through). "Member since / Last visit" is history,
              and the counter is mid-sale — the card keeps only what identifies the person in front
              of them. Both facts stay one tap away on the customer profile. */''}</div>
-      <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
+      <div class="till-head-right-v577">
+        <p class="inline-status" style="margin:0;color:var(--green)">${CUI.icon('check',{size:16})}<span>Found</span></p>
+        ${/* nestly_v577: the compact replacement for the struck-through full-width "Different
+             number" button. Same handler, same reset — this is tillLeaveRowV373's #tBack under a
+             different id so both can coexist on the catalogue-error branch that still renders it. */''}
+        ${locked?'':`<button type="button" class="till-head-change-v577" id="tHeadChangeV577">${esc(walkin?'Switch to customer':'Different number')}</button>`}
+      </div>
     </div>${pickers}`;
   }
 
@@ -24278,8 +24428,12 @@ async function tillPage(){
     return `${strip}
       <div class="till-stage-panel-v374">${panel}</div>
       <div id="tcErr"></div>
-      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:28})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}
-      ${tillLeaveRowV373()}`;
+      ${cart.length?tillStickyCartHtmlV373():`<div class="empty" style="padding:22px 8px"><div>${CUI.icon('sales',{size:28})}</div><p class="muted small" style="margin-top:8px">Nothing added yet. Tap what the customer had.</p></div>`}`;
+      /* nestly_v577 (owner mark, photo 4): no ${'$'}{tillLeaveRowV373()} on the happy path any more.
+         The route it served is not lost — tillCustomerHeadV373 now carries a compact "Change"
+         beside the customer's name, the same disclosure pattern the branch/teammate row uses. The
+         catalogue-error and loading branches above KEEP the button: those are dead ends with no
+         customer head rendered, and stranding a cashier there would be worse than the extra row. */
   }
   /* Tab 1 — what they had today: the services and products tapped most often, and one door to
      the rest of the catalogue. */
@@ -24372,10 +24526,9 @@ async function tillPage(){
           <input id="tillManualReasonV375" type="text" maxlength="120" placeholder="e.g. touch-up" ${cartLocked()?'disabled':''}></div>
         <button type="button" class="btn sm" id="tillManualAddV375" ${cartLocked()?'disabled':''}>Add</button>
       </div>
-      ${/* nestly_v558: what is typed here becomes the line's NAME — on the receipt and on the
-           customer's Activity history — so the sentence says so rather than leaving the counter to
-           discover it after the sale. Left blank the line is called "Other item", as it always was. */''}
-      <p class="muted small" style="margin-top:6px">Adds a one-off line to this sale. What you type becomes its name on the receipt and in the customer's history; leave it blank and it is called "Other item". It earns whatever your programmes award, the same as any other item.</p>
+      ${/* nestly_v577 (owner mark, photo 4): the explanatory sentence is struck out. What is typed
+           here still becomes the line's NAME on the receipt and in Activity, and blank still reads
+           "Other item" — the behaviour is unchanged, only the paragraph is gone. */''}
     </div>`;
   }
   function wireTillManualAmountV375(root){
@@ -24432,7 +24585,16 @@ async function tillPage(){
     }else if(evalState==='expired'){
       amount='Price check expired';
     }
+    /* nestly_v577 (owner mark, photo 4: "please show list of item detail"). The bar named a count
+       and a total and nothing else, so a cashier mid-sale could not see WHAT was in the cart
+       without leaving the items stage. It now lists each line — name, quantity, catalogue price —
+       above the same figures. These are the browsing prices tillCartLinesHtmlV373 already prints;
+       the payable total stays the evaluation's, untouched, on the right of the figures row. */
+    const detail=cartSaleLines().concat(extraLines()).map(line=>
+      `<li class="till-sticky-line-v577"><span class="till-sticky-line-name-v577" data-merchant-content>${esc(line.label)}${Number(line.qty||1)>1?` ×${Number(line.qty)}`:''}</span>
+        <span class="till-sticky-line-amount-v577">${esc(money(Number(line.unit_cents||0)*Number(line.qty||1)))}</span></li>`).join('');
     return `<div class="till-sticky-cart-v373">
+      ${detail?`<ul class="till-sticky-lines-v577">${detail}</ul>`:''}
       <div class="till-sticky-figures-v373"><b>${count} item${count===1?'':'s'}${amount?` · ${esc(amount)}`:''}</b>
         ${saved?`<span class="ok small">${esc(saved)}</span>`:''}</div>
       <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:20})} Review sale</button>
@@ -24475,28 +24637,27 @@ async function tillPage(){
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:20})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
     const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
-    /* Points are the server's answer, worked out when the sale is written (record_cart_sale
-       returns them and the receipt prints them). evaluate_checkout does not preview them, so
-       this screen says what will happen rather than inventing a number. */
-    const pointsNote=(!walkin&&hasSale)
-      ?`<p class="muted small" style="margin-top:8px">Points are worked out when the sale is recorded — the receipt shows exactly how many were earned.</p>`
-      :'';
+    /* nestly_v577 (owner mark, photo 1): the "points are worked out when the sale is recorded"
+       sentence is struck through. Points remain the server's answer — record_cart_sale returns
+       them and the receipt prints them — the screen simply no longer narrates it. */
     /* V468-B: owner struck "Different number" on the Confirm sale step (photo) — no
        ${tillLeaveRowV373()} here any more. The route it served still exists one tap away via
        "Add more items" -> the items stage, which keeps its own tillLeaveRowV373() back-to-keypad
        button, so removing it here does not strand the cashier. */
-    return `<b class="small till-review-head-v373">Confirm sale</b>
+    /* nestly_v577 (owner mark, photo 1): the full-width "Add more items" button at the foot is
+       replaced by a small round + on the "Confirm sale" heading row. Same id, same handler, same
+       route back to the items stage — only its size and where it sits on the card changed. */
+    return `<div class="till-review-head-row-v577"><b class="small till-review-head-v373">Confirm sale</b>
+      ${locked?'':`<button type="button" class="till-add-more-v577" id="tBackToItemsV373" aria-label="Add more items" title="Add more items">${CUI.icon('add',{size:22})}</button>`}</div>
       ${tillCartLinesHtmlV373()}
       ${checkoutPanelHtml()}
       ${tillExtrasHtmlV373()}
       ${combinedTotalV257}
-      ${pointsNote}
       <div id="tcErr"></div>
       ${tenderHtml}
       ${paynowHtml}
       ${partialHtml}
-      ${actionHtml}
-      ${locked?'':`<button class="btn ghost sm" id="tBackToItemsV373" style="width:100%;margin-top:10px">${CUI.icon('back',{size:16})} Add more items</button>`}`;
+      ${actionHtml}`;
   }
   // sale lines (service/product/custom) — per-line CATALOG prices for browsing only; the payable
   // figures live in the checkout panel (evaluation-authoritative).
@@ -24660,6 +24821,7 @@ async function tillPage(){
      (not added), so re-binding the same node is a no-op rather than a duplicate listener. */
   function bindTillControlsV373(){
     if($('tBack'))$('tBack').onclick=backToPhoneStep;
+    if($('tHeadChangeV577'))$('tHeadChangeV577').onclick=backToPhoneStep;
     if($('tWalkinSwitch'))$('tWalkinSwitch').onclick=backToPhoneStep;
     if($('tGoReviewV373'))$('tGoReviewV373').onclick=()=>{closeTillAddSheetV373();tillStageV373='review';draw()};
     if($('tBackToItemsV373'))$('tBackToItemsV373').onclick=()=>{tillStageV373='items';tillItemsTabV374='items';draw()};
@@ -25450,7 +25612,7 @@ async function salesPage(){
     /* nestly_v571 (owner, Sales & refunds photo: the blank column ringed, "I need to see sales
        detail / what product/service sold"). The lines are embedded with the page rather than
        fetched per row — one round trip, and the ledger already reads a row per sale. */
-    let query=sb.from('sales').select('*, clients(full_name), staff(full_name), sale_items(description,qty,created_at)').eq('business_id',S.biz.id);
+    let query=sb.from('sales').select('*, clients(full_name), staff(full_name), sale_items(description,qty,unit_cents,line_cents,created_at)').eq('business_id',S.biz.id);
     /* V266: the To boundary was built as `<date>T23:59`, which drops the final 59 seconds of
        the chosen day — a sale recorded at 23:59:30 SGT fell outside a range that named its own
        date. Singapore calendar days are half-open instants: [From 00:00 SGT, To+1 day 00:00 SGT). */
@@ -46808,13 +46970,22 @@ async function staffPerfPage(drillId){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   let staffPerfSearch='',staffPerfSort='revenue',staffPerfDir='desc';
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div></div>
-    <div class="range">
+    ${/* nestly_v577 (owner mark, photo 11). Two marks on one control: the date boxes crossed out
+         and labelled "too big" with a small box drawn beside them, and both note lines bracketed
+         with an arrow into the range — "put inside this". `.range input{width:auto}` meant each
+         date input took its Safari intrinsic width, which on the owner's iPad is wide enough to
+         wrap onto its own full-width line — hence two giant stacked boxes. They are now pinned
+         narrow (staff-perf-range-v577), and the period control, Run report and both notes are one
+         panel. Same ids, same handlers, same quick-chip behaviour. */''}
+    <div class="range staff-perf-range-v577">
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
-      <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
+      <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
       <button class="btn sm" id="papply">Run report</button>
+      <div class="staff-perf-range-notes-v577">
+        <p class="muted small">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
+        <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p>
+      </div>
     </div></div>
-    <p class="muted small" style="margin:-8px 0 14px">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
-    <div style="margin:-6px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
     <div class="staff-performance-filterbar" aria-label="Staff performance filters">
       <label class="small">Staff search <input type="search" id="staffPerfSearch" placeholder="Name or email"></label>
       <label class="small">Sort by <select id="staffPerfSort"><option value="revenue">Attributed revenue</option><option value="commission">Signed commission</option><option value="revenueRecords">Revenue-qualified records</option><option value="ledgerRecords">Ledger-record count</option></select></label>
@@ -48445,6 +48616,8 @@ async function settingsPage(){
         <div><label for="sp-prod-${s.id}">Product commission %</label><input id="sp-prod-${s.id}" type="number" min="0" max="100" step="0.01" value="${esc(pctValue(s.commission_product_bps))}" placeholder="blank = not set"></div>
       </div>
       <p class="muted small help">Leave a commission blank if it is not decided. 0% is a real setting and means no commission on that kind of sale.</p>
+      ${staffBranchPickerHtmlV577(s)}
+      ${staffProfileActionsHtmlV577(s)}
       <div class="row" style="margin-top:12px"><button class="btn sm" onclick="saveStaffProfile('${s.id}',this)">Save profile</button><span class="spacer"></span><button class="btn ghost sm" onclick="toggleStaffProfile('${s.id}')">Cancel</button></div>
     </div>`;
   }
@@ -48574,11 +48747,30 @@ async function settingsPage(){
     toast('Working hours saved');
     loadStaffRotaV228();
   }
+  /* nestly_v577: branch roster + this business's staff->branch membership, both refreshed by
+     loadTeam. `null` on the list means the read failed, which the picker reports rather than
+     silently rendering "no branches". */
+  let staffBranchListV577=null,staffBranchAssignedV577=new Map();
   async function loadTeam(){
-    const [{data:st,error:staffError},{data:inv,error:inviteError}]=await Promise.all([
+    /* nestly_v577 (owner mark, photo 13: "Branches — need to select which branch", drawn beside
+       the profile form). Branch membership is public.staff_branches, exactly as the Branches page
+       writes it — this reads the SAME two tables so the two screens can never disagree, and the
+       Save below reuses the same insert/delete pair rather than minting a second write path. */
+    const [{data:st,error:staffError},{data:inv,error:inviteError},
+           {data:brs,error:branchError},{data:sbr,error:assignError}]=await Promise.all([
       sb.from('staff').select('*').eq('business_id',S.biz.id).order('created_at'),
-      sb.from('staff_invites').select('*').eq('business_id',S.biz.id).eq('status','pending').order('created_at',{ascending:false})]);
+      sb.from('staff_invites').select('*').eq('business_id',S.biz.id).eq('status','pending').order('created_at',{ascending:false}),
+      sb.from('branches').select('id,name,active,is_default').eq('business_id',S.biz.id).order('name'),
+      sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)]);
     if(staffError||inviteError)return fail(staffError||inviteError);
+    /* A branch read that fails must not take the whole team list down with it — the roster is the
+       point of this page. The profile panel says so instead of showing an empty picker. */
+    staffBranchListV577=branchError?null:(brs||[]);
+    staffBranchAssignedV577=new Map();
+    if(!assignError)(sbr||[]).forEach(row=>{
+      if(!staffBranchAssignedV577.has(row.staff_id))staffBranchAssignedV577.set(row.staff_id,new Set());
+      staffBranchAssignedV577.get(row.staff_id).add(row.branch_id);
+    });
     teamRowsById=new Map((st||[]).map(row=>[row.id,row]));
     myStaffId=(st||[]).find(x=>x.user_id===S.user?.id)?.id||null;
     /* V209 (owner: "staff list very messy, no title/subtitle for each category ... make it
@@ -48653,17 +48845,17 @@ async function settingsPage(){
                however much this particular row's pills+buttons happen to take up. -->
           <div class="staff-row-actions">
             ${accessPill}${modPill}<span class="spacer"></span>
+            ${/* nestly_v577 (owner mark, photo 12: all four row buttons ringed on both teammates,
+                 "all move into edit button"). Give app access / Modules / Deactivate / Delete are
+                 no longer four buttons per row — the row carries one Edit, and all four live in
+                 the profile panel it opens (staffProfilePanelHtml). Same onclick handlers, same
+                 confirms, same server calls: only where the button is drawn changed.
+                 Approve access / Decline are deliberately NOT moved. They are a pending request
+                 waiting on the owner, they are not among the four the owner ringed, and burying a
+                 time-sensitive decision one click deeper is the opposite of what this page is for. */''}
             ${s.role!=='owner'?`${accessPendingV569?`<button class="btn sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',true,this)">Approve access</button>
             <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',false,this)">Decline</button>`:''}
-            ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
-            <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
-            <!-- V285: Remove used to be a hard DELETE, which is the wrong default for a person.
-                 Deactivating is what a shop actually does when somebody leaves: access stops at
-                 once, the seat stops being billed (a seat is an ACTIVE login — see CLAUDE.md
-                 §v14), and every past sale, appointment and commission row keeps the name on it.
-                 Delete survives for the row created by mistake, behind its own second confirm. -->
-            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="setStaffActiveV285('${s.id}',${s.active===false?'true':'false'},this)">${s.active===false?'Reactivate':'Deactivate'}</button>
-            <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Delete</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+            <button class="btn ghost sm" onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}">${openProfileId===s.id?'Close':'Edit'}</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
           </div>
           ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}">${esc(s.full_name||'This teammate')} has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
         </div>
@@ -48730,6 +48922,45 @@ async function settingsPage(){
       toast('Template deleted');
       await loadTemplates();await loadTeam();
     });
+  }
+  /* nestly_v577 (owner, photo 13: "Branches — need to select which branch"). The same membership
+     the Branches page edits from the other direction (branch -> tick its staff); this is staff ->
+     tick their branches. Owners and managers are not offered it: they see every branch regardless
+     of assignment, so a tick here would be a control that changes nothing. */
+  function staffBranchPickerHtmlV577(s){
+    if(s.role==='owner'||s.role==='manager')
+      return `<p class="muted small help" style="margin-top:12px">Owners and managers see every branch, so there is nothing to assign here.</p>`;
+    if(staffBranchListV577===null)
+      return `<p class="muted small help" style="margin-top:12px">Branches could not be loaded, so they cannot be changed here right now. Assign this teammate from Branches instead.</p>`;
+    const branches=staffBranchListV577||[];
+    if(branches.length<2)return '';
+    const assigned=staffBranchAssignedV577.get(s.id)||new Set();
+    return `<fieldset class="staff-branch-picker-v577" data-staff-branch-picker-v577="${esc(s.id)}">
+      <legend>Branches</legend>
+      <p class="muted small" style="margin:0 0 8px">Tick where this teammate works. They will see only these branches' data. Untick everything to leave them unassigned.</p>
+      ${branches.map(branch=>`<label class="staff-branch-choice-v577">
+        <input type="checkbox" data-staff-branch-v577="${esc(branch.id)}" ${assigned.has(branch.id)?'checked':''}${branch.active===false?' disabled':''}>
+        <span data-merchant-content>${esc(branch.name)}</span>${branch.is_default?' <span class="pill new">Default</span>':''}${branch.active===false?' <span class="pill off">Off</span>':''}
+      </label>`).join('')}
+    </fieldset>`;
+  }
+  /* nestly_v577 (owner, photo 12): the four actions the owner moved off the row. Identical
+     handlers to the ones the row used to carry — this is a relocation, not a rewrite. */
+  function staffProfileActionsHtmlV577(s){
+    if(s.role==='owner')return '';
+    return `<div class="staff-profile-actions-v577">
+      <b class="small">Access and status</b>
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
+        ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+        <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
+        ${/* V285's reasoning is unchanged and still governs these two: deactivating is what a shop
+             does when somebody leaves (access stops, the seat stops being billed, every past sale
+             and commission keeps the name), and Delete stays behind its own second confirm for the
+             row created by mistake. */''}
+        <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="setStaffActiveV285('${s.id}',${s.active===false?'true':'false'},this)">${s.active===false?'Reactivate':'Deactivate'}</button>
+        <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Delete</button>
+      </div>
+    </div>`;
   }
   window.chRole=async(id,role)=>{
     const {data,error}=await sb.rpc('set_staff_role_v74',{p_staff:id,p_role:role});
@@ -48854,6 +49085,31 @@ async function settingsPage(){
     if(btn){btn.disabled=true;btn.textContent='Saving…';}
     const {error}=await sb.from('staff').update(patch).eq('id',staffId);
     if(error){if(btn){btn.disabled=false;btn.textContent='Save profile';}return fail(error)}
+    /* nestly_v577 (owner, photo 13): the branch ticks, written through the SAME insert/delete
+       pair the Branches page uses. Only the difference is written — an unchanged tick makes no
+       call — and the branch-scope cache is invalidated exactly as toggleStaffBranch does, or the
+       teammate's own session would keep the branch list it was given before this edit. */
+    const picker=document.querySelector(`[data-staff-branch-picker-v577="${CSS.escape(staffId)}"]`);
+    if(picker){
+      const was=staffBranchAssignedV577.get(staffId)||new Set();
+      const add=[],remove=[];
+      picker.querySelectorAll('[data-staff-branch-v577]').forEach(box=>{
+        const branchId=box.dataset.staffBranchV577;
+        if(box.disabled)return; // an inactive branch is shown for context and is not editable here
+        if(box.checked&&!was.has(branchId))add.push(branchId);
+        if(!box.checked&&was.has(branchId))remove.push(branchId);
+      });
+      if(add.length||remove.length){
+        invalidateBranchScopeCacheV370();
+        const results=await Promise.all([
+          add.length?sb.from('staff_branches').insert(add.map(branchId=>({business_id:S.biz.id,staff_id:staffId,branch_id:branchId}))):Promise.resolve({error:null}),
+          remove.length?sb.from('staff_branches').delete().eq('business_id',S.biz.id).eq('staff_id',staffId).in('branch_id',remove):Promise.resolve({error:null})]);
+        const branchError=results.find(result=>result&&result.error)?.error;
+        /* The staff row itself is already saved at this point, so this reports the branch failure
+           without claiming the whole edit was lost. */
+        if(branchError){if(btn){btn.disabled=false;btn.textContent='Save profile';}return fail(branchError)}
+      }
+    }
     /* Role travels through the RPC so module permissions are re-derived with it. */
     const nextRole=read('sp-role')?.value;
     if(nextRole&&nextRole!==row.role){await window.chRole(staffId,nextRole);return}
@@ -49915,10 +50171,6 @@ function wireBusinessProfileExtrasV418(){
     loadBusinessProfileExtrasV418();
   };
 }
-function serviceBufferPointerCardHtmlV325(){
-  return `<div class="card" style="margin-top:16px"><b>Service buffer times</b>
-    <p class="muted small" style="margin:6px 0 0">Buffer before/after each appointment is set per service. Open <a href="#/services">Services</a>, edit a service, and set its buffer times there.</p></div>`;
-}
 /* V325 (owner-authorized exception #2, relocation). The auto-cancel/overflow/auto-confirm/
    staff-choice booking rules, opening hours and the reschedule/cancel auto-approve toggle lived
    in Bookings; the owner asked for them to live in this Appointment Setting step instead — SAME
@@ -50618,7 +50870,10 @@ async function customerInterfacePageV243(hashParam){
     ${ciSectionV296('appointment',`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
     ${bookingRulesCardHtmlV325()}
     ${customerCapabilitiesAppointmentCardHtmlV375()}
-    ${serviceBufferPointerCardHtmlV325()}`)}
+    ${/* nestly_v577 (owner mark, photo 9: the whole "Service buffer times" card struck through,
+         "remove this!"). It was a POINTER card only — it set nothing and saved nothing, it just
+         told the reader that buffers live on the service. Buffers themselves are untouched: they
+         are still set per service under Services -> edit a service, exactly as before. */''}`)}
     ${ciSectionV296('preview',customerInterfacePreviewCardHtmlV243())}
     ${ciSectionV296('done',customerInterfaceDoneCardHtmlV325())}
     ${ciSectionV296('programme',`${customerInterfaceSectionHeadingV269('ciSectionProgrammeV269','Customer programme','How your points, tiers and rewards are presented in the customer wallet.')}

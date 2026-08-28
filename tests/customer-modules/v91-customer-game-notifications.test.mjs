@@ -125,9 +125,16 @@ test('v499 opening the app AFTER the sale confirms it — the case the owner pho
 
 test('v499 a cold open on genuinely old history still says nothing, and never repeats', () => {
   const h = celebrationHarnessV499();
-  h.earn('biz', [earnV499(agoV499(2 * 24 * 60 * 60 * 1000))], 'stamps');
+  /* nestly_v577: ONE timestamp, read once and reused. This called agoV499() separately for each
+     earn, so the two ISO strings differed whenever a millisecond ticked between the calls — and
+     the fingerprint is built from event_at, so a different string is a DIFFERENT earn, which the
+     second assertion then correctly reported as firing. Measured at ~5% failures at rest and far
+     higher under full-suite load: the test was flaky, the behaviour it describes was not. An idle
+     poll re-reads the SAME row, which is what this now models. */
+  const sameEarn = earnV499(agoV499(2 * 24 * 60 * 60 * 1000));
+  h.earn('biz', [sameEarn], 'stamps');
   assert.deepEqual(h.fired, [], 'a plain reload must not re-celebrate last week');
-  h.earn('biz', [earnV499(agoV499(2 * 24 * 60 * 60 * 1000))], 'stamps');
+  h.earn('biz', [sameEarn], 'stamps');
   assert.deepEqual(h.fired, [], 'and an idle poll re-reading the same answer stays quiet');
 });
 

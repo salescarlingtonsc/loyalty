@@ -167,7 +167,11 @@ test('V287 the Sales page no longer pulls the whole customer table it never read
   /* nestly_v571 (owner mark: "I need to see sales detail / what product/service sold"). The Item
      column embeds sale_items on the SAME query — the point of this test, that the ledger does not
      go back for a second table it can join, is unchanged. */
-  assert.match(sales, /select\('\*, clients\(full_name\), staff\(full_name\), sale_items\(description,qty,created_at\)'\)/);
+  /* nestly_v577 (owner mark, photo 3: "maximise/minimise to see each item price"). The embed now
+     also carries unit_cents and line_cents so the Item cell can open a per-line breakdown. Still
+     the same single query — which is what this test is actually about — with two more columns on
+     the embed it already had. */
+  assert.match(sales, /select\('\*, clients\(full_name\), staff\(full_name\), sale_items\(description,qty,unit_cents,line_cents,created_at\)'\)/);
   assert.match(sales, /const salesLoadError=staffError;/);
 });
 

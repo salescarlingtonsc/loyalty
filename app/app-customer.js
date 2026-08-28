@@ -1697,6 +1697,10 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
        the shop's own mark than by reading a name. Falls back to the initial when a business has
        not uploaded a logo — never a placeholder image pretending to be theirs. */
     if(!group.business_logo)group.business_logo=String(business.logo_url||'');
+    /* nestly_v577 (owner, photo 20: "business address here" written into each history row). Read
+       from the same programme summary the logo and name come from, so a business that has not set
+       one simply has no address line rather than an empty placeholder. */
+    if(!group.business_address)group.business_address=String(business.address||'');
   }
   const seenRequests=new Set();
   for(const request of Array.isArray(requestPayload?.items)?requestPayload.items:[]){
@@ -1865,6 +1869,47 @@ function customerBookingAppointmentRowV344(group,item,changesFeatureEnabled=fals
       :`<span class="pill ${tab==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
   return `<div class="wallet-appt customer-booking-appointment-row-v344">${customerBookingDateTileV344(item.starts_at)}<div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${action}</div>`;
 }
+/* nestly_v577 (owner mark, photo 20). The History tab was crossed through and redrawn: instead
+   of one card per business holding that business's past visits, the owner drew a flat list of
+   rows ordered by date — "history don't based on business, but based on latest appointment date"
+   — each row carrying the company logo, the business name, the item detail, the business address
+   and a Book button.
+
+   Only History changes. Ongoing and Cancelled stay grouped by business, because those are lists
+   of things still to act on and the business is the unit you act against; History is a record,
+   and a record reads by when it happened.
+
+   The row reuses the same date tile and the same Book-again handler (data-repeat-booking, with
+   the appointment id) the grouped rows already used, so rebooking from here is the identical
+   path — this is a re-layout, not a second booking route. */
+function customerBookingHistoryRowV577(group,item){
+  const logo=customerBookingBusinessLogoV195(group);
+  const name=String(group.business_name||'').trim()||'Business';
+  const detail=[item.service_name,item.branch_name].map(part=>String(part||'').trim()).filter(Boolean).join(' · ');
+  const address=String(group.business_address||group.address||'').trim();
+  const bookable=group.bookingEnabled&&group.business_slug;
+  return `<article class="card customer-history-row-v577" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+    ${customerBookingDateTileV344(item.starts_at)}
+    <div class="customer-history-copy-v577">
+      <div class="customer-history-who-v577">${logo}<b data-merchant-content>${esc(name)}</b></div>
+      <p class="customer-history-when-v577">${esc(walletDate(item.starts_at,true)||'Time unavailable')}</p>
+      ${detail?`<p class="muted small customer-history-detail-v577" data-merchant-content>${esc(detail)}</p>`:''}
+      ${address?`<p class="muted small customer-history-address-v577" data-merchant-content>${esc(address)}</p>`:''}
+    </div>
+    ${bookable
+      ?`<button class="btn ghost sm customer-history-book-v577" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
+      :`<span class="pill ok customer-history-book-v577">${esc(ct('Appointment'))}</span>`}
+  </article>`;
+}
+/* Every past appointment across every business, newest first. Requests are appended with their
+   own row renderer inside their business card below — they are not appointments and have no
+   appointment date to sort by. */
+function customerBookingHistoryListV577(groups=[]){
+  const rows=[];
+  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item})));
+  rows.sort((a,b)=>String(b.item.starts_at||'').localeCompare(String(a.item.starts_at||'')));
+  return rows.map(({group,item})=>customerBookingHistoryRowV577(group,item)).join('');
+}
 function customerBookingRequestRowV344(item){
   return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
 }
@@ -1948,9 +1993,24 @@ function customerBookingChooserV291(groups=[]){
   }
   return `<section class="card customer-booking-chooser">${searchHead}<div class="customer-booking-chips">${businesses.map(chip).join('')}</div></section>`;
 }
+/* nestly_v577 (owner, photo 21): the search box, on the Bookings header row beside the date
+   chip. Same id and same wiring as before — only its home and what it filters changed. */
+function customerBookingSearchMarkupV577(){
+  return `<div class="customer-booking-search customer-booking-search-v577">
+    <label class="sr-only" for="customerBookingSearch">Search company name</label>
+    ${CUI.icon('search',{size:16})}
+    <input id="customerBookingSearch" type="search" autocomplete="off" placeholder="Search company name">
+    <span class="sr-only" id="customerBookingSearchStatus" role="status" aria-live="polite" hidden></span>
+  </div>`;
+}
 /* v326: filters the chips customerBookingChooserV291 already rendered — same shape as
    wireCustomerProgrammeSearchV195, kept as its own function since it targets a different
-   input/host and groups by sector wrapper instead of category section. */
+   input/host and groups by sector wrapper instead of category section.
+   nestly_v577: the chooser those chips lived in is gone (owner, photo 21), so the same filter now
+   runs over the booking CARDS on the page. Two consequences follow from that and are handled
+   below: there are no [data-booking-search-group] sector wrappers left to collapse, and an empty
+   query must show EVERYTHING rather than v571's three most-recent chips — hiding a customer's own
+   bookings until they type would be a filter that eats the page. */
 function wireCustomerBookingSearchV326(host=document){
   const input=host.querySelector('#customerBookingSearch');
   if(!input)return;
@@ -1980,10 +2040,7 @@ function wireCustomerBookingSearchV326(host=document){
      most recently. v549 showed nothing at all and explained itself in a sentence the owner has
      now struck out — so the default state has to be useful rather than explained. Typing still
      searches everything; this only decides what stands there before anyone types. */
-  const RECENT_BOOKING_CHIPS_V571=3;
-  const recentItemsV571=new Set([...items]
-    .sort((a,b)=>Number(b.dataset.bookingLastAt||0)-Number(a.dataset.bookingLastAt||0))
-    .slice(0,RECENT_BOOKING_CHIPS_V571));
+  /* nestly_v577: superseded — see the note on this function. An empty query shows every card. */
   const apply=()=>{
     const query=String(input.value||'').trim().toLowerCase();
     const category=query?queryCategoryV549(query):'';
@@ -1992,7 +2049,7 @@ function wireCustomerBookingSearchV326(host=document){
       const terms=String(item.dataset.bookingSearchTerms||item.dataset.bookingSearchName||'');
       const match=query
         ?(terms.includes(query)||(!!category&&String(item.dataset.bookingSearchCategory||'')===category))
-        :recentItemsV571.has(item);
+        :true;
       item.hidden=!match;
       if(match)shown++;
     });
@@ -2109,7 +2166,15 @@ async function renderCustomerBookings(){
     const requestCount=requestItems.length;
     const activeRequestCount=requestItems.filter(isActiveCustomerBookingRequest).length;
     const hasMore=!!requestPayload?.next_cursor;
-    $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingFilterMarkupV195(currentBookingRange,bookingRangePanelOpenV3)}</header>
+    /* nestly_v577 (owner mark, photo 21). Two marks on one screen: the "Search company name"
+         box ringed with an arrow up to the row holding the date chip ("shift here"), and the whole
+         business directory below it — FACIAL / SALON / FNB and their "Book now" chips — crossed
+         out ("remove this"). The search moves onto the header row, and now filters the booking
+         cards on this page by company instead of a directory that is no longer here. Nothing is
+         stranded: photo 20's history rows carry their own Book button, which is the route the
+         directory's "Book now" chips used to be, and the empty state still offers the customer's
+         linked businesses through customerBookingEmptyMarkupV183 below. */
+    $('walletBody').innerHTML=`<header class="customer-page-head customer-booking-head-v577"><div><h1>Bookings</h1></div><span class="spacer"></span>${customerBookingSearchMarkupV577()}${customerBookingFilterMarkupV195(currentBookingRange,bookingRangePanelOpenV3)}</header>
     ${partialMessages.length?`<div class="card" role="status"><div class="row"><p class="muted small">Some booking info didn’t load.</p><span class="spacer"></span><button class="btn ghost sm" id="customerBookingsRetry">Retry</button></div>
       <!-- v286 (audit): these six sentences were computed and then thrown away — only
            partialMessages.length was read. A customer whose appointment feed failed saw a list
@@ -2117,10 +2182,14 @@ async function renderCustomerBookings(){
            gap is the difference between "something broke" and "your appointments are missing". -->
       <ul class="muted small" style="margin:8px 0 0 18px">${partialMessages.map(message=>`<li>${esc(message)}</li>`).join('')}</ul></div>`:''}
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
-    ${currentBookingTab==='bookings'?customerBookingChooserV291(allGroups):''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?`<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
+    ${groups.length?(currentBookingTab==='history'
+      ? /* nestly_v577 (owner, photo 20): History is a flat, date-ordered list. Any history-tab
+           request rows keep their business card below the appointments, so nothing is dropped. */
+        `<div class="customer-booking-list customer-history-list-v577">${customerBookingHistoryListV577(groups)}</div>
+         ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
+      : `<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
        filed a brand-new request while the old booking stayed — two live bookings for one visit.
        Rebooking a PAST visit keeps its own "Book again" on history rows; an ONGOING booking is
        re-timed through the row's Reschedule, which replaces rather than duplicates. */''}${/* nestly_v548 (owner photo 1, the button struck out: "remove", clarified as "'open
@@ -2132,7 +2201,7 @@ async function renderCustomerBookings(){
        programme page is one tap from Rewards, from Home, and from the row actions themselves. */''}</div>
       ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
       ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
-    </section>`).join('')}</div>`
+    </section>`).join('')}</div>`)
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
@@ -3380,7 +3449,7 @@ function customerHomeOffersMarkupV167(state={status:'loading',items:[]}){
   }
   /* v183 (owner annotation: kicker struck out, "put some logo, make it interesting"): the
      stacked kicker read as filler above the real title. One icon-led title line instead. */
-  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:20})}</span><span>Limited offers</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
+  return `<section class="customer-home-offers" aria-labelledby="customerHomeOffersTitle"><div class="customer-home-offers-head"><h2 id="customerHomeOffersTitle" class="customer-home-offers-title"><span class="customer-home-offers-badge" aria-hidden="true">${CUI.icon('loyalty',{size:20})}</span><span>Limited offers</span> <span class="customer-home-head-emoji-v577" aria-hidden="true">✨</span></h2><a href="#/customer/programmes">View all <span aria-hidden="true">›</span></a></div>${body}</section>`;
 }
 /* v178 (owner annotation): from an offer the customer must be able to click into the company
    itself — address, phone, email and every other offer that company is currently running. */
@@ -5437,7 +5506,7 @@ function customerHomeBusinessCardV345(card){
 function customerHomeBusinessRailV343(cards=[]){
   const rows=(Array.isArray(cards)?cards:[]).slice(0,8);
   if(!rows.length)return '';
-  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa</span></h2><a href="#/customer/programmes">See all</a></div>
+  return `<section class="customer-home-businesses-v343" aria-labelledby="customerHomeBusinessesTitle"><div class="customer-home-section-head-v343"><h2 id="customerHomeBusinessesTitle">Your Peekaa <span class="customer-home-head-emoji-v577" aria-hidden="true">👀</span></h2><a href="#/customer/programmes">See all</a></div>
     <div class="customer-home-business-track-v343">${rows.map(customerHomeBusinessCardV345).join('')}</div></section>`;
 }
 function customerHomeBookingTimeV345(value){
@@ -7905,9 +7974,14 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        which sets `.customer-push-setting`.hidden from the push state on every reconcile and so
        un-hid a card the page had deliberately parked. The park is now declared with an attribute
        the painter honours, so visibility is decided in one place instead of two racing ones.
-       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
-       it back visible — no more park attribute, no more forced hidden. */
-    if(device){device.removeAttribute('data-push-parked-v571');$('walletBody')?.appendChild(device)}
+       nestly_v577 (owner mark, photo 15: the Device notifications card struck through again,
+       "remove this"). v576 read an earlier photo as "put the switch on the page"; this one is
+       unambiguous, so the card goes back to being PARKED — hidden on Messages, and reachable
+       (and fully working) inside the gear's Inbox settings, which is the v571 arrangement. It is
+       parked rather than deleted on purpose: the node carries the live v296 push binding that
+       owns #customerPushMessagesControl, deleting it would take the customer's only way to turn
+       device notifications on with it, and the push-permission tests read it by id. */
+    if(device){device.setAttribute('data-push-parked-v571','');device.hidden=true;$('walletBody')?.appendChild(device)}
     if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
   };
   const closeInboxSettingsModalV549=()=>{
@@ -8061,11 +8135,13 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
        borrows it on open and hands it back on close. The node — and therefore the v296 push
        binding that owns #customerPushMessagesControl — is never destroyed by a re-render again.
-       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
-       it back visible — it no longer gets hidden or parked here. */
+       nestly_v577 (owner, photo 15): parked again — see the note in returnInboxSettingsNodesV549.
+       The re-render rescue below is unchanged and still matters: the node must be moved out of
+       `host` before the next `host.innerHTML=` destroys it and the push binding with it. */
     const deviceSectionV549=$('customerMessagesNotifications');
     if(deviceSectionV549&&!inboxSettingsDeactivateV549){
-      deviceSectionV549.removeAttribute('data-push-parked-v571');
+      deviceSectionV549.setAttribute('data-push-parked-v571','');
+      deviceSectionV549.hidden=true;
       if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
         $('walletBody')?.appendChild(deviceSectionV549);
     }
@@ -8075,7 +8151,18 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     host.querySelectorAll('[data-inbox-open]').forEach(button=>button.onclick=async()=>{
       const item=items.find(entry=>entry?.event_id===button.dataset.inboxOpen);const slug=global?item?.business?.slug:businessSlug;
       if(!item||!slug||!walletSectionStillCurrent(host,isCurrent))return;
-      button.disabled=true;await setState(item,'read');if(!isCurrent())return;nav('#/wallet/'+encodeURIComponent(slug));
+      button.disabled=true;await setState(item,'read');if(!isCurrent())return;
+      /* nestly_v577 (owner mark, photo 15: a bracket down the whole message list — "i want see
+         promo details"). Opening a promotion row landed on the programme page and left the
+         customer to hunt for the offer it was about. The row knows which offer it is: v577's
+         inbox RPCs now return offer_id (the event's source_ref_id, which they already resolved
+         to fetch offer_title). Handing it to customerOfferFocusV167 is the SAME mechanism a tap
+         on the Home rail uses — the programme page scrolls that promotion into view and focuses
+         it — so there is one "open this offer" path, not a second one for messages.
+         A row with no offer_id (every non-promotion message, and every promotion message written
+         before this migration) simply navigates as it always did. */
+      customerOfferFocusV167=item.offer_id||null;
+      nav('#/wallet/'+encodeURIComponent(slug));
     });
     host.querySelectorAll('[data-inbox-state]').forEach(button=>button.onclick=async()=>{
       const item=items.find(entry=>entry?.event_id===button.dataset.inboxState);if(!item)return;

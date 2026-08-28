@@ -2805,6 +2805,12 @@
       "path": "db/migrations/20260828_nestly_v575_waitlist_preferred_at.sql",
       "semanticVersion": "v575",
       "proposedDeployVersion": "20260828060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v577_publish_preserves_tier_identity.sql",
+      "semanticVersion": "v577",
+      "proposedDeployVersion": "20260828070000"
     }
   ]
 }

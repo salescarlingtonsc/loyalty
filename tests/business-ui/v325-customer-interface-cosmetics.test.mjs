@@ -203,8 +203,11 @@ test('V325 buffer-before/after are wired into the existing add and edit service 
   assert.match(servicesPage, /\.update\(\{name,variant_label:variant,price_cents:price,duration_min:duration,\s*\n\s*buffer_before_min:bufferBefore,buffer_after_min:bufferAfter\}\)\.eq\('id',id\)/);
   // No new RPC, no new call site — still the plain services table insert/update.
   assert.doesNotMatch(servicesPage, /sb\.rpc\('[a-z_]*buffer/i);
-  // Appointment Setting points at Services rather than duplicating the whole catalogue.
-  assert.match(app, /Buffer before\/after each appointment is set per service\. Open <a href="#\/services">Services<\/a>/);
+  /* nestly_v577 (owner mark, photo 9): Appointment Setting no longer carries the pointer sentence
+     at all — the card holding it was struck out. What this test exists to protect is above: the
+     buffer fields are on the SERVICE, saved through the service's own insert/update, with no
+     second write path. That is unchanged, and is now the only place buffers are set. */
+  assert.doesNotMatch(app, /Buffer before\/after each appointment is set per service/);
 });
 
 /* -------------------------------------------------------- (d) relocated booking rules, exc. 2 */
@@ -215,7 +218,12 @@ test('V325 the booking-rules card renders under Appointment Setting with every r
   assert.match(page, /\$\{ciSectionV296\('appointment',`/);
   assert.doesNotMatch(page, /ciSectionV296\('appointment',ciWithPreviewV325/);
   assert.match(page, /bookingRulesCardHtmlV325\(\)/);
-  assert.match(page, /serviceBufferPointerCardHtmlV325\(\)/);
+  /* nestly_v577 (owner mark, photo 9: the whole "Service buffer times" card struck through,
+     "remove this!"). It was a POINTER card — it set nothing and saved nothing, it only told the
+     reader that buffers are set per service. Buffers themselves are untouched and are still edited
+     under Services; the assertions below that they reach the service save still hold. */
+  assert.doesNotMatch(page, /serviceBufferPointerCardHtmlV325\(\)/);
+  assert.doesNotMatch(app, /function serviceBufferPointerCardHtmlV325\(/);
   for (const id of ['aac', 'setHold', 'setOverflow', 'setAutoConfirm', 'setSave', 'setStaffChoice', 'setAvailabilityBody', 'setAvailabilitySave']) {
     assert.match(bookingRules, new RegExp(`id="${id}"`), `${id} must still be part of the relocated card`);
   }
@@ -243,7 +251,9 @@ test('V325 the branch contact card edits address/phone through the SAME write pa
   // Branches' own edit save calls the same shared function — one write path, two callers.
   const branchesPage = section(app, 'async function branchesPage(){', 'async function load(){');
   assert.match(branchesPage, /const \{error\}=await saveBranchFieldsV325\(editId,payload\);/);
-  const branchCard = section(app, 'async function loadBranchContactCardV325(){', 'function serviceBufferPointerCardHtmlV325(');
+  /* nestly_v577: the section used to end at serviceBufferPointerCardHtmlV325, which photo 9
+     removed. Anchored on the next surviving declaration instead. */
+  const branchCard = section(app, 'async function loadBranchContactCardV325(){', 'function businessLinkNormaliseV471(');
   assert.match(branchCard, /saveBranchFieldsV325\(id,\{phone,address\}\)/);
   assert.match(app, /Add or remove branches entirely in <a href="#\/branches">Branches<\/a>/);
 });

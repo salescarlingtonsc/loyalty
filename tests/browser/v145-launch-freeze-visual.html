@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2fd8af7588777f02fd591d799c53d41919504ad2eb44cda67945a670a319dd09"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="64507ebd5c13e83d40ba76646bc0afa6b5e9d27bb04e72afd01814dd16ac4876"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -655,9 +655,52 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    control in the bar removes the variable, exactly as V225 did. */
 .sales-filter-row>div>input,
 .sales-filter-row>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
+/* nestly_v577 — owner batch: FIVE photos ringing the same defect on five different pages
+   ("boxes overlapping, solve!", "misalignment, solve!!!", "overlapping"): Sales & refunds,
+   Waitlist, Rewards Overview, Rewards History and Sales again.
+
+   V225 and v571 both read this as a HEIGHT problem and pinned --control-h on every control. That
+   was real but it was not this. The remaining defect is WIDTH: input[type=date] carries an
+   intrinsic minimum width from the UA stylesheet (markedly wider on iPad Safari, which is what
+   the owner photographs), the cells are grid/flex items, and while the CELL was given min-width:0
+   so its track may shrink, the INPUT inside it never was — so the input keeps its intrinsic width
+   and paints straight over the neighbouring cell's label. Measured in-browser against a simulated
+   UA floor: 78px of overflow before this rule, 0px after.
+
+   Pinning the control to its cell (width:100% + min-width:0 at a specificity above the UA rule)
+   is what removes it. The date text may ellipsise on a very narrow column, which is the correct
+   trade: a clipped date is legible, a date printed on top of the next label is not. */
+.sales-filter-row>div>input,.sales-filter-row>div>select,
+.v150-filterbar>div>input,.v150-filterbar>div>select,
+.wl-period-v571>label>input,
+.appointment-list-filters>div>input,.appointment-list-filters>div>select,
+.staff-performance-filterbar>div>input,.staff-performance-filterbar>div>select{
+  width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+/* The two filter bars that are flex rather than grid need their CELLS to be able to shrink too,
+   or the cell itself is what overflows and the rule above has nothing to shrink into. */
+.v150-filterbar>div,.wl-period-v571>label{min-width:0;flex-shrink:1}
 .sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
+/* nestly_v577 (owner, photo 3): the expandable Item cell. Styled as the Audit details disclosure
+   in the same row so the two read as one affordance repeated, not two inventions. */
+.sales-item-details-v577>summary{cursor:pointer;list-style:none}
+.sales-item-details-v577>summary::-webkit-details-marker{display:none}
+.sales-item-details-v577>summary::after{content:"▸";margin-left:6px;color:var(--muted);font-size:11px;display:inline-block}
+.sales-item-details-v577[open]>summary::after{transform:rotate(90deg)}
+.sales-item-lines-v577{list-style:none;margin:8px 0 0;padding:8px 0 0;border-top:1px solid var(--hair);display:grid;gap:6px}
+.sales-item-line-v577{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:baseline;
+  font-size:12.5px;font-variant-numeric:tabular-nums}
+.sales-item-line-name-v577{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.sales-item-line-unit-v577{color:var(--muted);white-space:nowrap}
+.sales-item-line-total-v577{font-weight:700;color:var(--ink);white-space:nowrap}
 .record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
 .staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0;padding:14px;border:1px solid #E7DAD2;background:var(--head-tint);border-radius:var(--r);box-shadow:var(--shadow)}
+/* nestly_v577 — Staff Members profile panel (owner photos 12 and 13): the branch picker, and the
+   four row actions that moved in here. */
+.staff-branch-picker-v577{margin:14px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
+.staff-branch-picker-v577>legend{padding:0 6px;font-size:13px;font-weight:750;color:var(--ink)}
+.staff-branch-choice-v577{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;color:var(--ink);font-size:13.5px}
+.staff-branch-choice-v577>input{width:auto;margin:0}
+.staff-profile-actions-v577{margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}
 .staff-rank-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
 .staff-rank-card{position:relative;overflow:hidden;min-height:112px;padding:16px 18px;border-color:#E9D8D2;background:linear-gradient(145deg,#fff,#fff8f5)}
 .staff-rank-card::after{content:'';position:absolute;right:-22px;top:-22px;width:74px;height:74px;border-radius:50%;background:rgba(202,62,50,.08)}
@@ -1253,6 +1296,16 @@ input[type=range]:focus{box-shadow:none}
 .range>.btn{align-self:flex-end}
 .range>span[aria-hidden]{align-self:flex-end;padding-bottom:calc(var(--control-h) / 2 - .5em)}
 .range input{width:auto}
+/* nestly_v577 (owner, photo 11: the two date boxes crossed out, "too big", with a small box
+   sketched beside them, and both notes arrowed into the panel). `.range input{width:auto}` above
+   gives a date input its UA intrinsic width — wide enough on iPad Safari to claim a whole line
+   each. Pinned narrow here, and the notes now sit inside the same panel as a full-width last row. */
+.staff-perf-range-v577{align-items:flex-end;row-gap:10px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--head-tint)}
+.staff-perf-range-v577 input[type=date]{width:150px;min-width:0;max-width:100%;flex:0 0 auto;
+  height:var(--control-h);min-height:var(--control-h);box-sizing:border-box}
+.staff-perf-range-notes-v577{flex:1 1 100%;display:grid;gap:4px;margin-top:2px}
+.staff-perf-range-notes-v577 p{margin:0}
 /* segmented control, iOS-style */
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
@@ -1722,6 +1775,28 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .till-sticky-figures-v373>b{font-size:16px;letter-spacing:-.02em}
 .till-sticky-cart-v373>.btn{flex:0 0 auto;min-height:50px;padding:12px 22px;font-size:15.5px}
 .till-review-head-v373{display:block;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:16px;font-weight:750;letter-spacing:-.02em}
+/* nestly_v577 — owner batch, Record sale (photos 1 and 4).
+   The sticky bar lists what is in the cart above the count/total row; the list scrolls on its own
+   so a long sale never pushes Review sale off screen. The Confirm sale heading became a row so the
+   small round + (the old full-width "Add more items") can sit at its right edge. */
+.till-sticky-cart-v373{flex-wrap:wrap}
+.till-sticky-lines-v577{flex:1 1 100%;order:-1;list-style:none;margin:0 0 8px;padding:0;max-height:132px;overflow:auto;
+  display:grid;gap:4px;font-variant-numeric:tabular-nums}
+.till-sticky-line-v577{display:flex;align-items:baseline;gap:10px;font-size:13.5px;color:var(--ink2)}
+.till-sticky-line-name-v577{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.till-sticky-line-amount-v577{flex:0 0 auto;font-weight:650;color:var(--ink)}
+.till-review-head-row-v577{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.till-review-head-row-v577 .till-review-head-v373{margin-top:16px;flex:1 1 auto;border-top:0;padding-top:0}
+.till-review-head-row-v577{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.till-review-head-row-v577 .till-review-head-v373{margin-top:0}
+.till-add-more-v577{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;
+  border-radius:50%;border:1px solid var(--coral);background:#fff;color:var(--coral);line-height:0;
+  transition:background .14s var(--ease),transform .14s var(--ease)}
+.till-add-more-v577:hover{background:var(--tint)}
+.till-add-more-v577:active{transform:scale(.94)}
+.till-head-right-v577{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto}
+.till-head-change-v577{padding:0;border:0;background:transparent;color:var(--coral);font-weight:700;font-size:12.5px;
+  text-decoration:underline;text-underline-offset:3px}
 .till-add-sheet-v373 .modal-card{width:min(var(--dialog-w-lg),100%);max-height:88dvh;overflow:auto}
 .till-sheet-tabs-v373{margin:14px 0 12px;max-width:100%}
 .till-sheet-panel-v373{min-height:120px}
@@ -4792,9 +4867,114 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    a size tag. */
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
+/* ============================ nestly_v577 — customer display titles ==========================
+   Owner, photo 22: "Nice to see you again.", "40 rewards ready", "Limited offers" and "View all ›"
+   each ringed, with one note — "those title font can change to cuter font like this" — and an
+   arrow to the peekaa wordmark at the top of the screen.
+
+   The greeting h1 and the section headings are NOT ringed but are changed with them on purpose:
+   they are the same run of display type, and leaving "Good afternoon, Steven" in the UI stack
+   while the subtitle directly under it turned round would read as a mistake rather than a choice.
+
+   --peekaa-display always ENDS in the existing --sf stack, so if the Google Fonts request is
+   blocked, slow, or offline, every one of these falls back to exactly the face it renders today.
+   `!important` is present only where the rule it has to beat already used it (the ≤430px block
+   pins .customer-home-greeting-v343 h1 with !important), never as a default. */
+:root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
+.customer-home-greeting-v343 h1,
+.customer-my-rewards-title h1,
+.customer-page-head h1{font-family:var(--peekaa-display)!important;letter-spacing:-.005em}
+.customer-home-greeting-v343 p,
+.customer-home-ready-copy-v343 b,
+.customer-home-ready-copy-v343 small,
+.customer-home-section-head-v343 h2,
+.customer-home-offers-head h2,
+.customer-home-section-head-v343 a,
+.customer-home-offers-head a{font-family:var(--peekaa-display)}
+/* The two emoji the owner asked for beside the headings (photo 17: "add this" against ✨ on
+   Limited offers and 👀 on Your Peekaa). Sized off the heading so they scale with it, and
+   aria-hidden in the markup so a screen reader reads the heading, not "sparkles". */
+.customer-home-head-emoji-v577{font-size:.85em;line-height:1;vertical-align:baseline}
+
+/* ===================== nestly_v577 — customer surfaces, owner batch ========================= */
+
+/* Photo 19 — the My Peekaa QR sheet: "box smaller", with "MY PEEKAA QR" ringed and marked
+   "bigger". The sheet is narrowed and its padding tightened; the kicker, which is also the
+   dialog's accessible name (v571), is promoted from an eyebrow to a real heading. The close X and
+   "Scan a business QR instead" were ringed too, but with no instruction against them — read as
+   pointing, so they keep their present size and position. */
+.customer-scan-modal .modal-card{width:min(360px,calc(100vw - 40px));padding:20px 20px 24px}
+.customer-scan-modal #customerScanSheetKicker{font-size:15px;font-weight:800;letter-spacing:.10em;color:var(--ink)}
+
+/* Photo 21 — the company search moves onto the Bookings header row, beside the date chip. */
+.customer-booking-head-v577{flex-wrap:wrap;row-gap:10px;align-items:center}
+.customer-booking-search-v577{display:flex;align-items:center;gap:8px;flex:1 1 200px;min-width:0;max-width:320px;
+  margin:0;padding:0 12px;border:1px solid var(--control-border);border-radius:999px;background:var(--card,#fff)}
+.customer-booking-search-v577 input{flex:1 1 auto;min-width:0;border:0;background:transparent;padding:10px 0;font-size:14px}
+.customer-booking-search-v577 input:focus{outline:none}
+.customer-booking-search-v577:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+
+/* Photo 20 — History as one flat, date-ordered list rather than a card per business. */
+.customer-history-list-v577{display:grid;gap:10px}
+.customer-history-row-v577{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px}
+.customer-history-copy-v577{min-width:0;display:grid;gap:2px}
+.customer-history-who-v577{display:flex;align-items:center;gap:8px;min-width:0}
+.customer-history-who-v577 b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.customer-history-who-v577 img,.customer-history-who-v577 .customer-booking-logo{width:28px;height:28px;border-radius:9px;flex:0 0 auto}
+.customer-history-when-v577{margin:0;font-size:13.5px;font-weight:650;color:var(--ink)}
+.customer-history-detail-v577,.customer-history-address-v577{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-history-book-v577{flex:0 0 auto;white-space:nowrap}
+@media(max-width:560px){
+  .customer-history-row-v577{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
+  .customer-history-book-v577{grid-column:2;justify-self:start}
+}
+
+/* Photo 23 — "delete this space" against the gap under the last Home card, and "scroll to here
+   only". The shell reserves room for the floating nav on every page; Home was additionally
+   ending in a section margin, so the page scrolled past its own content into empty ground. The
+   nav clearance stays (the bar floats over the page and would otherwise cover the last card);
+   what goes is the extra trailing margin beneath it. */
+.customer-home-businesses-v343{margin-bottom:0}
+.customer-home-businesses-v343>:last-child{margin-bottom:0}
+
+/* ===================== nestly_v577 — the boot screen (owner, photo 14) =====================
+   "background color different", against the logo tile.
+
+   v571b read this as a page-vs-poster mismatch and set the shell to #F4EEE0, which is genuinely
+   the poster's exact colour — measured, top-left pixel. But the poster is only on screen until
+   the video's first frame decodes. The VIDEO is what the owner is actually looking at, and its
+   flat beige is neither #F4EEE0 nor stable: sampled on the decoded frames it runs #F6EFE2 at t=0,
+   #F9F2E2 at t=1, #F9F0E1 from t=1.5 — ordinary compression noise across a large flat field. So
+   there is no single background value that can match it, and the previous approach could not have
+   worked whatever number was chosen.
+
+   The rectangle is removed instead of matched. A radial mask fades the video's own edge into the
+   page, so no straight edge exists to disagree with anything. closest-side makes the mask radius
+   the frame's half-width (270px of the 540px source); the artwork's ink measures out to a radius
+   of 229px, so holding full opacity to 88% (238px) clears the logo with room to spare and fades
+   over the empty margin beyond it. */
+.boot-mark-v577{display:block;width:min(210px,56vw);height:auto;margin:2px auto 10px;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  /* The mask removes the EDGE; this removes the remaining lightness difference inside it. The
+     video's flat field decodes around #F9F0E1 against the page's #F4EEE0, and 0.985 brings it to
+     within 1-2 values per channel (244,238,224 wanted; 245,236,222 produced) — below the
+     threshold anything can be seen at. It is a scale, not a match to one sampled frame, so the
+     frame-to-frame drift shrinks with it instead of being locked to a single guess. Near-black
+     logo ink is unaffected at this factor. */
+  filter:brightness(.985)}
+/* "wait me ..." — the owner's own words, with the animation they asked for: the three dots
+   arrive in turn. prefers-reduced-motion holds them all visible rather than pulsing. */
+.boot-wait-v577{margin:0;text-align:center;font-size:15px;font-weight:650;letter-spacing:.01em;color:#8A7F6E}
+.boot-wait-dots-v577>span{opacity:.15;animation:boot-wait-dot-v577 1.35s infinite}
+.boot-wait-dots-v577>span:nth-child(2){animation-delay:.22s}
+.boot-wait-dots-v577>span:nth-child(3){animation-delay:.44s}
+@keyframes boot-wait-dot-v577{0%,60%,100%{opacity:.15}30%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.boot-wait-dots-v577>span{opacity:1;animation:none}}
+
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2fd8af7588777f02fd591d799c53d41919504ad2eb44cda67945a670a319dd09</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 64507ebd5c13e83d40ba76646bc0afa6b5e9d27bb04e72afd01814dd16ac4876</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7088,9 +7268,40 @@ const SALE_KERNEL_NOTE_V518='cart checkout (kernel)';
    charge, an appointment completion and every pre-v51 row carry their meaning in `note`, not in
    line items. Those fall back to the note, minus the kernel's own bookkeeping string, which is
    machinery rather than anything a person sold. */
+/* nestly_v577 (owner mark, photo 3: "ABC" and "BDC" ringed in the Item column — "maximise /
+   minimise to see each item price"). The cell printed the joined line NAMES and nothing else, so a
+   multi-item sale showed what was sold but never what each part of it cost; only the row's Gross
+   and Net were visible. The names stay exactly as they were and become the summary of a <details>
+   — the same disclosure the Audit details cell beside it already uses — which opens a per-line
+   qty / unit / line-total list. Every figure is read straight from that sale's own sale_items row
+   as stored; nothing here is derived, and a line whose money was never recorded shows a dash
+   rather than a computed guess. Points are deliberately NOT split per line: they are recorded once
+   for the whole sale (see activitySaleBreakdownV541), and inventing a per-item figure that
+   disagreed with the ledger is exactly the number an argument is lost over. */
+function salesItemLinesPanelV577(lines){
+  const rows=lines.slice()
+    .sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')))
+    .map(line=>{
+      const qty=Math.max(1,Math.round(Number(line&&line.qty)||1));
+      const unit=Number(line&&line.unit_cents),total=Number(line&&line.line_cents);
+      return `<li class="sales-item-line-v577">
+        <span class="sales-item-line-name-v577" data-merchant-content>${esc(String(line&&line.description||'').trim()||'Item')}${qty>1?` ×${qty}`:''}</span>
+        <span class="sales-item-line-unit-v577">${Number.isFinite(unit)?esc(money(unit)):'—'}${qty>1?' each':''}</span>
+        <span class="sales-item-line-total-v577">${Number.isFinite(total)?esc(money(total)):'—'}</span>
+      </li>`;
+    }).join('');
+  return `<ul class="sales-item-lines-v577">${rows}</ul>`;
+}
 function salesItemCellV571(sale){
   const text=activitySaleItemsTextV518({items:sale&&sale.sale_items});
-  if(text)return `<span class="sales-item-v571">${esc(text)}</span>`;
+  if(text){
+    const lines=Array.isArray(sale&&sale.sale_items)?sale.sale_items:[];
+    /* One line has nothing to break down — its price IS the row's Gross — so it stays plain text
+       and the counter is not given a disclosure that reveals what it already read. */
+    if(lines.length<2)return `<span class="sales-item-v571">${esc(text)}</span>`;
+    return `<details class="sales-item-details-v577"><summary><span class="sales-item-v571">${esc(text)}</span></summary>
+      ${salesItemLinesPanelV577(lines)}</details>`;
+  }
   if(S.myRole!=='owner')
     return '<span class="muted small" title="Line items are visible to the owner role only.">Owner access required</span>';
   const note=String((sale&&sale.note)||'').trim();
@@ -8492,9 +8703,14 @@ function renderHistPage(history,n,offsetV468=0){
        which sets `.customer-push-setting`.hidden from the push state on every reconcile and so
        un-hid a card the page had deliberately parked. The park is now declared with an attribute
        the painter honours, so visibility is decided in one place instead of two racing ones.
-       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
-       it back visible — no more park attribute, no more forced hidden. */
-    if(device){device.removeAttribute('data-push-parked-v571');$('walletBody')?.appendChild(device)}
+       nestly_v577 (owner mark, photo 15: the Device notifications card struck through again,
+       "remove this"). v576 read an earlier photo as "put the switch on the page"; this one is
+       unambiguous, so the card goes back to being PARKED — hidden on Messages, and reachable
+       (and fully working) inside the gear's Inbox settings, which is the v571 arrangement. It is
+       parked rather than deleted on purpose: the node carries the live v296 push binding that
+       owns #customerPushMessagesControl, deleting it would take the customer's only way to turn
+       device notifications on with it, and the push-permission tests read it by id. */
+    if(device){device.setAttribute('data-push-parked-v571','');device.hidden=true;$('walletBody')?.appendChild(device)}
     if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
   };
   const closeInboxSettingsModalV549=()=>{
@@ -8648,11 +8864,13 @@ function renderHistPage(history,n,offsetV468=0){
        renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
        borrows it on open and hands it back on close. The node — and therefore the v296 push
        binding that owns #customerPushMessagesControl — is never destroyed by a re-render again.
-       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
-       it back visible — it no longer gets hidden or parked here. */
+       nestly_v577 (owner, photo 15): parked again — see the note in returnInboxSettingsNodesV549.
+       The re-render rescue below is unchanged and still matters: the node must be moved out of
+       `host` before the next `host.innerHTML=` destroys it and the push binding with it. */
     const deviceSectionV549=$('customerMessagesNotifications');
     if(deviceSectionV549&&!inboxSettingsDeactivateV549){
-      deviceSectionV549.removeAttribute('data-push-parked-v571');
+      deviceSectionV549.setAttribute('data-push-parked-v571','');
+      deviceSectionV549.hidden=true;
       if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
         $('walletBody')?.appendChild(deviceSectionV549);
     }
@@ -8662,7 +8880,18 @@ function renderHistPage(history,n,offsetV468=0){
     host.querySelectorAll('[data-inbox-open]').forEach(button=>button.onclick=async()=>{
       const item=items.find(entry=>entry?.event_id===button.dataset.inboxOpen);const slug=global?item?.business?.slug:businessSlug;
       if(!item||!slug||!walletSectionStillCurrent(host,isCurrent))return;
-      button.disabled=true;await setState(item,'read');if(!isCurrent())return;nav('#/wallet/'+encodeURIComponent(slug));
+      button.disabled=true;await setState(item,'read');if(!isCurrent())return;
+      /* nestly_v577 (owner mark, photo 15: a bracket down the whole message list — "i want see
+         promo details"). Opening a promotion row landed on the programme page and left the
+         customer to hunt for the offer it was about. The row knows which offer it is: v577's
+         inbox RPCs now return offer_id (the event's source_ref_id, which they already resolved
+         to fetch offer_title). Handing it to customerOfferFocusV167 is the SAME mechanism a tap
+         on the Home rail uses — the programme page scrolls that promotion into view and focuses
+         it — so there is one "open this offer" path, not a second one for messages.
+         A row with no offer_id (every non-promotion message, and every promotion message written
+         before this migration) simply navigates as it always did. */
+      customerOfferFocusV167=item.offer_id||null;
+      nav('#/wallet/'+encodeURIComponent(slug));
     });
     host.querySelectorAll('[data-inbox-state]').forEach(button=>button.onclick=async()=>{
       const item=items.find(entry=>entry?.event_id===button.dataset.inboxState);if(!item)return;
@@ -8823,7 +9052,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'2fd8af7588777f02fd591d799c53d41919504ad2eb44cda67945a670a319dd09',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'64507ebd5c13e83d40ba76646bc0afa6b5e9d27bb04e72afd01814dd16ac4876',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
