@@ -3168,6 +3168,24 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   background:var(--peekaa-red,#B3261E);color:#fff}
 .customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
+.global-act-badge-v580{display:inline-flex;align-items:center;margin-left:6px}
+.global-act-badge-v580:empty{display:none}
+.global-act-badge-v580 .nav-badge{margin-left:0;min-width:20px;height:20px;font-size:10.5px}
+.customer-programme-card-status-v346.is-ready-v392{justify-self:start;align-self:start;
+  width:fit-content;max-width:100%}
+.customer-home-offer-media.has-art-v421::before,
+.customer-home-offer-media.has-art-v421::after{content:none}
+.customer-home-offer-media.has-art-v421{background:var(--card,#fff)}
+.sales-filter-row>label>input,
+.range>label>input,.range>label>select{min-width:0;max-width:100%}
+.range>label{min-width:0;flex:0 1 auto}
+.range>label>input[type=date]{width:150px}
+@supports (grid-template-rows: subgrid){
+  .sales-filter-row,.sales-filter-row.secondary{grid-template-rows:auto auto;align-items:start}
+  .sales-filter-row>div{display:grid;grid-template-rows:subgrid;grid-row:span 2;row-gap:6px}
+  .sales-filter-row>div>label{margin:0;align-self:end}
+  .sales-filter-row>.btn{grid-row:2;align-self:stretch}
+}
 :root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
 :root{--peekaa-body:'Nunito',-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,'Segoe UI',sans-serif}
 .customer-surface,
@@ -3185,18 +3203,25 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-search-v577 input{flex:1 1 auto;min-width:0;border:0;background:transparent;padding:10px 0;font-size:14px}
 .customer-booking-search-v577 input:focus{outline:none}
 .customer-booking-search-v577:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
-.customer-history-list-v577{display:grid;gap:10px}
-.customer-history-row-v577{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px}
-.customer-history-copy-v577{min-width:0;display:grid;gap:2px}
-.customer-history-who-v577{display:flex;align-items:center;gap:8px;min-width:0}
-.customer-history-who-v577 b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
-.customer-history-who-v577 img,.customer-history-who-v577 .customer-booking-logo{width:28px;height:28px;border-radius:9px;flex:0 0 auto}
-.customer-history-when-v577{margin:0;font-size:13.5px;font-weight:650;color:var(--ink)}
-.customer-history-detail-v577,.customer-history-address-v577{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.customer-history-book-v577{flex:0 0 auto;white-space:nowrap}
+.customer-booking-rows-v580{display:grid;gap:10px}
+.customer-booking-row-v580{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;
+  align-items:center;padding:14px 16px}
+.customer-booking-row-logo-v580{flex:0 0 auto;line-height:0}
+.customer-booking-row-logo-v580 img,.customer-booking-row-logo-v580 .customer-booking-logo{
+  width:44px;height:44px;border-radius:12px;object-fit:cover}
+.customer-booking-row-copy-v580{min-width:0;display:grid;gap:2px}
+.customer-booking-row-copy-v580>b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-detail-v580{margin:0;font-size:13.5px;color:var(--ink2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
+.customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+.customer-booking-act-v580{white-space:nowrap}
 @media(max-width:560px){
-  .customer-history-row-v577{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
-  .customer-history-book-v577{grid-column:2;justify-self:start}
+  .customer-booking-row-v580{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
+  .customer-booking-row-end-v580{grid-column:2;justify-items:start;
+    grid-auto-flow:column;align-items:center;gap:10px}
 }
 .customer-home-businesses-v343{margin-bottom:0}
 .customer-home-businesses-v343>:last-child{margin-bottom:0}

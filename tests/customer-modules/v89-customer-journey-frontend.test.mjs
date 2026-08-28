@@ -213,8 +213,18 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
      is that the rows keep theirs — a header tidy is not permission to strip the page. */
   assert.doesNotMatch(bookings,/>\$\{esc\(ct\('Open programme'\)\)\}<\/a>/,
     'the redundant header link is gone');
-  assert.match(bookings,/customerBookingAppointmentRowV344\(group,item,changesFeatureEnabled\)/,
-    'the appointment rows — Reschedule / Book again — are untouched');
+  /* nestly_v580 (owner, photo 6: "all follow this format", answered as all three tabs). The page
+     renders one row shape now — customerBookingRowV580 via customerBookingRowListV580 — rather
+     than per-business cards of customerBookingAppointmentRowV344. What this assertion exists to
+     protect is unchanged and is checked directly below: a header tidy is not permission to strip
+     the row's actions, so the row must still carry Reschedule for a movable booking and Book
+     otherwise, through the same data- attributes the old row used. */
+  assert.match(bookings,/customerBookingRowListV580\(groups,currentBookingTab\)/);
+  const bookingRow=section(app,'function customerBookingRowV580','function customerBookingRowListV580');
+  assert.match(bookingRow,/data-reschedule-v508="\$\{esc\(item\.appointment_id\)\}"/,
+    'a movable booking keeps Reschedule');
+  assert.match(bookingRow,/data-repeat-booking data-business-slug=/,
+    'a past visit keeps its Book action');
   assert.match(bookings,/customerBookingRequestRowV344/,'and so is Withdraw on a pending request');
 });
 

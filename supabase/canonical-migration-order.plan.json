@@ -2818,6 +2818,12 @@
       "version": "20260828130000",
       "name": "nestly_v580_appointment_send_follows_the_appointment",
       "sourcePath": "db/migrations/20260828_nestly_v580_appointment_send_follows_the_appointment.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828140000",
+      "name": "nestly_v581_appointment_branch_address",
+      "sourcePath": "db/migrations/20260828_nestly_v581_appointment_branch_address.sql"
     }
   ]
 }

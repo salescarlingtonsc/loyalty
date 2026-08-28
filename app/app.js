@@ -6785,46 +6785,68 @@ function customerBookingAppointmentRowV344(group,item,changesFeatureEnabled=fals
       :`<span class="pill ${tab==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
   return `<div class="wallet-appt customer-booking-appointment-row-v344">${customerBookingDateTileV344(item.starts_at)}<div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${action}</div>`;
 }
-/* nestly_v577 (owner mark, photo 20). The History tab was crossed through and redrawn: instead
-   of one card per business holding that business's past visits, the owner drew a flat list of
-   rows ordered by date — "history don't based on business, but based on latest appointment date"
-   — each row carrying the company logo, the business name, the item detail, the business address
-   and a Book button.
+/* nestly_v580 (owner mark, photo 6, superseding v577's History-only version). The owner redrew
+   the row and wrote "all follow this format" — logo, business name, "<service> at <time>", the
+   booking's address, the date as plain text on the right, and the action. The calendar date tile
+   is struck out ("don't need this calendar logo"): it repeated a date the row already prints.
 
-   Only History changes. Ongoing and Cancelled stay grouped by business, because those are lists
-   of things still to act on and the business is the unit you act against; History is a record,
-   and a record reads by when it happened.
+   Owner ruling, asked and answered: ALL THREE TABS take this row, not History alone. Ongoing and
+   Cancelled keep their own actions — Reschedule for a booking that can still be moved, the status
+   pill otherwise — so the format is shared without flattening what each tab is for.
 
-   The row reuses the same date tile and the same Book-again handler (data-repeat-booking, with
-   the appointment id) the grouped rows already used, so rebooking from here is the identical
-   path — this is a re-layout, not a second booking route. */
-function customerBookingHistoryRowV577(group,item){
+   The address is the BRANCH's, from nestly_v580's addition to customer_get_appointments_page: it
+   is where the customer actually went, which for a multi-branch firm is not the business address.
+   A booking whose branch has no address on file simply omits the line.
+
+   Every action here is the one the grouped rows already carried (data-repeat-booking and
+   data-reschedule-v508, with the same ids), so this is a re-layout and not a second booking
+   route. */
+function walletClockV580(value){
+  if(!value)return '';
+  const at=new Date(value);
+  if(Number.isNaN(at.getTime()))return '';
+  return at.toLocaleString('en-SG',{timeZone:'Asia/Singapore',timeStyle:'short'});
+}
+function customerBookingRowV580(group,item,tab){
   const logo=customerBookingBusinessLogoV195(group);
   const name=String(group.business_name||'').trim()||'Business';
-  const detail=[item.service_name,item.branch_name].map(part=>String(part||'').trim()).filter(Boolean).join(' · ');
-  const address=String(group.business_address||group.address||'').trim();
-  const bookable=group.bookingEnabled&&group.business_slug;
-  return `<article class="card customer-history-row-v577" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
-    ${customerBookingDateTileV344(item.starts_at)}
-    <div class="customer-history-copy-v577">
-      <div class="customer-history-who-v577">${logo}<b data-merchant-content>${esc(name)}</b></div>
-      <p class="customer-history-when-v577">${esc(walletDate(item.starts_at,true)||'Time unavailable')}</p>
-      ${detail?`<p class="muted small customer-history-detail-v577" data-merchant-content>${esc(detail)}</p>`:''}
-      ${address?`<p class="muted small customer-history-address-v577" data-merchant-content>${esc(address)}</p>`:''}
+  const service=String(item.service_name||'').trim();
+  /* Time only. walletDate is the one date formatter on this surface (Asia/Singapore, en-SG); this
+     asks it for the same instant with a time style and no date, so the row cannot drift from every
+     other date the customer sees. */
+  const time=walletClockV580(item.starts_at);
+  const detail=[service,time?`at ${time}`:''].filter(Boolean).join(' ');
+  const address=String(item.branch_address||'').trim();
+  const branch=String(item.branch_name||'').trim();
+  const rescheduleV508=group.bookingEnabled===true&&!!group.business_slug&&!!item.appointment_id
+    &&String(item.status||'')==='booked'&&tab==='bookings';
+  const action=rescheduleV508
+    ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>`
+    :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
+      ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
+      :`<span class="pill ${tab==='cancelled'?'no':'ok'} customer-booking-act-v580">${esc(ct('Appointment'))}</span>`;
+  return `<article class="card customer-booking-row-v580" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+    <div class="customer-booking-row-logo-v580">${logo}</div>
+    <div class="customer-booking-row-copy-v580">
+      <b data-merchant-content>${esc(name)}</b>
+      ${detail?`<p class="customer-booking-row-detail-v580" data-merchant-content>${esc(detail)}</p>`:''}
+      ${address
+        ?`<p class="muted small customer-booking-row-address-v580" data-merchant-content>${esc(address)}</p>`
+        :branch?`<p class="muted small customer-booking-row-address-v580" data-merchant-content>${esc(branch)}</p>`:''}
     </div>
-    ${bookable
-      ?`<button class="btn ghost sm customer-history-book-v577" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
-      :`<span class="pill ok customer-history-book-v577">${esc(ct('Appointment'))}</span>`}
+    <div class="customer-booking-row-end-v580">
+      <time class="customer-booking-row-date-v580" datetime="${esc(item.starts_at||'')}">${esc(walletDate(item.starts_at)||'')}</time>
+      ${action}
+    </div>
   </article>`;
 }
-/* Every past appointment across every business, newest first. Requests are appended with their
-   own row renderer inside their business card below — they are not appointments and have no
-   appointment date to sort by. */
-function customerBookingHistoryListV577(groups=[]){
+/* Every appointment across every business on this tab, newest first. Requests are not
+   appointments and have no appointment date to sort by, so they keep their own row below. */
+function customerBookingRowListV580(groups=[],tab='bookings'){
   const rows=[];
   groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item})));
   rows.sort((a,b)=>String(b.item.starts_at||'').localeCompare(String(a.item.starts_at||'')));
-  return rows.map(({group,item})=>customerBookingHistoryRowV577(group,item)).join('');
+  return rows.map(({group,item})=>customerBookingRowV580(group,item,tab)).join('');
 }
 function customerBookingRequestRowV344(item){
   return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
@@ -7100,24 +7122,13 @@ async function renderCustomerBookings(){
     ${hasMore||requestPayload?.truncated===true?`<div class="card" role="status"><div class="row"><p class="muted small">Showing ${requestCount}${hasMore||requestPayload?.truncated===true?'+':''} request records, including ${activeRequestCount} active.</p><span class="spacer"></span>${hasMore?'<button class="btn ghost sm" id="customerBookingsMore">Load more requests</button>':'<span class="muted small">We can’t show older requests right now.</span>'}</div></div>`:''}
     ${customerBookingTablistMarkupV178(currentBookingTab,tabCounts)}
     <div id="customerBookingPanel" role="tabpanel" tabindex="0" aria-labelledby="customerBookingTab-${esc(currentBookingTab)}">
-    ${groups.length?(currentBookingTab==='history'
-      ? /* nestly_v577 (owner, photo 20): History is a flat, date-ordered list. Any history-tab
-           request rows keep their business card below the appointments, so nothing is dropped. */
-        `<div class="customer-booking-list customer-history-list-v577">${customerBookingHistoryListV577(groups)}</div>
-         ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
-      : `<div class="customer-booking-list">${groups.map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name)}</h2><p class="muted small">${group.tabRequests.length} request${group.tabRequests.length===1?'':'s'} · ${group.tabAppointments.length} appointment${group.tabAppointments.length===1?'':'s'}</p></div><span class="spacer"></span>${/* nestly_v509 (owner photo 3: remove "Rebook"). The header button opened the portal and
-       filed a brand-new request while the old booking stayed — two live bookings for one visit.
-       Rebooking a PAST visit keeps its own "Book again" on history rows; an ONGOING booking is
-       re-timed through the row's Reschedule, which replaces rather than duplicates. */''}${/* nestly_v548 (owner photo 1, the button struck out: "remove", clarified as "'open
-       programme' is redundant"). The whole header is already a route to that programme — the
-       business name, its logo and the card itself sit inside a list the customer reached from
-       their own programmes, and the appointment rows below carry the actions that belong to this
-       page (Reschedule, Book again, Withdraw). A second general-purpose "go elsewhere" button
-       competed with them for the only prominent slot in the header. Nothing is stranded: the
-       programme page is one tap from Rewards, from Home, and from the row actions themselves. */''}</div>
-      ${group.tabRequests.length?`<h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}`:''}
-      ${group.tabAppointments.length?`<h3 class="customer-booking-appointments-head-v344">${CUI.icon('bookings',{size:20})}<span>${esc(appointmentHeading)}</span><span aria-hidden="true">✦</span></h3>${group.tabAppointments.map(item=>customerBookingAppointmentRowV344(group,item,changesFeatureEnabled)).join('')}`:''}
-    </section>`).join('')}</div>`)
+    ${/* nestly_v580 (owner mark, photo 6: "all follow this format", answered as all three tabs).
+         One row shape everywhere — customerBookingRowV580 — instead of History being flat while
+         Ongoing and Cancelled stayed grouped in per-business cards. Requests are NOT appointments:
+         they have no appointment time to sort by and carry their own decision, so they keep their
+         business card and sit under the appointment rows. */''}
+    ${groups.length?`<div class="customer-booking-list customer-booking-rows-v580">${customerBookingRowListV580(groups,currentBookingTab)}</div>
+      ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
@@ -17134,7 +17145,13 @@ function globalActionsHtml(){
     </div>`:''}
     <div class="global-quick">
       ${canQuickEarn?`<button type="button" class="btn sm global-act" id="globalQuickEarn" title="Record sale"><span class="ic" aria-hidden="true">${CUI.icon('till',{size:16})}</span><span>Record sale</span></button>`:''}
-      ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'Appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:16})}</span><span>${canNewAppt?'Appointment':'View calendar'}</span></button>`:''}
+      ${/* nestly_v580 (owner mark, photo 3: the Appointments rail badge circled with an arrow to
+           this button — "here also show"). The SAME pendingBookingRequestCountV329 the rail badge
+           reads, in a second slot, so the two can never disagree: refreshPendingBookingRequest
+           CountNowV370 repaints every [data-appointments-badge-slot] it finds, and this is now one
+           of them. This is where v577 removed the wordy "N awaiting confirmation" chip; the number
+           the owner actually wanted is back, on the control it belongs to. */''}
+      ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'Appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:16})}</span><span>${canNewAppt?'Appointment':'View calendar'}</span><span class="global-act-badge-v580" data-appointments-badge-slot>${appointmentsNavBadgeHtml()}</span></button>`:''}
     </div>
   </div>`;
 }

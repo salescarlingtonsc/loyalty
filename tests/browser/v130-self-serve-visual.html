@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="533c22619d35149c75dac10d5c48e4275ff05f0e11380d980cac8b0f62a37f19"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="e146cc0bb05872015bd04ddcf68c43942f191fe5f55af9d54701a103e71b8c64"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4881,6 +4881,70 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    a size tag. */
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
+/* ==================== nestly_v580 — the two filter bars the owner re-ringed ==================
+   Photo 1, Sales & refunds: "fix this alignment !!!" — From and To sit taller than Customer
+   search, so their labels ride up and the three do not line up.
+   Photo 2, Customer intelligence: "alignment fix!" — Run report drawn ON TOP of the To box.
+
+   These are the same family v577 measured, and each needed something v577 did not do.
+
+   (a) The OVERLAP on Customer intelligence is v577's width defect in a bar that rule never named.
+       `.range>label>input` already sets width:100%, but with no min-width:0 the UA's intrinsic
+       date width still wins, the input overflows the label it lives in, and the next flex item —
+       Run report — is drawn over it. Same fix as v577, applied to the shape it missed: the label
+       and its control must BOTH be allowed to shrink.
+
+   (b) The ALIGNMENT on Sales & refunds is not fixable by pinning heights, and that is why V225,
+       v571 and v577 all failed at it in turn: they each set height:var(--control-h) on every
+       control, which measures correctly in Chromium (verified: identical label tops, input tops
+       and 44px heights) and still comes out wrong on iPad Safari, where a date input's internal
+       layout can exceed a height it has been given.
+
+       So alignment stops depending on every control agreeing about its own height. The row is a
+       grid with two explicit tracks — labels in one, controls in the other — and each cell opts
+       into them with subgrid. Every label then shares one baseline and every control shares
+       another BY CONSTRUCTION, whatever any individual control decides it is worth. Safari has
+       supported subgrid since 16; where it is missing the previous height pin is still in force,
+       so this degrades to exactly today's behaviour rather than to something worse. */
+/* Photo 3: the pending-booking count on the header Appointment button. The badge markup is the
+   rail's own (.nav-badge), so it cannot drift in style or in value; only the slot is new. The
+   rail's badge uses margin-left:auto to sit at the row's end — wrong inside a button, where it
+   must sit against the label — so that one property is reset here. */
+.global-act-badge-v580{display:inline-flex;align-items:center;margin-left:6px}
+.global-act-badge-v580:empty{display:none}
+.global-act-badge-v580 .nav-badge{margin-left:0;min-width:20px;height:20px;font-size:10.5px}
+
+/* Photo 5, My Rewards: "shorten the red bar" — the pink "N rewards ready" pill runs the full
+   width of the card's copy column instead of hugging its words.
+
+   It already declares display:inline-flex, which would hug. But its parent
+   .customer-programme-card-copy is display:grid, and a grid item is BLOCKIFIED — inline-flex
+   computes to flex — so it stretches the track like any other block. justify-self is what an
+   inline-flex would have given for free; width:fit-content covers the flex-parent case too, and
+   max-width keeps a long status ellipsising inside the card rather than pushing it wider. */
+.customer-programme-card-status-v346.is-ready-v392{justify-self:start;align-self:start;
+  width:fit-content;max-width:100%}
+
+/* Photo 4, Limited offers: "i don't want blurred background". V421 filled the letterbox around a
+   non-matching aspect with a blurred, darkened copy of the artwork. The owner wants the plain
+   card ground instead. The MEDIA BOX and object-fit:contain stay exactly as they are — this only
+   removes the two decorative pseudo-elements, so the whole picture is still shown uncropped
+   (V173/V421's rule) on a clean background. */
+.customer-home-offer-media.has-art-v421::before,
+.customer-home-offer-media.has-art-v421::after{content:none}
+.customer-home-offer-media.has-art-v421{background:var(--card,#fff)}
+
+.sales-filter-row>label>input,
+.range>label>input,.range>label>select{min-width:0;max-width:100%}
+.range>label{min-width:0;flex:0 1 auto}
+.range>label>input[type=date]{width:150px}
+@supports (grid-template-rows: subgrid){
+  .sales-filter-row,.sales-filter-row.secondary{grid-template-rows:auto auto;align-items:start}
+  .sales-filter-row>div{display:grid;grid-template-rows:subgrid;grid-row:span 2;row-gap:6px}
+  .sales-filter-row>div>label{margin:0;align-self:end}
+  .sales-filter-row>.btn{grid-row:2;align-self:stretch}
+}
+
 /* ============================ nestly_v577 — customer display titles ==========================
    Owner, photo 22: "Nice to see you again.", "40 rewards ready", "Limited offers" and "View all ›"
    each ringed, with one note — "those title font can change to cuter font like this" — and an
@@ -4943,19 +5007,28 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-search-v577 input:focus{outline:none}
 .customer-booking-search-v577:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 
-/* Photo 20 — History as one flat, date-ordered list rather than a card per business. */
-.customer-history-list-v577{display:grid;gap:10px}
-.customer-history-row-v577{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px}
-.customer-history-copy-v577{min-width:0;display:grid;gap:2px}
-.customer-history-who-v577{display:flex;align-items:center;gap:8px;min-width:0}
-.customer-history-who-v577 b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
-.customer-history-who-v577 img,.customer-history-who-v577 .customer-booking-logo{width:28px;height:28px;border-radius:9px;flex:0 0 auto}
-.customer-history-when-v577{margin:0;font-size:13.5px;font-weight:650;color:var(--ink)}
-.customer-history-detail-v577,.customer-history-address-v577{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.customer-history-book-v577{flex:0 0 auto;white-space:nowrap}
+/* nestly_v580 (owner, photo 6) supersedes v577's History-only row: ONE row for all three booking
+   tabs. The calendar date tile is gone ("don't need this calendar logo") and the date is plain
+   text at the row's end, above the action. */
+.customer-booking-rows-v580{display:grid;gap:10px}
+.customer-booking-row-v580{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;
+  align-items:center;padding:14px 16px}
+.customer-booking-row-logo-v580{flex:0 0 auto;line-height:0}
+.customer-booking-row-logo-v580 img,.customer-booking-row-logo-v580 .customer-booking-logo{
+  width:44px;height:44px;border-radius:12px;object-fit:cover}
+.customer-booking-row-copy-v580{min-width:0;display:grid;gap:2px}
+.customer-booking-row-copy-v580>b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-detail-v580{margin:0;font-size:13.5px;color:var(--ink2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
+.customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+.customer-booking-act-v580{white-space:nowrap}
 @media(max-width:560px){
-  .customer-history-row-v577{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
-  .customer-history-book-v577{grid-column:2;justify-self:start}
+  .customer-booking-row-v580{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
+  .customer-booking-row-end-v580{grid-column:2;justify-items:start;
+    grid-auto-flow:column;align-items:center;gap:10px}
 }
 
 /* Photo 23 — "delete this space" against the gap under the last Home card, and "scroll to here

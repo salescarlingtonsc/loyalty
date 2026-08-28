@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="7b853e637c93e0405f7ac1cf265a2987ab1b281d6ce8c2fd3bb2bf16599daedf">
+<meta name="v104-production-source-sha256" content="9b7197e0d27c58e6a434779d3ef42fccef0fd77351803a713aaef6b360e3980e">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -4889,6 +4889,70 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    a size tag. */
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
+/* ==================== nestly_v580 — the two filter bars the owner re-ringed ==================
+   Photo 1, Sales & refunds: "fix this alignment !!!" — From and To sit taller than Customer
+   search, so their labels ride up and the three do not line up.
+   Photo 2, Customer intelligence: "alignment fix!" — Run report drawn ON TOP of the To box.
+
+   These are the same family v577 measured, and each needed something v577 did not do.
+
+   (a) The OVERLAP on Customer intelligence is v577's width defect in a bar that rule never named.
+       `.range>label>input` already sets width:100%, but with no min-width:0 the UA's intrinsic
+       date width still wins, the input overflows the label it lives in, and the next flex item —
+       Run report — is drawn over it. Same fix as v577, applied to the shape it missed: the label
+       and its control must BOTH be allowed to shrink.
+
+   (b) The ALIGNMENT on Sales & refunds is not fixable by pinning heights, and that is why V225,
+       v571 and v577 all failed at it in turn: they each set height:var(--control-h) on every
+       control, which measures correctly in Chromium (verified: identical label tops, input tops
+       and 44px heights) and still comes out wrong on iPad Safari, where a date input's internal
+       layout can exceed a height it has been given.
+
+       So alignment stops depending on every control agreeing about its own height. The row is a
+       grid with two explicit tracks — labels in one, controls in the other — and each cell opts
+       into them with subgrid. Every label then shares one baseline and every control shares
+       another BY CONSTRUCTION, whatever any individual control decides it is worth. Safari has
+       supported subgrid since 16; where it is missing the previous height pin is still in force,
+       so this degrades to exactly today's behaviour rather than to something worse. */
+/* Photo 3: the pending-booking count on the header Appointment button. The badge markup is the
+   rail's own (.nav-badge), so it cannot drift in style or in value; only the slot is new. The
+   rail's badge uses margin-left:auto to sit at the row's end — wrong inside a button, where it
+   must sit against the label — so that one property is reset here. */
+.global-act-badge-v580{display:inline-flex;align-items:center;margin-left:6px}
+.global-act-badge-v580:empty{display:none}
+.global-act-badge-v580 .nav-badge{margin-left:0;min-width:20px;height:20px;font-size:10.5px}
+
+/* Photo 5, My Rewards: "shorten the red bar" — the pink "N rewards ready" pill runs the full
+   width of the card's copy column instead of hugging its words.
+
+   It already declares display:inline-flex, which would hug. But its parent
+   .customer-programme-card-copy is display:grid, and a grid item is BLOCKIFIED — inline-flex
+   computes to flex — so it stretches the track like any other block. justify-self is what an
+   inline-flex would have given for free; width:fit-content covers the flex-parent case too, and
+   max-width keeps a long status ellipsising inside the card rather than pushing it wider. */
+.customer-programme-card-status-v346.is-ready-v392{justify-self:start;align-self:start;
+  width:fit-content;max-width:100%}
+
+/* Photo 4, Limited offers: "i don't want blurred background". V421 filled the letterbox around a
+   non-matching aspect with a blurred, darkened copy of the artwork. The owner wants the plain
+   card ground instead. The MEDIA BOX and object-fit:contain stay exactly as they are — this only
+   removes the two decorative pseudo-elements, so the whole picture is still shown uncropped
+   (V173/V421's rule) on a clean background. */
+.customer-home-offer-media.has-art-v421::before,
+.customer-home-offer-media.has-art-v421::after{content:none}
+.customer-home-offer-media.has-art-v421{background:var(--card,#fff)}
+
+.sales-filter-row>label>input,
+.range>label>input,.range>label>select{min-width:0;max-width:100%}
+.range>label{min-width:0;flex:0 1 auto}
+.range>label>input[type=date]{width:150px}
+@supports (grid-template-rows: subgrid){
+  .sales-filter-row,.sales-filter-row.secondary{grid-template-rows:auto auto;align-items:start}
+  .sales-filter-row>div{display:grid;grid-template-rows:subgrid;grid-row:span 2;row-gap:6px}
+  .sales-filter-row>div>label{margin:0;align-self:end}
+  .sales-filter-row>.btn{grid-row:2;align-self:stretch}
+}
+
 /* ============================ nestly_v577 — customer display titles ==========================
    Owner, photo 22: "Nice to see you again.", "40 rewards ready", "Limited offers" and "View all ›"
    each ringed, with one note — "those title font can change to cuter font like this" — and an
@@ -4951,19 +5015,28 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-search-v577 input:focus{outline:none}
 .customer-booking-search-v577:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
 
-/* Photo 20 — History as one flat, date-ordered list rather than a card per business. */
-.customer-history-list-v577{display:grid;gap:10px}
-.customer-history-row-v577{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 16px}
-.customer-history-copy-v577{min-width:0;display:grid;gap:2px}
-.customer-history-who-v577{display:flex;align-items:center;gap:8px;min-width:0}
-.customer-history-who-v577 b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
-.customer-history-who-v577 img,.customer-history-who-v577 .customer-booking-logo{width:28px;height:28px;border-radius:9px;flex:0 0 auto}
-.customer-history-when-v577{margin:0;font-size:13.5px;font-weight:650;color:var(--ink)}
-.customer-history-detail-v577,.customer-history-address-v577{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.customer-history-book-v577{flex:0 0 auto;white-space:nowrap}
+/* nestly_v580 (owner, photo 6) supersedes v577's History-only row: ONE row for all three booking
+   tabs. The calendar date tile is gone ("don't need this calendar logo") and the date is plain
+   text at the row's end, above the action. */
+.customer-booking-rows-v580{display:grid;gap:10px}
+.customer-booking-row-v580{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;
+  align-items:center;padding:14px 16px}
+.customer-booking-row-logo-v580{flex:0 0 auto;line-height:0}
+.customer-booking-row-logo-v580 img,.customer-booking-row-logo-v580 .customer-booking-logo{
+  width:44px;height:44px;border-radius:12px;object-fit:cover}
+.customer-booking-row-copy-v580{min-width:0;display:grid;gap:2px}
+.customer-booking-row-copy-v580>b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-detail-v580{margin:0;font-size:13.5px;color:var(--ink2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
+.customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+.customer-booking-act-v580{white-space:nowrap}
 @media(max-width:560px){
-  .customer-history-row-v577{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
-  .customer-history-book-v577{grid-column:2;justify-self:start}
+  .customer-booking-row-v580{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
+  .customer-booking-row-end-v580{grid-column:2;justify-items:start;
+    grid-auto-flow:column;align-items:center;gap:10px}
 }
 
 /* Photo 23 — "delete this space" against the gap under the last Home card, and "scroll to here
@@ -5032,7 +5105,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 7b853e637c93e0405f7ac1cf265a2987ab1b281d6ce8c2fd3bb2bf16599daedf</p>
+  <p class="v104-provenance">Local production-render harness · source 9b7197e0d27c58e6a434779d3ef42fccef0fd77351803a713aaef6b360e3980e</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -5044,7 +5117,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="7b853e637c93e0405f7ac1cf265a2987ab1b281d6ce8c2fd3bb2bf16599daedf";
+const PRODUCTION_SOURCE_SHA256="9b7197e0d27c58e6a434779d3ef42fccef0fd77351803a713aaef6b360e3980e";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

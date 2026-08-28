@@ -1916,7 +1916,13 @@ function globalActionsHtml(){
     </div>`:''}
     <div class="global-quick">
       ${canQuickEarn?`<button type="button" class="btn sm global-act" id="globalQuickEarn" title="Record sale"><span class="ic" aria-hidden="true">${CUI.icon('till',{size:16})}</span><span>Record sale</span></button>`:''}
-      ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'Appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:16})}</span><span>${canNewAppt?'Appointment':'View calendar'}</span></button>`:''}
+      ${/* nestly_v580 (owner mark, photo 3: the Appointments rail badge circled with an arrow to
+           this button — "here also show"). The SAME pendingBookingRequestCountV329 the rail badge
+           reads, in a second slot, so the two can never disagree: refreshPendingBookingRequest
+           CountNowV370 repaints every [data-appointments-badge-slot] it finds, and this is now one
+           of them. This is where v577 removed the wordy "N awaiting confirmation" chip; the number
+           the owner actually wanted is back, on the control it belongs to. */''}
+      ${canViewAppts?`<button type="button" class="btn ghost sm global-act" id="globalNewAppt" data-workspace-i18n title="${canNewAppt?'Appointment':'View calendar'}"><span class="ic" aria-hidden="true">${CUI.icon('appointments',{size:16})}</span><span>${canNewAppt?'Appointment':'View calendar'}</span><span class="global-act-badge-v580" data-appointments-badge-slot>${appointmentsNavBadgeHtml()}</span></button>`:''}
     </div>
   </div>`;
 }

@@ -2823,6 +2823,12 @@
       "path": "db/migrations/20260828_nestly_v580_appointment_send_follows_the_appointment.sql",
       "semanticVersion": "v580",
       "proposedDeployVersion": "20260828130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v581_appointment_branch_address.sql",
+      "semanticVersion": "v581",
+      "proposedDeployVersion": "20260828140000"
     }
   ]
 }
