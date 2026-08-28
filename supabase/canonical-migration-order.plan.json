@@ -2860,6 +2860,12 @@
       "version": "20260829120000",
       "name": "nestly_v588_staff_signup_flow_integrity",
       "sourcePath": "db/migrations/20260829_nestly_v588_staff_signup_flow_integrity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829130000",
+      "name": "nestly_v589_referral_switch_is_one_switch",
+      "sourcePath": "db/migrations/20260829_nestly_v589_referral_switch_is_one_switch.sql"
     }
   ]
 }

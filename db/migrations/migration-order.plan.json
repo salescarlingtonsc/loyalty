@@ -2865,6 +2865,12 @@
       "path": "db/migrations/20260829_nestly_v588_staff_signup_flow_integrity.sql",
       "semanticVersion": "v588",
       "proposedDeployVersion": "20260829120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v589_referral_switch_is_one_switch.sql",
+      "semanticVersion": "v589",
+      "proposedDeployVersion": "20260829130000"
     }
   ]
 }
