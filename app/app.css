@@ -395,6 +395,10 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .sales-filter-row>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 .sales-filter-row>div>label{margin:0 0 6px}
 .sales-filter-row>.btn{align-self:end}
+.wl-period-chip-v571.is-on{background:var(--peekaa-red,var(--coral));border-color:transparent;color:#fff}
+.wl-period-v571 input[type=date]{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
+.sales-filter-row>div>input,
+.sales-filter-row>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
 .record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
 .staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0;padding:14px;border:1px solid #E7DAD2;background:var(--head-tint);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -855,7 +859,11 @@ input[type=range]:focus{box-shadow:none}
 .chart-frame{position:relative;block-size:240px;min-block-size:0;margin-top:12px;overflow:hidden}
 .chart-frame canvas{position:absolute;inset:0;display:block;width:100% !important;height:100% !important;max-height:100%}
 .expiry-days-field[hidden]{display:none}
-.range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.range{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.range>label{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:0;min-width:0}
+.range>label>input,.range>label>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0;width:100%}
+.range>.btn{align-self:flex-end}
+.range>span[aria-hidden]{align-self:flex-end;padding-bottom:calc(var(--control-h) / 2 - .5em)}
 .range input{width:auto}
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
@@ -1919,6 +1927,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
 .pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
 .pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);

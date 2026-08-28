@@ -634,7 +634,10 @@ test('waitlist terminal booked rows are labelled as conversions, never proven se
   ],start);
   assert.equal(summary.bookedToday,2,'the shared terminal state cannot distinguish physical seating from future booking');
   const waitlist=section('async function waitlistPage(){','/* ---------- inventory ---------- */');
-  assert.match(waitlist,/Resolved as booked today/);
+  /* nestly_v571 (owner: "Add filter time here" — Today / Yesterday / date–date). The tile now
+     names the period it is counting, so the word "today" is only one of its possible endings. */
+  assert.match(waitlist,/Resolved as booked \$\{esc\(waitlistPeriodLabelV571\(\)\)\}/);
+  assert.match(waitlist,/const waitlistPeriodV571=\{mode:'today'/,'today is still the default');
   /* nestly_v571 (owner mark: the disclaimer sentence scribbled out, "remove this wording"). The
      invariant it existed to protect is that the tile must never claim physical seating — that is
      what the doesNotMatch below has always enforced, and it still does. The prose is gone; the

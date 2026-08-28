@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="96bc8db5e27e5bf64d6e9cf6784a9d8c10d291cddb7c517875e12d4c4e25d0db"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3f54f4431a50c1e7cd284d2466f4fd8e59d5e764c792da7ba4b9486fa7dfd978"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -642,6 +642,19 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .sales-filter-row>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 .sales-filter-row>div>label{margin:0 0 6px}
 .sales-filter-row>.btn{align-self:end}
+/* nestly_v571: the Waitlist period chips. Pressed state is a filled chip, matching the Today /
+   Tomorrow pair on the Dashboard schedule so the two read as the same control. */
+.wl-period-chip-v571.is-on{background:var(--peekaa-red,var(--coral));border-color:transparent;color:#fff}
+.wl-period-v571 input[type=date]{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
+/* nestly_v571 (owner, two photos, the same complaint on both: the From / To / search boxes
+   ringed on Sales & refunds and on Customer intelligence — "fix this boxes misalignment cause
+   it's overlapping"). Same cause as V225 on the appointments bar: input[type=date] and
+   input[type=search] have DIFFERENT intrinsic heights (a date input is markedly taller on iPad
+   Safari, which is what the owner is looking at). The cells are bottom-aligned, so the taller
+   control pushed its own label up into the box beside it. Pinning one explicit height on every
+   control in the bar removes the variable, exactly as V225 did. */
+.sales-filter-row>div>input,
+.sales-filter-row>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
 .record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
 .staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0;padding:14px;border:1px solid #E7DAD2;background:var(--head-tint);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -1229,7 +1242,16 @@ input[type=range]:focus{box-shadow:none}
 .chart-frame{position:relative;block-size:240px;min-block-size:0;margin-top:12px;overflow:hidden}
 .chart-frame canvas{position:absolute;inset:0;display:block;width:100% !important;height:100% !important;max-height:100%}
 .expiry-days-field[hidden]{display:none}
-.range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.range{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+/* nestly_v571 (owner, Customer intelligence photo). Each control here is wrapped in an inline
+   <label> that holds its caption as loose text ("From <input>"). With a tall date input that
+   caption had nowhere to go but on top of the box. Every cell is its own bottom-aligned column
+   now — caption over control, one baseline for each — and the controls share one height, so the
+   arrow and the two buttons line up with them instead of floating. */
+.range>label{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:0;min-width:0}
+.range>label>input,.range>label>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0;width:100%}
+.range>.btn{align-self:flex-end}
+.range>span[aria-hidden]{align-self:flex-end;padding-bottom:calc(var(--control-h) / 2 - .5em)}
 .range input{width:auto}
 /* segmented control, iOS-style */
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
@@ -2808,6 +2830,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
 .pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
 .pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+/* nestly_v571 (owner, boot photo: the whole white card ringed — "remove the outer white box" —
+   with an arrow from the logo tile to the page behind it, "this background color same with this
+   color"). #F4EEE0 is not a guess: it is the top-left pixel of peekaa-loading-poster.png, so the
+   tile edge and the page are literally the same value and the seam the owner circled disappears.
+   The panel keeps its aria-busy and its status line; only the card surface is gone.
+   The colour is stated on the boot shell rather than on body, because this element is replaced
+   wholesale by the router's first paint and must not leave a tint behind on the real app. */
+[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -4743,7 +4775,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 96bc8db5e27e5bf64d6e9cf6784a9d8c10d291cddb7c517875e12d4c4e25d0db</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3f54f4431a50c1e7cd284d2466f4fd8e59d5e764c792da7ba4b9486fa7dfd978</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5047,14 +5079,22 @@ function staffPerformanceAggregation(rows,staffRows){
   }),{ledgerRecords:0,revenueRecords:0,revenue:0,commission:0});
   return {names,byStaff,keys,totals};
 }
-function waitlistTodaySummary(rows,dayStartMs){
+/* nestly_v571 (owner, Waitlist photo: "Add filter time here" over Today / Yesterday / date–date).
+   The window is now a range rather than "everything since midnight". `windowEndMs` is exclusive
+   and defaults to +infinity, which reproduces the shipped today-onwards behaviour exactly for
+   every caller that passes one argument. The QUEUE is deliberately not filtered: somebody
+   sitting in the shop waiting must never disappear because staff were looking at yesterday. */
+function waitlistTodaySummary(rows,windowStartMs,windowEndMs=Infinity){
   const all=Array.isArray(rows)?rows:[];
   const queue=all.filter(row=>row.status==='waiting'||row.status==='contacted');
-  const today=all.filter(row=>new Date(row.created_at).getTime()>=dayStartMs);
+  const inWindow=all.filter(row=>{
+    const at=new Date(row.created_at).getTime();
+    return at>=windowStartMs&&at<windowEndMs;
+  });
   return {
     queue,
-    added:today.length,
-    bookedToday:today.filter(row=>row.status==='booked').length
+    added:inWindow.length,
+    bookedToday:inWindow.filter(row=>row.status==='booked').length
   };
 }
 async function fetchAllRows(makeQuery,pageSize=DATA_API_PAGE_SIZE){
@@ -7042,7 +7082,14 @@ function activitySaleItemsTextV518(h){
    came from. */
 function activitySaleBreakdownV541(h,earnedPoints=0){
   const lines=Array.isArray(h&&h.items)?h.items.slice():[];
-  if(!lines.length)return '';
+  /* nestly_v571 (owner, Customer 360 photo: "Other item" ringed — "for other item: i need to see
+     the details"). v541 returned nothing at all for a sale with no line rows, so the one row the
+     owner most wanted to interrogate was the only row that would not open. Those sales are not
+     broken: a till entry made before v51 shipped line items, a package session, an appointment
+     completion — the meaning is in the amount, the kind and the reason, not in a list of goods.
+     So the panel opens and states what IS recorded, and says plainly that no per-item lines
+     exist rather than manufacturing one from the row's own label. */
+  if(!lines.length)return activitySaleNoLinesPanelV571(h,earnedPoints);
   lines.sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')));
   const saleCents=Math.max(0,Number(h.amount??h.amount_cents)||0);
   const earned=Math.max(0,Math.round(Number(earnedPoints)||0));
@@ -7080,6 +7127,25 @@ function activitySaleBreakdownV541(h,earnedPoints=0){
   </div>`;
 }
 const DASH_V541='—';
+/* The honest panel for a sale that carries no line items. Every figure here is read straight off
+   the row; nothing is derived, and the absence of lines is reported as an absence. */
+function activitySaleNoLinesPanelV571(h,earnedPoints=0){
+  const cents=Number((h&&(h.amount??h.amount_cents))??NaN);
+  const kind=String((h&&h.saleKind)||'').replace(/_/g,' ').trim();
+  const note=String((h&&h.note)||'').trim();
+  const earned=Math.max(0,Math.round(Number(earnedPoints)||0));
+  const facts=[
+    ['What was recorded',note&&note!==SALE_KERNEL_NOTE_V518?note:(kind||'a sale')],
+    ['Type',kind||'sale'],
+    Number.isFinite(cents)?['Amount',money(cents)]:null,
+    ['Points earned',earned?customerPointTotalV103(earned):'None']
+  ].filter(Boolean);
+  return `<div class="c360-act-breakdown-v541">
+    <table class="cui-table"><tbody>${facts.map(([label,value])=>
+      `<tr><th scope="row" style="text-align:left;font-weight:600">${esc(label)}</th><td>${esc(String(value))}</td></tr>`).join('')}</tbody></table>
+    <p class="muted small" style="margin-top:6px">No per-item lines were recorded for this sale, so there is nothing further to break down. Sales rung up before itemised receipts, package sessions and completed appointments all record their value this way.</p>
+  </div>`;
+}
 /* The human description of a sale row, used both in its own ITEM cell and when another row has
    to refer to it. Never an id: the owner cannot act on a UUID.
    v517: the goods outrank both the note and the kind word. A cart checkout used to describe
@@ -7330,7 +7396,7 @@ function renderHistPage(history,n,offsetV468=0){
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
       <td data-label="Staff">${cell.staff||DASH_V252}</td>
     </tr>${breakdown?`<tr class="c360-act-breakdown-row-v541"><td colspan="6">
-      <details class="c360-act-details-v541"><summary>What was sold${h.items&&h.items.length>1?` · ${h.items.length} items`:''}</summary>${breakdown}</details>
+      <details class="c360-act-details-v541"><summary>${h.items&&h.items.length?`What was sold${h.items.length>1?` · ${h.items.length} items`:''}`:'Sale details'}</summary>${breakdown}</details>
     </td></tr>`:''}`;
   }).join('')}</tbody></table></div>`;
 }
@@ -8698,7 +8764,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'96bc8db5e27e5bf64d6e9cf6784a9d8c10d291cddb7c517875e12d4c4e25d0db',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'3f54f4431a50c1e7cd284d2466f4fd8e59d5e764c792da7ba4b9486fa7dfd978',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

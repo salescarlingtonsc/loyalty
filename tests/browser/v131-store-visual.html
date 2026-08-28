@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ad1de501c04c612621a7c2376909a9f94a0e767d42d16698a16075db3d24dfd1"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="a616e6de8b3f8c50054d283764b37cdcc1025b92169b6d6b3f2cf793f48d9065"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -641,6 +641,19 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .sales-filter-row>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 .sales-filter-row>div>label{margin:0 0 6px}
 .sales-filter-row>.btn{align-self:end}
+/* nestly_v571: the Waitlist period chips. Pressed state is a filled chip, matching the Today /
+   Tomorrow pair on the Dashboard schedule so the two read as the same control. */
+.wl-period-chip-v571.is-on{background:var(--peekaa-red,var(--coral));border-color:transparent;color:#fff}
+.wl-period-v571 input[type=date]{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
+/* nestly_v571 (owner, two photos, the same complaint on both: the From / To / search boxes
+   ringed on Sales & refunds and on Customer intelligence — "fix this boxes misalignment cause
+   it's overlapping"). Same cause as V225 on the appointments bar: input[type=date] and
+   input[type=search] have DIFFERENT intrinsic heights (a date input is markedly taller on iPad
+   Safari, which is what the owner is looking at). The cells are bottom-aligned, so the taller
+   control pushed its own label up into the box beside it. Pinning one explicit height on every
+   control in the bar removes the variable, exactly as V225 did. */
+.sales-filter-row>div>input,
+.sales-filter-row>div>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0}
 .sales-date-v154{display:grid;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums}.sales-date-v154 span:last-child{color:var(--muted);font-size:12px}
 .record-status{font-weight:750;color:var(--ink)}.sales-audit-details{margin-top:4px}.sales-audit-details summary{color:var(--muted);font-size:12px;cursor:pointer}
 .staff-performance-filterbar{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;align-items:end;margin:14px 0;padding:14px;border:1px solid #E7DAD2;background:var(--head-tint);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -1228,7 +1241,16 @@ input[type=range]:focus{box-shadow:none}
 .chart-frame{position:relative;block-size:240px;min-block-size:0;margin-top:12px;overflow:hidden}
 .chart-frame canvas{position:absolute;inset:0;display:block;width:100% !important;height:100% !important;max-height:100%}
 .expiry-days-field[hidden]{display:none}
-.range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.range{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+/* nestly_v571 (owner, Customer intelligence photo). Each control here is wrapped in an inline
+   <label> that holds its caption as loose text ("From <input>"). With a tall date input that
+   caption had nowhere to go but on top of the box. Every cell is its own bottom-aligned column
+   now — caption over control, one baseline for each — and the controls share one height, so the
+   arrow and the two buttons line up with them instead of floating. */
+.range>label{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:0;min-width:0}
+.range>label>input,.range>label>select{height:var(--control-h);min-height:var(--control-h);box-sizing:border-box;margin:0;width:100%}
+.range>.btn{align-self:flex-end}
+.range>span[aria-hidden]{align-self:flex-end;padding-bottom:calc(var(--control-h) / 2 - .5em)}
 .range input{width:auto}
 /* segmented control, iOS-style */
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
@@ -2807,6 +2829,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
 .pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
 .pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
+/* nestly_v571 (owner, boot photo: the whole white card ringed — "remove the outer white box" —
+   with an arrow from the logo tile to the page behind it, "this background color same with this
+   color"). #F4EEE0 is not a guess: it is the top-left pixel of peekaa-loading-poster.png, so the
+   tile edge and the page are literally the same value and the seam the owner circled disappears.
+   The panel keeps its aria-busy and its status line; only the card surface is gone.
+   The colour is stated on the boot shell rather than on body, because this element is replaced
+   wholesale by the router's first paint and must not leave a tint behind on the real app. */
+[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);

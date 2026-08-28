@@ -53,13 +53,25 @@ test('the RPC resolves ownership exactly as the reader does, and only un-actione
 
 /* ------------------------------------------------------------------ the offer deep link */
 
-test('the offer route never gates a stranger behind sign-in', () => {
-  const route = section(appJs, "if(h.startsWith('#/offer/'))", 'const directCustomerDestination');
-  assert.ok(route.length < 900, 'the offer branch sits BEFORE the signed-out destination guard');
+/* nestly_v571 (owner, shared-offer photo, arrow from "View this offer"): "will bring me to their
+   business page & ask to register first if I have not registered. If I have registered, clicking
+   this will bring me to the business page showing this offer details."
+   That overrules v290's rule that a share link must never meet a sign-in wall — the owner wants
+   the wall, because registering is the point of sharing the offer. The destination changes from
+   #/b/<slug> (the BOOKING portal) to #/wallet/<slug> (the business profile), which is the route
+   the router already knows how to remember across registration. */
+test('v571 a stranger opening a shared offer is asked to register, then lands on the business profile', () => {
   const landing = section(appJs, 'async function renderCustomerOfferLandingV290', 'async function renderCustomerMessages');
   assert.match(landing, /if\(!S\.user\)\{/);
-  assert.match(landing, /nav\(slug\?`#\/b\/\$\{encodeURIComponent\(slug\)\}`:'#\/wallet'\)/,
-    'a signed-out recipient forwards to the public business page, never a sign-in wall');
+  assert.match(landing, /nav\(slug\?`#\/wallet\/\$\{encodeURIComponent\(slug\)\}`:'#\/wallet'\)/,
+    'the destination is the business profile, which the signed-out guard turns into register-then-land');
+  assert.doesNotMatch(landing, /`#\/b\/\$\{encodeURIComponent\(slug\)\}`/,
+    'the booking portal is not where a shared OFFER belongs');
+  /* The router branch that makes the promise good: a remembered destination plus the business
+     intent, so registration returns the new member to the business they were sent to. */
+  const route = section(appJs, 'const directCustomerDestination', 'if(!S.user&&h===\'#/join\')');
+  assert.match(route, /rememberPendingCustomerDestination\(directCustomerDestination\)/);
+  assert.match(route, /return renderCustomerRegistration\(isRouteCurrent\)/);
   assert.match(landing, /^[\s\S]*?\/\^\[0-9a-f\]\{8\}/m, 'junk ids are refused before any fetch');
 });
 

@@ -3292,9 +3292,19 @@ async function renderCustomerOfferLandingV290(offerId){
   const id=String(offerId||'').trim().toLowerCase();
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id))return nav('#/wallet');
   if(!S.user){
+    /* nestly_v571 (owner, shared-offer photo: "when I click view this offer, will bring me to
+       their business page & ask to register first if I have not registered; if I have registered,
+       clicking this will bring me to the business page showing this offer details"). v290 sent a
+       signed-out visitor to #/b/<slug> — the BOOKING portal — on the reasoning that a share link
+       should never meet a sign-in wall. The owner has overruled that: the destination is the
+       business PROFILE, and registering is the step that gets you there.
+       #/wallet/<slug> is what makes that happen without new machinery — the router already
+       remembers a customer destination, stores the business intent and shows registration
+       first, then lands the new member exactly there. The signed-in half below is unchanged and
+       already does the second thing the owner describes. */
     const {data}=await customerRpc('offer_share_page_v268',{p_offer:id});
     const slug=String(data?.business_slug||'').trim();
-    return nav(slug?`#/b/${encodeURIComponent(slug)}`:'#/wallet');
+    return nav(slug?`#/wallet/${encodeURIComponent(slug)}`:'#/wallet');
   }
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;

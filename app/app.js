@@ -2868,14 +2868,22 @@ function staffPerformanceAggregation(rows,staffRows){
   }),{ledgerRecords:0,revenueRecords:0,revenue:0,commission:0});
   return {names,byStaff,keys,totals};
 }
-function waitlistTodaySummary(rows,dayStartMs){
+/* nestly_v571 (owner, Waitlist photo: "Add filter time here" over Today / Yesterday / date–date).
+   The window is now a range rather than "everything since midnight". `windowEndMs` is exclusive
+   and defaults to +infinity, which reproduces the shipped today-onwards behaviour exactly for
+   every caller that passes one argument. The QUEUE is deliberately not filtered: somebody
+   sitting in the shop waiting must never disappear because staff were looking at yesterday. */
+function waitlistTodaySummary(rows,windowStartMs,windowEndMs=Infinity){
   const all=Array.isArray(rows)?rows:[];
   const queue=all.filter(row=>row.status==='waiting'||row.status==='contacted');
-  const today=all.filter(row=>new Date(row.created_at).getTime()>=dayStartMs);
+  const inWindow=all.filter(row=>{
+    const at=new Date(row.created_at).getTime();
+    return at>=windowStartMs&&at<windowEndMs;
+  });
   return {
     queue,
-    added:today.length,
-    bookedToday:today.filter(row=>row.status==='booked').length
+    added:inWindow.length,
+    bookedToday:inWindow.filter(row=>row.status==='booked').length
   };
 }
 async function fetchAllRows(makeQuery,pageSize=DATA_API_PAGE_SIZE){
@@ -6999,9 +7007,19 @@ async function renderCustomerOfferLandingV290(offerId){
   const id=String(offerId||'').trim().toLowerCase();
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id))return nav('#/wallet');
   if(!S.user){
+    /* nestly_v571 (owner, shared-offer photo: "when I click view this offer, will bring me to
+       their business page & ask to register first if I have not registered; if I have registered,
+       clicking this will bring me to the business page showing this offer details"). v290 sent a
+       signed-out visitor to #/b/<slug> — the BOOKING portal — on the reasoning that a share link
+       should never meet a sign-in wall. The owner has overruled that: the destination is the
+       business PROFILE, and registering is the step that gets you there.
+       #/wallet/<slug> is what makes that happen without new machinery — the router already
+       remembers a customer destination, stores the business intent and shows registration
+       first, then lands the new member exactly there. The signed-in half below is unchanged and
+       already does the second thing the owner describes. */
     const {data}=await customerRpc('offer_share_page_v268',{p_offer:id});
     const slug=String(data?.business_slug||'').trim();
-    return nav(slug?`#/b/${encodeURIComponent(slug)}`:'#/wallet');
+    return nav(slug?`#/wallet/${encodeURIComponent(slug)}`:'#/wallet');
   }
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
@@ -8876,9 +8894,16 @@ function customerReferralCardMarkupV300(card,business){
   </section>`;
 }
 async function shareCustomerReferralV300(card,business){
+  /* nestly_v571 (owner, Refer a friend photo, arrow from Share: "share this link to friends for
+     register for this business"). It shared #/b/<slug>, the booking portal — a friend who opened
+     it was invited to book a slot, not to join the programme the code pays out on. #/wallet/<slug>
+     is the business's customer profile, and for somebody with no account the router asks them to
+     register first and then lands them there, which is the journey the code needs them to take.
+     The code itself still travels in the message text (referralShareMessage): attributing it
+     automatically from the link would need a server change this does not make. */
   const slug=String(business?.slug||'').trim();
   let url='';
-  try{url=slug?NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`):''}catch{}
+  try{url=slug?NestlyNativeBridge.publicUrl(`/#/wallet/${encodeURIComponent(slug)}`):''}catch{}
   if(!url)return toast('This business has no public page to share yet.');
   const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
   const businessId=String(business?.id||'');
@@ -21642,7 +21667,14 @@ function activitySaleItemsTextV518(h){
    came from. */
 function activitySaleBreakdownV541(h,earnedPoints=0){
   const lines=Array.isArray(h&&h.items)?h.items.slice():[];
-  if(!lines.length)return '';
+  /* nestly_v571 (owner, Customer 360 photo: "Other item" ringed — "for other item: i need to see
+     the details"). v541 returned nothing at all for a sale with no line rows, so the one row the
+     owner most wanted to interrogate was the only row that would not open. Those sales are not
+     broken: a till entry made before v51 shipped line items, a package session, an appointment
+     completion — the meaning is in the amount, the kind and the reason, not in a list of goods.
+     So the panel opens and states what IS recorded, and says plainly that no per-item lines
+     exist rather than manufacturing one from the row's own label. */
+  if(!lines.length)return activitySaleNoLinesPanelV571(h,earnedPoints);
   lines.sort((a,b)=>String(a&&a.created_at||'').localeCompare(String(b&&b.created_at||'')));
   const saleCents=Math.max(0,Number(h.amount??h.amount_cents)||0);
   const earned=Math.max(0,Math.round(Number(earnedPoints)||0));
@@ -21680,6 +21712,25 @@ function activitySaleBreakdownV541(h,earnedPoints=0){
   </div>`;
 }
 const DASH_V541='—';
+/* The honest panel for a sale that carries no line items. Every figure here is read straight off
+   the row; nothing is derived, and the absence of lines is reported as an absence. */
+function activitySaleNoLinesPanelV571(h,earnedPoints=0){
+  const cents=Number((h&&(h.amount??h.amount_cents))??NaN);
+  const kind=String((h&&h.saleKind)||'').replace(/_/g,' ').trim();
+  const note=String((h&&h.note)||'').trim();
+  const earned=Math.max(0,Math.round(Number(earnedPoints)||0));
+  const facts=[
+    ['What was recorded',note&&note!==SALE_KERNEL_NOTE_V518?note:(kind||'a sale')],
+    ['Type',kind||'sale'],
+    Number.isFinite(cents)?['Amount',money(cents)]:null,
+    ['Points earned',earned?customerPointTotalV103(earned):'None']
+  ].filter(Boolean);
+  return `<div class="c360-act-breakdown-v541">
+    <table class="cui-table"><tbody>${facts.map(([label,value])=>
+      `<tr><th scope="row" style="text-align:left;font-weight:600">${esc(label)}</th><td>${esc(String(value))}</td></tr>`).join('')}</tbody></table>
+    <p class="muted small" style="margin-top:6px">No per-item lines were recorded for this sale, so there is nothing further to break down. Sales rung up before itemised receipts, package sessions and completed appointments all record their value this way.</p>
+  </div>`;
+}
 /* The human description of a sale row, used both in its own ITEM cell and when another row has
    to refer to it. Never an id: the owner cannot act on a UUID.
    v517: the goods outrank both the note and the kind word. A cart checkout used to describe
@@ -21930,7 +21981,7 @@ function renderHistPage(history,n,offsetV468=0){
       <td data-label="Amount" class="c360-act-amt-v252">${cell.amount||DASH_V252}</td>
       <td data-label="Staff">${cell.staff||DASH_V252}</td>
     </tr>${breakdown?`<tr class="c360-act-breakdown-row-v541"><td colspan="6">
-      <details class="c360-act-details-v541"><summary>What was sold${h.items&&h.items.length>1?` · ${h.items.length} items`:''}</summary>${breakdown}</details>
+      <details class="c360-act-details-v541"><summary>${h.items&&h.items.length?`What was sold${h.items.length>1?` · ${h.items.length} items`:''}`:'Sale details'}</summary>${breakdown}</details>
     </td></tr>`:''}`;
   }).join('')}</tbody></table></div>`;
 }
@@ -44286,8 +44337,38 @@ async function waitlistPage(){
   const waitlistLoadGate=createLatestRequestGate(isCurrent);
   waitlistTableTypesV291=tableTypesV291;
 
+  /* nestly_v571 (owner, Waitlist photo: "Add filter time here", with Today / Yesterday / a
+     date–date pair drawn beside it). Today is the default because the queue is a today object;
+     the range exists so yesterday's or last week's resolved rows can be answered for without
+     leaving the page. It governs the RESOLVED tile only — see waitlistTodaySummary. */
+  const waitlistPeriodV571={mode:'today',from:sgDateInputValue(),to:sgDateInputValue()};
+  /* The two chips are shorthands for a range, not a separate mode the rest of the page has to
+     understand — everything downstream reads one {from,to} pair. */
+  const waitlistWindowDatesV571=()=>{
+    if(waitlistPeriodV571.mode==='today'){const d=sgDateInputValue();return {from:d,to:d}}
+    if(waitlistPeriodV571.mode==='yesterday'){const d=shiftSgDateInput(sgDateInputValue(),-1);return {from:d,to:d}}
+    const from=waitlistPeriodV571.from||sgDateInputValue();
+    const to=waitlistPeriodV571.to||from;
+    /* A backwards range is a slip, not an instruction to show nothing. */
+    return from<=to?{from,to}:{from:to,to:from};
+  };
+  const waitlistPeriodLabelV571=()=>{
+    if(waitlistPeriodV571.mode==='today')return 'today';
+    if(waitlistPeriodV571.mode==='yesterday')return 'yesterday';
+    const {from,to}=waitlistWindowDatesV571();
+    return from===to?`on ${from}`:`${from} to ${to}`;
+  };
+  const waitlistPeriodChipV571=(mode,label)=>
+    `<button type="button" class="btn ghost sm wl-period-chip-v571${waitlistPeriodV571.mode===mode?' is-on':''}" data-wl-period-v571="${mode}" aria-pressed="${waitlistPeriodV571.mode===mode?'true':'false'}">${label}</button>`;
+  const waitlistPeriodBarV571=()=>`<div class="row wl-period-v571" role="group" aria-label="Waitlist period" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+      ${waitlistPeriodChipV571('today','Today')}${waitlistPeriodChipV571('yesterday','Yesterday')}
+      <label class="small" style="display:flex;flex-direction:column;gap:4px"><span>From</span><input type="date" id="wlFromV571" value="${esc(waitlistPeriodV571.from)}"></label>
+      <label class="small" style="display:flex;flex-direction:column;gap:4px"><span>To</span><input type="date" id="wlToV571" value="${esc(waitlistPeriodV571.to)}"></label>
+      <button type="button" class="btn sm" id="wlPeriodApplyV571">Apply</button>
+    </div>`;
   routeMain.innerHTML=
     CUI.pageHeader({title:'Waitlist',iconName:'waitlist',canWrite,moduleLabel:'Waitlist'})
+    +`<div id="wlPeriodHostV571">${waitlistPeriodBarV571()}</div>`
     +`<div class="kpis wl-flow" id="wlkpis" style="margin-bottom:18px">${Array.from({length:3},()=>CUI.skeletonCard({lines:2,className:'kpi-skel-plain'})).join('')}</div>`
     +(canWrite?`<section class="card"><div class="cui-card-head"><h2>Add walk-in</h2><p>Fully booked? Add them here and seat them the moment a spot opens.</p></div>
         <div class="wl-add-grid">
@@ -44300,6 +44381,32 @@ async function waitlistPage(){
         </div></section>`:'')
     +`<div id="wlDecisionStatus" role="status" aria-live="polite"></div>
     <section class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Waiting queue</h2><p>Oldest first. Linked booking requests must be confirmed into a real appointment or declined through Bookings.</p></div><div id="wlist">${CUI.skeletonGrid({cards:2,lines:3})}</div></section>`;
+
+  /* Repainting the bar keeps the pressed chip, the two dates and the loaded window as one piece
+     of state — a chip that looked selected while the list showed something else would be worse
+     than no filter at all. */
+  function wireWaitlistPeriodV571(){
+    const host=$('wlPeriodHostV571');if(!host)return;
+    host.querySelectorAll('[data-wl-period-v571]').forEach(button=>{button.onclick=()=>{
+      waitlistPeriodV571.mode=button.dataset.wlPeriodV571;
+      const {from,to}=waitlistWindowDatesV571();
+      waitlistPeriodV571.from=from;waitlistPeriodV571.to=to;
+      repaintWaitlistPeriodV571();loadWl();
+    }});
+    const apply=$('wlPeriodApplyV571');
+    if(apply)apply.onclick=()=>{
+      waitlistPeriodV571.mode='range';
+      waitlistPeriodV571.from=$('wlFromV571')?.value||waitlistPeriodV571.from;
+      waitlistPeriodV571.to=$('wlToV571')?.value||waitlistPeriodV571.to;
+      repaintWaitlistPeriodV571();loadWl();
+    };
+  }
+  function repaintWaitlistPeriodV571(){
+    const host=$('wlPeriodHostV571');if(!host)return;
+    host.innerHTML=waitlistPeriodBarV571();
+    wireWaitlistPeriodV571();
+  }
+  wireWaitlistPeriodV571();
 
   if(canWrite){
     $('wgo').onclick=async()=>{
@@ -44474,12 +44581,19 @@ async function waitlistPage(){
   async function loadWl(){
     const wlist=$('wlist');if(!wlist)return;
     const isLatest=waitlistLoadGate.begin();
-    // SGT day boundary via the app's helpers: SGT 'today' 00:00 expressed as a UTC instant.
-    const dayStartMs=new Date(sgIso(sgt(new Date().toISOString()).slice(0,10)+'T00:00')).getTime();
+    /* SGT day boundaries via the app's helpers, expressed as UTC instants. The END is the start
+       of the day AFTER `to`, so a single-day range covers that whole day rather than stopping at
+       its midnight. */
+    const {from:periodFrom,to:periodTo}=waitlistWindowDatesV571();
+    const dayStartMs=new Date(sgIso(`${periodFrom}T00:00`)).getTime();
+    const dayEndMs=new Date(sgIso(`${shiftSgDateInput(periodTo,1)}T00:00`)).getTime();
     const dayStartIso=new Date(dayStartMs).toISOString();
+    const dayEndIso=new Date(dayEndMs).toISOString();
     const {data:rows,error}=await fetchAllRowsResult(()=>sb.from('waitlist').select('*, services(name)',{count:'exact'})
       .eq('business_id',S.biz.id)
-      .or(`status.in.(waiting,contacted),created_at.gte.${dayStartIso}`)
+      /* Active rows are fetched WHATEVER the period: a walk-in waiting right now is not a
+         historical record and must not vanish because staff opened yesterday. */
+      .or(`status.in.(waiting,contacted),and(created_at.gte.${dayStartIso},created_at.lt.${dayEndIso})`)
       .order('created_at',{ascending:true}).order('id'));
     if(!isLatest()||!isCurrent())return;
     const kpis=$('wlkpis');
@@ -44491,12 +44605,12 @@ async function waitlistPage(){
       const rb=$('wlRetry');if(rb)rb.onclick=loadWl;
       return;
     }
-    const {queue,bookedToday}=waitlistTodaySummary(rows,dayStartMs);
+    const {queue,bookedToday}=waitlistTodaySummary(rows,dayStartMs,dayEndMs);
     setWaitlistBadgeCount(queue.length);
     currentRows=queue;
     if(kpis)kpis.innerHTML=`
       <div class="card kpi"><div class="l">Waiting now</div><div class="v">${queue.length}</div></div>
-      <div class="card kpi"><div class="l">Resolved as booked today</div><div class="v">${bookedToday}</div></div>
+      <div class="card kpi"><div class="l">Resolved as booked ${esc(waitlistPeriodLabelV571())}</div><div class="v">${bookedToday}</div></div>
       `;
     if(!queue.length){
       wlist.innerHTML=CUI.emptyState({iconName:'waitlist',title:'No waiting customers',

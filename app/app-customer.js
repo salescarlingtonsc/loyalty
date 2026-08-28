@@ -3807,9 +3807,16 @@ function customerReferralCardMarkupV300(card,business){
   </section>`;
 }
 async function shareCustomerReferralV300(card,business){
+  /* nestly_v571 (owner, Refer a friend photo, arrow from Share: "share this link to friends for
+     register for this business"). It shared #/b/<slug>, the booking portal — a friend who opened
+     it was invited to book a slot, not to join the programme the code pays out on. #/wallet/<slug>
+     is the business's customer profile, and for somebody with no account the router asks them to
+     register first and then lands them there, which is the journey the code needs them to take.
+     The code itself still travels in the message text (referralShareMessage): attributing it
+     automatically from the link would need a server change this does not make. */
   const slug=String(business?.slug||'').trim();
   let url='';
-  try{url=slug?NestlyNativeBridge.publicUrl(`/#/b/${encodeURIComponent(slug)}`):''}catch{}
+  try{url=slug?NestlyNativeBridge.publicUrl(`/#/wallet/${encodeURIComponent(slug)}`):''}catch{}
   if(!url)return toast('This business has no public page to share yet.');
   const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
   const businessId=String(business?.id||'');

@@ -331,8 +331,11 @@ test('B12 (V468) a page is five rows, and the offset moves the window rather tha
      transactions and will be next page". Executed, not grepped: the renderer is called the way
      the pager calls it and the ROWS that come back are counted. */
   setFilters({});
-  /* Body rows only — the <thead> row is a <tr> too, and counting it would make five read as six. */
-  const rowsIn = html => ((html.slice(html.indexOf('<tbody>')).match(/<tr[ >]/g)) || []).length;
+  /* Count TRANSACTIONS, which is what the owner's limit is about — not <tr> elements. Since
+     nestly_v571 every sale also emits a details row, and that row contains a table of its own, so
+     a <tr> tally counts the header, the disclosures and their innards. The Date cell appears
+     exactly once per transaction and nowhere else. */
+  const rowsIn = html => ((html.match(/data-label="Date"/g)) || []).length;
   const all = fixture();
   const page1 = A.renderHistPage(all, 5, 0);
   assert.equal(rowsIn(page1), 5, 'the first page shows exactly five');
@@ -553,10 +556,20 @@ test('V541 lines that do not add up to the sale are called out, not hidden', () 
     'a silent gap between the lines and the sale is how a reconciliation goes wrong');
 });
 
-test('V541 a sale with no lines opens nothing', () => {
+/* nestly_v571 (owner, Customer 360 photo: the "Other item" row ringed — "for other item: i need
+   to see the details"). v541 opened nothing for a line-less sale, on the reasoning that an EMPTY
+   disclosure is a dead control. That reasoning stands; the panel is simply no longer empty. It
+   states what the row actually records and says outright that there are no per-item lines, which
+   is the answer the owner was looking for and could not get. */
+test('V571 a sale with no lines opens a panel that says what IS recorded', () => {
   const rows = [{ t: '2026-08-19T03:00:00Z', kind: 'sale', id: 'ab12cd34-5566-4777-8888-99aabbccdd01',
     saleKind: 'service', note: 'package session used: 5x facial', amount: 0, staff: 'Aisyah', items: [] }];
   const html = A.renderHistPage(rows, 50);
-  assert.ok(!html.includes('c360-act-details-v541'),
-    'a package session has no lines — an empty disclosure would be a dead control');
+  assert.ok(html.includes('c360-act-details-v541'), 'the row opens');
+  assert.match(html, /Sale details/, 'and does not promise a list of goods it cannot show');
+  const text = visibleText(html);
+  assert.match(text, /package session used: 5x facial/, 'the recorded reason is the headline fact');
+  assert.match(text, /No per-item lines were recorded for this sale/,
+    'the absence is stated, never papered over');
+  assert.doesNotMatch(text, /What was sold/, 'that summary belongs to sales that really have lines');
 });
