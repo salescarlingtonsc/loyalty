@@ -118,11 +118,20 @@ test('home and rewards cards keep points/stamps labels honest and compact',()=>{
     app.indexOf('function customerProgrammeDirectoryStatusV346'));
   const homeFn=app.slice(app.indexOf('function customerHomeBusinessBalanceV345'),
     app.indexOf('function customerHomeBusinessCardV345'));
+  /* nestly_v583 splits these two. The HOME balance is unchanged — v422's ruling stands there in
+     full. The DIRECTORY metric now answers the owner's newer mark on that column (photo 6: "for
+     stamp card, simply state how many stamps left to next rewards"), which asks for the distance
+     to the next reward, not the balance v422 struck. It still prints no balance and no
+     denominator, which is what v422 was protecting. */
+  assert.match(homeFn,/if\(unit==='stamps'\)return ''/,'home balance prints nothing for stamps');
+  assert.doesNotMatch(homeFn.replace(/\/\*[\s\S]*?\*\//g,' '),/stamps`/,
+    'home balance has no stamps figure left to print');
+  assert.match(metricFn,/remaining_units/,
+    'directory metric states the distance the SERVER reports, never its own arithmetic');
+  assert.doesNotMatch(metricFn.replace(/\/\*[\s\S]*?\*\//g,' '),/customerPointTotalV103\(balance\)\}\s*\$\{[^}]*stamps/,
+    'directory metric never prints the stamps BALANCE — the figure v422 struck');
   for(const [name,fn] of [['directory metric',metricFn],['home balance',homeFn]]){
-    assert.match(fn,/if\(unit==='stamps'\)return ''/,`${name} prints nothing for stamps`);
     assert.match(fn,/customerPointTotalV103\(balance\)\} pts/,`${name} still prints points`);
-    assert.doesNotMatch(fn.replace(/\/\*[\s\S]*?\*\//g,' '),/stamps`/,
-      `${name} has no stamps figure left to print`);
   }
   /* An empty figure must not leave an empty slot behind it. */
   assert.match(app,/\$\{metric\?`<div class="customer-programme-card-balance"><b>/,

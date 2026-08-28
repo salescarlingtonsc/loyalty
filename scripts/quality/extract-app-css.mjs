@@ -96,7 +96,7 @@ export const SKELETON_TOKENS = new Set([
      to prevent. `[data-boot-panel]` is listed because it is the second compound of
      `…[data-boot-skeleton] [data-boot-panel]`, and selectorCanMatchSkeleton requires EVERY
      compound to be a known token. */
-  '[data-boot-panel]', '.boot-mark-v577', '.boot-wait-v577', '.boot-wave-v578',
+  '[data-boot-panel]', '.boot-mark-v577',
   '#root', '#toast', '#appStatus', '#appAlert'
 ]);
 

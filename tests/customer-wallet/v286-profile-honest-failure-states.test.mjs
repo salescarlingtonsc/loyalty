@@ -37,7 +37,7 @@ test('v286: account-level controls do not depend on the profile row', () => {
   /* Appearance, sounds, marketing, communications, password, passkeys, device notifications are all
      rendered from one innerHTML that now holds the personal-details card as a variable, so a failed
      profile read can no longer take them off the page. */
-  assert.match(profile, /\$\('walletBody'\)\.innerHTML=`<header class="customer-page-head">[\s\S]*?\$\{personalDetailsHtmlV286\}/);
+  assert.match(profile, /\$\('walletBody'\)\.innerHTML=`<header class="customer-page-head customer-profile-head-v583">[\s\S]*?\$\{personalDetailsHtmlV286\}/);
   for (const id of ['customerAppearance', 'customerExperiencePreferences', 'customerMarketingPreference',
     'customerCommunicationsEntry', 'customerPasswordManage', 'customerPasskeys']) {
     const at = profile.indexOf(`id="${id}"`);

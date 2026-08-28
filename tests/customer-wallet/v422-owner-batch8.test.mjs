@@ -95,7 +95,13 @@ test('photo 4: a stamps firm contributes no balance figure to the My Rewards til
   const { customerProgrammeDirectoryMetricV346: metric } = harness;
   assert.equal(metric(stampsCard(13, 0, true)), '',
     '"13 / 13 stamps" is the figure the owner ringed with "for stamps dont need show this"');
-  assert.equal(metric(stampsCard(2, 3)), '', 'and a part-filled card prints nothing either');
+  /* nestly_v583 supersedes this one case, and only this one. The owner's new mark on the same
+     column (photo 6: "for stamp card, simply state how many stamps left to next rewards") asks for
+     the DISTANCE to the next reward, which is not the figure v422 struck — that was the balance
+     and its denominator, "13 / 13 stamps". A card with nothing outstanding still prints nothing,
+     asserted above, so the struck figure has not come back. */
+  assert.equal(metric(stampsCard(2, 3)), '3 stamps left',
+    'v583: a part-filled card states how far the next reward is');
   /* Points are untouched: a points balance is a number the customer spends and has to know. */
   assert.equal(metric({ loyalty: { balance: 240, unit: 'points' } }), '240 pts');
   /* Membership and packages keep their own figures, and still outrank the points balance. */

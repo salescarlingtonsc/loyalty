@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="46057883a44e0149ef783d4773ba48b01f0e2629786c477f38b12f3aca905d41"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1eff7b3ec197511607519c4f2c9a81f20a26f458bed7822abda66b30b9f2713d"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4906,6 +4906,57 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
        another BY CONSTRUCTION, whatever any individual control decides it is worth. Safari has
        supported subgrid since 16; where it is missing the previous height pin is still in force,
        so this degrades to exactly today's behaviour rather than to something worse. */
+/* ===================== nestly_v583 — customer surfaces, owner batch ==========================
+
+   Photo 4 (Company details) and photo 7 (offer detail): "change this box colour to Peekaa light
+   pink, applies to all business profile". Both screens use the SAME box — .customer-offer-detail-
+   meta — so one rule covers the address/phone block, the other-branch blocks and the offer's
+   validity block, and they cannot drift apart. --peekaa-red-faint is the token this design system
+   already reserves for large tinted surfaces, so this is the brand's pink and not a new colour. */
+.customer-offer-detail-meta{background:var(--peekaa-red-faint,#FDEEEB);border-color:transparent}
+
+/* Photo 5: the business logo and name at the top of the offer sheet, opposite the close button. */
+.customer-offer-detail-head-v583{align-items:center;gap:10px}
+.customer-offer-detail-brand-v583{display:flex;align-items:center;gap:9px;min-width:0}
+.customer-offer-detail-brand-v583>b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}
+.customer-offer-detail-brand-v583 .customer-company-logo{
+  width:34px;height:34px;border-radius:11px;flex:0 0 auto}
+
+/* Photo 9: the Profile gear. Sized and shaped like the other round icon controls on the customer
+   surface (the bell, the back button) so it reads as one of them. */
+.customer-profile-head-v583{display:flex;align-items:flex-start;gap:12px}
+.customer-profile-gear-v583{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--hair);background:var(--card,#fff);
+  color:var(--ink2);line-height:0;transition:color .14s var(--ease),border-color .14s var(--ease),background .14s var(--ease)}
+.customer-profile-gear-v583:hover,
+.customer-profile-gear-v583[aria-expanded="true"]{color:var(--peekaa-red,var(--coral));
+  border-color:var(--peekaa-red,var(--coral));background:var(--peekaa-red-faint,var(--tint))}
+#customerProfileSettingsV583[hidden]{display:none}
+
+/* Photo 11: "want glued together become a list" — the booking rows were separate cards with gaps.
+   One card now, rows divided by hairlines, like the Messages list. The row's own grid is
+   unchanged, so v581's alignment and the v580 format still hold; only the container changed. */
+.customer-booking-rows-v580{gap:0;background:var(--card,#fff);border-radius:var(--r);
+  box-shadow:var(--shadow);overflow:hidden}
+.customer-booking-row-v580{border-radius:0;box-shadow:none;background:transparent;
+  border-bottom:1px solid var(--hair)}
+.customer-booking-row-v580:last-child{border-bottom:0}
+
+/* nestly_v583 (owner, photo 1 — the Device notifications card struck out for the THIRD time,
+   with the ruling "remove from messages, because it is already inside the !").
+
+   v571 declared the park as an attribute and v579 put that attribute in the markup, and the card
+   still came back: visibility was being decided by JavaScript in two places (this page parks it,
+   customer-push.js repaints it from push state), and a race between them is not something an
+   attribute alone can settle.
+
+   So the park stops being a hint and becomes a fact. A parked node is display:none from CSS, which
+   no reconcile, repaint or re-render can undo — the only thing that unparks it is the settings
+   modal REMOVING the attribute when it borrows the card, which is the one intended path. The card
+   itself is untouched and still fully working inside the gear, which is where the owner says it
+   already lives, and it keeps the live v296 push binding that owns #customerPushMessagesControl. */
+[data-push-parked-v571]{display:none!important}
+
 /* Photo 3: the pending-booking count on the header Appointment button. The badge markup is the
    rail's own (.nav-badge), so it cannot drift in style or in value; only the slot is new. The
    rail's badge uses margin-left:auto to sit at the row's end — wrong inside a button, where it
@@ -5097,31 +5148,9 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      frame-to-frame drift shrinks with it instead of being locked to a single guess. Near-black
      logo ink is unaffected at this factor. */
   filter:brightness(.985)}
-/* nestly_v578 (owner: 'change wait me to "peekaaaaaa......." make the word wavey and moving —
-   I want brand recognition across the app'). The loading word IS the wordmark now: it is set in
-   the brand face (--peekaa-display, the same Baloo 2 the customer titles took in v577) and each
-   letter rides a sine, staggered by its index, so the name reads as a wave travelling left to
-   right rather than as text that happens to move.
+/* nestly_v583: the boot wordmark and its wave were removed at the owner's request (photo 13).
+   .boot-mark-v577 above keeps the logo animation and its seam-removing mask. */
 
-   --i is written per character in the markup, so one keyframe animates the whole word and adding
-   or removing a letter needs no new CSS. The trailing dots continue the same wave at the same
-   cadence instead of being a separate "loading" tic — the animation is one gesture.
-
-   The word is aria-hidden: the boot panel already carries a real sr-only status line ("Loading
-   Peekaa…"), and a screen reader must not be handed ten separate letter spans to read out. */
-.boot-wait-v577{margin:14px 0 0;text-align:center;font-family:var(--peekaa-display);font-size:26px;
-  font-weight:700;letter-spacing:.01em;color:#4A4136}
-.boot-wave-v578{display:inline-flex;align-items:baseline}
-.boot-wave-v578>span{display:inline-block;animation:boot-wave-v578 1.5s ease-in-out infinite;
-  animation-delay:calc(var(--i) * .085s)}
-@keyframes boot-wave-v578{
-  0%,60%,100%{transform:translateY(0);opacity:.62}
-  30%{transform:translateY(-.28em);opacity:1}
-}
-/* Reduced motion keeps the wordmark — it is brand, not decoration — and drops the movement. */
-@media(prefers-reduced-motion:reduce){
-  .boot-wave-v578>span{animation:none;transform:none;opacity:1}
-}
 body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px;max-width:calc(100vw - 16px);overflow:auto}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v131-nav{position:relative;top:auto;right:auto;padding:8px}.center-wrap{padding:12px}.modal-card{margin:12px;max-height:calc(100dvh - 24px)}}</style></head><body><nav class="v131-nav"><button class="btn" data-view="native">Native</button><button class="btn ghost" data-view="deletion">Profile</button><button class="btn ghost" data-view="persona">Workspaces</button><button class="btn ghost" data-view="customer-unavailable">Customer blocked</button><button class="btn ghost" data-view="customer-error">Customer error</button><button class="btn ghost" data-view="persona-error">Account error</button><button class="btn ghost" data-view="workspace-error">Staff blocked</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

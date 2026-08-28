@@ -119,8 +119,17 @@ ${image ? `<meta property="og:image" content="${esc(image)}">
 <meta name="twitter:description" content="${esc(description)}">
 <link rel="canonical" href="${esc(pageUrl)}">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<!-- nestly_v583 (owner mark, photo 12: the card's text bracketed — "these font also need to sync
+     to Peekaa font"). This page is server-rendered and standalone: it carries its own <style> and
+     never loads app.css, so the v579/v582 customer-surface fonts could not reach it and it stayed
+     on the system stack while every other customer screen moved. It now loads the same two faces
+     from the same host, with the previous stack kept behind each as the fallback, so a blocked or
+     slow font request renders exactly what this page renders today rather than a serif. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#F4F2EE;color:#17161A;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;
+body{margin:0;background:#F4F2EE;color:#17161A;font-family:'Nunito',-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;
   display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box}
 .card{background:#fff;border:1px solid rgba(23,22,26,.06);border-radius:24px;max-width:420px;width:100%;overflow:hidden;
   box-shadow:0 2px 6px rgba(23,22,26,.05),0 18px 44px rgba(23,22,26,.10);text-align:center}
@@ -131,7 +140,7 @@ body{margin:0;background:#F4F2EE;color:#17161A;font-family:-apple-system,BlinkMa
 .marks img{width:40px;height:40px;border-radius:11px;object-fit:cover;border:1px solid #EAE6DF;background:#fff}
 .marks span{color:#6B6673;font-size:17px}
 .cobrand{font-weight:700;font-size:14px;margin:0 0 12px}
-h1{font-size:1.25rem;margin:0 0 6px;letter-spacing:-.02em}
+h1{font-family:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,sans-serif;font-size:1.35rem;margin:0 0 6px;letter-spacing:-.005em}
 .muted{color:#6B6673;font-size:13px;margin:0 0 18px}
 a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 24px;border-radius:100px;
   background:linear-gradient(135deg,#C24135,#9D352C);color:#fff;font-weight:600;text-decoration:none;font-size:14px}

@@ -2103,7 +2103,11 @@ function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
 /* v196 (owner: "remove the (1) from history — dont need to know how many transactions in
    history"): a count is a prompt to act. Ongoing and Cancelled hold things a customer may still
    need to do something about; History is a record, and numbering it only added noise. */
-const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set(['history']);
+/* nestly_v583 (owner mark, photo 10: the "1" beside Cancelled ringed — "cancelled don't need put
+   number"). v196's reasoning applied to Cancelled as well as History and had simply not been
+   extended: a count is a prompt to act, and Ongoing is the only one of the three holding anything
+   the customer still has to do something about. Cancelled and History are both records. */
+const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set(['history','cancelled']);
 function customerBookingTablistMarkupV178(currentTab='bookings',counts={}){
   return `<div class="customer-booking-tabs" role="tablist" aria-label="Booking status">${CUSTOMER_BOOKING_TABS_V178.map(([tab,label])=>{
     const selected=tab===currentTab,showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196.has(tab);
@@ -2450,7 +2454,7 @@ async function renderCustomerProfile(){
         <p id="customerMemberQrStatusV327" class="muted small" role="status" aria-live="polite"></p>
       </section>`
     :'';
-  $('walletBody').innerHTML=`<header class="customer-page-head"><div><h1>Profile</h1><p class="muted">${profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div></header>
+  $('walletBody').innerHTML=`<header class="customer-page-head customer-profile-head-v583"><div><h1>Profile</h1><p class="muted">${profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div><span class="spacer"></span><button type="button" class="customer-profile-gear-v583" id="customerProfileSettingsGearV583" aria-expanded="false" aria-controls="customerProfileSettingsV583" aria-label="Settings" title="Settings">${CUI.icon('settings',{size:20})}</button></header>
     <!-- Top-20 #20: the page was ~14 visually identical white cards in one flat stack, so account
          closure, a marketing choice and a sound switch all read at the same weight. Four serif
          headings on the ivory ground group them. No card's markup, id, handler or copy changed;
@@ -2459,7 +2463,19 @@ async function renderCustomerProfile(){
          its position carries no wiring. Sign out stays last (v296). -->
     <h2 class="customer-profile-group-v3">You</h2>
     ${personalDetailsHtmlV286}
-    ${memberQrCardHtmlV327}
+    ${/* nestly_v583 (owner mark, photo 8: the whole My Peekaa QR card crossed out — "remove this,
+         here have already", with an arrow to the Scan QR button in the nav). The nav's Scan QR
+         sheet opens on "My Peekaa QR" (v329) showing the same v327 member code, so this card was
+         the second copy of it, and the taller one. The loader (loadMemberQrIntoV327) is untouched
+         and still serves that sheet. */''}
+    ${/* nestly_v583 (owner mark, photo 9: a gear drawn at the page head — "other than general
+         profile edit, all others grouped inside here", owner-confirmed as keeping Personal details
+         AND Date of birth on the page). Everything from Preferences down is wrapped in one
+         collapsible section rather than moved into a modal: every card below is bound BY ID after
+         this innerHTML, and relocating live nodes into a dialog is exactly what caused the
+         Messages device-card to keep escaping. Collapsed, the cards stay in the DOM and every
+         binding keeps working; the gear only toggles hidden. */''}
+    <div id="customerProfileSettingsV583" hidden>
     <h2 class="customer-profile-group-v3">Preferences</h2>
     <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
@@ -2490,8 +2506,19 @@ async function renderCustomerProfile(){
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
          the last thing on the page it acts on — deliberately after account & privacy, so it is
          reached by finishing the page rather than by hunting an icon. -->
-    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></div></section>`;
+    <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></div></section>
+    </div>`;
   bindPasswordVisibility($('walletBody'));
+  /* nestly_v583 (owner, photo 9): the gear. Assigned (not added) so a re-render rebinds rather
+     than stacking listeners, and it only toggles `hidden` — the cards it reveals never move, so
+     every binding made below this line stays attached whether the section is open or closed. */
+  const profileGearV583=$('customerProfileSettingsGearV583'),profileSettingsV583=$('customerProfileSettingsV583');
+  if(profileGearV583&&profileSettingsV583)profileGearV583.onclick=()=>{
+    const open=profileSettingsV583.hidden;
+    profileSettingsV583.hidden=!open;
+    profileGearV583.setAttribute('aria-expanded',open?'true':'false');
+    if(open)profileSettingsV583.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+  };
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
@@ -3715,7 +3742,16 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
          is the heading directly beneath it, the business is named again in the description and a
          third time on the business row at the foot of the same card. The close button keeps the
          row, and the dialog keeps its accessible name from the heading. */''}
-    <div class="row"><span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
+    ${/* nestly_v583 (owner mark, photo 5: a logo box and "Business name" drawn into the empty
+         space beside the close button). v417 removed the "LIMITED-TIME OFFER · CUBBLY SPA"
+         eyebrow because it repeated a business named twice more below; the owner now wants the
+         business identified at the TOP, as a mark rather than a sentence. It reuses
+         customerCompanyIdentityMarkupV178 — the same logo-or-monogram every other customer
+         surface draws — so a business with no logo still gets its initial, never a placeholder
+         pretending to be theirs. */''}
+    <div class="row customer-offer-detail-head-v583">
+      <div class="customer-offer-detail-brand-v583">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></div>
+      <span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
     ${factsV195?`<p class="customer-offer-detail-facts">${esc(factsV195)}</p>`:''}
@@ -3727,7 +3763,10 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
       <div data-offer-contact></div>
     </div>
     ${terms?`<p class="muted small customer-offer-detail-terms" style="margin-top:10px">${esc(terms)}</p>`:''}
-    ${business.id?customerCompanyDetailRowV178(business):''}
+    ${/* nestly_v583 (owner mark, photo 7: the business row at the foot scribbled out, "remove
+         this!"). It repeated the address and phone printed in the meta box directly above it,
+         and since this same photo puts the business logo and name at the TOP of the sheet, the
+         row was the third statement of the same business on one card. */''}
     <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
       ${/* v195 (owner: "add book appt button"): an offer a customer wants is worthless if booking
            it means leaving the sheet and finding the business again. The button is rendered only
@@ -5292,7 +5331,26 @@ function customerProgrammeDirectoryMetricV346(card){
     packages=card?.packages||{},membership=card?.membership||{};
   const unit=customerBalanceUnitV428(card);
   const balance=Math.max(0,Number(loyalty.balance)||0);
-  if(unit==='stamps')return '';
+  /* nestly_v583 (owner mark, photo 6: an arrow to the empty right-hand column on the two stamp
+     businesses — "for stamp card, simply state how many stamps left to next rewards"). v428 left
+     this blank for stamps because a raw stamp balance beside "N rewards ready" read as a second,
+     competing number. The owner is asking for the DISTANCE, not the balance, which is the one
+     figure the column can carry that the status line does not already say.
+
+     remaining_units is the SERVER's answer on next_eligible_reward — the same field the status
+     line reads — so this reports it rather than deriving readiness in the browser, which v145
+     forbids. When nothing is outstanding the reward is ready and the status line says so, so the
+     column falls back to the stamps actually held. */
+  if(unit==='stamps'){
+    const toGo=Math.max(0,Math.round(Number(card?.next_eligible_reward?.remaining_units)||0));
+    if(toGo>0)return `${customerPointTotalV103(toGo)} ${toGo===1?'stamp':'stamps'} left`;
+    /* And nothing otherwise. v422 recorded an earlier owner ruling on this very column — a stamps
+       BALANCE ringed with "for stamps dont need show this" — which the new instruction does not
+       reverse: the owner is asking for the distance to the next reward, not the count held. With
+       no distance outstanding the reward is ready and the status line beside this already says so,
+       so printing the balance here would re-introduce exactly the figure that was struck. */
+    return '';
+  }
   if(membership.active===true)return 'Member';
   if(Number(packages.sessions_remaining||0)>0)return `${Number(packages.sessions_remaining)} sessions`;
   return `${customerPointTotalV103(balance)} pts`;
@@ -8076,12 +8134,19 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
           <span class="customer-inbox-row-copy-v386">
             <span class="customer-inbox-row-top-v386"><b>${esc(name)}</b>${when?`<time class="customer-inbox-row-when-v386" datetime="${esc(when)}">${esc(walletDate(when))}</time>`:''}</span>
             <span class="customer-inbox-row-line-v386">${esc(line)}</span>
-            ${detail&&detail!==line?`<span class="customer-inbox-row-detail-v386 muted small">${esc(detail)}</span>`:''}
+            ${/* nestly_v583 (owner mark, photo 1: "remove sentence below"). The body line was the
+                 generator's stock sentence — "Open this programme to view the latest promotion." —
+                 printed identically under every row. Since v579 the line above it names the actual
+                 offer, so this repeated nothing but instructions. The row's own tap already opens
+                 the programme, so the sentence told the customer what the row does. */''}
           </span>
           ${state==='unread'?'<span class="customer-inbox-row-dot-v386" aria-hidden="true"></span>':''}
           <span class="sr-only">${esc(stateCopy)}</span>
         </${openable?'button':'div'}>
-        ${isResolved?'':`<button type="button" class="customer-inbox-row-dismiss-v386" data-inbox-state="${esc(item.event_id)}" data-state="dismiss" aria-label="Dismiss ${esc(line)}">${CUI.icon('close',{size:16})}</button>`}
+        ${/* nestly_v583 (owner mark, photo 1: the X ringed, "remove this"). Dismiss is gone from the
+             row. Nothing is stranded: a message stops being unread when it is opened, the list is
+             already bounded by its own cursor, and the state writer (customer_set_in_app_inbox_
+             state) is untouched — only this control no longer calls it. */''}
       </article>`;
     }).join('');
     host.setAttribute('aria-busy','false');

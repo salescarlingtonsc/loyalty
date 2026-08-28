@@ -1988,14 +1988,14 @@ const CUSTOMER_COPY=Object.freeze({
     joinReferralLabelV571:'Referral code (optional)',joinReferralPlaceholderV571:'If a friend gave you one',joinReferralUnknownV571:'That referral code is not recognised at this business.',joinReferralSelfV571:'That is your own code — ask your friend for theirs.',joinReferralAlreadyV571:'A referral is already recorded for you here.',joinReferralOffV571:'This business is not running a referral programme.',
     joinConfirmTitleV571:'Join {business}?',joinConfirmTitleUnknownV571:'Join this business?',joinConfirmBodyV571:'You will start collecting rewards here straight away.',joinConfirmCancelV571:'Cancel',joinConfirmGoV571:'Join',
     addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
-    referralHeading:'Give a friend {business}',
+    referralHeading:'Quote this! ❤️',
     /* v322 (owner ruling R1/R4): "no more store credits" — a referral pays POINTS. {reward} is now
        a points phrase from customerReferralPointsV322, not a money amount; {floor} is still money,
        because the friend still has to spend. */
-    referralTermsWithFloor:'They quote your code when they join. Once they spend {floor}, you get {reward}.',
+    referralTermsWithFloor:'Once they spend {floor}, you get {reward}.',
     referralFriendAlso:'Your friend gets {reward} too.',
     referralGiftFallback:'a free gift',
-    referralTerms:'They quote your code when they join. After their first spend, you get {reward}.',
+    referralTerms:'After their first spend, you get {reward}.',
     referralPoints:'{count} points',
     referralOnePoint:'1 point',
     referralStamps:'{count} stamps',
@@ -2191,11 +2191,11 @@ const CUSTOMER_COPY=Object.freeze({
     joinReferralLabelV571:'推荐码（选填）',joinReferralPlaceholderV571:'如果朋友给过您',joinReferralUnknownV571:'此商家无法识别该推荐码。',joinReferralSelfV571:'这是您自己的代码——请向朋友索取。',joinReferralAlreadyV571:'您在此处已记录了一条推荐。',joinReferralOffV571:'此商家目前没有推荐计划。',
     joinConfirmTitleV571:'加入{business}？',joinConfirmTitleUnknownV571:'加入此商家？',joinConfirmBodyV571:'您将立即开始在这里累积奖励。',joinConfirmCancelV571:'取消',joinConfirmGoV571:'加入',
     addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
-    referralHeading:'介绍朋友到{business}',
-    referralTermsWithFloor:'朋友加入时报上您的代码。他们消费满{floor}后，您可获得{reward}。',
+    referralHeading:'报上这个！❤️',
+    referralTermsWithFloor:'他们消费满{floor}后，您可获得{reward}。',
     referralFriendAlso:'您的朋友也可获得{reward}。',
     referralGiftFallback:'一份免费礼物',
-    referralTerms:'朋友加入时报上您的代码。他们首次消费后，您可获得{reward}。',
+    referralTerms:'他们首次消费后，您可获得{reward}。',
     referralPoints:'{count}积分',
     referralOnePoint:'1积分',
     referralStamps:'{count}个章',
@@ -2416,11 +2416,11 @@ const CUSTOMER_COPY=Object.freeze({
     joinReferralLabelV571:'Kod rujukan (pilihan)',joinReferralPlaceholderV571:'Jika rakan memberi anda satu',joinReferralUnknownV571:'Kod rujukan itu tidak dikenali di perniagaan ini.',joinReferralSelfV571:'Itu kod anda sendiri — minta kod rakan anda.',joinReferralAlreadyV571:'Rujukan telah pun direkodkan untuk anda di sini.',joinReferralOffV571:'Perniagaan ini tidak menjalankan program rujukan.',
     joinConfirmTitleV571:'Sertai {business}?',joinConfirmTitleUnknownV571:'Sertai perniagaan ini?',joinConfirmBodyV571:'Anda akan mula mengumpul ganjaran di sini dengan serta-merta.',joinConfirmCancelV571:'Batal',joinConfirmGoV571:'Sertai',
     addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
-    referralHeading:'Perkenalkan rakan kepada {business}',
-    referralTermsWithFloor:'Rakan anda sebut kod anda semasa mendaftar. Selepas mereka berbelanja {floor}, anda dapat {reward}.',
+    referralHeading:'Sebut kod ini! ❤️',
+    referralTermsWithFloor:'Selepas mereka berbelanja {floor}, anda dapat {reward}.',
     referralFriendAlso:'Rakan anda juga dapat {reward}.',
     referralGiftFallback:'hadiah percuma',
-    referralTerms:'Rakan anda sebut kod anda semasa mendaftar. Selepas belanja pertama mereka, anda dapat {reward}.',
+    referralTerms:'Selepas belanja pertama mereka, anda dapat {reward}.',
     referralPoints:'{count} mata',
     referralOnePoint:'1 mata',
     referralStamps:'{count} cop',
@@ -2641,11 +2641,11 @@ const CUSTOMER_COPY=Object.freeze({
     joinReferralLabelV571:'பரிந்துரை குறியீடு (ஐச்சிகம்)',joinReferralPlaceholderV571:'நண்பர் கொடுத்திருந்தால்',joinReferralUnknownV571:'அந்த குறியீடு இந்த வணிகத்தில் அடையாளம் காணப்படவில்லை.',joinReferralSelfV571:'அது உங்கள் சொந்த குறியீடு.',joinReferralAlreadyV571:'உங்களுக்காக ஏகனவே ஒரு பரிந்துரை பதிவு உள்ளது.',joinReferralOffV571:'இந்த வணிகம் பரிந்துரை திட்டத்தை நடத்தவில்லை.',
     joinConfirmTitleV571:'{business} இல் சேரவா?',joinConfirmTitleUnknownV571:'இந்த வணிகத்தில் சேரவா?',joinConfirmBodyV571:'நீங்கள் இங்கே உடனடியாக வெகுமதிகளைச் சேகரிக்கத் தொடங்குவீர்கள்.',joinConfirmCancelV571:'ரத்து',joinConfirmGoV571:'சேர',
     addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
-    referralHeading:'{business}-க்கு நண்பரை அறிமுகப்படுத்துங்கள்',
-    referralTermsWithFloor:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிடைக்கும்.',
+    referralHeading:'இந்தக் குறியீட்டைச் சொல்லுங்கள்! ❤️',
+    referralTermsWithFloor:'அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிடைக்கும்.',
     referralFriendAlso:'உங்கள் நண்பருக்கும் {reward} கிடைக்கும்.',
     referralGiftFallback:'ஒரு இலவசப் பரிசு',
-    referralTerms:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிடைக்கும்.',
+    referralTerms:'அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிடைக்கும்.',
     referralPoints:'{count} புள்ளிகள்',
     referralOnePoint:'1 புள்ளி',
     referralStamps:'{count} முத்திரைகள்',
@@ -3866,7 +3866,11 @@ function customerRewardOfferSwipeMarkupV339({reward=null,items=[],status='ready'
     banner?`<div class="customer-reward-offer-page-v339">${banner}</div>`:'',
     ...items.map(item=>`<div class="customer-reward-offer-page-v339">${customerPromotionCardV104(item,business,bookingEnabled)}</div>`)
   ].filter(Boolean);
-  const head=title?`<div class="customer-business-offers-head-v349"><h2>${esc(title)}</h2></div>`:'';
+  /* nestly_v583 (owner mark, photo 3: the ✨ ringed on the business page's Limited offers heading
+     — "add this logo here to all business pages"). It is the same decorative, aria-hidden mark the
+     Home rail took in v577, applied wherever this swipe rail names itself, so every business page
+     carries it rather than only Home. */
+  const head=title?`<div class="customer-business-offers-head-v349"><h2>${esc(title)} <span class="customer-home-head-emoji-v577" aria-hidden="true">✨</span></h2></div>`:'';
   if(!pages.length){
     const state=status==='error'
       ?'<div class="card customer-home-offers-state"><p class="muted small">Offers couldn’t load.</p><button class="btn ghost sm" type="button" data-programme-offers-retry>Try again</button></div>'

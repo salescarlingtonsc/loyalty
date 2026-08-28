@@ -443,7 +443,7 @@ test('My Rewards no longer explains how to get what the customer already has', (
 });
 
 test('History is a record, so it carries no count', () => {
-  assert.match(appJs, /const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set\(\['history'\]\)/);
+  assert.match(appJs, /const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set\(\['history','cancelled'\]\)/);
   assert.match(appJs, /showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196\.has\(tab\)/);
   assert.match(appJs, /\$\{showCount&&Number\(counts\[tab\]\)>0\?/);
   const tablist = new Function('esc', `${section(appJs, 'const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196', '\nasync function renderCustomerBookings')}
@@ -451,9 +451,14 @@ test('History is a record, so it carries no count', () => {
     return customerBookingTablistMarkupV178;`)((value) => String(value ?? ''));
   const html = tablist('bookings', { bookings: 2, cancelled: 3, history: 9 });
   assert.match(html, /Ongoing\s*<span class="customer-booking-tab-count">2/);
-  assert.match(html, /Cancelled\s*<span class="customer-booking-tab-count">3/);
+  /* nestly_v583 (owner mark, photo 10: the "1" beside Cancelled ringed — "cancelled don't need put
+     number"). v196's own rule was that a count is a prompt to act; Cancelled is a record, like
+     History, so it loses its count for the same reason History did. Ongoing keeps its own, because
+     that is the tab holding something still to do. */
+  assert.doesNotMatch(html, /Cancelled\s*<span class="customer-booking-tab-count">/);
   assert.doesNotMatch(html, /History\s*<span class="customer-booking-tab-count">/);
   assert.doesNotMatch(html, />9</);
+  assert.doesNotMatch(html, />3</);
 });
 
 /* ------------------------------------- 9 · v230: the panel is built from the firm's chosen mode */

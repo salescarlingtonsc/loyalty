@@ -48,7 +48,7 @@ test('referral copy exists in all four customer locales with the firm terms temp
     const occurrences=(app.split(`${key}:`).length-1);
     assert.ok(occurrences>=4,`expected ${key} in all four locale blocks, saw ${occurrences}`);
   }
-  assert.match(app,/referralTermsWithFloor:'They quote your code when they join\. Once they spend \{floor\}, you get \{reward\}\.'/);
+  assert.match(app,/referralTermsWithFloor:'Once they spend \{floor\}, you get \{reward\}\.'/);
   /* The word the ruling removed must be gone from every locale's referral terms, not just English —
      a zh-CN card still promising 余额 would be the same broken promise in another language. */
   for(const line of app.split('\n').filter(text=>/^\s*referralTerms(WithFloor)?:/.test(text))){
