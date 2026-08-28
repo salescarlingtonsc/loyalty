@@ -62,6 +62,14 @@ forces the `support` module on for the WhatsApp Inbox pilot.
    nothing else.
 9. **Two-path equivalence** — two different setup routes produce an identical live programme,
    spine, welcome offer, and member-facing answer.
+10. **A module switched Off is Off** — for the account the owner denied, on both sides of the
+    boundary: the page's reader refuses (step 18h), and that module's tables refuse the write
+    while still allowing the READ the till depends on (step 18i). Scanner checks **D19** (a
+    module-owned table must consult `app.can_module_write` on every write command) and **D20**
+    (a module's principal RPC must consult `app.can_module`, not a role permission alone) hold
+    the same rule across every tenant and every account not yet created — a role permission such
+    as `view_sales` is carried by every `staff` role by definition and is therefore never a
+    substitute for the owner's Off switch.
 
 ## Reference canaries
 

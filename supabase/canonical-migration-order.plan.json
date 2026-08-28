@@ -2764,6 +2764,18 @@
       "version": "20260828010856",
       "name": "nestly_v571_retention_dispatch_inert_repair",
       "sourcePath": "db/migrations/20260828_nestly_v571_retention_dispatch_inert_repair.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828010857",
+      "name": "nestly_v572_module_off_cannot_write",
+      "sourcePath": "db/migrations/20260828_nestly_v572_module_off_cannot_write.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828010858",
+      "name": "nestly_v573_module_off_reaches_the_rpcs",
+      "sourcePath": "db/migrations/20260828_nestly_v573_module_off_reaches_the_rpcs.sql"
     }
   ]
 }

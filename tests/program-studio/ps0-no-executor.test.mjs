@@ -334,8 +334,8 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      line's kind/id come from ps1c_bundle_lines_v204 instead of being hardcoded 'service' — and
      its acceptance suite is db/tests/v488_product_bundles_and_bottle_checkpoints.sql. The PS-2A
      shadow increments (v61-v64) remain barred. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints)/;
-  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout)/;
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs)/;
+  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
     const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
@@ -478,8 +478,14 @@ test('checkout_discount_lines is written ONLY by the kernel finaliser (record_ca
        because this table's rule_id is NOT NULL and its key is (sale_id, rule_id, effect_index).
        The invariant this test protects is unchanged: the ONLY writer is record_cart_sale, and
        every row it writes still traces to a consumed evaluation token. */
-    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout)/,
-      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67/v370 kernel migrations`);
+  /* V573 joins the list on exactly the same footing as v59, v67 and v370: it
+     CREATE-OR-REPLACEs the same finaliser (to add the 'till' module gate beside the existing
+     create_sales role gate) and carries the same single insert, unchanged. The invariant this
+     test protects is untouched -- the ONLY writer of this table is still record_cart_sale, every
+     insert still sits inside it, and every row still traces to a consumed evaluation token. The
+     assertions below re-prove all of that against the v572 body rather than taking it on trust. */
+    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v573_module_off_reaches_the_rpcs)/,
+      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67/v370/v573 kernel migrations`);
     const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
     const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
     assert.notEqual(finaliserAt, -1, `${file} must define the record_cart_sale finaliser`);

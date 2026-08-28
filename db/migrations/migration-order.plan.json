@@ -2769,6 +2769,18 @@
       "path": "db/migrations/20260828_nestly_v571_retention_dispatch_inert_repair.sql",
       "semanticVersion": "v571",
       "proposedDeployVersion": "20260828010856"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v572_module_off_cannot_write.sql",
+      "semanticVersion": "v572",
+      "proposedDeployVersion": "20260828010857"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v573_module_off_reaches_the_rpcs.sql",
+      "semanticVersion": "v573",
+      "proposedDeployVersion": "20260828010858"
     }
   ]
 }

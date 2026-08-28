@@ -1155,6 +1155,68 @@ exception when others then
   insert into _r values ('18h a module set Off is refused at the reader, not just hidden','FAIL: '||sqlerrm);
 end $s18h$;
 
+-- ======== 18i a module switched Off cannot WRITE that module's data (nestly_v572/v573) ========
+-- The audit that followed v570 found the reader was the smaller half. Six tables carried only a
+-- permissive ALL policy keyed on workspace membership, so a teammate denied the Services module
+-- could re-price a service (proven in production: SGD 30.00 -> 35.00, one row) and delete it
+-- outright. A module toggle that stops a page rendering but not a write is not a permission.
+-- This step certifies the write side of the same guarantee, and certifies that the READ survives
+-- -- the till must still show the service menu to a till-permitted teammate, which is precisely
+-- why v572 gated the write commands and deliberately left SELECT alone.
+do $s18i$
+declare
+  v_biz uuid := '1abe0e00-0000-4000-8000-000000000001';
+  v_mate uuid := '1abe0e00-0000-4000-8000-0000000000f3';
+  v_staff uuid; v_branch uuid; v_svc uuid;
+  v_before int; v_rows int; v_read int;
+  v_permitted boolean; v_inserted boolean := true;
+begin
+  select id into v_branch from public.branches where business_id=v_biz and active order by created_at limit 1;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,
+                         email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_mate,'authenticated','authenticated',
+          'lc-nowrite-'||v_mate||'@example.test','',now(),now(),now());
+  insert into public.staff(business_id,user_id,role,full_name,active,access_state,modules)
+  values (v_biz,v_mate,'staff','LC write-denied teammate',true,'approved',array['till','clients'])
+  returning id into v_staff;
+  insert into public.staff_branches(business_id, staff_id, branch_id)
+  values (v_biz, v_staff, v_branch);
+
+  insert into public.services(business_id,name,price_cents,duration_min)
+  values (v_biz,'LC certification service',3000,30) returning id into v_svc;
+  select price_cents into v_before from public.services where id=v_svc;
+
+  -- pg_temp.lc_as sets the JWT claims but NOT the database role, and RLS never applies to the
+  -- table owner -- so a write probe that only swaps claims runs as the owner and succeeds no
+  -- matter what the policies say. (This step failed exactly that way on its first run, against a
+  -- production that already had v572 applied.) The role swap is what makes this a real probe.
+  perform pg_temp.lc_as(v_mate);
+  set local role authenticated;
+  v_permitted := app.can_module_write(v_biz,'services');
+  select count(*) into v_read from public.services where business_id=v_biz;
+  update public.services set price_cents = price_cents + 500 where id = v_svc;
+  get diagnostics v_rows = row_count;
+  begin
+    insert into public.services(business_id,name,price_cents,duration_min)
+    values (v_biz,'LC forbidden service',100,10);
+  exception when insufficient_privilege then v_inserted := false;
+  end;
+  reset role;
+  perform pg_temp.lc_as(null);
+
+  insert into _r values ('18i a module set Off cannot write that module''s data (read survives)',
+    case when v_permitted then 'FAIL: the module authority still grants the denied teammate a write'
+         when v_rows <> 0 then 'FAIL: a denied teammate re-priced a service ('||v_rows||' row)'
+         when v_inserted then 'FAIL: a denied teammate created a service'
+         when v_read = 0 then 'FAIL: the read was gated too -- the till loses its service menu'
+         when (select price_cents from public.services where id=v_svc) <> v_before
+           then 'FAIL: the price changed despite the refusal'
+         else 'OK' end);
+exception when others then
+  reset role;
+  insert into _r values ('18i a module set Off cannot write that module''s data (read survives)','FAIL: '||sqlerrm);
+end $s18i$;
+
 -- ============ 19 two-path equivalence ========================================================
 -- Tenant A reached its final state through Grow (draft -> publish). Tenant B reaches the SAME
 -- state through Settings first (business_set_loyalty_model_v353 as the very first touch). The

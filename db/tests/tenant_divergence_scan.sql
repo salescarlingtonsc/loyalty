@@ -212,6 +212,79 @@ begin
 end
 $d18$;
 
+-- D19 / D20 (nestly_v572, nestly_v573) — the module toggle must be wired to the data.
+--
+-- D18 proves one reader honours one module for the accounts that exist today. These two prove
+-- the WIRING across every module-owned surface, which is what actually regressed: the full audit
+-- the owner asked for after v570 found six tables whose only policy was a permissive ALL keyed on
+-- workspace membership (a teammate denied Services re-priced a service from SGD 30.00 to 35.00
+-- and could delete it outright), and sixteen RPCs that asked only a ROLE permission.
+--
+-- These are catalogue checks, not executable probes, and deliberately so. An executable estate
+-- probe would have to attempt real writes in every tenant; and a probe can only test the accounts
+-- that happen to exist -- production has two non-owner logins, so an executable check would go
+-- quiet the moment they were removed and would say nothing about a teammate invited tomorrow.
+-- These assert the RULE against the catalogue instead: a module-owned write path must consult the
+-- module authority, for every tenant and every future account. The executable proof of the
+-- behaviour lives in db/tests/v572_module_off_cannot_write.sql and
+-- db/tests/v573_module_off_reaches_the_rpcs.sql, which run as the real `authenticated` role.
+do $d19$
+declare r record; v_bad text;
+begin
+  for r in
+    select * from (values
+      ('services','services'),('service_products','services'),
+      ('waitlist','waitlist'),('booking_requests','bookings'),
+      ('appointment_services','appointments')
+    ) as t(tbl, module)
+  loop
+    select string_agg(pol.polname||' ('||pol.polcmd::text||')', ', ') into v_bad
+    from pg_policy pol join pg_class c on c.oid=pol.polrelid
+    where c.relname = r.tbl
+      and pol.polcmd in ('*','a','w','d')            -- ALL / INSERT / UPDATE / DELETE
+      and coalesce(pg_get_expr(pol.polqual, pol.polrelid),'')||
+          coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),'') not like '%can_module%'
+      and coalesce(pg_get_expr(pol.polqual, pol.polrelid),'')||
+          coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),'') not like '%is_salon_owner%'
+      and coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') not like '%is_super_admin%';
+    if v_bad is not null then
+      insert into _scan values (null, '(platform)', 'D19', 'RUNTIME-DANGEROUS',
+        r.tbl||' accepts writes without consulting the '||r.module||' module authority: '||v_bad);
+    end if;
+  end loop;
+end
+$d19$;
+
+do $d20$
+declare r record;
+begin
+  for r in
+    select * from (values
+      ('public.get_dashboard_summary(uuid,date,date,uuid)','dailyreport'),
+      ('public.get_customer_intelligence_v83(uuid,uuid,date,date,integer,timestamptz,timestamptz,uuid)','customerintel'),
+      ('public.create_customer_intelligence_export_v83(uuid,uuid,date,date)','customerintel'),
+      ('public.get_customer_intelligence_export_page_v83(uuid,integer,integer)','customerintel'),
+      ('public.get_revenue_truth_v106(uuid,date,date,uuid,timestamptz)','customerintel'),
+      ('public.set_expense_void(uuid,uuid,boolean)','expenses'),
+      ('public.update_expense_v285(uuid,uuid,integer,text,text)','expenses'),
+      ('public.correct_quick_sale_amount_v84(uuid,uuid,integer,text,text)','sales'),
+      ('public.evaluate_checkout(uuid,uuid,uuid,jsonb,uuid)','till'),
+      ('public.reserve_checkout_sv_tender(uuid,uuid,integer,uuid)','till')
+    ) as t(sig, module)
+  loop
+    if to_regprocedure(r.sig) is null then
+      insert into _scan values (null, '(platform)', 'D20', 'RUNTIME-DANGEROUS',
+        r.sig||' has gone or moved -- the '||r.module||' module gate can no longer be verified');
+    elsif position('can_module' in pg_get_functiondef(to_regprocedure(r.sig))) = 0 then
+      insert into _scan values (null, '(platform)', 'D20', 'RUNTIME-DANGEROUS',
+        r.sig||' serves data without consulting the '||r.module||' module authority '
+        ||'(a ROLE permission alone is not the owner''s Off switch)');
+    end if;
+  end loop;
+end
+$d20$;
+
+
 -- D17 (nestly_v569) — the READER-vs-AUTHORITY check for staff logins, and the operational
 -- follow-up beside it. The canonical rule is app.is_salon_member: workspace open AND staff active
 -- AND access_state='approved'.
@@ -545,7 +618,7 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
   from (values
     ('D01','RUNTIME-DANGEROUS'),('D01b','RUNTIME-DANGEROUS'),('D02','RUNTIME-DANGEROUS'),
     ('D03','RUNTIME-DANGEROUS'),('D04','RUNTIME-DANGEROUS'),('D05','RUNTIME-DANGEROUS'),
-    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D18','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
+    ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D18','RUNTIME-DANGEROUS'),('D19','RUNTIME-DANGEROUS'),('D20','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
     ('D15','RUNTIME-DANGEROUS')

@@ -914,7 +914,7 @@
     {
       "id": "db.fn:public.record_cart_sale/7",
       "surface": "db_function",
-      "latest_file": "20260723120000_frenly_v51_sale_line_items.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "sale_items:INSERT",
       "detected_signals": "idem-signal",
       "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines)",
@@ -1309,7 +1309,7 @@
     {
       "id": "db.fn:public.set_expense_void/3",
       "surface": "db_function",
-      "latest_file": "20260718180329_frenly_v11b_money.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "expenses:UPDATE",
       "detected_signals": "none",
       "entry_point": "set_expense_void(p_business,p_expense,p_void)",
@@ -1527,7 +1527,7 @@
     {
       "id": "db.fn:public.evaluate_checkout/5",
       "surface": "db_function",
-      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "checkout_evaluations:INSERT, checkout_evaluation_operations:INSERT",
       "detected_signals": "idem-signal, advisory-lock",
       "entry_point": "evaluate_checkout(p_business,p_branch,p_client,p_lines,p_idempotency_key)",
@@ -1541,7 +1541,7 @@
     {
       "id": "db.fn:public.record_cart_sale/9",
       "surface": "db_function",
-      "latest_file": "20260817000003_nestly_v370_tier_discount_at_checkout.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "sale_items:INSERT (server lines + signed studio_discount lines), checkout_discount_lines:INSERT, benefit_fulfilments:INSERT, budget_reservations:INSERT, budget_periods:INSERT/UPDATE, checkout_evaluations:UPDATE (consume), checkout_sv_tenders:UPDATE (reserved -> consumed, binding sale_id + spend_operation_id)",
       "detected_signals": "idem-signal, for-update",
       "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid)  [the arity-9 TOKEN finaliser]",
@@ -1614,7 +1614,7 @@
     {
       "id": "db.fn:public.reserve_checkout_sv_tender/4",
       "surface": "db_function",
-      "latest_file": "20260725060000_frenly_v67_ps2live_checkout_tender.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "checkout_sv_tenders:INSERT (status reserved) + UPDATE (prior active -> released, reason superseded), audit_log:INSERT; via app.sv_reserve_core/app.sv_release_core: sv_operations:INSERT, sv_reservations:INSERT/UPDATE",
       "detected_signals": "idem-signal, advisory-lock, row-lock",
       "entry_point": "public.reserve_checkout_sv_tender(business, evaluation_id, requested_cents, idempotency_key) \u2014 the till \"Use stored value\" opt-in. SECURITY DEFINER, granted to authenticated; create_sales + can_see_branch + tenant only (contract \u00a75: spending SV at the till needs no extra grant).",
@@ -1717,7 +1717,7 @@
     {
       "id": "db.fn:public.correct_quick_sale_amount_v84/5",
       "surface": "db_function",
-      "latest_file": "20260726190000_nestly_v84_fast_sale_corrections.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "points_batches:UPDATE, points_ledger:INSERT; sale_amount_corrections_v84:INSERT, audit_log:INSERT; via public.reverse_sale/public.record_quick_sale: sales:INSERT, payments:INSERT, financial_operations:INSERT/UPDATE",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "delegates_to": [
@@ -2012,7 +2012,7 @@
     {
       "id": "db.fn:public.update_expense_v285/5",
       "surface": "db_function",
-      "latest_file": "20260812000600_nestly_v285_a4_gap_closure.sql",
+      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
       "rows_written": "expenses:UPDATE, audit_log:INSERT",
       "detected_signals": "for-update",
       "entry_point": "update_expense_v285(p_business,p_expense,p_amount_cents,p_category,p_note)",
