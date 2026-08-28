@@ -5420,6 +5420,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 /* Photo 9: the Referrals back button sits on its own line above the page header, which is where
    every other Rewards & Offer page draws it. */
 .grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}
+
+/* nestly_v586 — the editor's Home control is one line, not a block (owner photo 1). Same badge as
+   the Limited Offer list, so the two surfaces read as one answer. */
+.promotion-featured-row-v586{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card,#fff)}
+.promotion-featured-row-v586 .grow-offer-featured-mark-v485{flex:0 0 auto}
+.promotion-featured-row-v586 .btn{margin-left:auto}
+@media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
 </style>
 </head>
 <body>
@@ -5477,7 +5485,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cd71b0862926","customer":"/app-customer.js?b=825c952c6896","business":"/app-business.js?b=8de71398f36f","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cd71b0862926","customer":"/app-customer.js?b=825c952c6896","business":"/app-business.js?b=1da68140bb46","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

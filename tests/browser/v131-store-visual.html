@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="6db5fa56dbe02553249acd6bff89420cc716d405f0e200bddf4aded8f292a166"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="902533a3eb58cf6e038965622c9e0aed9ff8daad9c8ece70196afe4789c3327e"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5319,6 +5319,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 /* Photo 9: the Referrals back button sits on its own line above the page header, which is where
    every other Rewards & Offer page draws it. */
 .grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}
+
+/* nestly_v586 — the editor's Home control is one line, not a block (owner photo 1). Same badge as
+   the Limited Offer list, so the two surfaces read as one answer. */
+.promotion-featured-row-v586{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card,#fff)}
+.promotion-featured-row-v586 .grow-offer-featured-mark-v485{flex:0 0 auto}
+.promotion-featured-row-v586 .btn{margin-left:auto}
+@media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
 body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px;max-width:calc(100vw - 16px);overflow:auto}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v131-nav{position:relative;top:auto;right:auto;padding:8px}.center-wrap{padding:12px}.modal-card{margin:12px;max-height:calc(100dvh - 24px)}}</style></head><body><nav class="v131-nav"><button class="btn" data-view="native">Native</button><button class="btn ghost" data-view="deletion">Profile</button><button class="btn ghost" data-view="persona">Workspaces</button><button class="btn ghost" data-view="customer-unavailable">Customer blocked</button><button class="btn ghost" data-view="customer-error">Customer error</button><button class="btn ghost" data-view="persona-error">Account error</button><button class="btn ghost" data-view="workspace-error">Staff blocked</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

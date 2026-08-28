@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="6c010fb46bda67ce07b95a603c7851b4182f2b97923fdf6130525340e8131095">
+<meta name="v105-production-component-sha256" content="d02b309360c34dff4156a03f6e84dcb4ab01d9f95d46a9ca0ca9dd72f3bdae8a">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -5327,6 +5327,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    every other Rewards & Offer page draws it. */
 .grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}
 
+/* nestly_v586 — the editor's Home control is one line, not a block (owner photo 1). Same badge as
+   the Limited Offer list, so the two surfaces read as one answer. */
+.promotion-featured-row-v586{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card,#fff)}
+.promotion-featured-row-v586 .grow-offer-featured-mark-v485{flex:0 0 auto}
+.promotion-featured-row-v586 .btn{margin-left:auto}
+@media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
+
 .platform-console{
   min-height:100dvh;background:var(--bg);color:var(--ink);
   display:grid;grid-template-columns:264px minmax(0,1fr)
@@ -6137,7 +6145,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 6c010fb46bda</span>
+<span class="v105-provenance">v105 production-component harness · d02b309360c3</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6262,7 +6270,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'6c010fb46bda67ce07b95a603c7851b4182f2b97923fdf6130525340e8131095',
+  sourceHash:'d02b309360c34dff4156a03f6e84dcb4ab01d9f95d46a9ca0ca9dd72f3bdae8a',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

@@ -2847,6 +2847,12 @@
       "path": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql",
       "semanticVersion": "v583",
       "proposedDeployVersion": "20260828190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v586_tier_basis_reaches_the_draft.sql",
+      "semanticVersion": "v586",
+      "proposedDeployVersion": "20260829100000"
     }
   ]
 }

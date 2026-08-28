@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="bfa6fc9c31df3b2102feaa63ca7b2c9c80ab68c39974f9fb0648b69fc0cf341d"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="1312e3e3b13148d62575491d9e5bef32177842d59551990c8b45f5f6d1a7a7b3"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5321,9 +5321,17 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    every other Rewards & Offer page draws it. */
 .grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}
 
+/* nestly_v586 — the editor's Home control is one line, not a block (owner photo 1). Same badge as
+   the Limited Offer list, so the two surfaces read as one answer. */
+.promotion-featured-row-v586{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card,#fff)}
+.promotion-featured-row-v586 .grow-offer-featured-mark-v485{flex:0 0 auto}
+.promotion-featured-row-v586 .btn{margin-left:auto}
+@media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
+
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · bfa6fc9c31df3b2102feaa63ca7b2c9c80ab68c39974f9fb0648b69fc0cf341d</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 1312e3e3b13148d62575491d9e5bef32177842d59551990c8b45f5f6d1a7a7b3</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -8911,7 +8919,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'bfa6fc9c31df3b2102feaa63ca7b2c9c80ab68c39974f9fb0648b69fc0cf341d',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'1312e3e3b13148d62575491d9e5bef32177842d59551990c8b45f5f6d1a7a7b3',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

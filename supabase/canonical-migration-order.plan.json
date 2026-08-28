@@ -2842,6 +2842,12 @@
       "version": "20260828190000",
       "name": "nestly_v583_owner_automation_toggles",
       "sourcePath": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829100000",
+      "name": "nestly_v586_tier_basis_reaches_the_draft",
+      "sourcePath": "db/migrations/20260829_nestly_v586_tier_basis_reaches_the_draft.sql"
     }
   ]
 }

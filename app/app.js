@@ -29807,27 +29807,28 @@ async function uploadRewardPhotoV326(file){
    filters by), so there is one fact on screen, not two guesses at it. Everything arrives as an
    argument: this function sits in the gap between promotionsPage and growPage that
    tests/grow/v104-promotion-retry-safety.test.mjs requires to be free of direct S.biz reads. */
-function promotionFeaturedCardV462({items=[],featuredOfferId='',pinned=false,canWrite=false}={}){
+/* nestly_v586 (owner photo 1: the whole pink block ringed — "just streamline to let them decide if
+   they want to show on home", with photo 2 showing the green badge as the shape it should take).
+   V462 put a paragraph, a second offer picker and a button on the editor, so choosing what appears
+   on Home meant reading two sentences and then picking an offer OTHER than the one on screen —
+   which is a list job, and the Limited Offer list already does it. What belongs on an editor is
+   this offer's own answer: it is on Home, or one tap puts it there. Same server fact
+   (featured_offer_id), same RPC, same badge the list uses, so the two surfaces still cannot
+   disagree — there is just less to read. */
+function promotionFeaturedCardV462({items=[],featuredOfferId='',pinned=false,canWrite=false,selectedId=''}={}){
   const live=(Array.isArray(items)?items:[]).filter(item=>promotionLifecycleV186(item).live);
   if(!live.length)return '';
-  const featured=live.find(item=>String(item.id)===String(featuredOfferId))||null;
-  const name=String(featured?.name||featured?.offerFacts||'').trim();
-  const others=live.filter(item=>item!==featured);
-  return `<div class="imp-note promotion-featured-v462" data-promotion-featured-v462 style="margin-top:12px">
-    <b>Shown on customer Home: ${featured?esc(name||'this offer'):'nothing yet'}</b>
-    <p class="muted small" style="margin-top:6px">${featured
-      ?(pinned
-        ?'You chose this one. Customers see it on their Home screen alongside offers from other shops; every other live offer is still on your own business page.'
-        :'Chosen for you because it went live most recently. Pick a different one any time.')
-      :'None of your live offers is on the Home screen yet.'}</p>
-    ${canWrite&&others.length?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
-      <label class="muted small" for="promotionFeaturedPickV462">Show this one instead</label>
-      <select id="promotionFeaturedPickV462" class="grow-setup-input-v301" style="max-width:280px">
-        <option value="">Choose an offer…</option>
-        ${others.map(item=>`<option value="${esc(item.id)}">${esc(String(item.name||item.offerFacts||'Untitled offer').slice(0,70))}</option>`).join('')}
-      </select>
-      <button type="button" class="btn ghost sm" id="promotionFeaturedApplyV462">Show on Home</button>
-    </div>`:''}
+  const selected=live.find(item=>String(item.id)===String(selectedId))||null;
+  /* A draft is not on Home and cannot be put there, so the control is not offered for one — an
+     offer has to be live before this question means anything. */
+  if(!selected)return '';
+  const isFeatured=String(featuredOfferId||'')===String(selected.id);
+  return `<div class="promotion-featured-v462 promotion-featured-row-v586" data-promotion-featured-v462 style="margin-top:12px">
+    ${isFeatured
+      ?`<span class="pill ok grow-offer-featured-mark-v485" data-grow-offer-featured-v462="${esc(selected.id)}">${CUI.icon('home',{size:14})} Shown on customer Home</span>
+        ${pinned?'':'<span class="muted small">Chosen for you because it went live most recently.</span>'}`
+      :`<span class="muted small">Not on the customer Home screen — it is still on your business page.</span>
+        ${canWrite?`<button type="button" class="btn ghost sm" id="promotionFeaturedApplyV462" data-promotion-featured-target-v586="${esc(selected.id)}">${CUI.icon('home',{size:16})}<span>Show on Home</span></button>`:''}`}
   </div>`;
 }
 /* V462 (owner ruling R2c) — "publishing when 10 are live prompts the owner to move one to draft
@@ -29937,6 +29938,10 @@ async function promotionsPage(selectedPromotionId=null){
   const canPublishThis=initial.active||Boolean(initial.metadata?.published_once_at)||canPublishNew,
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
   host.innerHTML=`<div class="promotion-studio" data-workspace-i18n>
+    ${/* nestly_v586 (owner photo 1: "missing back button"). Promotions is opened from Limited
+         Offer's own + Add, and had no way back to it — the same gap photo 9 found on Referrals.
+         Same control, same class, pointing at the list this page publishes into. */''}
+    <div class="grow-breadcrumb-row-v585"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow/offers" aria-label="Back to Limited Offer">${CUI.icon('back',{size:16})}</a></div>
     ${CUI.pageHeader({title:'Promotions',subtitle:'Turn one factual offer and photo into clear customer-ready marketing.',iconName:'loyalty',canWrite:true,moduleLabel:'Customer programme'})}
     ${customerVisibleCount===0?'<aside class="notice warn" role="status"><b>Customers currently see no offers.</b><p class="muted small" style="margin-top:5px">An offer only shows to customers while its dates are current and it has a photo. Publish one, or check the dates and photo on an existing promotion below.</p></aside>':customerVisibleCount===null?'<aside class="notice warn" role="status"><b>Customer-visible offer status could not be confirmed.</b><p class="muted small" style="margin-top:5px">Refresh before relying on the offers shelf status.</p></aside>':''}
     ${/* V462 (R2c): the slots figure is now the LIVE count — the number the publish gate actually
@@ -29947,7 +29952,7 @@ async function promotionsPage(selectedPromotionId=null){
       <p class="muted small" style="margin-top:4px">Customers see every live offer on your business page, and one of them on their Home screen. ${atLiveCapV462?'You are at the limit — move one back to draft before publishing another.':`You can publish ${Math.max(0,max-quotaUsed)} more.`} Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}.</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} offers live" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
       ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
-      ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true})}
+      ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true,selectedId:selected?.id||''})}
     </section>
     <ol class="promotion-studio-progress" aria-label="Promotion publishing steps">
       <li><strong>1. Offer</strong>Add exact facts and dates</li>
@@ -30612,9 +30617,10 @@ async function promotionsPage(selectedPromotionId=null){
      same RPC and then re-renders the page from the server rather than patching the card, so the
      line the owner reads afterwards is the server's answer and not this handler's assumption. */
   if(field('promotionFeaturedApplyV462'))field('promotionFeaturedApplyV462').onclick=async()=>{
-    const picker=field('promotionFeaturedPickV462'),chosen=String(picker?.value||'');
-    if(!chosen)return toast('Choose an offer first.');
     const button=field('promotionFeaturedApplyV462');
+    /* nestly_v586: the offer this editor is open on, not one chosen from a second list. */
+    const chosen=String(button?.dataset?.promotionFeaturedTargetV586||'');
+    if(!chosen)return toast('Open a live offer first.');
     CUI.setButtonBusy(button,{busy:true,label:'Moving…'});
     const {error}=await sb.rpc('business_set_featured_offer_v462',{
       p_business:businessId,p_promotion_id:chosen});

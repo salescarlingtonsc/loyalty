@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="c3d90d5712d40947d50d90b60d9041b64c3b30f897f870b6ef73cf59029c5f13"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="1ca4a2ff3002481c7c8361718a4fb4ec6a5ac0d55b606256124addd5252a9bed"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5321,8 +5321,16 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    every other Rewards & Offer page draws it. */
 .grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}
 
+/* nestly_v586 — the editor's Home control is one line, not a block (owner photo 1). Same badge as
+   the Limited Offer list, so the two surfaces read as one answer. */
+.promotion-featured-row-v586{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card,#fff)}
+.promotion-featured-row-v586 .grow-offer-featured-mark-v485{flex:0 0 auto}
+.promotion-featured-row-v586 .btn{margin-left:auto}
+@media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
+
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c3d90d5712d40947d50d90b60d9041b64c3b30f897f870b6ef73cf59029c5f13</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 1ca4a2ff3002481c7c8361718a4fb4ec6a5ac0d55b606256124addd5252a9bed</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -15399,7 +15407,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'c3d90d5712d40947d50d90b60d9041b64c3b30f897f870b6ef73cf59029c5f13',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'1ca4a2ff3002481c7c8361718a4fb4ec6a5ac0d55b606256124addd5252a9bed',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

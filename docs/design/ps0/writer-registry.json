@@ -2300,8 +2300,8 @@
       "id": "browser.rpc:app/app.js:business_set_tier_basis_v347",
       "surface": "browser_rpc_binding",
       "rpc": "business_set_tier_basis_v347",
-      "resolves_to": "business_set_tier_basis_v347/2 (owner-only; V347). Upserts public.loyalty_programs.tier_basis only (visits|spend|points_earned).",
-      "call_site_finding": "none \u2014 NO VALUE WRITE; it changes which metric a ladder is measured by, never a balance. Existed because tier_basis previously reached loyalty_programs only through publish_loyalty_config, which forced the Manage Tiers page into the wizard. audit_log'd"
+      "resolves_to": "business_set_tier_basis_v347/2 (owner-only; V347, latest_file 20260829_nestly_v586_tier_basis_reaches_the_draft.sql). Upserts public.loyalty_programs.tier_basis (visits|spend|points_earned) AND realigns any OPEN DRAFT loyalty_program_versions row to the same value.",
+      "call_site_finding": "none \u2014 NO VALUE WRITE; it changes which metric a ladder is measured by, never a balance. Existed because tier_basis previously reached loyalty_programs only through publish_loyalty_config, which forced the Manage Tiers page into the wizard. nestly_v586 widened it to the open draft as well: writing only the live row left a draft created BEFORE the change holding the old basis, and publishing that draft silently restored it (owner: 'i already changed to by per visit but it refreshes back to points' \u2014 Jess Salon, draft 16:47Z points_earned against a live 16:53Z visits). Published snapshots are still never touched. audit_log'd, now with drafts_realigned"
     },
     {
       "id": "browser.rpc:app/app.js:business_set_earning_rule_v359",
