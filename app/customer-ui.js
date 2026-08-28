@@ -51,7 +51,12 @@
     daily:'M4 4h16v16H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h6',
     pnl:'M3 3v18h18M7 16l4-5 4 3 5-7',
     expenses:'M12 2v20M17 6.5A4.5 4.5 0 0 0 12.5 3h-1A4.5 4.5 0 0 0 7 7.5c0 6 10 3 10 9A4.5 4.5 0 0 1 12.5 21h-1A4.5 4.5 0 0 1 7 17.5',
-    settings:'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.56V20h-3v-.08a1.7 1.7 0 0 0-1-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 14.7a1.7 1.7 0 0 0-1.56-1H5v-3h.08a1.7 1.7 0 0 0 1.56-1A1.7 1.7 0 0 0 6.3 8.8l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 10.3 7a1.7 1.7 0 0 0 1-1.56V5h3v.08a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19 10.3a1.7 1.7 0 0 0 1.56 1H21v3h-.08a1.7 1.7 0 0 0-1.52.7Z',
+    /* nestly_v585 (owner photo 3: the gear ringed — "its settings, use the normal settings icon
+       not this"). The old path was an 8-lobed cog whose teeth close up into a solid rosette at
+       the 20px this is actually drawn at — rendered side by side at 20/24/32/48px, it reads as a
+       flower until about 32. This is the conventional cog: six square teeth and an open hub, so
+       the shape survives being small. */
+    settings:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M10.7 3.6h2.6l.35 2.1 1.5.87 2-.75 1.3 2.25-1.6 1.38v1.8l1.6 1.38-1.3 2.25-2-.75-1.5.87-.35 2.1h-2.6l-.35-2.1-1.5-.87-2 .75-1.3-2.25 1.6-1.38v-1.8L5.55 8.07l1.3-2.25 2 .75 1.5-.87z',
     setup:'m5 12 4 4L19 6M4 3h16v18H4z',
     platform:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4',
     wallet:'M3 7h18v13H3zM3 9V6a2 2 0 0 1 2-2h13M16 13h5',

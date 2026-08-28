@@ -40,7 +40,11 @@ test('home offer cards open the offer detail sheet with full marketing content',
   assert.match(detail, /availability_label/);
   assert.match(detail, /customer_get_offer_business_contact_v173/);
   assert.match(detail, /Promise\.resolve\(sb\.rpc\('customer_get_offer_business_contact_v173'/);
-  assert.match(detail, /tel:/);
+  /* nestly_v585: the sheet stopped carrying its own copy of the three contact lines and calls the
+     one builder (customerBranchContactLinesV386), which is where the tel: link now lives — that
+     shared builder is what made the owner's pin and telephone marks reach both surfaces at once. */
+  assert.match(detail, /customerBranchContactLinesV386\(branch\)/);
+  assert.match(app, /function customerBranchContactLinesV386[\s\S]{0,1400}tel:/);
   assert.match(detail, /#\/b\/\$\{slug\}/);
   assert.match(detail, /CUI\.activateDialog/);
 });

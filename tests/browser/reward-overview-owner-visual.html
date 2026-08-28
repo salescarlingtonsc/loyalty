@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="5329f380cac0e99dcf3251c4f66a86e4eac2d6ede45c3d7bf6fda90cb97bb0ce"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="c3d90d5712d40947d50d90b60d9041b64c3b30f897f870b6ef73cf59029c5f13"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3046,6 +3046,20 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-datesheet-actions-v3{display:flex;gap:8px;margin-top:4px}
 .customer-datesheet-actions-v3 .btn{flex:1 1 0}
 @media(max-width:520px){.customer-page-head{flex-wrap:wrap}.customer-datesheet-wrap-v3{width:100%;align-items:stretch}.customer-datesheet-chip-v3{width:100%;justify-content:flex-start}.customer-datesheet-v3{left:0;right:0;width:auto}}
+/* nestly_v585 (owner photo 5: the "Any dates" chip scribbled out across its empty half —
+   "shorten this" — and the search box ringed with "move up here"). On a phone the rule above
+   stretches the chip to the full row, so the two controls stacked and the chip carried a hand's
+   width of nothing. On the Bookings header only, the chip is its own content wide and the search
+   takes the rest of that same line. The panel it opens still spans the row, because a date picker
+   that narrow would be unusable. */
+@media(max-width:520px){
+  .customer-booking-head-v577 .customer-datesheet-wrap-v3{width:auto;align-items:flex-start;flex:0 0 auto;order:2}
+  .customer-booking-head-v577 .customer-datesheet-chip-v3{width:auto;justify-content:center}
+  .customer-booking-head-v577 .customer-booking-search-v577{order:3;flex:1 1 140px;max-width:none}
+  .customer-booking-head-v577>div:first-child{flex:1 0 100%;order:1}
+  .customer-booking-head-v577>.spacer{display:none}
+  .customer-booking-head-v577 .customer-datesheet-v3{left:0;right:auto;width:min(320px,calc(100vw - 40px))}
+}
 /* v291 · the Book-with chooser: every joined business, sector-grouped once there is >1 sector */
 .customer-booking-chooser h2{font-size:16px}
 /* v326 · same search-field treatment as .customer-my-rewards-search, filtering the chips below */
@@ -5119,10 +5133,18 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
+/* nestly_v585 (owner photo 5: the date circled at the bottom of the card with an arrow to its top
+   right, "move here smaller"). v581 reflowed this row to two columns below 560px, which dropped
+   the date and the Book button onto a second line under the address — the owner asked about that
+   difference at the time and has now said where they want it. The three-column shape holds at
+   every width: date at the top right, action beneath it. The date shrinks a step so the business
+   name stays the loudest thing on the row. */
+.customer-booking-row-date-v580{font-size:11.5px}
 @media(max-width:560px){
-  .customer-booking-row-v580{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
-  .customer-booking-row-end-v580{grid-column:2;justify-items:start;
-    grid-auto-flow:column;align-items:center;gap:10px}
+  .customer-booking-row-v580{gap:10px;padding:12px 13px}
+  .customer-booking-row-logo-v580 img,.customer-booking-row-logo-v580 .customer-booking-logo{
+    width:38px;height:38px;border-radius:10px}
+  .customer-booking-row-end-v580{align-content:start;gap:9px}
 }
 
 /* Photo 23 — "delete this space" against the gap under the last Home card, and "scroll to here
@@ -5278,8 +5300,29 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   line-height:0;cursor:pointer;transition:background .14s var(--ease),border-color .14s var(--ease)}
 .staff-delete-icon-v584:hover{background:var(--peekaa-red-faint,var(--tint));border-color:currentColor}
 
+/* ===================== nestly_v585 — owner batch, 2026-08-29 ================================ */
+
+/* Photos 1 and 2: the owner's pin and telephone. Sized to the line they lead, so an emoji does
+   not sit taller than the address beside it, and given a fixed box so the two lines' text starts
+   at the same x whatever the glyph's own advance width is. */
+.customer-contact-mark-v585{display:inline-block;width:1.15em;font-size:13px;line-height:1;
+  text-align:center;flex:0 0 auto}
+.customer-business-contact-line-v386{display:flex;align-items:baseline;gap:7px}
+
+/* Photo 4: the business mark at the top of an offer sheet is a link now. It must not look like a
+   button — it is the same mark it was, with a pressed state so a thumb gets feedback. */
+.customer-offer-detail-brandlink-v585{color:inherit;border-radius:12px;padding:2px 6px 2px 2px;margin-left:-2px;
+  transition:background .14s var(--ease)}
+.customer-offer-detail-brandlink-v585:hover,
+.customer-offer-detail-brandlink-v585:focus-visible{background:var(--peekaa-red-faint,var(--tint))}
+.customer-offer-detail-brandlink-v585:active{transform:scale(.985)}
+
+/* Photo 9: the Referrals back button sits on its own line above the page header, which is where
+   every other Rewards & Offer page draws it. */
+.grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}
+
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 5329f380cac0e99dcf3251c4f66a86e4eac2d6ede45c3d7bf6fda90cb97bb0ce</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c3d90d5712d40947d50d90b60d9041b64c3b30f897f870b6ef73cf59029c5f13</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -5333,7 +5376,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     daily:'M4 4h16v16H4zM8 2v4M16 2v4M4 9h16M8 13h3M8 17h6',
     pnl:'M3 3v18h18M7 16l4-5 4 3 5-7',
     expenses:'M12 2v20M17 6.5A4.5 4.5 0 0 0 12.5 3h-1A4.5 4.5 0 0 0 7 7.5c0 6 10 3 10 9A4.5 4.5 0 0 1 12.5 21h-1A4.5 4.5 0 0 1 7 17.5',
-    settings:'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.56V20h-3v-.08a1.7 1.7 0 0 0-1-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 14.7a1.7 1.7 0 0 0-1.56-1H5v-3h.08a1.7 1.7 0 0 0 1.56-1A1.7 1.7 0 0 0 6.3 8.8l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 10.3 7a1.7 1.7 0 0 0 1-1.56V5h3v.08a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19 10.3a1.7 1.7 0 0 0 1.56 1H21v3h-.08a1.7 1.7 0 0 0-1.52.7Z',
+    /* nestly_v585 (owner photo 3: the gear ringed — "its settings, use the normal settings icon
+       not this"). The old path was an 8-lobed cog whose teeth close up into a solid rosette at
+       the 20px this is actually drawn at — rendered side by side at 20/24/32/48px, it reads as a
+       flower until about 32. This is the conventional cog: six square teeth and an open hub, so
+       the shape survives being small. */
+    settings:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M10.7 3.6h2.6l.35 2.1 1.5.87 2-.75 1.3 2.25-1.6 1.38v1.8l1.6 1.38-1.3 2.25-2-.75-1.5.87-.35 2.1h-2.6l-.35-2.1-1.5-.87-2 .75-1.3-2.25 1.6-1.38v-1.8L5.55 8.07l1.3-2.25 2 .75 1.5-.87z',
     setup:'m5 12 4 4L19 6M4 3h16v18H4z',
     platform:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4',
     wallet:'M3 7h18v13H3zM3 9V6a2 2 0 0 1 2-2h13M16 13h5',
@@ -5902,6 +5950,17 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
   const servedMediaUrlV576=objectPath=>/\.gif$/i.test(objectPath)
     ?`${origin}${publicPrefix}${objectPath}`
     :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75&resize=contain`;
+  /* nestly_v585 (owner photo 10: "i added photo - but does not reflect"). The upload worked —
+     production shows all three of Jess Salon's service assets stored, customer_visible, at
+     version 1 — and the LIST still offered "Attach photo". Cause: this helper stopped being
+     idempotent at v576. The Services loader resolves the asset URL once and stores the result on
+     the row; the row renderer then passes that stored value back through here. Before v576 the
+     return was the same /object/public/ URL it was given, so resolving twice was harmless. Since
+     v576 the return is a /render/image/ URL with a query string, which matches neither prefix
+     below — so the second pass returned '' and the photo vanished on every surface that resolves
+     a value it has already resolved. Recognising our own output fixes all of them at once. */
+  const renderPrefixV585=`${origin}/storage/v1/render/image/public/business-public/`;
+  if(raw.startsWith(renderPrefixV585))return raw;
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return servedMediaUrlV576(relative);
   const absolutePrefix=origin+publicPrefix;
@@ -12703,6 +12762,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      hardcoded "Points earned" label regardless of what was actually saved. */
   const growTiersBasisV347=snapshot.loyalty?.tier_basis||'visits';
   const growTiersBasisLabelV347=({points_earned:'Points earned',spend:'Lifetime spend',visits:'Visits'})[growTiersBasisV347]||'Visits';
+  /* nestly_v585 (owner photo 8: an arrow from the basis dropdown to the "Required points" field —
+     "when switch to visits the fields need to change to visits ... if not there will be
+     misunderstanding between points / visits or even lifetime spends. it needs to be consistent").
+     V347 fixed the LABEL on the card and left every figure on the page reading "points", so a
+     firm whose tiers are earned by visits was setting "Required points: 300" for a rung the
+     server unlocks at 300 VISITS. The number was never wrong; the noun was. One vocabulary, read
+     off the same stored basis the card shows and the server evaluates:
+       visits        -> a count of visit-counted sales
+       points_earned -> lifetime points earned
+       spend         -> DOLLARS. The threshold column holds dollars for this basis (the server
+                        compares it against sum(amount_cents)/100), so it is written and read as
+                        money rather than as a bare number.
+     The customer half of the owner's instruction was already true and is left alone: the tier
+     resolver returns `basis` with every payload and customerTierRequirementTextV189 /
+     customerTierUnitWordV310 have printed the matching noun since v189/v310. This change makes
+     the BUSINESS side say what the customer is already being told. */
+  const growTiersBasisIsSpendV585=growTiersBasisV347==='spend';
+  const growTiersUnitWordV585=growTiersBasisIsSpendV585?'spent'
+    :growTiersBasisV347==='points_earned'?'points':'visits';
+  const growTiersThresholdLabelV585=growTiersBasisIsSpendV585
+    ?`Required spend (${S.biz.currency||'SGD'})`
+    :growTiersBasisV347==='points_earned'?'Required points':'Required visits';
+  /* loyalty_tiers.threshold is an INTEGER column, so a spend rung is whole dollars. The field
+     says so rather than inviting cents it would silently round away. */
+  const growTiersThresholdPlaceholderV585=growTiersBasisIsSpendV585?'e.g. 500'
+    :growTiersBasisV347==='points_earned'?'e.g. 500':'e.g. 10';
+  /* Reached-at, in the firm's own basis. Spend prints as money; the other two print a count and
+     the noun that goes with it. */
+  const growTiersThresholdTextV585=value=>{
+    const amount=Math.max(0,Number(value)||0);
+    return growTiersBasisIsSpendV585?money(Math.round(amount*100))
+      :`${amount.toLocaleString('en-SG')} ${amount===1?growTiersUnitWordV585.replace(/s$/,''):growTiersUnitWordV585}`;
+  };
   const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
   /* V351 (owner UX pass): row went from a 4-column table look to a plain card — no per-tier
      "Turn on/off" any more (the owner's own caution: pausing a MIDDLE rung of a ladder has no
@@ -12724,14 +12816,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -12753,7 +12845,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">${esc(growTiersThresholdLabelV585)}</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" data-workspace-i18n inputmode="numeric" style="width:100%;max-width:160px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="${esc(growTiersThresholdPlaceholderV585)}"></p>
+    <p class="muted small" style="margin:-2px 0 0">${growTiersBasisIsSpendV585
+      ?'Tier level is earned by lifetime spend, so this is the amount a customer has to have spent with you, in whole dollars.'
+      :growTiersBasisV347==='points_earned'
+        ?'Tier level is earned by points, so this is the number of points a customer has to have earned.'
+        :'Tier level is earned by visits, so this is the number of visits a customer has to have made.'}</p>
     ${/* V363: the single "Benefit" textarea became a list. Each row is one perk_note line and one
          chip on the customer's tier card; the picker below prefills a row the owner then edits.
          A tier with no rows is a legitimate, common shape (the owner's own example: Essential =
@@ -12825,7 +12922,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          each end now, so 0% and 100% land where a whole label still fits. Nothing about the
          SPACING between tiers changes — the same fraction, over a track two half-labels shorter. */
       const railFracV493=(pct/100).toFixed(4);
-      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${esc(growTiersThresholdTextV585(tier.threshold))}</small></span>`;
     }).join('')}
   </div>`:'';
   const growTiersManageV331=!canRewards
@@ -14748,7 +14845,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersBusyV331=false;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     if(snapshot.loyalty)snapshot.loyalty.tier_basis=basis;else snapshot.loyalty={tier_basis:basis};
-    toast('Tier basis updated');
+    /* nestly_v585 (owner photo 8, "if not there will be misunderstanding"). Switching the basis
+       does NOT rewrite the rungs — 300 stays 300 — so the same ladder now unlocks at 300 visits
+       where it used to unlock at 300 points, for every customer, immediately. Every label on this
+       page and in the customer app follows the new basis from this moment, which is exactly why
+       the numbers underneath them have to be re-read. Saying it once, here, is the difference
+       between a deliberate change and a silent one. */
+    const rungsV585=growTiersPublishedV331.length;
+    const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
+    toast(rungsV585
+      ?`Tiers are earned by ${wordV585} now. Your ${rungsV585} rung${rungsV585===1?'' :'s'} kept ${rungsV585===1?'its':'their'} number — check ${rungsV585===1?'it reads':'they read'} right in ${wordV585}.`
+      :`Tiers are earned by ${wordV585} now.`);
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -15292,7 +15399,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'5329f380cac0e99dcf3251c4f66a86e4eac2d6ede45c3d7bf6fda90cb97bb0ce',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'c3d90d5712d40947d50d90b60d9041b64c3b30f897f870b6ef73cf59029c5f13',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

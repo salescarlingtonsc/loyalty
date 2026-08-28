@@ -17015,6 +17015,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      hardcoded "Points earned" label regardless of what was actually saved. */
   const growTiersBasisV347=snapshot.loyalty?.tier_basis||'visits';
   const growTiersBasisLabelV347=({points_earned:'Points earned',spend:'Lifetime spend',visits:'Visits'})[growTiersBasisV347]||'Visits';
+  /* nestly_v585 (owner photo 8: an arrow from the basis dropdown to the "Required points" field —
+     "when switch to visits the fields need to change to visits ... if not there will be
+     misunderstanding between points / visits or even lifetime spends. it needs to be consistent").
+     V347 fixed the LABEL on the card and left every figure on the page reading "points", so a
+     firm whose tiers are earned by visits was setting "Required points: 300" for a rung the
+     server unlocks at 300 VISITS. The number was never wrong; the noun was. One vocabulary, read
+     off the same stored basis the card shows and the server evaluates:
+       visits        -> a count of visit-counted sales
+       points_earned -> lifetime points earned
+       spend         -> DOLLARS. The threshold column holds dollars for this basis (the server
+                        compares it against sum(amount_cents)/100), so it is written and read as
+                        money rather than as a bare number.
+     The customer half of the owner's instruction was already true and is left alone: the tier
+     resolver returns `basis` with every payload and customerTierRequirementTextV189 /
+     customerTierUnitWordV310 have printed the matching noun since v189/v310. This change makes
+     the BUSINESS side say what the customer is already being told. */
+  const growTiersBasisIsSpendV585=growTiersBasisV347==='spend';
+  const growTiersUnitWordV585=growTiersBasisIsSpendV585?'spent'
+    :growTiersBasisV347==='points_earned'?'points':'visits';
+  const growTiersThresholdLabelV585=growTiersBasisIsSpendV585
+    ?`Required spend (${S.biz.currency||'SGD'})`
+    :growTiersBasisV347==='points_earned'?'Required points':'Required visits';
+  /* loyalty_tiers.threshold is an INTEGER column, so a spend rung is whole dollars. The field
+     says so rather than inviting cents it would silently round away. */
+  const growTiersThresholdPlaceholderV585=growTiersBasisIsSpendV585?'e.g. 500'
+    :growTiersBasisV347==='points_earned'?'e.g. 500':'e.g. 10';
+  /* Reached-at, in the firm's own basis. Spend prints as money; the other two print a count and
+     the noun that goes with it. */
+  const growTiersThresholdTextV585=value=>{
+    const amount=Math.max(0,Number(value)||0);
+    return growTiersBasisIsSpendV585?money(Math.round(amount*100))
+      :`${amount.toLocaleString('en-SG')} ${amount===1?growTiersUnitWordV585.replace(/s$/,''):growTiersUnitWordV585}`;
+  };
   const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
   /* V351 (owner UX pass): row went from a 4-column table look to a plain card — no per-tier
      "Turn on/off" any more (the owner's own caution: pausing a MIDDLE rung of a ladder has no
@@ -17036,14 +17069,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -17065,7 +17098,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">${esc(growTiersThresholdLabelV585)}</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" data-workspace-i18n inputmode="numeric" style="width:100%;max-width:160px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="${esc(growTiersThresholdPlaceholderV585)}"></p>
+    <p class="muted small" style="margin:-2px 0 0">${growTiersBasisIsSpendV585
+      ?'Tier level is earned by lifetime spend, so this is the amount a customer has to have spent with you, in whole dollars.'
+      :growTiersBasisV347==='points_earned'
+        ?'Tier level is earned by points, so this is the number of points a customer has to have earned.'
+        :'Tier level is earned by visits, so this is the number of visits a customer has to have made.'}</p>
     ${/* V363: the single "Benefit" textarea became a list. Each row is one perk_note line and one
          chip on the customer's tier card; the picker below prefills a row the owner then edits.
          A tier with no rows is a legitimate, common shape (the owner's own example: Essential =
@@ -17137,7 +17175,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          each end now, so 0% and 100% land where a whole label still fits. Nothing about the
          SPACING between tiers changes — the same fraction, over a track two half-labels shorter. */
       const railFracV493=(pct/100).toFixed(4);
-      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${esc(growTiersThresholdTextV585(tier.threshold))}</small></span>`;
     }).join('')}
   </div>`:'';
   const growTiersManageV331=!canRewards
@@ -19060,7 +19098,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersBusyV331=false;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     if(snapshot.loyalty)snapshot.loyalty.tier_basis=basis;else snapshot.loyalty={tier_basis:basis};
-    toast('Tier basis updated');
+    /* nestly_v585 (owner photo 8, "if not there will be misunderstanding"). Switching the basis
+       does NOT rewrite the rungs — 300 stays 300 — so the same ladder now unlocks at 300 visits
+       where it used to unlock at 300 points, for every customer, immediately. Every label on this
+       page and in the customer app follows the new basis from this moment, which is exactly why
+       the numbers underneath them have to be re-read. Saying it once, here, is the difference
+       between a deliberate change and a silent one. */
+    const rungsV585=growTiersPublishedV331.length;
+    const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
+    toast(rungsV585
+      ?`Tiers are earned by ${wordV585} now. Your ${rungsV585} rung${rungsV585===1?'' :'s'} kept ${rungsV585===1?'its':'their'} number — check ${rungsV585===1?'it reads':'they read'} right in ${wordV585}.`
+      :`Tiers are earned by ${wordV585} now.`);
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -24484,7 +24532,12 @@ async function referralsPage(){
       ${referralKindV429==='voucher'?`<p class="muted small">This referral pays a free gift — ${esc(String(p?.reward_label||'').trim()||'not named yet')}. Change the reward type in Rewards Programme → Referrals.</p>`:''}
       <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
     :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>${esc(referralAmountLabelV429)}</dt><dd>${esc(referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'A free gift'):growReferralAmountWordV425(referralKindV429,p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
+  /* nestly_v585 (owner photo 9: "add a back button (only this does not have back button)"). Every
+     other Rewards & Offer destination carries the same round back control; this page was reached
+     from the rail and from the programme row and then had no way out except the rail. Same button,
+     same class, same destination pattern as the dedicated grow pages. */
+  routeMain.innerHTML=`<div class="grow-breadcrumb-row-v585"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to Rewards Programme">${CUI.icon('back',{size:16})}</a></div>
+    ${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
     ${/* nestly_v429 (B4): filled in once the referral rows have loaded — v425 records WHY a
          qualified referral could not be paid on referrals.blocked_reason, which until now was a
          row that silently never moved. */''}

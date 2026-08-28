@@ -153,7 +153,7 @@ test('G3: activation notifies open pages but never re-navigates them', () => {
 });
 
 test('G3: the shell cache is versioned forward and the app document joins it', () => {
-  assert.match(sw, /const CACHE_VERSION='v22-20260829-v584'/);
+  assert.match(sw, /const CACHE_VERSION='v23-20260829-v585'/);
   assert.match(sw, /const SHELL_DOCUMENTS=Object\.freeze\(\['\/index\.html','\/app'\]\)/);
   assert.match(sw, /return \(await cache\.match\('\/index\.html'\)\)\|\|\(await cache\.match\('\/offline\.html'\)\)/,
     'offline navigation prefers the real shell and still falls back honestly');
@@ -259,7 +259,10 @@ test('Messages and Profile offer a way back to Home', () => {
   const messages = block('async function renderCustomerMessages', 'const CUSTOMER_CONSENT_CATEGORY_LABELS_V282');
   assert.match(messages, /active:'messages',backTo:'#\/wallet'/);
   const profile = block('async function renderCustomerProfile', 'async function renderCustomerQrJoin');
-  assert.match(profile, /active:'profile',backTo:'#\/wallet'/);
+  /* nestly_v585 (owner photo 3): Settings became its own page, rendered by this same function, so
+     the profile's back target depends on which half is showing — Settings goes back to Profile,
+     Profile goes back to Home. Both are still a way back, which is what A3 is about. */
+  assert.match(profile, /backTo:settingsViewV585\?'#\/customer\/profile':'#\/wallet'/);
   assert.match(app, /if\(\$\('walletBack'\)\)\$\('walletBack'\)\.onclick=\(\)=>nav\(backHref\)/);
 });
 

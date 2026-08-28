@@ -129,8 +129,13 @@ test('photo 2: the company sheet is company details, with a phone glyph and ever
   assert.match(sheet,/data-business-branches-v386/);
   assert.match(sheet,/\.slice\(1\)/,'branches\[0\] is the default branch already printed above');
   const lines=app.slice(app.indexOf('function customerBranchContactLinesV386'));
-  assert.match(lines.slice(0,900),/CUI\.icon\('phone',\{size:16\}\)/);
-  assert.doesNotMatch(lines.slice(0,900),/CUI\.icon\('mail'/,'there is no envelope glyph; an unknown name falls back to INFO');
+  /* nestly_v585 (owner photos 1 and 2: a pin drawn beside the address, a telephone beside the
+     number, "photo 2 is incorrect" on the version that had neither). The line-art glyphs became
+     the owner's own two emoji. What this assertion is really for — the number is never a bare
+     unlabelled string — is unchanged and is what is checked. */
+  assert.match(lines.slice(0,1400),/CUSTOMER_CONTACT_PHONE_V585/);
+  assert.match(lines.slice(0,1400),/CUSTOMER_CONTACT_PIN_V585/);
+  assert.doesNotMatch(lines.slice(0,1400),/CUI\.icon\('mail'/,'there is still no envelope glyph, and none was drawn');
 });
 
 test('photo 7: the hero takes its shape from the business’s own programme spine',()=>{

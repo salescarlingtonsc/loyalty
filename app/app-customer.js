@@ -2419,10 +2419,18 @@ async function hydrateCustomerConsentHistoryV282(isCurrent){
   if(section)section.setAttribute('aria-busy','false');
 }
 
-async function renderCustomerProfile(){
+/* nestly_v585 (owner photo 3, item 3: "when clicked settings icon it should land me in another
+   page - not endless scrolling (current way). then i just need to press back to come back").
+   v583 made the gear reveal the cards in place, which left one very long page. They are a separate
+   ROUTE now — but rendered by this same function, with both halves always in the DOM and one of
+   them hidden. That is deliberate: every card below the fold is bound BY ID after this render, and
+   moving live nodes to a second renderer is exactly what kept breaking the Messages device card.
+   Hidden, not moved: every binding still finds the node it always did. */
+async function renderCustomerProfile(requestedView){
+  const settingsViewV585=requestedView==='settings';
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
-  renderCustomerShell({active:'profile',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
+  renderCustomerShell({active:'profile',backTo:settingsViewV585?'#/customer/profile':'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
   const profile=context.features.customer_phone_registration===true?context.profile:null;
   /* v286: a null profile used to collapse the whole page into "Profile editing isn’t available for
      this account" — the same wording for a transient customer_get_profile failure as for an account
@@ -2454,15 +2462,22 @@ async function renderCustomerProfile(){
         <p id="customerMemberQrStatusV327" class="muted small" role="status" aria-live="polite"></p>
       </section>`
     :'';
-  $('walletBody').innerHTML=`<header class="customer-page-head customer-profile-head-v583"><div><h1>Profile</h1><p class="muted">${profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div><span class="spacer"></span><button type="button" class="customer-profile-gear-v583" id="customerProfileSettingsGearV583" aria-expanded="false" aria-controls="customerProfileSettingsV583" aria-label="Settings" title="Settings">${CUI.icon('settings',{size:20})}</button></header>
+  $('walletBody').innerHTML=`<header class="customer-page-head customer-profile-head-v583"><div><h1>${settingsViewV585?'Settings':'Profile'}</h1><p class="muted">${settingsViewV585
+      ?`Appearance, privacy, security and your ${esc(BRAND.customerLabel)} account.`
+      :profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div><span class="spacer"></span>${settingsViewV585?''
+      :`<a class="customer-profile-gear-v583" id="customerProfileSettingsGearV583" href="#/customer/settings" aria-label="Settings" title="Settings">${CUI.icon('settings',{size:20})}</a>`}</header>
     <!-- Top-20 #20: the page was ~14 visually identical white cards in one flat stack, so account
          closure, a marketing choice and a sound switch all read at the same weight. Four serif
          headings on the ivory ground group them. No card's markup, id, handler or copy changed;
          the only card that MOVED is Device notifications, from between passkeys and account
          closure into Preferences, where it belongs — it is bound by id after this innerHTML, so
          its position carries no wiring. Sign out stays last (v296). -->
-    <h2 class="customer-profile-group-v3">You</h2>
-    ${personalDetailsHtmlV286}
+    ${/* nestly_v585 (owner photos 3 and 7, item 2: "You" struck through, with "move up" drawn at
+         the gear). The heading named the reader rather than the content, and it was the only thing
+         between the page's own subtitle and a card already titled "Personal details" — so removing
+         it also lifts the gear and that card up the page, which is what the second mark asked
+         for. */''}
+    <div id="customerProfilePersonalV585"${settingsViewV585?' hidden':''}>${personalDetailsHtmlV286}</div>
     ${/* nestly_v583 (owner mark, photo 8: the whole My Peekaa QR card crossed out — "remove this,
          here have already", with an arrow to the Scan QR button in the nav). The nav's Scan QR
          sheet opens on "My Peekaa QR" (v329) showing the same v327 member code, so this card was
@@ -2475,7 +2490,7 @@ async function renderCustomerProfile(){
          this innerHTML, and relocating live nodes into a dialog is exactly what caused the
          Messages device-card to keep escaping. Collapsed, the cards stay in the DOM and every
          binding keeps working; the gear only toggles hidden. */''}
-    <div id="customerProfileSettingsV583" hidden>
+    <div id="customerProfileSettingsV583"${settingsViewV585?'':' hidden'}>
     <h2 class="customer-profile-group-v3">Preferences</h2>
     <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
@@ -2509,16 +2524,9 @@ async function renderCustomerProfile(){
     <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></div></section>
     </div>`;
   bindPasswordVisibility($('walletBody'));
-  /* nestly_v583 (owner, photo 9): the gear. Assigned (not added) so a re-render rebinds rather
-     than stacking listeners, and it only toggles `hidden` — the cards it reveals never move, so
-     every binding made below this line stays attached whether the section is open or closed. */
-  const profileGearV583=$('customerProfileSettingsGearV583'),profileSettingsV583=$('customerProfileSettingsV583');
-  if(profileGearV583&&profileSettingsV583)profileGearV583.onclick=()=>{
-    const open=profileSettingsV583.hidden;
-    profileSettingsV583.hidden=!open;
-    profileGearV583.setAttribute('aria-expanded',open?'true':'false');
-    if(open)profileSettingsV583.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
-  };
+  /* nestly_v585: the gear is a plain link to #/customer/settings — no toggle handler, because
+     there is no longer anything to toggle. The router renders this same function with the two
+     halves swapped, and the shell's own back button (backTo above) returns to the profile. */
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
@@ -3710,15 +3718,22 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
    an icon; the phone and email lines were unlabelled strings, so a number sat under an address
    with nothing saying it was callable. One shape for all three, reused by the default branch and
    by every branch listed under it. */
+/* nestly_v585 (owner photos 1 and 2: a red pin drawn beside the address and a red telephone
+   beside the number, with "photo 2 is incorrect" written on the version that had a building glyph
+   and a bare number). The two marks are the owner's own emoji, so they are used verbatim rather
+   than approximated with a line-art glyph from the icon set — a pin and a phone read the same in
+   every language, which is the point on a surface that ships in four.
+   They are aria-hidden: the address and the number say what they are, and a screen reader
+   announcing "round pushpin" before an address is noise. */
+const CUSTOMER_CONTACT_PIN_V585='\uD83D\uDCCD';    /* 📍 */
+const CUSTOMER_CONTACT_PHONE_V585='\u260E\uFE0F';  /* ☎️ */
 function customerBranchContactLinesV386(branch={}){
   const phone=String(branch?.phone||'').trim();
-  /* The address glyph moves from 'bookings' (a calendar) to 'branch' (a building) — the same
-     glyph the profile header already uses for its Address segment. There is no envelope in the
-     customer icon set and CUI.icon falls back to the INFO glyph for an unknown name, so the
-     email line is left unprefixed rather than labelled with a wrong picture. */
+  /* There is no envelope emoji mark from the owner for the email line, and inventing one would be
+     a third decision they did not make, so it stays unprefixed. */
   return [
-    branch?.address?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('branch',{size:16})} <span>${esc(branch.address)}</span></p>`:'',
-    phone?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('phone',{size:16})} <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
+    branch?.address?`<p class="muted small customer-business-contact-line-v386"><span class="customer-contact-mark-v585" aria-hidden="true">${CUSTOMER_CONTACT_PIN_V585}</span> <span>${esc(branch.address)}</span></p>`:'',
+    phone?`<p class="muted small customer-business-contact-line-v386"><span class="customer-contact-mark-v585" aria-hidden="true">${CUSTOMER_CONTACT_PHONE_V585}</span> <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
     branch?.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
   ].filter(Boolean).join('');
 }
@@ -3749,8 +3764,16 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
          customerCompanyIdentityMarkupV178 — the same logo-or-monogram every other customer
          surface draws — so a business with no logo still gets its initial, never a placeholder
          pretending to be theirs. */''}
+    ${/* nestly_v585 (owner photo 4: an arrow from the logo at the top of the offer sheet —
+         "click here can go business profile"). v583 put the business here as a MARK; a customer
+         reading an offer and wanting to know who is running it had nothing to press. It is a link
+         when we know the slug, and stays a plain mark when we do not, so it can never be a
+         control that goes nowhere. data-offer-detail-nav hands the sheet's own history entry to
+         the destination (wireCustomerSheetNavV183), so Back returns to the page behind the sheet
+         rather than reopening it. */''}
     <div class="row customer-offer-detail-head-v583">
-      <div class="customer-offer-detail-brand-v583">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></div>
+      ${slug?`<a class="customer-offer-detail-brand-v583 customer-offer-detail-brandlink-v585" href="#/wallet/${slug}" data-offer-detail-nav aria-label="${esc(`Open ${business.name||'this business'}`)}">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></a>`
+        :`<div class="customer-offer-detail-brand-v583">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></div>`}
       <span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
@@ -3812,12 +3835,11 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
         if(error)return contactFailed();
         const branch=data?.branch||{},host=overlay.querySelector('[data-offer-contact]');
         if(!host)return;
-        const lines=[
-          branch.address?`<p class="muted small">${CUI.icon('bookings',{size:16})} ${esc(branch.address)}</p>`:'',
-          branch.phone?`<p class="muted small"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:'',
-          branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
-        ].filter(Boolean).join('');
-        host.innerHTML=lines||'';
+        /* nestly_v585 (owner: "photo 2 is incorrect"). This sheet carried its OWN copy of the
+           three contact lines — a calendar glyph on the address, nothing at all on the number —
+           which is exactly how it drifted from the business page beside it. One builder now, so
+           the marks the owner drew cannot apply to one surface and not the other. */
+        host.innerHTML=customerBranchContactLinesV386(branch)||'';
         const rowLines=overlay.querySelector('[data-company-row-lines]');
         if(rowLines){
           const summary=[branch.address,branch.phone].map(value=>String(value||'').trim()).filter(Boolean);
@@ -5403,7 +5425,11 @@ function customerProgrammeTileMarkupV96(card){
       quietest thing on the card. It leads now, and only when something really is ready — the
       other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${/* nestly_v395 (owner photo 4: the coin ringed in red, "remove this, change to star"). CUI's
         'redeem' glyph is a dollar sign, so a reward the customer earned with points read as a
-        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${CUI.icon('star',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div>${metric?`<div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>`:'<div class="customer-programme-card-balance"><span aria-hidden="true">›</span></div>'}${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${/* nestly_v585 (owner photo 6: an arrow from "1 reward ready" to a drawn gift — "change all
+        stars to this"). v395 moved this off a coin because a reward earned with points read as a
+        price; a star then said "special" rather than "there is something here for you". The gift
+        is the same thing the customer is about to collect. Only the READY pill changes — the
+        points-card headings keep their star, because those name a balance, not a gift. */''}${CUI.icon('giftcard',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div>${metric?`<div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>`:'<div class="customer-programme-card-balance"><span aria-hidden="true">›</span></div>'}${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();

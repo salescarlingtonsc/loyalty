@@ -721,7 +721,10 @@ const CUSTOMER_DIRECT_DESTINATIONS=new Set([
      in Profile → Communications"). Without it a signed-out deep link fell through to
      renderAuth — the MERCHANT sign-in card — and nothing remembered where the visitor was
      going, so even a correct customer sign-in landed on the wallet instead. */
-  '#/customer/communications'
+  '#/customer/communications',
+  /* nestly_v585: Settings is its own page now (owner photo 3), so a signed-out deep link to it
+     must be remembered through sign-in exactly like the profile it belongs to. */
+  '#/customer/settings'
 ]);
 function normalizeCustomerDestination(value){
   const route=String(value??'').trim();
@@ -1524,6 +1527,7 @@ async function route(){
     if(h==='#/customer/explore')return nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
+    if(h==='#/customer/settings')return renderCustomerProfile('settings');
     if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
@@ -2915,6 +2919,17 @@ function customerMediaUrlV95(value){
   const servedMediaUrlV576=objectPath=>/\.gif$/i.test(objectPath)
     ?`${origin}${publicPrefix}${objectPath}`
     :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75&resize=contain`;
+  /* nestly_v585 (owner photo 10: "i added photo - but does not reflect"). The upload worked —
+     production shows all three of Jess Salon's service assets stored, customer_visible, at
+     version 1 — and the LIST still offered "Attach photo". Cause: this helper stopped being
+     idempotent at v576. The Services loader resolves the asset URL once and stores the result on
+     the row; the row renderer then passes that stored value back through here. Before v576 the
+     return was the same /object/public/ URL it was given, so resolving twice was harmless. Since
+     v576 the return is a /render/image/ URL with a query string, which matches neither prefix
+     below — so the second pass returned '' and the photo vanished on every surface that resolves
+     a value it has already resolved. Recognising our own output fixes all of them at once. */
+  const renderPrefixV585=`${origin}/storage/v1/render/image/public/business-public/`;
+  if(raw.startsWith(renderPrefixV585))return raw;
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return servedMediaUrlV576(relative);
   const absolutePrefix=origin+publicPrefix;

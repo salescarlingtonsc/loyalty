@@ -2061,6 +2061,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-datesheet-actions-v3{display:flex;gap:8px;margin-top:4px}
 .customer-datesheet-actions-v3 .btn{flex:1 1 0}
 @media(max-width:520px){.customer-page-head{flex-wrap:wrap}.customer-datesheet-wrap-v3{width:100%;align-items:stretch}.customer-datesheet-chip-v3{width:100%;justify-content:flex-start}.customer-datesheet-v3{left:0;right:0;width:auto}}
+@media(max-width:520px){
+  .customer-booking-head-v577 .customer-datesheet-wrap-v3{width:auto;align-items:flex-start;flex:0 0 auto;order:2}
+  .customer-booking-head-v577 .customer-datesheet-chip-v3{width:auto;justify-content:center}
+  .customer-booking-head-v577 .customer-booking-search-v577{order:3;flex:1 1 140px;max-width:none}
+  .customer-booking-head-v577>div:first-child{flex:1 0 100%;order:1}
+  .customer-booking-head-v577>.spacer{display:none}
+  .customer-booking-head-v577 .customer-datesheet-v3{left:0;right:auto;width:min(320px,calc(100vw - 40px))}
+}
 .customer-booking-chooser h2{font-size:16px}
 .customer-booking-search{position:relative;display:flex;align-items:center;gap:8px;min-width:0;max-width:420px;padding:0 12px;border:1px solid var(--control-border);border-radius:999px;background:var(--card);color:var(--muted)}
 .customer-booking-search input{flex:1;min-width:0;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit}
@@ -3252,10 +3260,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
+.customer-booking-row-date-v580{font-size:11.5px}
 @media(max-width:560px){
-  .customer-booking-row-v580{grid-template-columns:auto minmax(0,1fr);row-gap:10px}
-  .customer-booking-row-end-v580{grid-column:2;justify-items:start;
-    grid-auto-flow:column;align-items:center;gap:10px}
+  .customer-booking-row-v580{gap:10px;padding:12px 13px}
+  .customer-booking-row-logo-v580 img,.customer-booking-row-logo-v580 .customer-booking-logo{
+    width:38px;height:38px;border-radius:10px}
+  .customer-booking-row-end-v580{align-content:start;gap:9px}
 }
 .customer-home-businesses-v343{margin-bottom:0}
 .customer-home-businesses-v343>:last-child{margin-bottom:0}
@@ -3336,3 +3346,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   border-radius:50%;border:1px solid var(--line);background:var(--card,#fff);color:var(--peekaa-red,var(--coral));
   line-height:0;cursor:pointer;transition:background .14s var(--ease),border-color .14s var(--ease)}
 .staff-delete-icon-v584:hover{background:var(--peekaa-red-faint,var(--tint));border-color:currentColor}
+.customer-contact-mark-v585{display:inline-block;width:1.15em;font-size:13px;line-height:1;
+  text-align:center;flex:0 0 auto}
+.customer-business-contact-line-v386{display:flex;align-items:baseline;gap:7px}
+.customer-offer-detail-brandlink-v585{color:inherit;border-radius:12px;padding:2px 6px 2px 2px;margin-left:-2px;
+  transition:background .14s var(--ease)}
+.customer-offer-detail-brandlink-v585:hover,
+.customer-offer-detail-brandlink-v585:focus-visible{background:var(--peekaa-red-faint,var(--tint))}
+.customer-offer-detail-brandlink-v585:active{transform:scale(.985)}
+.grow-breadcrumb-row-v585{display:flex;align-items:center;margin-bottom:10px}

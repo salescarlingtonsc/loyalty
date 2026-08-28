@@ -12,7 +12,7 @@ function section(source, start, end) {
   return source.slice(from, to);
 }
 
-const profile = section(appJs, 'async function renderCustomerProfile(){', 'async function renderCustomerQrJoin');
+const profile = section(appJs, 'async function renderCustomerProfile(requestedView){', 'async function renderCustomerQrJoin');
 const surfaceContext = section(appJs, 'async function loadCustomerSurfaceContext', 'async function renderCustomerProgrammes');
 
 /* v286 (audit, customer Profile). Three failure states on this page told the customer something

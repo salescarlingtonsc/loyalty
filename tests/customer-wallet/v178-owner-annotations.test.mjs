@@ -152,8 +152,14 @@ test('offer details open a company sheet with contact, current offers and a per-
   assert.doesNotMatch(sheet,/data-business-detail-nav/);
   assert.match(sheet,/customerBranchContactLinesV386\(branch\)/);
   assert.match(sheet,/data-business-branches-v386/);
-  assert.match(app,/function customerBranchContactLinesV386[\s\S]{0,900}CUI\.icon\('phone',\{size:16\}\)/,
-    'the phone number carries a phone glyph, which is what the owner drew');
+  /* nestly_v585 (owner photos 1 and 2: a pin drawn beside the address, a telephone beside the
+     number, "photo 2 is incorrect" on the version that had neither). The line-art glyphs became
+     the owner's own two emoji. What this assertion is really for — the number is never a bare
+     unlabelled string — is unchanged and is what is checked. */
+  assert.match(app,/function customerBranchContactLinesV386[\s\S]{0,1400}CUSTOMER_CONTACT_PHONE_V585/,
+    'the phone number carries the telephone mark the owner drew');
+  assert.match(app,/function customerBranchContactLinesV386[\s\S]{0,1400}CUSTOMER_CONTACT_PIN_V585/,
+    'and the address carries the pin');
   assert.match(app,/function customerCompanyIdentityMarkupV178[\s\S]{0,400}customerMediaUrlV95\(business\?\.logo_url\)/);
   assert.match(app,/\.customer-business-detail-modal \.modal-card\{width:min\(var\(--dialog-w-md\)/);
 });

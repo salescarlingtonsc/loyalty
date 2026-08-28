@@ -1707,7 +1707,10 @@ const CUSTOMER_DIRECT_DESTINATIONS=new Set([
      in Profile → Communications"). Without it a signed-out deep link fell through to
      renderAuth — the MERCHANT sign-in card — and nothing remembered where the visitor was
      going, so even a correct customer sign-in landed on the wallet instead. */
-  '#/customer/communications'
+  '#/customer/communications',
+  /* nestly_v585: Settings is its own page now (owner photo 3), so a signed-out deep link to it
+     must be remembered through sign-in exactly like the profile it belongs to. */
+  '#/customer/settings'
 ]);
 function normalizeCustomerDestination(value){
   const route=String(value??'').trim();
@@ -3618,6 +3621,7 @@ async function route(){
     if(h==='#/customer/explore')return nav('#/wallet');
     if(h==='#/customer/messages')return renderCustomerMessages();
     if(h==='#/customer/profile')return renderCustomerProfile();
+    if(h==='#/customer/settings')return renderCustomerProfile('settings');
     if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
@@ -5780,6 +5784,17 @@ function customerMediaUrlV95(value){
   const servedMediaUrlV576=objectPath=>/\.gif$/i.test(objectPath)
     ?`${origin}${publicPrefix}${objectPath}`
     :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75&resize=contain`;
+  /* nestly_v585 (owner photo 10: "i added photo - but does not reflect"). The upload worked —
+     production shows all three of Jess Salon's service assets stored, customer_visible, at
+     version 1 — and the LIST still offered "Attach photo". Cause: this helper stopped being
+     idempotent at v576. The Services loader resolves the asset URL once and stores the result on
+     the row; the row renderer then passes that stored value back through here. Before v576 the
+     return was the same /object/public/ URL it was given, so resolving twice was harmless. Since
+     v576 the return is a /render/image/ URL with a query string, which matches neither prefix
+     below — so the second pass returned '' and the photo vanished on every surface that resolves
+     a value it has already resolved. Recognising our own output fixes all of them at once. */
+  const renderPrefixV585=`${origin}/storage/v1/render/image/public/business-public/`;
+  if(raw.startsWith(renderPrefixV585))return raw;
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
   if(relative&&objectPathPattern.test(relative))return servedMediaUrlV576(relative);
   const absolutePrefix=origin+publicPrefix;
@@ -7459,10 +7474,18 @@ async function hydrateCustomerConsentHistoryV282(isCurrent){
   if(section)section.setAttribute('aria-busy','false');
 }
 
-async function renderCustomerProfile(){
+/* nestly_v585 (owner photo 3, item 3: "when clicked settings icon it should land me in another
+   page - not endless scrolling (current way). then i just need to press back to come back").
+   v583 made the gear reveal the cards in place, which left one very long page. They are a separate
+   ROUTE now — but rendered by this same function, with both halves always in the DOM and one of
+   them hidden. That is deliberate: every card below the fold is bound BY ID after this render, and
+   moving live nodes to a second renderer is exactly what kept breaking the Messages device card.
+   Hidden, not moved: every binding still finds the node it always did. */
+async function renderCustomerProfile(requestedView){
+  const settingsViewV585=requestedView==='settings';
   const walletRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===walletRenderEpoch;
   const context=await loadCustomerSurfaceContext(isCurrent);if(!context)return;
-  renderCustomerShell({active:'profile',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
+  renderCustomerShell({active:'profile',backTo:settingsViewV585?'#/customer/profile':'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:context.features.customer_in_app_inbox===true,body:'<div class="card"><p class="muted">Loading your profile…</p></div>'});
   const profile=context.features.customer_phone_registration===true?context.profile:null;
   /* v286: a null profile used to collapse the whole page into "Profile editing isn’t available for
      this account" — the same wording for a transient customer_get_profile failure as for an account
@@ -7494,15 +7517,22 @@ async function renderCustomerProfile(){
         <p id="customerMemberQrStatusV327" class="muted small" role="status" aria-live="polite"></p>
       </section>`
     :'';
-  $('walletBody').innerHTML=`<header class="customer-page-head customer-profile-head-v583"><div><h1>Profile</h1><p class="muted">${profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div><span class="spacer"></span><button type="button" class="customer-profile-gear-v583" id="customerProfileSettingsGearV583" aria-expanded="false" aria-controls="customerProfileSettingsV583" aria-label="Settings" title="Settings">${CUI.icon('settings',{size:20})}</button></header>
+  $('walletBody').innerHTML=`<header class="customer-page-head customer-profile-head-v583"><div><h1>${settingsViewV585?'Settings':'Profile'}</h1><p class="muted">${settingsViewV585
+      ?`Appearance, privacy, security and your ${esc(BRAND.customerLabel)} account.`
+      :profile?`Keep your name up to date and manage your ${esc(BRAND.customerLabel)} account.`:`Your ${esc(BRAND.customerLabel)} account details.`}</p></div><span class="spacer"></span>${settingsViewV585?''
+      :`<a class="customer-profile-gear-v583" id="customerProfileSettingsGearV583" href="#/customer/settings" aria-label="Settings" title="Settings">${CUI.icon('settings',{size:20})}</a>`}</header>
     <!-- Top-20 #20: the page was ~14 visually identical white cards in one flat stack, so account
          closure, a marketing choice and a sound switch all read at the same weight. Four serif
          headings on the ivory ground group them. No card's markup, id, handler or copy changed;
          the only card that MOVED is Device notifications, from between passkeys and account
          closure into Preferences, where it belongs — it is bound by id after this innerHTML, so
          its position carries no wiring. Sign out stays last (v296). -->
-    <h2 class="customer-profile-group-v3">You</h2>
-    ${personalDetailsHtmlV286}
+    ${/* nestly_v585 (owner photos 3 and 7, item 2: "You" struck through, with "move up" drawn at
+         the gear). The heading named the reader rather than the content, and it was the only thing
+         between the page's own subtitle and a card already titled "Personal details" — so removing
+         it also lifts the gear and that card up the page, which is what the second mark asked
+         for. */''}
+    <div id="customerProfilePersonalV585"${settingsViewV585?' hidden':''}>${personalDetailsHtmlV286}</div>
     ${/* nestly_v583 (owner mark, photo 8: the whole My Peekaa QR card crossed out — "remove this,
          here have already", with an arrow to the Scan QR button in the nav). The nav's Scan QR
          sheet opens on "My Peekaa QR" (v329) showing the same v327 member code, so this card was
@@ -7515,7 +7545,7 @@ async function renderCustomerProfile(){
          this innerHTML, and relocating live nodes into a dialog is exactly what caused the
          Messages device-card to keep escaping. Collapsed, the cards stay in the DOM and every
          binding keeps working; the gear only toggles hidden. */''}
-    <div id="customerProfileSettingsV583" hidden>
+    <div id="customerProfileSettingsV583"${settingsViewV585?'':' hidden'}>
     <h2 class="customer-profile-group-v3">Preferences</h2>
     <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
@@ -7549,16 +7579,9 @@ async function renderCustomerProfile(){
     <section class="card" id="customerProfileSignOutCard" style="margin-top:16px"><div class="row"><div><h2>${esc(ct('signOut'))}</h2><p class="muted small" style="margin-top:6px">You will need your phone number or passkey to sign back in.</p></div><span class="spacer"></span><button class="btn ghost" id="customerProfileSignOut" type="button"><span>${esc(ct('signOut'))}</span></button></div></section>
     </div>`;
   bindPasswordVisibility($('walletBody'));
-  /* nestly_v583 (owner, photo 9): the gear. Assigned (not added) so a re-render rebinds rather
-     than stacking listeners, and it only toggles `hidden` — the cards it reveals never move, so
-     every binding made below this line stays attached whether the section is open or closed. */
-  const profileGearV583=$('customerProfileSettingsGearV583'),profileSettingsV583=$('customerProfileSettingsV583');
-  if(profileGearV583&&profileSettingsV583)profileGearV583.onclick=()=>{
-    const open=profileSettingsV583.hidden;
-    profileSettingsV583.hidden=!open;
-    profileGearV583.setAttribute('aria-expanded',open?'true':'false');
-    if(open)profileSettingsV583.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
-  };
+  /* nestly_v585: the gear is a plain link to #/customer/settings — no toggle handler, because
+     there is no longer anything to toggle. The router renders this same function with the two
+     halves swapped, and the shell's own back button (backTo above) returns to the profile. */
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
@@ -8858,15 +8881,22 @@ function showCustomerBusinessDetailV178(business={},{inheritHistoryId=0}={}){
    an icon; the phone and email lines were unlabelled strings, so a number sat under an address
    with nothing saying it was callable. One shape for all three, reused by the default branch and
    by every branch listed under it. */
+/* nestly_v585 (owner photos 1 and 2: a red pin drawn beside the address and a red telephone
+   beside the number, with "photo 2 is incorrect" written on the version that had a building glyph
+   and a bare number). The two marks are the owner's own emoji, so they are used verbatim rather
+   than approximated with a line-art glyph from the icon set — a pin and a phone read the same in
+   every language, which is the point on a surface that ships in four.
+   They are aria-hidden: the address and the number say what they are, and a screen reader
+   announcing "round pushpin" before an address is noise. */
+const CUSTOMER_CONTACT_PIN_V585='\uD83D\uDCCD';    /* 📍 */
+const CUSTOMER_CONTACT_PHONE_V585='\u260E\uFE0F';  /* ☎️ */
 function customerBranchContactLinesV386(branch={}){
   const phone=String(branch?.phone||'').trim();
-  /* The address glyph moves from 'bookings' (a calendar) to 'branch' (a building) — the same
-     glyph the profile header already uses for its Address segment. There is no envelope in the
-     customer icon set and CUI.icon falls back to the INFO glyph for an unknown name, so the
-     email line is left unprefixed rather than labelled with a wrong picture. */
+  /* There is no envelope emoji mark from the owner for the email line, and inventing one would be
+     a third decision they did not make, so it stays unprefixed. */
   return [
-    branch?.address?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('branch',{size:16})} <span>${esc(branch.address)}</span></p>`:'',
-    phone?`<p class="muted small customer-business-contact-line-v386">${CUI.icon('phone',{size:16})} <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
+    branch?.address?`<p class="muted small customer-business-contact-line-v386"><span class="customer-contact-mark-v585" aria-hidden="true">${CUSTOMER_CONTACT_PIN_V585}</span> <span>${esc(branch.address)}</span></p>`:'',
+    phone?`<p class="muted small customer-business-contact-line-v386"><span class="customer-contact-mark-v585" aria-hidden="true">${CUSTOMER_CONTACT_PHONE_V585}</span> <a href="tel:${esc(phone.replace(/[^+0-9]/g,''))}">${esc(phone)}</a></p>`:'',
     branch?.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
   ].filter(Boolean).join('');
 }
@@ -8926,8 +8956,16 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
          customerCompanyIdentityMarkupV178 — the same logo-or-monogram every other customer
          surface draws — so a business with no logo still gets its initial, never a placeholder
          pretending to be theirs. */''}
+    ${/* nestly_v585 (owner photo 4: an arrow from the logo at the top of the offer sheet —
+         "click here can go business profile"). v583 put the business here as a MARK; a customer
+         reading an offer and wanting to know who is running it had nothing to press. It is a link
+         when we know the slug, and stays a plain mark when we do not, so it can never be a
+         control that goes nowhere. data-offer-detail-nav hands the sheet's own history entry to
+         the destination (wireCustomerSheetNavV183), so Back returns to the page behind the sheet
+         rather than reopening it. */''}
     <div class="row customer-offer-detail-head-v583">
-      <div class="customer-offer-detail-brand-v583">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></div>
+      ${slug?`<a class="customer-offer-detail-brand-v583 customer-offer-detail-brandlink-v585" href="#/wallet/${slug}" data-offer-detail-nav aria-label="${esc(`Open ${business.name||'this business'}`)}">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></a>`
+        :`<div class="customer-offer-detail-brand-v583">${customerCompanyIdentityMarkupV178(business)}<b data-merchant-content>${esc(business.name||'')}</b></div>`}
       <span class="spacer"></span><button class="btn ghost sm" id="customerOfferDetailClose" type="button" aria-label="Close offer details">${CUI.icon('close',{size:20})}</button></div>
     ${image?`<div class="customer-offer-detail-media"><img src="${esc(image)}" alt="${esc(item?.image_alt||item?.name||'Offer')}"></div>`:`<div class="customer-offer-detail-media customer-offer-detail-media--fallback" aria-hidden="true"><span>${esc(initial)}</span></div>`}
     <h2 id="customerOfferDetailTitle">${esc(item?.name||'Offer')}</h2>
@@ -8989,12 +9027,11 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
         if(error)return contactFailed();
         const branch=data?.branch||{},host=overlay.querySelector('[data-offer-contact]');
         if(!host)return;
-        const lines=[
-          branch.address?`<p class="muted small">${CUI.icon('bookings',{size:16})} ${esc(branch.address)}</p>`:'',
-          branch.phone?`<p class="muted small"><a href="tel:${esc(String(branch.phone).replace(/[^+0-9]/g,''))}">${esc(branch.phone)}</a></p>`:'',
-          branch.email?`<p class="muted small"><a href="mailto:${esc(branch.email)}">${esc(branch.email)}</a></p>`:''
-        ].filter(Boolean).join('');
-        host.innerHTML=lines||'';
+        /* nestly_v585 (owner: "photo 2 is incorrect"). This sheet carried its OWN copy of the
+           three contact lines — a calendar glyph on the address, nothing at all on the number —
+           which is exactly how it drifted from the business page beside it. One builder now, so
+           the marks the owner drew cannot apply to one surface and not the other. */
+        host.innerHTML=customerBranchContactLinesV386(branch)||'';
         const rowLines=overlay.querySelector('[data-company-row-lines]');
         if(rowLines){
           const summary=[branch.address,branch.phone].map(value=>String(value||'').trim()).filter(Boolean);
@@ -12491,7 +12528,11 @@ function customerProgrammeTileMarkupV96(card){
       quietest thing on the card. It leads now, and only when something really is ready — the
       other statuses ("120 points to reward") stay as they were. */''}<h2>${esc(business.name||ct('localBusiness'))}</h2>${tier?`<p class="customer-programme-card-tier-v346">${esc(tier)}</p>`:''}<p class="customer-programme-card-status-v346${customerProgrammeRewardReadyV392(card)?' is-ready-v392':''}">${customerProgrammeRewardReadyV392(card)?`${/* nestly_v395 (owner photo 4: the coin ringed in red, "remove this, change to star"). CUI's
         'redeem' glyph is a dollar sign, so a reward the customer earned with points read as a
-        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${CUI.icon('star',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div>${metric?`<div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>`:'<div class="customer-programme-card-balance"><span aria-hidden="true">›</span></div>'}${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
+        price. 'star' is already in the same icon set at the same weight — no new asset. */''}${/* nestly_v585 (owner photo 6: an arrow from "1 reward ready" to a drawn gift — "change all
+        stars to this"). v395 moved this off a coin because a reward earned with points read as a
+        price; a star then said "special" rather than "there is something here for you". The gift
+        is the same thing the customer is about to collect. Only the READY pill changes — the
+        points-card headings keep their star, because those name a balance, not a gift. */''}${CUI.icon('giftcard',{size:16})}<span>${esc(status)}</span>`:esc(status)}</p></div>${metric?`<div class="customer-programme-card-balance"><b>${esc(metric)}</b><span aria-hidden="true">›</span></div>`:'<div class="customer-programme-card-balance"><span aria-hidden="true">›</span></div>'}${customerCardProgressV2B(card)?`<div class="customer-programme-progress-v2b" style="grid-column:2/-1">${customerCardProgressV2B(card)}</div>`:''}${holdings?`<div style="grid-column:1/-1">${holdings}</div>`:''}</div></a>`;
 }
 function customerBusinessCategoryV122(industry=''){
   const value=String(industry||'').trim().toLowerCase();
@@ -33182,6 +33223,39 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      hardcoded "Points earned" label regardless of what was actually saved. */
   const growTiersBasisV347=snapshot.loyalty?.tier_basis||'visits';
   const growTiersBasisLabelV347=({points_earned:'Points earned',spend:'Lifetime spend',visits:'Visits'})[growTiersBasisV347]||'Visits';
+  /* nestly_v585 (owner photo 8: an arrow from the basis dropdown to the "Required points" field —
+     "when switch to visits the fields need to change to visits ... if not there will be
+     misunderstanding between points / visits or even lifetime spends. it needs to be consistent").
+     V347 fixed the LABEL on the card and left every figure on the page reading "points", so a
+     firm whose tiers are earned by visits was setting "Required points: 300" for a rung the
+     server unlocks at 300 VISITS. The number was never wrong; the noun was. One vocabulary, read
+     off the same stored basis the card shows and the server evaluates:
+       visits        -> a count of visit-counted sales
+       points_earned -> lifetime points earned
+       spend         -> DOLLARS. The threshold column holds dollars for this basis (the server
+                        compares it against sum(amount_cents)/100), so it is written and read as
+                        money rather than as a bare number.
+     The customer half of the owner's instruction was already true and is left alone: the tier
+     resolver returns `basis` with every payload and customerTierRequirementTextV189 /
+     customerTierUnitWordV310 have printed the matching noun since v189/v310. This change makes
+     the BUSINESS side say what the customer is already being told. */
+  const growTiersBasisIsSpendV585=growTiersBasisV347==='spend';
+  const growTiersUnitWordV585=growTiersBasisIsSpendV585?'spent'
+    :growTiersBasisV347==='points_earned'?'points':'visits';
+  const growTiersThresholdLabelV585=growTiersBasisIsSpendV585
+    ?`Required spend (${S.biz.currency||'SGD'})`
+    :growTiersBasisV347==='points_earned'?'Required points':'Required visits';
+  /* loyalty_tiers.threshold is an INTEGER column, so a spend rung is whole dollars. The field
+     says so rather than inviting cents it would silently round away. */
+  const growTiersThresholdPlaceholderV585=growTiersBasisIsSpendV585?'e.g. 500'
+    :growTiersBasisV347==='points_earned'?'e.g. 500':'e.g. 10';
+  /* Reached-at, in the firm's own basis. Spend prints as money; the other two print a count and
+     the noun that goes with it. */
+  const growTiersThresholdTextV585=value=>{
+    const amount=Math.max(0,Number(value)||0);
+    return growTiersBasisIsSpendV585?money(Math.round(amount*100))
+      :`${amount.toLocaleString('en-SG')} ${amount===1?growTiersUnitWordV585.replace(/s$/,''):growTiersUnitWordV585}`;
+  };
   const growTiersLosingV331=growTiersOnV331?[]:programmeExclusionsV322('tiers').filter(other=>programmeSpineOnV314(other)===true);
   /* V351 (owner UX pass): row went from a 4-column table look to a plain card — no per-tier
      "Turn on/off" any more (the owner's own caution: pausing a MIDDLE rung of a ladder has no
@@ -33203,14 +33277,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${threshold} points${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -33232,7 +33306,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>
     <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">Required points</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="e.g. 500"></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">${esc(growTiersThresholdLabelV585)}</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" data-workspace-i18n inputmode="numeric" style="width:100%;max-width:160px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="${esc(growTiersThresholdPlaceholderV585)}"></p>
+    <p class="muted small" style="margin:-2px 0 0">${growTiersBasisIsSpendV585
+      ?'Tier level is earned by lifetime spend, so this is the amount a customer has to have spent with you, in whole dollars.'
+      :growTiersBasisV347==='points_earned'
+        ?'Tier level is earned by points, so this is the number of points a customer has to have earned.'
+        :'Tier level is earned by visits, so this is the number of visits a customer has to have made.'}</p>
     ${/* V363: the single "Benefit" textarea became a list. Each row is one perk_note line and one
          chip on the customer's tier card; the picker below prefills a row the owner then edits.
          A tier with no rows is a legitimate, common shape (the owner's own example: Essential =
@@ -33304,7 +33383,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          each end now, so 0% and 100% land where a whole label still fits. Nothing about the
          SPACING between tiers changes — the same fraction, over a track two half-labels shorter. */
       const railFracV493=(pct/100).toFixed(4);
-      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${Math.max(0,Number(tier.threshold||0))} points</small></span>`;
+      return `<span class="grow-tier-ladder-stop-v343" style="left:calc(46px + (100% - 92px) * ${railFracV493})"><i class="grow-tier-ladder-logo-v399" aria-hidden="true">${ladderIconV399}</i><b data-merchant-content>${esc(tier.name)}</b><small>${esc(growTiersThresholdTextV585(tier.threshold))}</small></span>`;
     }).join('')}
   </div>`:'';
   const growTiersManageV331=!canRewards
@@ -35227,7 +35306,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersBusyV331=false;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     if(snapshot.loyalty)snapshot.loyalty.tier_basis=basis;else snapshot.loyalty={tier_basis:basis};
-    toast('Tier basis updated');
+    /* nestly_v585 (owner photo 8, "if not there will be misunderstanding"). Switching the basis
+       does NOT rewrite the rungs — 300 stays 300 — so the same ladder now unlocks at 300 visits
+       where it used to unlock at 300 points, for every customer, immediately. Every label on this
+       page and in the customer app follows the new basis from this moment, which is exactly why
+       the numbers underneath them have to be re-read. Saying it once, here, is the difference
+       between a deliberate change and a silent one. */
+    const rungsV585=growTiersPublishedV331.length;
+    const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
+    toast(rungsV585
+      ?`Tiers are earned by ${wordV585} now. Your ${rungsV585} rung${rungsV585===1?'' :'s'} kept ${rungsV585===1?'its':'their'} number — check ${rungsV585===1?'it reads':'they read'} right in ${wordV585}.`
+      :`Tiers are earned by ${wordV585} now.`);
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -40945,7 +41034,12 @@ async function referralsPage(){
       ${referralKindV429==='voucher'?`<p class="muted small">This referral pays a free gift — ${esc(String(p?.reward_label||'').trim()||'not named yet')}. Change the reward type in Rewards Programme → Referrals.</p>`:''}
       <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
     :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>${esc(referralAmountLabelV429)}</dt><dd>${esc(referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'A free gift'):growReferralAmountWordV425(referralKindV429,p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
+  /* nestly_v585 (owner photo 9: "add a back button (only this does not have back button)"). Every
+     other Rewards & Offer destination carries the same round back control; this page was reached
+     from the rail and from the programme row and then had no way out except the rail. Same button,
+     same class, same destination pattern as the dedicated grow pages. */
+  routeMain.innerHTML=`<div class="grow-breadcrumb-row-v585"><a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to Rewards Programme">${CUI.icon('back',{size:16})}</a></div>
+    ${CUI.pageHeader({title:'Referrals',subtitle:referralStatusCopy,iconName:'referrals',canWrite,moduleLabel:'Referral settings'})}
     ${/* nestly_v429 (B4): filled in once the referral rows have loaded — v425 records WHY a
          qualified referral could not be paid on referrals.blocked_reason, which until now was a
          row that silently never moved. */''}
