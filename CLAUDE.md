@@ -274,6 +274,12 @@ closing the writer, fail closed, re-run the gates and prove no fixture residue.
 Core principle: every production bug should make Peekaa permanently harder to
 break. Assess (A) regression, (B) scanner rule, (C) certification for every bug
 WITHOUT waiting to be asked.
+The canonical file also carries triage (severity, exposure window, ⚖️ data
+exposure), verification standards (verify against prod AS THE REAL PRINCIPAL —
+RLS never applies to the table owner), the false-closure traps, the cleanliness
+rules (one authority per fact; no parallel implementations; delete orphans), the
+waiver policy, and a Definition-of-Done checklist to walk before claiming
+closure.
 
 ## Design direction (owner-confirmed; updated 2026-07-18 post-launch)
 - **Grouped navigation (Cubbly reference, owner screenshot 2026-07-18):** a handful of

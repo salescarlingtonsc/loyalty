@@ -110,6 +110,21 @@ Assess and apply each of the ten layers where relevant. "Not relevant" is a legi
 9. **Fail closed** — defaults may seed a NEW DRAFT, never fabricate live production state.
 10. **Re-run the gates and prove no fixture/probe residue remains.**
 
+### Also binding, in the canonical file
+
+- **Triage (§1)** — severity (P0/P1/P2 sets which layers are mandatory), the exposure window
+  ("how long has this been live?"), and a data-exposure statement ⚖️ for anything touching
+  permissions, RLS or tenant isolation.
+- **Verification standards (§3)** — verify against production **as the real principal**
+  (RLS never applies to the table owner); execute behaviour rather than grepping source; prove
+  every new check can fail; vary one variable and build a positive control.
+- **False-closure traps (§4)** — the dozen ways a green result has hidden a live defect here.
+- **Cleanliness rules (§5)** — one authority per fact; fix the shared path, not each caller;
+  no parallel implementations; delete what the change orphans; never widen scope to pass a test;
+  migrations replay-safe; enforce at the authority AND honour at every surface.
+- **Waivers (§6)** — exact `check_id`+`business_id` scope, a stated reason, a review date.
+- **Definition of Done (§7)** — the closure checklist to walk before claiming a bug is closed.
+
 ### Commands
 
 - `npm run tenant-gate` — divergence scanner (layers 4, 7).
@@ -117,8 +132,8 @@ Assess and apply each of the ten layers where relevant. "Not relevant" is a legi
 - `npm run certify-tenant` — lifecycle certification (layer 5).
 
 Command behaviour, when each MUST run, and verdict semantics are in
-`docs/design/ps0/TENANT_CONSISTENCY_GATES.md`. Worked examples (nestly_v568, nestly_v572/v573)
-are in the canonical file.
+`docs/design/ps0/TENANT_CONSISTENCY_GATES.md`. Worked examples (nestly_v568, nestly_v572/v573,
+nestly_v559/v560/v563) are in the canonical file.
 
 ## Data handling
 
