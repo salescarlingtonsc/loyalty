@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v20-20260826-css1';  /* nestly_v527: the shell document lost its inline stylesheet — existing installs must rebuild or they keep serving the 512KB one. */
+const CACHE_VERSION='v21-20260828-v578';  /* nestly_v578: customer-ui.js gained backdrop-dismiss for every dialog. This worker PRECACHES that file, so bumping its ?v= token alone would still serve the old copy from here — the two cache identities move together or the fix never lands. */
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 /* V289 (audit A3, G3b): the app document itself is now part of the shell, so an offline
    navigation lands in Peekaa's own "you're offline" state instead of the standalone fallback

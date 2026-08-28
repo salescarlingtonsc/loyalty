@@ -4675,8 +4675,8 @@
       "version": "20260828070000",
       "name": "nestly_v577_publish_preserves_tier_identity",
       "path": "supabase/migrations/20260828070000_nestly_v577_publish_preserves_tier_identity.sql",
-      "octetLength": 13138,
-      "sha256": "2f9ab71b8531a4be91a13eb2e1aad05728675b42611cf3c6f87351142168ab3c",
+      "octetLength": 13424,
+      "sha256": "6fcafe9d22f4cd891e3ba5aecc94425bd70d751d986b565ef18c977bbb369230",
       "provenance": "local-source"
     }
   ]

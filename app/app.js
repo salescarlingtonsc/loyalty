@@ -22976,6 +22976,11 @@ async function tillPage(){
     (accessibleTillBranches.find(branch=>branch.is_default)?.id||accessibleTillBranches[0]?.id||'');
   const canRecordSales=hasRoleCapability('create_sales')&&Boolean(tillBranchId);
   const verifiedPaynowReady=!merchantPaymentStatusError&&merchantPaymentStatus?.paynow_ready===true;
+  /* nestly_v578 (owner mark, photo 2: a banknote sketched onto Cash and a card onto Card — "add
+     an icon"). One map, read by BOTH tender rows below (the catalogue cart's and the legacy
+     amount-only card's), so the two can never end up with different pictograms for the same
+     tender. PayNow QR reuses the paynow mark: it is the same rail, taken a different way. */
+  const tillTenderIconV578=value=>({cash:'cash',card:'card',paynow:'paynow',paynow_qr:'paynow',other:'other'}[value]||'other');
   const legacyTenderOptions=[['cash','Cash'],['card','Card'],['paynow','External PayNow'],['other','Other']];
   const cartTenderOptions=[['cash','Cash'],['card','Card'],
     ...(verifiedPaynowReady?[['paynow_qr','PayNow QR']]:[]),['paynow','External PayNow'],['other','Other']];
@@ -23294,7 +23299,7 @@ async function tillPage(){
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
           <div class="frontline-tenders" id="tTenders">
-            ${legacyTenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}
+            ${legacyTenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${CUI.icon(tillTenderIconV578(value),{size:20})}<span>${label}</span></button>`).join('')}
           </div>
         </fieldset>
         <div id="tErr3"></div>
@@ -24597,7 +24602,7 @@ async function tillPage(){
       ${detail?`<ul class="till-sticky-lines-v577">${detail}</ul>`:''}
       <div class="till-sticky-figures-v373"><b>${count} item${count===1?'':'s'}${amount?` · ${esc(amount)}`:''}</b>
         ${saved?`<span class="ok small">${esc(saved)}</span>`:''}</div>
-      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:20})} Review sale</button>
+      <button type="button" class="btn" id="tGoReviewV373">${CUI.icon('forward',{size:20})} Review</button>
     </div>`;
   }
   function tillLeaveRowV373(){
@@ -24622,7 +24627,7 @@ async function tillPage(){
        failing at the counter. Cash / card / external PayNow / other are unaffected. */
     const tenderOptions=walkin?cartTenderOptions.filter(([value])=>value!=='paynow_qr'):cartTenderOptions;
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
-      <div class="frontline-tenders" id="tTenders">${tenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${label}</button>`).join('')}</div>
+      <div class="frontline-tenders" id="tTenders">${tenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${CUI.icon(tillTenderIconV578(value),{size:20})}<span>${label}</span></button>`).join('')}</div>
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
     const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
@@ -46981,7 +46986,15 @@ async function staffPerfPage(drillId){
       <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
       <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
       <button class="btn sm" id="papply">Run report</button>
-      <div class="staff-perf-range-notes-v577">
+      ${/* nestly_v578 (owner mark, photo 4: the two note lines boxed — "convert this portion into
+           a '?' so owners will press '?' to view - dont need to show out"). v577 put them inside
+           this panel; they are still here, now behind the ? rather than standing open above the
+           report. Both keep their ids and roles: reportScopeNoteV272 is still what the branch-scope
+           loader writes into, and it is still aria-live, so a scope answer that arrives while the
+           panel is open is still announced. It is collapsed rather than removed because the second
+           line can say a branch's figures are missing, which is not decoration. */''}
+      <button type="button" class="staff-perf-help-v578" id="staffPerfHelpV578" aria-expanded="false" aria-controls="staffPerfNotesV578" aria-label="About these figures" title="About these figures">?</button>
+      <div class="staff-perf-range-notes-v577" id="staffPerfNotesV578" hidden>
         <p class="muted small">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
         <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p>
       </div>
@@ -47010,6 +47023,14 @@ async function staffPerfPage(drillId){
   };
   $('pf').onchange=$('pt').onchange=invalidate;
   $('papply').onclick=()=>load();
+  /* nestly_v578: the ? discloses the notes. Assigned (not added) so a re-render rebinds rather
+     than stacking a second listener. */
+  const staffPerfHelpV578=$('staffPerfHelpV578'),staffPerfNotesV578=$('staffPerfNotesV578');
+  if(staffPerfHelpV578&&staffPerfNotesV578)staffPerfHelpV578.onclick=()=>{
+    const open=staffPerfNotesV578.hidden;
+    staffPerfNotesV578.hidden=!open;
+    staffPerfHelpV578.setAttribute('aria-expanded',open?'true':'false');
+  };
   /* Wave 2C (Top-20 #9): the second filter card and its second commit verb are gone — search and
      sort apply as you type, like a filter should. */
   const staffPerfApplyFiltersV2C=()=>{

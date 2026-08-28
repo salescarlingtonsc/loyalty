@@ -90,6 +90,13 @@ export const SKELETON_TOKENS = new Set([
   '.skip-link', '.sr-only',
   '.wallet-shell', '.customer-surface', '.wallet-inner',
   '.card', '.pf-skeleton', '.toast',
+  /* nestly_v578. The boot panel's own parts. These are, by definition, the FIRST thing painted,
+     and they were styled entirely from app.css — so the logo rendered unmasked and the loading
+     word unstyled until that sheet landed, which is the exact flash this critical subset exists
+     to prevent. `[data-boot-panel]` is listed because it is the second compound of
+     `…[data-boot-skeleton] [data-boot-panel]`, and selectorCanMatchSkeleton requires EVERY
+     compound to be a known token. */
+  '[data-boot-panel]', '.boot-mark-v577', '.boot-wait-v577', '.boot-wave-v578',
   '#root', '#toast', '#appStatus', '#appAlert'
 ]);
 

@@ -93,8 +93,13 @@ test('V527 the offline shell caches the shipped document, not the fat source', (
     'the service worker must precache the SHIPPED document — caching /index.html would put the '
     + '512KB inline stylesheet straight back into the offline shell');
   assert.ok(!sw.includes("await fetch('/index.html',{cache:'reload'})"));
-  assert.match(sw, /const CACHE_VERSION='v20-/,
-    'the cache version must move, or existing installs keep serving the old heavy shell');
+  /* nestly_v578: this pinned the exact major ('v20-') while its own message asks for the version
+     to MOVE — so it failed on the first legitimate bump, which is the opposite of the invariant.
+     Read as a minimum instead: v527's shell fix must not be rolled back, and any later bump is
+     fine. (See the same lesson in the programmes contract gate.) */
+  const swMajor = Number(sw.match(/const CACHE_VERSION='v(\d+)-/)?.[1]);
+  assert.ok(Number.isInteger(swMajor) && swMajor >= 20,
+    `the cache version must be at least v20 and must move forward, never back — found ${swMajor}`);
   assert.match(sw, /<link\[\^>\]\+rel="stylesheet"\[\^>\]\+href="\(\[\^"\]\+\)"/,
     'and the shell scan still picks the stylesheet up as a cached asset');
 });

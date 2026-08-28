@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="71e9e39fa11d20584e1f182b4b33a3941bc3cd5bfb409c1b1e3a53c755f74fcd"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="08bca88cf01d34c406a7264346c4ba8d1a2fa2b0e442acca3fc314af9cf9bbc2"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1306,6 +1306,15 @@ input[type=range]:focus{box-shadow:none}
   height:var(--control-h);min-height:var(--control-h);box-sizing:border-box}
 .staff-perf-range-notes-v577{flex:1 1 100%;display:grid;gap:4px;margin-top:2px}
 .staff-perf-range-notes-v577 p{margin:0}
+.staff-perf-range-notes-v577[hidden]{display:none}
+/* nestly_v578 (owner, photo 4): the ? that discloses them. Sized to the same 44px tap target the
+   controls beside it use, so it reads as part of the control row rather than an afterthought. */
+.staff-perf-help-v578{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--control-border);background:#fff;
+  color:var(--muted);font-size:15px;font-weight:750;line-height:1;
+  transition:color .14s var(--ease),border-color .14s var(--ease),background .14s var(--ease)}
+.staff-perf-help-v578:hover{color:var(--coral);border-color:var(--coral);background:var(--tint)}
+.staff-perf-help-v578[aria-expanded="true"]{color:var(--coral);border-color:var(--coral);background:var(--tint)}
 /* segmented control, iOS-style */
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
@@ -1729,6 +1738,12 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .frontline-keypad .btn{height:60px;font-size:22px;font-weight:700}
 .frontline-tenders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
 .frontline-tenders .btn{min-height:52px;font-size:15px}
+/* nestly_v578 (owner, photo 2): the tender buttons now carry a pictogram beside their label. The
+   icon takes the button's own colour, so it inverts with the label on the pressed (filled) state
+   instead of needing a second rule. */
+.frontline-tenders .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px}
+.frontline-tenders .btn>svg{flex:0 0 auto;opacity:.85}
+.frontline-tenders .btn[aria-pressed="true"]>svg{opacity:1}
 .frontline-tenders .btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .till-cart-card{max-width:560px}
 .till-cart-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:6px}
@@ -4963,17 +4978,34 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      frame-to-frame drift shrinks with it instead of being locked to a single guess. Near-black
      logo ink is unaffected at this factor. */
   filter:brightness(.985)}
-/* "wait me ..." — the owner's own words, with the animation they asked for: the three dots
-   arrive in turn. prefers-reduced-motion holds them all visible rather than pulsing. */
-.boot-wait-v577{margin:0;text-align:center;font-size:15px;font-weight:650;letter-spacing:.01em;color:#8A7F6E}
-.boot-wait-dots-v577>span{opacity:.15;animation:boot-wait-dot-v577 1.35s infinite}
-.boot-wait-dots-v577>span:nth-child(2){animation-delay:.22s}
-.boot-wait-dots-v577>span:nth-child(3){animation-delay:.44s}
-@keyframes boot-wait-dot-v577{0%,60%,100%{opacity:.15}30%{opacity:1}}
-@media(prefers-reduced-motion:reduce){.boot-wait-dots-v577>span{opacity:1;animation:none}}
+/* nestly_v578 (owner: 'change wait me to "peekaaaaaa......." make the word wavey and moving —
+   I want brand recognition across the app'). The loading word IS the wordmark now: it is set in
+   the brand face (--peekaa-display, the same Baloo 2 the customer titles took in v577) and each
+   letter rides a sine, staggered by its index, so the name reads as a wave travelling left to
+   right rather than as text that happens to move.
+
+   --i is written per character in the markup, so one keyframe animates the whole word and adding
+   or removing a letter needs no new CSS. The trailing dots continue the same wave at the same
+   cadence instead of being a separate "loading" tic — the animation is one gesture.
+
+   The word is aria-hidden: the boot panel already carries a real sr-only status line ("Loading
+   Peekaa…"), and a screen reader must not be handed ten separate letter spans to read out. */
+.boot-wait-v577{margin:14px 0 0;text-align:center;font-family:var(--peekaa-display);font-size:26px;
+  font-weight:700;letter-spacing:.01em;color:#4A4136}
+.boot-wave-v578{display:inline-flex;align-items:baseline}
+.boot-wave-v578>span{display:inline-block;animation:boot-wave-v578 1.5s ease-in-out infinite;
+  animation-delay:calc(var(--i) * .085s)}
+@keyframes boot-wave-v578{
+  0%,60%,100%{transform:translateY(0);opacity:.62}
+  30%{transform:translateY(-.28em);opacity:1}
+}
+/* Reduced motion keeps the wordmark — it is brand, not decoration — and drops the movement. */
+@media(prefers-reduced-motion:reduce){
+  .boot-wave-v578>span{animation:none;transform:none;opacity:1}
+}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 71e9e39fa11d20584e1f182b4b33a3941bc3cd5bfb409c1b1e3a53c755f74fcd</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 08bca88cf01d34c406a7264346c4ba8d1a2fa2b0e442acca3fc314af9cf9bbc2</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -5034,6 +5066,19 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',
     export:'M12 3v12M7 10l5 5 5-5M4 21h16',
     import:'M12 21V9M7 14l5-5 5 5M4 3h16',
+    /* nestly_v578 (owner, photo 2: a banknote drawn on Cash and a card drawn on Card — "add an
+       icon"). The four tender buttons were the only choice row in the till with no pictograms,
+       which is exactly the low-literacy-first rule this product is built on (CLAUDE.md: staff may
+       be WPass/SPass workers; pictogram-first, colour semantics, numbers over words). Same 24-box,
+       same 1.9 stroke, same single-path shape as every other icon here.
+         cash    a banknote with the value circle in the middle
+         card    a card with its magnetic stripe
+         paynow  a QR-ish bracket pair — the external transfer the counter confirms by sight
+         other   three dots: the catch-all, matching 'menu' rather than inventing a new metaphor */
+    cash:'M2 6h20v12H2zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M5 9v.01M19 15v.01',
+    card:'M2 6h20v12H2zM2 10h20M6 15h4',
+    paynow:'M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3zM15 15h2v2h-2M19 19h2v2h-2',
+    other:'M6 12v.01M12 12v.01M18 12v.01',
     add:'M12 5v14M5 12h14',
     /* v402: the staff mobile dock's "More" button asked for 'menu', which was never in this map,
        so it rendered the info circle — a circled "i" sitting between Record sale and Appointments.
@@ -5341,6 +5386,33 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
     };
     dialog.addEventListener('keydown',keydown);
+    /* nestly_v578 (owner: "clicking outside the box = cross button or exit the pop up ... please
+       make sure ALL the pop up is working like that, i dont need to keep repeating this issue").
+
+       It kept recurring because backdrop-dismiss was never a behaviour of the dialog SYSTEM — it
+       was hand-wired per sheet, so every new dialog started without it and had to be reported.
+       Escape and the Android Back button have always been handled here; this is the third way out
+       of the same door, in the same place, so a dialog opened through activateDialog now has it by
+       construction and cannot be shipped without it.
+
+       `dialog` is the overlay and the card is its child, so a click that lands ON the overlay is
+       by definition outside the card. mousedown and click must BOTH land there: otherwise a drag
+       that starts on a text selection inside the card and releases over the backdrop would close
+       the sheet and discard what the user was doing.
+
+       Guarded on isConnected because a handful of sheets still carry their own backdrop handler
+       (they predate this); whichever fires second finds the dialog already gone and does nothing,
+       rather than closing twice. */
+    let pressedBackdrop=false;
+    const backdropDown=event=>{pressedBackdrop=event.target===dialog};
+    const backdropClick=event=>{
+      if(event.target!==dialog||!pressedBackdrop)return;
+      pressedBackdrop=false;
+      if(!dialog.isConnected)return;
+      onClose?.();
+    };
+    dialog.addEventListener('mousedown',backdropDown);
+    dialog.addEventListener('click',backdropClick);
     /* v177: on Android the hardware/gesture Back is what people reach for to dismiss a sheet.
        Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
        hashchange — the only navigation signal the app router listens to — never fires. Back then
@@ -5360,6 +5432,8 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
     return ({restoreFocus=true,handOffHistory=false}={})=>{
       dialog.removeEventListener('keydown',keydown);
+      dialog.removeEventListener('mousedown',backdropDown);
+      dialog.removeEventListener('click',backdropClick);
       window.removeEventListener('popstate',popstate);
       /* Only unwind our own entry, and only once — a Back-press already consumed it. */
       if(handOffHistory)closedByUs=true;
@@ -14838,7 +14912,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'71e9e39fa11d20584e1f182b4b33a3941bc3cd5bfb409c1b1e3a53c755f74fcd',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'08bca88cf01d34c406a7264346c4ba8d1a2fa2b0e442acca3fc314af9cf9bbc2',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

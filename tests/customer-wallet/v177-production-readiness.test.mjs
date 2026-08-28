@@ -145,7 +145,7 @@ test('the service worker ships the v177 shell and keeps navigation network-first
   // v195 moved the shell to v9 so the un-fingerprinted customer-ui.js (two new icons) is refetched.
   // V289 moves it to v10: the install no longer calls skipWaiting and the app document itself is
   // precached, so every client must build the new cache rather than inherit the old one.
-  assert.match(sw,/const CACHE_VERSION='v20-20260826-css1';/);
+  assert.match(sw,/const CACHE_VERSION='v21-20260828-v578';/);
   const fetchHandler=section(sw,"self.addEventListener('fetch'",'const CUSTOMER_PUSH_TYPES=');
   assert.match(fetchHandler,/if\(request\.mode==='navigate'\)\{/);
   assert.match(fetchHandler,/return await fetch\(request\)/,'navigation must try the network first');

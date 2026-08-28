@@ -58,6 +58,19 @@
     bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',
     export:'M12 3v12M7 10l5 5 5-5M4 21h16',
     import:'M12 21V9M7 14l5-5 5 5M4 3h16',
+    /* nestly_v578 (owner, photo 2: a banknote drawn on Cash and a card drawn on Card — "add an
+       icon"). The four tender buttons were the only choice row in the till with no pictograms,
+       which is exactly the low-literacy-first rule this product is built on (CLAUDE.md: staff may
+       be WPass/SPass workers; pictogram-first, colour semantics, numbers over words). Same 24-box,
+       same 1.9 stroke, same single-path shape as every other icon here.
+         cash    a banknote with the value circle in the middle
+         card    a card with its magnetic stripe
+         paynow  a QR-ish bracket pair — the external transfer the counter confirms by sight
+         other   three dots: the catch-all, matching 'menu' rather than inventing a new metaphor */
+    cash:'M2 6h20v12H2zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M5 9v.01M19 15v.01',
+    card:'M2 6h20v12H2zM2 10h20M6 15h4',
+    paynow:'M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3zM15 15h2v2h-2M19 19h2v2h-2',
+    other:'M6 12v.01M12 12v.01M18 12v.01',
     add:'M12 5v14M5 12h14',
     /* v402: the staff mobile dock's "More" button asked for 'menu', which was never in this map,
        so it rendered the info circle — a circled "i" sitting between Record sale and Appointments.
@@ -365,6 +378,33 @@
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
     };
     dialog.addEventListener('keydown',keydown);
+    /* nestly_v578 (owner: "clicking outside the box = cross button or exit the pop up ... please
+       make sure ALL the pop up is working like that, i dont need to keep repeating this issue").
+
+       It kept recurring because backdrop-dismiss was never a behaviour of the dialog SYSTEM — it
+       was hand-wired per sheet, so every new dialog started without it and had to be reported.
+       Escape and the Android Back button have always been handled here; this is the third way out
+       of the same door, in the same place, so a dialog opened through activateDialog now has it by
+       construction and cannot be shipped without it.
+
+       `dialog` is the overlay and the card is its child, so a click that lands ON the overlay is
+       by definition outside the card. mousedown and click must BOTH land there: otherwise a drag
+       that starts on a text selection inside the card and releases over the backdrop would close
+       the sheet and discard what the user was doing.
+
+       Guarded on isConnected because a handful of sheets still carry their own backdrop handler
+       (they predate this); whichever fires second finds the dialog already gone and does nothing,
+       rather than closing twice. */
+    let pressedBackdrop=false;
+    const backdropDown=event=>{pressedBackdrop=event.target===dialog};
+    const backdropClick=event=>{
+      if(event.target!==dialog||!pressedBackdrop)return;
+      pressedBackdrop=false;
+      if(!dialog.isConnected)return;
+      onClose?.();
+    };
+    dialog.addEventListener('mousedown',backdropDown);
+    dialog.addEventListener('click',backdropClick);
     /* v177: on Android the hardware/gesture Back is what people reach for to dismiss a sheet.
        Without a history entry it exits the whole route instead. pushState keeps the SAME url, so
        hashchange — the only navigation signal the app router listens to — never fires. Back then
@@ -384,6 +424,8 @@
     requestAnimationFrame(()=>{const target=dialog.querySelector(initialFocus)||focusable()[0]||dialog;target.focus()});
     return ({restoreFocus=true,handOffHistory=false}={})=>{
       dialog.removeEventListener('keydown',keydown);
+      dialog.removeEventListener('mousedown',backdropDown);
+      dialog.removeEventListener('click',backdropClick);
       window.removeEventListener('popstate',popstate);
       /* Only unwind our own entry, and only once — a Back-press already consumed it. */
       if(handOffHistory)closedByUs=true;

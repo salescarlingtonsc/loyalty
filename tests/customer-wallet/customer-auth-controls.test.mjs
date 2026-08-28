@@ -73,9 +73,12 @@ test('auth-control cache identity changes with the versioned customer UI asset',
   /* V298 retargets the token: customer-ui.js changed (the synthesised table <caption> is now
      sr-only, so a card title is printed once), and a visitor holding the v195 copy would keep
      seeing the doubled title. Same invariant, newer strings. */
-  assert.match(app,/<script src="\/customer-ui\.js\?v=20260813-v298-caption-once"><\/script>/);
+  /* nestly_v578 retargets the token again: customer-ui.js gained backdrop-dismiss inside
+     activateDialog, and a visitor holding the v298 copy would keep a sheet that only closes from
+     its X — which is the very complaint ("i dont need to keep repeating this issue"). */
+  assert.match(app,/<script src="\/customer-ui\.js\?v=20260828-v578-backdrop-dismiss"><\/script>/);
   /* V289: CACHE_VERSION moved again (guarded updates + a precached app shell). The invariant this
      test protects is the direction, not the string: the shell cache identity must never be older
      than the customer-ui.js token it caches, so bumping the asset always requires bumping this. */
-  assert.match(sw,/CACHE_VERSION='v20-20260826-css1'/);
+  assert.match(sw,/CACHE_VERSION='v21-20260828-v578'/);
 });

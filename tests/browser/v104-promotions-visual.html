@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="fb0894050427347f3690f7128d9de54337fc24e76c9af7b4761f4bae308a32a8">
+<meta name="v104-production-source-sha256" content="e2409218b28eb05c15ac0b2a79caf919428f12ba8725c0887db4ccb4aeb5ef1e">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1313,6 +1313,15 @@ input[type=range]:focus{box-shadow:none}
   height:var(--control-h);min-height:var(--control-h);box-sizing:border-box}
 .staff-perf-range-notes-v577{flex:1 1 100%;display:grid;gap:4px;margin-top:2px}
 .staff-perf-range-notes-v577 p{margin:0}
+.staff-perf-range-notes-v577[hidden]{display:none}
+/* nestly_v578 (owner, photo 4): the ? that discloses them. Sized to the same 44px tap target the
+   controls beside it use, so it reads as part of the control row rather than an afterthought. */
+.staff-perf-help-v578{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--control-border);background:#fff;
+  color:var(--muted);font-size:15px;font-weight:750;line-height:1;
+  transition:color .14s var(--ease),border-color .14s var(--ease),background .14s var(--ease)}
+.staff-perf-help-v578:hover{color:var(--coral);border-color:var(--coral);background:var(--tint)}
+.staff-perf-help-v578[aria-expanded="true"]{color:var(--coral);border-color:var(--coral);background:var(--tint)}
 /* segmented control, iOS-style */
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
@@ -1736,6 +1745,12 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .frontline-keypad .btn{height:60px;font-size:22px;font-weight:700}
 .frontline-tenders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
 .frontline-tenders .btn{min-height:52px;font-size:15px}
+/* nestly_v578 (owner, photo 2): the tender buttons now carry a pictogram beside their label. The
+   icon takes the button's own colour, so it inverts with the label on the pressed (filled) state
+   instead of needing a second rule. */
+.frontline-tenders .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px}
+.frontline-tenders .btn>svg{flex:0 0 auto;opacity:.85}
+.frontline-tenders .btn[aria-pressed="true"]>svg{opacity:1}
 .frontline-tenders .btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .till-cart-card{max-width:560px}
 .till-cart-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:6px}
@@ -4970,14 +4985,31 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      frame-to-frame drift shrinks with it instead of being locked to a single guess. Near-black
      logo ink is unaffected at this factor. */
   filter:brightness(.985)}
-/* "wait me ..." — the owner's own words, with the animation they asked for: the three dots
-   arrive in turn. prefers-reduced-motion holds them all visible rather than pulsing. */
-.boot-wait-v577{margin:0;text-align:center;font-size:15px;font-weight:650;letter-spacing:.01em;color:#8A7F6E}
-.boot-wait-dots-v577>span{opacity:.15;animation:boot-wait-dot-v577 1.35s infinite}
-.boot-wait-dots-v577>span:nth-child(2){animation-delay:.22s}
-.boot-wait-dots-v577>span:nth-child(3){animation-delay:.44s}
-@keyframes boot-wait-dot-v577{0%,60%,100%{opacity:.15}30%{opacity:1}}
-@media(prefers-reduced-motion:reduce){.boot-wait-dots-v577>span{opacity:1;animation:none}}
+/* nestly_v578 (owner: 'change wait me to "peekaaaaaa......." make the word wavey and moving —
+   I want brand recognition across the app'). The loading word IS the wordmark now: it is set in
+   the brand face (--peekaa-display, the same Baloo 2 the customer titles took in v577) and each
+   letter rides a sine, staggered by its index, so the name reads as a wave travelling left to
+   right rather than as text that happens to move.
+
+   --i is written per character in the markup, so one keyframe animates the whole word and adding
+   or removing a letter needs no new CSS. The trailing dots continue the same wave at the same
+   cadence instead of being a separate "loading" tic — the animation is one gesture.
+
+   The word is aria-hidden: the boot panel already carries a real sr-only status line ("Loading
+   Peekaa…"), and a screen reader must not be handed ten separate letter spans to read out. */
+.boot-wait-v577{margin:14px 0 0;text-align:center;font-family:var(--peekaa-display);font-size:26px;
+  font-weight:700;letter-spacing:.01em;color:#4A4136}
+.boot-wave-v578{display:inline-flex;align-items:baseline}
+.boot-wave-v578>span{display:inline-block;animation:boot-wave-v578 1.5s ease-in-out infinite;
+  animation-delay:calc(var(--i) * .085s)}
+@keyframes boot-wave-v578{
+  0%,60%,100%{transform:translateY(0);opacity:.62}
+  30%{transform:translateY(-.28em);opacity:1}
+}
+/* Reduced motion keeps the wordmark — it is brand, not decoration — and drops the movement. */
+@media(prefers-reduced-motion:reduce){
+  .boot-wave-v578>span{animation:none;transform:none;opacity:1}
+}
 
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -4985,7 +5017,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source fb0894050427347f3690f7128d9de54337fc24e76c9af7b4761f4bae308a32a8</p>
+  <p class="v104-provenance">Local production-render harness · source e2409218b28eb05c15ac0b2a79caf919428f12ba8725c0887db4ccb4aeb5ef1e</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -4997,7 +5029,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="fb0894050427347f3690f7128d9de54337fc24e76c9af7b4761f4bae308a32a8";
+const PRODUCTION_SOURCE_SHA256="e2409218b28eb05c15ac0b2a79caf919428f12ba8725c0887db4ccb4aeb5ef1e";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

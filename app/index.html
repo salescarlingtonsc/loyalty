@@ -85,7 +85,7 @@
   <link rel="preload" as="script" href="/brand-config.js">
   <link rel="preload" as="script" href="/runtime-config.js?v=2">
   <link rel="preload" as="script" href="/runtime-config-loader.js?v=2">
-  <link rel="preload" as="script" href="/customer-ui.js?v=20260813-v298-caption-once">
+  <link rel="preload" as="script" href="/customer-ui.js?v=20260828-v578-backdrop-dismiss">
   <link rel="preload" as="script" href="/app-core.js?b=ddaf63a3b900">
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
@@ -1406,6 +1406,15 @@ input[type=range]:focus{box-shadow:none}
   height:var(--control-h);min-height:var(--control-h);box-sizing:border-box}
 .staff-perf-range-notes-v577{flex:1 1 100%;display:grid;gap:4px;margin-top:2px}
 .staff-perf-range-notes-v577 p{margin:0}
+.staff-perf-range-notes-v577[hidden]{display:none}
+/* nestly_v578 (owner, photo 4): the ? that discloses them. Sized to the same 44px tap target the
+   controls beside it use, so it reads as part of the control row rather than an afterthought. */
+.staff-perf-help-v578{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--control-border);background:#fff;
+  color:var(--muted);font-size:15px;font-weight:750;line-height:1;
+  transition:color .14s var(--ease),border-color .14s var(--ease),background .14s var(--ease)}
+.staff-perf-help-v578:hover{color:var(--coral);border-color:var(--coral);background:var(--tint)}
+.staff-perf-help-v578[aria-expanded="true"]{color:var(--coral);border-color:var(--coral);background:var(--tint)}
 /* segmented control, iOS-style */
 .qbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:#fff;border:1px solid var(--control-border);border-radius:999px;padding:9px 14px;font-size:12.5px;
   font-weight:600;color:var(--muted);box-shadow:var(--shadow);
@@ -1829,6 +1838,12 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .frontline-keypad .btn{height:60px;font-size:22px;font-weight:700}
 .frontline-tenders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
 .frontline-tenders .btn{min-height:52px;font-size:15px}
+/* nestly_v578 (owner, photo 2): the tender buttons now carry a pictogram beside their label. The
+   icon takes the button's own colour, so it inverts with the label on the pressed (filled) state
+   instead of needing a second rule. */
+.frontline-tenders .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px}
+.frontline-tenders .btn>svg{flex:0 0 auto;opacity:.85}
+.frontline-tenders .btn[aria-pressed="true"]>svg{opacity:1}
 .frontline-tenders .btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .till-cart-card{max-width:560px}
 .till-cart-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;margin-top:6px}
@@ -5063,14 +5078,31 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      frame-to-frame drift shrinks with it instead of being locked to a single guess. Near-black
      logo ink is unaffected at this factor. */
   filter:brightness(.985)}
-/* "wait me ..." — the owner's own words, with the animation they asked for: the three dots
-   arrive in turn. prefers-reduced-motion holds them all visible rather than pulsing. */
-.boot-wait-v577{margin:0;text-align:center;font-size:15px;font-weight:650;letter-spacing:.01em;color:#8A7F6E}
-.boot-wait-dots-v577>span{opacity:.15;animation:boot-wait-dot-v577 1.35s infinite}
-.boot-wait-dots-v577>span:nth-child(2){animation-delay:.22s}
-.boot-wait-dots-v577>span:nth-child(3){animation-delay:.44s}
-@keyframes boot-wait-dot-v577{0%,60%,100%{opacity:.15}30%{opacity:1}}
-@media(prefers-reduced-motion:reduce){.boot-wait-dots-v577>span{opacity:1;animation:none}}
+/* nestly_v578 (owner: 'change wait me to "peekaaaaaa......." make the word wavey and moving —
+   I want brand recognition across the app'). The loading word IS the wordmark now: it is set in
+   the brand face (--peekaa-display, the same Baloo 2 the customer titles took in v577) and each
+   letter rides a sine, staggered by its index, so the name reads as a wave travelling left to
+   right rather than as text that happens to move.
+
+   --i is written per character in the markup, so one keyframe animates the whole word and adding
+   or removing a letter needs no new CSS. The trailing dots continue the same wave at the same
+   cadence instead of being a separate "loading" tic — the animation is one gesture.
+
+   The word is aria-hidden: the boot panel already carries a real sr-only status line ("Loading
+   Peekaa…"), and a screen reader must not be handed ten separate letter spans to read out. */
+.boot-wait-v577{margin:14px 0 0;text-align:center;font-family:var(--peekaa-display);font-size:26px;
+  font-weight:700;letter-spacing:.01em;color:#4A4136}
+.boot-wave-v578{display:inline-flex;align-items:baseline}
+.boot-wave-v578>span{display:inline-block;animation:boot-wave-v578 1.5s ease-in-out infinite;
+  animation-delay:calc(var(--i) * .085s)}
+@keyframes boot-wave-v578{
+  0%,60%,100%{transform:translateY(0);opacity:.62}
+  30%{transform:translateY(-.28em);opacity:1}
+}
+/* Reduced motion keeps the wordmark — it is brand, not decoration — and drops the movement. */
+@media(prefers-reduced-motion:reduce){
+  .boot-wave-v578>span{animation:none;transform:none;opacity:1}
+}
 </style>
 </head>
 <body>
@@ -5097,7 +5129,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
          the visible "something is happening" cue. The sr-only status line above is unchanged and
          is still what a screen reader announces, so this text is aria-hidden to avoid saying it
          twice. -->
-    <p class="boot-wait-v577" aria-hidden="true">wait me<span class="boot-wait-dots-v577"><span>.</span><span>.</span><span>.</span></span></p>
+    <p class="boot-wait-v577" aria-hidden="true"><span class="boot-wave-v578"><span style="--i:0">p</span><span style="--i:1">e</span><span style="--i:2">e</span><span style="--i:3">k</span><span style="--i:4">a</span><span style="--i:5">a</span><span style="--i:6">a</span><span style="--i:7">a</span><span style="--i:8">a</span><span style="--i:9">a</span><span style="--i:10">.</span><span style="--i:11">.</span><span style="--i:12">.</span><span style="--i:13">.</span><span style="--i:14">.</span><span style="--i:15">.</span><span style="--i:16">.</span></span></p>
   </div></div></div></div>
 <div id="toast" class="toast" aria-hidden="true"></div>
 <div id="appStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -5106,7 +5138,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>
-<script src="/customer-ui.js?v=20260813-v298-caption-once"></script>
+<script src="/customer-ui.js?v=20260828-v578-backdrop-dismiss"></script>
 <!-- v184: the platform console is ~210KB of JS+CSS that only a Peekaa admin can ever use, and it
      was being downloaded by every customer opening a booking page. app.js fetches these on
      demand when a #/platform route is requested (loadPlatformConsoleAssetsV184). This element is
@@ -5132,7 +5164,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=2f0bce5b8c2f","business":"/app-business.js?b=6d02de8da370","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=d66c0a690c5f","customer":"/app-customer.js?b=2f0bce5b8c2f","business":"/app-business.js?b=3fa46e0b3655","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

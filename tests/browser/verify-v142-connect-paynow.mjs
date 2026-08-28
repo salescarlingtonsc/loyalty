@@ -43,7 +43,9 @@ try{
     await page.getByRole('button',{name:/Harbour Lunch Set/}).click();
     /* V373: the tender and the confirm button live on the review stage now — one tap after the
        item, exactly as a cashier reaches them. */
-    await page.getByRole('button',{name:/Review sale/}).click();
+    /* nestly_v578 (owner: "remove 'sale' wording only"): the button is "Review" now. Matched on
+       the id instead of the label so a future wording change cannot break this capture again. */
+    await page.locator('#tGoReviewV373').click();
     await page.getByRole('button',{name:'PayNow QR'}).click();
     await page.getByRole('button',{name:/Record sale · SGD 10\.00/}).waitFor();
     await page.getByRole('button',{name:/Record sale · SGD 10\.00/}).click();
