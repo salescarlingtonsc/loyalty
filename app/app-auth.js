@@ -272,7 +272,12 @@ function renderBusinessStaffInviteAcceptV151(code){
     $('staffInviteAcceptGo').disabled=true;
     $('staffInviteAcceptStatus').innerHTML='<p class="muted small" style="margin-top:10px">Checking invite and creating membership…</p>';
     const preview=await previewStaffInviteV151(normalized,'staffInviteAcceptPreviewV151');
-    if(preview?.status&&preview.status!=='valid'){
+    /* nestly_v588 (owner: "even using the reference code to sign up as staff, during sign up
+       process - it is in a mess", pre-go-live 2026-08-29). accept_invite now replays correctly
+       for the same user, and preview_staff_invite can answer 'awaiting_approval' for a code that
+       already parked someone pending owner approval — both must be let through to the RPC, which
+       is the real authority, instead of being refused here on the client. */
+    if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){
       $('staffInviteAcceptStatus').innerHTML='<div class="err">This invite is not active. Ask the business owner for a new company invite link.</div>';
       $('staffInviteAcceptGo').disabled=false;return;
     }
@@ -282,10 +287,15 @@ function renderBusinessStaffInviteAcceptV151(code){
       $('staffInviteAcceptStatus').innerHTML=`<div class="err">${esc(error.message||'This invite could not be accepted. It may be invalid, expired, revoked, already used, or restricted to another email.')}</div>`;
       $('staffInviteAcceptGo').disabled=false;return;
     }
+    /* nestly_v588: the old code did `S.biz=data`, corrupting the business object with
+       accept_invite's own {status,business_id,business_slug,business_name,message} payload, and
+       toasted "Welcome to the team" even when the server had just parked the caller
+       awaiting_approval. Never assign S.biz here — the workspace router re-derives it, and the
+       v569 "Waiting for approval" card already handles a pending persona correctly. */
     sessionStorage.removeItem(STAFF_INVITE_STORAGE_V151);
-    S.biz=data;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.staffWorkspaces=[];
-    const slug=data?.slug||data?.business_slug||'';
-    toast('Welcome to the team');
+    S.myModules=null;S.myModulePerms=null;S.myRole=null;S.staffWorkspaces=[];
+    const slug=data?.business_slug||'';
+    toast(data?.status==='approved'?'Welcome back — opening the workspace':(data?.message||'Joined — waiting for the owner to approve you'));
     if(slug)nav(`#/workspace/${encodeURIComponent(slug)}/dashboard`);else nav('#/dashboard');
   };
   $('staffInviteAcceptSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();renderStaffInviteAuthV151('in',normalized)};

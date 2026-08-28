@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b712f0ed12281a91b34455e43d2776ded28b27f73fe1f2fa8c7fa648ed989504"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d1996234e5b7f781fc30fac5823c01c27d556f02b3d27ba5e3c33fc6d5d31aba"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5578,12 +5578,17 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
       <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
+    ${admin?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>'}
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
   if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
+  /* nestly_v588 (owner: staff signup was "in a mess" — a code holder had no visible door in from
+     the ordinary sign-in screen). Gated on the same !admin condition as #sw: this is the business
+     side of renderAuth only. */
+  if($('authStaffInviteDoorV588'))$('authStaffInviteDoorV588').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
@@ -5764,7 +5769,16 @@ async function wireAccountDeletionButton(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    /* nestly_v588: the SECOND accept_invite call site, on the onboarding screen — it carried the
+       exact bug the invite-accept page had: it assigned accept_invite's {status,message} payload
+       to S.biz (corrupting the business object) and toasted a welcome at a person the server had
+       just parked awaiting owner approval. Same treatment as renderBusinessStaffInviteAcceptV151:
+       never touch S.biz, speak the server's own message, and land on the workspace route, whose
+       v569 card names the wait. */
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}
+      const joinSlugV588=data?.business_slug||'';
+      toast(data?.status==='approved'?'Welcome back — opening the workspace':(data?.message||'Joined — waiting for the owner to approve you'));
+      nav(joinSlugV588?`#/workspace/${encodeURIComponent(joinSlugV588)}/dashboard`:'#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }

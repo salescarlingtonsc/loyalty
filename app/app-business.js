@@ -1699,7 +1699,16 @@ function renderOnboard(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    /* nestly_v588: the SECOND accept_invite call site, on the onboarding screen — it carried the
+       exact bug the invite-accept page had: it assigned accept_invite's {status,message} payload
+       to S.biz (corrupting the business object) and toasted a welcome at a person the server had
+       just parked awaiting owner approval. Same treatment as renderBusinessStaffInviteAcceptV151:
+       never touch S.biz, speak the server's own message, and land on the workspace route, whose
+       v569 card names the wait. */
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}
+      const joinSlugV588=data?.business_slug||'';
+      toast(data?.status==='approved'?'Welcome back — opening the workspace':(data?.message||'Joined — waiting for the owner to approve you'));
+      nav(joinSlugV588?`#/workspace/${encodeURIComponent(joinSlugV588)}/dashboard`:'#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
@@ -32826,33 +32835,63 @@ async function settingsPage(){
   window.staffReferenceCodeV217=async(staffId,button)=>{
     const name=button?.dataset?.name||'this teammate';
     if(button)button.disabled=true;
-    const {data,error}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId});
+    /* nestly_v588: p_rotate:false — a second click on "Give app access" for the same teammate now
+       returns the SAME pending code (reused:true) instead of silently revoking-and-reminting the
+       one already handed out, which is what made the owner's report "in a mess": a link already
+       sent could stop working underneath the person it was sent to. Rotation is now an explicit,
+       separate action (below). */
+    const {data,error}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId,p_rotate:false});
     if(button)button.disabled=false;
     if(error)return fail(error);
-    const code=data?.code||'';
-    if(!code)return fail(new Error('The reference code was not returned. Try again.'));
+    if(!data?.code)return fail(new Error('The reference code was not returned. Try again.'));
     document.querySelector('#staffReferenceModalV217')?.remove();
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="staffReferenceModalV217" role="dialog" aria-modal="true" aria-labelledby="staffReferenceTitleV217" tabindex="-1">
-      <section class="modal-card" style="max-width:480px">
-        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
-        <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
-        <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
-          <li>Give this code to ${esc(name)}.</li>
-          <li>They create their own account, then enter the code.</li>
-          <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
-        </ol>
-        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
-        <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button><button type="button" class="btn ghost sm" id="staffReferenceDoneV217">Done</button></div>
-      </section></div>`);
+      <section class="modal-card" style="max-width:480px"></section></div>`);
     const dialog=$('staffReferenceModalV217');
     let deactivate;
     const close=()=>deactivate?.();
+    /* nestly_v588: the card is (re)painted in place from a payload, so "New code instead" can
+       swap the code shown without tearing the dialog down and re-activating it — one history
+       entry, one focus lifecycle. */
+    const paint=payload=>{
+      const code=payload?.code||'';
+      const reusedNote=payload?.reused?`<p class="muted small" style="margin-top:8px">This is the code you already created — it still works${payload?.expires_at?`, until ${esc(walletDate(payload.expires_at,true))}`:''}.</p>`:'';
+      const restrictedNote=payload?.restricted_to_email?`<p class="muted small" style="margin-top:4px">This code only works for ${esc(payload.restricted_to_email)}.</p>`:'';
+      dialog.querySelector('.modal-card').innerHTML=`
+        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
+        <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
+        ${reusedNote}${restrictedNote}
+        <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
+          <li>Send ${esc(name)} the invite link (or read them the code).</li>
+          <li>They create their own account — the code is filled in for them from the link.</li>
+          <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
+        </ol>
+        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
+        <div class="row" style="margin-top:16px;flex-wrap:wrap;gap:8px">
+          <button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button>
+          <button type="button" class="btn" id="staffReferenceCopyLinkV217">Copy invite link</button>
+          <button type="button" class="btn ghost sm" id="staffReferenceRotateV217">New code instead</button>
+          <button type="button" class="btn ghost sm" id="staffReferenceDoneV217">Done</button>
+        </div>`;
+      $('staffReferenceCloseV217').onclick=close;
+      $('staffReferenceDoneV217').onclick=()=>{close();loadTeam()};
+      $('staffReferenceCopyV217').onclick=()=>copyTextToClipboard(code,{
+        success:workspaceTemplateTextV97('inviteCreated',{code}),
+        failure:'Copy was blocked. Read the code out or write it down.'});
+      $('staffReferenceCopyLinkV217').onclick=()=>copyTextToClipboard(staffInviteLinkV151(code),{
+        success:'Invite link copied — send it to them on WhatsApp',
+        failure:'Copy was blocked. Read the code out instead.'});
+      $('staffReferenceRotateV217').onclick=async()=>{
+        const rotateBtn=$('staffReferenceRotateV217');
+        rotateBtn.disabled=true;
+        const {data:fresh,error:rotateError}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId,p_rotate:true});
+        if(rotateError){rotateBtn.disabled=false;return fail(rotateError)}
+        if(!fresh?.code){rotateBtn.disabled=false;return fail(new Error('The reference code was not returned. Try again.'))}
+        paint(fresh);
+      };
+    };
+    paint(data);
     deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#staffReferenceCopyV217'});
-    $('staffReferenceCloseV217').onclick=close;
-    $('staffReferenceDoneV217').onclick=()=>{close();loadTeam()};
-    $('staffReferenceCopyV217').onclick=()=>copyTextToClipboard(code,{
-      success:workspaceTemplateTextV97('inviteCreated',{code}),
-      failure:'Copy was blocked. Read the code out or write it down.'});
   };
   window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
   window.toggleStaffProfile=(staffId)=>{openProfileId=(openProfileId===staffId)?null:staffId;loadTeam();};

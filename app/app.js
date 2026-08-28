@@ -3556,7 +3556,9 @@ async function route(){
       return renderCustomerRegistration(isRouteCurrent);
     }
     if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
-    if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('in',staffInviteCodeV151);
+    /* nestly_v588: a fresh reference code arriving here is almost always a brand-new
+       teammate, not a returning one — default to Create account. */
+    if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('up',staffInviteCodeV151);
     if(!S.user&&h==='#/business'&&new URLSearchParams(location.search).get('signup')==='1')return renderBusinessSignupChoice();
     if(!S.user)return renderAuth('in',{admin:requestedPlatformRoute});
     /* Platform routes are resolved before workspace discovery/onboarding. The platform
@@ -15950,6 +15952,15 @@ function staffInvitePreviewMarkupV151(preview){
       <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
     </div>`;
   }
+  /* nestly_v588: the server can now answer a replayed invite code with awaiting_approval instead
+     of falling through to invalid — this tells the person that plainly instead of claiming their
+     working code is broken. */
+  if(preview.status==='awaiting_approval'){
+    return `<div class="ok" style="margin-top:10px;background:var(--success-bg);color:var(--green)">
+      <b>${esc(preview.business_name||'Business found')}</b>
+      <p class="small" style="margin-top:5px">This code has already been used to join, and is waiting for the owner's approval. If that was you, sign in with the account you created.</p>
+    </div>`;
+  }
   const messages={
     invalid:'This company invite code is invalid.',
     expired:'This company invite has expired.',
@@ -15986,7 +15997,8 @@ function renderBusinessSignupChoice(){
   CUI.focusRoute($('main'),{enhanceContent:true});
   $('requestDemoChoice').onclick=()=>renderBusinessDemoRequest();
   $('startBusinessChoice').onclick=()=>{return renderBusinessApplication()};
-  $('joinBusinessChoice').onclick=()=>renderStaffInviteAuthV151('in',businessStaffInviteCodeV151());
+  // nestly_v588: same default-to-signup reasoning as the router's staff-invite entry above.
+  $('joinBusinessChoice').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   $('businessSignupBack').onclick=()=>renderAuth('in');
 }
 function renderBusinessDemoRequest(){
@@ -16045,10 +16057,10 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="staffInviteAuthTitle" style="margin:14px 0 2px">Join an existing business</h1>
-    <p class="muted small" style="margin-top:6px">Enter your company invite code, then sign in or create a staff account. Stripe is not required for invited staff.</p>
+    <p class="muted small" style="margin-top:6px">Enter the code your business gave you, then create your account — or sign in if you already have one.</p>
     <label for="staffInviteCodeV151">Company invite code</label><input id="staffInviteCodeV151" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="e.g. 7FE22596" value="${esc(saved)}">
     <div id="staffInvitePreviewV151" role="status" aria-live="polite" style="margin-top:8px">${staffInvitePreviewMarkupV151(null)}</div>
-    <div class="row" style="gap:8px;margin-top:14px"><button type="button" class="btn ${mode==='in'?'':'ghost'} sm" id="staffInviteSignInTab">Sign in</button><button type="button" class="btn ${mode==='up'?'':'ghost'} sm" id="staffInviteSignUpTab">Create account</button></div>
+    <div class="v150-segment" role="group" aria-label="Account" style="margin-top:14px"><button type="button" id="staffInviteSignInTab" aria-pressed="${mode==='in'}">Sign in</button><button type="button" id="staffInviteSignUpTab" aria-pressed="${mode==='up'}">Create account</button></div>
     <label for="staffInviteEmailV151">Email</label><input id="staffInviteEmailV151" type="email" autocomplete="email" placeholder="you@business.com">
     <label for="staffInvitePasswordV151">Password</label>${passwordControlHtml('staffInvitePasswordV151',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     ${mode==='up'?`<label for="staffInvitePasswordConfirmV151">Confirm password</label>${passwordControlHtml('staffInvitePasswordConfirmV151',{autocomplete:'new-password',placeholder:'••••••••'})}`:''}
@@ -16067,7 +16079,9 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
     if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code before continuing with Google.</div>';return}
     const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
-    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
+    /* nestly_v588: allow a code that is already awaiting_approval through — the server
+       replays correctly now, so refusing it here just blocks a genuine returning user. */
+    if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
     $('staffInviteGoogleV158').disabled=true;
     try{
       const {error}=await sb.auth.signInWithOAuth({
@@ -16088,7 +16102,8 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     const password=$('staffInvitePasswordV151').value;
     if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code.</div>';return}
     const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
-    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing.</div>';return}
+    /* nestly_v588: same relaxation as the Google branch above. */
+    if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing.</div>';return}
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('staffInviteAuthError').innerHTML='<div class="err">Enter the email you want to use for this workspace.</div>';return}
     if(mode==='up'&&(!validNewPassword(password)||password!==$('staffInvitePasswordConfirmV151').value)){
       $('staffInviteAuthError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
@@ -16134,7 +16149,12 @@ function renderBusinessStaffInviteAcceptV151(code){
     $('staffInviteAcceptGo').disabled=true;
     $('staffInviteAcceptStatus').innerHTML='<p class="muted small" style="margin-top:10px">Checking invite and creating membership…</p>';
     const preview=await previewStaffInviteV151(normalized,'staffInviteAcceptPreviewV151');
-    if(preview?.status&&preview.status!=='valid'){
+    /* nestly_v588 (owner: "even using the reference code to sign up as staff, during sign up
+       process - it is in a mess", pre-go-live 2026-08-29). accept_invite now replays correctly
+       for the same user, and preview_staff_invite can answer 'awaiting_approval' for a code that
+       already parked someone pending owner approval — both must be let through to the RPC, which
+       is the real authority, instead of being refused here on the client. */
+    if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){
       $('staffInviteAcceptStatus').innerHTML='<div class="err">This invite is not active. Ask the business owner for a new company invite link.</div>';
       $('staffInviteAcceptGo').disabled=false;return;
     }
@@ -16144,10 +16164,15 @@ function renderBusinessStaffInviteAcceptV151(code){
       $('staffInviteAcceptStatus').innerHTML=`<div class="err">${esc(error.message||'This invite could not be accepted. It may be invalid, expired, revoked, already used, or restricted to another email.')}</div>`;
       $('staffInviteAcceptGo').disabled=false;return;
     }
+    /* nestly_v588: the old code did `S.biz=data`, corrupting the business object with
+       accept_invite's own {status,business_id,business_slug,business_name,message} payload, and
+       toasted "Welcome to the team" even when the server had just parked the caller
+       awaiting_approval. Never assign S.biz here — the workspace router re-derives it, and the
+       v569 "Waiting for approval" card already handles a pending persona correctly. */
     sessionStorage.removeItem(STAFF_INVITE_STORAGE_V151);
-    S.biz=data;S.myModules=null;S.myModulePerms=null;S.myRole=null;S.staffWorkspaces=[];
-    const slug=data?.slug||data?.business_slug||'';
-    toast('Welcome to the team');
+    S.myModules=null;S.myModulePerms=null;S.myRole=null;S.staffWorkspaces=[];
+    const slug=data?.business_slug||'';
+    toast(data?.status==='approved'?'Welcome back — opening the workspace':(data?.message||'Joined — waiting for the owner to approve you'));
     if(slug)nav(`#/workspace/${encodeURIComponent(slug)}/dashboard`);else nav('#/dashboard');
   };
   $('staffInviteAcceptSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();renderStaffInviteAuthV151('in',normalized)};
@@ -16488,12 +16513,17 @@ function renderAuth(mode='in',{admin=false}={}){
       <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
+    ${admin?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>'}
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
   if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
+  /* nestly_v588 (owner: staff signup was "in a mess" — a code holder had no visible door in from
+     the ordinary sign-in screen). Gated on the same !admin condition as #sw: this is the business
+     side of renderAuth only. */
+  if($('authStaffInviteDoorV588'))$('authStaffInviteDoorV588').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>
@@ -16855,7 +16885,16 @@ function renderOnboard(){
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
-    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}S.biz=data;toast('Welcome to the team 🎉');nav('#/dashboard')};
+    /* nestly_v588: the SECOND accept_invite call site, on the onboarding screen — it carried the
+       exact bug the invite-accept page had: it assigned accept_invite's {status,message} payload
+       to S.biz (corrupting the business object) and toasted a welcome at a person the server had
+       just parked awaiting owner approval. Same treatment as renderBusinessStaffInviteAcceptV151:
+       never touch S.biz, speak the server's own message, and land on the workspace route, whose
+       v569 card names the wait. */
+    $('join').onclick=async()=>{if(!$('ic').value.trim())return toast('Enter your invite code');$('join').disabled=true;invalidatePersonaCacheV370();const {data,error}=await sb.rpc('accept_invite',{p_code:$('ic').value});if(error){toast(humanErrorV295(error,'That invite code could not be used.'));$('join').disabled=false;return}
+      const joinSlugV588=data?.business_slug||'';
+      toast(data?.status==='approved'?'Welcome back — opening the workspace':(data?.message||'Joined — waiting for the owner to approve you'));
+      nav(joinSlugV588?`#/workspace/${encodeURIComponent(joinSlugV588)}/dashboard`:'#/dashboard')};
     $('out').onclick=async()=>{killChannels();await sb.auth.signOut({scope:'local'});resetClientSessionState();route()};
   })();
 }
@@ -49405,33 +49444,63 @@ async function settingsPage(){
   window.staffReferenceCodeV217=async(staffId,button)=>{
     const name=button?.dataset?.name||'this teammate';
     if(button)button.disabled=true;
-    const {data,error}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId});
+    /* nestly_v588: p_rotate:false — a second click on "Give app access" for the same teammate now
+       returns the SAME pending code (reused:true) instead of silently revoking-and-reminting the
+       one already handed out, which is what made the owner's report "in a mess": a link already
+       sent could stop working underneath the person it was sent to. Rotation is now an explicit,
+       separate action (below). */
+    const {data,error}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId,p_rotate:false});
     if(button)button.disabled=false;
     if(error)return fail(error);
-    const code=data?.code||'';
-    if(!code)return fail(new Error('The reference code was not returned. Try again.'));
+    if(!data?.code)return fail(new Error('The reference code was not returned. Try again.'));
     document.querySelector('#staffReferenceModalV217')?.remove();
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="staffReferenceModalV217" role="dialog" aria-modal="true" aria-labelledby="staffReferenceTitleV217" tabindex="-1">
-      <section class="modal-card" style="max-width:480px">
-        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
-        <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
-        <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
-          <li>Give this code to ${esc(name)}.</li>
-          <li>They create their own account, then enter the code.</li>
-          <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
-        </ol>
-        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
-        <div class="row" style="margin-top:16px;flex-wrap:wrap"><button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button><button type="button" class="btn ghost sm" id="staffReferenceDoneV217">Done</button></div>
-      </section></div>`);
+      <section class="modal-card" style="max-width:480px"></section></div>`);
     const dialog=$('staffReferenceModalV217');
     let deactivate;
     const close=()=>deactivate?.();
+    /* nestly_v588: the card is (re)painted in place from a payload, so "New code instead" can
+       swap the code shown without tearing the dialog down and re-activating it — one history
+       entry, one focus lifecycle. */
+    const paint=payload=>{
+      const code=payload?.code||'';
+      const reusedNote=payload?.reused?`<p class="muted small" style="margin-top:8px">This is the code you already created — it still works${payload?.expires_at?`, until ${esc(walletDate(payload.expires_at,true))}`:''}.</p>`:'';
+      const restrictedNote=payload?.restricted_to_email?`<p class="muted small" style="margin-top:4px">This code only works for ${esc(payload.restricted_to_email)}.</p>`:'';
+      dialog.querySelector('.modal-card').innerHTML=`
+        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
+        <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
+        ${reusedNote}${restrictedNote}
+        <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
+          <li>Send ${esc(name)} the invite link (or read them the code).</li>
+          <li>They create their own account — the code is filled in for them from the link.</li>
+          <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
+        </ol>
+        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
+        <div class="row" style="margin-top:16px;flex-wrap:wrap;gap:8px">
+          <button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button>
+          <button type="button" class="btn" id="staffReferenceCopyLinkV217">Copy invite link</button>
+          <button type="button" class="btn ghost sm" id="staffReferenceRotateV217">New code instead</button>
+          <button type="button" class="btn ghost sm" id="staffReferenceDoneV217">Done</button>
+        </div>`;
+      $('staffReferenceCloseV217').onclick=close;
+      $('staffReferenceDoneV217').onclick=()=>{close();loadTeam()};
+      $('staffReferenceCopyV217').onclick=()=>copyTextToClipboard(code,{
+        success:workspaceTemplateTextV97('inviteCreated',{code}),
+        failure:'Copy was blocked. Read the code out or write it down.'});
+      $('staffReferenceCopyLinkV217').onclick=()=>copyTextToClipboard(staffInviteLinkV151(code),{
+        success:'Invite link copied — send it to them on WhatsApp',
+        failure:'Copy was blocked. Read the code out instead.'});
+      $('staffReferenceRotateV217').onclick=async()=>{
+        const rotateBtn=$('staffReferenceRotateV217');
+        rotateBtn.disabled=true;
+        const {data:fresh,error:rotateError}=await sb.rpc('create_staff_reference_code_v217',{p_business:S.biz.id,p_staff:staffId,p_rotate:true});
+        if(rotateError){rotateBtn.disabled=false;return fail(rotateError)}
+        if(!fresh?.code){rotateBtn.disabled=false;return fail(new Error('The reference code was not returned. Try again.'))}
+        paint(fresh);
+      };
+    };
+    paint(data);
     deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#staffReferenceCopyV217'});
-    $('staffReferenceCloseV217').onclick=close;
-    $('staffReferenceDoneV217').onclick=()=>{close();loadTeam()};
-    $('staffReferenceCopyV217').onclick=()=>copyTextToClipboard(code,{
-      success:workspaceTemplateTextV97('inviteCreated',{code}),
-      failure:'Copy was blocked. Read the code out or write it down.'});
   };
   window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
   window.toggleStaffProfile=(staffId)=>{openProfileId=(openProfileId===staffId)?null:staffId;loadTeam();};

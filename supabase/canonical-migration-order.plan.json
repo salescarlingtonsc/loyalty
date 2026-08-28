@@ -2854,6 +2854,12 @@
       "version": "20260829110000",
       "name": "nestly_v587_join_qr_names_its_business",
       "sourcePath": "db/migrations/20260829_nestly_v587_join_qr_names_its_business.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829120000",
+      "name": "nestly_v588_staff_signup_flow_integrity",
+      "sourcePath": "db/migrations/20260829_nestly_v588_staff_signup_flow_integrity.sql"
     }
   ]
 }

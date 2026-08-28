@@ -1462,7 +1462,9 @@ async function route(){
       return renderCustomerRegistration(isRouteCurrent);
     }
     if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
-    if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('in',staffInviteCodeV151);
+    /* nestly_v588: a fresh reference code arriving here is almost always a brand-new
+       teammate, not a returning one — default to Create account. */
+    if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('up',staffInviteCodeV151);
     if(!S.user&&h==='#/business'&&new URLSearchParams(location.search).get('signup')==='1')return renderBusinessSignupChoice();
     if(!S.user)return renderAuth('in',{admin:requestedPlatformRoute});
     /* Platform routes are resolved before workspace discovery/onboarding. The platform
@@ -5675,6 +5677,15 @@ function staffInvitePreviewMarkupV151(preview){
       <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
     </div>`;
   }
+  /* nestly_v588: the server can now answer a replayed invite code with awaiting_approval instead
+     of falling through to invalid — this tells the person that plainly instead of claiming their
+     working code is broken. */
+  if(preview.status==='awaiting_approval'){
+    return `<div class="ok" style="margin-top:10px;background:var(--success-bg);color:var(--green)">
+      <b>${esc(preview.business_name||'Business found')}</b>
+      <p class="small" style="margin-top:5px">This code has already been used to join, and is waiting for the owner's approval. If that was you, sign in with the account you created.</p>
+    </div>`;
+  }
   const messages={
     invalid:'This company invite code is invalid.',
     expired:'This company invite has expired.',
@@ -5711,7 +5722,8 @@ function renderBusinessSignupChoice(){
   CUI.focusRoute($('main'),{enhanceContent:true});
   $('requestDemoChoice').onclick=()=>renderBusinessDemoRequest();
   $('startBusinessChoice').onclick=()=>{return renderBusinessApplication()};
-  $('joinBusinessChoice').onclick=()=>renderStaffInviteAuthV151('in',businessStaffInviteCodeV151());
+  // nestly_v588: same default-to-signup reasoning as the router's staff-invite entry above.
+  $('joinBusinessChoice').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   $('businessSignupBack').onclick=()=>renderAuth('in');
 }
 function renderBusinessDemoRequest(){
@@ -5770,10 +5782,10 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="staffInviteAuthTitle" style="margin:14px 0 2px">Join an existing business</h1>
-    <p class="muted small" style="margin-top:6px">Enter your company invite code, then sign in or create a staff account. Stripe is not required for invited staff.</p>
+    <p class="muted small" style="margin-top:6px">Enter the code your business gave you, then create your account — or sign in if you already have one.</p>
     <label for="staffInviteCodeV151">Company invite code</label><input id="staffInviteCodeV151" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="e.g. 7FE22596" value="${esc(saved)}">
     <div id="staffInvitePreviewV151" role="status" aria-live="polite" style="margin-top:8px">${staffInvitePreviewMarkupV151(null)}</div>
-    <div class="row" style="gap:8px;margin-top:14px"><button type="button" class="btn ${mode==='in'?'':'ghost'} sm" id="staffInviteSignInTab">Sign in</button><button type="button" class="btn ${mode==='up'?'':'ghost'} sm" id="staffInviteSignUpTab">Create account</button></div>
+    <div class="v150-segment" role="group" aria-label="Account" style="margin-top:14px"><button type="button" id="staffInviteSignInTab" aria-pressed="${mode==='in'}">Sign in</button><button type="button" id="staffInviteSignUpTab" aria-pressed="${mode==='up'}">Create account</button></div>
     <label for="staffInviteEmailV151">Email</label><input id="staffInviteEmailV151" type="email" autocomplete="email" placeholder="you@business.com">
     <label for="staffInvitePasswordV151">Password</label>${passwordControlHtml('staffInvitePasswordV151',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     ${mode==='up'?`<label for="staffInvitePasswordConfirmV151">Confirm password</label>${passwordControlHtml('staffInvitePasswordConfirmV151',{autocomplete:'new-password',placeholder:'••••••••'})}`:''}
@@ -5792,7 +5804,9 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     const code=rememberBusinessStaffInviteV151($('staffInviteCodeV151').value);
     if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code before continuing with Google.</div>';return}
     const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
-    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
+    /* nestly_v588: allow a code that is already awaiting_approval through — the server
+       replays correctly now, so refusing it here just blocks a genuine returning user. */
+    if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
     $('staffInviteGoogleV158').disabled=true;
     try{
       const {error}=await sb.auth.signInWithOAuth({
@@ -5813,7 +5827,8 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     const password=$('staffInvitePasswordV151').value;
     if(!code){$('staffInviteAuthError').innerHTML='<div class="err">Enter a valid company invite code.</div>';return}
     const preview=await previewStaffInviteV151(code,'staffInvitePreviewV151');
-    if(preview?.status&&preview.status!=='valid'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing.</div>';return}
+    /* nestly_v588: same relaxation as the Google branch above. */
+    if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing.</div>';return}
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('staffInviteAuthError').innerHTML='<div class="err">Enter the email you want to use for this workspace.</div>';return}
     if(mode==='up'&&(!validNewPassword(password)||password!==$('staffInvitePasswordConfirmV151').value)){
       $('staffInviteAuthError').innerHTML='<div class="err">Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.</div>';return;
@@ -6139,12 +6154,17 @@ function renderAuth(mode='in',{admin=false}={}){
       <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
       ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
     </div>
+    ${admin?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>'}
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
   if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
   if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
+  /* nestly_v588 (owner: staff signup was "in a mess" — a code holder had no visible door in from
+     the ordinary sign-in screen). Gated on the same !admin condition as #sw: this is the business
+     side of renderAuth only. */
+  if($('authStaffInviteDoorV588'))$('authStaffInviteDoorV588').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
   if($('businessGoogleSignIn'))$('businessGoogleSignIn').onclick=event=>

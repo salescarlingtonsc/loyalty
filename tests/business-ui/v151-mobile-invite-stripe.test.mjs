@@ -55,7 +55,12 @@ test('V151 signup entry separates new business from invited staff', () => {
   assert.match(signup, /Stripe Checkout or manual payment approval/);
   assert.match(signup, /Join an existing business/);
   assert.match(signup, /Company invite code/);
-  assert.match(signup, /Stripe is not required for invited staff/);
+  /* nestly_v588 (owner: staff signup "in a mess"): the reassuring-but-irrelevant "Stripe is not
+     required for invited staff" line is gone from the invite screen's subtitle — replaced by a
+     plain "enter the code, then create your account or sign in" instruction. Pinned in the
+     v588 test file, not here. */
+  assert.doesNotMatch(signup, /Stripe is not required for invited staff/);
+  assert.match(signup, /Enter the code your business gave you, then create your account — or sign in if you already have one\./);
 });
 
 test('V151 company invite direct links reuse staff_invites and accept_invite', () => {
@@ -69,7 +74,9 @@ test('V151 company invite direct links reuse staff_invites and accept_invite', (
   assert.match(signup, /sb\.rpc\('accept_invite',\{p_code:normalized\}\)/);
   assert.match(signup, /The company, role, module access, expiry, and reuse rules come from the invitation record/);
   assert.match(route, /staffInviteCodeV151/);
-  assert.match(route, /renderStaffInviteAuthV151\('in',staffInviteCodeV151\)/);
+  /* nestly_v588: a fresh reference-code link is almost always a brand-new teammate, so the
+     unauthenticated router entry now defaults to Create account ('up'), not Sign in ('in'). */
+  assert.match(route, /renderStaffInviteAuthV151\('up',staffInviteCodeV151\)/);
   assert.match(route, /renderBusinessStaffInviteAcceptV151\(staffInviteCodeV151\)/);
 });
 
