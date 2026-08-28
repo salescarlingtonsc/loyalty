@@ -4708,6 +4708,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'Language',english:'English',chinese:'简体中文',backProgrammes:'Back to My Rewards',
     chooseProgramme:'Choose a reward business',yourProgrammes:'My Rewards',
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
+    joinConfirmTitleV571:'Join {business}?',joinConfirmTitleUnknownV571:'Join this business?',joinConfirmBodyV571:'You will start collecting rewards here straight away.',joinConfirmCancelV571:'Cancel',joinConfirmGoV571:'Join',
     addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
     referralHeading:'Give a friend {business}',
     /* v322 (owner ruling R1/R4): "no more store credits" — a referral pays POINTS. {reward} is now
@@ -4909,6 +4910,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'语言',english:'English',chinese:'简体中文',backProgrammes:'返回我的奖励',
     chooseProgramme:'选择一家奖励商家',yourProgrammes:'我的奖励',
     programmesIntro:'选择一家商家，查看它的奖励、权益、预约和活动记录。',
+    joinConfirmTitleV571:'加入{business}？',joinConfirmTitleUnknownV571:'加入此商家？',joinConfirmBodyV571:'您将立即开始在这里累积奖励。',joinConfirmCancelV571:'取消',joinConfirmGoV571:'加入',
     addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
     referralHeading:'介绍朋友到{business}',
     referralTermsWithFloor:'朋友加入时报上您的代码。他们消费满{floor}后，您可获得{reward}。',
@@ -5132,6 +5134,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'Bahasa',english:'English',chinese:'简体中文',backProgrammes:'Kembali ke Ganjaran Saya',
     chooseProgramme:'Pilih perniagaan ganjaran',yourProgrammes:'Ganjaran Saya',
     programmesIntro:'Pilih perniagaan untuk membuka ganjaran, manfaat, tempahan dan aktivitinya.',
+    joinConfirmTitleV571:'Sertai {business}?',joinConfirmTitleUnknownV571:'Sertai perniagaan ini?',joinConfirmBodyV571:'Anda akan mula mengumpul ganjaran di sini dengan serta-merta.',joinConfirmCancelV571:'Batal',joinConfirmGoV571:'Sertai',
     addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
     referralHeading:'Perkenalkan rakan kepada {business}',
     referralTermsWithFloor:'Rakan anda sebut kod anda semasa mendaftar. Selepas mereka berbelanja {floor}, anda dapat {reward}.',
@@ -5355,6 +5358,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'மொழி',english:'English',chinese:'简体中文',backProgrammes:'என் வெகுமதிகளுக்குத் திரும்பு',
     chooseProgramme:'வெகுமதி வணிகத்தைத் தேர்ந்தெடுக்கவும்',yourProgrammes:'என் வெகுமதிகள்',
     programmesIntro:'வெகுமதிகள், சலுகைகள், முன்பதிவுகள் மற்றும் செயல்பாடுகளைத் திறக்க ஒரு வணிகத்தைத் தேர்ந்தெடுக்கவும்.',
+    joinConfirmTitleV571:'{business} இல் சேரவா?',joinConfirmTitleUnknownV571:'இந்த வணிகத்தில் சேரவா?',joinConfirmBodyV571:'நீங்கள் இங்கே உடனடியாக வெகுமதிகளைச் சேகரிக்கத் தொடங்குவீர்கள்.',joinConfirmCancelV571:'ரத்து',joinConfirmGoV571:'சேர',
     addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
     referralHeading:'{business}-க்கு நண்பரை அறிமுகப்படுத்துங்கள்',
     referralTermsWithFloor:'சேரும்போது உங்கள் குறியீட்டை நண்பர் சொல்லட்டும். அவர்கள் {floor} செலவழித்ததும், உங்களுக்கு {reward} கிடைக்கும்.',
@@ -7447,6 +7451,43 @@ async function renderCustomerProfile(){
   focusCustomerRoute();
 }
 
+/* nestly_v571 — the scan confirmation. Resolves the token to a business name through the public
+   gateway (read-only, writes nothing), then asks. Resolves true when the customer presses Join.
+   Pressing Cancel clears the pending token and returns them to their programmes, so a stale token
+   cannot silently re-fire on the next render. */
+async function confirmCustomerJoinV571(token,isCurrent){
+  let preview=null;
+  try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
+  if(!isCurrent())return false;
+  const name=String(preview?.business_name||preview?.business?.name||'').trim();
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='modal customer-surface';
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','customerJoinConfirmTitleV571');
+    overlay.innerHTML=`<section class="modal-card">
+      <p class="customer-quest-kicker" style="text-align:center;margin:0 0 12px">${esc(ct('addProgramme'))}</p>
+      <h2 id="customerJoinConfirmTitleV571" style="text-align:center;margin:0">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
+      <p class="muted small" style="text-align:center;margin:8px 0 0">${esc(ct('joinConfirmBodyV571'))}</p>
+      ${/* nestly_v571: the owner also asked for a referral-code field here. It is NOT shipped in
+           this pass, deliberately. customer_join_business_from_qr_v89 takes a token and an
+           idempotency key and nothing else, and there is no customer-callable RPC that records
+           "I was referred by CODE" — a referrals row is a payout obligation and today only staff
+           create one. A box that swallowed the code would be a promise the server cannot keep,
+           which is worse than not asking. The field lands with the RPC that can honour it. */''}
+      <div class="row" style="gap:10px;margin-top:18px">
+        <button class="btn ghost" type="button" id="customerJoinCancelV571" style="flex:1">${esc(ct('joinConfirmCancelV571'))}</button>
+        <button class="btn" type="button" id="customerJoinGoV571" style="flex:1">${esc(ct('joinConfirmGoV571'))}</button>
+      </div></section>`;
+    document.body.appendChild(overlay);
+    const close=answer=>{overlay.remove();resolve(answer)};
+    overlay.querySelector('#customerJoinCancelV571').onclick=()=>{
+      rememberPendingCustomerJoinToken('');close(false);nav('#/customer/programmes');
+    };
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    overlay.querySelector('#customerJoinGoV571').focus();
+  });
+}
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
@@ -7454,6 +7495,17 @@ async function renderCustomerQrJoin(){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
   }
+  /* nestly_v571 (owner, scan sheet photo: "Once scanned, customer interface will prompt a pop-up
+     for customer to confirm & will have field to fill referral code if have"). A scan used to
+     join the instant the router resolved the token — the customer never saw WHICH business they
+     were about to join, and a mis-scanned or stale printed code enrolled them silently.
+     The business is resolved WITHOUT joining, through the same read-only gateway route the
+     public join page uses (GET public-join?token=…): rate-limited, no auth needed, and it writes
+     nothing. Only after the customer presses Join does the RPC below run.
+     If that preview cannot be reached the confirmation still stands — it simply cannot name the
+     business, which is a weaker prompt but never a silent join. */
+  if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
+  if(!isCurrent())return;
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);

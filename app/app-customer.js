@@ -2557,6 +2557,43 @@ async function renderCustomerProfile(){
   focusCustomerRoute();
 }
 
+/* nestly_v571 — the scan confirmation. Resolves the token to a business name through the public
+   gateway (read-only, writes nothing), then asks. Resolves true when the customer presses Join.
+   Pressing Cancel clears the pending token and returns them to their programmes, so a stale token
+   cannot silently re-fire on the next render. */
+async function confirmCustomerJoinV571(token,isCurrent){
+  let preview=null;
+  try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
+  if(!isCurrent())return false;
+  const name=String(preview?.business_name||preview?.business?.name||'').trim();
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='modal customer-surface';
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','customerJoinConfirmTitleV571');
+    overlay.innerHTML=`<section class="modal-card">
+      <p class="customer-quest-kicker" style="text-align:center;margin:0 0 12px">${esc(ct('addProgramme'))}</p>
+      <h2 id="customerJoinConfirmTitleV571" style="text-align:center;margin:0">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
+      <p class="muted small" style="text-align:center;margin:8px 0 0">${esc(ct('joinConfirmBodyV571'))}</p>
+      ${/* nestly_v571: the owner also asked for a referral-code field here. It is NOT shipped in
+           this pass, deliberately. customer_join_business_from_qr_v89 takes a token and an
+           idempotency key and nothing else, and there is no customer-callable RPC that records
+           "I was referred by CODE" — a referrals row is a payout obligation and today only staff
+           create one. A box that swallowed the code would be a promise the server cannot keep,
+           which is worse than not asking. The field lands with the RPC that can honour it. */''}
+      <div class="row" style="gap:10px;margin-top:18px">
+        <button class="btn ghost" type="button" id="customerJoinCancelV571" style="flex:1">${esc(ct('joinConfirmCancelV571'))}</button>
+        <button class="btn" type="button" id="customerJoinGoV571" style="flex:1">${esc(ct('joinConfirmGoV571'))}</button>
+      </div></section>`;
+    document.body.appendChild(overlay);
+    const close=answer=>{overlay.remove();resolve(answer)};
+    overlay.querySelector('#customerJoinCancelV571').onclick=()=>{
+      rememberPendingCustomerJoinToken('');close(false);nav('#/customer/programmes');
+    };
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    overlay.querySelector('#customerJoinGoV571').focus();
+  });
+}
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
@@ -2564,6 +2601,17 @@ async function renderCustomerQrJoin(){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
   }
+  /* nestly_v571 (owner, scan sheet photo: "Once scanned, customer interface will prompt a pop-up
+     for customer to confirm & will have field to fill referral code if have"). A scan used to
+     join the instant the router resolved the token — the customer never saw WHICH business they
+     were about to join, and a mis-scanned or stale printed code enrolled them silently.
+     The business is resolved WITHOUT joining, through the same read-only gateway route the
+     public join page uses (GET public-join?token=…): rate-limited, no auth needed, and it writes
+     nothing. Only after the customer presses Join does the RPC below run.
+     If that preview cannot be reached the confirmation still stands — it simply cannot name the
+     business, which is a weaker prompt but never a silent join. */
+  if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
+  if(!isCurrent())return;
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
