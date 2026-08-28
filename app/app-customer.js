@@ -216,6 +216,38 @@ function recordCustomerSessionStartV256(businessId,locale){
     context:{entry_point:'customer_app',locale,surface_version:'v255'}
   });
 }
+function peekShareReferralV576(slug){
+  try{
+    const stored=JSON.parse(localStorage.getItem(SHARE_REFERRAL_STORE_KEY_V576)||'null');
+    if(!stored||stored.slug!==normalizeCustomerBusinessIntent(slug))return '';
+    if(Date.now()-Number(stored.at||0)>30*24*3600000){localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576);return ''}
+    return String(stored.code||'');
+  }catch{return ''}
+}
+function clearShareReferralV576(){try{localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576)}catch{}}
+/* Fire-and-forget, from the wallet render for the business the code names. The server owns every
+   guard; this only decides what to do with its answer. A definitive answer (applied, or a
+   refusal that will never change) retires the stored code; "not a member yet" (42501) keeps it
+   for the render that follows the join. Success gets a toast; a silent background refusal stays
+   silent — the customer typed nothing, so there is nothing to correct. */
+const attemptedShareReferralV576=new Set();
+async function applyShareReferralV576(slug){
+  const code=peekShareReferralV576(slug);
+  if(!code||!S.user)return;
+  const key=`${slug}:${code}`;
+  if(attemptedShareReferralV576.has(key))return;
+  attemptedShareReferralV576.add(key);
+  const {data,error}=await sb.rpc('customer_apply_referral_code_v571',{
+    p_business_slug:slug,p_code:code,
+    p_idempotency_key:writeAttemptKey('nestly.customer.shareRefApply',key)
+  }).then(result=>result,thrown=>({data:null,error:thrown}));
+  if(error){attemptedShareReferralV576.delete(key);return}
+  const reason=String(data?.reason||'');
+  if(data?.applied===true||['self_referral','already_referred','unknown_code','referrals_off'].includes(reason)){
+    clearShareReferralV576();
+    if(data?.applied===true&&reason==='ok')toast('Referral code applied — your friend gets the credit.');
+  }
+}
 function takePendingCustomerDestination(fallback=''){
   const destination=normalizeCustomerDestination(pendingCustomerDestination);
   return destination||fallback;
@@ -2224,7 +2256,11 @@ async function renderCustomerMessages(){
          #customerPushMessagesControl by id, and the push-permission tests read it — but it now
          renders inside the settings panel the gear opens, with the reminder preferences, which is
          where the owner drew both of them. */''}
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting" id="customerMessagesNotifications" hidden><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:6px">Get these updates on your lock screen too. Which ones you receive is set in <a href="#/customer/communications">Communications</a>.</p></div><button class="btn ghost sm" id="customerPushMessagesControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:16})}<span data-push-label>Turn on device notifications</span></button></section>`}`});
+    ${/* nestly_v576 (owner photos 8+9): device notifications is now an iOS-style on/off switch,
+         Peekaa red, deliberately visible on the page — a single compact row instead of a card
+         with a paragraph explaining itself. The status line already says what state it's in, so
+         the old "lock screen too" copy is redundant and was dropped. */''}
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting customer-push-setting-row-v576" id="customerMessagesNotifications" hidden><div><h2 style="font-size:1rem;margin:0">Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite" style="margin:4px 0 0">Checking this device…</p></div><button class="push-switch-v576" id="customerPushMessagesControl" type="button" role="switch" aria-checked="false" aria-pressed="false"><span class="sr-only" data-push-label>Turn on device notifications</span><span class="push-switch-knob-v576" aria-hidden="true"></span></button></section>`}`});
   focusCustomerRoute();
   /* v296 (owner drew it onto this page): the switch that governs whether these updates also
      reach the lock screen now sits with the inbox it governs, not behind an avatar menu. */
@@ -3928,8 +3964,12 @@ async function shareCustomerReferralV300(card,business){
      The code itself still travels in the message text (referralShareMessage): attributing it
      automatically from the link would need a server change this does not make. */
   const slug=String(business?.slug||'').trim();
+  /* nestly_v576: the code rides IN the link, so the friend never types it — the router stores it
+     and the wallet applies it once they are a member. It stays in the message text too, for the
+     person who reads the message but types the address by hand. */
+  const shareCodeV576=String(card?.code||'').trim();
   let url='';
-  try{url=slug?NestlyNativeBridge.publicUrl(`/#/wallet/${encodeURIComponent(slug)}`):''}catch{}
+  try{url=slug?NestlyNativeBridge.publicUrl(`/#/wallet/${encodeURIComponent(slug)}${shareCodeV576?`?ref=${encodeURIComponent(shareCodeV576)}`:''}`):''}catch{}
   if(!url)return toast('This business has no public page to share yet.');
   const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
   const businessId=String(business?.id||'');
@@ -5921,6 +5961,10 @@ function customerWalletSilentPaintV333(html){
    customer's membership (v14's verified-link model) — that renders as a disabled explanation, not
    a false "off" switch, so a customer can never read "not yet asked" as "opted out". */
 async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){
+  /* nestly_v576: a referral code that arrived on a shared link is applied the moment the customer
+     stands in the business it names — including the render right after they join. Fire-and-forget;
+     the wallet must never wait on it. */
+  if(businessSlug)applyShareReferralV576(businessSlug).catch(()=>{});
   /* A silent pass rides the CURRENT epoch instead of opening a new one. Bumping it would make
      the watcher that scheduled this very refresh look stale to itself and stop. The guard still
      works: any real navigation renders non-silently, bumps the epoch, and every await below sees
@@ -7860,8 +7904,10 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        the settings modal borrows it. What put it back on screen is customer-push.js's own painter,
        which sets `.customer-push-setting`.hidden from the push state on every reconcile and so
        un-hid a card the page had deliberately parked. The park is now declared with an attribute
-       the painter honours, so visibility is decided in one place instead of two racing ones. */
-    if(device){device.hidden=true;device.setAttribute('data-push-parked-v571','');$('walletBody')?.appendChild(device)}
+       the painter honours, so visibility is decided in one place instead of two racing ones.
+       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
+       it back visible — no more park attribute, no more forced hidden. */
+    if(device){device.removeAttribute('data-push-parked-v571');$('walletBody')?.appendChild(device)}
     if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
   };
   const closeInboxSettingsModalV549=()=>{
@@ -8014,10 +8060,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        pass, so the guard above simply skipped and nobody noticed. It stays where
        renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
        borrows it on open and hands it back on close. The node — and therefore the v296 push
-       binding that owns #customerPushMessagesControl — is never destroyed by a re-render again. */
+       binding that owns #customerPushMessagesControl — is never destroyed by a re-render again.
+       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
+       it back visible — it no longer gets hidden or parked here. */
     const deviceSectionV549=$('customerMessagesNotifications');
     if(deviceSectionV549&&!inboxSettingsDeactivateV549){
-      deviceSectionV549.hidden=true;deviceSectionV549.setAttribute('data-push-parked-v571','');
+      deviceSectionV549.removeAttribute('data-push-parked-v571');
       if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
         $('walletBody')?.appendChild(deviceSectionV549);
     }
@@ -8703,6 +8751,14 @@ async function renderPortal(slug){
       wireTeamChoice();
     };
     wireTeamChoice();
+    /* nestly_v576 (owner: "load quite long when booking appointment"). The human-verification
+       challenge used to mount only when the customer REACHED the last step, so they stared at a
+       disabled Confirm while Cloudflare's script downloaded and the challenge ran — that wait was
+       the whole complaint. Mounting at draw runs it in the background while they pick a service
+       and a time; by the Details step the token is normally already minted. The details-step call
+       stays as the fallback (mountBookingTurnstile is idempotent), and an interactive challenge
+       simply waits, visible, on the step it has always lived on. */
+    mountBookingTurnstile();
     root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
     if($('next-service'))$('next-service').onclick=()=>{if(hasServices&&!serviceChosen){$('err-service').textContent='Please choose a service, or “Just a reservation”.';CUI.announce('Please choose a service',{assertive:true});return;}showStep(stepIdx+1);};
     if($('next-branch'))$('next-branch').onclick=()=>showStep(stepIdx+1);
@@ -8761,9 +8817,13 @@ async function renderPortal(slug){
       bookingTurnstileControl?.destroy();bookingTurnstileControl=null;
       bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 tabindex="-1" style="margin-bottom:8px">${esc(m.title)}</h2>
         <p class="muted">${m.body}</p>
-        <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${manageToken?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
+        <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${(manageToken&&!linkedCustomer)?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>
         <p class="small" style="margin-top:6px;word-break:break-all"><a href="${esc(manageUrl)}" style="color:#D06A2E;text-decoration:underline">${esc(manageUrl)}</a></p>
-        <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}${linkedCustomer?`<p style="margin-top:14px"><a class="btn sm" href="#/customer/bookings">View in Bookings</a></p>`:''}</div>`;
+        <button class="btn ghost sm" id="copyManage" style="margin-top:12px">Copy private link</button>`:''}${linkedCustomer?`<p style="margin-top:14px"><a class="btn" href="#/customer/bookings">View in Bookings</a></p>`:''}</div>`;
+      /* nestly_v576 (owner photo 4): a signed-in customer's booking already lives in their
+         app account — the guest private-link/manage flow is only for anonymous bookers, and
+         sending a signed-in customer through it stranded them on the portal instead of the
+         app's own Bookings tab. */
       CUI.announce(m.title+' '+m.body,{assertive:true});
       requestAnimationFrame(()=>bookingFormCard.querySelector('h2')?.focus());
       if($('copyManage')) $('copyManage').onclick=async()=>copyTextToClipboard(manageUrl,{button:$('copyManage'),success:'Private link copied'});
@@ -8865,7 +8925,7 @@ async function renderPortal(slug){
       if(back)back.setAttribute('href',portalBackHrefV192);
       loadPortalUpcomingBookingsV183(slug,isPortalCurrent);
       const identity=customerBookingIdentitySummaryV167({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
-      slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as ${esc(identity.name)}${identity.contact?` · ${esc(identity.contact)}`:''}</b><p class="muted small" style="margin-top:4px">This request will be securely attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><button class="btn ghost sm" id="portalBookingEditIdentity" type="button">Edit booking details</button></div></div>`;
+      slot.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="row"><div><b>Booking as ${esc(identity.name)}${identity.contact?` · ${esc(identity.contact)}`:''}</b><p class="muted small" style="margin-top:4px">This request will be securely attached to your ${esc(customer.business_name||biz.name)} programme.</p></div><span class="spacer"></span><button class="btn ghost sm" id="portalBookingEditIdentity" type="button" aria-label="Edit booking details">Edit</button></div></div>`;
       if(!isPortalCurrent()||!slot.isConnected)return;
       prefillEmptyPortalDetails({profile:profileResult?.error?null:profileResult?.data?.profile,user:signedInUser});
       $('portalBookingEditIdentity')?.addEventListener('click',()=>portalShowStepV192?.(steps.indexOf('details')));

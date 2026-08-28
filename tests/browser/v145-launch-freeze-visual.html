@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1aad3d48246b05a4c0a0d028194b490d635ba373b4c8a852b3931f60b1085a55"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="2fd8af7588777f02fd591d799c53d41919504ad2eb44cda67945a670a319dd09"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3745,6 +3745,14 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
   background:var(--surface-2,#f2efe9);color:var(--ink-2,#5c5750);
   border:1px solid var(--line,#e6e1d8)}
 .customer-inbox-settings-toggle-v549:hover{background:var(--surface-3,#e9e4dc)}
+/* nestly_v576 (owner photos 8+9): device notifications is an iOS-style switch, Peekaa red. The
+   button keeps every push state; states that need words still say them in the status line. */
+.customer-push-setting-row-v576{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.push-switch-v576{position:relative;flex:none;width:52px;height:32px;border:0;border-radius:999px;background:#D9D3C8;cursor:pointer;transition:background .18s ease;padding:0}
+.push-switch-v576[aria-checked="true"]{background:var(--peekaa-red,var(--coral))}
+.push-switch-v576 .push-switch-knob-v576{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .18s ease}
+.push-switch-v576[aria-checked="true"] .push-switch-knob-v576{transform:translateX(20px)}
+.push-switch-v576[disabled]{opacity:.5;cursor:default}
 /* Inside the dialog the panel is the whole content, so it drops the divider it wore as the last
    block on a scrolling page, and the dialog scrolls if a customer has many programmes. */
 .customer-inbox-settings-card-v549{max-width:var(--dialog-w-md,520px)}
@@ -3839,7 +3847,9 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-shell .customer-expiring-glance{display:none}
 .customer-home-booking-strip-v344{display:grid;grid-template-columns:82px minmax(0,1fr) auto;gap:16px;align-items:center;margin:2px 0 12px;padding:18px 22px;border-radius:20px;background:rgba(255,255,255,.9);box-shadow:var(--shadow-warm-lg);color:var(--ink);text-decoration:none}.customer-home-booking-icon-v344{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:var(--tint);color:var(--coral)}.customer-home-booking-copy-v344{display:grid;gap:2px}.customer-home-booking-copy-v344 small{color:var(--coral);font-weight:800}.customer-home-booking-copy-v344 b{font-size:20px}.customer-home-booking-copy-v344 em{font-style:normal;color:var(--muted)}.customer-home-booking-action-v344{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:1px solid var(--coral);border-radius:999px;color:var(--coral);font-weight:760}
 .customer-booking-appointments-head-v344{display:flex;align-items:center;gap:9px;margin:18px 0 8px;font-size:1rem}.customer-booking-appointments-head-v344 svg{color:var(--coral)}.customer-booking-appointments-head-v344 span:last-child{color:#FFBE74}.customer-booking-appointment-row-v344{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:16px}.customer-booking-date-tile-v344{display:grid;place-items:center;align-self:center;width:70px;min-height:86px;border-radius:18px;background:#fff;color:var(--ink);box-shadow:var(--shadow-warm)}.customer-booking-date-tile-v344 small{font-size:12px;font-weight:850;letter-spacing:.08em;color:var(--coral)}.customer-booking-date-tile-v344 b{font-size:2rem;line-height:1;font-weight:500}.customer-booking-date-tile-v344 em{font-size:12px;font-style:normal;color:var(--muted);font-weight:760}
-.customer-my-qr-stage-v344{position:relative;margin:12px 0 6px}.customer-qr-sparkle-v344{position:absolute;color:#FFD5A8;font-size:1.7rem;line-height:1}.customer-qr-sparkle-v344.s1{left:4%;top:28%}.customer-qr-sparkle-v344.s2{right:7%;top:48%}.customer-qr-sparkle-v344.s3{left:8%;bottom:10%}.customer-qr-heart-v344{position:absolute;right:13%;bottom:4%;display:grid;place-items:center;width:48px;height:44px;background:#E44B3F;color:#fff;transform:rotate(-45deg);box-shadow:0 12px 20px rgba(194,65,53,.24)}.customer-qr-heart-v344::before,.customer-qr-heart-v344::after{content:"";position:absolute;width:48px;height:44px;border-radius:50%;background:inherit}.customer-qr-heart-v344::before{top:-22px;left:0}.customer-qr-heart-v344::after{left:22px;top:0}.customer-qr-heart-v344 span{position:relative;z-index:1;transform:rotate(45deg);font-size:.78rem;font-weight:800}
+.customer-my-qr-stage-v344{position:relative;margin:12px 0 6px}.customer-qr-sparkle-v344{position:absolute;color:#FFD5A8;font-size:1.7rem;line-height:1}.customer-qr-sparkle-v344.s1{left:4%;top:28%}.customer-qr-sparkle-v344.s2{right:7%;top:48%}.customer-qr-sparkle-v344.s3{left:8%;bottom:10%}/* nestly_v576 (owner photo 6): the heart sat ON the QR corner and could break scans; the brand mark sits below it instead. */
+.customer-my-qr-brand-v576{display:flex;justify-content:center;margin:2px 0 8px}
+.customer-my-qr-brand-v576 img,.customer-my-qr-brand-v576 svg{height:34px;width:auto}
 .customer-programme-compact-head-v339.customer-programme-compact-head-v337{padding:18px 22px;border-radius:18px;background:#fff;box-shadow:var(--shadow-warm-lg);margin-bottom:12px}.customer-programme-compact-head-v339 .customer-programme-logo{width:60px;height:60px;border-radius:16px}.customer-programme-compact-head-v339 .customer-programme-compact-copy b{font-family:var(--sf);font-size:24px;color:var(--ink)}.customer-programme-compact-head-v339 .customer-programme-tier-jump-v327{display:inline-flex;align-items:center;justify-content:center;margin:4px auto 0;min-height:28px;padding:0 28px;border:0;border-radius:0;background:#E9E7E5;color:var(--coral);font-weight:850}
 .customer-shell .customer-points-hero-v337{border-radius:22px;padding:24px 26px;background:linear-gradient(180deg,var(--brand-red),var(--brand-red-dark));box-shadow:0 22px 40px rgba(157,53,44,.24)}.customer-shell .customer-points-hero-label-v337{font-size:.82rem;letter-spacing:.13em}.customer-shell .customer-points-hero-figure-v337 b{font-size:3.1rem}.customer-shell .customer-points-hero-bar-v337{height:8px;max-width:360px}.customer-shell .customer-points-hero-icon-v337{width:54px;height:54px;border-radius:17px}.customer-shell .customer-claimable-banner-v337{border-radius:18px;padding:18px 22px;background:linear-gradient(135deg,#FFF8D9,#FFF4D8);box-shadow:0 14px 34px rgba(138,109,26,.14)}.customer-shell .customer-claimable-banner-kicker-v337{letter-spacing:.12em}.customer-shell .customer-claimable-banner-name-v337{font-size:18px}.customer-shell .customer-programme-contact-item-v337{min-height:64px;border-radius:16px;font-size:1rem}.customer-shell .customer-programme-contact-item-book-v337{background:var(--grad)}
 .ci-live-preview-inner-v326.customer-shell{padding:20px 18px calc(100px + env(safe-area-inset-bottom))}.ci-live-preview-inner-v326 .wallet-inner{padding:0}.ci-live-preview-inner-v326 .ci-live-preview-sample-badge-v326{margin:0 0 14px}.ci-live-preview-inner-v326 .customer-primary-nav{position:sticky;bottom:0;margin-top:16px}
@@ -4784,7 +4794,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 1aad3d48246b05a4c0a0d028194b490d635ba373b4c8a852b3931f60b1085a55</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2fd8af7588777f02fd591d799c53d41919504ad2eb44cda67945a670a319dd09</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8481,8 +8491,10 @@ function renderHistPage(history,n,offsetV468=0){
        the settings modal borrows it. What put it back on screen is customer-push.js's own painter,
        which sets `.customer-push-setting`.hidden from the push state on every reconcile and so
        un-hid a card the page had deliberately parked. The park is now declared with an attribute
-       the painter honours, so visibility is decided in one place instead of two racing ones. */
-    if(device){device.hidden=true;device.setAttribute('data-push-parked-v571','');$('walletBody')?.appendChild(device)}
+       the painter honours, so visibility is decided in one place instead of two racing ones.
+       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
+       it back visible — no more park attribute, no more forced hidden. */
+    if(device){device.removeAttribute('data-push-parked-v571');$('walletBody')?.appendChild(device)}
     if(panel){panel.hidden=true;(panelHome||host||$('walletBody'))?.appendChild(panel)}
   };
   const closeInboxSettingsModalV549=()=>{
@@ -8635,10 +8647,12 @@ function renderHistPage(history,n,offsetV468=0){
        pass, so the guard above simply skipped and nobody noticed. It stays where
        renderCustomerMessages put it now (a sibling in walletBody, kept hidden), and the modal
        borrows it on open and hands it back on close. The node — and therefore the v296 push
-       binding that owns #customerPushMessagesControl — is never destroyed by a re-render again. */
+       binding that owns #customerPushMessagesControl — is never destroyed by a re-render again.
+       nestly_v576: the owner now wants the switch ON the page, so the modal borrows it and hands
+       it back visible — it no longer gets hidden or parked here. */
     const deviceSectionV549=$('customerMessagesNotifications');
     if(deviceSectionV549&&!inboxSettingsDeactivateV549){
-      deviceSectionV549.hidden=true;deviceSectionV549.setAttribute('data-push-parked-v571','');
+      deviceSectionV549.removeAttribute('data-push-parked-v571');
       if(deviceSectionV549.parentElement===host||host.contains(deviceSectionV549))
         $('walletBody')?.appendChild(deviceSectionV549);
     }
@@ -8809,7 +8823,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'1aad3d48246b05a4c0a0d028194b490d635ba373b4c8a852b3931f60b1085a55',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'2fd8af7588777f02fd591d799c53d41919504ad2eb44cda67945a670a319dd09',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

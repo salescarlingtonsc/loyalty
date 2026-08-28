@@ -259,6 +259,9 @@
       if(setting)setting.hidden=setting.hasAttribute('data-push-parked-v571')||!visible(value);
       button.dataset.pushState=value.state;
       button.setAttribute('aria-pressed',value.state==='enabled'?'true':'false');
+      /* nestly_v576: the button is now styled as a switch (role="switch"), which reads its
+         state from aria-checked, not aria-pressed. */
+      button.setAttribute('aria-checked',value.state==='enabled'?'true':'false');
       button.querySelector('[data-push-label]')?.replaceChildren(buttonLabel(value));
       if(statusHost){
         statusHost.textContent=value.detail;

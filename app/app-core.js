@@ -722,6 +722,20 @@ function normalizeCustomerDestination(value){
   return slug?`#/wallet/${encodeURIComponent(slug)}`:'';
 }
 try{pendingCustomerDestination=normalizeCustomerDestination(sessionStorage.getItem(CUSTOMER_DESTINATION_SESSION_KEY)||'')}catch{}
+/* nestly_v576 (owner, Refer a friend photo: "when share the link - it should auto populate the
+   referral code"). The share link now carries ?ref=<code>. Both slug normalizers above
+   deliberately refuse queries, so the ref is captured and stripped at the router — the one door
+   every entry path uses — and STORED, because between the tap and the moment the code can be
+   applied sits the whole registration flow. localStorage rather than session: sign-up can take
+   minutes and the reward should survive a closed tab. Applied only once the customer is a
+   verified member of that business (the server re-checks everything); 30-day shelf life. */
+const SHARE_REFERRAL_STORE_KEY_V576='nestly.customer.shareReferralV576';
+function rememberShareReferralV576(slug,code){
+  const cleanSlug=normalizeCustomerBusinessIntent(slug);
+  const cleanCode=String(code||'').trim().toUpperCase().slice(0,32);
+  if(!cleanSlug||!cleanCode)return;
+  try{localStorage.setItem(SHARE_REFERRAL_STORE_KEY_V576,JSON.stringify({slug:cleanSlug,code:cleanCode,at:Date.now()}))}catch{}
+}
 function rememberPendingCustomerDestination(value){
   pendingCustomerDestination=normalizeCustomerDestination(value);
   try{
@@ -1321,6 +1335,17 @@ async function route(){
       }else if(claimRouteParams.has('business')){
         pendingCustomerBusinessSlug=normalizeCustomerBusinessIntent(claimRouteParams.get('business'));
       }
+    }
+    /* nestly_v576: pull ?ref=<code> off a shared wallet link before any normalizer sees it.
+       Placed AFTER the invitation scrub above on purpose — the wallet contract pins that scrub as
+       route()'s first history.replaceState, because an invitation is a secret and a ref code is
+       merely a coupon. */
+    if(h.startsWith('#/wallet/')&&h.includes('?')){
+      const [cleanHash,queryPart]=h.split('?');
+      const refCode=new URLSearchParams(queryPart||'').get('ref')||'';
+      if(refCode)rememberShareReferralV576(decodeURIComponent(cleanHash.slice(9)),refCode);
+      try{history.replaceState(null,'',`${location.pathname}${location.search}${cleanHash}`)}catch{}
+      h=cleanHash;
     }
     if(h.startsWith('#/customer?')){
       const customerRouteParams=new URLSearchParams(h.split('?')[1]||'');
@@ -2793,11 +2818,22 @@ function customerMediaUrlV95(value){
   const publicPrefix='/storage/v1/object/public/business-public/';
   const objectPathPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:logo|hero|programme|reward|product|service|benefit|offer|gallery)\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:png|jpe?g|webp|gif)$/i;
   const origin=SB_URL.replace(/\/+$/,'');
+  /* nestly_v576 (owner, photo 7: "it loads too slow... it needs to be instant"). Owners upload
+     camera-roll originals — the offer the owner circled is a 2.65MB PNG — and this helper was
+     handing those bytes straight to a phone. Routed through storage's image renderer instead:
+     width 780 covers the 390px customer column at 2x, and browsers that send Accept: image/webp
+     (all of them, today) get webp back — the same 2.65MB offer measured 117KB, served from the
+     CDN cache after the first render. GIFs are exempt: resizing one costs its animation. The
+     validation stays exactly as it was; only the serving endpoint changes, and only for paths
+     that already passed it. */
+  const servedMediaUrlV576=objectPath=>/\.gif$/i.test(objectPath)
+    ?`${origin}${publicPrefix}${objectPath}`
+    :`${origin}/storage/v1/render/image/public/business-public/${objectPath}?width=780&quality=75`;
   const relative=raw.startsWith(publicPrefix)?raw.slice(publicPrefix.length):'';
-  if(relative&&objectPathPattern.test(relative))return origin+raw;
+  if(relative&&objectPathPattern.test(relative))return servedMediaUrlV576(relative);
   const absolutePrefix=origin+publicPrefix;
   const absolutePath=raw.startsWith(absolutePrefix)?raw.slice(absolutePrefix.length):'';
-  if(absolutePath&&objectPathPattern.test(absolutePath))return raw;
+  if(absolutePath&&objectPathPattern.test(absolutePath))return servedMediaUrlV576(absolutePath);
   return '';
 }
 /* v194: the nav is painted before the wallet data arrives, so the counts are remembered and
@@ -2989,7 +3025,7 @@ function openCustomerJoinScanner(){
   overlay.innerHTML=`<section class="modal-card"><div class="row"><span class="spacer"></span><button class="btn ghost sm" id="customerJoinScannerClose" type="button" aria-label="${esc(ct('Close scanner'))}">${CUI.icon('close',{size:20})}</button></div>
     <p class="customer-quest-kicker" id="customerScanSheetKicker" style="text-align:center;margin:0 0 12px">${esc(ct('My Peekaa QR'))}</p>
     <div id="customerMyQrPanelV329" aria-busy="true">
-      <div class="customer-my-qr-stage-v344"><span class="customer-qr-sparkle-v344 s1" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s2" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s3" aria-hidden="true">✦</span><div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div><span class="customer-qr-heart-v344" aria-hidden="true"><span>•ᴗ•</span></span></div>
+      <div class="customer-my-qr-stage-v344"><span class="customer-qr-sparkle-v344 s1" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s2" aria-hidden="true">✦</span><span class="customer-qr-sparkle-v344 s3" aria-hidden="true">✦</span><div id="customerMyQrSlotV329" style="display:grid;place-items:center;min-height:200px;margin:16px auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;max-width:240px"><p class="muted small">${esc(ct('Loading your code…'))}</p></div><div class="customer-my-qr-brand-v576" aria-hidden="true">${brandWordmark()}</div></div>
       <p id="customerMyQrStatusV329" class="muted small" role="status" aria-live="polite"></p>
       <button class="btn ghost sm" id="customerMyQrSwitchToScan" type="button" style="width:100%;margin-top:6px">${CUI.icon('scan',{size:16})}<span>${esc(ct('Scan a business QR instead'))}</span></button>
     </div>
