@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="370e682d186de54ebdf5a6ba5dd5659860f2d0cdc0f9a0f03958a9c6bf964f7c"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="d0ee34fbb27a1159356dca33deff2499121b5b6a2be85df4b6c7a10112d60f5e"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2837,9 +2837,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    The panel keeps its aria-busy and its status line; only the card surface is gone.
    The colour is stated on the boot shell rather than on body, because this element is replaced
    wholesale by the router's first paint and must not leave a tint behind on the real app. */
-[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
-[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
-[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
+/* nestly_v571b: the selectors carry .wallet-shell and .customer-surface deliberately. Both of
+   those set `background:var(--bg)` LATER in this same stylesheet, and a bare [data-boot-skeleton]
+   ties them on specificity (0,1,0) — so source order won and the boot screen kept painting the
+   near-white --bg while the logo tile stayed #F4EEE0. That difference IS the "white box" the
+   owner is pointing at. Measured after deploy, not assumed. */
+.wallet-shell.customer-surface[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+.wallet-shell.customer-surface[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+/* The shimmer bars ran var(--bg) -> #fff, which is three white slabs on a beige page. They are
+   now beige-on-beige: still a "content is coming" cue, no longer boxes. */
+.wallet-shell.customer-surface[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EFE7D7,#F8F2E4,#EFE7D7);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -4777,7 +4784,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 370e682d186de54ebdf5a6ba5dd5659860f2d0cdc0f9a0f03958a9c6bf964f7c</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · d0ee34fbb27a1159356dca33deff2499121b5b6a2be85df4b6c7a10112d60f5e</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -8293,7 +8300,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'370e682d186de54ebdf5a6ba5dd5659860f2d0cdc0f9a0f03958a9c6bf964f7c',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'d0ee34fbb27a1159356dca33deff2499121b5b6a2be85df4b6c7a10112d60f5e',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

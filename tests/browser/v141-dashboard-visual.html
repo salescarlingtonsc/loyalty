@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="cff069892a1ed3c115b9aae157904d1934a61ad81f76198ecc4567126f55d766"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="5b58177bdf78f38cee24033d8a24c59f2a19cac90aec82c3a238256b88de5d9a"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2838,9 +2838,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    The panel keeps its aria-busy and its status line; only the card surface is gone.
    The colour is stated on the boot shell rather than on body, because this element is replaced
    wholesale by the router's first paint and must not leave a tint behind on the real app. */
-[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
-[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
-[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
+/* nestly_v571b: the selectors carry .wallet-shell and .customer-surface deliberately. Both of
+   those set `background:var(--bg)` LATER in this same stylesheet, and a bare [data-boot-skeleton]
+   ties them on specificity (0,1,0) — so source order won and the boot screen kept painting the
+   near-white --bg while the logo tile stayed #F4EEE0. That difference IS the "white box" the
+   owner is pointing at. Measured after deploy, not assumed. */
+.wallet-shell.customer-surface[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+.wallet-shell.customer-surface[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+/* The shimmer bars ran var(--bg) -> #fff, which is three white slabs on a beige page. They are
+   now beige-on-beige: still a "content is coming" cue, no longer boxes. */
+.wallet-shell.customer-surface[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EFE7D7,#F8F2E4,#EFE7D7);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -5895,6 +5902,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'cff069892a1ed3c115b9aae157904d1934a61ad81f76198ecc4567126f55d766',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'5b58177bdf78f38cee24033d8a24c59f2a19cac90aec82c3a238256b88de5d9a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

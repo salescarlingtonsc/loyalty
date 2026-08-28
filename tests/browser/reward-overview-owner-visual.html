@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="0b8d990f359b1da135bf27adb1abcce38ac3943d56eab8d4b65e18230d13ebc7"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="65e45ba6b1bb27c26d8a3e3fc3b8626b29709f60ee34bcaa9f72e80535c5de94"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2837,9 +2837,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    The panel keeps its aria-busy and its status line; only the card surface is gone.
    The colour is stated on the boot shell rather than on body, because this element is replaced
    wholesale by the router's first paint and must not leave a tint behind on the real app. */
-[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
-[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
-[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
+/* nestly_v571b: the selectors carry .wallet-shell and .customer-surface deliberately. Both of
+   those set `background:var(--bg)` LATER in this same stylesheet, and a bare [data-boot-skeleton]
+   ties them on specificity (0,1,0) — so source order won and the boot screen kept painting the
+   near-white --bg while the logo tile stayed #F4EEE0. That difference IS the "white box" the
+   owner is pointing at. Measured after deploy, not assumed. */
+.wallet-shell.customer-surface[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+.wallet-shell.customer-surface[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+/* The shimmer bars ran var(--bg) -> #fff, which is three white slabs on a beige page. They are
+   now beige-on-beige: still a "content is coming" cue, no longer boxes. */
+.wallet-shell.customer-surface[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EFE7D7,#F8F2E4,#EFE7D7);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -4776,7 +4783,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0b8d990f359b1da135bf27adb1abcce38ac3943d56eab8d4b65e18230d13ebc7</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 65e45ba6b1bb27c26d8a3e3fc3b8626b29709f60ee34bcaa9f72e80535c5de94</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14612,7 +14619,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'0b8d990f359b1da135bf27adb1abcce38ac3943d56eab8d4b65e18230d13ebc7',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'65e45ba6b1bb27c26d8a3e3fc3b8626b29709f60ee34bcaa9f72e80535c5de94',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

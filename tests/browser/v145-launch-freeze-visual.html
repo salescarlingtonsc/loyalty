@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="49777d0e143fab2f305135cc550faa88255e966663c607501cb43cfb92e7bc27"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="e488ddfc46fd46c4083bc6159fec852a7903f63e8bc56934ea30dd3f3de572a7"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2837,9 +2837,16 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    The panel keeps its aria-busy and its status line; only the card surface is gone.
    The colour is stated on the boot shell rather than on body, because this element is replaced
    wholesale by the router's first paint and must not leave a tint behind on the real app. */
-[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
-[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
-[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
+/* nestly_v571b: the selectors carry .wallet-shell and .customer-surface deliberately. Both of
+   those set `background:var(--bg)` LATER in this same stylesheet, and a bare [data-boot-skeleton]
+   ties them on specificity (0,1,0) — so source order won and the boot screen kept painting the
+   near-white --bg while the logo tile stayed #F4EEE0. That difference IS the "white box" the
+   owner is pointing at. Measured after deploy, not assumed. */
+.wallet-shell.customer-surface[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+.wallet-shell.customer-surface[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+/* The shimmer bars ran var(--bg) -> #fff, which is three white slabs on a beige page. They are
+   now beige-on-beige: still a "content is coming" cue, no longer boxes. */
+.wallet-shell.customer-surface[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EFE7D7,#F8F2E4,#EFE7D7);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
@@ -4777,7 +4784,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 49777d0e143fab2f305135cc550faa88255e966663c607501cb43cfb92e7bc27</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e488ddfc46fd46c4083bc6159fec852a7903f63e8bc56934ea30dd3f3de572a7</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8786,7 +8793,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'49777d0e143fab2f305135cc550faa88255e966663c607501cb43cfb92e7bc27',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'e488ddfc46fd46c4083bc6159fec852a7903f63e8bc56934ea30dd3f3de572a7',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

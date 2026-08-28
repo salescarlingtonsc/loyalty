@@ -1927,9 +1927,9 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .pf-slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
 .pf-slot{min-height:44px;padding:10px 8px;border:1px solid var(--control-border);border-radius:12px;background:var(--card);color:var(--ink);font-weight:650}
 .pf-slot.sel{background:var(--tint);border-color:var(--coral);color:var(--coral)}
-[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
-[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
-[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EDE5D5,#F8F3E9,#EDE5D5);background-size:200% 100%}
+.wallet-shell.customer-surface[data-boot-skeleton]{min-height:100dvh;background:#F4EEE0}
+.wallet-shell.customer-surface[data-boot-skeleton] [data-boot-panel]{background:transparent;border:0;box-shadow:none;padding:22px}
+.wallet-shell.customer-surface[data-boot-skeleton] .pf-skeleton{background:linear-gradient(90deg,#EFE7D7,#F8F2E4,#EFE7D7);background-size:200% 100%}
 .pf-skeleton{height:56px;border-radius:12px;background:linear-gradient(90deg,var(--bg),#fff,var(--bg));background-size:200% 100%;animation:wallet-loading 1.2s linear infinite;margin-bottom:10px}
 @media(max-width:420px){.pf-progress li{font-size:10px}.pf-step .split{grid-template-columns:1fr}.pf-summary dl{grid-template-columns:1fr}.pf-summary dd{text-align:left}}
 .wallet-shell{min-height:100dvh;background:var(--bg);
