@@ -4839,6 +4839,19 @@ async function clientsPage(){
   load();
 }
 
+/* nestly_v574: the customer 360 summary row for WhatsApp offers. TEXT ONLY, deliberately no
+   button and no toggle — only the customer can set this, from their own Peekaa app
+   (customer_set_whatsapp_marketing_consent_v574). Factored out of clientDetail's summary card so
+   the row can be built and tested on its own, the same way summaryRowV294 and
+   pointsHistoryButtonV319Of already are. Reproduces summaryRowV294's own markup shape exactly
+   (label span, value span, one row div) rather than depending on that closure-local helper. */
+function staffClientWhatsappConsentRowMarkupV574(permission){
+  const valueHtml=permission?.opted_in===true
+    ?`<span class="pill on">Allowed by customer · ${esc(formatCustomerJoinedDateV141(permission.decided_at||''))}</span>`
+    :'<span class="pill off">Not allowed</span>';
+  return `<div class="c360-summary-row-v294"><span class="c360-summary-label-v294">${esc('WhatsApp offers')}</span><span class="c360-summary-value-v294">${valueHtml}</span></div><p class="muted small" style="margin-top:2px">Only the customer can change this, from their own Peekaa app.</p>`;
+}
+
 async function clientDetail(id){
   const routeMain=M();
   const isClientDetailCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -4897,6 +4910,12 @@ async function clientDetail(id){
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
   let adjustmentIdem=crypto.randomUUID();
+  /* nestly_v574: staff get a READ-ONLY line, never a setter — only the customer's own app can
+     change this (customer_set_whatsapp_marketing_consent_v574). Fired alongside the big profile
+     Promise.all so it costs no extra latency, and failed softly: an RPC error must not turn a
+     working customer detail panel into a blank one over one informational line. */
+  const whatsappPermissionRequestV574=sb.rpc('staff_get_client_messaging_permission_v574',{p_business:S.biz.id,p_client:id})
+    .then(({data,error})=>error?null:data).catch(()=>null);
   const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
@@ -4936,6 +4955,8 @@ async function clientDetail(id){
        the same tables the Memberships / Packages pages already query, now scoped to one client. */
     canReadMemberships?fetchAllRowsResult(()=>sb.from('memberships').select('*, membership_plans(name,price_cents,cadence)',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('created_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     canReadPackages?fetchAllRowsResult(()=>sb.from('client_packages').select('id,business_id,client_id,purchased_at,remaining,status,plan_name_snapshot,sessions_snapshot,plan_version_snapshot,price_cents_snapshot,service_name_snapshot,service_variant_snapshot,service_duration_min_snapshot,list_unit_cents_snapshot,list_value_cents_snapshot',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false}).order('id')):Promise.resolve({data:[]})]);
+  if(!isClientDetailCurrent())return;
+  const whatsappPermissionV574=await whatsappPermissionRequestV574;
   if(!isClientDetailCurrent())return;
   if(error) throw error;
   /* Loyalty, birthday and visit-feedback projections are independent profile facets.
@@ -5427,6 +5448,10 @@ async function clientDetail(id){
          every value, for every role. Deliberately no replacement anywhere in this profile: a
          smaller or collapsed version of a row the owner removed is the same row. */''}
     ${summaryRowV294('PDPA consent',c.marketing_consent?'<span class="pill on">Yes</span>':'<span class="pill off">No</span>')}
+    ${/* nestly_v574: TEXT ONLY — no button, no toggle. This is the customer's own choice, made in
+         their own Peekaa app (customer_set_whatsapp_marketing_consent_v574); staff cannot set it
+         here or anywhere else, so this row deliberately carries no control at all. */
+      staffClientWhatsappConsentRowMarkupV574(whatsappPermissionV574)}
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
       c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}

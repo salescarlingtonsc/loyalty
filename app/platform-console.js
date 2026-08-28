@@ -3471,6 +3471,59 @@
       'WhatsApp capability updated.':'Keupayaan WhatsApp dikemas kini.'
     })
   });
+  // v574: Retention holds panel (System health / #/platform/automation).
+  const PLATFORM_COPY_V574=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Retention holds':'留存暂停',
+      'No retention holds':'暂无留存暂停',
+      'No business or campaign currently has a platform retention hold.':'当前没有商户或活动处于平台留存暂停状态。',
+      'A platform-side emergency stop layered over each firm’s own retention switch. Placing a hold never changes the merchant’s own setting — it only stops sends while the hold is active. Every change is recorded with a reason.':'一项叠加在各商户自身留存开关之上的平台级紧急停止措施。设置暂停绝不会更改商户自己的设置——它只在暂停生效期间阻止发送。每次更改都会记录原因。',
+      'No hold reason recorded.':'尚未记录暂停原因。',
+      'Placed {when}':'记录于 {when}',
+      'HELD':'已暂停',
+      'Allowed':'允许',
+      'Stopped':'已停止',
+      'Release':'解除',
+      'Hold':'暂停',
+      'Release whole lane':'解除整条通道',
+      'Hold whole lane':'暂停整条通道',
+      'the whole retention lane for {business}':'{business} 的整条留存通道',
+      'this campaign':'此活动',
+      'Hold retention sends':'暂停留存发送',
+      'Release retention hold':'解除留存暂停',
+      'Place hold':'设置暂停',
+      'Release hold':'解除暂停',
+      'This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.':'此平台级暂停将覆盖{scope}。它叠加在商户自己的开关之上——不会更改商户的设置。',
+      'This releases the platform hold on {scope}. The firm’s own switch decides sends from here.':'此操作将解除对{scope}的平台暂停。此后由商户自己的开关决定是否发送。',
+      'Retention hold placed.':'已设置留存暂停。',
+      'Retention hold released.':'已解除留存暂停。'
+    }),
+    ms:Object.freeze({
+      'Retention holds':'Penggantungan pengekalan',
+      'No retention holds':'Tiada penggantungan pengekalan',
+      'No business or campaign currently has a platform retention hold.':'Tiada perniagaan atau kempen yang sedang mempunyai penggantungan pengekalan platform.',
+      'A platform-side emergency stop layered over each firm’s own retention switch. Placing a hold never changes the merchant’s own setting — it only stops sends while the hold is active. Every change is recorded with a reason.':'Satu penghentian kecemasan di peringkat platform yang diletakkan di atas suis pengekalan setiap firma sendiri. Meletakkan penggantungan tidak sekali-kali mengubah tetapan peniaga sendiri — ia hanya menghentikan penghantaran semasa penggantungan aktif. Setiap perubahan direkodkan dengan sebab.',
+      'No hold reason recorded.':'Tiada sebab penggantungan direkodkan.',
+      'Placed {when}':'Digantung {when}',
+      'HELD':'DIGANTUNG',
+      'Allowed':'Dibenarkan',
+      'Stopped':'Dihentikan',
+      'Release':'Lepaskan',
+      'Hold':'Gantung',
+      'Release whole lane':'Lepaskan keseluruhan laluan',
+      'Hold whole lane':'Gantung keseluruhan laluan',
+      'the whole retention lane for {business}':'keseluruhan laluan pengekalan untuk {business}',
+      'this campaign':'kempen ini',
+      'Hold retention sends':'Gantung penghantaran pengekalan',
+      'Release retention hold':'Lepaskan penggantungan pengekalan',
+      'Place hold':'Gantung sekarang',
+      'Release hold':'Lepaskan penggantungan',
+      'This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.':'Penghentian di peringkat platform ini merangkumi {scope}. Ia diletakkan di atas suis firma sendiri — tetapan mereka tidak diubah.',
+      'This releases the platform hold on {scope}. The firm’s own switch decides sends from here.':'Ini melepaskan penggantungan platform pada {scope}. Suis firma sendiri menentukan penghantaran selepas ini.',
+      'Retention hold placed.':'Penggantungan pengekalan telah digantung.',
+      'Retention hold released.':'Penggantungan pengekalan telah dilepaskan.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3492,6 +3545,7 @@
       ??PLATFORM_COPY_V511[platformLocale]?.[key]
       ??PLATFORM_COPY_V513[platformLocale]?.[key]
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
+      ??PLATFORM_COPY_V574[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -12317,21 +12371,136 @@
     });
   }
 
+  // --------------------------------------------------------------------------
+  // v574: Retention holds panel — a Peekaa-side emergency stop layered OVER a
+  // firm's own bring-back campaign switch, from
+  // public.platform_list_retention_holds_v574 /
+  // public.platform_set_retention_hold_v574. A hold NEVER mutates the
+  // merchant's own bringback_campaigns_v361.active — it only overrides what
+  // sends while it is on, which is why the row shows all three states
+  // (tenant / platform / effective) rather than collapsing them into one.
+  // Visible to super admins only; every write requires a reason (>=3 chars)
+  // and is optimistic-concurrency guarded on the row's own version — the
+  // per-campaign `version` for a campaign hold, or `business_hold_version`
+  // for the firm-wide lane hold (p_campaign = null).
+  // --------------------------------------------------------------------------
+  function retentionHoldReasonText(row) {
+    return row?.reason?String(row.reason):pt('No hold reason recorded.');
+  }
+  function retentionHoldDetailHtml(row) {
+    const reason=escapeHtml(retentionHoldReasonText(row));
+    const placed=row?.placed_at?`<p class="muted small">${escapeHtml(pt('Placed {when}',{when:dateTime(row.placed_at)}))}</p>`:'';
+    return `${reason}${placed}`;
+  }
+  function retentionHoldRowHtml(row,CUI,canWrite) {
+    const tenantOn=Boolean(row.tenant_active);
+    const platformHeld=Boolean(row.platform_held);
+    const businessHeld=Boolean(row.business_hold);
+    const effectiveOn=Boolean(row.effective_active);
+    return [
+      `<b>${escapeHtml(row.business_name||row.business_id||'—')}</b>`,
+      escapeHtml(row.campaign_name||row.campaign_id||'—'),
+      CUI.status(tenantOn?pt('Active'):pt('Paused'),tenantOn?'ok':'off'),
+      CUI.status(platformHeld?pt('HELD'):pt('Allowed'),platformHeld?'no':'ok'),
+      CUI.status(effectiveOn?pt('Active'):pt('Stopped'),effectiveOn?'ok':'no'),
+      retentionHoldDetailHtml(row),
+      canWrite?[
+        `<button type="button" class="btn ghost sm" data-automation-write data-retention-hold-campaign="${escapeHtml(row.business_id)}" data-retention-hold-campaign-id="${escapeHtml(row.campaign_id)}">${escapeHtml(platformHeld?pt('Release'):pt('Hold'))}</button>`,
+        `<button type="button" class="btn ghost sm" data-automation-write data-retention-hold-business="${escapeHtml(row.business_id)}">${escapeHtml(businessHeld?pt('Release whole lane'):pt('Hold whole lane'))}</button>`
+      ].join(''):''
+    ];
+  }
+  function retentionHoldsPanelHtml(rows,CUI,canWrite) {
+    const holds=asArray(rows);
+    const body=holds.length?CUI.table({
+      caption:'Retention holds',
+      headers:['Business','Campaign','Tenant setting','Platform state','Effective','Hold detail',''],
+      rows:holds.map(row=>retentionHoldRowHtml(row,CUI,canWrite))
+    }):CUI.emptyState({
+      iconName:'retention',title:'No retention holds',
+      body:'No business or campaign currently has a platform retention hold.'
+    });
+    return CUI.card({
+      title:'Retention holds',
+      description:'A platform-side emergency stop layered over each firm’s own retention switch. Placing a hold never changes the merchant’s own setting — it only stops sends while the hold is active. Every change is recorded with a reason.',
+      body
+    });
+  }
+  // Renders '' for any role other than super_admin — cross-tenant retention
+  // hold state (and the ability to stop a firm's sends) is platform-only.
+  function retentionHoldsSectionHtml(rows,CUI,access) {
+    if(access?.role!=='super_admin')return'';
+    return retentionHoldsPanelHtml(rows,CUI,true);
+  }
+  // Pure payload builder so the exact RPC arguments — including scope
+  // (campaign vs the firm's whole lane) and which version guards the write —
+  // can be asserted without a DOM or a live Supabase client.
+  function retentionHoldPayload(row,changes={}) {
+    const scope=changes.scope==='business'?'business':'campaign';
+    return{
+      p_business:row.business_id,
+      p_campaign:scope==='business'?null:row.campaign_id,
+      p_held:Boolean(changes.held),
+      p_reason:String(changes.reason||'').trim(),
+      p_expected_version:scope==='business'?row.business_hold_version:row.version
+    };
+  }
+  async function submitRetentionHold(sb,row,changes) {
+    return rpc(sb,'platform_set_retention_hold_v574',retentionHoldPayload(row,changes));
+  }
+  function retentionHoldModal(row,scope,held,context,refresh) {
+    const {CUI,sb}=context;
+    const scopeLabel=scope==='business'
+      ?pt('the whole retention lane for {business}',{business:row.business_name||row.business_id})
+      :String(row.campaign_name||row.campaign_id||pt('this campaign'));
+    modal({
+      title:held?pt('Hold retention sends'):pt('Release retention hold'),
+      submitLabel:held?pt('Place hold'):pt('Release hold'),
+      CUI,
+      body:`<p class="muted small">${escapeHtml(held
+        ?pt('This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.',{scope:scopeLabel})
+        :pt('This releases the platform hold on {scope}. The firm’s own switch decides sends from here.',{scope:scopeLabel}))}</p>
+        ${CUI.field({id:'retentionHoldReason',label:'Reason',control:'textarea',required:true,hint:'This note is retained in the platform audit trail.',attributes:'name="reason" rows="3" minlength="3" maxlength="1000"'})}`,
+      onSubmit:async(form,controls)=>{
+        await submitRetentionHold(sb,row,{held,reason:form.get('reason'),scope});
+        controls.close();await refresh();CUI.announce(held?pt('Retention hold placed.'):pt('Retention hold released.'));
+      }
+    });
+  }
+  function wireRetentionHoldsPanel(main,context,holdRows,refresh) {
+    main.querySelectorAll('[data-retention-hold-campaign]').forEach(button=>{
+      const businessId=button.dataset.retentionHoldCampaign,campaignId=button.dataset.retentionHoldCampaignId;
+      const row=asArray(holdRows).find(item=>item.business_id===businessId&&item.campaign_id===campaignId);
+      if(row)button.onclick=()=>retentionHoldModal(row,'campaign',!row.platform_held,context,refresh);
+    });
+    main.querySelectorAll('[data-retention-hold-business]').forEach(button=>{
+      const businessId=button.dataset.retentionHoldBusiness;
+      const row=asArray(holdRows).find(item=>item.business_id===businessId);
+      if(row)button.onclick=()=>retentionHoldModal(row,'business',!row.business_hold,context,refresh);
+    });
+  }
+
   async function renderAutomation(context,deletionPage={offset:0,rows:[]}) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'System health','Loading reconciliation and billing event health…','retention');
     try{
       const isSuperAdmin=context.access?.role==='super_admin';
-      const [reconciliation,billing,deletionResult,capabilityGrants]=await Promise.all([
+      const [reconciliation,billing,deletionResult,capabilityGrants,retentionHolds]=await Promise.all([
         rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
         rpc(sb,'platform_get_automation_billing_v89',{p_business:null,p_limit:250}),
         rpc(sb,'platform_list_account_deletion_requests_v133',{p_status:null,p_limit:100,p_offset:deletionPage.offset})
           .then(value=>({value,error:null})).catch(error=>({value:null,error})),
         isSuperAdmin
           ?rpc(sb,'platform_list_capability_grants_v557',{}).catch(()=>[])
+          :Promise.resolve([]),
+        // Fail soft: an unavailable v574 RPC must never break the rest of
+        // System health.
+        isSuperAdmin
+          ?rpc(sb,'platform_list_retention_holds_v574',{}).catch(()=>[])
           :Promise.resolve([])
       ]);
       const capabilityRows=asArray(capabilityGrants);
+      const retentionHoldRows=asArray(retentionHolds);
       const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing),privacyPageRows=asArray(deletionResult.value);
       const privacyRows=deletionResult.error&&deletionPage.rows.length
         ?deletionPage.rows
@@ -12344,11 +12513,13 @@
         ${CUI.card({title:'Reconciliation exceptions',body:items.length?items.map(item=>`<article class="platform-action-item" tabindex="-1" data-incident-id="${escapeHtml(item.id||item.provider_object_id||item.created_at||'')}"><div><b>${escapeHtml(platformStatus(item.object_type||'provider object'))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))}</p></div>${CUI.status(platformStatus(item.result||item.status||'exception'),item.result==='matched'?'ok':'no')}</article>`).join(''):localizedEmptyHtml('No reconciliation exceptions were returned.')})}
         ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}
         ${whatsappCapabilitiesSectionHtml(capabilityRows,CUI,context.access)}
+        ${retentionHoldsSectionHtml(retentionHoldRows,CUI,context.access)}
         <div id="platformDeletionQueue">${accountDeletionQueueHtml(privacyRows,CUI,{error:Boolean(deletionResult.error)&&!deletionPage.rows.length,hasMore,loadError:Boolean(deletionResult.error)&&Boolean(deletionPage.rows.length)})}</div>`;
       main.querySelectorAll('[data-deletion-claim]').forEach(button=>button.onclick=()=>claimAccountDeletionRequest(button.dataset.deletionClaim,context));
       main.querySelectorAll('[data-deletion-resolve]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionResolve,context));
       main.querySelectorAll('[data-deletion-review]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionReview,context,'retention_review'));
       if(isSuperAdmin)wireWhatsappCapabilitiesPanel(main,context,capabilityRows,()=>renderAutomation(context,deletionPage));
+      if(isSuperAdmin)wireRetentionHoldsPanel(main,context,retentionHoldRows,()=>renderAutomation(context,deletionPage));
       const deletionRetry=main.querySelector('[data-deletion-retry]');
       if(deletionRetry)deletionRetry.onclick=()=>renderAutomation(context);
       const deletionMore=main.querySelector('[data-deletion-more]');
@@ -14129,7 +14300,9 @@
     v513ReviewUnavailableHtml,v513NextActorChip,hydrateOnboardingReviewV513,
     renderOnboardingMetricsV513,
     whatsappCapabilityLabel,whatsappCapabilityLimitText,whatsappCapabilitiesPanelHtml,
-    whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant
+    whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant,
+    retentionHoldReasonText,retentionHoldDetailHtml,retentionHoldRowHtml,retentionHoldsPanelHtml,
+    retentionHoldsSectionHtml,retentionHoldPayload,submitRetentionHold
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -14165,7 +14338,9 @@
     v513ReviewUnavailableHtml,v513NextActorChip,hydrateOnboardingReviewV513,
     renderOnboardingMetricsV513,
     whatsappCapabilityLabel,whatsappCapabilityLimitText,whatsappCapabilitiesPanelHtml,
-    whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant
+    whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant,
+    retentionHoldReasonText,retentionHoldDetailHtml,retentionHoldRowHtml,retentionHoldsPanelHtml,
+    retentionHoldsSectionHtml,retentionHoldPayload,submitRetentionHold
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

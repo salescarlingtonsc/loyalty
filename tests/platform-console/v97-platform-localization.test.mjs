@@ -335,8 +335,18 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // Limit count / Limit period field labels). Announcement inventory is
   // unchanged — the panel's only CUI.announce() call reuses the same
   // 'WhatsApp capability updated.' string already counted in explicit.
-  assert.equal(explicit.length,1064,'update the audited explicit-copy inventory when adding runtime UI');
-  assert.equal(metadata.length,832,'update the audited CUI metadata inventory when adding UI metadata'); // C7
+  // v574 (Retention holds panel, System health route): +19 distinct explicit pt()
+  // strings (the no-reason fallback, the 'Placed {when}' template, the three-state
+  // column labels HELD/Allowed/Stopped, the Hold/Release action pair for both the
+  // campaign and firm-wide scopes, the firm-wide scope description template and
+  // 'this campaign' fallback, the hold/release modal's title/submit-label/body pairs,
+  // and the two placed/released confirmation announcements). +4 distinct metadata
+  // strings (the panel card's title and description, and the empty-state title/body
+  // pair). Announcement inventory is unchanged — both of the panel's CUI.announce()
+  // calls pass a ternary expression, the same non-literal-argument shape every other
+  // hold/release confirmation already uses, so they were never part of this set.
+  assert.equal(explicit.length,1083,'update the audited explicit-copy inventory when adding runtime UI');
+  assert.equal(metadata.length,836,'update the audited CUI metadata inventory when adding UI metadata'); // v574
   assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');

@@ -4932,6 +4932,57 @@ function customerProgrammeInitialsV96(name){
   const words=String(name||'').trim().split(/\s+/).filter(Boolean);
   return (words.length>1?`${words[0][0]}${words[1][0]}`:words[0]?.slice(0,2)||'N').toUpperCase();
 }
+function customerWhatsappConsentCardMarkupV574(businessName,permissionEntry){
+  const nameHtml=esc(businessName||'this business');
+  if(!permissionEntry){
+    return `<section class="card wallet-section" id="walletWhatsappConsentV574" aria-labelledby="customerWhatsappConsentTitleV574">
+      <div class="wallet-section-head"><div><h2 id="customerWhatsappConsentTitleV574">WhatsApp from ${nameHtml}</h2></div></div>
+      <p class="muted small" style="margin-top:8px">We'll ask about WhatsApp once this business has confirmed your membership.</p>
+    </section>`;
+  }
+  const allowed=permissionEntry?.whatsapp_marketing?.allowed===true;
+  return `<section class="card wallet-section" id="walletWhatsappConsentV574" aria-labelledby="customerWhatsappConsentTitleV574">
+    <div class="wallet-section-head"><div><h2 id="customerWhatsappConsentTitleV574">WhatsApp from ${nameHtml}</h2></div></div>
+    <label class="row" for="customerWhatsappConsentToggleV574" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500">
+      <span class="cui-switch" style="margin-top:1px"><input id="customerWhatsappConsentToggleV574" type="checkbox" ${allowed?'checked':''}><i></i></span>
+      <span>Receive useful WhatsApp updates and offers from ${nameHtml}.</span>
+    </label>
+    <p class="muted small" style="margin-top:8px">Only this business. Turning it on here does not affect any other business you follow, and it never changes your booking confirmations, receipts or security messages — those are not marketing and keep sending.</p>
+    <p id="customerWhatsappConsentStatusV574" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
+  </section>`;
+}
+/* Wired after every paint that carries the card (both a real navigation and, since the card
+   reflects server state that can change elsewhere, a silent re-render). Optimistic, but never
+   dishonest: a failed write puts the switch back where it was and says so — the same discipline
+   as the platform-wide toggle at renderCustomerCommunicationsV263. */
+function wireCustomerWhatsappConsentV574(businessId,businessName,host,isCurrent=()=>true){
+  const input=host?.querySelector('#customerWhatsappConsentToggleV574');
+  if(!input)return;
+  const status=$('customerWhatsappConsentStatusV574');
+  const say=message=>{if(status)status.textContent=message;if(message)CUI.announce(message)};
+  input.onchange=async()=>{
+    const wanted=input.checked;
+    const before=!wanted;
+    input.disabled=true;say('Saving…');
+    const {data,error}=await sb.rpc('customer_set_whatsapp_marketing_consent_v574',{
+      p_business:businessId,p_opted_in:wanted,p_idempotency_key:crypto.randomUUID()
+    });
+    if(!isCurrent()||!input.isConnected)return;
+    input.disabled=false;
+    if(error){input.checked=before;say('That choice could not be saved, so it has been put back. Please try again.');return}
+    if(data?.status==='refused'&&data?.reason==='not_linked_to_business'){
+      input.checked=before;
+      const card=input.closest('#walletWhatsappConsentV574');
+      if(card)card.outerHTML=customerWhatsappConsentCardMarkupV574(businessName,null);
+      return;
+    }
+    const nowAllowed=data?.state?.allowed===true||(data?.opted_in===true&&wanted);
+    say(nowAllowed
+      ?`WhatsApp messages from ${businessName||'this business'} are on.`
+      :`WhatsApp messages from ${businessName||'this business'} are off. Your points, bookings and service messages are not affected.`);
+  };
+}
+
 function customerProgrammeTileLogoV96(business){
   const logoUrl=customerMediaUrlV95(business?.logo_url);
   return logoUrl
@@ -5862,6 +5913,13 @@ function customerWalletSilentPaintV333(html){
   if(scroller)scroller.scrollTop=scrollTop;
   return true;
 }
+/* nestly_v574: a per-business WhatsApp marketing switch. NOT pre-ticked — it renders checked only
+   when the server's own read (customer_get_messaging_permissions_v574) says allowed===true, never
+   from an assumption. The same control grants and withdraws: withdrawal must be exactly as easy
+   as granting (one tap), so there is deliberately no separate "off" affordance and no confirm
+   step either way. Absent from the permissions array means the business has not yet confirmed the
+   customer's membership (v14's verified-link model) — that renders as a disabled explanation, not
+   a false "off" switch, so a customer can never read "not yet asked" as "opted out". */
 async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){
   /* A silent pass rides the CURRENT epoch instead of opening a new one. Bumping it would make
      the watcher that scheduled this very refresh look stale to itself and stop. The guard still
@@ -6098,7 +6156,14 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
   const promotionPromptRequest=customerFeatures.customer_in_app_inbox===true
     ?sb.rpc('customer_get_pending_promotion_prompt_v122',{p_business_slug:businessSlug})
     :Promise.resolve({data:null,error:null});
-  const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult]=await Promise.all([
+  /* nestly_v574: the customer's own WhatsApp choice for THIS business, read from the permissions
+     array rather than a per-business RPC — that array is the one surface public.consents exposes
+     to the customer, one entry per business they hold a VERIFIED link to. A business absent from
+     it is not "opted out", it is "not yet asked" (v14's join model — the customer may be looking
+     at a business page before the link is confirmed), and the card below renders that as a
+     distinct, disabled state rather than guessing a false "off". */
+  const messagingPermissionsRequest=sb.rpc('customer_get_messaging_permissions_v574');
+  const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult,messagingPermissionsResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
@@ -6108,11 +6173,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        otherwise carry their branch scope into their own customer view and silently lose the other
        outlets' offers. A promotion that only runs at one outlet says so in its own terms. */
     businessId?sb.rpc('customer_get_promotions_v155',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
-    promotionPromptRequest
+    promotionPromptRequest,
+    messagingPermissionsRequest
   ]);
   if(!isWalletCurrent())return;
   const businessActions=businessActionsResult.error?null:businessActionsResult.data;
   const presentation=customerProgrammePresentationV95(presentationResult.error?{}:presentationResult.data,{business:b,loyalty:actionableCard?.loyalty||loyalty});
+  /* v574: fail SOFT and SILENT — an unavailable permissions read hides the card (customerWhatsappConsentCardMarkupV574
+     returns '' without an entry), it never renders a switch pre-ticked from a guess. */
+  const whatsappPermissionEntryV574=messagingPermissionsResult.error?null
+    :(Array.isArray(messagingPermissionsResult.data)?messagingPermissionsResult.data:[])
+      .find(entry=>String(entry?.business_id||'')===String(businessId||''))||null;
   /* v189: a failed tier lookup used to render as an empty space, which reads as "this business
      has no tiers" — the customer cannot tell a paused programme from a broken call. Carry the
      failure through so the card can say which it is. 42501 is the server's "not running for you"
@@ -6216,6 +6287,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
         ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}
       </section>
+      ${customerWhatsappConsentCardMarkupV574(b.name,whatsappPermissionEntryV574)}
       ${customerBusinessSecondaryMarkupV346(presentation)}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
@@ -6230,6 +6302,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
      re-render rebinds them together. */
   wireCustomerGalleryV418($('walletBody'));
   wireCustomerActivityTabsV472($('walletBody'));
+  wireCustomerWhatsappConsentV574(businessId,b.name,$('walletBody'),isWalletCurrent);
   /* V468-E2(a): showing the member code IS the counter moment — it is the thing the customer does
      immediately before the staff rings the sale or applies a reward. Delegated on the body, which
      is replaced wholesale by every paint, so the listener never accumulates. */

@@ -2793,6 +2793,12 @@
       "path": "db/migrations/20260828_nestly_v572_retention_safety_hardening.sql",
       "semanticVersion": "v572",
       "proposedDeployVersion": "20260828020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v574_retention_control_plane.sql",
+      "semanticVersion": "v574",
+      "proposedDeployVersion": "20260828050000"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b058c455e763353f1ba3db3bed5fd947eb5e11190194b4946404e2a3daca8955"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="49777d0e143fab2f305135cc550faa88255e966663c607501cb43cfb92e7bc27"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4777,7 +4777,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · b058c455e763353f1ba3db3bed5fd947eb5e11190194b4946404e2a3daca8955</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 49777d0e143fab2f305135cc550faa88255e966663c607501cb43cfb92e7bc27</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -5900,6 +5900,12 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   let birthdayRedemptionIdem=null;
   let birthdayReversalIdem=null;
   let adjustmentIdem=crypto.randomUUID();
+  /* nestly_v574: staff get a READ-ONLY line, never a setter — only the customer's own app can
+     change this (customer_set_whatsapp_marketing_consent_v574). Fired alongside the big profile
+     Promise.all so it costs no extra latency, and failed softly: an RPC error must not turn a
+     working customer detail panel into a blank one over one informational line. */
+  const whatsappPermissionRequestV574=sb.rpc('staff_get_client_messaging_permission_v574',{p_business:S.biz.id,p_client:id})
+    .then(({data,error})=>error?null:data).catch(()=>null);
   const [{data:c,error},{data:loyaltyProjection,error:loyaltyProjectionError},{data:rg,error:rgError},{data:allSl,error:salesError},{data:redemptionRows,error:redemptionHistoryError},{data:allAp,error:appointmentsError},{data:stAll,error:staffError},{data:cfDefs,error:cfDefsError},{data:cfVals,error:cfValsError},{data:cfOpts,error:cfOptsError},{data:birthdayBenefit,error:birthdayError},{data:feedbackResult,error:feedbackError},{data:msRows,error:membershipsError},{data:cpRows,error:packagesError}]=await Promise.all([
     // Staff customer detail deliberately excludes DOB. Birthday fulfilment
     // exposes only the capability-gated, benefit-safe RPC projection below.
@@ -5939,6 +5945,8 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        the same tables the Memberships / Packages pages already query, now scoped to one client. */
     canReadMemberships?fetchAllRowsResult(()=>sb.from('memberships').select('*, membership_plans(name,price_cents,cadence)',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('created_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     canReadPackages?fetchAllRowsResult(()=>sb.from('client_packages').select('id,business_id,client_id,purchased_at,remaining,status,plan_name_snapshot,sessions_snapshot,plan_version_snapshot,price_cents_snapshot,service_name_snapshot,service_variant_snapshot,service_duration_min_snapshot,list_unit_cents_snapshot,list_value_cents_snapshot',{count:'exact'}).eq('business_id',S.biz.id).eq('client_id',id).order('purchased_at',{ascending:false}).order('id')):Promise.resolve({data:[]})]);
+  if(!isClientDetailCurrent())return;
+  const whatsappPermissionV574=await whatsappPermissionRequestV574;
   if(!isClientDetailCurrent())return;
   if(error) throw error;
   /* Loyalty, birthday and visit-feedback projections are independent profile facets.
@@ -6430,6 +6438,10 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
          every value, for every role. Deliberately no replacement anywhere in this profile: a
          smaller or collapsed version of a row the owner removed is the same row. */''}
     ${summaryRowV294('PDPA consent',c.marketing_consent?'<span class="pill on">Yes</span>':'<span class="pill off">No</span>')}
+    ${/* nestly_v574: TEXT ONLY — no button, no toggle. This is the customer's own choice, made in
+         their own Peekaa app (customer_set_whatsapp_marketing_consent_v574); staff cannot set it
+         here or anywhere else, so this row deliberately carries no control at all. */
+      staffClientWhatsappConsentRowMarkupV574(whatsappPermissionV574)}
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
       c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
@@ -8774,7 +8786,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'b058c455e763353f1ba3db3bed5fd947eb5e11190194b4946404e2a3daca8955',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'49777d0e143fab2f305135cc550faa88255e966663c607501cb43cfb92e7bc27',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
