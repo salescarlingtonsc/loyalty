@@ -79,82 +79,46 @@ behaviour. The owner's latest explicit instruction remains authoritative.
 
 ## Peekaa Permanent Bug-Closure Protocol (owner directive)
 
-Every production bug should make Peekaa permanently harder to break. Convert
-the knowledge from each defect into an automated guard wherever feasible, so
-the owner never has to manually rediscover the same class of inconsistency.
-Whenever a bug is reported, automatically assess whether it warrants (A) an
-acceptance regression, (B) a tenant scanner rule, and/or (C) lifecycle
-certification — and do so without waiting for the owner to ask.
+**Canonical source: [`docs/engineering/BUG_CLOSURE_PROTOCOL.md`](docs/engineering/BUG_CLOSURE_PROTOCOL.md).**
+Read it before closing any production bug. The summary below exists so this file is not silent on
+the rule; the canonical file wins on every detail.
 
-A bug is closed only when all nine layers below have been considered, not
-merely when the screenshot looks right, the affected tenant works, a row was
-backfilled, or the suite is green.
+> **Every production bug should make Peekaa permanently harder to break.**
 
-1. **Fix the live symptom.** Restore correct behaviour for the affected
-   customer/business; verify the REAL production reader/output after the fix.
-2. **Find the defect class.** Determine why the invalid state was possible.
-   Never conclude "tenant X had bad data"; determine "what system behaviour
-   ALLOWED tenant X to acquire that shape, and can another tenant acquire it?"
-   Prefer fixing the writer, authority, invariant, or lifecycle that created
-   the bad state.
-3. **Add an acceptance regression.** An executable test reproducing the exact
-   failure shape; it must fail against the old behaviour, pass after the fix,
-   and exercise BEHAVIOUR rather than merely grepping source where practical.
-4. **Extend the production divergence scanner**
-   (`db/tests/tenant_divergence_scan.sql`). Ask "can this failure already
-   exist silently in another tenant?" Add a rule detecting the invalid state
-   estate-wide. CRITICAL: do not only test whether two readers agree — test
-   whether the readers are CORRECT against the canonical business rule. Two
-   wrong readers agreeing is still a bug. Classify findings: runtime-dangerous
-   → blocking; intentional documented exception → explicit scoped waiver
-   (never broad/global waivers); historical/informational → non-blocking.
-5. **Extend lifecycle certification**
-   (`db/tests/tenant_lifecycle_certification.sql`) if the bug represents a
-   state transition or lifecycle scenario — for example: new tenant creation;
-   programme ON/OFF; Points↔Stamps; publish after an unrelated settings
-   change; stale draft; reward becoming claimable; reward becoming
-   non-claimable; customer earns before/after configuration;
-   birthday/welcome/referral configuration; redemption; programme switching.
-6. **Check all tenants.** Run the scanner, identify affected tenants,
-   backfill only where necessary, make backfills auditable and idempotent
-   where practical, and verify zero unexplained runtime-dangerous divergence
-   afterward. Never repair tenants one by one without closing the source of
-   corruption.
-7. **Validate canonical correctness.** For important business state (current
-   programme; active/off; balance; stamp target; earning rate; claimability;
-   reward eligibility; expiry) define the canonical answer and have all
-   consumers derive from the same authority/core where practical.
-   `Reader A == Reader B` is NOT sufficient evidence; require
-   `Reader A == Reader B == canonical business rule`.
-8. **Fail closed.** Missing or contradictory required production state must
-   never be hidden with cosmetic defaults. Defaults may initialise a NEW
-   DRAFT; defaults must not fabricate live production state. If live
-   configuration is invalid, prevent publish or return an explicit internal
-   configuration failure.
-9. **Permanent closure standard.** A bug is CLOSED when protections exist
-   across all of: live repair + root cause + regression test + scanner
-   coverage + lifecycle certification + estate-wide verification.
+A bug is NOT closed because the affected tenant works, the screenshot looks right, a row was
+backfilled, or the suite is green. Whenever a bug is reported, assess **without waiting for the
+owner to ask** whether it warrants (A) an acceptance regression, (B) a tenant scanner rule,
+and/or (C) lifecycle certification — and add them.
+
+Assess and apply each of the ten layers where relevant. "Not relevant" is a legitimate answer;
+*unconsidered* is not:
+
+1. **Fix and verify the live symptom** — against the real production reader, not a local repro.
+2. **Identify the defect class**, not only the affected tenant — fix the writer, authority,
+   invariant or lifecycle that allowed the bad state.
+3. **Add an executable regression that would have caught it** — proven to fail before the fix;
+   behaviour, not a source grep.
+4. **Extend the divergence scanner** (`npm run tenant-gate`) when the invalid state is detectable
+   estate-wide — and prove the new check can fail.
+5. **Extend lifecycle certification** (`npm run certify-tenant`) for lifecycle/state-transition
+   bugs.
+6. **Verify canonical correctness** — `Reader A == Reader B` is not evidence; require
+   `A == B == the canonical business rule`.
+7. **Scan all tenants** for the same failure shape; measure blast radius before applying.
+8. **Backfill only after closing the writer** that created the bad state — stop the writer, then
+   repair the data.
+9. **Fail closed** — defaults may seed a NEW DRAFT, never fabricate live production state.
+10. **Re-run the gates and prove no fixture/probe residue remains.**
 
 ### Commands
 
-- `npm run tenant-gate` — runs the divergence scanner (layer 4).
-- `npm run tenant-gate:prove` — proves the scanner can still detect an
-  injected divergence (a gate on the gate).
-- `npm run certify-tenant` — runs the lifecycle certification (layer 5).
+- `npm run tenant-gate` — divergence scanner (layers 4, 7).
+- `npm run tenant-gate:prove` — proves the scanner still detects an injected divergence.
+- `npm run certify-tenant` — lifecycle certification (layer 5).
 
-Full command behaviour, when each MUST run, and verdict semantics are in
-`docs/design/ps0/TENANT_CONSISTENCY_GATES.md`.
-
-### Worked example: nestly_v568
-
-A consistency check comparing two readers becomes tautological the moment one
-reader delegates to the other — it can then only see disagreement, never a
-defect both readers inherit. `reward_availability_v432` let a parked points
-gift render "READY" because its closed-cycle arm skipped the programme-id
-join; the existing scanner check couldn't catch it because it only compared
-readers, not the rule. Fix: scanner check D16 now states the rule directly
-against the availability core's own answer — no reward may be offered while
-its own programme is off.
+Command behaviour, when each MUST run, and verdict semantics are in
+`docs/design/ps0/TENANT_CONSISTENCY_GATES.md`. Worked examples (nestly_v568, nestly_v572/v573)
+are in the canonical file.
 
 ## Data handling
 

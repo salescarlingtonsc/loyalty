@@ -264,9 +264,16 @@ and approval only to the risk exceptions listed in `AGENTS.md`, scoped to the
 specific risky action. Production remains `gadpooereceldfpfxsod`; never use the
 retired project `kyzovonwnscrzmkvocid`.
 
-Every production bug follows the Peekaa Permanent Bug-Closure Protocol in
-`AGENTS.md` ("Peekaa Permanent Bug-Closure Protocol" section) — fix, root
-cause, regression, scanner, lifecycle certification, estate-wide check.
+Every production bug follows the **Peekaa Permanent Bug-Closure Protocol**.
+**Canonical source: `docs/engineering/BUG_CLOSURE_PROTOCOL.md`** (summarised in
+`AGENTS.md`; the canonical file wins on every detail). Ten layers — fix and
+verify live, defect class not tenant, executable regression that would have
+caught it, divergence scanner, lifecycle certification, canonical correctness
+(reader agreement is NOT correctness), estate-wide scan, backfill only after
+closing the writer, fail closed, re-run the gates and prove no fixture residue.
+Core principle: every production bug should make Peekaa permanently harder to
+break. Assess (A) regression, (B) scanner rule, (C) certification for every bug
+WITHOUT waiting to be asked.
 
 ## Design direction (owner-confirmed; updated 2026-07-18 post-launch)
 - **Grouped navigation (Cubbly reference, owner screenshot 2026-07-18):** a handful of
