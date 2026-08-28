@@ -2812,6 +2812,12 @@
       "version": "20260828080000",
       "name": "nestly_v579_inbox_backfill_promotion_ref",
       "sourcePath": "db/migrations/20260828_nestly_v579_inbox_backfill_promotion_ref.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828130000",
+      "name": "nestly_v580_appointment_send_follows_the_appointment",
+      "sourcePath": "db/migrations/20260828_nestly_v580_appointment_send_follows_the_appointment.sql"
     }
   ]
 }

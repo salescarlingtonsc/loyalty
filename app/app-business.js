@@ -29882,8 +29882,8 @@ async function loadGrowBbWhatsappStripV551(root){
   if(!host.isConnected)return;
   const n=k=>Number(data[k])||0;
   const reasons=data.suppressed_reasons&&typeof data.suppressed_reasons==='object'?data.suppressed_reasons:{};
-  const reasonLabelV551={platform_outbound_off:'messaging is off platform-wide',retention_sends_off:'WhatsApp offers are not switched on yet',capability_disabled:'WhatsApp offers are not enabled for this business',synthetic_client:'demo customers are never messaged',consent_missing:'the customer has not consented to offers',consent_withdrawn:'the customer opted out',preference_opt_out:'the customer turned offers off in their app',no_phone:'no phone number on file',customer_opted_out:'the customer replied STOP',stale_unsent:'the offer aged out before sending'};
-  const reasonBits=Object.entries(reasons).map(([k,v])=>`${Number(v)||0} — ${reasonLabelV551[k]||k}`);
+  const reasonLabelV551={outbound_off:'messaging is off platform-wide',retention_sends_off:'WhatsApp offers are not switched on yet',capability_disabled:'WhatsApp offers are not enabled for this business',synthetic_client:'demo customers are never messaged',consent_missing:'the customer has not consented to offers',consent_withdrawn:'the customer opted out',whatsapp_consent_absent:'the customer has not opted in to WhatsApp offers yet',whatsapp_consent_withdrawn:'the customer withdrew WhatsApp consent',preference_opt_out:'the customer turned offers off in their app',no_phone:'no valid mobile number on file',customer_opted_out:'the customer replied STOP',stale_unsent:'the offer aged out before sending',cooldown_active:'Peekaa waits 30 days between offers to the same customer',platform_hold:'paused by Peekaa for a safety review',business_not_active:'your workspace is not active',demo_business_marketing:'demo businesses are never messaged',platform_channel_off:'WhatsApp is switched off platform-wide',business_not_eligible:'this business is not eligible for WhatsApp offers',synthetic_business:'this is a demo business — never messaged'};
+  const reasonBits=Object.entries(reasons).map(([k,v])=>`${Number(v)||0} — ${reasonLabelV551[k]||'not sent — held by a safety check'}`);
   const pending=data.template_status&&data.template_status!=='approved';
   const total=n('queued')+n('sent')+n('delivered')+n('read')+n('failed')+n('suppressed');
   host.innerHTML=`<section class="card" style="margin-top:12px" aria-labelledby="growBbWaTitleV551">
@@ -33903,7 +33903,7 @@ function wireBookingRulesV325(isCurrent=()=>true){
       const {error}=await sb.from('businesses').update({booking_confirmation_template:value}).eq('id',S.biz.id);
       if(!isCurrent())return;
       button.disabled=false;
-      if(error){err.innerHTML=`<div class="err">${esc(error.message)}</div>`;return}
+      if(error){err.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That message could not be saved.'))}</div>`;return}
       S.biz.booking_confirmation_template=value;
       toast('WhatsApp confirmation message saved');
     };

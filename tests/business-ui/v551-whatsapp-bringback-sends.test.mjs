@@ -56,7 +56,7 @@ test('V551 counts and named suppression reasons are printed in owner words', asy
   assert.ok(html.includes('>4</b> Sent') && html.includes('>2</b> Read') && html.includes('>5</b> Not sent'));
   assert.ok(html.includes('has not consented'), 'consent_missing gets a human sentence');
   assert.ok(html.includes('replied STOP'), 'customer_opted_out gets a human sentence');
-  assert.ok(html.includes('no phone number on file'));
+  assert.ok(html.includes('no valid mobile number on file'));
   assert.ok(!html.includes('being reviewed'), 'approved template shows the live copy');
 });
 
