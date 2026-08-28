@@ -2575,12 +2575,12 @@ async function confirmCustomerJoinV571(token,isCurrent){
       <p class="customer-quest-kicker" style="text-align:center;margin:0 0 12px">${esc(ct('addProgramme'))}</p>
       <h2 id="customerJoinConfirmTitleV571" style="text-align:center;margin:0">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
       <p class="muted small" style="text-align:center;margin:8px 0 0">${esc(ct('joinConfirmBodyV571'))}</p>
-      ${/* nestly_v571: the owner also asked for a referral-code field here. It is NOT shipped in
-           this pass, deliberately. customer_join_business_from_qr_v89 takes a token and an
-           idempotency key and nothing else, and there is no customer-callable RPC that records
-           "I was referred by CODE" — a referrals row is a payout obligation and today only staff
-           create one. A box that swallowed the code would be a promise the server cannot keep,
-           which is worse than not asking. The field lands with the RPC that can honour it. */''}
+      <label class="small" style="display:block;margin-top:16px">
+        <span>${esc(ct('joinReferralLabelV571'))}</span>
+        <input id="customerJoinReferralV571" type="text" autocomplete="off" maxlength="32"
+          placeholder="${esc(ct('joinReferralPlaceholderV571'))}" style="width:100%;margin-top:6px;text-transform:uppercase">
+      </label>
+      <p class="muted small" id="customerJoinReferralNoteV571" role="status" aria-live="polite" style="margin-top:6px"></p>
       <div class="row" style="gap:10px;margin-top:18px">
         <button class="btn ghost" type="button" id="customerJoinCancelV571" style="flex:1">${esc(ct('joinConfirmCancelV571'))}</button>
         <button class="btn" type="button" id="customerJoinGoV571" style="flex:1">${esc(ct('joinConfirmGoV571'))}</button>
@@ -2590,10 +2590,58 @@ async function confirmCustomerJoinV571(token,isCurrent){
     overlay.querySelector('#customerJoinCancelV571').onclick=()=>{
       rememberPendingCustomerJoinToken('');close(false);nav('#/customer/programmes');
     };
-    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    /* nestly_v571: the code is CHECKED before the customer confirms, so a wrong one is a
+       correction they can make here rather than a surprise after joining. customer_check_
+       referral_code_v571 is read-only and keyed on the join token. A check that cannot be
+       reached does not block anything — the apply call after the join re-validates for real,
+       and the server is the only thing that decides. */
+    const referralInput=overlay.querySelector('#customerJoinReferralV571');
+    const referralNote=overlay.querySelector('#customerJoinReferralNoteV571');
+    const joinButton=overlay.querySelector('#customerJoinGoV571');
+    const setNote=(text,bad)=>{
+      referralNote.textContent=text||'';
+      referralNote.classList.toggle('err',!!bad);
+    };
+    let checkSeq=0;
+    referralInput.addEventListener('input',()=>{
+      referralInput.value=referralInput.value.toUpperCase();
+      setNote('');
+    });
+    const checkReferralV571=async()=>{
+      const code=String(referralInput.value||'').trim();
+      if(!code)return true;
+      const seq=++checkSeq;
+      joinButton.disabled=true;
+      const {data,error}=await sb.rpc('customer_check_referral_code_v571',{p_join_token:token,p_code:code});
+      if(seq!==checkSeq)return false;
+      joinButton.disabled=false;
+      /* An unreachable check must never stop somebody joining. */
+      if(error)return true;
+      if(data&&data.ok===false){setNote(customerReferralReasonTextV571(data.reason),true);return false}
+      return true;
+    };
+    referralInput.addEventListener('blur',()=>{checkReferralV571()});
+    joinButton.onclick=async()=>{
+      if(!(await checkReferralV571()))return;
+      pendingCustomerJoinReferralV571=String(referralInput.value||'').trim();
+      close(true);
+    };
     overlay.querySelector('#customerJoinGoV571').focus();
   });
 }
+/* The customer-facing wording for every refusal the server can return. Kept beside the dialog
+   so a new server reason is obvious here as an untranslated fallback rather than a blank line. */
+function customerReferralReasonTextV571(reason){
+  const map={
+    unknown_code:ct('joinReferralUnknownV571'),
+    self_referral:ct('joinReferralSelfV571'),
+    already_referred:ct('joinReferralAlreadyV571'),
+    referrals_off:ct('joinReferralOffV571'),
+    unknown_business:ct('joinReferralUnknownV571')
+  };
+  return map[String(reason||'')]||ct('joinReferralUnknownV571');
+}
+let pendingCustomerJoinReferralV571='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
@@ -2635,6 +2683,23 @@ async function renderCustomerQrJoin(){
   }
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
   const slug=normalizeCustomerBusinessIntent(data?.business?.slug||data?.business_slug||'');
+  /* nestly_v571: the attribution runs AFTER the join, never before it, so a referral code can
+     never be the reason somebody failed to join a programme. The server re-validates every
+     guard — it does not trust the pre-check in the dialog — and its unique index makes a
+     retried join a no-op rather than a second attribution. The idempotency key is derived from
+     the joined business and the code, so the same retry sends the same key. */
+  const referralCodeV571=pendingCustomerJoinReferralV571;pendingCustomerJoinReferralV571='';
+  if(referralCodeV571&&slug){
+    const {data:referralResult}=await sb.rpc('customer_apply_referral_code_v571',{
+      p_business_slug:slug,p_code:referralCodeV571,
+      p_idempotency_key:writeAttemptKey('nestly.customer.joinReferral',`${slug}:${referralCodeV571}`)
+    }).then(result=>result,()=>({data:null}));
+    if(!isCurrent())return;
+    /* Applied or not, the join stands. The customer is told which happened rather than left to
+       assume a code was honoured. */
+    if(referralResult&&referralResult.applied===false)
+      toast(customerReferralReasonTextV571(referralResult.reason));
+  }
   status.textContent='Programme joined. Opening your wallet…';
   await maybeOfferCustomerPasskeySetup({isCurrent});
   if(!isCurrent())return;
@@ -7782,13 +7847,21 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
       const when=item?.created_at||item?.deadline_at||'';
       const openable=item?.action_available===true&&!isResolved&&item?.route_key==='wallet_business'&&!!routeSlug;
       const monogram=(name[0]||'B').toUpperCase();
-      const line=String(item?.title||'Inbox update').trim();
+      /* nestly_v571 (owner, Messages photo: "company logo"). The reader supplies it now; the
+         monogram stays as the fallback for a business that has never uploaded one. */
+      const logoV571=customerMediaUrlV95(business?.logo_url);
+      /* nestly_v571 (owner: "state offer title"). Only rows the generator stamped with their
+         promotion carry one — every message written before v571, and every non-promotion
+         message, has none and keeps the stored title. Nothing is inferred. */
+      const line=String(item?.offer_title||item?.title||'Inbox update').trim();
       const detail=String(item?.body||'').trim();
       /* Screen-reader only, so the full wording costs no space and stays the honest one. */
       const stateCopy=isResolved?'Resolved history':isUnavailable?'Programme temporarily unavailable':state==='unread'?'Unread':'Read';
       return `<article class="customer-inbox-item customer-inbox-row-v386 ${esc(state)}">
         <${openable?'button':'div'} class="customer-inbox-row-main-v386"${openable?` type="button" data-inbox-open="${esc(item.event_id)}" data-route-key="wallet_business"`:''}>
-          <span class="customer-inbox-avatar-v386" aria-hidden="true">${esc(monogram)}</span>
+          ${logoV571
+            ?`<img class="customer-inbox-avatar-v386 customer-inbox-avatar-logo-v571" src="${esc(logoV571)}" alt="" loading="lazy" decoding="async">`
+            :`<span class="customer-inbox-avatar-v386" aria-hidden="true">${esc(monogram)}</span>`}
           <span class="customer-inbox-row-copy-v386">
             <span class="customer-inbox-row-top-v386"><b>${esc(name)}</b>${when?`<time class="customer-inbox-row-when-v386" datetime="${esc(when)}">${esc(walletDate(when))}</time>`:''}</span>
             <span class="customer-inbox-row-line-v386">${esc(line)}</span>

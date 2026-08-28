@@ -2761,6 +2761,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260828000004",
+      "name": "nestly_v571_referral_attribution_and_inbox_provenance",
+      "sourcePath": "db/migrations/20260828_nestly_v571_referral_attribution_and_inbox_provenance.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260828010856",
       "name": "nestly_v571_retention_dispatch_inert_repair",
       "sourcePath": "db/migrations/20260828_nestly_v571_retention_dispatch_inert_repair.sql"

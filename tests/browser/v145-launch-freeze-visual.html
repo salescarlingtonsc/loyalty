@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="3f54f4431a50c1e7cd284d2466f4fd8e59d5e764c792da7ba4b9486fa7dfd978"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="b058c455e763353f1ba3db3bed5fd947eb5e11190194b4946404e2a3daca8955"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3732,6 +3732,8 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* nestly_v571 (owner, Messages photo: the round red control ringed — "smaller and don't want red
    color"). Red is the brand's ACTION colour; a settings door painted in it read louder than the
    messages it sits over. Neutral surface, quieter glyph, smaller footprint — still a 40px target. */
+/* nestly_v571: the business logo takes the avatar's place when there is one. */
+.customer-inbox-avatar-logo-v571{object-fit:cover;border-radius:50%}
 .customer-inbox-settings-toggle-v549{width:40px;height:40px;font-size:18px;font-weight:700;
   background:var(--surface-2,#f2efe9);color:var(--ink-2,#5c5750);
   border:1px solid var(--line,#e6e1d8)}
@@ -4775,7 +4777,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3f54f4431a50c1e7cd284d2466f4fd8e59d5e764c792da7ba4b9486fa7dfd978</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · b058c455e763353f1ba3db3bed5fd947eb5e11190194b4946404e2a3daca8955</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8504,13 +8506,21 @@ function renderHistPage(history,n,offsetV468=0){
       const when=item?.created_at||item?.deadline_at||'';
       const openable=item?.action_available===true&&!isResolved&&item?.route_key==='wallet_business'&&!!routeSlug;
       const monogram=(name[0]||'B').toUpperCase();
-      const line=String(item?.title||'Inbox update').trim();
+      /* nestly_v571 (owner, Messages photo: "company logo"). The reader supplies it now; the
+         monogram stays as the fallback for a business that has never uploaded one. */
+      const logoV571=customerMediaUrlV95(business?.logo_url);
+      /* nestly_v571 (owner: "state offer title"). Only rows the generator stamped with their
+         promotion carry one — every message written before v571, and every non-promotion
+         message, has none and keeps the stored title. Nothing is inferred. */
+      const line=String(item?.offer_title||item?.title||'Inbox update').trim();
       const detail=String(item?.body||'').trim();
       /* Screen-reader only, so the full wording costs no space and stays the honest one. */
       const stateCopy=isResolved?'Resolved history':isUnavailable?'Programme temporarily unavailable':state==='unread'?'Unread':'Read';
       return `<article class="customer-inbox-item customer-inbox-row-v386 ${esc(state)}">
         <${openable?'button':'div'} class="customer-inbox-row-main-v386"${openable?` type="button" data-inbox-open="${esc(item.event_id)}" data-route-key="wallet_business"`:''}>
-          <span class="customer-inbox-avatar-v386" aria-hidden="true">${esc(monogram)}</span>
+          ${logoV571
+            ?`<img class="customer-inbox-avatar-v386 customer-inbox-avatar-logo-v571" src="${esc(logoV571)}" alt="" loading="lazy" decoding="async">`
+            :`<span class="customer-inbox-avatar-v386" aria-hidden="true">${esc(monogram)}</span>`}
           <span class="customer-inbox-row-copy-v386">
             <span class="customer-inbox-row-top-v386"><b>${esc(name)}</b>${when?`<time class="customer-inbox-row-when-v386" datetime="${esc(when)}">${esc(walletDate(when))}</time>`:''}</span>
             <span class="customer-inbox-row-line-v386">${esc(line)}</span>
@@ -8764,7 +8774,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'3f54f4431a50c1e7cd284d2466f4fd8e59d5e764c792da7ba4b9486fa7dfd978',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'b058c455e763353f1ba3db3bed5fd947eb5e11190194b4946404e2a3daca8955',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

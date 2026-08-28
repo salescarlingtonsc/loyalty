@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="1e0e346a7aca0fd94aee9db3c9da6bf221b1eec6e8a28b58cf53535ee7e60521">
+<meta name="v105-production-component-sha256" content="ca18f43fc3103f7769418b04e0db26a0015cf56eee61d07943f0e007c10a20d6">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3738,6 +3738,8 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* nestly_v571 (owner, Messages photo: the round red control ringed — "smaller and don't want red
    color"). Red is the brand's ACTION colour; a settings door painted in it read louder than the
    messages it sits over. Neutral surface, quieter glyph, smaller footprint — still a 40px target. */
+/* nestly_v571: the business logo takes the avatar's place when there is one. */
+.customer-inbox-avatar-logo-v571{object-fit:cover;border-radius:50%}
 .customer-inbox-settings-toggle-v549{width:40px;height:40px;font-size:18px;font-weight:700;
   background:var(--surface-2,#f2efe9);color:var(--ink-2,#5c5750);
   border:1px solid var(--line,#e6e1d8)}
@@ -5589,7 +5591,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 1e0e346a7aca</span>
+<span class="v105-provenance">v105 production-component harness · ca18f43fc310</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -5714,7 +5716,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'1e0e346a7aca0fd94aee9db3c9da6bf221b1eec6e8a28b58cf53535ee7e60521',
+  sourceHash:'ca18f43fc3103f7769418b04e0db26a0015cf56eee61d07943f0e007c10a20d6',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

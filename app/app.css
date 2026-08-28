@@ -2520,6 +2520,7 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
   font-family:var(--sf,inherit);font-size:22px;font-weight:750;line-height:1;cursor:pointer;
   transition:background .14s var(--ease)}
 .customer-inbox-settings-toggle-v549:hover{background:var(--peekaa-red-dark,var(--coral-hover))}
+.customer-inbox-avatar-logo-v571{object-fit:cover;border-radius:50%}
 .customer-inbox-settings-toggle-v549{width:40px;height:40px;font-size:18px;font-weight:700;
   background:var(--surface-2,#f2efe9);color:var(--ink-2,#5c5750);
   border:1px solid var(--line,#e6e1d8)}

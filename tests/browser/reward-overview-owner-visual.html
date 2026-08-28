@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="fd8c421a9005b5fef8fba99c2c446f945fa2df43d9f3d66085e18d2b86da10d9"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="0b8d990f359b1da135bf27adb1abcce38ac3943d56eab8d4b65e18230d13ebc7"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3732,6 +3732,8 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 /* nestly_v571 (owner, Messages photo: the round red control ringed — "smaller and don't want red
    color"). Red is the brand's ACTION colour; a settings door painted in it read louder than the
    messages it sits over. Neutral surface, quieter glyph, smaller footprint — still a 40px target. */
+/* nestly_v571: the business logo takes the avatar's place when there is one. */
+.customer-inbox-avatar-logo-v571{object-fit:cover;border-radius:50%}
 .customer-inbox-settings-toggle-v549{width:40px;height:40px;font-size:18px;font-weight:700;
   background:var(--surface-2,#f2efe9);color:var(--ink-2,#5c5750);
   border:1px solid var(--line,#e6e1d8)}
@@ -4774,7 +4776,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · fd8c421a9005b5fef8fba99c2c446f945fa2df43d9f3d66085e18d2b86da10d9</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0b8d990f359b1da135bf27adb1abcce38ac3943d56eab8d4b65e18230d13ebc7</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14610,7 +14612,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'fd8c421a9005b5fef8fba99c2c446f945fa2df43d9f3d66085e18d2b86da10d9',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'0b8d990f359b1da135bf27adb1abcce38ac3943d56eab8d4b65e18230d13ebc7',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

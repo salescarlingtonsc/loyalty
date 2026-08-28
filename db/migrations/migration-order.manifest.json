@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 462,
-  "executableCount": 448,
+  "itemCount": 463,
+  "executableCount": 449,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -677,11 +677,12 @@
     },
     {
       "sourceDeployVersion": "20260828",
-      "count": 7,
+      "count": 8,
       "paths": [
         "db/migrations/20260828_nestly_v568_survivor_arm_stays_in_its_pot.sql",
         "db/migrations/20260828_nestly_v569_login_active_only_when_approved.sql",
         "db/migrations/20260828_nestly_v570_dashboard_off_means_off.sql",
+        "db/migrations/20260828_nestly_v571_referral_attribution_and_inbox_provenance.sql",
         "db/migrations/20260828_nestly_v571_retention_dispatch_inert_repair.sql",
         "db/migrations/20260828_nestly_v572_module_off_cannot_write.sql",
         "db/migrations/20260828_nestly_v572_retention_safety_hardening.sql",
@@ -4357,13 +4358,21 @@
     {
       "order": 459,
       "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v571_referral_attribution_and_inbox_provenance.sql",
+      "semanticVersion": "v571",
+      "proposedDeployVersion": "20260828000004",
+      "sha256": "239c01db2db57abafd9681ba4813a0dda698d36f438fe4d1f9385a6921f0db7d"
+    },
+    {
+      "order": 460,
+      "kind": "executable",
       "path": "db/migrations/20260828_nestly_v571_retention_dispatch_inert_repair.sql",
       "semanticVersion": "v571",
       "proposedDeployVersion": "20260828010856",
       "sha256": "f843b0f0ae49546f76576a4b4b997badf12e1c2ad65a834958b516f1e5d0995a"
     },
     {
-      "order": 460,
+      "order": 461,
       "kind": "executable",
       "path": "db/migrations/20260828_nestly_v572_module_off_cannot_write.sql",
       "semanticVersion": "v572",
@@ -4371,7 +4380,7 @@
       "sha256": "0c7e49628f6a50a0f57b05aadc744fd951c6c6ad3eedbcecc050176e56241e1b"
     },
     {
-      "order": 461,
+      "order": 462,
       "kind": "executable",
       "path": "db/migrations/20260828_nestly_v573_module_off_reaches_the_rpcs.sql",
       "semanticVersion": "v573",
@@ -4379,7 +4388,7 @@
       "sha256": "decac89b10049be59b0f6095b13e8f143588261637e9d67dabea5a3dcc07c66f"
     },
     {
-      "order": 462,
+      "order": 463,
       "kind": "executable",
       "path": "db/migrations/20260828_nestly_v572_retention_safety_hardening.sql",
       "semanticVersion": "v572",
