@@ -1,5 +1,5 @@
 import { enforceRateLimit, json, preflight, publicError, readJson, recordAccountOpen, requireOrigin, turnstileSiteKey, verifyTurnstile, adminClient } from '../_shared/gateway.ts';
-import { TOKEN_PATTERN, validJoinTokenPayload } from '../_shared/validation.ts';
+import { JOIN_TOKEN_PATTERN, validJoinTokenPayload } from '../_shared/validation.ts';
 
 Deno.serve(async (req) => {
   const options = preflight(req);
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
       const limit = await enforceRateLimit(req, 'join-page', 120, 60);
       if (!limit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: limit.retry_after });
       const joinToken = new URL(req.url).searchParams.get('token') || '';
-      if (!TOKEN_PATTERN.test(joinToken)) return publicError(req, 404);
+      if (!JOIN_TOKEN_PATTERN.test(joinToken)) return publicError(req, 404);
       const { data, error } = await adminClient().rpc('internal_public_join_page_v89', { p_join_token: joinToken });
       if (error || !data) return publicError(req, 404);
       return json(req, 200, { ...data, turnstile_site_key: turnstileSiteKey() });

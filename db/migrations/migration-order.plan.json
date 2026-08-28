@@ -2853,6 +2853,12 @@
       "path": "db/migrations/20260829_nestly_v586_tier_basis_reaches_the_draft.sql",
       "semanticVersion": "v586",
       "proposedDeployVersion": "20260829100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v587_join_qr_names_its_business.sql",
+      "semanticVersion": "v587",
+      "proposedDeployVersion": "20260829110000"
     }
   ]
 }

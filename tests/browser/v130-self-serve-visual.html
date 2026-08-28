@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c832f37ff4286db92a65f285d95416a3759d19593702fa7c09f8f43d173a3e01"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b712f0ed12281a91b34455e43d2776ded28b27f73fe1f2fa8c7fa648ed989504"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5327,6 +5327,40 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .promotion-featured-row-v586 .grow-offer-featured-mark-v485{flex:0 0 auto}
 .promotion-featured-row-v586 .btn{margin-left:auto}
 @media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
+
+/* ===================== nestly_v587 — the join sheet a scan opens ============================
+   Owner: "make it super fun with the theme similar to our app". The sheet leads with the Peekaa
+   wordmark on the brand's own warm wash, states the one question, and offers the one answer.
+   Everything else that used to be here (a referral field, a Cancel button beside the Join) is
+   gone at the owner's instruction: Yes, or the ✕. */
+.customer-join-sheet-v587{position:relative;width:min(var(--dialog-w-sm),calc(100vw - 32px));
+  text-align:center;padding:0 22px 24px;overflow:hidden}
+.customer-join-close-v587{position:absolute;top:12px;right:12px;z-index:2;display:inline-flex;
+  align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--hair);background:var(--card,#fff);color:var(--ink2);line-height:0;
+  cursor:pointer;transition:color .14s var(--ease),border-color .14s var(--ease)}
+.customer-join-close-v587:hover{color:var(--peekaa-red,var(--coral));border-color:currentColor}
+/* The wordmark sits on a soft brand wash with one warm glow behind it — the same two tokens the
+   customer celebration uses, so this reads as the app it belongs to rather than a system alert. */
+.customer-join-art-v587{position:relative;margin:0 -22px 18px;padding:30px 22px 24px;
+  background:var(--peekaa-red-faint,#FDEEEB);display:grid;place-items:center}
+/* Sized by HEIGHT, like the v576 QR-sheet wordmark — the asset is 890x568, so a width rule
+   would set its height by accident and a taller logo would swamp the sheet. */
+.customer-join-art-v587 img,.customer-join-art-v587 svg{position:relative;z-index:1;
+  height:74px;width:auto;max-width:70%;object-fit:contain}
+.customer-join-art-glow-v587{position:absolute;width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle,var(--peekaa-red-soft,#F7DCD7) 0%,transparent 70%);
+  opacity:.85}
+@media(prefers-reduced-motion:no-preference){
+  .customer-join-art-v587 img,.customer-join-art-v587 svg{animation:customerJoinPopV587 .42s var(--spring) both}
+  .customer-join-art-glow-v587{animation:customerJoinGlowV587 .5s var(--ease) both}
+}
+@keyframes customerJoinPopV587{from{transform:scale(.82) translateY(6px);opacity:0}to{transform:none;opacity:1}}
+@keyframes customerJoinGlowV587{from{transform:scale(.6);opacity:0}to{transform:none;opacity:.85}}
+.customer-join-kicker-v587{margin:0 0 6px}
+.customer-join-title-v587{margin:0;font-size:clamp(21px,5.4vw,26px);line-height:1.2}
+.customer-join-body-v587{margin:10px 0 0}
+.customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
 body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px}.v130-nav .btn{padding:8px 12px}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v130-nav{position:relative;top:auto;right:auto;padding:8px;overflow:auto}.center-wrap{padding:12px}.grid2{grid-template-columns:1fr}}</style></head><body><nav class="v130-nav" aria-label="V130 acceptance views"><button class="btn" data-view="signup">Signup</button><button class="btn ghost" data-view="login">Login</button><button class="btn ghost" data-view="setup">Setup</button><button class="btn ghost" data-view="pending">Pending</button><button class="btn ghost" data-view="control">Control</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

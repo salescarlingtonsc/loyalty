@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="4cee982c012d1a2a77f8af24983a7b462457f25fe51884c7e9bea91954daf566"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="3ac2c5fdf850560ec09d002e2a4cb06a857ac703e1300836eefb33365175b552"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -5330,6 +5330,40 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .promotion-featured-row-v586 .btn{margin-left:auto}
 @media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
 
+/* ===================== nestly_v587 — the join sheet a scan opens ============================
+   Owner: "make it super fun with the theme similar to our app". The sheet leads with the Peekaa
+   wordmark on the brand's own warm wash, states the one question, and offers the one answer.
+   Everything else that used to be here (a referral field, a Cancel button beside the Join) is
+   gone at the owner's instruction: Yes, or the ✕. */
+.customer-join-sheet-v587{position:relative;width:min(var(--dialog-w-sm),calc(100vw - 32px));
+  text-align:center;padding:0 22px 24px;overflow:hidden}
+.customer-join-close-v587{position:absolute;top:12px;right:12px;z-index:2;display:inline-flex;
+  align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--hair);background:var(--card,#fff);color:var(--ink2);line-height:0;
+  cursor:pointer;transition:color .14s var(--ease),border-color .14s var(--ease)}
+.customer-join-close-v587:hover{color:var(--peekaa-red,var(--coral));border-color:currentColor}
+/* The wordmark sits on a soft brand wash with one warm glow behind it — the same two tokens the
+   customer celebration uses, so this reads as the app it belongs to rather than a system alert. */
+.customer-join-art-v587{position:relative;margin:0 -22px 18px;padding:30px 22px 24px;
+  background:var(--peekaa-red-faint,#FDEEEB);display:grid;place-items:center}
+/* Sized by HEIGHT, like the v576 QR-sheet wordmark — the asset is 890x568, so a width rule
+   would set its height by accident and a taller logo would swamp the sheet. */
+.customer-join-art-v587 img,.customer-join-art-v587 svg{position:relative;z-index:1;
+  height:74px;width:auto;max-width:70%;object-fit:contain}
+.customer-join-art-glow-v587{position:absolute;width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle,var(--peekaa-red-soft,#F7DCD7) 0%,transparent 70%);
+  opacity:.85}
+@media(prefers-reduced-motion:no-preference){
+  .customer-join-art-v587 img,.customer-join-art-v587 svg{animation:customerJoinPopV587 .42s var(--spring) both}
+  .customer-join-art-glow-v587{animation:customerJoinGlowV587 .5s var(--ease) both}
+}
+@keyframes customerJoinPopV587{from{transform:scale(.82) translateY(6px);opacity:0}to{transform:none;opacity:1}}
+@keyframes customerJoinGlowV587{from{transform:scale(.6);opacity:0}to{transform:none;opacity:.85}}
+.customer-join-kicker-v587{margin:0 0 6px}
+.customer-join-title-v587{margin:0;font-size:clamp(21px,5.4vw,26px);line-height:1.2}
+.customer-join-body-v587{margin:10px 0 0}
+.customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
+
   .v141-wordmark{font-size:1.35rem;font-weight:750;letter-spacing:-.04em;padding:4px 10px 22px}.v141-profile{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--hair)}
   </style></head><body><div class="shell"><aside class="side"><div class="v141-wordmark">◉◉<br>peekaa</div><nav class="nav"><a class="act" href="#/dashboard"> Dashboard</a><a href="#/clients">Customers</a><button class="navhead"><span>Serve &amp; sell</span><span class="chev">+</span></button><button class="navhead"><span>Grow</span><span class="chev">+</span></button><button class="navhead"><span>Money</span><span class="chev">+</span></button><button class="navhead"><span>Operations setup</span><span class="chev">+</span></button></nav><div class="foot">V141 source-bound candidate</div></aside>
   <div class="col"><header class="appbar"><div class="global-actions"><div class="global-search"><span class="global-search-ic">⌕</span><input aria-label="Find a customer" placeholder="Find a customer  ( / )"><button class="global-search-go" aria-label="Search customers">›</button></div><div class="global-quick"><button class="btn sm global-act">Record sale</button><button class="btn ghost sm global-act">New appointment</button></div></div><span class="dashboard-appbar-branch" id="dashboardBranchWrap"><span class="muted small">Loading branches…</span></span><select aria-label="Language" style="width:auto"><option>English</option></select><button class="v141-profile"><span class="avatar">G</span><b>Glow Atelier</b></button></header><main class="main" id="main"></main></div></div><div id="toast" class="toast"></div><script>
@@ -6498,6 +6532,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'4cee982c012d1a2a77f8af24983a7b462457f25fe51884c7e9bea91954daf566',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'3ac2c5fdf850560ec09d002e2a4cb06a857ac703e1300836eefb33365175b552',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

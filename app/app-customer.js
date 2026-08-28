@@ -2719,71 +2719,59 @@ async function renderCustomerProfile(requestedView){
    gateway (read-only, writes nothing), then asks. Resolves true when the customer presses Join.
    Pressing Cancel clears the pending token and returns them to their programmes, so a stale token
    cannot silently re-fire on the next render. */
+/* nestly_v587 (owner: "customer scan business qrcode to join their program > pops up Join xxxx
+   Programme? make it super fun with the theme similar to our app > they only can choose yes and
+   close button > once pressing yes will land inside the exact same business").
+
+   Three things were wrong before this, and only the third was cosmetic:
+     1. the preview NEVER resolved. The gateway rejected the token's shape (see JOIN_TOKEN_PATTERN
+        in supabase/functions/_shared/validation.ts), so this returned nothing and the sheet fell
+        back to "Join this business?" — the owner's "scanned but failed to retrieve".
+     2. even when it resolved, the name was read from a key the payload has never had:
+        internal_public_join_page_v89 returns `name`, this read `business_name` / `business.name`.
+     3. and the sheet asked for a referral code, which the owner has now replaced with one Yes.
+
+   The referral FIELD is gone at the owner's instruction. Referral by shared LINK is untouched and
+   is the path that actually carries attribution today: applyShareReferralV576 remembers the code
+   from a ?ref= share and applies it after sign-in, so a friend who shares their link still gets
+   credit without anybody typing anything. */
 async function confirmCustomerJoinV571(token,isCurrent){
   let preview=null;
   try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
   if(!isCurrent())return false;
-  const name=String(preview?.business_name||preview?.business?.name||'').trim();
+  /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
+     future payload that nests the business still names it. */
+  const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
+  pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
     overlay.className='modal customer-surface';
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
     overlay.setAttribute('aria-labelledby','customerJoinConfirmTitleV571');
-    overlay.innerHTML=`<section class="modal-card">
-      <p class="customer-quest-kicker" style="text-align:center;margin:0 0 12px">${esc(ct('addProgramme'))}</p>
-      <h2 id="customerJoinConfirmTitleV571" style="text-align:center;margin:0">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
-      <p class="muted small" style="text-align:center;margin:8px 0 0">${esc(ct('joinConfirmBodyV571'))}</p>
-      <label class="small" style="display:block;margin-top:16px">
-        <span>${esc(ct('joinReferralLabelV571'))}</span>
-        <input id="customerJoinReferralV571" type="text" autocomplete="off" maxlength="32"
-          placeholder="${esc(ct('joinReferralPlaceholderV571'))}" style="width:100%;margin-top:6px;text-transform:uppercase">
-      </label>
-      <p class="muted small" id="customerJoinReferralNoteV571" role="status" aria-live="polite" style="margin-top:6px"></p>
-      <div class="row" style="gap:10px;margin-top:18px">
-        <button class="btn ghost" type="button" id="customerJoinCancelV571" style="flex:1">${esc(ct('joinConfirmCancelV571'))}</button>
-        <button class="btn" type="button" id="customerJoinGoV571" style="flex:1">${esc(ct('joinConfirmGoV571'))}</button>
-      </div></section>`;
+    overlay.innerHTML=`<section class="modal-card customer-join-sheet-v587">
+      <button class="customer-join-close-v587" type="button" id="customerJoinCancelV571" aria-label="${esc(ct('joinConfirmCancelV571'))}" title="${esc(ct('joinConfirmCancelV571'))}">${CUI.icon('close',{size:18})}</button>
+      <div class="customer-join-art-v587" aria-hidden="true"><span class="customer-join-art-glow-v587"></span>${brandWordmark()}</div>
+      <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
+      <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
+      <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
+      <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
+    </section>`;
     document.body.appendChild(overlay);
     const close=answer=>{overlay.remove();resolve(answer)};
-    overlay.querySelector('#customerJoinCancelV571').onclick=()=>{
-      rememberPendingCustomerJoinToken('');close(false);nav('#/customer/programmes');
+    /* Close and the backdrop are the same decision: not now. The token is dropped so a stale scan
+       cannot be replayed by a later render, and the customer lands somewhere real. */
+    const dismiss=()=>{
+      rememberPendingCustomerJoinToken('');pendingCustomerJoinSlugV587='';
+      close(false);nav('#/customer/programmes');
     };
-    /* nestly_v571: the code is CHECKED before the customer confirms, so a wrong one is a
-       correction they can make here rather than a surprise after joining. customer_check_
-       referral_code_v571 is read-only and keyed on the join token. A check that cannot be
-       reached does not block anything — the apply call after the join re-validates for real,
-       and the server is the only thing that decides. */
-    const referralInput=overlay.querySelector('#customerJoinReferralV571');
-    const referralNote=overlay.querySelector('#customerJoinReferralNoteV571');
-    const joinButton=overlay.querySelector('#customerJoinGoV571');
-    const setNote=(text,bad)=>{
-      referralNote.textContent=text||'';
-      referralNote.classList.toggle('err',!!bad);
-    };
-    let checkSeq=0;
-    referralInput.addEventListener('input',()=>{
-      referralInput.value=referralInput.value.toUpperCase();
-      setNote('');
+    overlay.querySelector('#customerJoinCancelV571').onclick=dismiss;
+    overlay.addEventListener('mousedown',event=>{if(event.target===overlay)overlay.dataset.pressV587='1'});
+    overlay.addEventListener('click',event=>{
+      if(event.target!==overlay||overlay.dataset.pressV587!=='1')return;
+      overlay.dataset.pressV587='';dismiss();
     });
-    const checkReferralV571=async()=>{
-      const code=String(referralInput.value||'').trim();
-      if(!code)return true;
-      const seq=++checkSeq;
-      joinButton.disabled=true;
-      const {data,error}=await sb.rpc('customer_check_referral_code_v571',{p_join_token:token,p_code:code});
-      if(seq!==checkSeq)return false;
-      joinButton.disabled=false;
-      /* An unreachable check must never stop somebody joining. */
-      if(error)return true;
-      if(data&&data.ok===false){setNote(customerReferralReasonTextV571(data.reason),true);return false}
-      return true;
-    };
-    referralInput.addEventListener('blur',()=>{checkReferralV571()});
-    joinButton.onclick=async()=>{
-      if(!(await checkReferralV571()))return;
-      pendingCustomerJoinReferralV571=String(referralInput.value||'').trim();
-      close(true);
-    };
+    overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
     overlay.querySelector('#customerJoinGoV571').focus();
   });
 }
@@ -2800,6 +2788,9 @@ function customerReferralReasonTextV571(reason){
   return map[String(reason||'')]||ct('joinReferralUnknownV571');
 }
 let pendingCustomerJoinReferralV571='';
+/* nestly_v587: the business the scanned QR belongs to, learned from the read-only preview, so a
+   successful join can open it even if the join reply itself is older than v587. */
+let pendingCustomerJoinSlugV587='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
@@ -2840,13 +2831,19 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
-  const slug=normalizeCustomerBusinessIntent(data?.business?.slug||data?.business_slug||'');
+  /* nestly_v587 (owner: "once pressing yes will land inside the exact same business"). This read
+     was always empty: customer_join_business_from_qr_v89 returned outcome + business_id and no
+     slug at all, so every successful join fell back to the programmes list. v587 adds
+     business_slug to that reply; the preview's slug is the fallback for a reply minted before it. */
+  const slug=normalizeCustomerBusinessIntent(data?.business_slug||data?.business?.slug||'')
+    ||pendingCustomerJoinSlugV587;
   /* nestly_v571: the attribution runs AFTER the join, never before it, so a referral code can
      never be the reason somebody failed to join a programme. The server re-validates every
      guard — it does not trust the pre-check in the dialog — and its unique index makes a
      retried join a no-op rather than a second attribution. The idempotency key is derived from
      the joined business and the code, so the same retry sends the same key. */
   const referralCodeV571=pendingCustomerJoinReferralV571;pendingCustomerJoinReferralV571='';
+  pendingCustomerJoinSlugV587='';
   if(referralCodeV571&&slug){
     const {data:referralResult}=await sb.rpc('customer_apply_referral_code_v571',{
       p_business_slug:slug,p_code:referralCodeV571,

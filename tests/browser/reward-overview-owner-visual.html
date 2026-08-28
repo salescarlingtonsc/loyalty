@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="1ca4a2ff3002481c7c8361718a4fb4ec6a5ac0d55b606256124addd5252a9bed"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="35ec640a77ef893b227fcf6916897add8aa344a1cd5c518f0b312813eebd6ecc"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5329,8 +5329,42 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .promotion-featured-row-v586 .btn{margin-left:auto}
 @media(max-width:520px){.promotion-featured-row-v586 .btn{margin-left:0;width:100%;justify-content:center}}
 
+/* ===================== nestly_v587 — the join sheet a scan opens ============================
+   Owner: "make it super fun with the theme similar to our app". The sheet leads with the Peekaa
+   wordmark on the brand's own warm wash, states the one question, and offers the one answer.
+   Everything else that used to be here (a referral field, a Cancel button beside the Join) is
+   gone at the owner's instruction: Yes, or the ✕. */
+.customer-join-sheet-v587{position:relative;width:min(var(--dialog-w-sm),calc(100vw - 32px));
+  text-align:center;padding:0 22px 24px;overflow:hidden}
+.customer-join-close-v587{position:absolute;top:12px;right:12px;z-index:2;display:inline-flex;
+  align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--hair);background:var(--card,#fff);color:var(--ink2);line-height:0;
+  cursor:pointer;transition:color .14s var(--ease),border-color .14s var(--ease)}
+.customer-join-close-v587:hover{color:var(--peekaa-red,var(--coral));border-color:currentColor}
+/* The wordmark sits on a soft brand wash with one warm glow behind it — the same two tokens the
+   customer celebration uses, so this reads as the app it belongs to rather than a system alert. */
+.customer-join-art-v587{position:relative;margin:0 -22px 18px;padding:30px 22px 24px;
+  background:var(--peekaa-red-faint,#FDEEEB);display:grid;place-items:center}
+/* Sized by HEIGHT, like the v576 QR-sheet wordmark — the asset is 890x568, so a width rule
+   would set its height by accident and a taller logo would swamp the sheet. */
+.customer-join-art-v587 img,.customer-join-art-v587 svg{position:relative;z-index:1;
+  height:74px;width:auto;max-width:70%;object-fit:contain}
+.customer-join-art-glow-v587{position:absolute;width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle,var(--peekaa-red-soft,#F7DCD7) 0%,transparent 70%);
+  opacity:.85}
+@media(prefers-reduced-motion:no-preference){
+  .customer-join-art-v587 img,.customer-join-art-v587 svg{animation:customerJoinPopV587 .42s var(--spring) both}
+  .customer-join-art-glow-v587{animation:customerJoinGlowV587 .5s var(--ease) both}
+}
+@keyframes customerJoinPopV587{from{transform:scale(.82) translateY(6px);opacity:0}to{transform:none;opacity:1}}
+@keyframes customerJoinGlowV587{from{transform:scale(.6);opacity:0}to{transform:none;opacity:.85}}
+.customer-join-kicker-v587{margin:0 0 6px}
+.customer-join-title-v587{margin:0;font-size:clamp(21px,5.4vw,26px);line-height:1.2}
+.customer-join-body-v587{margin:10px 0 0}
+.customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
+
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 1ca4a2ff3002481c7c8361718a4fb4ec6a5ac0d55b606256124addd5252a9bed</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 35ec640a77ef893b227fcf6916897add8aa344a1cd5c518f0b312813eebd6ecc</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -15407,7 +15441,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'1ca4a2ff3002481c7c8361718a4fb4ec6a5ac0d55b606256124addd5252a9bed',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'35ec640a77ef893b227fcf6916897add8aa344a1cd5c518f0b312813eebd6ecc',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

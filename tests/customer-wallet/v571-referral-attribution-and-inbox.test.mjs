@@ -42,12 +42,25 @@ test('v571 the referral is applied AFTER the join, never before it', () => {
   assert.ok(applyCall > refusal, 'attribution sits past every join-failure return');
 });
 
-test('v571 the join is never blocked by an unreachable or refused code check', () => {
+/* nestly_v587 (owner: the scan sheet "only can choose yes and close button"). The referral FIELD
+   is gone from the join sheet, so the pre-check it guarded — customer_check_referral_code_v571 —
+   has no caller and the three assertions about its failure modes have nothing left to describe.
+   What v571 was really protecting is unchanged and is asserted instead: a referral can still never
+   be the reason somebody fails to join, and the code path that carries attribution today is the
+   shared LINK (applyShareReferralV576), which needs nobody to type anything. */
+test('nestly_v587 the join sheet asks one question and takes one answer', () => {
   const dialog = section(appJs, 'async function confirmCustomerJoinV571(', 'let pendingCustomerJoinReferralV571');
-  assert.match(dialog, /if\(error\)return true;/,
-    'a check that cannot be reached lets the customer through — the server re-validates anyway');
-  assert.match(dialog, /if\(!code\)return true;/, 'an empty code is not an error');
-  assert.match(dialog, /data\.ok===false/, 'only an explicit server refusal stops the confirm');
+  assert.doesNotMatch(dialog, /customerJoinReferralV571/, 'no referral field on the sheet');
+  assert.doesNotMatch(dialog, /customer_check_referral_code_v571/, 'and no pre-check to block on');
+  assert.match(dialog, /id="customerJoinGoV571"/, 'one Yes');
+  assert.match(dialog, /id="customerJoinCancelV571"[^>]*aria-label/, 'and one close, which is a real control');
+  // The preview names the business from the key the server actually sends.
+  assert.match(dialog, /preview\?\.name\|\|preview\?\.business_name/);
+});
+
+test('nestly_v587 referral by shared link still needs nobody to type a code', () => {
+  assert.match(appJs, /async function applyShareReferralV576\(slug\)\{/);
+  assert.match(appJs, /customer_apply_referral_code_v571/);
 });
 
 test('v571 the attribution key is stable across a retried join', () => {

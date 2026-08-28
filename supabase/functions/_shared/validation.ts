@@ -2,6 +2,17 @@ export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_PATTERN = /^\+[1-9][0-9]{7,14}$/;
 export const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+/* nestly_v587 — a JOIN token is not the same shape as a booking-manage token, and has not been
+   since v197. app.v197_join_token() returns encode(hmac(...),'hex'): 64 hex characters. This file
+   checked every token against the 43-character base64url shape, so the gateway answered 404 to
+   every join QR minted since v197 — the read-only preview the in-app scan sheet uses, and the
+   signed-out counter sign-up that posts here. Proven against the owner's own live QR (Jess Salon,
+   status active, join_enabled true): GET public-join?token=… -> 404, while
+   internal_public_join_page_v89 answered the same token correctly when called directly.
+   Both shapes are accepted: the 43-character one so a QR printed before v197 keeps working, and
+   the 64-hex one every QR minted since. TOKEN_PATTERN itself is untouched — booking-manage tokens
+   have their own generator and are not widened by this. */
+export const JOIN_TOKEN_PATTERN = /^(?:[A-Za-z0-9_-]{43}|[0-9a-f]{64})$/;
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const NESTLY_PUBLIC_ORIGINS = Object.freeze([
   'https://peekaa.asia',
@@ -62,7 +73,7 @@ export function validJoinPayload(body) {
 }
 
 export function validJoinTokenPayload(body) {
-  return !!body && TOKEN_PATTERN.test(String(body.join_token || ''))
+  return !!body && JOIN_TOKEN_PATTERN.test(String(body.join_token || ''))
     && String(body.name || '').trim().length >= 2
     && String(body.name || '').trim().length <= 100
     && /^[3689][0-9]{7}$/.test(String(body.phone || ''))
