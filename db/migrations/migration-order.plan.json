@@ -2763,6 +2763,12 @@
       "path": "db/migrations/20260828_nestly_v570_dashboard_off_means_off.sql",
       "semanticVersion": "v570",
       "proposedDeployVersion": "20260828000003"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v571_retention_dispatch_inert_repair.sql",
+      "semanticVersion": "v571",
+      "proposedDeployVersion": "20260828010856"
     }
   ]
 }
