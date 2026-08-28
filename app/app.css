@@ -3169,16 +3169,13 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-stamp-rung-state-v496{flex:0 0 auto;margin-left:auto;text-align:right}
 .customer-reward-quantity-v496{font-weight:800;letter-spacing:.02em}
 :root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
+:root{--peekaa-body:'Nunito',-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,'Segoe UI',sans-serif}
+.customer-surface,
+.customer-shell.customer-surface,
+.wallet-shell.customer-surface{--sf:var(--peekaa-body);font-family:var(--peekaa-body)}
 .customer-home-greeting-v343 h1,
 .customer-my-rewards-title h1,
 .customer-page-head h1{font-family:var(--peekaa-display)!important;letter-spacing:-.005em}
-.customer-home-greeting-v343 p,
-.customer-home-ready-copy-v343 b,
-.customer-home-ready-copy-v343 small,
-.customer-home-section-head-v343 h2,
-.customer-home-offers-head h2,
-.customer-home-section-head-v343 a,
-.customer-home-offers-head a{font-family:var(--peekaa-display)}
 .customer-home-head-emoji-v577{font-size:.85em;line-height:1;vertical-align:baseline}
 .customer-scan-modal .modal-card{width:min(360px,calc(100vw - 40px));padding:20px 20px 24px}
 .customer-scan-modal #customerScanSheetKicker{font-size:15px;font-weight:800;letter-spacing:.10em;color:var(--ink)}

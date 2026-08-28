@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="34178cc605d85a6f75ffd14ab15ec975b7eef9468b743d75906153f01699ec5f"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="533c22619d35149c75dac10d5c48e4275ff05f0e11380d980cac8b0f62a37f19"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4895,16 +4895,31 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    `!important` is present only where the rule it has to beat already used it (the ≤430px block
    pins .customer-home-greeting-v343 h1 with !important), never as a default. */
 :root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
+/* nestly_v579 (owner: "the other fonts are still not changed to nunito? basically other than the
+   main header - the rest is Nunito"). v577 read the earlier note as "the ringed titles" and put
+   Baloo 2 on the headings AND their neighbours. The rule is simpler than that: the main header is
+   the brand face, everything else on the customer surface is Nunito.
+
+   Done by REDEFINING --sf on the customer shell rather than by editing rules. Twenty rules across
+   this stylesheet already say `font-family:var(--sf)` — the greeting, section heads, card titles,
+   programme names, offer copy — and every one of them resolves through this variable, so one
+   override converts the whole surface and cannot miss a rule or drift when a new one is added.
+   It is scoped to .customer-surface, so the workspace keeps the system font it has today.
+
+   Both faces still END in the original --sf stack, so a blocked or slow Google Fonts request
+   falls back to exactly what renders now rather than to a serif. */
+:root{--peekaa-body:'Nunito',-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,'Segoe UI',sans-serif}
+/* The selector matches `.customer-shell.customer-surface` on purpose: that rule sets the system
+   stack DIRECTLY (not through --sf) at two-class specificity, so a single-class rule here set the
+   variable correctly and still lost the actual font-family — every element that merely inherits,
+   rather than naming var(--sf), stayed on the system face. Verified in-browser both ways. */
+.customer-surface,
+.customer-shell.customer-surface,
+.wallet-shell.customer-surface{--sf:var(--peekaa-body);font-family:var(--peekaa-body)}
+/* The main header — and only the main header — keeps the brand face. */
 .customer-home-greeting-v343 h1,
 .customer-my-rewards-title h1,
 .customer-page-head h1{font-family:var(--peekaa-display)!important;letter-spacing:-.005em}
-.customer-home-greeting-v343 p,
-.customer-home-ready-copy-v343 b,
-.customer-home-ready-copy-v343 small,
-.customer-home-section-head-v343 h2,
-.customer-home-offers-head h2,
-.customer-home-section-head-v343 a,
-.customer-home-offers-head a{font-family:var(--peekaa-display)}
 /* The two emoji the owner asked for beside the headings (photo 17: "add this" against ✨ on
    Limited offers and 👀 on Your Peekaa). Sized off the heading so they scale with it, and
    aria-hidden in the markup so a screen reader reads the heading, not "sparkles". */

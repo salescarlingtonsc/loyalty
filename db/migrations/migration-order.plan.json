@@ -2811,6 +2811,12 @@
       "path": "db/migrations/20260828_nestly_v577_publish_preserves_tier_identity.sql",
       "semanticVersion": "v577",
       "proposedDeployVersion": "20260828070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v579_inbox_backfill_promotion_ref.sql",
+      "semanticVersion": "v579",
+      "proposedDeployVersion": "20260828080000"
     }
   ]
 }

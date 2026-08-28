@@ -1280,7 +1280,7 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
     if(!isRouteCurrent())return;
     if(customerFeatures._load_error){
       if(!isRouteCurrent())return;
-      return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
+      return renderCustomerCapabilityRetry('We could not check your customer access.',customerFeatures._load_error_reason);
     }
     if(!customerFeatures.customer_phone_registration){
       if(!isRouteCurrent())return;
@@ -2325,11 +2325,18 @@ async function renderCustomerMessages(){
          #customerPushMessagesControl by id, and the push-permission tests read it — but it now
          renders inside the settings panel the gear opens, with the reminder preferences, which is
          where the owner drew both of them. */''}
+    ${/* nestly_v579 (owner: "not fixed"). v577 parked this card, but only from the inbox load —
+         AFTER first render. customer-push.js repaints `.customer-push-setting`.hidden from the push
+         state on every reconcile, and it honours the park ONLY when the attribute is already on the
+         node. The reconcile that runs before the inbox finishes loading therefore found a card with
+         no park attribute and un-hid it, which is why the owner kept seeing it. The attribute is
+         declared in the markup below now, so the card is parked from the very first paint and there
+         is no window in which the painter can disagree. */''}
     ${/* nestly_v576 (owner photos 8+9): device notifications is now an iOS-style on/off switch,
          Peekaa red, deliberately visible on the page — a single compact row instead of a card
          with a paragraph explaining itself. The status line already says what state it's in, so
          the old "lock screen too" copy is redundant and was dropped. */''}
-    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting customer-push-setting-row-v576" id="customerMessagesNotifications" hidden><div><h2 style="font-size:1rem;margin:0">Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite" style="margin:4px 0 0">Checking this device…</p></div><button class="push-switch-v576" id="customerPushMessagesControl" type="button" role="switch" aria-checked="false" aria-pressed="false"><span class="sr-only" data-push-label>Turn on device notifications</span><span class="push-switch-knob-v576" aria-hidden="true"></span></button></section>`}`});
+    ${NestlyNativeBridge.isNative?'':`<section class="card customer-push-setting customer-push-setting-row-v576" id="customerMessagesNotifications" hidden data-push-parked-v571><div><h2 style="font-size:1rem;margin:0">Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite" style="margin:4px 0 0">Checking this device…</p></div><button class="push-switch-v576" id="customerPushMessagesControl" type="button" role="switch" aria-checked="false" aria-pressed="false"><span class="sr-only" data-push-label>Turn on device notifications</span><span class="push-switch-knob-v576" aria-hidden="true"></span></button></section>`}`});
   focusCustomerRoute();
   /* v296 (owner drew it onto this page): the switch that governs whether these updates also
      reach the lock screen now sits with the inbox it governs, not behind an avatar menu. */

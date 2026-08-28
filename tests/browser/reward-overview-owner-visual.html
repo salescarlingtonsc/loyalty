@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="08bca88cf01d34c406a7264346c4ba8d1a2fa2b0e442acca3fc314af9cf9bbc2"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="3b14b44ad6645fd50e65ee4ed5a6300cad37952db2caeb96f390aa0b1744d57b"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -4896,16 +4896,31 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    `!important` is present only where the rule it has to beat already used it (the ≤430px block
    pins .customer-home-greeting-v343 h1 with !important), never as a default. */
 :root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
+/* nestly_v579 (owner: "the other fonts are still not changed to nunito? basically other than the
+   main header - the rest is Nunito"). v577 read the earlier note as "the ringed titles" and put
+   Baloo 2 on the headings AND their neighbours. The rule is simpler than that: the main header is
+   the brand face, everything else on the customer surface is Nunito.
+
+   Done by REDEFINING --sf on the customer shell rather than by editing rules. Twenty rules across
+   this stylesheet already say `font-family:var(--sf)` — the greeting, section heads, card titles,
+   programme names, offer copy — and every one of them resolves through this variable, so one
+   override converts the whole surface and cannot miss a rule or drift when a new one is added.
+   It is scoped to .customer-surface, so the workspace keeps the system font it has today.
+
+   Both faces still END in the original --sf stack, so a blocked or slow Google Fonts request
+   falls back to exactly what renders now rather than to a serif. */
+:root{--peekaa-body:'Nunito',-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,'Segoe UI',sans-serif}
+/* The selector matches `.customer-shell.customer-surface` on purpose: that rule sets the system
+   stack DIRECTLY (not through --sf) at two-class specificity, so a single-class rule here set the
+   variable correctly and still lost the actual font-family — every element that merely inherits,
+   rather than naming var(--sf), stayed on the system face. Verified in-browser both ways. */
+.customer-surface,
+.customer-shell.customer-surface,
+.wallet-shell.customer-surface{--sf:var(--peekaa-body);font-family:var(--peekaa-body)}
+/* The main header — and only the main header — keeps the brand face. */
 .customer-home-greeting-v343 h1,
 .customer-my-rewards-title h1,
 .customer-page-head h1{font-family:var(--peekaa-display)!important;letter-spacing:-.005em}
-.customer-home-greeting-v343 p,
-.customer-home-ready-copy-v343 b,
-.customer-home-ready-copy-v343 small,
-.customer-home-section-head-v343 h2,
-.customer-home-offers-head h2,
-.customer-home-section-head-v343 a,
-.customer-home-offers-head a{font-family:var(--peekaa-display)}
 /* The two emoji the owner asked for beside the headings (photo 17: "add this" against ✨ on
    Limited offers and 👀 on Your Peekaa). Sized off the heading so they scale with it, and
    aria-hidden in the markup so a screen reader reads the heading, not "sparkles". */
@@ -5005,7 +5020,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 08bca88cf01d34c406a7264346c4ba8d1a2fa2b0e442acca3fc314af9cf9bbc2</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 3b14b44ad6645fd50e65ee4ed5a6300cad37952db2caeb96f390aa0b1744d57b</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -14912,7 +14927,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'08bca88cf01d34c406a7264346c4ba8d1a2fa2b0e442acca3fc314af9cf9bbc2',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'3b14b44ad6645fd50e65ee4ed5a6300cad37952db2caeb96f390aa0b1744d57b',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

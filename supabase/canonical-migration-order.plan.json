@@ -2806,6 +2806,12 @@
       "version": "20260828070000",
       "name": "nestly_v577_publish_preserves_tier_identity",
       "sourcePath": "db/migrations/20260828_nestly_v577_publish_preserves_tier_identity.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828080000",
+      "name": "nestly_v579_inbox_backfill_promotion_ref",
+      "sourcePath": "db/migrations/20260828_nestly_v579_inbox_backfill_promotion_ref.sql"
     }
   ]
 }

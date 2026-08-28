@@ -1109,10 +1109,68 @@ const unavailableCustomerCapabilities=(loadError=false)=>({customer_identity:fal
 async function loadCustomerFeatureCapabilities({refresh=false}={}){
   if(CUSTOMER_FEATURES_EMERGENCY_DISABLED) return unavailableCustomerCapabilities();
   if(customerFeatureCapabilities&&!refresh) return customerFeatureCapabilities;
-  const {data,error}=await sb.rpc('get_customer_feature_capabilities');
-  if(error)return unavailableCustomerCapabilities(true);
-  customerFeatureCapabilities={...unavailableCustomerCapabilities(),...(data||{})};
-  return customerFeatureCapabilities;
+  /* nestly_v579 (owner: "keep not able to log in? what happen to the backend? i cannot afford to
+     have this in during live run", with the "We could not check your customer access" card).
+
+     The backend was checked and is not the fault: get_customer_feature_capabilities is SECURITY
+     DEFINER, granted to authenticated, answers in 9.5ms mean over 1,379 production calls, and
+     returns correctly for both a customer link and the owner's own auth user. Auth is healthy too
+     — no expired sessions, refreshes landing normally.
+
+     What was wrong is what this function did with ONE failure. Any error at all — a phone that
+     lost signal for a second, a cold edge worker, an access token that lapsed between page
+     restore and this call — returned _load_error and the router turned that into a permanent
+     "could not load" card whose only exit is a button. There was no retry, and no distinction
+     between "your session lapsed" (fixable here, silently) and "the server is down" (not).
+
+     So: an auth-shaped failure refreshes the session and tries again, which is the case that
+     produces exactly this screen after a phone has been asleep; anything else transient is
+     retried twice with a short backoff. Only a failure that survives all of that reaches the
+     card, and it now carries WHICH failure it was, so the next report identifies itself instead
+     of repeating one generic sentence. A 42501/PGRST301 that survives a refresh is a real
+     permission answer and is not retried further. */
+  const authShaped=error=>{
+    const code=String(error?.code||'');
+    const status=Number(error?.status||0);
+    return status===401||status===403||code==='42501'||code==='PGRST301'||code==='PGRST302';
+  };
+  const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  let lastError=null,refreshed=false;
+  for(let attempt=0;attempt<3;attempt++){
+    const {data,error}=await sb.rpc('get_customer_feature_capabilities');
+    if(!error){
+      customerFeatureCapabilities={...unavailableCustomerCapabilities(),...(data||{})};
+      return customerFeatureCapabilities;
+    }
+    lastError=error;
+    if(authShaped(error)){
+      /* One refresh, once. If the token really has lapsed this recovers silently; if the answer
+         is a genuine denial the retry returns the same thing and we stop. */
+      if(refreshed)break;
+      refreshed=true;
+      try{await sb.auth.refreshSession()}catch{}
+      continue;
+    }
+    if(attempt<2)await sleep(400*(attempt+1));
+  }
+  const unavailable=unavailableCustomerCapabilities(true);
+  unavailable._load_error_reason=customerCapabilityFailureReasonV579(lastError);
+  return unavailable;
+}
+/* The sentence the card shows. Each branch names something the reader can act on, and the last
+   one carries the server's own code so a screenshot is enough to identify it. */
+function customerCapabilityFailureReasonV579(error){
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)
+    return 'This device looks offline. Reconnect and try again.';
+  const code=String(error?.code||'');
+  const status=Number(error?.status||0);
+  if(status===401||status===403||code==='42501'||code==='PGRST301'||code==='PGRST302')
+    return 'Your sign-in has expired. Sign out and sign in again.';
+  if(code==='PGRST002')
+    return 'Peekaa is starting back up. Try again in a moment.';
+  if(status>=500||code==='')
+    return 'Peekaa could not be reached just now. Try again in a moment.';
+  return `Peekaa could not be reached just now (${code}). Try again in a moment.`;
 }
 
 /* v185 surface chunks. app/app.js is still the one file anybody edits; the build partitions it by
@@ -1461,7 +1519,7 @@ async function route(){
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
       const customerCapabilities=await loadCustomerFeatureCapabilities();
       if(!isRouteCurrent())return;
-      if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');
+      if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access.',customerCapabilities._load_error_reason);
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
       return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
     }
@@ -3301,7 +3359,7 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
   const features=await loadCustomerFeatureCapabilities();
   customerInboxEnabledV178=features?.customer_in_app_inbox===true;
   if(!isCurrent())return null;
-  if(features._load_error){if(!silent)renderCustomerCapabilityRetry('We could not check your customer access. Please try again.');return null}
+  if(features._load_error){if(!silent)renderCustomerCapabilityRetry('We could not check your customer access.',features._load_error_reason);return null}
   if(!features.customer_wallet){if(!silent)renderCustomerWalletUnavailable();return null}
   const [profileResult,personaResult]=await Promise.all([
     features.customer_phone_registration===true?customerRpc('customer_get_profile'):Promise.resolve({data:null,error:null}),
@@ -3459,12 +3517,13 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
   $('walletSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
-function renderCustomerCapabilityRetry(message){
+function renderCustomerCapabilityRetry(message,reason=''){
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
     <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
+      ${reason?`<p class="muted small" style="margin-top:6px">${esc(reason)}</p>`:''}
       <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
     </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();

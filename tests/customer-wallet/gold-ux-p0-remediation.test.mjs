@@ -8,7 +8,22 @@ test('customer capability and profile failures stay retryable and never masquera
   const registration = app.match(/async function renderCustomerRegistration\([^\n]*\)[\s\S]*?(?=const CUSTOMER_PRIMARY_NAV|async function renderCustomerClaim)/)?.[0] || '';
   const context = app.match(/async function loadCustomerSurfaceContext\([^\n]*\)[\s\S]*?(?=async function renderCustomerProgrammes)/)?.[0] || '';
   const wallet = app.match(/async function renderCustomerWallet\([\s\S]*?(?=async function renderCustomerNotificationPreferences)/)?.[0] || '';
-  assert.match(app, /if\(error\)return unavailableCustomerCapabilities\(true\)/);
+  /* nestly_v579 (owner: "keep not able to log in ... i cannot afford to have this in during live
+     run"). A capability failure is still marked retryable — that is the invariant this test
+     protects — but a SINGLE failure no longer produces the dead-end card. An auth-shaped error
+     refreshes the session and retries once, anything else transient is retried with a backoff,
+     and only a failure that survives all of that is surfaced (with the reason). */
+  const capabilities = app.match(/async function loadCustomerFeatureCapabilities\([\s\S]*?\n\}/)?.[0] || '';
+  assert.match(capabilities, /unavailableCustomerCapabilities\(true\)/,
+    'a surviving failure must still be marked retryable, never cached as a real answer');
+  assert.match(capabilities, /for\(let attempt=0;attempt<3;attempt\+\+\)/,
+    'a single transient failure must not become a permanent card');
+  assert.match(capabilities, /await sb\.auth\.refreshSession\(\)/,
+    'an expired token must be refreshed and retried rather than shown as an outage');
+  assert.match(capabilities, /if\(refreshed\)break/,
+    'a genuine permission denial must not loop on refresh');
+  assert.match(app, /_load_error_reason/,
+    'the card must say which failure it was, so the next report identifies itself');
   assert.match(app, /_load_error:loadError/);
   assert.match(app, /customerCapabilities\._load_error\)return renderCustomerCapabilityRetry/);
   assert.match(app, /customerFeatures\._load_error\)\{[\s\S]{0,160}return renderCustomerCapabilityRetry/);
