@@ -93,8 +93,13 @@ test('the strip is a real tablist, not styled buttons', () => {
 
 test('the chosen tab is remembered for the visit, not for ever', () => {
   // scoped to this helper: an unrelated collapsible elsewhere keeps its own localStorage key
+  /* nestly_v584: the slice used to end at enhanceBookingsTabsV195, which no longer exists (owner
+     photo 13 deleted the Bookings settings tab). It ends at the next top-level declaration
+     instead, which is what "this helper only" always meant. */
   const body = appJs.slice(appJs.indexOf('function sectionTabsV200'),
-    appJs.indexOf('function enhanceBookingsTabsV195'));
+    appJs.indexOf('let bookingsShellTokenV288', appJs.indexOf('function sectionTabsV200')) > 0
+      ? appJs.indexOf('let bookingsShellTokenV288', appJs.indexOf('function sectionTabsV200'))
+      : appJs.indexOf('const V183_DAYS=', appJs.indexOf('function sectionTabsV200')));
   // sessionStorage: a tab is "where was I just now". Restoring last week's choice would hide the
   // section the owner came back for.
   assert.match(body, /sessionStorage\.setItem\(storageKey,groups\[index\]\.name\)/);

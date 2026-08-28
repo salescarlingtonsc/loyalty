@@ -270,6 +270,7 @@ test('service worker notifies but never re-navigates open pages after replacing 
       'nestly-shell-v9-20260808-v195-tier-icons',
       'nestly-shell-v10-20260812-v289-guarded-updates',
       'nestly-shell-v21-20260828-v578',
+      'nestly-shell-v22-20260829-v584',
       'unrelated-cache'
     ]
   });
@@ -293,12 +294,15 @@ test('service worker notifies but never re-navigates open pages after replacing 
     'nestly-shell-v9-20260808-v195-tier-icons',
     /* V298: v10 joins the condemned list because v298 is v11 — the shell that cached the
        doubled-caption customer-ui.js must not survive activation. */
-    'nestly-shell-v10-20260812-v289-guarded-updates'
+    'nestly-shell-v10-20260812-v289-guarded-updates',
+    /* nestly_v584: and v21 joins it, because v584 is v22 — the shell that precached the
+       customer-ui.js without the dustbin glyph must not survive activation either. */
+    'nestly-shell-v21-20260828-v578'
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
     {
       type: 'PEEKAA_SW_ACTIVATED',
-      cacheVersion: 'v21-20260828-v578'
+      cacheVersion: 'v22-20260829-v584'
     }
   ]);
   /* V289 (audit A3, G3a): activation is now only reached through the guarded applyUpdate path,

@@ -43,7 +43,10 @@ test("the button's visibility gate matches the destination route's own access gu
      line: an owner who switched a staff member's Dashboard permission Off meant it, and the
      exemption made that a no-op. 'sales' was never the exempted key, so the condition this test
      cares about is still byte-for-byte the same for the /sales route. */
-  assert.match(app,/if\(MODULES\[pageKey\]&&!OWNER_ONLY_MODULES\.has\(pageKey\)\s*\n(?:\s*&&!BOTTLE_SURFACES_V275\.has\(pageKey\)\s*\n)?\s*&&!canReadModule\(pageKey\)\)\{/);
+  /* nestly_v584: the guard resolves a SURFACE alias first (Customer packages is its own rail row
+     but is gated on the real 'packages' module), so the key it tests is moduleGateKeyV584 rather
+     than the raw pageKey. Same guard, same failure mode, one indirection. */
+  assert.match(app,/if\(MODULES\[pageKey\]&&!OWNER_ONLY_MODULES\.has\(pageKey\)\s*\n(?:\s*&&!BOTTLE_SURFACES_V275\.has\(pageKey\)\s*\n)?\s*&&!canReadModule\(moduleGateKeyV584\)\)\{/);
   assert.ok(!app.includes("OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','sales'"),
     'sales must not be owner-only, or the route guard and this button\'s gate would diverge');
 });

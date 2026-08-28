@@ -70,15 +70,23 @@ test('services and inventory render explicit read-only states and bind mutations
   assert.match(inventory,/Read-only product access/);
   assert.match(inventory,/canWrite\?importBtn\('inventory'\):''/);
   assert.match(inventory,/if\(canWrite\)\$\('padd2'\)\.onclick/);
-  assert.match(inventory,/if\(canWrite\)\$\('badd2'\)\.onclick/);
+  /* nestly_v584 (owner photo 9: "Remove stock taking feature", confirmed as everywhere in the
+     app). The receive-batch handler is gone with the control it was bound to, so there is no
+     second write on this page to gate — which is the state the role matrix needs to know. */
+  assert.doesNotMatch(inventory,/\$\('badd2'\)/);
+  assert.doesNotMatch(inventory,/receive_stock/);
   assert.match(inventory,/id="inventoryRetry"/);
 });
 
 test('packages and expenses retain reads while their write actions follow the exact module matrix',()=>{
-  const packages=section('async function packagesPage(){','/* ---------- branches');
+  const packages=section('async function packagesPage(options){','/* ---------- branches');
   const expenses=section('async function expensesPage(){','/* ---------- P&L ---------- */');
   assert.match(packages,/const canWrite=canWriteModule\('packages'\)/);
-  assert.match(packages,/if\(canWrite\)\{[\s\S]*\$\('kadd'\)\.onclick/);
+  /* nestly_v584: the page renders one of two views (owner photo 12 moved Customer packages into
+     its own Serve & sell rail row), so the plan-editor handlers are gated on the write permission
+     AND on being the view that draws them. The permission half is what this matrix is about and
+     is unchanged. */
+  assert.match(packages,/if\(canWrite&&packagesViewV584==='plans'\)\{[\s\S]*\$\('kadd'\)\.onclick/);
   /* V285 retarget: the canSell capability gate and the #ksell handler it guarded are both GONE,
      because the control they protected has not existed since selling a package moved into the
      till — no markup here or in index.html renders #ksell, #kc, #kk or #kSaleBranch. The pin now

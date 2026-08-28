@@ -114,6 +114,9 @@ test('V324 the symbol rewardCardGridV250 still appears exactly twice — declare
 });
 
 test("V324 growPointsRewardTabV324 resets to 'published' on route change, same as the other module-level tab flags", () => {
-  const resetLine = app.split('\n').find(line => line.includes("growOffersTabV324='published';growPointsRewardTabV324='published';"));
+  /* nestly_v584 slid growOffersPageV584 into this same reset (the offer list pages at 20 now, and
+     a new route must start on page one), so the two flags are no longer adjacent characters. */
+  const resetLine = app.split('\n').find(line =>
+    line.includes("growOffersTabV324='published';") && line.includes("growPointsRewardTabV324='published';"));
   assert.ok(resetLine, 'the router reset must clear the points reward tab alongside growTopicV229 and growOffersTabV324');
 });

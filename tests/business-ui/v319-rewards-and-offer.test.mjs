@@ -364,7 +364,7 @@ test('V319 #/grow/offers resolves as a view, lights one rail row, and renders on
   assert.match(appJs,/const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/,
     'without this the hash is handed to the deep editor instead of the view');
   /* V375 added 'bringback' to the same list, for the same reason — see photo 9. */
-  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback','birthday'\]/,
+  assert.match(appJs,/const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback','birthday','welcome'\]/,
     'without this the offers view falls through to "render every category"');
   /* Rail active-state: 'offers' belongs to its own child, not to the Rewards Programme list. */
   const navActive=section('const navViewActiveV296=','const childRowsV294=');
@@ -444,12 +444,21 @@ test('V319 every attribute this wave emits is read back with the casing the DOM 
   /* W6 increment 2 shipped four dead toggles because a handler read dataset.growSetupSwitchW6I2
      while the DOM spells the attribute growSetupSwitchW6i2. These three attributes are test hooks
      with no dataset reader at all — this asserts that stays true, so the trap cannot reopen. */
-  for(const attribute of ['grow-overview-split-v319','grow-overview-category-v319','grow-limited-offer-v319']){
+  for(const attribute of ['grow-overview-split-v319','grow-limited-offer-v319']){
     const camel=attribute.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
     assert.match(appJs,new RegExp(`data-${attribute}`),`${attribute} must be emitted`);
     assert.doesNotMatch(appJs,new RegExp(`dataset\\.${camel}`,'i'),
       `${attribute} gained a dataset reader — pin the exact casing before relying on it`);
   }
+  /* nestly_v584: grow-overview-category-v319 DID gain a reader — the History sub-tabs the owner
+     asked for (photo 14: "both needs to have their own sub tabs - to show one at a time") switch
+     the two sections by that attribute. So it leaves the no-reader list and joins the pinned one:
+     the DOM spells `data-grow-overview-category-v319` as dataset.growOverviewCategoryV319, and any
+     other casing is the exact bug this test exists for. */
+  assert.match(appJs,/data-grow-overview-category-v319/);
+  assert.match(appJs,/dataset\.growOverviewCategoryV319/,
+    'the reader must use the casing the DOM gives, not a hand-typed variant');
+  assert.doesNotMatch(appJs,/dataset\.growOverviewCategoryv319/);
 });
 
 test('V319 the shipped business bundle carries all three changes', () => {

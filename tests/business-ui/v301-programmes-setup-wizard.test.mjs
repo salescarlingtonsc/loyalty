@@ -61,7 +61,7 @@ test('V301 (a) the wizard is a real function, mounted from growPage', () => {
   /* V371: one constant now feeds both the view resolver and the deep-link guard. They used to be
      separate literals and drifted — V366 added 'bringback' to the resolver only, so the Bring-back
      page also mounted a deep editor surface with a view name where a draft id belongs. */
-  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','birthday','ongoing','available','settings','setup'\]\);/);
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','birthday','welcome','ongoing','available','settings','setup'\]\);/);
   assert.match(app, /const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
   assert.match(app, /const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/);
 });
@@ -73,7 +73,7 @@ test('V301 (a) "setup" resolves as a Programmes view, and is not mistaken for a 
   // The three V271/V294 rail children keep resolving exactly as before.
   assert.match(app, /views:\[\['Overview','#\/grow\/overview','reports'\],\['Rewards Programme','#\/grow','star'\],\s*\['Limited Offer','#\/grow\/offers','tag'\],\['History','#\/grow\/history','waitlist'\]\]/);
   // The view replaces the category list rather than stacking on it.
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback','birthday'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback','birthday','welcome'\]\.includes\(programmeView\);/);
   assert.match(grow, /programmeView==='setup'\?'Set up rewards'/);
 });
 

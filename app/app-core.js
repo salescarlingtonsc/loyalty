@@ -250,7 +250,10 @@ const INDUSTRIES={
 };
 const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],clients:['customers','Customers'],appointments:['appointments','Appointments'],
   sales:['sales','Sales & refunds'],services:['services','Services'],bookings:['bookings','Bookings'],waitlist:['waitlist','Waitlist'],
-  inventory:['inventory','Products'],packages:['packages','Packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
+  inventory:['inventory','Products'],packages:['packages','Packages'],
+  /* nestly_v584: a SURFACE key, like 'bottlesetup' — not a sector entitlement. It is gated on the
+     real 'packages' module through SURFACE_MODULE_ALIAS_V584 below. */
+  custpackages:['packages','Customer packages'],branches:['branch','Branches'],loyalty:['loyalty','Loyalty'],
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],support:['customers','WhatsApp Inbox'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
@@ -281,6 +284,9 @@ const HIDDEN_BUSINESS_SURFACES=new Set([]);
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf','customerintel']);
 const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
+/* nestly_v584: a surface that has its own rail row and route but no entitlement of its own —
+   the value is the module whose read permission actually governs it. */
+const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages'});
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -321,6 +327,9 @@ let growSwitchErrorV322='';
    tabs re-renders growPage from scratch. Cleared by the router alongside growTopicV229 so leaving
    the page and coming back always opens on Published. */
 let growOffersTabV324='published';
+/* nestly_v584: which page of the current offer bucket is on screen. Module-level like the tab
+   above, because the list is part of the grow page's one big render. */
+let growOffersPageV584=0;
 /* V324 (owner: apply the same Published/Draft/History split to Point system's own reward
    catalogue). The three groups already existed as data — rewardCardsV250 (live/scheduled/paused),
    growPendingNewRewardsV268 (created in the current draft, never published) and
@@ -761,7 +770,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growOffersPageV584=0;growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -1863,9 +1872,10 @@ async function route(){
        inherits and passes, and only an explicit denial fails. Setup keeps its always-reachable
        status by a different route — it is in OWNER_ONLY_MODULES and has its own owner guard
        above — so nothing un-configured is locked out by this. */
+    const moduleGateKeyV584=SURFACE_MODULE_ALIAS_V584[pageKey]||pageKey;
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)
        &&!BOTTLE_SURFACES_V275.has(pageKey)
-       &&!canReadModule(pageKey)){
+       &&!canReadModule(moduleGateKeyV584)){
       toast('You don\'t have access to that.');
       return nav(firstPermittedPageV570());
     }
@@ -6329,12 +6339,14 @@ const IMPORT_CONFIGS={
       {key:'description',aliases:['description','desc','details']}],
     build:o=>({business_id:S.biz.id,active:true,...o})},
   inventory:{title:'Products',table:'products',
-    hint:'Columns: name (required), sku, price/retail (in dollars), and optionally qty/stock for an opening batch.',
+    /* nestly_v584: no opening-batch column. Stock counting left the workspace with the owner's
+       photo-9 ruling, so a CSV that promises to load an opening quantity would be promising a
+       figure nothing in the app can now show. */
+    hint:'Columns: name (required), sku, price/retail (in dollars).',
     fields:[
       {key:'name',aliases:['name','product','item'],required:true},
       {key:'sku',aliases:['sku','code','barcode','ref']},
-      {key:'retail_price_cents',aliases:['price','retail','retail price','price (sgd)','amount','cost'],money:true},
-      {key:'opening_qty',aliases:['qty','quantity','stock','on hand','opening stock','count'],int:true,stripField:true}],
+      {key:'retail_price_cents',aliases:['price','retail','retail price','price (sgd)','amount','cost'],money:true}],
     build:o=>({business_id:S.biz.id,...o})},
   staff:{title:'Team members',table:'staff',
     hint:'Columns: name (required), email, phone, title, role, calendar_color. Imported people are roster records; invite them separately if they need to sign in.',
@@ -6355,14 +6367,10 @@ const IMPORT_CONFIGS={
       {key:'email',aliases:['email','e-mail']},
       {key:'timezone',aliases:['timezone','time zone'],def:'Asia/Singapore'}],
     build:o=>({business_id:S.biz.id,active:true,...o})},
-  reservations:{title:'Tables / capacity',table:'booking_tables',
-    hint:'Columns: name (required), pax/seats, quantity, sort. Use one row per table type or capacity pool.',
-    fields:[
-      {key:'name',aliases:['name','table','table type','capacity type'],required:true},
-      {key:'pax',aliases:['pax','seats','party size'],int:true},
-      {key:'quantity',aliases:['quantity','qty','count','number'],int:true,def:1},
-      {key:'sort',aliases:['sort','order','position'],int:true,def:0}],
-    build:o=>({business_id:S.biz.id,active:true,...o})},
+  /* nestly_v584: the Tables / capacity importer is gone with the surface that opened it (owner
+     photo 13). booking_tables and everything a business has already saved in it are untouched in
+     the database; there is simply no longer a screen here that reads or writes them, and an
+     import button with no page behind it is a door into a room that was demolished. */
 };
 /* Parse pasted/file text into array-of-arrays. Auto-detects tab (Excel paste) vs comma (CSV),
    honours quoted fields + embedded newlines. */
@@ -6643,15 +6651,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   customerRecordExported:Object.freeze({en:'{count} customer record exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
   customerRecordsExported:Object.freeze({en:'{count} customer records exported with no silent truncation.','zh-CN':'已完整导出 {count} 条顾客记录。',ms:'{count} rekod pelanggan dieksport tanpa pemotongan senyap.'}),
   customersShown:Object.freeze({en:'{count} customers shown','zh-CN':'已显示 {count} 位顾客',ms:'{count} pelanggan ditunjukkan'}),
-  importBooking:Object.freeze({en:'Import {count} booking','zh-CN':'导入 {count} 个预订',ms:'Import {count} tempahan'}),
-  importBookings:Object.freeze({en:'Import {count} bookings','zh-CN':'导入 {count} 个预订',ms:'Import {count} tempahan'}),
-  bookingsReady:Object.freeze({en:'{ready} bookings ready (of {rows} rows).','zh-CN':'{rows} 行中有 {ready} 个预订可导入。',ms:'{ready} tempahan sedia (daripada {rows} baris).'}),
-  firstBookings:Object.freeze({en:'First: {bookings}…','zh-CN':'首批：{bookings}…',ms:'Pertama: {bookings}…'}),
-  importBookingPreview:Object.freeze({en:'✓ Imported {inserted}, skipped {skipped}.','zh-CN':'✓ 已导入 {inserted} 个，跳过 {skipped} 个。',ms:'✓ {inserted} diimport, {skipped} dilangkau.'}),
-  firstImportError:Object.freeze({en:'First {count} error:','zh-CN':'首 {count} 个错误：',ms:'{count} ralat pertama:'}),
-  firstImportErrors:Object.freeze({en:'First {count} errors:','zh-CN':'前 {count} 个错误：',ms:'{count} ralat pertama:'}),
-  importedBooking:Object.freeze({en:'Imported {count} booking — review it above as pending','zh-CN':'已导入 {count} 个预订，请在上方审核待处理项目',ms:'{count} tempahan diimport — semak sebagai belum selesai di atas'}),
-  importedBookings:Object.freeze({en:'Imported {count} bookings — review them above as pending','zh-CN':'已导入 {count} 个预订，请在上方审核待处理项目',ms:'{count} tempahan diimport — semak sebagai belum selesai di atas'}),
   importCustomers:Object.freeze({en:'Import {count} customers','zh-CN':'导入 {count} 位顾客',ms:'Import {count} pelanggan'}),
   customersReady:Object.freeze({en:'{ready} customers ready (of {rows} rows).','zh-CN':'{rows} 行中有 {ready} 位顾客可导入。',ms:'{ready} pelanggan sedia (daripada {rows} baris).'}),
   firstCustomers:Object.freeze({en:'First: {customers}…','zh-CN':'首批：{customers}…',ms:'Pertama: {customers}…'}),
@@ -6756,6 +6755,13 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   calendarPendingRequest:Object.freeze({en:'Awaiting confirmation: {service} for {customer}, {time}, {staff}','zh-CN':'待确认：{customer} 的 {service}，{time}，{staff}',ms:'Menunggu pengesahan: {service} untuk {customer}, {time}, {staff}'}),
   bookAppointmentSlot:Object.freeze({en:'Book {service} with {staff} at {time}','zh-CN':'预约 {service}：{staff}，{time}',ms:'Tempah {service} dengan {staff} pada {time}'}),
   callBookingCustomer:Object.freeze({en:'Call {customer} on {phone}','zh-CN':'致电 {customer}：{phone}',ms:'Hubungi {customer} di {phone}'}),
+  /* nestly_v584: the tick and cross that replaced the Confirm / Decline words carry these as their
+     accessible names, so nothing was lost by dropping the visible text. */
+  confirmBookingFor:Object.freeze({en:'Confirm the booking for {customer}','zh-CN':'确认 {customer} 的预订',ms:'Sahkan tempahan untuk {customer}'}),
+  /* nestly_v584: the staff editor's Delete became a dustbin (owner photo 16), so the whole
+     sentence now lives in its accessible name. */
+  deleteTeammateNamed:Object.freeze({en:'Delete {name}','zh-CN':'删除 {name}',ms:'Padam {name}'}),
+  declineBookingFor:Object.freeze({en:'Decline the booking for {customer}','zh-CN':'拒绝 {customer} 的预订',ms:'Tolak tempahan untuk {customer}'}),
   removeFromWaitlist:Object.freeze({en:'Remove {customer} from waitlist','zh-CN':'将 {customer} 从候补名单中移除',ms:'Alih keluar {customer} daripada senarai menunggu'}),
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
@@ -6792,9 +6798,10 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'offerOnCustomerHome','offerNotLiveForHome','offerLiveCapReached',
   'customerPagination','completedTransaction','completedTransactions',
   'scopePeriod','allBranchesPeriod','scopeCustomers','customerRecordExported',
-  'customerRecordsExported','customersShown','importBooking','importBookings',
-  'bookingsReady','firstBookings','importBookingPreview','firstImportError','firstImportErrors',
-  'importedBooking','importedBookings','importCustomers',
+  /* nestly_v584: the nine booking-import strings retired with the bookings CSV importer, which
+     went with the Booking settings tab the owner deleted (photo 13). A named template with no
+     render path is copy that can only rot. */
+  'customerRecordsExported','customersShown','importCustomers',
   'customersReady','firstCustomers','requestStatus','adjustedBalance','itemAdded','itemSelected',
   'noValidImportRows','noValidImportRowsSkipped','importRowsReady','importRowsReadySkipped',
   'bookedWith','newReturn','newReturns','measurementStarted','measurementStartedEnds',
@@ -6822,7 +6829,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'positiveStampCost','positivePointsCost','switchOtherWorkspace','switchOtherWorkspaces',
   'notificationsUnread','phoneKeyDelete','phoneKeyClear','phoneKeyDigit','openCustomer',
   'removeItem','deleteItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
-  'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','bookAppointmentSlot','removeFromWaitlist','joinedAt',
+  'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','confirmBookingFor','declineBookingFor','deleteTeammateNamed','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails','explainHelpDotV385',
   /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
      "How the programme fits together" block that was their only render path. */

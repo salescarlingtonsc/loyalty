@@ -69,11 +69,17 @@ test('frontend preserves invalid source values for backend validation', async ()
   assert.doesNotMatch(app, /birth_date.*transform:/i);
 });
 
-test('staff, branch and reservation upload controls use the shared importer', async () => {
+test('staff and branch upload controls use the shared importer', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  for (const entity of ['staff', 'branches', 'reservations']) {
+  /* nestly_v584: 'reservations' left this list with the surface that offered it — the owner
+     deleted Bookings' settings tab and its contents (photo 13), and Tables / capacity was the
+     only page that carried importBtn('reservations'). The importer MECHANISM this test exists to
+     pin is unchanged, and is still proven by the two entities that still have a screen. */
+  for (const entity of ['staff', 'branches']) {
     assert.match(app, new RegExp(`${entity}:\\{title:`));
     assert.match(app, new RegExp(`importBtn\\('${entity}'(?:,[^)]*)?\\)`));
   }
+  assert.doesNotMatch(app, /importBtn\('reservations'/);
+  assert.doesNotMatch(app, /reservations:\{title:/);
   assert.match(app, /Imported people are roster records; invite them separately/i);
 });

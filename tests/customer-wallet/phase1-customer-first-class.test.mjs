@@ -76,7 +76,7 @@ test('business entry resolves workspaces while customer and workspace deep links
   assert.match(chooser,/const hasCustomer=includeCustomer&&/);
   assert.match(chooser,/<h2 id="personaWorkspacesTitle">Business workspaces<\/h2>/);
   assert.match(chooser,/<h2>\$\{esc\(BRAND\.customerLabel\)\}<\/h2>/);
-  assert.match(chooser,/staff\.map\(workspace=>`<a class="btn ghost sm" href="#\/workspace\/\$\{encodeURIComponent\(workspace\.business_slug\)\}\/dashboard"/);
+  assert.match(chooser,/staff\.map\(workspace=>`<a class="btn ghost" href="#\/workspace\/\$\{encodeURIComponent\(workspace\.business_slug\)\}\/dashboard"/);
   assert.match(chooser,/href="#\/wallet"/);
 });
 

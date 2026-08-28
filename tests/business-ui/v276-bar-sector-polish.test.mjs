@@ -80,7 +80,7 @@ test('V276 a bar keeps Bookings and Waitlist in Serve & sell, and Bottles standa
   assert.match(app,
     /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely");
        nestly_v488 (owner, photo 2): Bottles left the group for its own flat rail entry. */
-    /\{key:'serve',icon:'till',label:'Serve & sell',items:\['till','appointments','bookings','waitlist'\]\}/);
+    /\{key:'serve',icon:'till',label:'Serve & sell',items:\['till','appointments','bookings','waitlist','custpackages'\]\}/);
   assert.match(app, /\{key:'bottles',icon:'bottle',flat:'Bottles',items:\['bottles'\]\}/);
   // Bottles is stripped for every sector except a bar, and for no other reason.
   assert.match(navHtml, /const sectorShowsBottlesV275=isBarSectorV275\(\);/);

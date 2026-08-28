@@ -3,51 +3,39 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 
-test('bookings separates the thing you act on from the things you set once', () => {
-  // Owner: "below here got different tab so it's not messy" — the requests table was buried
-  // between customer app actions, change requests, tables/capacity and CSV import.
-  assert.match(app, /function enhanceBookingsTabsV195/);
-  assert.match(app, /id="bookingsTabRequests"/);
-  assert.match(app, /id="bookingsTabSettings"/);
-  assert.match(app, /enhanceBookingsTabsV195\(M\(\)\)/);
-});
-
-test('the split is done in the DOM so every existing id keeps working', () => {
-  const i = app.indexOf('function enhanceBookingsTabsV195');
-  const src = app.slice(i, i + 2600);
-  assert.match(src, /root\.querySelector\('#blist'\)/);
-  assert.ok(!src.includes('innerHTML=`<div class="card" id="blist"'),
-    'the shared template must not be rewritten; load paths depend on those ids');
-  /* V288 (audit A2 HIGH 3): RETARGETED, not deleted. A literal '1' was idempotent across
-     re-renders in the WRONG direction — dataset survives an innerHTML reset, so the realtime
-     re-render skipped the enhancement entirely and destroyed the tabs it was meant to protect.
-     The guard is now a per-render token, which is idempotent WITHIN a render and re-arms
-     between them. */
-  assert.match(src, /dataset\.bookingsTabsV195!==String\(bookingsShellTokenV288\)/,
-    'must be idempotent within a render, and re-arm between renders');
-});
-
-test('the portal link stays visible in both tabs', () => {
-  const i = app.indexOf('function enhanceBookingsTabsV195');
-  const src = app.slice(i, i + 2600);
-  /* V288 (audit A2 HIGH 2): RETARGETED, not deleted. #cp lives in the .topbar, so
-     closest('.card,section') returned NULL and the portal card was never actually recognised —
-     this assertion passed while the behaviour it names was broken. The nodes that stay above
-     the tabs are marked with data-bookings-shell now, so the check is on the real mechanism. */
-  /* V375: the portal card moved to Appointments (owner, photo 5), so the shell marker that
-     stays above the tabs here is the head — the mechanism this test names is unchanged. */
-  assert.match(app, /data-appointments-shell="portal"/);
+/* nestly_v584 — the V195/V288 tab split is DELETED, at the owner's instruction.
+   Owner photo 13 struck "Booking settings" through and wrote "delete booking settings"; asked
+   what should become of what the tab held (the seating switch, Tables / capacity and the bookings
+   CSV import), they chose to delete the tab AND its contents. So the four tests that used to
+   stand here — the enhancer, the DOM split, the portal card above the tabs and the tab a11y — are
+   replaced by ONE that holds the deletion in place, because a re-grown Booking settings tab is
+   exactly the regression this file is now for. What governs how customers book was never in that
+   tab: booking rules, opening hours, staff choice and auto-approve moved to Customer Interface ->
+   Appointment Setting in V325, and that pointer is still asserted below. */
+test('nestly_v584 bookings is the requests list, with no settings tab behind it', () => {
+  assert.doesNotMatch(app, /enhanceBookingsTabsV195/);
+  assert.doesNotMatch(app, /bookingsTabSettings/);
+  assert.doesNotMatch(app, /Booking settings<\/button>/);
+  // ...and the contents that lived in it are gone with it.
+  assert.doesNotMatch(app, /id="tblAdd"/);
+  assert.doesNotMatch(app, /id="bkCsvf"/);
+  assert.doesNotMatch(app, /setTakesTablesV223/);
+  // The page still marks its own shell, and still points at where the rules actually live.
   assert.match(app, /data-bookings-shell="head"/);
-  assert.match(src, /if\(child\.hasAttribute\('data-bookings-shell'\)\|\|child\.contains\(tabs\)\)return/);
+  assert.match(app, /Auto-approve is \$\{S\.biz\.auto_approve_changes\?'on':'off'\}\. Change this in <a href="#\/customer-interface\/appointment">/);
 });
 
-test('tabs are real tabs for assistive technology', () => {
-  const i = app.indexOf('function enhanceBookingsTabsV195');
-  const src = app.slice(i, i + 2600);
-  assert.match(src, /role','tablist'/);
-  assert.match(src, /role="tab"/);
-  assert.match(src, /role','tabpanel'/);
-  assert.match(src, /aria-selected/);
+test('nestly_v584 a booking decision is a tick and a cross, and the list pages at 20', () => {
+  /* Owner photo 13: Confirm and Decline struck out, a green tick and a red cross drawn in.
+     Photo 2: the pager drawn under the request list — "every page got 20 lists". */
+  assert.match(app, /booking-decision-yes-v584/);
+  assert.match(app, /booking-decision-no-v584/);
+  assert.doesNotMatch(app, /booking-decision" data-request="\$\{b\.id\}"[^>]*>Confirm</);
+  // Both buttons keep a spoken name, so dropping the words costs a screen reader nothing.
+  assert.match(app, /confirmBookingFor/);
+  assert.match(app, /declineBookingFor/);
+  assert.match(app, /pagerHtmlV584\(\{scope:'bookings'/);
+  assert.match(app, /const PAGE_SIZE_V584=20;/);
 });
 
 test('the receipt QR opens the customer wallet, never a public receipt URL', () => {

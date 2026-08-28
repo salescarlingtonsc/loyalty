@@ -14,7 +14,7 @@ function section(start, end) {
 
 const recordSale = section('function drawCartComposer(){', 'async function servicesPage()');
 const services = section('async function servicesPage()', 'async function referralsPage()');
-const packages = section('async function packagesPage()', '/* ---------- branches (owner-only) ----------');
+const packages = section('async function packagesPage(options)', '/* ---------- branches (owner-only) ----------');
 /* V243: end marker follows the CSV-import block out of settingsPage. Same region, same intent. */
 const settings = section('async function settingsPage()', '  /* ---------- billing (read-only) ---------- */');
 
@@ -57,8 +57,16 @@ test('V157 keeps Record sale focused by collapsing package sales and showing ite
 
 test('V157 reorganises Packages into My packages and Customer packages without a sale form', () => {
   assert.match(packages, /Manage prepaid sessions\. Sell packages from Record sale\./);
-  assert.match(packages, /data-package-tab="plans">My packages/);
-  assert.match(packages, /data-package-tab="customers">Customer packages/);
+  /* nestly_v584 (owner photo 12: the Customer packages tab ringed with an arrow into the Serve &
+     sell rail — "put under new modules under serve & sell"). The two halves V157 separated are
+     still separate; they are now two destinations rather than two tabs, because they are two
+     different jobs — one is setup, the other is a counter action. One builder still renders both,
+     so the split cannot drift. */
+  assert.match(packages, /const packagesViewV584=options&&options\.view==='customers'\?'customers':'plans';/);
+  assert.match(packages, /\$\{packagesViewV584==='plans'\?`<section class="package-panel-v157" id="pkgPanelPlans"/);
+  assert.match(packages, /\$\{packagesViewV584==='customers'\?`<section class="package-panel-v157" id="pkgPanelCustomers"/);
+  assert.doesNotMatch(packages, /data-package-tab=/);
+  assert.match(app, /custpackages:\(\)=>packagesPage\(\{view:'customers'\}\)/);
   assert.match(packages, /id="kCustomerSearch" type="search" placeholder="Name or phone"/);
   assert.match(packages, /filter\(k=>!query\|\|\[k\.client_name,k\.client_phone,k\.plan_name\]\.some/);
   assert.doesNotMatch(packages, /id="ksell"/);

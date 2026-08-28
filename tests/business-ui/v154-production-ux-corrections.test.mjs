@@ -147,7 +147,13 @@ test('V154 Programmes replaces Grow label and categorises programme rows', () =>
   /* V229: renamed to plain "Promotions" (the owner's word) and Referrals became its own
      category, so both remain distinct from the points work — which is the point here. */
   assert.match(grow, /programme-category-title">Promotions</);
-  assert.match(grow, /programme-category-title">Referrals</);
+  /* nestly_v584 (owner photo 6: the pink "Referrals" strip ringed — first "don't want background
+     pink colour, pls match with others", then, asked which pink: remove it entirely, because no
+     other reward page has one). The page heading directly above already says Referrals, so the
+     band repeated the page's own title. The CATEGORY itself is unchanged and still distinct from
+     the points work, which is what this test is really about. */
+  assert.match(grow, /data-programme-category-v268="referrals"/);
+  assert.doesNotMatch(grow, /programme-category-title">Referrals</);
   /* V229: renamed to say what is in it rather than what it is like. */
   /* V294: gift cards left the category (item 7b) — Memberships stands alone. */
   assert.match(grow, /programme-category-title">Memberships</);

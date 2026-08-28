@@ -105,7 +105,7 @@ const qrPieces=(()=>{
   const constant=[null,copy[1]];
   const start=source.indexOf('async function loadSignupConfig(host){');
   assert.notEqual(start,-1,'could not find loadSignupConfig');
-  const end=source.indexOf('async function loadCommissionConfig()',start);
+  const end=source.indexOf('/* ---------- Customer Interface (V243) ----------',start);
   assert.notEqual(end,-1,'could not find the end of loadSignupConfig');
   return {reason:constant[1],body:source.slice(start,end)};
 })();

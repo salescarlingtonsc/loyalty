@@ -463,7 +463,10 @@ test('G1 the card and the chip read the same two columns, and the reader was alr
 test('G2 the only write is the same RPC the Packages page uses', () => {
   const rpcs = [...v442.matchAll(/sb\.rpc\('([^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(rpcs, ['use_package_session_v102']);
-  const packages = app.slice(app.indexOf('async function packagesPage(){'));
+  /* nestly_v584 gave packagesPage an options argument (the Customer packages tab became its own
+     rail destination under Serve & sell, owner photo 12), so the anchor is the declaration rather
+     than its old empty parameter list. */
+  const packages = app.slice(app.indexOf('async function packagesPage(options){'));
   assert.ok(packages.includes("sb.rpc('use_package_session_v102'"),
     'the Packages page call site must still be the same one — two definitions of "use a session" is the thing to avoid');
 });

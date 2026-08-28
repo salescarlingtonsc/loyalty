@@ -86,29 +86,25 @@ test('(c) the add-tier fields are hidden behind a reveal button', () => {
   assert.match(loyalty, /openTierDialogV236\(tier\?\.name\?`Edit tier — \$\{tier\.name\}`:'Edit tier',b\)/);
 });
 
-test('(d) the table-seating question is sector-gated, and booking rules survive', () => {
-  /* V276 retarget: 'bar' joined the seated sectors — the copy under the switch already named a
-     bar, but the list did not, so the one sector it names by hand never saw the control. The
-     gating shape this test exists to pin is unchanged. */
-  assert.match(bookings, /const seatingSectorV235=\['fnb','bar','other'\]\.includes\(String\(S\.biz\.industry\|\|''\)\.toLowerCase\(\)\);/);
-  assert.match(bookings, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
-  // The toggle itself only renders for a seated sector...
-  assert.match(bookings, /\$\{seatingSectorV235\?`<label[^`]*id="setTakesTablesV223"/s);
-  // ...and so does Tables / capacity, which stays in Bookings.
-  assert.match(bookings, /\$\{seatsGuestsV235\?`<div class="row"><b>Tables \/ capacity<\/b>/);
-  /* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
-     hold-timer/overflow/auto-confirm booking rules moved to bookingRulesCardHtmlV325 — same
-     markup, just moved, per the V259 pattern. Bookings keeps a pointer instead of a second copy. */
-  assert.doesNotMatch(bookings, /When you're full/, 'the overflow rule must not have a second copy in Bookings');
+test('(d) nestly_v584 — seating left Bookings; the booking rules it never owned did not move', () => {
+  /* This test was V235's: the seating QUESTION belonged to seated sectors only, so a spa was
+     never offered a switch it could not truthfully use. Owner photo 13 deleted the whole Booking
+     settings tab and — asked what should happen to its contents — chose to delete them too. So
+     Bookings asks nothing about seating now. Everything this test really guards is the OTHER
+     half, and that is unchanged: the rules live in Customer Interface, they are not inside any
+     seating gate, and only the overflow rule (which genuinely needs tables) is gated. */
+  assert.doesNotMatch(bookings, /setTakesTablesV223/);
+  assert.doesNotMatch(bookings, /seatingSectorV235/);
+  assert.doesNotMatch(bookings, /Tables \/ capacity/);
   assert.match(bookings, /Booking rules, opening hours and who customers may choose now live in <a href="#\/customer-interface\/appointment">/);
+  assert.match(bookingRules, /const seatingSectorV235=\['fnb','bar','other'\]\.includes\(String\(S\.biz\.industry\|\|''\)\.toLowerCase\(\)\);/);
+  assert.match(bookingRules, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
   assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label for="setOverflow">When you're full<\/label>/);
-  // Booking rules are NOT inside the seating gate — every sector still sets its hold timer.
   const rules = bookingRules.slice(bookingRules.indexOf('Booking rules'), bookingRules.indexOf('id="setSave"'));
   assert.ok(!rules.includes('${seatingSectorV235?'), 'the booking-rules block must render for every sector');
-  // The seating toggle's own relocated save sends every other field null — it never touches
-  // the hold timer/overflow/auto-confirm rules that moved to Customer Interface.
-  assert.match(bookings, /const takesTables=\$\('setTakesTablesV223'\)\.checked;/);
-  assert.match(bookings, /p_hold_minutes:null,\s*\n\s*p_overflow:null,p_notify:S\.biz\.notify_new_bookings,p_auto_confirm:null,/);
+  /* The relocated save still sends null for the seating column, so nothing a business already
+     set is overwritten now that the switch is gone. */
+  assert.match(app, /p_takes_table_reservations:null/);
 });
 
 test('(e) two "% off" benefit lines are flagged, never merged or deleted', () => {

@@ -180,7 +180,7 @@ const NAVGROUPS=[
      entry directly below the group it left. Flat like Home and Customers because it is one
      surface. The gating is unchanged and does the hiding for free: 'bottles' is only in the bar
      sector's bundle, so every other sector's rail simply never grows this row. */
-  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist']},
+  {key:'serve',icon:'till',label:'Serve & sell',items:['till','appointments','bookings','waitlist','custpackages']},
   {key:'bottles',icon:'bottle',flat:'Bottles',items:['bottles']},
   /* V294 (owner markup 2026-08-12): the combined "Memberships & gift cards" programme card was
      removed, and that card was the only advertised door to gift-card management (the grow group
@@ -1786,6 +1786,7 @@ function navHtml(page,idPrefix='nav'){
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
     ||(m==='bottlesetup'&&sectorShowsBottlesV275&&S.myRole==='owner')
+    ||(m==='custpackages'&&enabled.includes('packages'))
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
     ||(m!=='waitlist'&&m!=='appointments'&&enabled.includes(m))
     ||(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled.includes(m));
@@ -2955,7 +2956,7 @@ function renderShell(page){
       EDITOR surface is untouched; only this top-level page redirects. */
       nav('#/grow/bringback');return Promise.resolve();},promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
-    waitlist:waitlistPage,inventory:inventoryPage,packages:packagesPage,reports:reportsPage,customerintel:customerIntelligencePage,support:supportInboxPageV531,
+    waitlist:waitlistPage,inventory:inventoryPage,packages:()=>packagesPage({view:'plans'}),custpackages:()=>packagesPage({view:'customers'}),reports:reportsPage,customerintel:customerIntelligencePage,support:supportInboxPageV531,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
@@ -9623,9 +9624,16 @@ async function salesPage(){
           <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
           <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="gift_card">Gift card</option><option value="membership">Membership</option></select></div>
           <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
+          ${/* nestly_v584 (owner photo 10: an arrow from Clear filters to the right-hand end of the
+               field row, marked "clear"). Apply and Clear are one pair of decisions about the same
+               six fields; Clear sat alone on a third line, so the way OUT of a filter was further
+               from the filter than the way IN. They now sit together at the end of the row the
+               fields form, and the result sentence keeps a line of its own because it is a
+               statement, not a control. */''}
           <button class="btn sm" id="salesApply">Apply filters</button>
+          <button class="btn ghost sm" id="salesClear">Clear filters</button>
         </div>
-        <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" id="salesClear">Clear filters</button><span class="muted small" id="salesFilterSummary" role="status" aria-live="polite"></span></div>
+        <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><span class="muted small" id="salesFilterSummary" role="status" aria-live="polite"></span></div>
       </div>
       <div id="recent" style="margin-top:8px">${CUI.tableSkeleton({rows:6,columns:7})}</div></section>`;
   const salesFilterNoteV266=(text,tone='')=>{
@@ -9782,30 +9790,51 @@ async function servicesPage(){
       <label for="sba">Buffer after (minutes)</label><input id="sba" type="number" min="0" step="5" value="0">
       <div style="margin-top:16px" class="row"><button class="btn" id="sadd">Save service</button><button class="btn ghost sm" id="cancelServiceForm">Cancel</button></div></div>`:''}
     <div class="card"><div class="v150-soft-head"><b>Services catalogue</b><p>Active services can be selected for bookings and sales.</p></div><div id="slist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
-    <div id="commissionWrap"></div></div>`;
+    </div>`;
   /* Keep the list in memory so an add reflects INSTANTLY (one insert round-trip that
      returns the row, then local splice + re-render) instead of a second full re-fetch. */
   let svCache=[];
   function renderSvc(){
     const sv=svCache;
-    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th class="num">Mins</th><th>Status</th><th></th></tr>
+    /* nestly_v584 (owner photo 17). Three marks on one screen, all pulling the same way:
+         * "Turn off" struck out on every row with a ✗ drawn beside it — the row action is an icon
+           now, like the tick and cross the owner asked for on Bookings;
+         * "Commission override %" written as a COLUMN header with a ringed "?", so the figure is
+           readable down the list instead of only inside a form further down the page;
+         * the whole "Service commission override %" card at the foot ringed with an arrow into
+           Edit and "click is pop-up" — so the editor becomes a dialog and the override moves into
+           it, beside the price it overrides. The separate card is gone; nothing about what the
+           override MEANS changed, and it still writes services.commission_bps. */
+    const commissionPctV584=bps=>bps===null||bps===undefined?'':String(Number(bps)/100);
+    $('slist').innerHTML=(sv&&sv.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Services catalogue"><table data-responsive="true"><tr><th>Service</th><th class="num">Price</th><th class="num">Mins</th><th class="num">Commission%${canWrite?helpDotMarkupV385('the commission override','Overrides the staff default for this one service. Blank means the team member\u2019s own rate applies; 0% means no commission on this service at all. Set it inside Edit.'):''}</th><th>Status</th><th></th></tr>
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
+      <td class="num">${s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
       <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
-      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button class="btn ghost sm" onclick="toggleSvc('${s.id}',${!s.active})">${s.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingServiceId===s.id?`<tr class="service-edit-row"><td colspan="5"><div class="v150-soft-head"><b>Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
-        <div class="field-grid">
-          <div><label for="svcEditName">Name</label><input id="svcEditName" value="${esc(s.name||'')}"></div>
-          <div><label for="svcEditVariant">Variation (optional)</label><input id="svcEditVariant" value="${esc(s.variant_label||'')}"></div>
-          <div><label for="svcEditPrice">Price (${S.biz.currency||'SGD'})</label><input id="svcEditPrice" type="number" min="0" step="0.01" value="${((s.price_cents||0)/100).toFixed(2)}"></div>
-          <div><label for="svcEditDuration">Duration (minutes)</label><input id="svcEditDuration" type="number" min="5" step="5" value="${Number(s.duration_min)||60}"></div>
-          <div><label for="svcEditBufferBefore">Buffer before (minutes)</label><input id="svcEditBufferBefore" type="number" min="0" step="5" value="${Number(s.buffer_before_min)||0}"></div>
-          <div><label for="svcEditBufferAfter">Buffer after (minutes)</label><input id="svcEditBufferAfter" type="number" min="0" step="5" value="${Number(s.buffer_after_min)||0}"></div>
-        </div>
-        <div class="row" style="margin-top:12px"><button class="btn sm" data-svc-save="${s.id}">Save changes</button><button class="btn ghost sm" data-svc-cancel="1">Cancel</button><span class="muted small" id="svcEditStatus" role="status" aria-live="polite"></span></div></td></tr>`:''}`;
+      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button type="button" class="svc-toggle-icon-v584${s.active?'':' is-off'}" data-workspace-i18n onclick="toggleSvc('${s.id}',${!s.active})" title="${s.active?'Turn this service off':'Turn this service back on'}" aria-label="${s.active?'Turn this service off':'Turn this service back on'}">${CUI.icon(s.active?'close':'check',{size:18})}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add your first service so customers can book and staff can select it during checkout.'});
+    const editingRowV584=canWrite&&editingServiceId?(sv||[]).find(row=>row.id===editingServiceId):null;
+    if(editingRowV584){
+      const s=editingRowV584;
+      $('slist').insertAdjacentHTML('beforeend',`<div class="modal" id="svcEditModalV584" role="dialog" aria-modal="true" aria-labelledby="svcEditTitleV584" tabindex="-1">
+        <section class="modal-card" style="max-width:620px">
+          <div class="v150-soft-head"><b id="svcEditTitleV584">Edit service</b><p>Correct anything you typed wrongly. Changes apply to future bookings and sales; past records keep the price they were sold at.</p></div>
+          <div class="field-grid">
+            <div><label for="svcEditName">Name</label><input id="svcEditName" value="${esc(s.name||'')}"></div>
+            <div><label for="svcEditVariant">Variation (optional)</label><input id="svcEditVariant" value="${esc(s.variant_label||'')}"></div>
+            <div><label for="svcEditPrice">Price (${S.biz.currency||'SGD'})</label><input id="svcEditPrice" type="number" min="0" step="0.01" value="${((s.price_cents||0)/100).toFixed(2)}"></div>
+            <div><label for="svcEditDuration">Duration (minutes)</label><input id="svcEditDuration" type="number" min="5" step="5" value="${Number(s.duration_min)||60}"></div>
+            <div><label for="svcEditBufferBefore">Buffer before (minutes)</label><input id="svcEditBufferBefore" type="number" min="0" step="5" value="${Number(s.buffer_before_min)||0}"></div>
+            <div><label for="svcEditBufferAfter">Buffer after (minutes)</label><input id="svcEditBufferAfter" type="number" min="0" step="5" value="${Number(s.buffer_after_min)||0}"></div>
+            <div><label for="svcEditCommissionV584">Commission override %</label><input id="svcEditCommissionV584" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(commissionPctV584(s.commission_bps))}"></div>
+          </div>
+          <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission.</p>
+          <div class="row" style="margin-top:14px"><button class="btn ghost sm" data-svc-cancel="1">Cancel</button><span class="muted small" id="svcEditStatus" role="status" aria-live="polite"></span><span class="spacer"></span><button class="btn sm" data-svc-save="${s.id}">Save changes</button></div>
+        </section></div>`);
+    }
     if(canUploadCatalogueMedia)bindCataloguePhotoUploadsV158({onSaved:()=>load()});
     bindServiceEditors();
   }
@@ -9835,12 +9864,23 @@ async function servicesPage(){
      photo and its bookings. This edits the row in place. Past sales are untouched: they carry
      their own snapshotted price, so correcting the catalogue never rewrites history. */
   let editingServiceId=null;
+  /* nestly_v584: the editor is a dialog now, so it is activated the same way every other dialog in
+     this file is — Esc, the backdrop and Cancel all take the one path back through renderSvc. */
+  let closeServiceDialogV584=null;
   function bindServiceEditors(){
+    const dialogV584=$('svcEditModalV584');
+    if(dialogV584){
+      closeServiceDialogV584=CUI.activateDialog(dialogV584,{
+        onClose:()=>{if(editingServiceId){editingServiceId=null;renderSvc()}},
+        initialFocus:'#svcEditName'});
+    }else closeServiceDialogV584=null;
     document.querySelectorAll('[data-svc-edit]').forEach(b=>b.onclick=()=>{
       editingServiceId=b.dataset.svcEdit;renderSvc();
-      document.getElementById('svcEditName')?.focus();
     });
-    document.querySelectorAll('[data-svc-cancel]').forEach(b=>b.onclick=()=>{editingServiceId=null;renderSvc()});
+    document.querySelectorAll('[data-svc-cancel]').forEach(b=>b.onclick=()=>{
+      if(closeServiceDialogV584)return closeServiceDialogV584();
+      editingServiceId=null;renderSvc();
+    });
     document.querySelectorAll('[data-svc-save]').forEach(b=>b.onclick=async()=>{
       const id=b.dataset.svcSave,status=$('svcEditStatus');
       const name=$('svcEditName').value.trim();
@@ -9849,18 +9889,28 @@ async function servicesPage(){
       const duration=parseInt($('svcEditDuration').value||'0',10);
       const bufferBefore=parseInt($('svcEditBufferBefore')?.value||'0',10)||0;
       const bufferAfter=parseInt($('svcEditBufferAfter')?.value||'0',10)||0;
+      /* nestly_v584: blank stays NULL — "not set" and "0%" are different settings and always were
+         (the retired card's own copy said so). Only a real number is written. */
+      const commissionRawV584=String($('svcEditCommissionV584')?.value||'').trim();
+      const commissionBpsV584=commissionRawV584===''?null:Math.round(parseFloat(commissionRawV584)*100);
       if(name.length<2){if(status)status.textContent='Give the service a name.';return}
       if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
       if(!(duration>=5)){if(status)status.textContent='Enter a duration of at least 5 minutes.';return}
+      if(commissionBpsV584!==null&&!(commissionBpsV584>=0&&commissionBpsV584<=10000)){
+        if(status)status.textContent='Enter a commission between 0 and 100, or leave it blank.';return;
+      }
       CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
       const {data,error}=await sb.from('services')
         .update({name,variant_label:variant,price_cents:price,duration_min:duration,
-          buffer_before_min:bufferBefore,buffer_after_min:bufferAfter}).eq('id',id).select().limit(1);
+          buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,
+          commission_bps:commissionBpsV584}).eq('id',id).select().limit(1);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
       if(error){if(status)status.textContent=ownerErrorText(error);return}
       const row=svCache.find(x=>x.id===id);
       if(row&&data&&data[0])Object.assign(row,data[0]);
-      editingServiceId=null;renderSvc();toast('Service updated');
+      editingServiceId=null;
+      if(closeServiceDialogV584){const close=closeServiceDialogV584;closeServiceDialogV584=null;close()}
+      renderSvc();toast('Service updated');
     });
   }
   window.toggleSvc=async(id,to)=>{
@@ -9886,9 +9936,11 @@ async function servicesPage(){
     });renderSvc();
   }
   load();
-  /* V180: the per-service commission override lives here now, next to the price it overrides.
-     It is owner-only and self-guards on its mount point, so a non-owner simply gets nothing. */
-  loadCommissionConfig();
+  /* nestly_v584 (owner photo 17: the whole "Service commission override %" card ringed, with an
+     arrow into the row's Edit and "click is pop-up"). V180 put the override on this page because
+     it belongs beside the price it overrides; v584 keeps that and goes one step further — it is
+     inside the service's own editor now, so a service is edited in one place. loadCommissionConfig
+     and its separate card are deleted rather than left mounted on a node that no longer exists. */
   /* bundles */
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
     <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
@@ -10216,70 +10268,14 @@ function sectionTabsV200(root,{key='',label='Sections'}={}){
   setTab(initial,{remember:false});
   return {strip,panels,setTab};
 }
-/* V288 (audit A2, HIGH 3): the guard token is compared against the CURRENT render's token, not
-   against a bare '1'. A realtime booking INSERT re-runs bookingsPage(), which resets
-   routeMain.innerHTML — but dataset lives on the element and survives that reset, so a plain
-   '1' made every refresh after the first skip the enhancement entirely: the tabs vanished and
-   whatever the owner had typed into Booking settings went with them. bookingsPage() stamps a
-   fresh token on every render, so the enhancement runs exactly once per render. */
-let bookingsShellTokenV288=0;
-/* The tab the owner was last on, so an auto-refresh does not throw them back to Requests. */
-let bookingsActiveTabV288='requests';
-function enhanceBookingsTabsV195(root){
-  if(!root||root.dataset.bookingsTabsV195!==String(bookingsShellTokenV288))return;
-  const requests=root.querySelector('#blist');
-  if(!requests)return;
-  root.dataset.bookingsTabsV195='done';
-  const tabs=document.createElement('div');
-  tabs.className='v150-segment';
-  tabs.setAttribute('role','tablist');
-  tabs.setAttribute('aria-label','Bookings');
-  tabs.style.margin='0 0 14px';
-  tabs.innerHTML=`<button type="button" id="bookingsTabRequests" role="tab" aria-selected="true" aria-controls="bookingsRequestsPanel" aria-pressed="true">Booking requests</button>`
-    +`<button type="button" id="bookingsTabSettings" role="tab" aria-selected="false" aria-controls="bookingsSettingsPanel" aria-pressed="false">Booking settings</button>`;
-  const requestsPanel=document.createElement('div');
-  requestsPanel.id='bookingsRequestsPanel';
-  requestsPanel.setAttribute('role','tabpanel');
-  requestsPanel.setAttribute('aria-labelledby','bookingsTabRequests');
-  const settingsPanel=document.createElement('div');
-  settingsPanel.id='bookingsSettingsPanel';
-  settingsPanel.setAttribute('role','tabpanel');
-  settingsPanel.setAttribute('aria-labelledby','bookingsTabSettings');
-  settingsPanel.hidden=true;
-  /* The portal-link card stays above the tabs: it is the one thing an owner copies from either
-     view, and burying it inside a tab would make it findable only by accident. */
-  /* V288 (audit A2, HIGH 2): the nodes that stay above the tabs are MARKED, not inferred.
-     `#cp` lives in the .topbar, so closest('.card,section') returned null — the portal card was
-     never recognised, and because the page heading and the change-requests card are plain DIVs
-     they were swept into the hidden settings panel. On first paint the owner saw no h1, no
-     portal link and no change requests. data-bookings-shell says which is which. */
-  requests.before(tabs);
-  tabs.after(requestsPanel,settingsPanel);
-  const settingsNodes=[];
-  Array.from(root.children).forEach(child=>{
-    if(child===tabs||child===requestsPanel||child===settingsPanel)return;
-    if(child.hasAttribute('data-bookings-shell')||child.contains(tabs))return;
-    if(child===requests||child.contains(requests))return;
-    if(child.tagName==='DIV'||child.tagName==='SECTION')settingsNodes.push(child);
-  });
-  requestsPanel.appendChild(requests);
-  settingsNodes.forEach(node=>settingsPanel.appendChild(node));
-  const setTab=name=>{
-    const showRequests=name==='requests';
-    bookingsActiveTabV288=showRequests?'requests':'settings';
-    requestsPanel.hidden=!showRequests;
-    settingsPanel.hidden=showRequests;
-    tabs.querySelector('#bookingsTabRequests').setAttribute('aria-selected',String(showRequests));
-    tabs.querySelector('#bookingsTabRequests').setAttribute('aria-pressed',String(showRequests));
-    tabs.querySelector('#bookingsTabSettings').setAttribute('aria-selected',String(!showRequests));
-    tabs.querySelector('#bookingsTabSettings').setAttribute('aria-pressed',String(!showRequests));
-  };
-  tabs.querySelector('#bookingsTabRequests').onclick=()=>setTab('requests');
-  tabs.querySelector('#bookingsTabSettings').onclick=()=>setTab('settings');
-  /* V288: restore the tab the owner was on. A realtime insert must not yank a half-filled
-     Booking settings form off screen. */
-  setTab(bookingsActiveTabV288==='settings'?'settings':'requests');
-}
+/* nestly_v584 (owner photo 13: "Booking settings" struck through — "delete booking settings").
+   Asked what should happen to what the tab held — the seating switch, Tables / capacity and the
+   bookings CSV import — the owner chose to delete the tab AND its contents. So the V195/V288 tab
+   enhancer is gone with them: Bookings is the requests list and the change requests above it,
+   which is what an owner opens this page to act on. Booking rules, opening hours, who customers
+   may choose and auto-approve already live in Customer Interface -> Appointment Setting (V325),
+   so nothing that governs how customers book was in here to lose. booking_tables rows are left
+   in the database untouched. */
 /* V228: lifted out of bookingsPage so the Staff page can render the same weekday rows.
    The owner asked for the staff schedule to live with the staff, and duplicating this
    markup would have let the two grids drift apart. */
@@ -10292,6 +10288,52 @@ const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-ho
   <input type="time" id="v183Open-${esc(scope)}-${weekday}" data-day-opens="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.opens_at||fallback.opens).slice(0,5))}" ${row?'':'disabled'}>
   <input type="time" id="v183Close-${esc(scope)}-${weekday}" data-day-closes="${weekday}" data-day-scope="${esc(scope)}" value="${esc(String(row?.closes_at||fallback.closes).slice(0,5))}" ${row?'':'disabled'}>
 </div>`;
+
+/* nestly_v584 — ONE pager, for the two lists the owner drew it on: the Bookings request list
+   (photo 2, "every page got 20 lists") and Limited Offer (photo 8, "only show 20 lists every
+   page"). Both drew the same control — first, previous, a few numbers, next, last — so both get
+   the same one rather than two that drift. Paging is done in the browser over rows that are
+   already loaded: neither list is fetched page-by-page, so a page change costs nothing and the
+   counts above the table stay true. */
+const PAGE_SIZE_V584=20;
+function pageCountV584(total){return Math.max(1,Math.ceil(Math.max(0,Number(total)||0)/PAGE_SIZE_V584))}
+function pageSliceV584(rows,page){
+  const list=Array.isArray(rows)?rows:[];
+  const safe=Math.min(Math.max(0,Number(page)||0),pageCountV584(list.length)-1);
+  return list.slice(safe*PAGE_SIZE_V584,(safe+1)*PAGE_SIZE_V584);
+}
+function pagerHtmlV584({scope,page,total,label='Rows'}){
+  const pages=pageCountV584(total);
+  if(pages<2)return '';
+  const current=Math.min(Math.max(0,Number(page)||0),pages-1);
+  /* At most five numbers around the current page, with an ellipsis for the rest — the owner's own
+     drawing was "1 2 3 ... ", which is what a long list has to look like. */
+  const first=Math.max(0,Math.min(current-2,pages-5)),last=Math.min(pages-1,Math.max(current+2,4));
+  const numbers=[];
+  for(let index=Math.max(0,first);index<=last;index+=1)numbers.push(index);
+  /* The four step labels are fixed UI words chosen in this function, not merchant data, so they
+     carry data-workspace-i18n and are translated with the rest of the workspace copy. */
+  const step=(target,text,title,disabled)=>`<button type="button" class="pager-step-v584" data-workspace-i18n data-pager-go-v584="${target}" title="${esc(title)}" aria-label="${esc(title)}"${disabled?' disabled':''}>${text}</button>`;
+  /* A fixed accessible name: the list this pager belongs to already carries its own region label,
+     so interpolating the row noun here would only repeat it. */
+  return `<nav class="pager-v584" data-workspace-i18n data-pager-v584="${esc(scope)}" aria-label="Pages">
+    ${step(0,'&laquo;','First page',current===0)}${step(current-1,'&lsaquo;','Previous page',current===0)}
+    ${numbers[0]>0?'<span class="pager-gap-v584" aria-hidden="true">…</span>':''}
+    ${numbers.map(index=>`<button type="button" class="pager-num-v584${index===current?' is-on':''}" data-pager-go-v584="${index}" aria-current="${index===current?'page':'false'}">${index+1}</button>`).join('')}
+    ${numbers[numbers.length-1]<pages-1?'<span class="pager-gap-v584" aria-hidden="true">…</span>':''}
+    ${step(current+1,'&rsaquo;','Next page',current>=pages-1)}${step(pages-1,'&raquo;','Last page',current>=pages-1)}
+    <span class="muted small pager-count-v584">${esc(`${label}: ${Number(total)||0} · page ${current+1} of ${pages}`)}</span>
+  </nav>`;
+}
+function wirePagerV584(host,scope,go){
+  if(!host)return;
+  host.querySelectorAll(`[data-pager-v584="${scope}"] [data-pager-go-v584]`).forEach(button=>{
+    button.onclick=()=>{
+      const target=Number(button.dataset.pagerGoV584);
+      if(Number.isFinite(target))go(Math.max(0,target));
+    };
+  });
+}
 
 async function bookingsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -10309,16 +10351,12 @@ async function bookingsPage(){
   const canDeclineBooking=canWriteModule('bookings');
   const canDecideChange=canWriteModule('appointments');
   const decisionNotices=new Map(),pendingDecisions=new Set();
-  /* V235 (owner: "how can a spa have table seating at all"). V223 hid the seating CONTROLS
-     behind the flag but still asked every sector the question, so an appointment business was
-     offered a switch it can never truthfully turn on. The question now belongs to seated
-     sectors only (INDUSTRIES keys), while the booking rules below it render for everyone. */
-  /* V276: 'bar' joins the seated list. The helper text under this very switch already reads
-     "Turn this on for a cafe, restaurant or bar" — but 'bar' was not in the list, so the one
-     sector the copy names by hand never saw the switch, and with it lost Tables / capacity,
-     the when-you-are-full rule and auto-confirm. A bar has tables. */
-  const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
-  const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
+  /* nestly_v584 (owner photo 2, the pager drawn under the request list): 20 rows a page. */
+  let bookingRequestPageV584=0,bookingRequestRowsV584=[];
+  /* nestly_v584: the seating question and the table-capacity card are gone from this page (owner
+     photo 13), so the two sector flags that gated them are gone with them. The identical pair still
+     lives in Customer Interface -> Appointment Setting, where the when-you-are-full rule that
+     genuinely depends on seating is set — that one is untouched. */
   routeMain.innerHTML=`<div class="topbar" data-bookings-shell="head" data-workspace-i18n><div class="cui-page-title">${CUI.icon('bookings',{size:24})}<div><h1>Bookings</h1><p class="muted small">Requests from your public booking page</p></div></div>
     <button class="btn ghost sm" id="cp">Copy portal link</button></div>
     <div class="card" data-bookings-shell="changes" style="margin-bottom:16px"><b>Change requests</b>
@@ -10330,54 +10368,10 @@ async function bookingsPage(){
       <p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Change this in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
-    ${isOwner?`<div class="split" style="margin-bottom:16px">
-      <div class="card">
-        <!-- V223 (owner: "how can table bookings be present in a spa/salon?"). Seating is not
-             something every business has. A facial spa takes booking REQUESTS through the same
-             public page, but it has no tables, no pax and no when-full overflow — and every
-             salon/spa/massage/fitness sector is granted the full module list, so all of them
-             were shown table management they can never use. The seating controls now appear
-             only for a business that says it seats guests. -->
-        ${seatingSectorV235?`<label style="display:flex;align-items:center;gap:8px;margin:0 0 6px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-          <input type="checkbox" id="setTakesTablesV223" style="width:auto" ${S.biz.takes_table_reservations?'checked':''}> We seat guests at tables</label>
-        <p class="muted small" style="margin:0 0 14px">Turn this on for a cafe, restaurant or bar. Leave it off for appointment work like a spa or salon — customers can still book through your page, they just are not seated at a table.</p>
-        <div style="margin:0 0 14px"><button class="btn ghost sm" id="setTakesTablesSaveV325">Save</button></div>
-        <div id="setTakesTablesErrV325"></div>`:''}
-        ${seatsGuestsV235?`<div class="row"><b>Tables / capacity</b><span class="spacer"></span>${importBtn('reservations')}</div>
-        <p class="muted small" style="margin:6px 0 10px">Owner only. Add your table types so customers can reserve them on your portal.</p>
-        <!-- V291 (audit A2 #21): four controls on one non-wrapping flex row pushed the Add
-             button off the right edge at 390px. Wrapping is the whole fix. -->
-        <div class="row" style="flex-wrap:wrap;gap:8px"><input id="tblName" placeholder="e.g. Small (2-seater)" style="flex:1 1 180px">
-          <input id="tblPax" type="number" min="1" placeholder="Pax" style="max-width:76px">
-          <input id="tblQty" type="number" min="1" value="1" placeholder="Qty" style="max-width:76px">
-          <button class="btn sm" id="tblAdd" style="flex:0 0 auto">Add</button></div>
-        <div id="capBody" style="margin-top:14px">${CUI.tableSkeleton({rows:3,columns:6})}</div>`:''}
-        <!-- V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief):
-             the hold-timer/overflow/auto-confirm booking rules, the staff-choice toggle and
-             opening hours moved to Customer Interface > Appointment Setting — same markup, ids
-             and save handlers as before, just moved (bookingRulesCardHtmlV325 /
-             wireBookingRulesV325). The seating toggle and Tables/capacity above are untouched:
-             the owner's relocation list did not name them, and Tables/capacity carries its own
-             local edit state. -->
-        <p class="muted small" style="margin-top:14px">Booking rules, opening hours and who customers may choose now live in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
-      </div>
-      <div class="card"><b>Import existing bookings (CSV)</b>
-        <p class="muted small" style="margin:6px 0 10px">Columns recognised: <b>name</b> (required), phone, email, party_size, preferred_at, notes, table_type. Bookings import as pending for you to review.</p>
-        <label for="bkCsvf">Bookings CSV file</label>
-        <input type="file" id="bkCsvf" accept=".csv,text/csv">
-        <div id="bkCsvPrev" style="margin-top:12px"></div>
-      </div>
-    </div>`:''}`;
-  /* V195 (owner: "below here got different tab so it's not messy" — Booking Requests vs Booking
-     Settings). The page stacked five unrelated cards: customer app actions, change requests, the
-     requests table, tables/capacity and CSV import. The thing an owner opens this page to DO —
-     act on requests — was buried in the middle of configuration they set once.
-     Split in the DOM rather than in the template: the markup is one large string shared with the
-     load paths, and every id keeps working exactly as before. Same approach the Staff page uses. */
-  /* V288: a fresh token per render, read by the enhancement's guard above. */
-  bookingsShellTokenV288+=1;
-  routeMain.dataset.bookingsTabsV195=String(bookingsShellTokenV288);
-  enhanceBookingsTabsV195(M());
+    ${/* nestly_v584: the settings tab is gone, so the one thing it was still worth saying is said
+         here — where the rules that govern booking actually live. Losing the pointer with the tab
+         would leave an owner hunting for opening hours. */''}
+    <p class="muted small">Booking rules, opening hours and who customers may choose now live in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>`;
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   async function load(){
     const {data:br,error}=await sb.from('booking_requests').select('*, services(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
@@ -10391,17 +10385,31 @@ async function bookingsPage(){
       if(retry)retry.onclick=()=>{list.innerHTML='<div class="empty">Loading…</div>';load()};
       return;
     }
+    bookingRequestRowsV584=br||[];
+    paintBookingRequestsV584();
+  }
+  function paintBookingRequestsV584(){
+    const list=$('blist');if(!list?.isConnected)return;
+    const br=bookingRequestRowsV584;
+    if(bookingRequestPageV584>=pageCountV584(br.length))bookingRequestPageV584=0;
+    const visibleV584=pageSliceV584(br,bookingRequestPageV584);
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
-      ${br.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"${b.appointment_id?` class="booking-row-openable-v378" data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
+      ${visibleV584.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"${b.appointment_id?` class="booking-row-openable-v378" data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
         : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
-      <td data-label="Actions">${actionable?`${canConvertBooking?`<button class="btn sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''}>Confirm</button>`:''}
-      ${canDeclineBooking?`<button class="btn ghost sm booking-decision" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''}>Decline</button>`:''}`:'<span class="muted small">No action needed</span>'}
-      ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>`
+      ${/* nestly_v584 (owner photo 13: Confirm and Decline struck out, a green tick and a red cross
+           drawn in their place). Two round icon buttons — the decision is a yes/no on a row that
+           already says who and when, so the words were carrying no information the tick and cross
+           do not. Both keep their accessible name, their title and the same onclick, so a screen
+           reader and the handler see exactly what they saw before. */''}
+      <td data-label="Actions">${actionable?`<span class="booking-decision-icons-v584">${canConvertBooking?`<button class="booking-decision booking-decision-yes-v584" type="button" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''} title="Confirm this booking" ${workspaceTemplateAttributeV97('aria-label','confirmBookingFor',{customer:b.name||'this customer'})}>${CUI.icon('check',{size:18})}</button>`:''}
+      ${canDeclineBooking?`<button class="booking-decision booking-decision-no-v584" type="button" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''} title="Decline this booking" ${workspaceTemplateAttributeV97('aria-label','declineBookingFor',{customer:b.name||'this customer'})}>${CUI.icon('close',{size:18})}</button>`:''}</span>`:'<span class="muted small">No action needed</span>'}
+      ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>${pagerHtmlV584({scope:'bookings',page:bookingRequestPageV584,total:br.length,label:'Requests'})}`
       :CUI.emptyState({iconName:'appointments',title:'No booking requests yet',body:'Customer booking requests will appear here after customers use your booking link.'});
+    wirePagerV584(list,'bookings',target=>{bookingRequestPageV584=target;paintBookingRequestsV584()});
     focusNotifiedBookingV206(list);
     /* V378 (owner: "when clicked into customer's booking should pop up [the appointment detail]").
        A confirmed request carries the appointment it produced, so the row hands off to the ONE
@@ -10475,169 +10483,6 @@ async function bookingsPage(){
     await loadCr();
   }:undefined;
   load();loadCr();
-
-  if(!isOwner) return;
-
-  /* ---- Tables / capacity (owner only) ---- */
-  let editingTableTypeV291=null;
-  async function loadCapacity(){
-    if(!$('capBody'))return;
-    const [{data:tbl,error:e1},{data:avail,error:e2}]=await Promise.all([
-      sb.from('booking_tables').select('*').eq('business_id',S.biz.id).order('sort'),
-      sb.from('v_table_availability').select('*').eq('business_id',S.biz.id)]);
-    if(!isCurrent())return;
-    if(e1||e2){$('capBody').innerHTML=`<div class="err">${esc((e1||e2).message)}</div>`;return}
-    const availByType=Object.fromEntries((avail||[]).map(a=>[a.table_type_id,a]));
-    /* V291 (audit A2 leftover): a table type could be switched off or removed but never
-       corrected — a typo in the name, or two more of the same table arriving, meant deleting the
-       row and re-adding it, which detaches it from the bookings that already name it. Editing is
-       an in-place UPDATE of the same three columns the add form writes. Remove is unchanged.
-       V291 also wraps the table in .cui-table-wrap so it scrolls inside its own box at 390px
-       instead of pushing the page sideways (audit A2 #21). */
-    $('capBody').innerHTML=(tbl&&tbl.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Table types"><table data-responsive="true"><tr><th>Name</th><th>Pax</th><th>Qty</th><th>Live</th><th>Status</th><th></th></tr>
-      ${tbl.map(t=>{const a=availByType[t.id];
-        const editingV291=editingTableTypeV291===t.id;
-        return `<tr><td data-label="Name"><b data-merchant-content>${esc(t.name)}</b></td><td data-label="Pax">${t.pax??'—'}</td><td data-label="Qty">${t.quantity}</td>
-        <td class="small" data-label="Live">${a?`${a.held} held · ${a.available} free`:'—'}</td>
-        <td data-label="Status"><span class="pill ${t.active?'on':'off'}">${statusOnOff(t.active)}</span></td>
-        <td data-label="Actions"><button class="btn ghost sm" type="button" data-table-edit-v291="${t.id}">${editingV291?'Close':'Edit'}</button>
-        <button class="btn ghost sm" onclick="toggleTable('${t.id}',${!t.active})">${t.active?'Turn off':'Turn on'}</button>
-        <button class="btn danger sm" onclick="rmTable('${t.id}')">Delete</button></td></tr>${editingV291?`<tr><td colspan="6">
-          <div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">
-            <div style="flex:1 1 180px"><label for="tblEditNameV291">Name</label><input id="tblEditNameV291" value="${esc(t.name||'')}"></div>
-            <div><label for="tblEditPaxV291">Pax</label><input id="tblEditPaxV291" type="number" min="1" style="max-width:90px" value="${t.pax??''}"></div>
-            <div><label for="tblEditQtyV291">Qty</label><input id="tblEditQtyV291" type="number" min="1" style="max-width:90px" value="${Number(t.quantity)||1}"></div>
-            <button class="btn sm" type="button" data-table-save-v291="${t.id}">Save changes</button>
-            <button class="btn ghost sm" type="button" data-table-cancel-v291="1">Cancel</button>
-          </div>
-          <p class="muted small" style="margin-top:8px">Renaming or re-counting a table type changes it everywhere it is offered. Bookings already held keep this table type.</p>
-          <p class="err small" id="tblEditErrV291" role="alert" hidden></p></td></tr>`:''}`;
-      }).join('')}</table></div>`
-      :CUI.emptyState({iconName:'appointments',title:'No tables yet',body:'Add your tables so customers can reserve them.'});
-    $('capBody').querySelectorAll('[data-table-edit-v291]').forEach(button=>button.onclick=()=>{
-      editingTableTypeV291=editingTableTypeV291===button.dataset.tableEditV291?null:button.dataset.tableEditV291;
-      loadCapacity();
-    });
-    $('capBody').querySelectorAll('[data-table-cancel-v291]').forEach(button=>button.onclick=()=>{
-      editingTableTypeV291=null;loadCapacity();
-    });
-    $('capBody').querySelectorAll('[data-table-save-v291]').forEach(button=>button.onclick=async()=>{
-      const name=$('tblEditNameV291').value.trim();
-      const paxRaw=$('tblEditPaxV291').value.trim(),qty=parseInt($('tblEditQtyV291').value||'0',10);
-      const errorHost=$('tblEditErrV291');
-      const showError=message=>{if(errorHost){errorHost.textContent=message;errorHost.hidden=false}};
-      if(errorHost)errorHost.hidden=true;
-      if(name.length<2)return showError('Name the table type.');
-      if(!(qty>=1))return showError('How many of this table do you have? Enter 1 or more.');
-      if(paxRaw!==''&&!(parseInt(paxRaw,10)>=1))return showError('Seats must be 1 or more, or left blank.');
-      CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
-      const {error}=await sb.from('booking_tables')
-        .update({name,pax:paxRaw===''?null:parseInt(paxRaw,10),quantity:qty})
-        .eq('id',button.dataset.tableSaveV291).eq('business_id',S.biz.id);
-      if(!isCurrent())return;
-      CUI.setButtonBusy(button,{busy:false});
-      if(error)return showError(ownerErrorText(error));
-      editingTableTypeV291=null;toast('Table type updated');loadCapacity();
-    });
-  }
-  /* V223: these elements only exist for a business that seats guests. */
-  if($('tblAdd'))$('tblAdd').onclick=async()=>{
-    const name=$('tblName').value.trim();
-    if(name.length<2) return toast('Name the table type');
-    const {error}=await sb.from('booking_tables').insert({business_id:S.biz.id,name,
-      pax:$('tblPax').value?parseInt($('tblPax').value):null,quantity:parseInt($('tblQty').value||'1')});
-    if(!isCurrent())return;
-    if(error) return fail(error);
-    toast('Table type added');$('tblName').value='';$('tblPax').value='';$('tblQty').value='1';loadCapacity();
-  };
-  window.toggleTable=async(id,to)=>{
-    const {error}=await sb.from('booking_tables').update({active:to}).eq('id',id);
-    if(!isCurrent())return;
-    if(error) return fail(error);
-    toast('Updated');loadCapacity();
-  };
-  window.rmTable=async(id)=>{
-    if(!await confirmActionV386('Remove this table type? Existing bookings against it are unaffected.')) return;
-    const {error}=await sb.from('booking_tables').delete().eq('id',id);
-    if(!isCurrent())return;
-    if(error) return fail(error);
-    toast('Removed');loadCapacity();
-  };
-  loadCapacity();
-
-  /* ---- V325: the seating toggle's own tiny save (owner only) ----
-     The hold-timer/overflow/auto-confirm booking rules, staff-choice and opening hours moved to
-     Customer Interface > Appointment Setting (bookingRulesCardHtmlV325 / wireBookingRulesV325);
-     see the comment above the seating toggle's markup. This still calls the SAME
-     set_booking_settings RPC — the one write path — just for the one field this page still owns,
-     sending null for everything else so the RPC's own coalesce leaves those fields untouched. */
-  if($('setTakesTablesSaveV325'))$('setTakesTablesSaveV325').onclick=async()=>{
-    const takesTables=$('setTakesTablesV223').checked;
-    $('setTakesTablesSaveV325').disabled=true;
-    const {error}=await sb.rpc('set_booking_settings',{p_business:S.biz.id,p_hold_minutes:null,
-      p_overflow:null,p_notify:S.biz.notify_new_bookings,p_auto_confirm:null,
-      p_takes_table_reservations:takesTables});
-    if(!isCurrent())return;
-    $('setTakesTablesSaveV325').disabled=false;
-    if(error){$('setTakesTablesErrV325').innerHTML=`<div class="err">${esc(humanErrorV295(error,'That setting could not be saved.'))}</div>`;return}
-    $('setTakesTablesErrV325').innerHTML='';
-    const seatingChanged=takesTables!==(S.biz.takes_table_reservations===true);
-    S.biz.takes_table_reservations=takesTables;
-    toast('Saved');
-    /* Turning seating on or off changes which controls belong on this page, so redraw rather
-       than leaving the owner to guess that a reload is needed. */
-    if(seatingChanged)bookingsPage().catch(fail);
-  };
-
-  /* ---- CSV import of existing bookings (owner only) ---- */
-  $('bkCsvf').onchange=async(ev)=>{
-    const file=ev.target.files[0];if(!file)return;
-    const text=await file.text();
-    if(!isCurrent())return;
-    const rows=[];let cur=[''],q=false;
-    for(const ch of text){
-      if(q){ if(ch==='"'){q=false} else cur[cur.length-1]+=ch; }
-      else if(ch==='"'){q=true}
-      else if(ch===','){cur.push('')}
-      else if(ch==='\n'||ch==='\r'){ if(cur.length>1||cur[0]!==''){rows.push(cur);cur=[''];} }
-      else cur[cur.length-1]+=ch;
-    }
-    if(cur.length>1||cur[0]!=='')rows.push(cur);
-    if(rows.length<2){$('bkCsvPrev').innerHTML=`<div class="err">CSV needs a header row + data</div>`;return}
-    const hdr=rows[0].map(h=>h.trim().toLowerCase());
-    const col=n=>hdr.findIndex(h=>h.includes(n));
-    const iN=col('name'),iP=col('phone'),iE=col('email'),iPs=col('party'),iAt=col('preferred'),iNo=col('notes');
-    const iTtId=hdr.findIndex(h=>h.includes('table_type_id'));
-    const iTt=hdr.findIndex((h,idx)=>idx!==iTtId&&h.includes('table'));
-    if(iN<0){$('bkCsvPrev').innerHTML=`<div class="err">No "name" column found</div>`;return}
-    const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>{
-      const rec={name:r[iN].trim()};
-      if(iP>=0&&r[iP]) rec.phone=r[iP].trim();
-      if(iE>=0&&r[iE]) rec.email=r[iE].trim();
-      if(iPs>=0&&r[iPs]) rec.party_size=parseInt(r[iPs]);
-      if(iAt>=0&&r[iAt]) rec.preferred_at=r[iAt].trim();
-      if(iNo>=0&&r[iNo]) rec.notes=r[iNo].trim();
-      if(iTtId>=0&&r[iTtId]) rec.table_type_id=r[iTtId].trim();
-      else if(iTt>=0&&r[iTt]) rec.table_type=r[iTt].trim();
-      return rec;
-    });
-    const firstBookings=[recs[0]?.name,recs[1]?.name].filter(Boolean).join(', ')||'—';
-    $('bkCsvPrev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('bookingsReady',{ready:recs.length,rows:rows.length-1})}<br>
-      ${workspaceTemplateHtmlV97('firstBookings',{bookings:firstBookings})}</p>
-      <button class="btn sm" id="bkCsvGo" style="margin-top:8px">${workspaceTemplateHtmlV97(recs.length===1?'importBooking':'importBookings',{count:recs.length})}</button>`;
-    $('bkCsvGo').onclick=async()=>{
-      $('bkCsvGo').disabled=true;
-      const {data,error}=await sb.rpc('import_bookings',{p_business:S.biz.id,p_rows:recs});
-      if(!isCurrent())return;
-      $('bkCsvGo').disabled=false;
-      if(error){$('bkCsvPrev').innerHTML+=`<div class="err">${esc(humanErrorV295(error,'That import could not be completed.'))}</div>`;return}
-      const errs=(data.errors||[]).slice(0,5);
-      $('bkCsvPrev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('importBookingPreview',{inserted:data.inserted,skipped:data.skipped})}</p>
-        ${errs.length?`<div class="err" style="margin-top:8px">${workspaceTemplateHtmlV97(errs.length===1?'firstImportError':'firstImportErrors',{count:errs.length})}<br>${errs.map(e=>`<span data-workspace-i18n>Row</span> <span data-merchant-content>${esc(String(e.row))}</span>: <span data-merchant-content>${esc(e.error)}</span>`).join('<br>')}</div>`:''}`;
-      toast(workspaceTemplateTextV97(Number(data.inserted)===1?'importedBooking':'importedBookings',{count:data.inserted}));
-      load();
-    };
-  };
 }
 
 /* ---------- grow recommender (UI glue for app/grow-recommender.js) ----------
@@ -14615,7 +14460,7 @@ async function promotionsPage(selectedPromotionId=null){
    #/grow/bringback resolved as a view AND fell through to mountGrowSurface with
    draftOverride:'bringback' — a deep editor surface the owner never asked for, mounted on top of
    the Bring-back page with a view name where a draft id belongs. One list, two readers. */
-const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','birthday','ongoing','available','settings','setup']);
+const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','birthday','welcome','ongoing','available','settings','setup']);
 async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
      pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
@@ -15173,7 +15018,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      its page; with no drilled topic and no tiles, topicOnV229 fell through to its "answer TRUE for
      every key" branch and rendered every other programme category below the bring-back module —
      the same trap V319 fixed for Limited Offer and V326 for the points page, one page later. */
-  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback','birthday'].includes(programmeView);
+  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback','birthday','welcome'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -15870,12 +15715,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      control it was describing — the Limited Offer note existed to carry a link to the editor,
      and the button carries it now, so nothing is lost by deleting the words. History takes no
      "+": nothing is added to a list of things that already ended. */
-  const growOverviewFrameV324=({scope,rewards,offers,addable=true})=>`<div class="grow-overview-split-v319" data-grow-overview-split-v319>
+  /* nestly_v584 (owner photo 14: the two column headings redrawn as a pair of pills at the top of
+     History — "both needs to have their own sub tabs - to show one at a time"). Only History is
+     tabbed: Overview's job is the side-by-side comparison of what is running, and the owner's mark
+     was drawn on History. Same builder, same rows, same ids — one flag decides whether the two
+     sections sit beside each other or take turns. */
+  const growOverviewFrameV324=({scope,rewards,offers,addable=true,tabbed=false})=>`<div class="grow-overview-split-v319${tabbed?' grow-overview-tabbed-v584':''}" data-grow-overview-split-v319>
+    ${tabbed?`<div class="v150-segment grow-overview-tabs-v584" role="tablist" aria-label="History sections">
+      <button type="button" role="tab" data-grow-history-tab-v584="rewards" aria-selected="true" aria-pressed="true">${CUI.icon('star',{size:16})}<span>Rewards &amp; Loyalty</span></button>
+      <button type="button" role="tab" data-grow-history-tab-v584="offers" aria-selected="false" aria-pressed="false">${CUI.icon('tag',{size:16})}<span>Limited Offer</span></button>
+    </div>`:''}
     <section class="grow-overview-column-v319" data-grow-overview-category-v319="rewards" aria-labelledby="growOverviewRewardsHead${scope}">
       <div class="grow-overview-column-head-v324"><span class="grow-overview-column-mark-v401" aria-hidden="true">${CUI.icon('star',{size:18})}</span><h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHead${scope}">Rewards &amp; Loyalty</h3>
         ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow" aria-label="Add another reward programme"><span aria-hidden="true">+</span></a>':''}</div>
       ${rewards}</section>
-    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHead${scope}">
+    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHead${scope}"${tabbed?' hidden':''}>
       <div class="grow-overview-column-head-v324"><span class="grow-overview-column-mark-v401" aria-hidden="true">${CUI.icon('tag',{size:18})}</span><h3 class="grow-overview-column-title-v319" id="growOverviewOffersHead${scope}">Limited Offer</h3>
         ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow/offers" aria-label="Add another limited offer"><span aria-hidden="true">+</span></a>':''}</div>
       ${offers}</section>
@@ -16186,9 +16040,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div><label for="growHistoryFromV375">From</label><input type="date" id="growHistoryFromV375" value="${esc(growHistoryFromV375)}"></div>
     <div><label for="growHistoryToV375">To</label><input type="date" id="growHistoryToV375" value="${esc(growHistoryToV375)}"></div>
     <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growHistoryApplyV375">Apply</button><button type="button" class="btn ghost sm" id="growHistoryClearV375">Clear</button></div>
-    ${growHistoryHiddenCountV375>0?`<p class="muted small" style="flex-basis:100%;margin:6px 0 0">Showing the last month. ${growHistoryHiddenCountV375} older ${growHistoryHiddenCountV375===1?'programme is':'programmes are'} hidden — set a From date to reach ${growHistoryHiddenCountV375===1?'it':'them'}. Nothing is deleted.</p>`:''}
+    ${/* nestly_v584 (owner photo 14: the whole sentence struck through, "delete this word"). It
+         explained the date filter it sits under, on a page where the filter is right there and
+         labelled; the reassurance at the end was answering a question nobody had asked. Nothing
+         about the window changed — only the paragraph describing it. */''}
   </div>`;
-  const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false})}`;
+  const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false,tabbed:true})}`;
   /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3 ==========================
      The dedicated #/grow/points page: Published | History (no Draft — every change here is
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
@@ -16397,11 +16254,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growPointsCurrentPhotoUrlV343||growPointsPhotoFileV343?` <button type="button" class="btn ghost sm" id="growPointsPhotoRemoveV343" style="margin-top:6px">Remove photo</button>`:''}
     </p>
     ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button>${/*
+    ${/* nestly_v584 (owner photo 5: a ring round Save changes and an arrow to the dialog's bottom
+         right — "Save move here"). Save is the dialog's primary action and now sits where this app
+         puts a primary action, at the end of the row. Delete keeps the left, so the destructive
+         button is nowhere near the thumb that is reaching for Save. Nothing else moved: same
+         buttons, same data hooks, same handlers. */''}
+    <div class="row grow-points-form-actions-v584" style="margin-top:10px;gap:8px;flex-wrap:wrap">${/*
       nestly_v416: Delete moved in here with the rest of the row's controls. The grid has no row
       to hang it off, and a gift that cannot be removed from the surface that creates it is a
       one-way door. Same RPC and same confirm state the level row used. */''}
-      ${growPointsEditingV326&&growStampsPickedV416&&canSetupGrow?`<span class="spacer"></span><button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(growPointsEditingV326)}">Delete</button>`:''}</div>
+      ${growPointsEditingV326&&growStampsPickedV416&&canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(growPointsEditingV326)}">Delete</button>`:''}
+      <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
       <b>Take this gift off stamp ${growStampsPickedV416}?</b>
       <p class="muted small" style="margin-top:6px">The stamp stays on the card; it just stops paying out. Customers already part-way through keep the card they started.</p>
@@ -16633,6 +16496,48 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       :CUI.emptyState({iconName:'loyalty',title:'No birthday gift yet',
         body:'Set one up and every customer whose birthday you hold gets it in their birthday month.',
         actionHtml:canSetupGrow?'<button type="button" class="btn sm" id="growBirthdaySetupV382">Set up the birthday gift</button>':''})}
+    </div>`;
+  /* nestly_v584 (owner photo 7, written under the Birthday benefit page: "welcome gift programme
+     follow this style"). Welcome gift was the one programme with no landing page — its tile opened
+     a write modal directly, so a manager could not read what the business gives new sign-ups
+     without permission to change it, and an owner could not check the setting without opening the
+     form. Same shape as V382's birthday page, built from the same welcomeOfferStatusV215 row the
+     editor writes, so the page and the form can never disagree. */
+  const growWelcomeV584=welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null;
+  const growWelcomeItemTextV584=!growWelcomeV584?''
+    :(growWelcomeV584.custom_label||growWelcomeV584.reward_label||'A free item');
+  const growWelcomeWhenTextV584=!growWelcomeV584?''
+    :Number(growWelcomeV584.min_spend_cents)>0
+      ?`After they spend ${money(Number(growWelcomeV584.min_spend_cents))}`
+      :'Straight away — no minimum spend';
+  const growWelcomeExpiryTextV584=!growWelcomeV584?''
+    :Number(growWelcomeV584.expiry_days)>0
+      ?`${Number(growWelcomeV584.expiry_days)} days after they join`
+      :'No expiry';
+  const growWelcomePageV584=!canRewards
+    ?CUI.emptyState({iconName:'giftcard',title:'Loyalty is not included',
+        body:'This workspace does not include the loyalty module, so there is no welcome gift to set up.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :`<div class="grow-tiers-page-v343">
+      <div class="grow-tier-basis-card-v343"><span><b>Welcome gift</b>
+        <p class="muted small" style="margin-top:4px">Given automatically the moment someone new joins through your QR code. Staff hand it over at the counter after looking the customer up.</p></span>
+        ${canSetupGrow?`<button type="button" class="btn sm" id="growWelcomeEditV584">Edit</button>`:''}</div>
+      ${growWelcomeV584?`<section class="card" style="margin-top:14px">
+        <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growWelcomeItemTextV584)}</b>
+            <p class="muted small" style="margin-top:4px">For new sign-ups only.</p></div>
+          <span class="pill ${growWelcomeV584.active?'on':'off'}">${statusOnOff(growWelcomeV584.active)}</span>
+        </div>
+        <dl class="appointment-detail-list" style="margin-top:12px">
+          <div><dt>What they get</dt><dd data-merchant-content>${esc(growWelcomeItemTextV584)}</dd></div>
+          <div><dt>When they can use it</dt><dd>${esc(growWelcomeWhenTextV584)}</dd></div>
+          <div><dt>Expires</dt><dd>${esc(growWelcomeExpiryTextV584)}</dd></div>
+          <div><dt>Terms</dt><dd>One per customer, ever. An existing customer never receives it. Nothing is charged and the visit is recorded at zero.</dd></div>
+        </dl>
+      </section>`
+      :CUI.emptyState({iconName:'giftcard',title:'No welcome gift yet',
+        body:'Set one up and every new sign-up gets it on their first visit.',
+        actionHtml:canSetupGrow?'<button type="button" class="btn sm" id="growWelcomeSetupV584">Set up the welcome gift</button>':''})}
     </div>`;
   const growBbPageV361=!canWinback
     ?CUI.emptyState({iconName:'retention',title:'Retention is not included',
@@ -17375,7 +17280,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      read from the same snapshot row, so the summary cannot drift from the form. Hidden while the
      editor is open, so the page never shows the value twice in two shapes. */
   const growReferralSummaryV375=!(referralConfigured&&!growReferralEditOpenV364)?''
-    :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
+    :`<div class="card grow-referral-panel-v584" data-grow-referral-summary-v375 style="margin-top:10px">
       <b>Referral settings</b>
       <dl class="appointment-detail-list" style="margin-top:8px">
         ${/* nestly_v558: the summary leads with the on/off, the way the birthday gift's read-only
@@ -17397,7 +17302,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
-    :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
+    :`<div class="card grow-referral-panel-v584" data-grow-referral-settings-v364 style="margin-top:10px">
       <b>Referral settings</b>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
       ${/* nestly_v558: the on/off the owner asked for, in the same toggle-row shape the birthday
@@ -17540,8 +17445,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V357: a stale 'draft' tab value (from before that tab was removed) would otherwise select an
      empty bucket and render a permanently empty list. Normalise to a tab that still exists. */
   if(!growOffersTabsV324.some(([key])=>key===growOffersTabV324))growOffersTabV324='published';
-  const growOffersListHtmlV324=growOffersBucketedV324[growOffersTabV324].length
-    ?growOffersBucketedV324[growOffersTabV324].map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
+  /* nestly_v584 (owner photo 8: the pager drawn under the offer list — "only show 20 lists every
+     page"). Same control the Bookings request list got. The bucket is already in memory, so a page
+     change is a re-render of rows that are loaded, not another read. */
+  const growOffersRowsV584=growOffersBucketedV324[growOffersTabV324];
+  if(growOffersPageV584>=pageCountV584(growOffersRowsV584.length))growOffersPageV584=0;
+  const growOffersListHtmlV324=growOffersRowsV584.length
+    ?pageSliceV584(growOffersRowsV584,growOffersPageV584).map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
+      +pagerHtmlV584({scope:'offers',page:growOffersPageV584,total:growOffersRowsV584.length,label:'Offers'})
     :`<p class="muted small" style="padding:14px 0">${esc(growOffersEmptyV324[growOffersTabV324])}</p>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -17579,7 +17490,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         /* nestly_v428 (item 5): 'birthday' joins the dedicated pages. It could not be here before
            because the view never resolved (see directFocusTokens), so the page it names had no
            way back except the sidebar. */
-        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday'].includes(programmeView);
+        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday','welcome'].includes(programmeView);
         if(growActiveTopicV229)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button>`;
         return dedicatedBackV362?`<a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a>`:'';
       })()}${/* v401: the module mark. Every one of the 37 CUI.pageHeader() calls renders a 24px glyph
@@ -17587,7 +17498,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            (home, customers, sales, services) — this was the fifth, and the only top-level page in
            the workspace whose header had none. 'star' is the glyph the rail already assigns to this
            group, so the page now matches the row that opened it. It is decoration, so it is
-           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':programmeView==='birthday'?'Birthday benefit':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
+           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':programmeView==='birthday'?'Birthday benefit':programmeView==='welcome'?'Welcome gift':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
       ${/* V364: the "More reward settings" header action went with the block it opened. */''}
       <div class="v150-title-actions"></div>
     </header>
@@ -17604,8 +17515,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${(()=>{
         /* nestly_v428 (item 5): 'birthday' is a dedicated page like the five beside it, so its
            sr-only h2 names the page rather than repeating the module. */
-        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday'].includes(programmeView);
-        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='birthday'?'Birthday benefit':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
+        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday','welcome'].includes(programmeView);
+        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='birthday'?'Birthday benefit':programmeView==='welcome'?'Welcome gift':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:20})} `:'';
         /* Wave 2A: the landing's h2 repeats the page h1 verbatim — keep it for structure, hide it from eyes. */
         const hideH2V2A=dedicatedViewV341||h2TextV341==='Rewards Programme';
@@ -17628,6 +17539,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
       ${programmeView==='bringback'?growBbPageV361:''}
       ${programmeView==='birthday'?growBirthdayPageV382:''}
+      ${programmeView==='welcome'?growWelcomePageV584:''}
       ${programmeView==='tiers'?growTiersManageV331:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
@@ -17676,7 +17588,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="grow-programme-list" style="margin-top:14px" data-grow-offers-list-v324>${growOffersListHtmlV324}</div>
       </div>`:''}
       ${topicOnV229('referrals')?`
-      <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
+      ${/* nestly_v584 (owner photo 6: the pink strip ringed — "don't want background pink colour,
+           pls match with others", and then: remove it entirely, no other reward page has one). The
+           page heading directly above already says Referrals, so the band repeated the page's own
+           title in a colour nothing else on this page uses. The category box and every row inside
+           it are untouched. */''}
+      <div class="programme-category" data-programme-category-v268="referrals"><div class="grow-programme-list">
         ${/* nestly_v558 (owner, photo 3): "Paused" is gone from this row. Referrals is either ON for
              customers or OFF, and the row says which — the switch that changes it is in the
              settings panel this row's own Edit opens. */''}
@@ -18136,8 +18053,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const tab=button.dataset.growOffersTabV324;
     if(!['published','history'].includes(tab))return;
     growOffersTabV324=tab;
+    growOffersPageV584=0;   /* a different bucket starts at its own first page */
     growRerenderV322();
   });
+  /* nestly_v584: the offer list's pager. Re-renders through growRerenderV322 like the tab strip
+     beside it, because the row SET changes — quietly, so the page does not announce itself. */
+  wirePagerV584(outerMain,'offers',target=>{growOffersPageV584=target;growRerenderV322({quiet:true})});
   /* V324: the Point system reward grid's own Published/Draft/History filter. Same reasoning as
      the Limited Offer tabs above — the card SET changes per tab, not just what is shown of one
      card, so this re-renders rather than toggling `hidden`. */
@@ -18295,14 +18216,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        birthday reuses the rewards editor's existing birthday focus target; bring-back has its own
        page. All three doors already existed — only the entry point moved. */
     if(tile.dataset.growTopicV229==='welcome'){
-      /* nestly_v428 (item 2): `if(!canSetupGrow)return` absorbed the tap in silence — a manager
-         pressed a tile that looked exactly like the six around it and nothing happened at all,
-         which reads as a broken app rather than as a refusal. The welcome tile's destination is a
-         WRITE modal with no read-only shape, so it stays closed and says why, using the same
-         sentence the Overview rows at [data-grow-open-v388] already use for this refusal. */
-      if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
-      return openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
-        ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+      /* nestly_v584 (owner photo 7: "welcome gift programme follow this style", drawn on the
+         Birthday benefit page). The tile opens the landing page now, not the editor. That also
+         retires the v428 refusal that used to live here for the same reason it retired on
+         birthday: the destination is a READ page that gates its own Edit on canSetupGrow, so a
+         manager gets to see what the business gives away instead of a toast. */
+      return nav('#/grow/welcome');
     }
     if(tile.dataset.growTopicV229==='birthday'){
       /* nestly_v428 (item 2): birthday is the other half of the same defect and gets the opposite
@@ -18470,6 +18389,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growBirthdayEditV382)growBirthdayEditV382.onclick=growBirthdayOpenEditorV382;
   const growBirthdaySetupV382=$('growBirthdaySetupV382');
   if(growBirthdaySetupV382)growBirthdaySetupV382.onclick=growBirthdayOpenEditorV382;
+  /* nestly_v584: the welcome gift's landing page has the same one door — the SAME modal the tile
+     used to open, so there is still one welcome-offer editor and one save path. */
+  const growWelcomeOpenEditorV584=()=>openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+    ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+  const growWelcomeEditV584=$('growWelcomeEditV584');
+  if(growWelcomeEditV584)growWelcomeEditV584.onclick=growWelcomeOpenEditorV584;
+  const growWelcomeSetupV584=$('growWelcomeSetupV584');
+  if(growWelcomeSetupV584)growWelcomeSetupV584.onclick=growWelcomeOpenEditorV584;
   const growHistoryApplyV375=$('growHistoryApplyV375');
   if(growHistoryApplyV375)growHistoryApplyV375.onclick=()=>{
     growHistoryFromV375=$('growHistoryFromV375')?.value||'';
@@ -18510,6 +18437,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(caret)caret.textContent=open?'\u25be':'\u25b8';
     outerMain.querySelectorAll(`tr[data-grow-usage-group-v413="${CSS.escape(key)}"][data-grow-usage-child-v413]`)
       .forEach(row=>{row.hidden=!open;});
+  });
+  /* nestly_v584: the History sub-tabs. DOM-only, like the gift-group disclosure above — nothing
+     the server knows changes, so re-rendering the page to swap two sections would throw away the
+     owner's scroll position for no reason. */
+  const growHistoryTabsV584=outerMain.querySelectorAll('[data-grow-history-tab-v584]');
+  growHistoryTabsV584.forEach(button=>button.onclick=()=>{
+    const want=button.dataset.growHistoryTabV584;
+    growHistoryTabsV584.forEach(other=>{
+      const on=other===button;
+      other.setAttribute('aria-selected',on?'true':'false');
+      other.setAttribute('aria-pressed',on?'true':'false');
+    });
+    const frame=button.closest('[data-grow-overview-split-v319]');
+    if(!frame)return;
+    frame.querySelectorAll('[data-grow-overview-category-v319]').forEach(section=>{
+      section.hidden=section.dataset.growOverviewCategoryV319!==want;
+    });
   });
   /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
      same way — it is Apply with the typing done for you, not a second window state. */
@@ -25242,7 +25186,7 @@ async function appointmentsPage(){
           <div><label for="appointmentListTo">To</label><input type="date" id="appointmentListTo" class="appt-date-narrow-v251" value="${shiftSgDateInput(todaySg,7)}"></div>
           <div><label for="appointmentListStatus">Appointment status</label><select id="appointmentListStatus"><option value="">All statuses</option><option value="booked">Booked</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="no_show">No-show</option></select></div>
           <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="appointmentListApply">Apply filters</button><button type="button" class="btn ghost sm" id="appointmentListClear">Clear filters</button></div>
-          <div class="row" style="grid-column:1/-1;gap:8px;flex-wrap:wrap"><button type="button" class="qbtn" data-appt-preset="today">Today</button><button type="button" class="qbtn" data-appt-preset="next7">Next 7 days</button><button type="button" class="qbtn" data-appt-preset="past7">Past 7 days</button><button type="button" class="qbtn" data-appt-preset="month">This month</button></div>
+          <div class="row filter-fullrow-v584" style="gap:8px;flex-wrap:wrap"><button type="button" class="qbtn" data-appt-preset="today">Today</button><button type="button" class="qbtn" data-appt-preset="next7">Next 7 days</button><button type="button" class="qbtn" data-appt-preset="past7">Past 7 days</button><button type="button" class="qbtn" data-appt-preset="month">This month</button></div>
         </div>
         <div id="calendarSelection"></div><div id="alist" style="margin-top:12px"><p class="muted small">Loading calendar…</p></div>
       </section>
@@ -28535,10 +28479,13 @@ async function waitlistPage(){
   };
   const waitlistPeriodChipV571=(mode,label)=>
     `<button type="button" class="btn ghost sm wl-period-chip-v571${waitlistPeriodV571.mode===mode?' is-on':''}" data-wl-period-v571="${mode}" aria-pressed="${waitlistPeriodV571.mode===mode?'true':'false'}">${label}</button>`;
-  const waitlistPeriodBarV571=()=>`<div class="row wl-period-v571" role="group" aria-label="Waitlist period" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+  const waitlistPeriodBarV571=()=>`<div class="row wl-period-v571" role="group" aria-label="Waitlist period" style="margin-bottom:14px">
       ${waitlistPeriodChipV571('today','Today')}${waitlistPeriodChipV571('yesterday','Yesterday')}
-      <label class="small" style="display:flex;flex-direction:column;gap:4px"><span>From</span><input type="date" id="wlFromV571" value="${esc(waitlistPeriodV571.from)}"></label>
-      <label class="small" style="display:flex;flex-direction:column;gap:4px"><span>To</span><input type="date" id="wlToV571" value="${esc(waitlistPeriodV571.to)}"></label>
+      ${/* nestly_v584 (owner photo 11: "overlapping" drawn across the From / To pair). The inline
+           flex column is gone so the shared filter-bar rule owns the label/control rows — see the
+           v584 block in the stylesheet. */''}
+      <label class="small"><span>From</span><input type="date" id="wlFromV571" value="${esc(waitlistPeriodV571.from)}"></label>
+      <label class="small"><span>To</span><input type="date" id="wlToV571" value="${esc(waitlistPeriodV571.to)}"></label>
       <button type="button" class="btn sm" id="wlPeriodApplyV571">Apply</button>
     </div>`;
   routeMain.innerHTML=
@@ -28841,25 +28788,27 @@ async function inventoryPage(){
      column is left untouched, so no figure already entered is destroyed, and cost is still
      collected in Programmes -> More reward settings, where it has an actual purpose: deciding
      what a reward can safely cost. It is never asked for twice. */
-  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('inventory',{size:24})}<div><h1>Products</h1><p class="muted small">What you sell and what you charge for it. Stock keeping is optional.</p></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('inventory',{size:24})}<div><h1>Products</h1><p class="muted small">What you sell and what you charge for it.</p></div></div>
     <div class="row">${canWrite?importBtn('inventory'):''}</div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
     <div class="split">
     ${canWrite?`<div class="card"><b>Add product</b>
       <label for="pn2">Name</label><input id="pn2"><label for="ps2">SKU (optional)</label><input id="ps2">
       <label for="pp2">Sell for (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00">
-      <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div>
-      <details class="till-sale-package-options" style="margin-top:20px"><summary>Count stock too (optional)</summary>
-      <p class="muted small" style="margin:0 0 8px">Only for goods you count — a batch with a quantity and an optional expiry date. Selling never needs this: a product with no stock recorded still sells normally.</p>
-      <label for="bp2">Product</label><select id="bp2"></select>
-      <div class="split"><div><label for="bq2">Quantity</label><input id="bq2" type="number" min="1" value="10"></div>
-      <div><label for="be2">Expiry (optional)</label><input id="be2" type="date"></div></div>
-      <div style="margin-top:14px"><button class="btn ghost" id="badd2">Receive batch</button></div></details></div>`:''}
+      ${/* nestly_v584 (owner photo 9: the whole stock-counting disclosure struck out corner to
+           corner and the STOCK column scribbled through — "Remove stock taking feature", confirmed
+           as everywhere in the app). Counting stock is gone from the workspace: no batches to
+           receive, no on-hand figure, no low warning. Selling is completely unaffected — v8's rule
+           has always been "deduct what exists, never below zero, never raise", so a product with
+           no stock row sells exactly as it did. Every stock table, view and RPC is left in the
+           database untouched, so nothing a firm already counted is destroyed and re-listing this
+           is a UI change if the owner wants it back. */''}
+      <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div></div>`:''}
     <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:5})}</div></div></div>`;
   /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
      be created — a mistyped price or name was permanent, which matters more now that a whole
      café menu lives here. Editing never rewrites history: every sale carries its own snapshot.
-     Disable rather than delete, because product_stock, stock batches and past sale lines all
+     Disable rather than delete, because stock records and past sale lines all
      reference the row; disabling removes it from Record sale and the catalogue while leaving
      every reference and every past receipt intact. */
   let editingProductId=null;
@@ -28892,20 +28841,17 @@ async function inventoryPage(){
     });
   }
   async function loadInv(){
-    const [productsResult,stockResult]=await Promise.all([
-      sb.from('products').select('*').eq('business_id',S.biz.id).order('name'),
-      sb.from('product_stock').select('*').eq('business_id',S.biz.id)]);
+    const [productsResult]=await Promise.all([
+      sb.from('products').select('*').eq('business_id',S.biz.id).order('name')]);
     if(!isCurrent())return;
-    if(productsResult.error||stockResult.error){
+    if(productsResult.error){
       $('ilist').innerHTML=`<div class="err">Products could not be loaded. <button class="btn ghost sm" id="inventoryRetry">Retry</button></div>`;
       $('inventoryRetry').onclick=loadInv;return;
     }
-    const pr=productsResult.data,st=stockResult.data;
-    const SM=Object.fromEntries((st||[]).map(x=>[x.product_id,x.stock]));
-    if(canWrite)$('bp2').innerHTML=(pr||[]).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')||'<option value="">— add a product first —</option>';
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th>Stock</th><th></th></tr></thead><tbody>
-      ${pr.map(p=>{const s=SM[p.id]||0;return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
-      <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td><td data-label="Stock">${s} ${s<5?'<span class="pill no">low</span>':''}</td>
+    const pr=productsResult.data;
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th></th></tr></thead><tbody>
+      ${pr.map(p=>{return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
+      <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td>
       <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
         <div class="field-grid">
           <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
@@ -28922,28 +28868,20 @@ async function inventoryPage(){
       sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
     if(error) return fail(error);toast('Product added');$('pn2').value='';$('pp2').value='';loadInv();
   };
-  if(canWrite)$('badd2').onclick=async()=>{
-    if(!$('bp2').value) return toast('Pick a product');
-    const product=$('bp2').value,qty=parseInt($('bq2').value||'1'),expiresOn=$('be2').value||null;
-    const stockSlot=`frenly:stock-receive:${S.biz.id}`;
-    const stockKey=writeAttemptKey(stockSlot,JSON.stringify([product,qty,expiresOn]));
-    const recvButton=$('badd2');recvButton.disabled=true;
-    const {data,error}=await sb.rpc('receive_stock',{p_business:S.biz.id,p_product:product,p_qty:qty,
-      p_expires_on:expiresOn,p_received_on:null,p_idempotency_key:stockKey});
-    if(error){
-      recvButton.disabled=false;
-      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(stockSlot);return toast('That batch clashed with another — check stock on hand, then start a fresh one')}
-      return fail(error);
-    }
-    clearWriteAttempt(stockSlot);recvButton.disabled=false;
-    toast(isReplayResult(data)?'Already received — no duplicate batch':'Stock received');loadInv();
-  };
   loadInv();
 }
 
 /* ---------- packages ---------- */
-async function packagesPage(){
+/* nestly_v584 (owner photo 12: the Customer packages tab ringed, with an arrow to the Serve &
+   sell group in the rail — "put under new modules under serve & sell"). The two tabs were doing
+   two different jobs on one page: My packages is setup (what you sell), Customer packages is a
+   counter action (use a session for the person in front of you). They are now two destinations,
+   so the daily one is one tap from the rail instead of two. ONE builder still renders both —
+   same markup, same ids, same handlers — with `view` deciding which half is on screen. */
+async function packagesPage(options){
+  const packagesViewV584=options&&options.view==='customers'?'customers':'plans';
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  const refreshPackagesV584=()=>packagesPage({view:packagesViewV584});
   const canWrite=canWriteModule('packages');
   routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
   const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult]=await Promise.all([
@@ -28978,13 +28916,9 @@ async function packagesPage(){
       ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
       :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
   };
-  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Manage prepaid sessions. Sell packages from Record sale.</p></div></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>${packagesViewV584==='customers'?'Customer packages':'Packages'}</h1><p class="muted small">${packagesViewV584==='customers'?'Find a customer and use one of their prepaid sessions.':'Manage prepaid sessions. Sell packages from Record sale.'}</p></div></div></div>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only packages access</b><p class="muted small" style="margin-top:5px">You can review package plans and customer balances. Ask for Packages edit access to create or use sessions.</p></div>`}
-    <div class="settings-tabs package-tabs-v157" role="tablist" aria-label="Package sections">
-      <button type="button" class="settings-tab" id="pkgTabPlans" role="tab" aria-selected="true" aria-controls="pkgPanelPlans" data-package-tab="plans">My packages</button>
-      <button type="button" class="settings-tab" id="pkgTabCustomers" role="tab" aria-selected="false" tabindex="-1" aria-controls="pkgPanelCustomers" data-package-tab="customers">Customer packages</button>
-    </div>
-    <section class="package-panel-v157" id="pkgPanelPlans" role="tabpanel" aria-labelledby="pkgTabPlans">
+    ${packagesViewV584==='plans'?`<section class="package-panel-v157" id="pkgPanelPlans" role="tabpanel">
     <div class="card">${canWrite?`<b id="kFormTitle">Create a package</b>
       <input id="kid" type="hidden">
       <label for="kn">Name</label><input id="kn" placeholder="e.g. 5x Facial">
@@ -29004,7 +28938,8 @@ async function packagesPage(){
         <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
         ${canWrite?(packagePurchaseCount[p.id]?`${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}`
           :`<div class="row" style="gap:6px;flex-wrap:wrap">${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button><button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}">Delete</button></div>`):''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
-    <section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel" aria-labelledby="pkgTabCustomers" hidden>
+    </section>`:''}
+    ${packagesViewV584==='customers'?`<section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel">
       <div class="card"><div class="row"><div><b>Customer packages</b><p class="muted small" style="margin-top:5px">Search by customer name or phone, then use sessions from the matching customer record.</p></div></div>
       <div class="package-customer-tools-v157">
         ${canWrite?`<div><label for="kUseBranch">Branch recording used session</label><select id="kUseBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select></div>`:''}
@@ -29012,30 +28947,9 @@ async function packagesPage(){
         <button class="btn ghost sm" id="kCustomerSearchClear" type="button">Clear</button>
       </div>
       <div id="klist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
-    </section>`;
-  if($('packagePreferencesRetry'))$('packagePreferencesRetry').onclick=packagesPage;
-  const packageTabs=[...routeMain.querySelectorAll('[data-package-tab]')];
-  const packagePanels={plans:$('pkgPanelPlans'),customers:$('pkgPanelCustomers')};
-  function selectPackageTab(key,focus=false){
-    packageTabs.forEach(tab=>{
-      const on=tab.dataset.packageTab===key;
-      tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;
-      const panel=packagePanels[tab.dataset.packageTab];if(panel)panel.hidden=!on;
-      if(on&&focus)tab.focus();
-    });
-  }
-  packageTabs.forEach((tab,i)=>{
-    tab.onclick=()=>selectPackageTab(tab.dataset.packageTab);
-    tab.onkeydown=e=>{
-      let next=null;
-      if(e.key==='ArrowRight'||e.key==='ArrowDown')next=(i+1)%packageTabs.length;
-      else if(e.key==='ArrowLeft'||e.key==='ArrowUp')next=(i-1+packageTabs.length)%packageTabs.length;
-      else if(e.key==='Home')next=0;else if(e.key==='End')next=packageTabs.length-1;
-      if(next===null)return;
-      e.preventDefault();selectPackageTab(packageTabs[next].dataset.packageTab,true);
-    };
-  });
-  if(canWrite){
+    </section>`:''}`;
+  if($('packagePreferencesRetry'))$('packagePreferencesRetry').onclick=refreshPackagesV584;
+  if(canWrite&&packagesViewV584==='plans'){
     const resetPackageForm=()=>{
       $('kid').value='';$('kn').value='';$('kp').value='';$('ks').value='5';$('kv').value='';
       $('kFormTitle').textContent='Create a package';$('kadd').textContent='Save package';$('kcancel').style.display='none';renderPackageDiscount();
@@ -29075,7 +28989,7 @@ async function packagesPage(){
       const {error}=await sb.rpc('business_manage_package_plan_v193',
         {p_business:S.biz.id,p_plan:id,p_action:'rename',p_name:name});
       if(error)return toast(ownerErrorText(error));
-      toast('Package renamed');packagesPage();
+      toast('Package renamed');refreshPackagesV584();
     });
     document.querySelectorAll('[data-package-delete]').forEach(button=>button.onclick=async()=>{
       const id=button.dataset.packageDelete,name=button.dataset.packageName||'this package';
@@ -29085,7 +28999,7 @@ async function packagesPage(){
         {p_business:S.biz.id,p_plan:id,p_action:'delete',p_name:null});
       if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
       if(error)return toast(ownerErrorText(error));
-      toast('Package deleted');packagesPage();
+      toast('Package deleted');refreshPackagesV584();
     });
     document.querySelectorAll('[data-edit-package]').forEach(button=>button.onclick=()=>{
       const plan=(plans||[]).find(item=>item.id===button.dataset.editPackage);if(!plan)return;
@@ -29108,7 +29022,7 @@ async function packagesPage(){
       if(error)return fail(error);
       toast($('kid').value
         ?workspaceTemplateTextV97('packageVersionCreated',{version:Number(data?.version_no||0)})
-        :'Package created');packagesPage();
+        :'Package created');refreshPackagesV584();
     };
     if($('kPoints'))$('kPoints').onchange=async()=>{
       const checkbox=$('kPoints');checkbox.disabled=true;
@@ -29127,6 +29041,7 @@ async function packagesPage(){
      index.html) has rendered #ksell, #kc, #kk or #kSaleBranch since selling a package moved into
      the till, so the block wired a click on an element that never exists. Selling is unaffected:
      the till's own checkout is the live call site of sell_package_v102 and is untouched. */
+  if(packagesViewV584!=='customers')return;
   const [{data:cps,error:cpError},workflow]=await Promise.all([
     sb.rpc('staff_list_package_entitlements_v102',{p_business:S.biz.id}),
     loadReversalWorkflows(null,100,'package').catch(e=>{fail(e);return null})]);
@@ -29136,7 +29051,7 @@ async function packagesPage(){
   const PACKAGE_PAGE_SIZE=100,packageRows=cps||[];
 	  let packagePage=0;
 	  const renderPackages=()=>{
-	    if(!isCurrent())return;
+	    if(!isCurrent()||!$('klist'))return;
 	    const query=($('kCustomerSearch')?.value||'').trim().toLowerCase();
 	    const filtered=packageRows.filter(k=>!query||[k.client_name,k.client_phone,k.plan_name].some(value=>String(value||'').toLowerCase().includes(query)));
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
@@ -29156,7 +29071,7 @@ async function packagesPage(){
     const prev=$('packagesPrev'),next=$('packagesNext');
     if(prev)prev.onclick=()=>{packagePage=Math.max(0,packagePage-1);renderPackages()};
     if(next)next.onclick=()=>{packagePage+=1;renderPackages()};
-    if(canWrite)bindReversalButtons(packagesPage);
+    if(canWrite)bindReversalButtons(refreshPackagesV584);
 	  };
 	  renderPackages();
 	  const packageSearch=$('kCustomerSearch');
@@ -29176,7 +29091,7 @@ async function packagesPage(){
     const result=packageUseResultV102(data);
     if(!result)return fail(new Error('The package-use receipt was incomplete. Retry with the same branch.'));
     packageSessionIdem.delete(attempt.slot);
-    toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));packagesPage();
+    toast(workspaceTemplateTextV97('sessionUsed',{remaining:result.remainingAfter}));refreshPackagesV584();
   };
 }
 
@@ -32262,6 +32177,7 @@ async function settingsPage(){
   /* team + per-staff module permissions (v74) */
   let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
   let openProfileId=null; // V180: staff.id whose editable profile is expanded, or null
+  let staffEditDeactivateV584=null; // nestly_v584: the open editor dialog's deactivator, if any
   const panelSel={};    // staff.id -> {mode:'inherit'|'explicit', perms:{module:'r'|'rw'}}
                          // panel edits kept in JS state (not read back from the DOM) so they
                          // survive the loadTeam() redraws other actions trigger.
@@ -32321,6 +32237,30 @@ async function settingsPage(){
       </div>`;
     }).join('');
   }
+  /* nestly_v584 (owner photo 15: "when click, it's pop-up" with an arrow to Edit; photo 16: the
+     panel redrawn with two tabs, "Profile" and "Access & Module"). The panel was an inline card
+     that pushed every teammate below it down the page — on the second person in the list the
+     fields opened somewhere off screen. It is a dialog now, and its two halves are two tabs: what
+     the person IS (name, contact, commission, branches) and what they may REACH (app access,
+     status, modules). PRESENTATION ONLY: staffProfilePanelHtml and modPanelHtml are the same
+     builders with the same ids, so every existing handler finds the same node it always did. */
+  function staffEditDialogHtmlV584(s){
+    const showAccess=s.role!=='owner';
+    return `<div class="modal" id="staffEditModalV584" role="dialog" aria-modal="true" aria-labelledby="staffEditTitleV584" tabindex="-1">
+      <section class="modal-card staff-edit-card-v584">
+        <div class="row" style="align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0"><p class="eyebrow">Team member</p>
+            <h2 id="staffEditTitleV584" style="margin-top:4px" data-merchant-content>${esc(s.full_name||'Team member')}</h2></div>
+          <button type="button" class="btn ghost sm icon-only" onclick="toggleStaffProfile('${s.id}')" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button>
+        </div>
+        ${showAccess?`<div class="v150-segment staff-edit-tabs-v584" role="tablist" aria-label="Team member sections">
+          <button type="button" role="tab" data-staff-tab-v584="profile" aria-selected="true" aria-pressed="true">Profile</button>
+          <button type="button" role="tab" data-staff-tab-v584="access" aria-selected="false" aria-pressed="false">Access &amp; Module</button>
+        </div>`:''}
+        <div data-staff-tabpanel-v584="profile">${staffProfilePanelHtml(s)}</div>
+        ${showAccess?`<div data-staff-tabpanel-v584="access" hidden>${staffProfileActionsHtmlV577(s)}${modPanelHtml(s)}</div>`:''}
+      </section></div>`;
+  }
   /* V180: the editable profile behind a staff row. Role stays on the existing
      set_staff_role_v74 RPC (it re-derives module permissions as a side effect, so a plain
      column UPDATE here would silently skip that); the plain identity and commission columns
@@ -32341,8 +32281,12 @@ async function settingsPage(){
       </div>
       <p class="muted small help">Leave a commission blank if it is not decided. 0% is a real setting and means no commission on that kind of sale.</p>
       ${staffBranchPickerHtmlV577(s)}
-      ${staffProfileActionsHtmlV577(s)}
-      <div class="row" style="margin-top:12px"><button class="btn sm" onclick="saveStaffProfile('${s.id}',this)">Save profile</button><span class="spacer"></span><button class="btn ghost sm" onclick="toggleStaffProfile('${s.id}')">Cancel</button></div>
+      ${/* nestly_v584 (owner photo 16: "Access and status" ringed with "put inside" and an arrow to
+           the new Access & Module tab; Cancel struck out; Save ringed at the bottom right). The
+           four actions moved one tab across — same handlers, same confirms — and Cancel goes
+           because the dialog already has three ways out (the ✕, the backdrop and Esc), all of which
+           discard exactly the same way this button did. */''}
+      <div class="row staff-profile-save-v584" style="margin-top:12px"><span class="spacer"></span><button class="btn sm" onclick="saveStaffProfile('${s.id}',this)">Save profile</button></div>
     </div>`;
   }
   function modPanelHtml(s){
@@ -32368,8 +32312,9 @@ async function settingsPage(){
         ${modulePermissionGridHtml(s,sel)}
       </div>
       <div id="modulePermStatus-${s.id}" role="status" aria-live="polite">${permissionStatusByStaff[s.id]||''}</div>
-      <div class="row" style="margin-top:6px"><button class="btn sm" onclick="saveStaffModules('${s.id}')">Save</button>
-      <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Close</button></div>
+      ${/* nestly_v584: no Close beside Save — this panel is a tab inside the editor dialog now, and
+           the dialog's own ✕ / backdrop / Esc are the way out. */''}
+      <div class="row staff-modules-save-v584" style="margin-top:6px"><span class="spacer"></span><button class="btn sm" onclick="saveStaffModules('${s.id}')">Save modules</button></div>
       <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
       <p class="muted small" style="margin-bottom:6px">Save this set as a reusable template:</p>
       <div class="row"><input id="tplName-${s.id}" placeholder="e.g. Barista" style="max-width:160px">
@@ -32519,8 +32464,9 @@ async function settingsPage(){
        match:row=>!['owner','manager'].includes(row.role)&&!row.user_id}
     ];
     const staffRowV209=s=>{
-      const explicitCount=s.module_perms&&typeof s.module_perms==='object'?Object.keys(s.module_perms).length:0;
-      const modPill=s.role==='owner'?'':(s.module_perms===null?'<span class="pill on">Inherits enabled modules</span>':`<span class="pill off">${explicitCount} explicit module${explicitCount===1?'':'s'}</span>`);
+      /* nestly_v584: the "Inherits enabled modules" / "N explicit modules" pill is struck out on
+         the owner's photo 15 along with the access one. What a teammate can reach is now read (and
+         changed) in one place — the Access & Module tab of the editor this row opens. */
       /* nestly_v569: the pill used to read straight off user_id, so the SECOND a teammate
          accepted an invite the roster said "App access active" — while accept_invite had parked
          them at access_state='pending' and app.is_salon_member (which demands 'approved') kept
@@ -32534,16 +32480,28 @@ async function settingsPage(){
          declines, so a declined teammate looks identical to a never-invited one on user_id
          alone — and the owner would have no way to see the decision they just made. */
       const accessPendingV569=!!s.user_id&&accessStateV569==='pending';
-      const accessPill=accessStateV569==='rejected'?'<span class="pill off">App access declined</span>'
-        :!s.user_id?'<span class="pill off">No app access</span>'
-        :accessPendingV569?'<span class="pill warn">Waiting for your approval</span>'
-        :'<span class="pill ok">App access active</span>';
       /* V180 (owner instruction): one line per teammate — name, email, phone, team and
          commission — and the row itself opens an editable profile. Previously the row showed
          only a name while email, phone and commission lived in separate cards further down
          the page, so an owner had to read three places to answer "who is this and what do
          they earn". The commission columns are the staff's own defaults; the per-SERVICE
          override stays in its own card because it belongs to a service, not to a person. */
+      /* nestly_v584: owners and managers see every branch by definition (staffBranchPickerHtmlV577
+         says so on the other side of this page), so their cell states that rather than printing an
+         assignment that governs nothing. */
+      const branchNamesV584=(staffBranchListV577||[])
+        .filter(branch=>(staffBranchAssignedV577.get(s.id)||new Set()).has(branch.id))
+        .map(branch=>branch.name);
+      const branchSummaryV584=['owner','manager'].includes(s.role)
+        ?'<span class="muted small">All branches</span>'
+        :staffBranchListV577===null?'<span class="muted small">—</span>'
+        :branchNamesV584.length?`<span class="muted small" data-merchant-content>${esc(branchNamesV584.join(', '))}</span>`
+        :'<span class="muted small">Unassigned</span>';
+      const appAccessCellV584=accessStateV569==='rejected'
+        ?'<span class="staff-access-mark-v584 is-no" title="App access declined" aria-label="App access declined">\u2715</span>'
+        :accessPendingV569?'<span class="pill warn">Waiting</span>'
+        :s.user_id?'<span class="staff-access-mark-v584 is-yes" title="Can sign in" aria-label="Can sign in">\u2713</span>'
+        :'<span class="staff-access-mark-v584 is-no" title="No app access" aria-label="No app access">\u2715</span>';
       const pct=bps=>bps===null||bps===undefined?'—':`${(Number(bps)/100).toFixed(Number(bps)%100?2:0)}%`;
       const commissionSummary=s.commission_service_bps==null&&s.commission_product_bps==null
         ?'<span class="muted small">Commission not set</span>'
@@ -32560,6 +32518,15 @@ async function settingsPage(){
             <span class="staff-col-v226" data-staff-col="Name"><b data-merchant-content>${esc(s.full_name||'Member')}</b></span>
             <span class="staff-col-v226" data-staff-col="Phone"><span class="muted small" data-merchant-content>${esc(s.phone||'—')}</span></span>
             <span class="staff-col-v226" data-staff-col="Email"><span class="muted small" data-merchant-content>${esc(s.email||'—')}</span></span>
+            ${/* nestly_v584 (owner photo 15: "BRANCH" and "APP ACCESS" written in as two new column
+                 headers, and the two chips under each name struck out). Both facts were already on
+                 the row — one as a pill in a wrapped strip below the grid, the other only inside
+                 the profile — so they could not be compared down a column, which is the whole
+                 point of this grid (V226: "I want clear segmentation"). App access is a tick or a
+                 cross, exactly as the owner drew it; a login still waiting on approval is neither,
+                 and says so, because that one needs an action rather than a symbol. */''}
+            <span class="staff-col-v226" data-staff-col="Branch">${branchSummaryV584}</span>
+            <span class="staff-col-v226" data-staff-col="App access">${appAccessCellV584}</span>
             <span class="staff-col-v226" data-staff-col="Position"><span class="pill ${s.role==='owner'?'ok':'off'}" data-merchant-content>${esc(s.title||ROLE_LABELS[s.role]||s.role)}</span></span>
             <span class="staff-col-v226" data-staff-col="Commission">${commissionSummary}</span>
           </button>
@@ -32568,7 +32535,7 @@ async function settingsPage(){
                row's full width (see the CSS note by .staff-row-actions) instead of shrinking by
                however much this particular row's pills+buttons happen to take up. -->
           <div class="staff-row-actions">
-            ${accessPill}${modPill}<span class="spacer"></span>
+            <span class="spacer"></span>
             ${/* nestly_v577 (owner mark, photo 12: all four row buttons ringed on both teammates,
                  "all move into edit button"). Give app access / Modules / Deactivate / Delete are
                  no longer four buttons per row — the row carries one Edit, and all four live in
@@ -32583,8 +32550,7 @@ async function settingsPage(){
           </div>
           ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}">${esc(s.full_name||'This teammate')} has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
         </div>
-        ${openProfileId===s.id?staffProfilePanelHtml(s):''}
-        ${(s.role!=='owner'&&openModId===s.id)?modPanelHtml(s):''}
+        ${openProfileId===s.id?staffEditDialogHtmlV584(s):''}
       </div>`;
     };
     const rows=st||[];
@@ -32597,11 +32563,46 @@ async function settingsPage(){
               <h3>${esc(group.title)} <span class="staff-group-count-v209">${members.length}</span></h3>
               <p class="muted small">${esc(group.sub)}</p>
             </div>
-            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Position</span><span>Commission</span></div>
+            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>App access</span><span>Position</span><span>Commission</span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
         }).join('')
       :'<p class="muted small">No teammates yet — add one above, or invite one below.</p>';
+    /* nestly_v584: activate the editor dialog and its two tabs. Closing takes the same path the
+       row's Edit toggle takes, so there is one place that decides which profile is open. */
+    const staffDialogV584=$('staffEditModalV584');
+    /* Saving a profile, a permission or a role re-runs loadTeam while the dialog stays open, so a
+       fresh node is activated each time. Without handing the previous activation's history entry
+       over, each re-render would push another one and Back would need pressing several times to
+       leave one dialog. The previous deactivator is retired first and the new activation INHERITS
+       its entry; when the re-render CLOSES the editor instead, the hand-off is not claimed and the
+       deactivator unwinds the entry itself, exactly as a normal close does. */
+    if(staffEditDeactivateV584){
+      const previous=staffEditDeactivateV584;staffEditDeactivateV584=null;
+      previous({restoreFocus:false,handOffHistory:!!staffDialogV584});
+    }
+    if(staffDialogV584){
+      const openedForV584=openProfileId;
+      staffEditDeactivateV584=CUI.activateDialog(staffDialogV584,{
+        onClose:()=>{
+          staffEditDeactivateV584=null;
+          if(openProfileId===openedForV584){openProfileId=null;loadTeam()}
+        },
+        inheritHistoryId:CUI.currentDialogHistoryId?.()||0,
+        initialFocus:'input,select,button'});
+      const staffTabsV584=[...staffDialogV584.querySelectorAll('[data-staff-tab-v584]')];
+      staffTabsV584.forEach(tab=>tab.onclick=()=>{
+        const want=tab.dataset.staffTabV584;
+        staffTabsV584.forEach(other=>{
+          const on=other===tab;
+          other.setAttribute('aria-selected',on?'true':'false');
+          other.setAttribute('aria-pressed',on?'true':'false');
+        });
+        staffDialogV584.querySelectorAll('[data-staff-tabpanel-v584]').forEach(panel=>{
+          panel.hidden=panel.dataset.staffTabpanelV584!==want;
+        });
+      });
+    }
     $('invites').innerHTML=(inv&&inv.length)?inv.map(i=>{
       const code=normalizeCompanyInviteCodeV151(i.code)||i.code;
       const link=staffInviteLinkV151(code);
@@ -32676,13 +32677,17 @@ async function settingsPage(){
       <b class="small">Access and status</b>
       <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
         ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
-        <button class="btn ghost sm" onclick="toggleModPanel('${s.id}')">Modules</button>
+        ${/* nestly_v584: no "Modules" button — the module grid is on this same tab, directly below,
+             so the button opened what the reader is already looking at. */''}
         ${/* V285's reasoning is unchanged and still governs these two: deactivating is what a shop
              does when somebody leaves (access stops, the seat stops being billed, every past sale
              and commission keeps the name), and Delete stays behind its own second confirm for the
              row created by mistake. */''}
         <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="setStaffActiveV285('${s.id}',${s.active===false?'true':'false'},this)">${s.active===false?'Reactivate':'Deactivate'}</button>
-        <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)">Delete</button>
+        ${/* nestly_v584 (owner photo 16: the word Delete struck out and a dustbin drawn beside it).
+             Same handler, same two-step confirm — only the label became the glyph everyone already
+             reads as "remove". The accessible name still says the whole thing. */''}
+        <button class="staff-delete-icon-v584" type="button" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)" title="Delete this teammate" ${workspaceTemplateAttributeV97('aria-label','deleteTeammateNamed',{name:s.full_name||'this teammate'})}>${CUI.icon('trash',{size:18})}</button>
       </div>
     </div>`;
   }
@@ -33327,37 +33332,6 @@ async function loadSignupConfig(host){
     setRevokeAvailableV456(false);
   }
 }
-async function loadCommissionConfig(){
-  if(!$('commissionWrap'))return;
-  const {data:me}=await sb.from('staff').select('role').eq('user_id',S.user.id).eq('business_id',S.biz.id).limit(1);
-  if(!me||!me.length||me[0].role!=='owner') return; /* owner-only config */
-  const pct=bps=>bps==null?'':(bps/100).toString();
-  const toBps=v=>{const t=(v||'').trim();return t===''?null:Math.round(parseFloat(t)*100)};
-  if(!$('commissionWrap'))return; /* only the Services page mounts this now */
-  const {data:svcList,error:e2}=await sb.from('services')
-    .select('id,name,commission_bps').eq('business_id',S.biz.id).order('name');
-  if(e2) return fail(e2);
-  /* V180 (owner instruction): the per-STAFF commission table was removed from here — it now
-     lives on each staff member's own row in Staff Members, where the person it belongs to is.
-     The per-SERVICE override stayed behind and moved to the Services page, next to the price
-     it overrides, because it is a property of a service and not of a person. */
-  $('commissionWrap').innerHTML=`<div style="margin-top:16px">
-    <div class="card"><b>Service commission override %</b>
-      <p class="muted small" style="margin:6px 0 10px">Overrides the staff default for this one service. Blank = inherit staff default; 0% = explicitly no commission on this service.</p>
-      ${(svcList&&svcList.length)?`<table><tr><th>Service</th><th>Override %</th><th></th></tr>
-        ${svcList.map(s=>`<tr><td>${esc(s.name)}</td>
-          <td><input data-cv="${s.id}" type="number" min="0" step="0.1" aria-label="Commission override %" placeholder="blank = inherit" value="${pct(s.commission_bps)}" style="max-width:110px"></td>
-          <td><button class="btn ghost sm" data-savesvc="${s.id}">Save</button></td></tr>`).join('')}</table>`
-        :'<p class="muted small">No services yet.</p>'}</div></div>`;
-  document.querySelectorAll('[data-savesvc]').forEach(b=>b.onclick=async()=>{
-    const id=b.dataset.savesvc;
-    const cv=document.querySelector(`[data-cv="${id}"]`).value;
-    const {error}=await sb.from('services').update({commission_bps:toBps(cv)}).eq('id',id);
-    if(error) return fail(error);
-    toast('Service override saved');
-  });
-}
-
 /* ---------- Customer Interface (V243) ----------
    Owner (screenshot: the three customer-facing Settings tabs circled, arrow pointing at the LEFT
    NAV): "shift these into a new module (Customer Interface) - where everything that is required to
@@ -33935,8 +33909,9 @@ function wireBookingRulesV325(isCurrent=()=>true){
   if(!$('setSave'))return;
   $('setSave').onclick=async()=>{
     const hold=parseInt($('setHold').value||'0');
-    /* No setTakesTablesV223 on this card — that toggle stayed in Bookings, so this always
-       sends null for p_takes_table_reservations, which the RPC coalesces into a no-op. */
+    /* No seating toggle on this card — nestly_v584 deleted the one that used to live in Bookings,
+       so this always sends null for p_takes_table_reservations, which the RPC coalesces into a
+       no-op and the stored value is left exactly as the business last set it. */
     const overflow=$('setOverflow')?$('setOverflow').value:null;
     const autoConfirm=$('setAutoConfirm')?$('setAutoConfirm').checked:null;
     $('setSave').disabled=true;

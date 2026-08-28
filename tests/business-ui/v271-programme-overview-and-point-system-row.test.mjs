@@ -55,7 +55,7 @@ test('V271 (a) every struck string is gone from the application code', () => {
   /* V371: one constant now feeds both the view resolver and the deep-link guard. They used to be
      separate literals and drifted — V366 added 'bringback' to the resolver only, so the Bring-back
      page also mounted a deep editor surface with a view name where a draft id belongs. */
-  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','birthday','ongoing','available','settings','setup'\]\);/);
+  assert.match(app, /const GROW_PROGRAMME_VIEWS_V371=Object\.freeze\(\['overview','history','offers','points','tiers','bringback','birthday','welcome','ongoing','available','settings','setup'\]\);/);
   assert.match(app, /const programmeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\)\?String\(hashParam\):'list'/);
   assert.match(app, /const hashParamIsProgrammeView=GROW_PROGRAMME_VIEWS_V371\.includes\(String\(hashParam\|\|''\)\);/);
 });
@@ -160,7 +160,7 @@ test('V271 (b) the three views are reachable, each with its own linkable hash', 
 test('V271 (b) Overview and History replace the category list rather than stacking on it', () => {
   /* V301: the setup wizard replaces the category list for the same reason Overview and History
      do — showing both would put the same programme on the page twice, under two shapes. */
-  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback','birthday'\]\.includes\(programmeView\);/);
+  assert.match(app, /const growCategoryViewV271=!\['overview','history','setup','offers','points','tiers','bringback','birthday','welcome'\]\.includes\(programmeView\);/);
   assert.match(app, /const topicOnV229=key=>!growCategoryViewV271\?false:\(growActiveTopicV229\?growTopicSectionV235===key:!growTilesModeV229\);/);
   assert.match(grow, /\$\{programmeView==='overview'\?`\$\{growOverviewTableV271\}\$\{growAnalyticsCardV375\}`:''\}/);
   assert.match(grow, /\$\{programmeView==='history'\?growHistoryTableV271:''\}/);

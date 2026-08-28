@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="45602b01454369ca7b7ae686f8eca82ab6f10adfad79fd299d7b2f1db06082e4">
+<meta name="v104-production-source-sha256" content="11468adb6c93ec30b856173232eda9887fd43f687cb1fc5961f26b99bfa3f9d4">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -1913,7 +1913,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
-:root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
+/* nestly_v584: two more columns — Branch and App access (owner photo 15 wrote both in by hand). */
+:root{--staff-cols-v226:minmax(120px,1.2fr) minmax(100px,.85fr) minmax(150px,1.4fr) minmax(95px,.9fr) minmax(74px,.5fr) minmax(100px,.85fr) minmax(110px,.9fr)}
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
@@ -3485,8 +3486,13 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    `.customer-home-grid` and `.customer-balance-panel` share the same media rule and the same
    flaw, but app.js emits neither class — reported as dead, not repaired here. */
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
-.entry-choice-card{width:min(720px,100%);padding:30px}
-.entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
+.entry-choice-card{width:min(860px,100%);padding:30px}
+/* nestly_v584 (owner photo 1: the workspace box ringed — "box misaligned, make it bigger").
+   The grid was a hard 2-up, so an account with business workspaces but no customer persona drew
+   ONE card in the left half and left the right half empty: the card looked mis-set against a
+   centred heading, and the workspace buttons inside it wrapped early for no reason. auto-fit lets
+   a lone card take the full row; two cards still sit side by side exactly as before. */
+.entry-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:22px}
 .entry-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:18px;min-height:190px;padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
 .entry-choice:hover{border-color:rgba(194,65,53,.35);box-shadow:var(--shadow-lg);transform:translateY(-2px)}
 .entry-choice-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--tint);color:var(--coral)}
@@ -5012,8 +5018,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    with every cell spanning both, so labels share one line and controls share another whatever any
    date box does with its own height on Safari. Getting compact by switching to a flex row would
    have thrown that away and reopened the bug the owner reported three times. */
-.sales-filter-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,max-content));
-  grid-template-rows:auto auto;align-items:start;justify-content:start;gap:10px 14px}
+/* nestly_v584 (owner photo 10: three arrows between the fields, "move to left"). The 150px floor
+   was wider than a select's own content, so every dropdown carried up to 46px of empty track to
+   its right and the six fields were spread across the card. The floor now only has to clear a
+   date box's own width; each track is its content, and the row packs left. */
+.sales-filter-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,max-content));
+  grid-template-rows:auto auto;align-items:start;justify-content:start;gap:10px 12px}
 .sales-filter-row,.sales-filter-row.secondary{display:contents}
 .sales-filter-panel>.sales-filter-row>div{display:grid;grid-row:span 2;row-gap:6px;min-width:0}
 .sales-filter-panel>.sales-filter-row>div>label{margin:0;align-self:end;white-space:nowrap}
@@ -5160,13 +5170,128 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    .boot-mark-v577 above keeps the logo animation and its seam-removing mask. */
 
 
+/* ===================== nestly_v584 — the filter bars, fixed structurally ====================
+   Owner photos 3, 4, 11 and 14: "field box misalignment", "fix this alignment", "overlapping",
+   "misalignment, solve!" — Appointment List, Rewards Overview, Waitlist and Rewards History.
+
+   v577 and v580 both read this as a SIZE problem and pinned heights and widths on the controls.
+   Kept, but it cannot be the whole answer: these bars are BOTTOM-aligned rows of cells whose
+   contents have different intrinsic heights, so any control taller than its neighbour (a date box
+   on iPad Safari is) pushes its own label UP while the short cell's label stays DOWN — and the low
+   label is then drawn beside, or across, the tall box next to it. Chasing each control's height is
+   chasing the symptom; the labels only ever lined up by accident.
+
+   Two structural changes remove the variable instead:
+     * the bar aligns its cells at the TOP, and every cell is a two-row grid — label row, control
+       row. Every label is one line (nowrap) at one font size, so all the labels share a baseline
+       and all the controls start at the same y whatever any control does with its own height.
+     * each cell is its own overflow context with a definite width, so a control that insists on
+       being wider than its cell is clipped INSIDE the cell and can never paint over the next
+       label. A clipped date is legible; a date printed on top of a label is not.
+   Buttons carry no label, so they are pushed down by one label line to land on the control row.
+   Columns are content-width, so the fields also pack to the left rather than being stretched
+   apart — the other half of what photo 10 asks for on Sales. */
+.appointment-list-filters,.v150-filterbar,.wl-period-v571{
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 12px}
+.appointment-list-filters>div,.v150-filterbar>div,.wl-period-v571>label{
+  display:grid;grid-template-rows:auto auto;row-gap:6px;align-content:start;margin:0;
+  flex:0 0 auto;min-width:0;max-width:100%;overflow:hidden}
+.appointment-list-filters>div>label,.v150-filterbar>div>label,.wl-period-v571>label>span{
+  margin:0;align-self:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:13px;line-height:1.35}
+.appointment-list-filters>div>input,.appointment-list-filters>div>select,
+.v150-filterbar>div>input,.v150-filterbar>div>select,
+.wl-period-v571>label>input{width:100%;min-width:0;max-width:100%}
+.appointment-list-filters input[type=date],.v150-filterbar input[type=date],
+.wl-period-v571 input[type=date]{width:150px}
+.appointment-list-filters input[type=search],.v150-filterbar input[type=search]{width:180px}
+.appointment-list-filters select,.v150-filterbar select{width:auto;min-width:132px}
+/* One label line's worth of space, so an unlabelled control sits on the control row. */
+.appointment-list-filters>.btn,.v150-filterbar>.btn,.wl-period-v571>.btn,
+.appointment-list-filters>div.row,.v150-filterbar>div.row,
+.v150-filterbar>div.v150-segment{margin-top:calc(13px * 1.35 + 6px);flex:0 0 auto}
+.appointment-list-filters>div.row,.v150-filterbar>div.row{
+  display:flex;align-items:center;overflow:visible;grid-template-rows:none}
+/* The helper sentence and the preset strip take a line of their own. */
+.appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584,
+.v150-filterbar>p{flex:1 0 100%;margin:2px 0 0}
+.appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584{margin-top:2px}
+@media(max-width:720px){
+  .appointment-list-filters>div,.v150-filterbar>div,.wl-period-v571>label{flex:1 0 100%}
+  .appointment-list-filters input[type=date],.v150-filterbar input[type=date],
+  .wl-period-v571 input[type=date],.appointment-list-filters input[type=search],
+  .v150-filterbar input[type=search],.appointment-list-filters select,
+  .v150-filterbar select{width:100%}
+}
+
+/* nestly_v584 — History's two sections take turns (owner photo 14). One column at full width, and
+   the pair of pills above it uses the same segment control the rest of the workspace uses. */
+.grow-overview-tabbed-v584{display:block}
+.grow-overview-tabs-v584{margin-bottom:14px}
+.grow-overview-tabs-v584 button{display:inline-flex;align-items:center;gap:7px}
+.grow-overview-tabbed-v584 .grow-overview-column-v319[hidden]{display:none}
+
+/* nestly_v584 — the referral panels stop being pink (owner photo 6). Same box the Birthday
+   benefit summary uses: white card, hairline border, no tint. */
+.grow-referral-panel-v584{background:var(--card,#fff);border:1px solid var(--line);color:var(--ink)}
+.grow-referral-panel-v584 dt{color:var(--muted)}
+
+/* nestly_v584 — the booking decision buttons are a tick and a cross (owner photo 13). Round, 44px,
+   the same target size every other icon control on this surface uses, with colour carrying the
+   meaning and title/aria-label carrying the words. */
+.booking-decision-icons-v584{display:inline-flex;gap:8px;align-items:center}
+.booking-decision-yes-v584,.booking-decision-no-v584{display:inline-flex;align-items:center;
+  justify-content:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card,#fff);line-height:0;cursor:pointer;
+  transition:background .14s var(--ease),border-color .14s var(--ease),color .14s var(--ease)}
+.booking-decision-yes-v584{color:var(--green,#177245)}
+.booking-decision-no-v584{color:var(--peekaa-red,var(--coral))}
+.booking-decision-yes-v584:hover:not(:disabled){background:var(--success-bg,#E8F5EC);border-color:currentColor}
+.booking-decision-no-v584:hover:not(:disabled){background:var(--peekaa-red-faint,var(--tint));border-color:currentColor}
+.booking-decision-yes-v584:disabled,.booking-decision-no-v584:disabled{opacity:.5;cursor:default}
+
+/* nestly_v584 — the pager the owner drew twice (photos 2 and 8). One control, both lists. */
+.pager-v584{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--hair)}
+.pager-step-v584,.pager-num-v584{min-width:36px;height:36px;padding:0 9px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card,#fff);color:var(--ink);font-weight:700;
+  font-size:13.5px;cursor:pointer;line-height:1}
+.pager-step-v584:disabled{opacity:.4;cursor:default}
+.pager-num-v584.is-on{background:var(--peekaa-red,var(--coral));border-color:transparent;color:#fff}
+.pager-step-v584:hover:not(:disabled),.pager-num-v584:hover:not(.is-on){background:var(--tint)}
+.pager-gap-v584{color:var(--muted);padding:0 2px}
+.pager-count-v584{margin-left:auto}
+@media(max-width:560px){.pager-count-v584{margin-left:0;flex-basis:100%}}
+
+/* nestly_v584 — the service on/off is an icon (owner photo 17: "Turn off" struck out, a cross
+   drawn beside it). Same round 40px control the booking decisions use, so the two read as one
+   affordance repeated across the workspace. */
+.svc-toggle-icon-v584{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  border-radius:50%;border:1px solid var(--line);background:var(--card,#fff);line-height:0;cursor:pointer;
+  color:var(--peekaa-red,var(--coral));transition:background .14s var(--ease),border-color .14s var(--ease)}
+.svc-toggle-icon-v584.is-off{color:var(--green,#177245)}
+.svc-toggle-icon-v584:hover{background:var(--tint);border-color:currentColor}
+
+/* nestly_v584 — the staff roster's two new columns and the editor dialog. */
+.staff-access-mark-v584{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  font-size:14px;font-weight:800;line-height:1}
+.staff-access-mark-v584.is-yes{color:var(--green,#177245);background:var(--success-bg,#E8F5EC)}
+.staff-access-mark-v584.is-no{color:var(--muted);background:var(--tint)}
+.staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
+.staff-edit-tabs-v584{margin:14px 0 4px}
+.staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
+.staff-delete-icon-v584{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  border-radius:50%;border:1px solid var(--line);background:var(--card,#fff);color:var(--peekaa-red,var(--coral));
+  line-height:0;cursor:pointer;transition:background .14s var(--ease),border-color .14s var(--ease)}
+.staff-delete-icon-v584:hover{background:var(--peekaa-red-faint,var(--tint));border-color:currentColor}
+
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 45602b01454369ca7b7ae686f8eca82ab6f10adfad79fd299d7b2f1db06082e4</p>
+  <p class="v104-provenance">Local production-render harness · source 11468adb6c93ec30b856173232eda9887fd43f687cb1fc5961f26b99bfa3f9d4</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -5178,7 +5303,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="45602b01454369ca7b7ae686f8eca82ab6f10adfad79fd299d7b2f1db06082e4";
+const PRODUCTION_SOURCE_SHA256="11468adb6c93ec30b856173232eda9887fd43f687cb1fc5961f26b99bfa3f9d4";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

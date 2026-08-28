@@ -39,7 +39,16 @@ test('Grow is one overview-first journey with secondary anatomy rather than four
   for(const step of ['trigger','who','reward','result']){
     assert.doesNotMatch(grow,new RegExp(`data-grow-step="${step}"`));
   }
-  assert.doesNotMatch(grow,/role="tablist"|data-growtab|settings-tabs/);
+  /* nestly_v584 (owner photo 14: "both needs to have their own sub tabs - to show one at a time",
+     drawn over History's two column headings). V98's rule is about the TOP of Grow — it must be
+     one overview-first journey, not four peer tabs — and that is unchanged: there is still no
+     growtab, no settings-tabs strip and no tablist at the page level. What History now has is a
+     two-way switch INSIDE one view, which is the owner's own instruction, so it is named
+     explicitly here rather than being allowed in by a loosened pattern. */
+  assert.doesNotMatch(grow,/data-growtab|settings-tabs/);
+  const tablists=[...grow.matchAll(/role="tablist"[^>]*aria-label="([^"]*)"/g)].map(m=>m[1]);
+  assert.deepEqual(tablists,['History sections'],
+    'the only tablist in Grow is the History sub-tab pair the owner asked for');
   // The standalone growAutoSetup launcher was removed when Programmes was simplified to one
   // list; openRewardsAutoSetup is now the draft-creation GATE reached from the programme
   // rows and the template picker. Assert that entry point rather than the retired button.

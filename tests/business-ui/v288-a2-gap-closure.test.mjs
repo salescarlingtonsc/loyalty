@@ -74,30 +74,23 @@ test('HIGH 1 — the rollback suite proves the confirm end to end for a bar tena
     assert.match(suite, /from public\.appointments/); // the created record is asserted to land
 });
 
-/* ------------------------------------------------------------------ HIGH 2 */
+/* ------------------------------------------------------------------ HIGH 2 and HIGH 3 */
 
-test('HIGH 2 — the Bookings shell is marked, never inferred from #cp\'s ancestors', () => {
+/* nestly_v584 — both of these guarded the Bookings TAB ENHANCER, and the owner has deleted the
+   tab it enhanced (photo 13: "delete booking settings", then, asked what should happen to the
+   seating switch, Tables / capacity and the CSV import inside it, "delete the tab and the
+   contents"). A2's two findings were (2) the shell nodes must be MARKED rather than inferred from
+   #cp's ancestors, and (3) the enhancement must survive a realtime re-render. With no enhancement
+   left, the honest thing to assert is that neither the enhancer nor its state survives — a
+   re-grown settings tab is the regression this file now guards — while the shell markers stay,
+   because the realtime re-render they were introduced for is unchanged. */
+test('HIGH 2/3 — nestly_v584: the tab enhancer is gone, and nothing kept its state', () => {
   assert.match(bookingsPage, /data-bookings-shell="head"/);
-  /* V375: the portal card lives on Appointments now (owner, photo 5); head and changes are
-     still the marked shell nodes the tab enhancer skips. */
   assert.match(bookingsPage, /data-bookings-shell="changes"/);
-  const enhance = between('function enhanceBookingsTabsV195(root){', 'const V183_DAYS=');
-  assert.match(enhance, /child\.hasAttribute\('data-bookings-shell'\)/);
-  /* The structural guess that returned null is gone. */
-  assert.doesNotMatch(enhance, /querySelector\('#cp'\)\?\.closest/);
-});
-
-/* ------------------------------------------------------------------ HIGH 3 */
-
-test('HIGH 3 — the tabs survive a realtime re-render, and keep the active tab', () => {
-  const enhance = between('function enhanceBookingsTabsV195(root){', 'const V183_DAYS=');
-  /* The guard is a per-render token, not a sticky '1' that outlives innerHTML. */
-  assert.match(enhance, /root\.dataset\.bookingsTabsV195!==String\(bookingsShellTokenV288\)/);
-  assert.doesNotMatch(enhance, /root\.dataset\.bookingsTabsV195==='1'/);
-  assert.match(enhance, /bookingsActiveTabV288=showRequests\?'requests':'settings'/);
-  assert.match(enhance, /setTab\(bookingsActiveTabV288==='settings'\?'settings':'requests'\)/);
-  assert.match(bookingsPage, /bookingsShellTokenV288\+=1;/);
-  assert.match(bookingsPage, /routeMain\.dataset\.bookingsTabsV195=String\(bookingsShellTokenV288\)/);
+  assert.doesNotMatch(app, /enhanceBookingsTabsV195/);
+  assert.doesNotMatch(app, /bookingsActiveTabV288/);
+  assert.doesNotMatch(app, /bookingsTabsV195/);
+  assert.doesNotMatch(app, /bookingsShellTokenV288/);
 });
 
 test('HIGH 3 — an auto-refresh never re-renders under a cursor', () => {

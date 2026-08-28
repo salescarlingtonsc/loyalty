@@ -163,7 +163,11 @@ test('V275 the nav advertises Bottles to bars only, and no other sector gained a
      cards row is gone; where Bottles rides is what this line is about and that is unchanged. */
   /* nestly_v488 (owner, photo 2: "i want the module 'bottle' to be standalone - not under serve
      and sell"): Bottles is its own flat rail entry now, gated by the same module key. */
-  assert.match(app, /label:'Serve & sell',items:\['till','appointments','bookings','waitlist'\]/);
+  /* nestly_v584 (owner photo 12: the Customer packages tab ringed with an arrow into this very
+     group — "put under new modules under serve & sell"). 'custpackages' is a SURFACE key, gated on
+     the real 'packages' module, so no entitlement changed; it is the counter action (use a
+     prepaid session for the person in front of you), which is doing, not money history. */
+  assert.match(app, /label:'Serve & sell',items:\['till','appointments','bookings','waitlist','custpackages'\]/);
   assert.match(app, /\{key:'bottles',icon:'bottle',flat:'Bottles',items:\['bottles'\]\}/);
   assert.match(app, /label:'Operations setup',items:\['staffmembers','branches','services','inventory','packages','bottlesetup'\]/);
   // Every other sector's module list is untouched: 'bottles' appears in exactly one INDUSTRIES

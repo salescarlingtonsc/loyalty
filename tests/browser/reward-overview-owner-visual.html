@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="676f7de74dc312edbc6fce436f5f89feca43f05df5ace87c9abd6a38e4d2b748"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="5329f380cac0e99dcf3251c4f66a86e4eac2d6ede45c3d7bf6fda90cb97bb0ce"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1906,7 +1906,8 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    The row was a flex wrap, so a field landed at a different x-position on every line and could
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
-:root{--staff-cols-v226:minmax(130px,1.3fr) minmax(105px,.9fr) minmax(170px,1.6fr) minmax(105px,.9fr) minmax(120px,1fr)}
+/* nestly_v584: two more columns — Branch and App access (owner photo 15 wrote both in by hand). */
+:root{--staff-cols-v226:minmax(120px,1.2fr) minmax(100px,.85fr) minmax(150px,1.4fr) minmax(95px,.9fr) minmax(74px,.5fr) minmax(100px,.85fr) minmax(110px,.9fr)}
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
@@ -3478,8 +3479,13 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    `.customer-home-grid` and `.customer-balance-panel` share the same media rule and the same
    flaw, but app.js emits neither class — reported as dead, not repaired here. */
 .customer-profile-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
-.entry-choice-card{width:min(720px,100%);padding:30px}
-.entry-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:22px}
+.entry-choice-card{width:min(860px,100%);padding:30px}
+/* nestly_v584 (owner photo 1: the workspace box ringed — "box misaligned, make it bigger").
+   The grid was a hard 2-up, so an account with business workspaces but no customer persona drew
+   ONE card in the left half and left the right half empty: the card looked mis-set against a
+   centred heading, and the workspace buttons inside it wrapped early for no reason. auto-fit lets
+   a lone card take the full row; two cards still sit side by side exactly as before. */
+.entry-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:22px}
 .entry-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:18px;min-height:190px;padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
 .entry-choice:hover{border-color:rgba(194,65,53,.35);box-shadow:var(--shadow-lg);transform:translateY(-2px)}
 .entry-choice-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--tint);color:var(--coral)}
@@ -5005,8 +5011,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    with every cell spanning both, so labels share one line and controls share another whatever any
    date box does with its own height on Safari. Getting compact by switching to a flex row would
    have thrown that away and reopened the bug the owner reported three times. */
-.sales-filter-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,max-content));
-  grid-template-rows:auto auto;align-items:start;justify-content:start;gap:10px 14px}
+/* nestly_v584 (owner photo 10: three arrows between the fields, "move to left"). The 150px floor
+   was wider than a select's own content, so every dropdown carried up to 46px of empty track to
+   its right and the six fields were spread across the card. The floor now only has to clear a
+   date box's own width; each track is its content, and the row packs left. */
+.sales-filter-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,max-content));
+  grid-template-rows:auto auto;align-items:start;justify-content:start;gap:10px 12px}
 .sales-filter-row,.sales-filter-row.secondary{display:contents}
 .sales-filter-panel>.sales-filter-row>div{display:grid;grid-row:span 2;row-gap:6px;min-width:0}
 .sales-filter-panel>.sales-filter-row>div>label{margin:0;align-self:end;white-space:nowrap}
@@ -5153,8 +5163,123 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    .boot-mark-v577 above keeps the logo animation and its seam-removing mask. */
 
 
+/* ===================== nestly_v584 — the filter bars, fixed structurally ====================
+   Owner photos 3, 4, 11 and 14: "field box misalignment", "fix this alignment", "overlapping",
+   "misalignment, solve!" — Appointment List, Rewards Overview, Waitlist and Rewards History.
+
+   v577 and v580 both read this as a SIZE problem and pinned heights and widths on the controls.
+   Kept, but it cannot be the whole answer: these bars are BOTTOM-aligned rows of cells whose
+   contents have different intrinsic heights, so any control taller than its neighbour (a date box
+   on iPad Safari is) pushes its own label UP while the short cell's label stays DOWN — and the low
+   label is then drawn beside, or across, the tall box next to it. Chasing each control's height is
+   chasing the symptom; the labels only ever lined up by accident.
+
+   Two structural changes remove the variable instead:
+     * the bar aligns its cells at the TOP, and every cell is a two-row grid — label row, control
+       row. Every label is one line (nowrap) at one font size, so all the labels share a baseline
+       and all the controls start at the same y whatever any control does with its own height.
+     * each cell is its own overflow context with a definite width, so a control that insists on
+       being wider than its cell is clipped INSIDE the cell and can never paint over the next
+       label. A clipped date is legible; a date printed on top of a label is not.
+   Buttons carry no label, so they are pushed down by one label line to land on the control row.
+   Columns are content-width, so the fields also pack to the left rather than being stretched
+   apart — the other half of what photo 10 asks for on Sales. */
+.appointment-list-filters,.v150-filterbar,.wl-period-v571{
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 12px}
+.appointment-list-filters>div,.v150-filterbar>div,.wl-period-v571>label{
+  display:grid;grid-template-rows:auto auto;row-gap:6px;align-content:start;margin:0;
+  flex:0 0 auto;min-width:0;max-width:100%;overflow:hidden}
+.appointment-list-filters>div>label,.v150-filterbar>div>label,.wl-period-v571>label>span{
+  margin:0;align-self:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:13px;line-height:1.35}
+.appointment-list-filters>div>input,.appointment-list-filters>div>select,
+.v150-filterbar>div>input,.v150-filterbar>div>select,
+.wl-period-v571>label>input{width:100%;min-width:0;max-width:100%}
+.appointment-list-filters input[type=date],.v150-filterbar input[type=date],
+.wl-period-v571 input[type=date]{width:150px}
+.appointment-list-filters input[type=search],.v150-filterbar input[type=search]{width:180px}
+.appointment-list-filters select,.v150-filterbar select{width:auto;min-width:132px}
+/* One label line's worth of space, so an unlabelled control sits on the control row. */
+.appointment-list-filters>.btn,.v150-filterbar>.btn,.wl-period-v571>.btn,
+.appointment-list-filters>div.row,.v150-filterbar>div.row,
+.v150-filterbar>div.v150-segment{margin-top:calc(13px * 1.35 + 6px);flex:0 0 auto}
+.appointment-list-filters>div.row,.v150-filterbar>div.row{
+  display:flex;align-items:center;overflow:visible;grid-template-rows:none}
+/* The helper sentence and the preset strip take a line of their own. */
+.appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584,
+.v150-filterbar>p{flex:1 0 100%;margin:2px 0 0}
+.appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584{margin-top:2px}
+@media(max-width:720px){
+  .appointment-list-filters>div,.v150-filterbar>div,.wl-period-v571>label{flex:1 0 100%}
+  .appointment-list-filters input[type=date],.v150-filterbar input[type=date],
+  .wl-period-v571 input[type=date],.appointment-list-filters input[type=search],
+  .v150-filterbar input[type=search],.appointment-list-filters select,
+  .v150-filterbar select{width:100%}
+}
+
+/* nestly_v584 — History's two sections take turns (owner photo 14). One column at full width, and
+   the pair of pills above it uses the same segment control the rest of the workspace uses. */
+.grow-overview-tabbed-v584{display:block}
+.grow-overview-tabs-v584{margin-bottom:14px}
+.grow-overview-tabs-v584 button{display:inline-flex;align-items:center;gap:7px}
+.grow-overview-tabbed-v584 .grow-overview-column-v319[hidden]{display:none}
+
+/* nestly_v584 — the referral panels stop being pink (owner photo 6). Same box the Birthday
+   benefit summary uses: white card, hairline border, no tint. */
+.grow-referral-panel-v584{background:var(--card,#fff);border:1px solid var(--line);color:var(--ink)}
+.grow-referral-panel-v584 dt{color:var(--muted)}
+
+/* nestly_v584 — the booking decision buttons are a tick and a cross (owner photo 13). Round, 44px,
+   the same target size every other icon control on this surface uses, with colour carrying the
+   meaning and title/aria-label carrying the words. */
+.booking-decision-icons-v584{display:inline-flex;gap:8px;align-items:center}
+.booking-decision-yes-v584,.booking-decision-no-v584{display:inline-flex;align-items:center;
+  justify-content:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card,#fff);line-height:0;cursor:pointer;
+  transition:background .14s var(--ease),border-color .14s var(--ease),color .14s var(--ease)}
+.booking-decision-yes-v584{color:var(--green,#177245)}
+.booking-decision-no-v584{color:var(--peekaa-red,var(--coral))}
+.booking-decision-yes-v584:hover:not(:disabled){background:var(--success-bg,#E8F5EC);border-color:currentColor}
+.booking-decision-no-v584:hover:not(:disabled){background:var(--peekaa-red-faint,var(--tint));border-color:currentColor}
+.booking-decision-yes-v584:disabled,.booking-decision-no-v584:disabled{opacity:.5;cursor:default}
+
+/* nestly_v584 — the pager the owner drew twice (photos 2 and 8). One control, both lists. */
+.pager-v584{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--hair)}
+.pager-step-v584,.pager-num-v584{min-width:36px;height:36px;padding:0 9px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card,#fff);color:var(--ink);font-weight:700;
+  font-size:13.5px;cursor:pointer;line-height:1}
+.pager-step-v584:disabled{opacity:.4;cursor:default}
+.pager-num-v584.is-on{background:var(--peekaa-red,var(--coral));border-color:transparent;color:#fff}
+.pager-step-v584:hover:not(:disabled),.pager-num-v584:hover:not(.is-on){background:var(--tint)}
+.pager-gap-v584{color:var(--muted);padding:0 2px}
+.pager-count-v584{margin-left:auto}
+@media(max-width:560px){.pager-count-v584{margin-left:0;flex-basis:100%}}
+
+/* nestly_v584 — the service on/off is an icon (owner photo 17: "Turn off" struck out, a cross
+   drawn beside it). Same round 40px control the booking decisions use, so the two read as one
+   affordance repeated across the workspace. */
+.svc-toggle-icon-v584{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  border-radius:50%;border:1px solid var(--line);background:var(--card,#fff);line-height:0;cursor:pointer;
+  color:var(--peekaa-red,var(--coral));transition:background .14s var(--ease),border-color .14s var(--ease)}
+.svc-toggle-icon-v584.is-off{color:var(--green,#177245)}
+.svc-toggle-icon-v584:hover{background:var(--tint);border-color:currentColor}
+
+/* nestly_v584 — the staff roster's two new columns and the editor dialog. */
+.staff-access-mark-v584{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  font-size:14px;font-weight:800;line-height:1}
+.staff-access-mark-v584.is-yes{color:var(--green,#177245);background:var(--success-bg,#E8F5EC)}
+.staff-access-mark-v584.is-no{color:var(--muted);background:var(--tint)}
+.staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
+.staff-edit-tabs-v584{margin:14px 0 4px}
+.staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
+.staff-delete-icon-v584{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  border-radius:50%;border:1px solid var(--line);background:var(--card,#fff);color:var(--peekaa-red,var(--coral));
+  line-height:0;cursor:pointer;transition:background .14s var(--ease),border-color .14s var(--ease)}
+.staff-delete-icon-v584:hover{background:var(--peekaa-red-faint,var(--tint));border-color:currentColor}
+
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 676f7de74dc312edbc6fce436f5f89feca43f05df5ace87c9abd6a38e4d2b748</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 5329f380cac0e99dcf3251c4f66a86e4eac2d6ede45c3d7bf6fda90cb97bb0ce</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -5257,6 +5382,8 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     eyeOff:'M3 3l18 18M10.6 6.12A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.4 17.4 0 0 1-2.1 2.7M6.2 6.2C3.77 7.9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3.2-.52M9.7 9.7a3.25 3.25 0 0 0 4.6 4.6',
     faceId:'M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M9 9h.01M15 9h.01M12 9v4h-1M8.5 16c1 .8 2.17 1.2 3.5 1.2s2.5-.4 3.5-1.2',
     edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4',
+    /* nestly_v584: a real dustbin, for the staff editor's Delete (owner photo 16 drew one). */
+    trash:'M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L17.5 7M10 11v5.5M14 11v5.5',
     /* v330: a real handset glyph for "Call" buttons — 'till' (a cash register) was being reused
        for phone actions before this, which read wrong once the label shrank to an icon-only
        button. A generic speech-bubble ('chat', tinted green in CSS) stands in for WhatsApp
@@ -6947,6 +7074,9 @@ let growSwitchErrorV322='';
    tabs re-renders growPage from scratch. Cleared by the router alongside growTopicV229 so leaving
    the page and coming back always opens on Published. */
 let growOffersTabV324='published';
+/* nestly_v584: which page of the current offer bucket is on screen. Module-level like the tab
+   above, because the list is part of the grow page's one big render. */
+let growOffersPageV584=0;
 /* V324 (owner: apply the same Published/Draft/History split to Point system's own reward
    catalogue). The three groups already existed as data — rewardCardsV250 (live/scheduled/paused),
    growPendingNewRewardsV268 (created in the current draft, never published) and
@@ -10018,7 +10148,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   render();
   if(stepKindW6I2()==='live')loadComparison();
 }
-    const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','birthday','ongoing','available','settings','setup']);
+    const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','birthday','welcome','ongoing','available','settings','setup']);
 async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
   /* V288: the tile drill sets growTopicV229 at module scope and re-calls this function directly,
      pushing no hash — so the topic outlived the page. An owner who drilled into Points, went to
@@ -10576,7 +10706,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      its page; with no drilled topic and no tiles, topicOnV229 fell through to its "answer TRUE for
      every key" branch and rendered every other programme category below the bring-back module —
      the same trap V319 fixed for Limited Offer and V326 for the points page, one page later. */
-  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback','birthday'].includes(programmeView);
+  const growCategoryViewV271=!['overview','history','setup','offers','points','tiers','bringback','birthday','welcome'].includes(programmeView);
   const topicOnV229=key=>!growCategoryViewV271?false:(growActiveTopicV229?growTopicSectionV235===key:!growTilesModeV229);
   /* V244 (owner: "ongoing program - should follow this UI UX" and "i need a Pending Program -
      for those (non) ongoing program - so business can easily set up"). Same tile, split into
@@ -11273,12 +11403,21 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      control it was describing — the Limited Offer note existed to carry a link to the editor,
      and the button carries it now, so nothing is lost by deleting the words. History takes no
      "+": nothing is added to a list of things that already ended. */
-  const growOverviewFrameV324=({scope,rewards,offers,addable=true})=>`<div class="grow-overview-split-v319" data-grow-overview-split-v319>
+  /* nestly_v584 (owner photo 14: the two column headings redrawn as a pair of pills at the top of
+     History — "both needs to have their own sub tabs - to show one at a time"). Only History is
+     tabbed: Overview's job is the side-by-side comparison of what is running, and the owner's mark
+     was drawn on History. Same builder, same rows, same ids — one flag decides whether the two
+     sections sit beside each other or take turns. */
+  const growOverviewFrameV324=({scope,rewards,offers,addable=true,tabbed=false})=>`<div class="grow-overview-split-v319${tabbed?' grow-overview-tabbed-v584':''}" data-grow-overview-split-v319>
+    ${tabbed?`<div class="v150-segment grow-overview-tabs-v584" role="tablist" aria-label="History sections">
+      <button type="button" role="tab" data-grow-history-tab-v584="rewards" aria-selected="true" aria-pressed="true">${CUI.icon('star',{size:16})}<span>Rewards &amp; Loyalty</span></button>
+      <button type="button" role="tab" data-grow-history-tab-v584="offers" aria-selected="false" aria-pressed="false">${CUI.icon('tag',{size:16})}<span>Limited Offer</span></button>
+    </div>`:''}
     <section class="grow-overview-column-v319" data-grow-overview-category-v319="rewards" aria-labelledby="growOverviewRewardsHead${scope}">
       <div class="grow-overview-column-head-v324"><span class="grow-overview-column-mark-v401" aria-hidden="true">${CUI.icon('star',{size:18})}</span><h3 class="grow-overview-column-title-v319" id="growOverviewRewardsHead${scope}">Rewards &amp; Loyalty</h3>
         ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow" aria-label="Add another reward programme"><span aria-hidden="true">+</span></a>':''}</div>
       ${rewards}</section>
-    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHead${scope}">
+    <section class="grow-overview-column-v319" data-grow-overview-category-v319="offers" aria-labelledby="growOverviewOffersHead${scope}"${tabbed?' hidden':''}>
       <div class="grow-overview-column-head-v324"><span class="grow-overview-column-mark-v401" aria-hidden="true">${CUI.icon('tag',{size:18})}</span><h3 class="grow-overview-column-title-v319" id="growOverviewOffersHead${scope}">Limited Offer</h3>
         ${addable?'<a class="btn ghost sm grow-overview-add-v324" href="#/grow/offers" aria-label="Add another limited offer"><span aria-hidden="true">+</span></a>':''}</div>
       ${offers}</section>
@@ -11589,9 +11728,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div><label for="growHistoryFromV375">From</label><input type="date" id="growHistoryFromV375" value="${esc(growHistoryFromV375)}"></div>
     <div><label for="growHistoryToV375">To</label><input type="date" id="growHistoryToV375" value="${esc(growHistoryToV375)}"></div>
     <div class="row" style="gap:8px;align-items:end"><button type="button" class="btn sm" id="growHistoryApplyV375">Apply</button><button type="button" class="btn ghost sm" id="growHistoryClearV375">Clear</button></div>
-    ${growHistoryHiddenCountV375>0?`<p class="muted small" style="flex-basis:100%;margin:6px 0 0">Showing the last month. ${growHistoryHiddenCountV375} older ${growHistoryHiddenCountV375===1?'programme is':'programmes are'} hidden — set a From date to reach ${growHistoryHiddenCountV375===1?'it':'them'}. Nothing is deleted.</p>`:''}
+    ${/* nestly_v584 (owner photo 14: the whole sentence struck through, "delete this word"). It
+         explained the date filter it sits under, on a page where the filter is right there and
+         labelled; the reassurance at the end was answering a question nobody had asked. Nothing
+         about the window changed — only the paragraph describing it. */''}
   </div>`;
-  const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false})}`;
+  const growHistoryTableV271=`${growHistoryFilterBarV375}${growOverviewFrameV324({scope:'HistoryV324',rewards:growHistoryRewardsTableV324,offers:growHistoryOffersTableV324,addable:false,tabbed:true})}`;
   /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3 ==========================
      The dedicated #/grow/points page: Published | History (no Draft — every change here is
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
@@ -11800,11 +11942,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growPointsCurrentPhotoUrlV343||growPointsPhotoFileV343?` <button type="button" class="btn ghost sm" id="growPointsPhotoRemoveV343" style="margin-top:6px">Remove photo</button>`:''}
     </p>
     ${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}
-    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button>${/*
+    ${/* nestly_v584 (owner photo 5: a ring round Save changes and an arrow to the dialog's bottom
+         right — "Save move here"). Save is the dialog's primary action and now sits where this app
+         puts a primary action, at the end of the row. Delete keeps the left, so the destructive
+         button is nowhere near the thumb that is reaching for Save. Nothing else moved: same
+         buttons, same data hooks, same handlers. */''}
+    <div class="row grow-points-form-actions-v584" style="margin-top:10px;gap:8px;flex-wrap:wrap">${/*
       nestly_v416: Delete moved in here with the rest of the row's controls. The grid has no row
       to hang it off, and a gift that cannot be removed from the surface that creates it is a
       one-way door. Same RPC and same confirm state the level row used. */''}
-      ${growPointsEditingV326&&growStampsPickedV416&&canSetupGrow?`<span class="spacer"></span><button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(growPointsEditingV326)}">Delete</button>`:''}</div>
+      ${growPointsEditingV326&&growStampsPickedV416&&canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(growPointsEditingV326)}">Delete</button>`:''}
+      <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
       <b>Take this gift off stamp ${growStampsPickedV416}?</b>
       <p class="muted small" style="margin-top:6px">The stamp stays on the card; it just stops paying out. Customers already part-way through keep the card they started.</p>
@@ -12036,6 +12184,48 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       :CUI.emptyState({iconName:'loyalty',title:'No birthday gift yet',
         body:'Set one up and every customer whose birthday you hold gets it in their birthday month.',
         actionHtml:canSetupGrow?'<button type="button" class="btn sm" id="growBirthdaySetupV382">Set up the birthday gift</button>':''})}
+    </div>`;
+  /* nestly_v584 (owner photo 7, written under the Birthday benefit page: "welcome gift programme
+     follow this style"). Welcome gift was the one programme with no landing page — its tile opened
+     a write modal directly, so a manager could not read what the business gives new sign-ups
+     without permission to change it, and an owner could not check the setting without opening the
+     form. Same shape as V382's birthday page, built from the same welcomeOfferStatusV215 row the
+     editor writes, so the page and the form can never disagree. */
+  const growWelcomeV584=welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null;
+  const growWelcomeItemTextV584=!growWelcomeV584?''
+    :(growWelcomeV584.custom_label||growWelcomeV584.reward_label||'A free item');
+  const growWelcomeWhenTextV584=!growWelcomeV584?''
+    :Number(growWelcomeV584.min_spend_cents)>0
+      ?`After they spend ${money(Number(growWelcomeV584.min_spend_cents))}`
+      :'Straight away — no minimum spend';
+  const growWelcomeExpiryTextV584=!growWelcomeV584?''
+    :Number(growWelcomeV584.expiry_days)>0
+      ?`${Number(growWelcomeV584.expiry_days)} days after they join`
+      :'No expiry';
+  const growWelcomePageV584=!canRewards
+    ?CUI.emptyState({iconName:'giftcard',title:'Loyalty is not included',
+        body:'This workspace does not include the loyalty module, so there is no welcome gift to set up.',
+        actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
+    :`<div class="grow-tiers-page-v343">
+      <div class="grow-tier-basis-card-v343"><span><b>Welcome gift</b>
+        <p class="muted small" style="margin-top:4px">Given automatically the moment someone new joins through your QR code. Staff hand it over at the counter after looking the customer up.</p></span>
+        ${canSetupGrow?`<button type="button" class="btn sm" id="growWelcomeEditV584">Edit</button>`:''}</div>
+      ${growWelcomeV584?`<section class="card" style="margin-top:14px">
+        <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growWelcomeItemTextV584)}</b>
+            <p class="muted small" style="margin-top:4px">For new sign-ups only.</p></div>
+          <span class="pill ${growWelcomeV584.active?'on':'off'}">${statusOnOff(growWelcomeV584.active)}</span>
+        </div>
+        <dl class="appointment-detail-list" style="margin-top:12px">
+          <div><dt>What they get</dt><dd data-merchant-content>${esc(growWelcomeItemTextV584)}</dd></div>
+          <div><dt>When they can use it</dt><dd>${esc(growWelcomeWhenTextV584)}</dd></div>
+          <div><dt>Expires</dt><dd>${esc(growWelcomeExpiryTextV584)}</dd></div>
+          <div><dt>Terms</dt><dd>One per customer, ever. An existing customer never receives it. Nothing is charged and the visit is recorded at zero.</dd></div>
+        </dl>
+      </section>`
+      :CUI.emptyState({iconName:'giftcard',title:'No welcome gift yet',
+        body:'Set one up and every new sign-up gets it on their first visit.',
+        actionHtml:canSetupGrow?'<button type="button" class="btn sm" id="growWelcomeSetupV584">Set up the welcome gift</button>':''})}
     </div>`;
   const growBbPageV361=!canWinback
     ?CUI.emptyState({iconName:'retention',title:'Retention is not included',
@@ -12778,7 +12968,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      read from the same snapshot row, so the summary cannot drift from the form. Hidden while the
      editor is open, so the page never shows the value twice in two shapes. */
   const growReferralSummaryV375=!(referralConfigured&&!growReferralEditOpenV364)?''
-    :`<div class="imp-note" data-grow-referral-summary-v375 style="margin-top:10px">
+    :`<div class="card grow-referral-panel-v584" data-grow-referral-summary-v375 style="margin-top:10px">
       <b>Referral settings</b>
       <dl class="appointment-detail-list" style="margin-top:8px">
         ${/* nestly_v558: the summary leads with the on/off, the way the birthday gift's read-only
@@ -12800,7 +12990,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
-    :`<div class="imp-note" data-grow-referral-settings-v364 style="margin-top:10px">
+    :`<div class="card grow-referral-panel-v584" data-grow-referral-settings-v364 style="margin-top:10px">
       <b>Referral settings</b>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
       ${/* nestly_v558: the on/off the owner asked for, in the same toggle-row shape the birthday
@@ -12943,8 +13133,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V357: a stale 'draft' tab value (from before that tab was removed) would otherwise select an
      empty bucket and render a permanently empty list. Normalise to a tab that still exists. */
   if(!growOffersTabsV324.some(([key])=>key===growOffersTabV324))growOffersTabV324='published';
-  const growOffersListHtmlV324=growOffersBucketedV324[growOffersTabV324].length
-    ?growOffersBucketedV324[growOffersTabV324].map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
+  /* nestly_v584 (owner photo 8: the pager drawn under the offer list — "only show 20 lists every
+     page"). Same control the Bookings request list got. The bucket is already in memory, so a page
+     change is a re-render of rows that are loaded, not another read. */
+  const growOffersRowsV584=growOffersBucketedV324[growOffersTabV324];
+  if(growOffersPageV584>=pageCountV584(growOffersRowsV584.length))growOffersPageV584=0;
+  const growOffersListHtmlV324=growOffersRowsV584.length
+    ?pageSliceV584(growOffersRowsV584,growOffersPageV584).map(item=>growOffersRowHtmlV324(item,growOffersTabV324)).join('')
+      +pagerHtmlV584({scope:'offers',page:growOffersPageV584,total:growOffersRowsV584.length,label:'Offers'})
     :`<p class="muted small" style="padding:14px 0">${esc(growOffersEmptyV324[growOffersTabV324])}</p>`;
   outerMain.innerHTML=`<div class="grow-overview" id="growOverview" data-programme-view="${esc(programmeView)}" data-workspace-i18n>
     <header class="v150-titlebar" aria-labelledby="growTitle">
@@ -12982,7 +13178,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         /* nestly_v428 (item 5): 'birthday' joins the dedicated pages. It could not be here before
            because the view never resolved (see directFocusTokens), so the page it names had no
            way back except the sidebar. */
-        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday'].includes(programmeView);
+        const dedicatedBackV362=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday','welcome'].includes(programmeView);
         if(growActiveTopicV229)return `<button type="button" class="btn ghost sm icon-only grow-breadcrumb-back-v346" id="growTopicBackV229" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</button>`;
         return dedicatedBackV362?`<a class="btn ghost sm icon-only grow-breadcrumb-back-v346" href="#/grow" aria-label="Back to all programmes">${CUI.icon('back',{size:16})}</a>`:'';
       })()}${/* v401: the module mark. Every one of the 37 CUI.pageHeader() calls renders a 24px glyph
@@ -12990,7 +13186,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            (home, customers, sales, services) — this was the fifth, and the only top-level page in
            the workspace whose header had none. 'star' is the glyph the rail already assigns to this
            group, so the page now matches the row that opened it. It is decoration, so it is
-           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':programmeView==='birthday'?'Birthday benefit':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
+           aria-hidden and the h1 still carries the whole accessible name. */''}<span class="grow-title-mark-v401" aria-hidden="true">${CUI.icon('star',{size:24})}</span><div class="grow-title-text-v362"><h1 id="growTitle">${programmeView==='setup'&&pendingGrowSetupRewardV303?.mode==='earning'?(pendingGrowSetupRewardV303.kind==='stamps'?'Stamp Card':'Point System'):programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='offers'?'Limited Offer':programmeView==='history'?'History':programmeView==='birthday'?'Birthday benefit':programmeView==='welcome'?'Welcome gift':'Rewards Programme'}</h1>${programmeView==='list'?'<p class="muted small" style="margin-top:4px">Choose which rewards you want to run, then set each one up individually.</p>':programmeView==='tiers'?'<p class="muted small" style="margin-top:4px">Reward loyal customers as they climb tiers.</p>':''}</div></div>
       ${/* V364: the "More reward settings" header action went with the block it opened. */''}
       <div class="v150-title-actions"></div>
     </header>
@@ -13007,8 +13203,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${(()=>{
         /* nestly_v428 (item 5): 'birthday' is a dedicated page like the five beside it, so its
            sr-only h2 names the page rather than repeating the module. */
-        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday'].includes(programmeView);
-        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='birthday'?'Birthday benefit':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
+        const dedicatedViewV341=!growActiveTopicV229&&['points','tiers','bringback','offers','history','birthday','welcome'].includes(programmeView);
+        const h2TextV341=growActiveTopicV229?esc(growActiveTopicV229.title):(programmeView==='overview'?'Overview':programmeView==='history'?'History':programmeView==='offers'?'Limited Offer':programmeView==='points'?growPointsPageTitleV326:programmeView==='tiers'?'Tier membership':programmeView==='bringback'?'Bring-back rewards':programmeView==='birthday'?'Birthday benefit':programmeView==='welcome'?'Welcome gift':programmeView==='ongoing'?'Ongoing programmes':programmeView==='available'?'Pending setup':programmeView==='setup'?'Set up rewards':'Rewards Programme');
         const h2IconV341=programmeView==='points'&&!growActiveTopicV229?`${CUI.icon('star',{size:20})} `:'';
         /* Wave 2A: the landing's h2 repeats the page h1 verbatim — keep it for structure, hide it from eyes. */
         const hideH2V2A=dedicatedViewV341||h2TextV341==='Rewards Programme';
@@ -13031,6 +13227,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${programmeView==='points'?(growPointsIsStampsV326?growStampsPageV350:growPointsManageV326):''}
       ${programmeView==='bringback'?growBbPageV361:''}
       ${programmeView==='birthday'?growBirthdayPageV382:''}
+      ${programmeView==='welcome'?growWelcomePageV584:''}
       ${programmeView==='tiers'?growTiersManageV331:''}
       ${topicOnV229('points')?`
       <!-- V227 (owner: "all points reward in this tab", with arrows from the milestone
@@ -13079,7 +13276,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="grow-programme-list" style="margin-top:14px" data-grow-offers-list-v324>${growOffersListHtmlV324}</div>
       </div>`:''}
       ${topicOnV229('referrals')?`
-      <div class="programme-category" data-programme-category-v268="referrals"><div class="programme-category-title">Referrals</div><div class="grow-programme-list">
+      ${/* nestly_v584 (owner photo 6: the pink strip ringed — "don't want background pink colour,
+           pls match with others", and then: remove it entirely, no other reward page has one). The
+           page heading directly above already says Referrals, so the band repeated the page's own
+           title in a colour nothing else on this page uses. The category box and every row inside
+           it are untouched. */''}
+      <div class="programme-category" data-programme-category-v268="referrals"><div class="grow-programme-list">
         ${/* nestly_v558 (owner, photo 3): "Paused" is gone from this row. Referrals is either ON for
              customers or OFF, and the row says which — the switch that changes it is in the
              settings panel this row's own Edit opens. */''}
@@ -13539,8 +13741,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const tab=button.dataset.growOffersTabV324;
     if(!['published','history'].includes(tab))return;
     growOffersTabV324=tab;
+    growOffersPageV584=0;   /* a different bucket starts at its own first page */
     growRerenderV322();
   });
+  /* nestly_v584: the offer list's pager. Re-renders through growRerenderV322 like the tab strip
+     beside it, because the row SET changes — quietly, so the page does not announce itself. */
+  wirePagerV584(outerMain,'offers',target=>{growOffersPageV584=target;growRerenderV322({quiet:true})});
   /* V324: the Point system reward grid's own Published/Draft/History filter. Same reasoning as
      the Limited Offer tabs above — the card SET changes per tab, not just what is shown of one
      card, so this re-renders rather than toggling `hidden`. */
@@ -13698,14 +13904,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        birthday reuses the rewards editor's existing birthday focus target; bring-back has its own
        page. All three doors already existed — only the entry point moved. */
     if(tile.dataset.growTopicV229==='welcome'){
-      /* nestly_v428 (item 2): `if(!canSetupGrow)return` absorbed the tap in silence — a manager
-         pressed a tile that looked exactly like the six around it and nothing happened at all,
-         which reads as a broken app rather than as a refusal. The welcome tile's destination is a
-         WRITE modal with no read-only shape, so it stays closed and says why, using the same
-         sentence the Overview rows at [data-grow-open-v388] already use for this refusal. */
-      if(!canSetupGrow)return toast('Ask an owner to change reward settings.');
-      return openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
-        ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+      /* nestly_v584 (owner photo 7: "welcome gift programme follow this style", drawn on the
+         Birthday benefit page). The tile opens the landing page now, not the editor. That also
+         retires the v428 refusal that used to live here for the same reason it retired on
+         birthday: the destination is a READ page that gates its own Edit on canSetupGrow, so a
+         manager gets to see what the business gives away instead of a toast. */
+      return nav('#/grow/welcome');
     }
     if(tile.dataset.growTopicV229==='birthday'){
       /* nestly_v428 (item 2): birthday is the other half of the same defect and gets the opposite
@@ -13873,6 +14077,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growBirthdayEditV382)growBirthdayEditV382.onclick=growBirthdayOpenEditorV382;
   const growBirthdaySetupV382=$('growBirthdaySetupV382');
   if(growBirthdaySetupV382)growBirthdaySetupV382.onclick=growBirthdayOpenEditorV382;
+  /* nestly_v584: the welcome gift's landing page has the same one door — the SAME modal the tile
+     used to open, so there is still one welcome-offer editor and one save path. */
+  const growWelcomeOpenEditorV584=()=>openWelcomeOfferEditorV215(welcomeOfferStatusV215?.configured?welcomeOfferStatusV215:null,
+    ()=>growPage(routedSurface,hashParam,routedFocus).catch(fail));
+  const growWelcomeEditV584=$('growWelcomeEditV584');
+  if(growWelcomeEditV584)growWelcomeEditV584.onclick=growWelcomeOpenEditorV584;
+  const growWelcomeSetupV584=$('growWelcomeSetupV584');
+  if(growWelcomeSetupV584)growWelcomeSetupV584.onclick=growWelcomeOpenEditorV584;
   const growHistoryApplyV375=$('growHistoryApplyV375');
   if(growHistoryApplyV375)growHistoryApplyV375.onclick=()=>{
     growHistoryFromV375=$('growHistoryFromV375')?.value||'';
@@ -13913,6 +14125,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(caret)caret.textContent=open?'\u25be':'\u25b8';
     outerMain.querySelectorAll(`tr[data-grow-usage-group-v413="${CSS.escape(key)}"][data-grow-usage-child-v413]`)
       .forEach(row=>{row.hidden=!open;});
+  });
+  /* nestly_v584: the History sub-tabs. DOM-only, like the gift-group disclosure above — nothing
+     the server knows changes, so re-rendering the page to swap two sections would throw away the
+     owner's scroll position for no reason. */
+  const growHistoryTabsV584=outerMain.querySelectorAll('[data-grow-history-tab-v584]');
+  growHistoryTabsV584.forEach(button=>button.onclick=()=>{
+    const want=button.dataset.growHistoryTabV584;
+    growHistoryTabsV584.forEach(other=>{
+      const on=other===button;
+      other.setAttribute('aria-selected',on?'true':'false');
+      other.setAttribute('aria-pressed',on?'true':'false');
+    });
+    const frame=button.closest('[data-grow-overview-split-v319]');
+    if(!frame)return;
+    frame.querySelectorAll('[data-grow-overview-category-v319]').forEach(section=>{
+      section.hidden=section.dataset.growOverviewCategoryV319!==want;
+    });
   });
   /* V388: a shortcut writes the same two module-scoped dates Apply writes and re-renders the
      same way — it is Apply with the typing done for you, not a second window state. */
@@ -15063,7 +15292,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'676f7de74dc312edbc6fce436f5f89feca43f05df5ace87c9abd6a38e4d2b748',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'5329f380cac0e99dcf3251c4f66a86e4eac2d6ede45c3d7bf6fda90cb97bb0ce',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

@@ -24,7 +24,10 @@ const page = app
 
 test('V221 the page presents itself as Products, not Inventory', () => {
   assert.match(page, /<h1>Products<\/h1>/);
-  assert.match(page, /What you sell and what you charge for it\. Stock keeping is optional\./);
+  /* nestly_v584 (owner photo 9: "Remove stock taking feature", confirmed as everywhere in the
+     app). The subtitle no longer offers stock keeping, because the page no longer does it. */
+  assert.match(page, /What you sell and what you charge for it\./);
+  assert.doesNotMatch(page, /Stock keeping is optional/);
   // The batch/expiry/FEFO framing is gone from the heading.
   assert.doesNotMatch(page, /Stock in batches with expiry/);
   assert.doesNotMatch(page, /FEFO/);
@@ -47,17 +50,21 @@ test('V222 the form asks only what you sell it for', () => {
   assert.doesNotMatch(add, /cost_cents/);
 });
 
-test('V221 stock keeping is optional and says so', () => {
-  assert.match(page, /<summary>Count stock too \(optional\)<\/summary>/);
-  assert.match(page, /a product with no stock recorded still sells normally/);
-  // The batch controls still exist for businesses that do count goods.
-  assert.match(page, /id="badd2"/);
-  assert.match(page, /Receive batch/);
-  // But they no longer sit above the fold as the second thing on the page.
-  assert.ok(page.indexOf('id="padd2"') < page.indexOf('Count stock too'),
-    'adding a product comes before counting stock');
+test('nestly_v584 stock keeping is gone from the workspace, not merely folded away', () => {
+  /* The owner struck out the whole "Count stock too" disclosure and scribbled through the STOCK
+     column, wrote "Remove stock taking feature", and confirmed the scope as everywhere in the app.
+     So this page must not offer a batch, a quantity, an expiry, an on-hand figure or a low
+     warning — and must not read product_stock to draw one. */
+  assert.doesNotMatch(page, /Count stock too/);
+  assert.doesNotMatch(page, /id="badd2"/);
+  assert.doesNotMatch(page, /Receive batch/);
+  assert.doesNotMatch(page, /receive_stock/);
+  assert.doesNotMatch(page, /product_stock/);
+  assert.doesNotMatch(page, /<th>Stock<\/th>/);
+  assert.doesNotMatch(page, /pill no">low/);
+  // What the page IS, is unchanged: add a product, see the list.
+  assert.match(page, /id="padd2"/);
   assert.match(page, /<b>Your products<\/b>/);
-  assert.doesNotMatch(page, /<b>Stock on hand<\/b>/);
 });
 
 test('V221 empty and error states speak about products', () => {

@@ -19,7 +19,7 @@ const sales = section('async function salesPage()', 'async function servicesPage
 const services = section('async function servicesPage()', 'async function referralsPage()');
 const bookings = section('async function bookingsPage()', 'async function waitlistPage()');
 const waitlist = section('async function waitlistPage()', '/* ---------- inventory ---------- */');
-const packages = section('async function packagesPage()', '/* ---------- branches (owner-only) ----------');
+const packages = section('async function packagesPage(options)', '/* ---------- branches (owner-only) ----------');
 const branches = section('async function branchesPage()', 'async function settingsPage()');
 const reports = section('async function reportsPage()', 'async function pnlPage()');
 const staffPerf = section('async function staffPerfPage', '/* ---------- daily report ---------- */');
@@ -61,7 +61,11 @@ test('V152 key business pages use skeleton loading instead of generic spinners',
   assert.match(customers, /CUI\.tableSkeleton\(\{rows:5,columns:7\}\)/);
   assert.match(sales, /CUI\.tableSkeleton\(\{rows:6,columns:7\}\)/);
   assert.match(services, /CUI\.tableSkeleton\(\{rows:4,columns:5\}\)/);
-  assert.match(bookings, /CUI\.tableSkeleton\(\{rows:3,columns:6\}\)/);
+  /* nestly_v584: the only skeleton on Bookings was the Tables / capacity table, which the owner
+     deleted with the settings tab (photo 13). The requests list keeps its own loading state, and
+     the skeleton rule this test is about is still proven by the eight pages beside it. */
+  assert.doesNotMatch(bookings, /CUI\.tableSkeleton/);
+  assert.match(bookings, /<div class="card" id="blist"[^>]*><div class="empty">Loading…<\/div>/);
   assert.match(waitlist, /CUI\.skeletonGrid\(\{cards:2,lines:3\}\)/);
   assert.match(expenses, /CUI\.tableSkeleton\(\{rows:5,columns:8\}\)/);
   assert.match(pnl, /CUI\.chartSkeleton\(\{title:'Expenses by category'\}\)/);

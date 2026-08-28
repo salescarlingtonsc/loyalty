@@ -32,7 +32,12 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g,
 const renderRow = new Function('esc', `
   const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Team member',frontdesk:'Front desk'};
   const openProfileId=null, openModId=null;
-  const staffProfilePanelHtml=()=>'', modPanelHtml=()=>'';
+  const staffProfilePanelHtml=()=>'', modPanelHtml=()=>'', staffEditDialogHtmlV584=()=>'';
+  /* nestly_v584: the row draws a Branch column now (owner photo 15 wrote the header in by hand),
+     so the two branch lookups it reads are stubbed like the panels — this file is about the
+     ACCESS state, and a stub that lies about branches would not change what it proves. */
+  const staffBranchListV577=[{id:'b1',name:'Orchard',is_default:true,active:true}];
+  const staffBranchAssignedV577=new Map();
   ${section('const staffRowV209=s=>{', 'const rows=st||[];')}
   return staffRowV209;`)(esc);
 
@@ -61,27 +66,32 @@ const makeHandler = () => {
 
 const row = state => renderRow(state);
 
-test('the pill states the real access_state, not merely "they have a login"', () => {
+test('the row states the real access_state, not merely "they have a login"', () => {
+  /* nestly_v584 (owner photo 15: "APP ACCESS" written in as a column header, and the pill under
+     each name struck out). The FACT this test is about is unchanged and is still read off
+     access_state; only where it is drawn moved — from a pill in a wrapped strip below the grid to
+     a tick or a cross in its own column, which is what lets it be compared down the list. */
   const approved = row({ id: 's1', full_name: 'Kelvin', role: 'staff', user_id: 'u1', access_state: 'approved' });
-  assert.match(approved, /pill ok">App access active</);
-  assert.ok(!approved.includes('Waiting for your approval'));
+  assert.match(approved, /data-staff-col="App access"><span class="staff-access-mark-v584 is-yes"/);
+  assert.ok(!approved.includes('Waiting'));
 
-  /* The bug: this row said "App access active" while every sign-in was refused. */
+  /* The bug: this row said "App access active" while every sign-in was refused. A tick would be
+     the same lie, so a pending row still gets words and still gets the decision. */
   const pending = row({ id: 's2', full_name: 'Mei', role: 'staff', user_id: 'u2', access_state: 'pending' });
-  assert.match(pending, /pill warn">Waiting for your approval</);
-  assert.ok(!pending.includes('App access active'));
+  assert.match(pending, /data-staff-col="App access"><span class="pill warn">Waiting</);
+  assert.ok(!pending.includes('staff-access-mark-v584 is-yes'));
 
   /* decide_staff_access_v207 detaches user_id when it declines, so the declined row is judged on
      access_state first — otherwise it would be indistinguishable from a never-invited one. */
   const rejected = row({ id: 's3', full_name: 'Sam', role: 'staff', user_id: null, access_state: 'rejected' });
-  assert.match(rejected, /pill off">App access declined</);
+  assert.match(rejected, /staff-access-mark-v584 is-no" title="App access declined"/);
 
   const noLogin = row({ id: 's4', full_name: 'Rota Only', role: 'staff', user_id: null, access_state: null });
-  assert.match(noLogin, /pill off">No app access</);
+  assert.match(noLogin, /staff-access-mark-v584 is-no" title="No app access"/);
 
   /* Rows predating the column must not be mass-flagged as waiting. */
   const legacy = row({ id: 's5', full_name: 'Old Hand', role: 'staff', user_id: 'u5', access_state: null });
-  assert.match(legacy, /pill ok">App access active</);
+  assert.match(legacy, /data-staff-col="App access"><span class="staff-access-mark-v584 is-yes"/);
 });
 
 test('only a pending row offers the decision, and it explains what approving does', () => {
@@ -99,11 +109,18 @@ test('only a pending row offers the decision, and it explains what approving doe
   assert.doesNotMatch(pending, /toggleModPanel\('s2'\)/);
   assert.doesNotMatch(pending, /setStaffActiveV285\('s2'/);
   assert.doesNotMatch(pending, /rmStaff\('s2'/);
-  /* …and they are genuinely still reachable, in staffProfileActionsHtmlV577. */
+  /* …and they are genuinely still reachable, in staffProfileActionsHtmlV577.
+     nestly_v584 (owner photo 16: the panel redrawn as Profile | Access & Module, with "Access and
+     status" ringed and "put inside"): the Modules BUTTON is gone because the module grid is on
+     that same tab, directly below these actions — a button that opens what you are already
+     looking at is not an action. The other three are unchanged, Delete having become a dustbin
+     with the same handler and the same confirm. */
   const actionsPanel = app.slice(app.indexOf('function staffProfileActionsHtmlV577'));
-  for (const action of [/toggleModPanel\('\$\{s\.id\}'\)/, /setStaffActiveV285\('\$\{s\.id\}'/, /rmStaff\('\$\{s\.id\}'/, /staffReferenceCodeV217\('\$\{s\.id\}'/]) {
-    assert.match(actionsPanel.slice(0, 1600), action);
+  for (const action of [/setStaffActiveV285\('\$\{s\.id\}'/, /rmStaff\('\$\{s\.id\}'/, /staffReferenceCodeV217\('\$\{s\.id\}'/]) {
+    assert.match(actionsPanel.slice(0, 2200), action);
   }
+  assert.match(app, /<div data-staff-tabpanel-v584="access" hidden>\$\{staffProfileActionsHtmlV577\(s\)\}\$\{modPanelHtml\(s\)\}<\/div>/,
+    'the module grid sits on the same tab as the access actions');
 
   for (const settled of [
     { id: 's1', role: 'staff', user_id: 'u1', access_state: 'approved' },

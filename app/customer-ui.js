@@ -100,6 +100,8 @@
     eyeOff:'M3 3l18 18M10.6 6.12A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.4 17.4 0 0 1-2.1 2.7M6.2 6.2C3.77 7.9 2.5 12 2.5 12s3.5 6 9.5 6a9.9 9.9 0 0 0 3.2-.52M9.7 9.7a3.25 3.25 0 0 0 4.6 4.6',
     faceId:'M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M9 9h.01M15 9h.01M12 9v4h-1M8.5 16c1 .8 2.17 1.2 3.5 1.2s2.5-.4 3.5-1.2',
     edit:'M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4',
+    /* nestly_v584: a real dustbin, for the staff editor's Delete (owner photo 16 drew one). */
+    trash:'M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L17.5 7M10 11v5.5M14 11v5.5',
     /* v330: a real handset glyph for "Call" buttons — 'till' (a cash register) was being reused
        for phone actions before this, which read wrong once the label shrank to an icon-only
        button. A generic speech-bubble ('chat', tinted green in CSS) stands in for WhatsApp

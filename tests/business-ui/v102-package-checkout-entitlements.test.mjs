@@ -24,7 +24,7 @@ test('package plans snapshot their server-derived list value and expose an hones
   assert.match(migration,/list_unit_cents_snapshot bigint/);
   assert.match(migration,/list_value_cents_snapshot bigint/);
   assert.match(migration,/v_service\.price_cents::bigint\*p_sessions::bigint/);
-  const packages=section('async function packagesPage(){','async function branchesPage(){');
+  const packages=section('async function packagesPage(options){','async function branchesPage(){');
   assert.match(packages,/Exact service \/ variation/);
   assert.match(packages,/Peekaa compares the package price with the exact service price × sessions/);
   assert.match(packages,/save_package_plan_v102/);
@@ -54,7 +54,7 @@ test('Quick Earn shows owned packages and pending vouchers, and consumes session
 test('package earning is owner-configurable and checkout points come from writer receipts',()=>{
   assert.match(migration,/set_package_points_policy_v102/);
   assert.match(migration,/app\.is_salon_owner\(p_business\)/);
-  const packages=section('async function packagesPage(){','async function branchesPage(){');
+  const packages=section('async function packagesPage(options){','async function branchesPage(){');
   assert.match(packages,/Make package purchases eligible for loyalty points/);
   assert.match(packages,/points are earned only when an active published loyalty programme applies/);
   assert.match(packages,/Using sessions never earns points again/);

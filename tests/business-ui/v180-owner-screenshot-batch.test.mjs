@@ -170,12 +170,21 @@ test('commission settings sit with the thing they belong to', () => {
   // Per-staff commission moved onto the staff row; the per-service override moved to Services.
   assert.ok(!app.includes('data-savestaff'), 'per-staff commission table should be gone');
   assert.ok(!app.includes('<b>Staff commission %</b>'), 'per-staff commission card should be gone');
-  assert.ok(app.includes('<b>Service commission override %</b>'), 'service override must survive the move');
+  /* nestly_v584 (owner photo 17: the standalone "Service commission override %" card ringed with
+     an arrow into the row's Edit and "click is pop-up"). V180's ruling is unchanged and is what
+     this test is for — the override belongs to the SERVICE, not to a person — but it now lives
+     inside that service's own editor rather than in a second card further down the same page.
+     One service, one form. */
+  assert.ok(!app.includes('<b>Service commission override %</b>'),
+    'the separate override card is gone');
+  assert.ok(!app.includes("commissionWrap"), 'and so is its mount point');
+  assert.ok(!app.includes('async function loadCommissionConfig'), 'and its loader');
   const services = app.indexOf('async function servicesPage()');
-  const mount = app.indexOf('<div id="commissionWrap"></div>');
+  const field = app.indexOf('id="svcEditCommissionV584"');
   const bundles = app.indexOf('id="bundleSegmentBody"', services);
-  assert.ok(services > 0 && mount > services && mount < bundles,
-    'the override must mount inside the Services page');
-  assert.ok(app.includes("if(!$('commissionWrap'))return"),
-    'the loader must no-op where it has no mount point');
+  assert.ok(services > 0 && field > services && field < bundles,
+    'the override must be edited inside the Services page');
+  // It still writes the same column, and blank still means "not set" rather than 0%.
+  assert.ok(app.includes('commission_bps:commissionBpsV584'));
+  assert.ok(app.includes("commissionRawV584===''?null"));
 });

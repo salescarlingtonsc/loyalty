@@ -543,7 +543,7 @@ test('existing referral, legacy sale and package paths never promise points whil
   const customers=section('async function clientsPage()', 'async function clientDetail(id)');
   const till=section('async function tillPage()', '/* ---------- sales ---------- */');
   const referrals=section('async function referralsPage()', '/* ---------- memberships ---------- */');
-  const packages=section('async function packagesPage()', 'async function branchesPage()');
+  const packages=section('async function packagesPage(options)', 'async function branchesPage()');
   const receiptStart=app.indexOf('function legacySaleReceiptV145(');
   const receiptEnd=app.indexOf('\nfunction giftCardAbilitiesV102',receiptStart);
   assert.ok(receiptStart>=0&&receiptEnd>receiptStart,'legacy sale receipt truth helper is missing');

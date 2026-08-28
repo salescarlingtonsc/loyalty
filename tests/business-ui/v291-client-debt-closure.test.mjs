@@ -187,15 +187,17 @@ test('V291 blocked time is visible in the List view and the mobile week agenda',
   assert.match(code,/\}\)\.join\(''\);\s*\n\s*const blockedAgendaV291=/);
 });
 
-test('V291 a table type can be renamed and re-counted, not only switched off',()=>{
-  const capacity=section('async function loadCapacity(){',"if($('tblAdd'))");
-  assert.match(capacity,/data-table-edit-v291/);
-  assert.match(capacity,/data-table-save-v291/);
-  assert.match(capacity,/sb\.from\('booking_tables'\)\s*\n?\s*\.update\(\{name,pax:paxRaw===''\?null:parseInt\(paxRaw,10\),quantity:qty\}\)/);
-  assert.match(capacity,/\.eq\('id',button\.dataset\.tableSaveV291\)\.eq\('business_id',S\.biz\.id\)/);
-  // Removal is unchanged, and the table now scrolls inside its own box.
-  assert.match(capacity,/rmTable\('\$\{t\.id\}'\)/);
-  assert.match(capacity,/<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Table types">/);
+test('nestly_v584 the table-capacity surface is deleted, not left half-wired',()=>{
+  /* V291 gave a table type an in-place rename and re-count, because deleting and re-adding a row
+     detaches it from the bookings that name it. Owner photo 13 deletes the whole Bookings settings
+     tab AND its contents, so there is no capacity surface left to edit. What that ruling must not
+     do is leave dead handlers pointing at booking_tables from a page nobody can reach — the rows
+     themselves stay in the database untouched. */
+  assert.ok(!app.includes('async function loadCapacity(){'));
+  assert.ok(!app.includes('data-table-save-v291'));
+  assert.ok(!app.includes("id=\"tblAdd\""));
+  assert.ok(!app.includes('window.rmTable'));
+  assert.ok(!app.includes('window.toggleTable'));
 });
 
 test('V291 a waiting walk-in can be corrected without losing their place in the queue',()=>{
@@ -337,7 +339,6 @@ test('V291 the Day view has a linear agenda fallback like the Week view',()=>{
   assert.match(code,/<p class="small day-timeline-slot-hint-v291">/);
 });
 
-test('V291 the bookings capacity controls wrap at 390px',()=>{
-  assert.match(code,/<div class="row" style="flex-wrap:wrap;gap:8px"><input id="tblName"/);
-  assert.match(code,/<button class="btn sm" id="tblAdd" style="flex:0 0 auto">Add<\/button>/);
-});
+/* nestly_v584: "the bookings capacity controls wrap at 390px" retired with the controls — see the
+   deletion test above. The 390px wrapping rule it was one instance of is still asserted for the
+   surfaces that still exist. */

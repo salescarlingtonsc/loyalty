@@ -132,7 +132,11 @@ test('V229 categories carry the owner\'s names', () => {
     'the grouping the owner struck out must not come back');
   assert.match(app, /programme-category-title">Point system</);
   assert.match(app, /programme-category-title">Promotions</);
-  assert.match(app, /programme-category-title">Referrals</);
+  /* nestly_v584 (owner photo 6): the Referrals band is gone — the page heading above it already
+     says Referrals, and no other reward page carries a coloured strip. The category is still its
+     own, which is what this test is about. */
+  assert.match(app, /data-programme-category-v268="referrals"/);
+  assert.doesNotMatch(app, /programme-category-title">Referrals</);
   /* V294 (owner: "remove this programme"): the combined card went; Memberships stands alone
      and gift cards moved to the Serve & sell nav group. */
   assert.match(app, /programme-category-title">Memberships</);

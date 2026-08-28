@@ -23,40 +23,22 @@ test('V223 the module is called Products in the nav, matching its own page', () 
 });
 
 /* (2) "how can table bookings be present in a spa/salon?" */
-test('V223 seating controls appear only for a business that seats guests', () => {
-  // V235: the controls are behind seatsGuestsV235 — the V223 flag AND a sector that seats.
-  assert.match(bookings, /\$\{seatsGuestsV235\?`<div class="row"><b>Tables \/ capacity<\/b>/);
-  /* V325: the overflow rule ("When you're full") moved to bookingRulesCardHtmlV325 along with
-     the rest of the hold-timer/auto-confirm booking rules — Bookings keeps a pointer, not a
-     second copy. */
-  assert.doesNotMatch(bookings, /When you're full/);
+test('nestly_v584 seating left Bookings entirely, and the rule that needs it did not', () => {
+  /* V223/V235 gated the seating question so a spa was never offered a switch it could not
+     truthfully use. Owner photo 13 goes further: "delete booking settings", and — asked directly
+     what should happen to the seating switch, Tables / capacity and the CSV import inside it —
+     "delete the tab and the contents". So Bookings no longer asks the question at all. */
+  assert.doesNotMatch(bookings, /setTakesTablesV223/);
+  assert.doesNotMatch(bookings, /Tables \/ capacity/);
+  assert.doesNotMatch(bookings, /seatingSectorV235/);
+  /* The one rule that genuinely depends on seating — "when you're full" — lives in Customer
+     Interface -> Appointment Setting and is untouched, still behind its own sector gate. */
   assert.match(bookingRules, /\$\{seatsGuestsV235\?`<label for="setOverflow">When you're full<\/label>/);
-  assert.match(bookings, /const seatsGuestsV235=seatingSectorV235&&S\.biz\.takes_table_reservations===true;/);
-  /* V235 (owner: "how can a spa have table seating at all"): the QUESTION itself is sector-gated,
-     so an appointment business is never offered a switch it can never truthfully turn on. */
-  /* V276 retarget: 'bar' joined the seated sectors — the copy under the switch already named a
-     bar, but the list did not, so the one sector it names by hand never saw the control. The
-     gating shape this test exists to pin is unchanged. */
-  assert.match(bookings, /const seatingSectorV235=\['fnb','bar','other'\]\.includes\(String\(S\.biz\.industry\|\|''\)\.toLowerCase\(\)\);/);
-  assert.match(bookings, /\$\{seatingSectorV235\?`<label[^`]*id="setTakesTablesV223"/s);
-  // The owner can turn it on themselves.
-  assert.match(bookings, /id="setTakesTablesV223"/);
-  assert.match(bookings, /We seat guests at tables/);
-  assert.match(bookings, /Leave it off for appointment work like a spa or salon/);
-  // Handlers must not assume elements that may not be rendered.
-  assert.match(bookings, /if\(\$\('tblAdd'\)\)\$\('tblAdd'\)\.onclick/);
-  assert.match(bookings, /if\(!\$\('capBody'\)\)return;/);
-  assert.match(bookingRules, /const overflow=\$\('setOverflow'\)\?\$\('setOverflow'\)\.value:null;/);
-  assert.match(bookingRules, /const autoConfirm=\$\('setAutoConfirm'\)\?\$\('setAutoConfirm'\)\.checked:null;/);
-  // A null must not be mirrored into local state — the server keeps the stored value.
-  assert.match(bookingRules, /if\(overflow!==null\)S\.biz\.booking_overflow=overflow;/);
-  assert.match(bookingRules, /if\(autoConfirm!==null\)S\.biz\.booking_auto_confirm=autoConfirm;/);
-  // Flipping the switch changes which controls belong on the page, so it redraws.
-  assert.match(bookings, /if\(seatingChanged\)bookingsPage\(\)/);
-  assert.match(bookings, /p_takes_table_reservations:takesTables/);
+  assert.match(bookingRules, /const seatingSectorV235=\['fnb','bar','other'\]\.includes\(String\(S\.biz\.industry\|\|''\)\.toLowerCase\(\)\);/);
+  // And Bookings still points at where the rules live, rather than growing a second copy.
+  assert.match(bookings, /Booking rules, opening hours and who customers may choose now live in <a href="#\/customer-interface\/appointment">/);
 });
 
-/* (4) "customer app settings should not be in bookings" */
 test('V223 customer app actions live with the other customer settings, not in Bookings', () => {
   assert.doesNotMatch(bookings, /businessCustomerCapabilities/);
   assert.doesNotMatch(bookings, /customer_capabilities_v89/);

@@ -219,13 +219,11 @@ test('V269 zero, unreadable and stale counts are all handled honestly', () => {
 
 test('V269 the button hands off to the one page that owns the decision', () => {
   assert.match(appointments, /bookingRequestsButtonV269\.onclick=\(\)=>nav\('#\/bookings'\);/);
-  // Bookings opens on the requests tab, so the hand-off lands on the requests themselves
-  assert.match(app, /tabs\.querySelector\('#bookingsTabRequests'\)\.onclick=\(\)=>setTab\('requests'\);/);
-  /* V288 (audit A2 HIGH 3): RETARGETED, not deleted. The enhancement's last act is still to
-     open a tab — but a realtime re-render must restore the tab the owner was actually on
-     rather than always snapping back to Requests, so the literal 'requests' is now the
-     fallback of that restore rather than an unconditional call. */
-  assert.match(app, /setTab\(bookingsActiveTabV288==='settings'\?'settings':'requests'\);\n\}/);
+  /* nestly_v584: there is no tab to land on any more — the owner deleted the Booking settings tab
+     and its contents (photo 13), so Bookings IS the requests list and the hand-off cannot land
+     anywhere else. That is a stronger version of what this test asserted. */
+  assert.doesNotMatch(app, /bookingsTabRequests/);
+  assert.match(app, /<div class="card" id="blist"/);
 });
 
 /* --------------------------------- (B2) accept/decline: one path each, idempotent, gated */

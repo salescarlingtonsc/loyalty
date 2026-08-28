@@ -29,7 +29,7 @@ const stepper = section(app, 'function customerInterfaceStepperHtmlV325(', 'func
 const page = section(app, 'async function customerInterfacePageV243(hashParam)', '/* ---------- phone country-code picker');
 const brandPanel = section(app, 'function workspaceBrandPanelHtmlV259(){', 'function wireWorkspaceBrandV259(){');
 const brandWiring = section(app, 'function wireWorkspaceBrandV259(){', '/* V325 (owner-authorized restructure');
-const servicesPage = section(app, 'async function servicesPage(){', 'async function loadCommissionConfig(');
+const servicesPage = section(app, 'async function servicesPage(){', '/* ---------- bookings ---------- */');
 const bookingRules = section(app, 'function bookingRulesCardHtmlV325(', 'function wireBookingRulesV325(');
 
 /* --------------------------------------------------------------------- (a) the stepper itself */
@@ -200,7 +200,11 @@ test('V325 buffer-before/after are wired into the existing add and edit service 
   // The add path: one insert, buffer fields included.
   assert.match(servicesPage, /business_id:S\.biz\.id,name,variant_label:variant,price_cents:price,duration_min:dur,\s*\n\s*buffer_before_min:bufferBefore,buffer_after_min:bufferAfter/);
   // The edit path: one update, buffer fields included.
-  assert.match(servicesPage, /\.update\(\{name,variant_label:variant,price_cents:price,duration_min:duration,\s*\n\s*buffer_before_min:bufferBefore,buffer_after_min:bufferAfter\}\)\.eq\('id',id\)/);
+  /* nestly_v584 (owner photo 17: the standalone commission-override card ringed with an arrow
+     into the row's Edit). The service editor writes one more column now — the per-service
+     override, which used to have its own card and its own Save further down the page. The two
+     buffer columns V325 added are untouched, which is what this line is for. */
+  assert.match(servicesPage, /\.update\(\{name,variant_label:variant,price_cents:price,duration_min:duration,\s*\n\s*buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,\s*\n\s*commission_bps:commissionBpsV584\}\)\.eq\('id',id\)/);
   // No new RPC, no new call site — still the plain services table insert/update.
   assert.doesNotMatch(servicesPage, /sb\.rpc\('[a-z_]*buffer/i);
   /* nestly_v577 (owner mark, photo 9): Appointment Setting no longer carries the pointer sentence
@@ -238,9 +242,13 @@ test('V325 Bookings keeps a pointer instead of a second copy of the relocated co
   const bookingsPage = section(app, 'async function bookingsPage(){', '\nasync function ');
   assert.match(bookingsPage, /Customer Interface → Appointment Setting/);
   assert.doesNotMatch(bookingsPage, /id="setHold"|id="setOverflow"|id="setAutoConfirm"|id="setStaffChoice"|id="setSave"/);
-  // The seating toggle and Tables/capacity — never named in the owner's relocation list — stay.
-  assert.match(bookingsPage, /id="setTakesTablesV223"/);
-  assert.match(bookingsPage, /Tables \/ capacity/);
+  /* nestly_v584: the seating toggle and Tables / capacity are gone too — not by relocation, by
+     deletion. Owner photo 13 struck the Booking settings tab through, and when asked what should
+     happen to what it held, chose "delete the tab and the contents". V325's own point survives
+     unchanged and is the line above: Bookings points at where the rules live rather than keeping a
+     second copy of them. */
+  assert.doesNotMatch(bookingsPage, /id="setTakesTablesV223"/);
+  assert.doesNotMatch(bookingsPage, /Tables \/ capacity/);
 });
 
 /* -------------------------------------------------------------------- (e) branch contact card */

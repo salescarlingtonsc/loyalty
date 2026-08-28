@@ -258,7 +258,7 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
 test('customer sign-up join URL is a safe 44px target without 390px overflow',()=>{
   /* V368: the QR card renders into a host it is handed (the profile menu's dialog) rather than a
      fixed page card, so the function takes one argument now. Same body, same RPCs. */
-  const signup=section('async function loadSignupConfig(host)','async function loadCommissionConfig()');
+  const signup=section('async function loadSignupConfig(host)','function bookingRulesCardHtmlV325()');
   const mobile=section('/* === COMPACT LAYOUT SHELL (<=768px)','@media(max-width:375px){');
 
   assert.match(signup,/<p class="small portal-link-row" id="joinQrLink"[^>]*><\/p>/);

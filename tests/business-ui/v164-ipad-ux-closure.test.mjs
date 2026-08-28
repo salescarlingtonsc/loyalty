@@ -124,7 +124,11 @@ test('V164 Programmes removes persistent setup CTA and keeps categorised overvie
   /* V229: renamed to plain "Promotions" (the owner's word) and Referrals became its own
      category, so both remain distinct from the points work — which is the point here. */
   assert.match(appHtml, /programme-category-title">Promotions</);
-  assert.match(appHtml, /programme-category-title">Referrals</);
+  /* nestly_v584 (owner photo 6): the pink "Referrals" band is gone — the page heading above it
+     already says Referrals, and no other reward page carries one. The category itself is
+     unchanged, which is what this line is really pinning. */
+  assert.match(appHtml, /data-programme-category-v268="referrals"/);
+  assert.doesNotMatch(appHtml, /programme-category-title">Referrals</);
   /* V229: renamed to say what is in it rather than what it is like. */
   /* V294: gift cards left the category (item 7b) — Memberships stands alone. */
   assert.match(appHtml, /programme-category-title">Memberships</);

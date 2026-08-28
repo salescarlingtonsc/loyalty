@@ -372,7 +372,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      linkNotAWebAddressV471 would mislead here — the value IS a web address, just the one address
      a customer must never be sent to. Names the owner's own field ({platform}); reviewed copy in
      all three locales. */
-  assert.equal(keys.length,148,'mixed-interface interpolation inventory changed without review');
+  /* nestly_v584 adds three: confirmBookingFor / declineBookingFor (owner photo 13 replaced the
+     Confirm and Decline words with a tick and a cross, so the words moved into the accessible
+     name) and deleteTeammateNamed (photo 16 did the same to the staff editor's Delete), and RETIRES
+     nine: the booking-import strings went with the bookings CSV importer the owner deleted along
+     with the Booking settings tab (photo 13). 148 + 3 - 9 = 142. */
+  assert.equal(keys.length,142,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -546,8 +551,9 @@ test('v97 dynamic count, page, amount, status, import, QR and billing copy local
   }
   assert.equal(templateText('completedTransaction',{count:1},'en'),'1 completed transaction');
   assert.equal(templateText('completedTransactions',{count:2},'en'),'2 completed transactions');
-  assert.equal(templateText('importBooking',{count:1},'en'),'Import 1 booking');
-  assert.equal(templateText('importBookings',{count:2},'en'),'Import 2 bookings');
+  /* nestly_v584: importBooking / importBookings retired with the bookings CSV importer (owner
+     photo 13 deleted the Booking settings tab and its contents). The singular/plural pairing this
+     line proved is still proved by the customer pair above and the QR pair below. */
   assert.equal(templateText('activeQrRevoked',{count:1},'en'),'1 active QR revoked.');
   assert.equal(templateText('activeQrsRevoked',{count:2},'en'),'2 active QRs revoked.');
   assert.equal(templateText('measurementStarted',{},'en'),'Measurement started');

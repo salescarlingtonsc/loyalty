@@ -31,7 +31,11 @@ test('V150 sidebar keeps operational actions separate from money history', () =>
      unchanged: Bottles is something staff DO during service, not money history. */
   /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the Gift cards
      row left this group. The separation this test guards is unchanged. */
-  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
+  /* nestly_v584 (owner photo 12: the Customer packages tab ringed with an arrow into this very
+     group — "put under new modules under serve & sell"). 'custpackages' is a SURFACE key, gated on
+     the real 'packages' module, so no entitlement changed; it is the counter action (use a
+     prepaid session for the person in front of you), which is doing, not money history. */
+  assert.match(navBlock, /items:\['till','appointments',(?:'bottles',)?'bookings','waitlist','custpackages'\]/);
   /* V180 owner instruction: Business Insights and Expenses swapped so the money group reads
      as money in -> money out -> result -> why. The separation this test guards is unchanged. */
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left

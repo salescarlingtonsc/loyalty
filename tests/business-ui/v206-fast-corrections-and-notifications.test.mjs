@@ -57,7 +57,11 @@ test('the deliberate separation between doing and reviewing is intact', () => {
      unchanged: Bottles is something staff DO during service, not money history. */
   /* V303 (owner 2026-08-13: "remove gift cards from the business UI entirely"): the Gift cards
      row left this group. The doing-vs-reviewing separation this test guards is unchanged. */
-  assert.match(app, /label:'Serve & sell',items:\['till','appointments',(?:'bottles',)?'bookings','waitlist'\]/);
+  /* nestly_v584 (owner photo 12: the Customer packages tab ringed with an arrow into this very
+     group — "put under new modules under serve & sell"). 'custpackages' is a SURFACE key, gated on
+     the real 'packages' module, so no entitlement changed; it is the counter action (use a
+     prepaid session for the person in front of you), which is doing, not money history. */
+  assert.match(app, /label:'Serve & sell',items:\['till','appointments',(?:'bottles',)?'bookings','waitlist','custpackages'\]/);
   /* V272 owner instruction ("delete this tab cause here have already"): Staff performance left
      this group; the doing-vs-reviewing separation this test guards is unchanged. */
   /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
