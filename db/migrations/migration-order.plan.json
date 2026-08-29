@@ -2883,6 +2883,12 @@
       "path": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql",
       "semanticVersion": "v598",
       "proposedDeployVersion": "20260829180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v599_browser_write_boundaries.sql",
+      "semanticVersion": "v599",
+      "proposedDeployVersion": "20260829190000"
     }
   ]
 }
