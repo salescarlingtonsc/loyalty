@@ -46700,7 +46700,7 @@ async function packagesPage(options){
 	      ||(packageStatusV612==='active'?Number(k.remaining)>0&&k.status!=='expired':Number(k.remaining)===0));
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
 	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
-    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th>Left</th><th>Status</th><th></th></tr>
+    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th>Left</th><th>Expiry</th><th>Status</th><th></th></tr>
       ${visible.map(k=>{
       /* nestly_v593: the server already reports 'expired' as the status of a package whose window
          has closed (staff_list_package_entitlements_v102 derives it, it is not a stored value).
@@ -46708,7 +46708,11 @@ async function packagesPage(options){
          a button the till is about to refuse with package_expired, so the row states the deadline
          and drops the action instead. */
       const expiredV593=k.status==='expired';
-      return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${k.expires_at?`<div class="muted small">${expiredV593?'Expired':'Use by'} ${esc(sgt(k.expires_at))}</div>`:''}</td>
+      return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${/* nestly_v614 (owner photo 1, a box drawn on the header between Status and the row
+             actions: "i need to have a tab on expiry date (if the package has an expiry)"). The
+             deadline used to be a third line under the package NAME, where it could not be read
+             down the list or compared between rows. It is a column now, so this sub-line goes
+             rather than saying the same thing twice on one row. */''}</td>
       ${/* nestly_v603 (owner: "Add! Date Bought dd/mm/yy  Last Used dd/mm/yy"). Bought is in the
            payload already; last used is v603's, and it counts only sessions that were not undone.
            An em dash rather than a blank so an untouched package reads as "never used" instead of
@@ -46716,6 +46720,14 @@ async function packagesPage(options){
       <td>${esc(packageDayV603(k.purchased_at))}</td>
       <td>${k.last_used_at?esc(packageDayV603(k.last_used_at)):'<span class="muted">—</span>'}</td>
       <td>${k.remaining}/${k.sessions||'?'}</td>
+      ${/* nestly_v614: dd/mm/yy, the same short Singapore date the two columns beside it print.
+           A package sold without a deadline says so in words — a blank cell here would read as a
+           date that failed to load, and "no expiry" is a real term the customer was sold. The
+           word "Expired" is not repeated: the Status pill beside it already says that, and the
+           date is what this column is for. */''}
+      <td>${k.expires_at
+        ?`<span${expiredV593?' class="err"':''}>${esc(packageDayV603(k.expires_at))}</span>`
+        :'<span class="muted small">No expiry</span>'}</td>
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
       <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
     }).join('')}</table>
