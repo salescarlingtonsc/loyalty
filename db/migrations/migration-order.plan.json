@@ -2946,6 +2946,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v603_one_relationship_per_pair.sql",
+      "semanticVersion": "v603",
+      "proposedDeployVersion": "20260829153715"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260829_nestly_v593_package_expiry.sql",
       "semanticVersion": "v593",
       "proposedDeployVersion": "20260829170000"

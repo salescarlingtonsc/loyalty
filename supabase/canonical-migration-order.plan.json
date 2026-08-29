@@ -2941,6 +2941,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260829153715",
+      "name": "nestly_v603_one_relationship_per_pair",
+      "sourcePath": "db/migrations/20260829_nestly_v603_one_relationship_per_pair.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260829170000",
       "name": "nestly_v593_package_expiry",
       "sourcePath": "db/migrations/20260829_nestly_v593_package_expiry.sql"
