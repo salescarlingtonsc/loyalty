@@ -80,7 +80,9 @@ async function retrieveRecoveredProviderResult(
       : null;
   }
   if (
-    ['change_cadence', 'change_capacity', 'cancel_at_period_end', 'resume'].includes(commandType)
+    /* v621: change_branches now recovers the same way the other item-shape commands do —
+       without it, an 'uncertain' branch command had no server-side resolution path at all. */
+    ['change_cadence', 'change_capacity', 'change_branches', 'cancel_at_period_end', 'resume'].includes(commandType)
   ) {
     const subscription = await stripe.subscriptions.retrieve(providerObjectId);
     return stripeSubscriptionMatchesCommandV125(

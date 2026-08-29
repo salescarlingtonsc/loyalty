@@ -6313,6 +6313,57 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   if(button)button.disabled=false;
   if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again or use email and password.</div>';
 }
+/* nestly_v625 (owner: admin sign-in becomes Google-only). No password path, no signup intent —
+   the super admin console has one door in. Mirrors the business Google flow's shape (own
+   sessionStorage attempt slot, own canonical-origin guard, own redirect target) but is
+   deliberately simpler: there is no server-side admission RPC to call before persisting the
+   session, because platform authority is decided by DB predicates on every read, not by a
+   gate at sign-in time. An unauthorized Google identity still signs in — it just sees a
+   console with nothing in it. */
+function platformOAuthRedirectUrl(){
+  const redirect=new URL(NestlyNativeBridge.publicUrl('/admin'));
+  redirect.searchParams.set('oauth','platform');
+  return redirect.toString();
+}
+function ensureCanonicalPlatformOAuthOrigin(){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/admin'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(canonical.toString());
+  return false;
+}
+function beginPlatformGoogleOAuthAttempt(){
+  try{
+    sessionStorage.setItem('nestly:platform-oauth-attempt',JSON.stringify({startedAt:Date.now()}));
+    return true;
+  }catch{return false}
+}
+function takePlatformGoogleOAuthAttempt(){
+  const key='nestly:platform-oauth-attempt',raw=sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if(!raw)return false;
+  try{
+    const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
+    return Number.isFinite(age)&&age>=0&&age<=30*60*1000;
+  }catch{return false}
+}
+async function startPlatformGoogleAuth({button,errorHostId}){
+  if(!ensureCanonicalPlatformOAuthOrigin())return;
+  const errorHost=$(errorHostId);
+  if(button)button.disabled=true;
+  if(errorHost)errorHost.innerHTML='';
+  if(beginPlatformGoogleOAuthAttempt()){
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:platformOAuthRedirectUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
+      });
+      if(!error)return;
+    }catch{}
+  }
+  sessionStorage.removeItem('nestly:platform-oauth-attempt');
+  if(button)button.disabled=false;
+  if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again.</div>';
+}
 function renderBusinessApplication(){
   destroyMountedTurnstiles();
   let locale=businessApplicationLanguage();
@@ -6451,25 +6502,34 @@ function renderAuth(mode='in',{admin=false}={}){
     ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:16})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:16})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
-    ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
+    ${admin?`${businessGoogleButtonHtml('platformGoogleSignIn')}<p class="muted small" style="margin-top:10px">Google sign-in only.</p><div id="autherr">${sessionStorage.getItem('nestly-platform-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-platform-oauth-notice'))}</div>`:''}</div>`:`
+    ${!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
     <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
-    <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
+    <div id="autherr">${sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
-      ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
+      <button class="btn" id="go">${mode==='in'?'Sign in':'Sign up'}</button>
+      <span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
     </div>
-    ${admin?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>'}
+    <button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>`}
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
-  if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
-  if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
+  /* nestly_v625: admin sign-in has no password form or mode switcher left to wire — one button,
+     one handler, then stop. Everything below this belongs to the business side of renderAuth. */
+  if(admin){
+    if(sessionStorage.getItem('nestly-platform-oauth-notice'))sessionStorage.removeItem('nestly-platform-oauth-notice');
+    if($('platformGoogleSignIn'))$('platformGoogleSignIn').onclick=event=>
+      startPlatformGoogleAuth({button:event.currentTarget,errorHostId:'autherr'});
+    return;
+  }
+  if(sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
+  if(NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
   /* nestly_v588 (owner: staff signup was "in a mess" — a code holder had no visible door in from
-     the ordinary sign-in screen). Gated on the same !admin condition as #sw: this is the business
-     side of renderAuth only. */
+     the ordinary sign-in screen). This is the business side of renderAuth only — admin already
+     returned above. */
   if($('authStaffInviteDoorV588'))$('authStaffInviteDoorV588').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
@@ -6635,6 +6695,38 @@ async function consumeBusinessOAuthRedirect(){
     sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
       ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
       :'Could not verify the consented Google signup. Return to signup and try again.');
+  }
+}
+
+/* nestly_v625: platform's mirror of consumeBusinessOAuthRedirect, deliberately thinner. There is
+   no separate admission RPC to call before persisting the session — platform authority is a
+   server-side DB predicate checked on every read, not a gate this function has to clear first.
+   So the only job here is: was this fragment expected (a pending attempt this tab started,
+   within the same window), and if so, hand the tokens to the real client. */
+async function consumePlatformOAuthRedirect(){
+  const search=new URLSearchParams(location.search);
+  if(search.get('oauth')!=='platform')return;
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,'').replace(/^\?/,'') );
+  const providerError=search.get('error_description')||search.get('error')||hash.get('error_description')||hash.get('error');
+  const oauthAccessToken=hash.get('access_token'),oauthRefreshToken=hash.get('refresh_token');
+  /* OAuth fragments contain credentials. Remove them from browser history before any network or
+     rendering work, exactly as the business flow does. */
+  history.replaceState(null,'','/admin');
+  const pendingAttempt=takePlatformGoogleOAuthAttempt();
+  if(!pendingAttempt||providerError){
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  if(!oauthAccessToken||!oauthRefreshToken){
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  try{
+    const {error}=await sb.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(error)throw error;
+  }catch{
+    await sb.auth.signOut({scope:'local'}).catch(()=>{});
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
   }
 }
 
@@ -7815,6 +7907,7 @@ function contrastSafeBrandColor(value){
 }
 async function boot(){
   try{await consumeBusinessOAuthRedirect()}catch{}
+  try{await consumePlatformOAuthRedirect()}catch{}
   try{await consumePasswordRecoveryRedirect()}catch{}
   loadBuildIdentity();
   route();

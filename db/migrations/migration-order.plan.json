@@ -2991,6 +2991,48 @@
       "path": "db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql",
       "semanticVersion": "v612",
       "proposedDeployVersion": "20260830010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v620_entitlement_authority.sql",
+      "semanticVersion": "v620",
+      "proposedDeployVersion": "20260830020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v621_branch_payment_truth.sql",
+      "semanticVersion": "v621",
+      "proposedDeployVersion": "20260830030000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v622_sa_writes_become_rpcs.sql",
+      "semanticVersion": "v622",
+      "proposedDeployVersion": "20260830040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v623_pii_read_audit.sql",
+      "semanticVersion": "v623",
+      "proposedDeployVersion": "20260830050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v624_billing_ops_visibility.sql",
+      "semanticVersion": "v624",
+      "proposedDeployVersion": "20260830060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v625_platform_google_only.sql",
+      "semanticVersion": "v625",
+      "proposedDeployVersion": "20260830070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql",
+      "semanticVersion": "v626",
+      "proposedDeployVersion": "20260830080000"
     }
   ]
 }

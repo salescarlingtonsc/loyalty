@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 496,
-  "executableCount": 482,
+  "itemCount": 503,
+  "executableCount": 489,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -728,10 +728,17 @@
     },
     {
       "sourceDeployVersion": "20260830",
-      "count": 2,
+      "count": 9,
       "paths": [
         "db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql",
-        "db/migrations/20260830_nestly_v613_bespoke_customer_package.sql"
+        "db/migrations/20260830_nestly_v613_bespoke_customer_package.sql",
+        "db/migrations/20260830_nestly_v620_entitlement_authority.sql",
+        "db/migrations/20260830_nestly_v621_branch_payment_truth.sql",
+        "db/migrations/20260830_nestly_v622_sa_writes_become_rpcs.sql",
+        "db/migrations/20260830_nestly_v623_pii_read_audit.sql",
+        "db/migrations/20260830_nestly_v624_billing_ops_visibility.sql",
+        "db/migrations/20260830_nestly_v625_platform_google_only.sql",
+        "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql"
       ]
     }
   ],
@@ -4703,6 +4710,62 @@
       "semanticVersion": "v612",
       "proposedDeployVersion": "20260830010000",
       "sha256": "c8f0ce126665d7e781d57e88db4586f7a36282d0e7e96aa5c47a40a7993a6380"
+    },
+    {
+      "order": 497,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v620_entitlement_authority.sql",
+      "semanticVersion": "v620",
+      "proposedDeployVersion": "20260830020000",
+      "sha256": "9efef0c097a0c26746e44790c20750d3bd05e45278c74545112cf1a7c07c2ce9"
+    },
+    {
+      "order": 498,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v621_branch_payment_truth.sql",
+      "semanticVersion": "v621",
+      "proposedDeployVersion": "20260830030000",
+      "sha256": "f6603520e78634bfd3b5331d9b93c306bdaa8ebca75c5b66ac38f18b6a488c25"
+    },
+    {
+      "order": 499,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v622_sa_writes_become_rpcs.sql",
+      "semanticVersion": "v622",
+      "proposedDeployVersion": "20260830040000",
+      "sha256": "442e803665b79ce78897cd564aea2770381ad715b9ba8c9b0e2468f879ab0c24"
+    },
+    {
+      "order": 500,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v623_pii_read_audit.sql",
+      "semanticVersion": "v623",
+      "proposedDeployVersion": "20260830050000",
+      "sha256": "8d2a0f54cca01580a7ca1a1f1224fa6e12bea2ae9576fa9f3565d05fb6afc05b"
+    },
+    {
+      "order": 501,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v624_billing_ops_visibility.sql",
+      "semanticVersion": "v624",
+      "proposedDeployVersion": "20260830060000",
+      "sha256": "06d83915a28d8ea65d2530dc6ec49dae37e4c8688543933c39b72d584393a95a"
+    },
+    {
+      "order": 502,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v625_platform_google_only.sql",
+      "semanticVersion": "v625",
+      "proposedDeployVersion": "20260830070000",
+      "sha256": "b968ae828461e94645c79be093635908cc36ec2e6c2a1c2aa8b371accc30c0b5"
+    },
+    {
+      "order": 503,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql",
+      "semanticVersion": "v626",
+      "proposedDeployVersion": "20260830080000",
+      "sha256": "c6aa815e312abad1be266f2f379da51c62065d03ee6ea7fa69a5cba1d6c84c19"
     }
   ]
 }

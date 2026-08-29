@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 452,
-  "itemCount": 497,
+  "pendingCount": 459,
+  "itemCount": 504,
   "items": [
     {
       "order": 1,
@@ -4977,6 +4977,76 @@
       "path": "supabase/migrations/20260830010000_nestly_v612_referral_immediate_when_no_floor.sql",
       "octetLength": 14860,
       "sha256": "c8f0ce126665d7e781d57e88db4586f7a36282d0e7e96aa5c47a40a7993a6380",
+      "provenance": "local-source"
+    },
+    {
+      "order": 498,
+      "kind": "pending",
+      "version": "20260830020000",
+      "name": "nestly_v620_entitlement_authority",
+      "path": "supabase/migrations/20260830020000_nestly_v620_entitlement_authority.sql",
+      "octetLength": 21703,
+      "sha256": "9efef0c097a0c26746e44790c20750d3bd05e45278c74545112cf1a7c07c2ce9",
+      "provenance": "local-source"
+    },
+    {
+      "order": 499,
+      "kind": "pending",
+      "version": "20260830030000",
+      "name": "nestly_v621_branch_payment_truth",
+      "path": "supabase/migrations/20260830030000_nestly_v621_branch_payment_truth.sql",
+      "octetLength": 14134,
+      "sha256": "f6603520e78634bfd3b5331d9b93c306bdaa8ebca75c5b66ac38f18b6a488c25",
+      "provenance": "local-source"
+    },
+    {
+      "order": 500,
+      "kind": "pending",
+      "version": "20260830040000",
+      "name": "nestly_v622_sa_writes_become_rpcs",
+      "path": "supabase/migrations/20260830040000_nestly_v622_sa_writes_become_rpcs.sql",
+      "octetLength": 7157,
+      "sha256": "442e803665b79ce78897cd564aea2770381ad715b9ba8c9b0e2468f879ab0c24",
+      "provenance": "local-source"
+    },
+    {
+      "order": 501,
+      "kind": "pending",
+      "version": "20260830050000",
+      "name": "nestly_v623_pii_read_audit",
+      "path": "supabase/migrations/20260830050000_nestly_v623_pii_read_audit.sql",
+      "octetLength": 14087,
+      "sha256": "8d2a0f54cca01580a7ca1a1f1224fa6e12bea2ae9576fa9f3565d05fb6afc05b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 502,
+      "kind": "pending",
+      "version": "20260830060000",
+      "name": "nestly_v624_billing_ops_visibility",
+      "path": "supabase/migrations/20260830060000_nestly_v624_billing_ops_visibility.sql",
+      "octetLength": 12779,
+      "sha256": "06d83915a28d8ea65d2530dc6ec49dae37e4c8688543933c39b72d584393a95a",
+      "provenance": "local-source"
+    },
+    {
+      "order": 503,
+      "kind": "pending",
+      "version": "20260830070000",
+      "name": "nestly_v625_platform_google_only",
+      "path": "supabase/migrations/20260830070000_nestly_v625_platform_google_only.sql",
+      "octetLength": 3265,
+      "sha256": "b968ae828461e94645c79be093635908cc36ec2e6c2a1c2aa8b371accc30c0b5",
+      "provenance": "local-source"
+    },
+    {
+      "order": 504,
+      "kind": "pending",
+      "version": "20260830080000",
+      "name": "nestly_v626_automation_writers_sa_only",
+      "path": "supabase/migrations/20260830080000_nestly_v626_automation_writers_sa_only.sql",
+      "octetLength": 7724,
+      "sha256": "c6aa815e312abad1be266f2f379da51c62065d03ee6ea7fa69a5cba1d6c84c19",
       "provenance": "local-source"
     }
   ]

@@ -4530,22 +4530,38 @@
       summary:firm.summary,branches:firm.branches,currency:firm.currency
     }));
   }
-  async function fetchEnterpriseCustomerPage(sb,filters,snapshot,cursor=null) {
+  // V624: platform_list_enterprise_customers_v82 now requires a stated reason
+  // (>=8 chars) for any call that is not scoped to exactly one business --
+  // reading customer PII across firms needs a declared purpose. A drawer or
+  // report scoped to a single business (p_businesses:[id]) stays promptless.
+  function enterpriseCustomersScopedToOneBusiness(filters) {
+    return Array.isArray(filters?.businesses)&&filters.businesses.length===1;
+  }
+  function collectEnterpriseCustomerReasonV624(filters) {
+    if(enterpriseCustomersScopedToOneBusiness(filters))return{ok:true,reason:null};
+    const input=globalObject.prompt(pt('This export reads customer personal data across businesses. Enter the reason (min 8 chars):'));
+    const reason=String(input||'').trim();
+    return reason.length>=8?{ok:true,reason}:{ok:false,reason:null};
+  }
+  async function fetchEnterpriseCustomerPage(sb,filters,snapshot,cursor=null,reason=null) {
     return asObject(await rpc(sb,'platform_list_enterprise_customers_v82',{
-      ...enterpriseArgs(filters),p_limit:500,p_snapshot_at:snapshot||null,
+      ...enterpriseArgs(filters),p_limit:200,p_snapshot_at:snapshot||null,
       p_after_created_at:cursor?.created_at||null,
-      p_after_client:cursor?.client_id||null
+      p_after_client:cursor?.client_id||null,
+      p_reason:reason||null
     }));
   }
-  async function fetchAllEnterpriseCustomers(sb,filters,snapshot) {
+  async function fetchAllEnterpriseCustomers(sb,filters,snapshot,reason=null) {
     const customers=[],seenCustomers=new Set(),seenCursors=new Set();
-    let cursor=null;
+    let cursor=null,pages=0;
+    const maxPages=40;
     do{
-      const payload=await fetchEnterpriseCustomerPage(sb,filters,snapshot,cursor);
+      const payload=await fetchEnterpriseCustomerPage(sb,filters,snapshot,cursor,reason);
       asArray(payload,['customers']).forEach(customer=>{
         const id=String(customer.client_id||'');
         if(id&&!seenCustomers.has(id)){seenCustomers.add(id);customers.push(customer)}
       });
+      pages+=1;
       const page=asObject(payload.pagination),next=asObject(page.next_cursor);
       cursor=page.has_more&&next.created_at&&next.client_id?next:null;
       if(cursor){
@@ -4553,7 +4569,10 @@
         if(seenCursors.has(token))throw new Error(pt('Customer paging did not advance.'));
         seenCursors.add(token);
       }
-    }while(cursor);
+    }while(cursor&&pages<maxPages);
+    // Surfaced on the array itself so every existing caller (which treats the
+    // return value as a plain customer list) keeps working unchanged.
+    customers.truncated=Boolean(cursor)&&pages>=maxPages;
     return customers;
   }
   function firmId(firm) {
@@ -5471,11 +5490,16 @@
     if(!host)return;
     host.innerHTML=loading(CUI,'Detailed report','Calculating the selected enterprise scope…','reports');
     try{
+      const reasonCheck=collectEnterpriseCustomerReasonV624(filters);
+      if(!reasonCheck.ok){
+        host.innerHTML=CUI.errorState({title:'Reason required',message:'Enter a reason of at least 8 characters to view customer records across more than one business.'});
+        return;
+      }
       const report=asObject(await rpc(sb,'platform_generate_improvement_report_v82',{
         ...enterpriseArgs(filters)
       }));
       const customerPayload=await fetchEnterpriseCustomerPage(
-        sb,filters,report.snapshot_at
+        sb,filters,report.snapshot_at,null,reasonCheck.reason
       );
       if(!host.isConnected)return;
       host.innerHTML=reportHtml(report,CUI,asArray(customerPayload,['customers']),asObject(customerPayload.pagination));
@@ -5498,14 +5522,22 @@
       }
       host.querySelector('#enterpriseReportCsv').onclick=async event=>{
         const button=event.currentTarget;
+        const csvReason=collectEnterpriseCustomerReasonV624(filters);
+        if(!csvReason.ok){
+          button.textContent=pt('Reason required');
+          button.title=pt('Enter a reason of at least 8 characters to export customer records across more than one business.');
+          return;
+        }
         button.disabled=true;button.textContent=pt('Preparing complete CSV…');
         try{
-          const customers=await fetchAllEnterpriseCustomers(sb,filters,report.snapshot_at);
+          const customers=await fetchAllEnterpriseCustomers(sb,filters,report.snapshot_at,csvReason.reason);
           downloadCsv(
             `${context.brand?.downloadPrefix||'peekaa'}-enterprise-report-${filters.from}-${filters.to}.csv`,
             reportCsvRows(report,customers)
           );
-          button.textContent=pt('Downloaded {count} customers',{count:customers.length});
+          button.textContent=customers.truncated
+            ?pt('Downloaded {count} customers (stopped at the page limit)',{count:customers.length})
+            :pt('Downloaded {count} customers',{count:customers.length});
         }catch(error){
           button.disabled=false;button.textContent=pt('Retry complete CSV');
           button.title=platformErrorMessage(error,'Export unavailable');
@@ -5723,10 +5755,15 @@
     if(!host)return;
     host.innerHTML=loading(CUI,'Enterprise report','Building firm, customer, pipeline and billing sections…','reports');
     try{
+      const reasonCheck=collectEnterpriseCustomerReasonV624(filters);
+      if(!reasonCheck.ok){
+        host.innerHTML=CUI.errorState({title:'Reason required',message:'Enter a reason of at least 8 characters to view customer records across more than one business.'});
+        return;
+      }
       const sectionAccess=reportSectionAccess(context.access);
       const [report,customerPayload,analytics,billingPayload]=await Promise.all([
         rpc(sb,'platform_generate_improvement_report_v82',enterpriseArgs(filters)),
-        fetchEnterpriseCustomerPage(sb,filters,null),
+        fetchEnterpriseCustomerPage(sb,filters,null,null,reasonCheck.reason),
         sectionAccess.onboarding
           ?rpc(sb,'platform_get_sme_analytics_v510',{p_from:filters.from,p_to:filters.to,p_snapshot_at:null,p_consultant:null,p_limit:200,p_after_source:null})
           :Promise.resolve(null),
@@ -5761,9 +5798,16 @@
       }
       host.querySelector('[data-cross-report-print]').onclick=()=>globalObject.print();
       host.querySelector('[data-cross-report-csv]').onclick=async event=>{
-        const button=event.currentTarget;button.disabled=true;button.textContent=pt('Preparing complete CSV…');
+        const button=event.currentTarget;
+        const csvReason=collectEnterpriseCustomerReasonV624(filters);
+        if(!csvReason.ok){
+          button.textContent=pt('Reason required');
+          button.title=pt('Enter a reason of at least 8 characters to export customer records across more than one business.');
+          return;
+        }
+        button.disabled=true;button.textContent=pt('Preparing complete CSV…');
         try{
-          const customers=await fetchAllEnterpriseCustomers(sb,filters,reportObject.snapshot_at);
+          const customers=await fetchAllEnterpriseCustomers(sb,filters,reportObject.snapshot_at,csvReason.reason);
           const legacy=reportCsvRows(reportObject,customers),header=legacy[0];
           const extendedHeader=['record_type','scope','name','group','metric','value','currency','from','to','snapshot_at'];
           const convertLegacy=row=>[row[0],row[1]||row[2]||row[3]||'',row[3]||row[1]||'',row[4]||'',row[6],row[7],row[5],row[8],row[9],row[10]];
@@ -5772,7 +5816,9 @@
             ...(sectionAccess.onboarding?analyticsReportRows(asObject(analytics)).slice(1):[]),
             ...(sectionAccess.billing?billingReportRows(billing,filters,reportObject.snapshot_at).slice(1):[])
           ]);
-          button.textContent=pt('Downloaded {count} customer rows',{count:customers.length});
+          button.textContent=customers.truncated
+            ?pt('Downloaded {count} customer rows (stopped at the page limit)',{count:customers.length})
+            :pt('Downloaded {count} customer rows',{count:customers.length});
         }catch(error){button.disabled=false;button.textContent=pt('Retry complete CSV');button.title=platformErrorMessage(error,'Export unavailable')}
       };
       host.querySelector('#platformCrossDomainReportSheet')?.scrollIntoView?.({behavior:'smooth',block:'start'});
@@ -11753,6 +11799,40 @@
     ])});
   }
 
+  // V624: businesses that flagged they intend to pay manually (bank
+  // transfer, PayNow, etc.) rather than through the self-serve checkout.
+  // Read-only queue -- the actual invoicing still runs through the existing
+  // Create manual invoice flow above, once the operator has followed up.
+  function manualPaymentRequestStatusTone(status) {
+    return status==='open'?'no':status==='actioned'?'ok':'off';
+  }
+  function manualPaymentRequestRows(rows,CUI) {
+    const open=rows.filter(row=>row.status==='open'),rest=rows.filter(row=>row.status!=='open');
+    return [...open,...rest].map(row=>[
+      `<b>${escapeHtml(row.business_name)}</b>`,
+      CUI.status(platformStatus(row.status),manualPaymentRequestStatusTone(row.status)),
+      escapeHtml(row.contact_phone||'—'),
+      escapeHtml(row.note||'—'),
+      escapeHtml(dateTime(row.requested_at)),
+      `${escapeHtml(platformStatus(row.subscription_status||'—'))} · ${escapeHtml(platformStatus(row.payment_status||'—'))}`,
+      row.status==='open'?`<div class="platform-actions"><button type="button" class="btn ghost sm" data-copy-manual-request="${escapeHtml(row.business_id)}">${escapeHtml(pt('Copy business ID'))}</button></div><p class="muted small">${escapeHtml(pt('Invoice with Create manual invoice above once you have followed up.'))}</p>`:''
+    ]);
+  }
+  function manualPaymentRequestsCardHtml(items,loadError,CUI) {
+    const body=loadError
+      ?`<div class="err">${escapeHtml(loadError)}</div>`
+      :items.length?CUI.table({
+        caption:'Manual payment requests',
+        headers:['Business','Status','Phone','Note','Requested','Subscription',''],
+        rows:manualPaymentRequestRows(items,CUI)
+      }):localizedEmptyHtml('No manual payment requests.');
+    return CUI.card({
+      title:'Manual payment requests',
+      description:'Businesses that asked to pay outside the self-serve checkout.',
+      body
+    });
+  }
+
   function lifecycleLane(row) {
     if(['canceled','cancelled'].includes(row.canonical_status)||row.actual_end)return'cancelled';
     if(row.cancel_at_period_end)return'cancel_at_period_end';
@@ -11894,7 +11974,12 @@
     const status=(filters.status??platformRouteParam(context.hash,'status'))||null;
     main.innerHTML=loading(CUI,'Subscription operations','Loading subscriptions, documents and payment follow-up…','reports');
     try{
-      const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:search,p_status:status,p_limit:500}));
+      const [payload,manualPaymentRequestsOutcome]=await Promise.all([
+        rpc(sb,'platform_get_subscription_operations_v156',{p_search:search,p_status:status,p_limit:500}).then(asObject),
+        rpc(sb,'platform_list_manual_payment_requests_v624',{p_status:null})
+          .then(data=>({items:asArray(data),error:null}))
+          .catch(error=>({items:[],error:platformErrorMessage(error,'Manual payment requests unavailable.')}))
+      ]);
       /* V292: 500 is this reader's hard ceiling, and every filter below the search
          box is applied in the BROWSER over that window -- so a filter that matches
          nothing may simply mean the matching subscription was never fetched. Say
@@ -11913,6 +11998,7 @@
           <label class="cui-field"><span class="field-label">${escapeHtml(pt('CRM owner'))}</span><select name="owner"><option value="">${escapeHtml(pt('All'))}</option>${[...new Set(rawRows.map(row=>row.crm_owner).filter(Boolean))].map(value=>`<option value="${escapeHtml(value)}"${local.owner===value?' selected':''}>${escapeHtml(value)}</option>`).join('')}</select></label><div class="platform-actions"><button class="btn" type="submit">${escapeHtml(pt('Apply filters'))}</button><button class="btn ghost" type="button" id="v156ClearFilters">${escapeHtml(pt('Clear filters'))}</button></div></form>
           <div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,context.canWrite)}</div>
           ${platformWindowHtml(subscriptionWindow,{cappedAdvice:'Search for the business by name to reach a subscription that is not listed.'})}</section>
+        ${manualPaymentRequestsCardHtml(manualPaymentRequestsOutcome.items,manualPaymentRequestsOutcome.error,CUI)}
         ${CUI.card({title:'Billing documents',description:'Stripe mirrors are created only from verified paid invoices. Manual invoices require private evidence and independent verification.',body:asArray(payload.documents).length?asArray(payload.documents).map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.document_number)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))} · ${escapeHtml(platformStatus(document.status))} · ${escapeHtml(currency(document.total_cents))}</p></div><div class="platform-actions">${document.pdf_ready?`<button type="button" class="btn ghost sm" data-open-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:''}${context.canWrite&&document.document_type==='invoice'&&!document.provider_invoice_id&&document.status==='open'?`<button type="button" class="btn ghost sm" data-v156-record-payment="${escapeHtml(document.id)}">${escapeHtml(pt('Record payment'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription documents have been issued.')})}
         ${CUI.card({title:'Manual payment verification',description:'The recorder and verifier must be different authorised administrators.',body:asArray(payload.manual_payments).length?asArray(payload.manual_payments).map(payment=>`<div class="platform-action-item"><div><b>${escapeHtml(payment.document_number)}</b><p class="muted small">${escapeHtml(payment.payment_reference)} · ${escapeHtml(currency(payment.amount_cents))} · ${escapeHtml(platformStatus(payment.status))}</p></div><div class="platform-actions"><button type="button" class="btn ghost sm" data-v156-evidence="${escapeHtml(payment.id)}">${escapeHtml(pt('Evidence'))}</button>${context.access?.role==='super_admin'&&payment.status==='pending_verification'?`<button type="button" class="btn sm" data-v156-verify="${escapeHtml(payment.id)}">${escapeHtml(pt('Verify'))}</button><button type="button" class="btn danger sm" data-v156-reject="${escapeHtml(payment.id)}">${escapeHtml(pt('Reject'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No manual payments await verification.')})}
         ${CUI.card({title:'Payment and renewal follow-up',description:'Tasks are deduplicated by subscription, event and reminder window, then resolved after verified recovery.',body:asArray(payload.tasks).length?asArray(payload.tasks).map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title)}</b><p class="muted small">${escapeHtml(platformStatus(task.task_type))} · ${escapeHtml(dateTime(task.due_at))}</p></div><div class="platform-actions">${CUI.status(platformStatus(task.priority),task.priority==='urgent'?'no':'new')}${context.canWrite?`<button type="button" class="btn ghost sm" data-v156-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt('Complete'))}</button>`:''}</div></div>`).join(''):localizedEmptyHtml('No subscription follow-up tasks are open.')})}
@@ -11922,6 +12008,13 @@
       const clear=main.querySelector('#v156ClearFilters');if(clear)clear.onclick=()=>renderSubscriptionOperations(context,{search:null,status:null});
       const settings=main.querySelector('#v156BillingSettings');if(settings)settings.onclick=()=>subscriptionBillingSettingsModal(payload,context);
       main.querySelectorAll('[data-v156-manual-invoice]').forEach(button=>{const row=rows.find(item=>item.business_id===button.dataset.v156ManualInvoice);button.onclick=()=>manualInvoiceModal(row,context)});
+      main.querySelectorAll('[data-copy-manual-request]').forEach(button=>button.onclick=async()=>{
+        let copied=false;
+        try{
+          if(globalObject.navigator?.clipboard?.writeText){await globalObject.navigator.clipboard.writeText(button.dataset.copyManualRequest);copied=true}
+        }catch(_error){copied=false}
+        CUI.announce(copied?pt('Business ID copied.'):pt('Copy was unavailable. Copy the business ID manually.'),{assertive:!copied});
+      });
       const documents=asArray(payload.documents),payments=asArray(payload.manual_payments);
       main.querySelectorAll('[data-v156-record-payment]').forEach(button=>{const document=documents.find(item=>item.id===button.dataset.v156RecordPayment);button.onclick=()=>manualPaymentModal(document,context)});
       main.querySelectorAll('[data-open-v156-document]').forEach(button=>button.onclick=()=>openSubscriptionDocument(button.dataset.openV156Document,button,context));
@@ -12480,14 +12573,80 @@
     });
   }
 
+  // --------------------------------------------------------------------------
+  // V624: Billing alerts panel (System health / #/platform/automation).
+  // System-detected billing exceptions the platform surfaces before a firm
+  // notices — an unpaid checkout, a stuck webhook event, a failing payment, a
+  // branch waiting on payment, an open manual payment request, or a firm with
+  // reconciliation left unconfigured. Resolving one always requires a note.
+  // --------------------------------------------------------------------------
+  function billingAlertKindLabel(kind) {
+    const labels={
+      checkout_unresolved:'Checkout never paid',
+      event_stuck:'Webhook event stuck',
+      payment_failed:'Payment failing',
+      branch_awaiting:'Branch awaiting payment',
+      manual_request_open:'Manual request waiting',
+      reconcile_unconfigured:'Reconciliation not configured'
+    };
+    return pt(labels[kind]||plainLabel(kind));
+  }
+  function billingAlertRowHtml(row,CUI,canWrite) {
+    return [
+      `<b>${escapeHtml(billingAlertKindLabel(row.kind))}</b>`,
+      escapeHtml(row.business_name||'—'),
+      escapeHtml(dateTime(row.created_at)),
+      `<span class="muted small">${escapeHtml(JSON.stringify(asObject(row.detail)))}</span>`,
+      canWrite?`<button type="button" class="btn ghost sm" data-automation-write data-billing-alert-resolve="${escapeHtml(row.id)}">${escapeHtml(pt('Resolve'))}</button>`:''
+    ];
+  }
+  function billingAlertsSectionHtml(rows,CUI,canWrite) {
+    const alerts=asArray(rows);
+    const body=alerts.length?CUI.table({
+      caption:'Billing alerts',
+      headers:['Kind','Business','Raised','Detail',''],
+      rows:alerts.map(row=>billingAlertRowHtml(row,CUI,canWrite))
+    }):localizedEmptyHtml('No open billing alerts.');
+    return CUI.card({
+      title:'Billing alerts',
+      description:'System-detected billing exceptions across checkout, webhooks, payments, branches and manual requests. Resolving one records a note in the audit trail.',
+      body
+    });
+  }
+  function wireBillingAlertsPanel(main,context,alertRows,refresh) {
+    const {CUI,sb}=context;
+    main.querySelectorAll('[data-billing-alert-resolve]').forEach(button=>{
+      const row=asArray(alertRows).find(item=>String(item.id)===button.dataset.billingAlertResolve);
+      if(!row)return;
+      button.onclick=async()=>{
+        const input=globalObject.prompt(pt('Resolution note (min 4 characters):'));
+        if(input===null)return;
+        const note=String(input).trim();
+        if(note.length<4){CUI.announce(pt('Enter at least 4 characters to resolve this alert.'),{assertive:true});return}
+        button.disabled=true;
+        try{
+          await rpc(sb,'platform_resolve_billing_alert_v624',{p_alert:row.id,p_note:note});
+          CUI.announce(pt('Billing alert resolved.'));
+          await refresh();
+        }catch(error){
+          button.disabled=false;
+          CUI.announce(platformErrorMessage(error,'The alert could not be resolved.'),{assertive:true});
+        }
+      };
+    });
+  }
+
   async function renderAutomation(context,deletionPage={offset:0,rows:[]}) {
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'System health','Loading reconciliation and billing event health…','retention');
     try{
       const isSuperAdmin=context.access?.role==='super_admin';
-      const [reconciliation,billing,deletionResult,capabilityGrants,retentionHolds]=await Promise.all([
+      const [reconciliation,billing,billingAlerts,deletionResult,capabilityGrants,retentionHolds]=await Promise.all([
         rpc(sb,'platform_get_automation_reconciliation_v89',{p_run:null,p_limit:50}),
         rpc(sb,'platform_get_automation_billing_v89',{p_business:null,p_limit:250}),
+        // Fail soft: an unavailable v624 RPC must never break the rest of
+        // System health.
+        rpc(sb,'platform_list_billing_alerts_v624',{p_include_resolved:false}).catch(()=>[]),
         rpc(sb,'platform_list_account_deletion_requests_v133',{p_status:null,p_limit:100,p_offset:deletionPage.offset})
           .then(value=>({value,error:null})).catch(error=>({value:null,error})),
         isSuperAdmin
@@ -12501,6 +12660,7 @@
       ]);
       const capabilityRows=asArray(capabilityGrants);
       const retentionHoldRows=asArray(retentionHolds);
+      const billingAlertRows=asArray(billingAlerts);
       const runs=asArray(reconciliation?.runs),items=asArray(reconciliation?.items),rows=asArray(billing),privacyPageRows=asArray(deletionResult.value);
       const privacyRows=deletionResult.error&&deletionPage.rows.length
         ?deletionPage.rows
@@ -12510,6 +12670,7 @@
       const failedEvents=rows.reduce((value,row)=>value+Number(row.failed_event_count||0),0);
       main.innerHTML=`${CUI.pageHeader({title:'System health',subtitle:'Technical reconciliation runs and provider event health. Resolve affected firm payments in Finance.',iconName:'retention'})}
         <section class="platform-health-grid"><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('retention',{size:17})}<span>${escapeHtml(pt('Reconciliation runs'))}</span></div><div class="platform-kpi-value">${runs.length}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('info',{size:17})}<span>${escapeHtml(pt('Failed billing events'))}</span></div><div class="platform-kpi-value">${failedEvents}</div></article><article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Reconciliation items'))}</span></div><div class="platform-kpi-value">${items.length}</div></article></section>
+        ${billingAlertsSectionHtml(billingAlertRows,CUI,isSuperAdmin)}
         ${CUI.card({title:'Reconciliation exceptions',body:items.length?items.map(item=>`<article class="platform-action-item" tabindex="-1" data-incident-id="${escapeHtml(item.id||item.provider_object_id||item.created_at||'')}"><div><b>${escapeHtml(platformStatus(item.object_type||'provider object'))}</b><p class="muted small">${escapeHtml(item.provider_object_id||pt('Provider object'))}</p></div>${CUI.status(platformStatus(item.result||item.status||'exception'),item.result==='matched'?'ok':'no')}</article>`).join(''):localizedEmptyHtml('No reconciliation exceptions were returned.')})}
         ${CUI.card({title:'Reconciliation history',body:runs.length?CUI.table({caption:'Billing reconciliation runs',headers:['Started','Mode','Status','Finished','Summary'],rows:automationRunRows(runs,CUI)}):CUI.emptyState({iconName:'retention',title:'No reconciliation runs',body:'No billing reconciliation history was returned.'})})}
         ${whatsappCapabilitiesSectionHtml(capabilityRows,CUI,context.access)}
@@ -12520,6 +12681,7 @@
       main.querySelectorAll('[data-deletion-review]').forEach(button=>button.onclick=()=>resolveAccountDeletionRequest(button.dataset.deletionReview,context,'retention_review'));
       if(isSuperAdmin)wireWhatsappCapabilitiesPanel(main,context,capabilityRows,()=>renderAutomation(context,deletionPage));
       if(isSuperAdmin)wireRetentionHoldsPanel(main,context,retentionHoldRows,()=>renderAutomation(context,deletionPage));
+      if(isSuperAdmin)wireBillingAlertsPanel(main,context,billingAlertRows,()=>renderAutomation(context,deletionPage));
       const deletionRetry=main.querySelector('[data-deletion-retry]');
       if(deletionRetry)deletionRetry.onclick=()=>renderAutomation(context);
       const deletionMore=main.querySelector('[data-deletion-more]');

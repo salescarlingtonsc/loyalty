@@ -16293,6 +16293,91 @@ function renderSelfServePaymentPendingV286(onboarding){
   };
   setTimeout(poll,1200);
 }
+/* nestly_v620: a locked workspace whose lock is really "pay us" — the trial ran out, or a
+   previously-paid subscription lapsed — gets a screen with a direct one-click path back to
+   Stripe Checkout, instead of the generic "contact your representative" copy below. That copy
+   is right for a still-pending approval or a paused-for-some-other-reason subscription; it is
+   wrong for a lock the owner can clear themselves right now. get_business_entitlement_v620 is
+   callable by any staff of the business even while locked, so any teammate opening a locked
+   workspace resolves the same authoritative operational_state — this never guesses from the
+   control payload's own paused/rejected flags, which predate v620 and do not distinguish
+   trial_expired or payment_lapsed from the other lock reasons. */
+function renderLockedWorkspacePaymentV620(control,entitlement){
+  const trialExpired=entitlement.operational_state==='trial_expired';
+  const headline=trialExpired?'Your trial has ended':'Your subscription payment has lapsed';
+  const reason=String(entitlement.restriction_reason||'').trim();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceLockedPaymentTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <div class="entry-choice-icon" style="margin-top:18px">${CUI.icon('info',{size:24})}</div>
+    <h1 id="workspaceLockedPaymentTitle" style="font-size:1.65rem;margin:14px 0 6px">${esc(headline)}</h1>
+    ${reason?`<p class="muted" style="line-height:1.6">${esc(reason)}</p>`:''}
+    <div id="workspaceLockedPaymentError"></div>
+    <button class="btn" id="workspaceLockedPaymentGo" style="width:100%;margin-top:16px">Continue to secure payment</button>
+    <button class="btn ghost" id="workspaceLockedPaymentSignOut" style="width:100%;margin-top:10px">Sign out</button>
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  $('main').focus();
+  CUI.announce(headline+'.',{assertive:true});
+  wireAccountDeletionButton();
+  $('workspaceLockedPaymentSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  $('workspaceLockedPaymentGo').onclick=async()=>{
+    const button=$('workspaceLockedPaymentGo'),errorHost=$('workspaceLockedPaymentError');
+    button.disabled=true;errorHost.innerHTML='';
+    const businessId=String(control.business_id||'');
+    /* Mirrors the Settings billing card's execute path (loadBillingConfig) — same idempotency
+       attempt shape and the same sessionStorage slot key, so a retry here and a retry from
+       Settings for the same business would recover the same in-flight command rather than
+       racing two different ones. */
+    const {data:billing,error:billingError}=await sb.rpc('get_business_billing_v125',{p_business:businessId});
+    if(billingError||!billing){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
+      return;
+    }
+    const cadence='annual';
+    const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
+    const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
+    const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
+    const writeBillingAttempt=attempt=>{try{sessionStorage.setItem(billingAttemptSlot,JSON.stringify(attempt))}catch{}};
+    const clearBillingAttempt=key=>{try{const current=readBillingAttempt();if(!current||current.key===key)sessionStorage.removeItem(billingAttemptSlot)}catch{}};
+    const fingerprint=JSON.stringify({type:'create_checkout',cadence,capacity});
+    let attempt=readBillingAttempt();
+    if(!attempt||attempt.fingerprint!==fingerprint){attempt={fingerprint,key:crypto.randomUUID(),command_id:null};writeBillingAttempt(attempt)}
+    let requested=attempt.command_id?{command_id:attempt.command_id}:null,requestError=null;
+    if(!requested){
+      const response=await sb.rpc('request_billing_command_v124',{
+        p_business:businessId,p_command_type:'create_checkout',p_cadence:cadence,
+        p_customer_capacity:capacity,p_idempotency_key:attempt.key
+      });
+      requested=response.data;requestError=response.error;
+    }
+    if(requestError||!requested?.command_id){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm whether the billing request was saved. Try again; the exact request will be reused.</div>';
+      return;
+    }
+    attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}});
+    if(executed.error){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm Stripe’s result. Try again to recover the exact provider request.</div>';
+      return;
+    }
+    const result=executed.data||requested;
+    if(result.redirect_url){clearBillingAttempt(attempt.key);location.assign(result.redirect_url);return}
+    if(['failed','canceled'].includes(result.status)){
+      clearBillingAttempt(attempt.key);
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe did not complete this request. Try again.</div>';
+    }else if(result.status==='uncertain'){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
+    }else{
+      clearBillingAttempt(attempt.key);
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe did not return a checkout link. Try again.</div>';
+    }
+  };
+}
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -16308,6 +16393,17 @@ function renderBusinessWorkspaceControl(control={}){
       renderSelfServePaymentPendingV286(onboarding);
     });
     return;
+  }
+  if(control._entitlementCheckedV620!==true){
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:24px;margin-top:18px">Checking account status…</h1></section></main>`;
+    sb.rpc('get_business_entitlement_v620',{p_business:control.business_id}).then(({data,error})=>{
+      renderBusinessWorkspaceControl({...control,_entitlementCheckedV620:true,_entitlementV620:(!error&&data)?data:null});
+    });
+    return;
+  }
+  const entitlementStateV620=String(control._entitlementV620?.operational_state||'');
+  if(entitlementStateV620==='trial_expired'||entitlementStateV620==='payment_lapsed'){
+    return renderLockedWorkspacePaymentV620(control,control._entitlementV620);
   }
   const paused=subscription.workspace_paused===true;
   const rejected=approvalStatus==='rejected';
@@ -16784,6 +16880,57 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   if(button)button.disabled=false;
   if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again or use email and password.</div>';
 }
+/* nestly_v625 (owner: admin sign-in becomes Google-only). No password path, no signup intent —
+   the super admin console has one door in. Mirrors the business Google flow's shape (own
+   sessionStorage attempt slot, own canonical-origin guard, own redirect target) but is
+   deliberately simpler: there is no server-side admission RPC to call before persisting the
+   session, because platform authority is decided by DB predicates on every read, not by a
+   gate at sign-in time. An unauthorized Google identity still signs in — it just sees a
+   console with nothing in it. */
+function platformOAuthRedirectUrl(){
+  const redirect=new URL(NestlyNativeBridge.publicUrl('/admin'));
+  redirect.searchParams.set('oauth','platform');
+  return redirect.toString();
+}
+function ensureCanonicalPlatformOAuthOrigin(){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/admin'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(canonical.toString());
+  return false;
+}
+function beginPlatformGoogleOAuthAttempt(){
+  try{
+    sessionStorage.setItem('nestly:platform-oauth-attempt',JSON.stringify({startedAt:Date.now()}));
+    return true;
+  }catch{return false}
+}
+function takePlatformGoogleOAuthAttempt(){
+  const key='nestly:platform-oauth-attempt',raw=sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if(!raw)return false;
+  try{
+    const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
+    return Number.isFinite(age)&&age>=0&&age<=30*60*1000;
+  }catch{return false}
+}
+async function startPlatformGoogleAuth({button,errorHostId}){
+  if(!ensureCanonicalPlatformOAuthOrigin())return;
+  const errorHost=$(errorHostId);
+  if(button)button.disabled=true;
+  if(errorHost)errorHost.innerHTML='';
+  if(beginPlatformGoogleOAuthAttempt()){
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:platformOAuthRedirectUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
+      });
+      if(!error)return;
+    }catch{}
+  }
+  sessionStorage.removeItem('nestly:platform-oauth-attempt');
+  if(button)button.disabled=false;
+  if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again.</div>';
+}
 function renderBusinessApplication(){
   destroyMountedTurnstiles();
   let locale=businessApplicationLanguage();
@@ -16959,25 +17106,34 @@ function renderAuth(mode='in',{admin=false}={}){
     ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:16})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:16})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
-    ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
+    ${admin?`${businessGoogleButtonHtml('platformGoogleSignIn')}<p class="muted small" style="margin-top:10px">Google sign-in only.</p><div id="autherr">${sessionStorage.getItem('nestly-platform-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-platform-oauth-notice'))}</div>`:''}</div>`:`
+    ${!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
     <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
-    <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
+    <div id="autherr">${sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
-      ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
+      <button class="btn" id="go">${mode==='in'?'Sign in':'Sign up'}</button>
+      <span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
     </div>
-    ${admin?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>'}
+    <button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>`}
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
-  if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
-  if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
+  /* nestly_v625: admin sign-in has no password form or mode switcher left to wire — one button,
+     one handler, then stop. Everything below this belongs to the business side of renderAuth. */
+  if(admin){
+    if(sessionStorage.getItem('nestly-platform-oauth-notice'))sessionStorage.removeItem('nestly-platform-oauth-notice');
+    if($('platformGoogleSignIn'))$('platformGoogleSignIn').onclick=event=>
+      startPlatformGoogleAuth({button:event.currentTarget,errorHostId:'autherr'});
+    return;
+  }
+  if(sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
+  if(NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
   /* nestly_v588 (owner: staff signup was "in a mess" — a code holder had no visible door in from
-     the ordinary sign-in screen). Gated on the same !admin condition as #sw: this is the business
-     side of renderAuth only. */
+     the ordinary sign-in screen). This is the business side of renderAuth only — admin already
+     returned above. */
   if($('authStaffInviteDoorV588'))$('authStaffInviteDoorV588').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
@@ -17178,6 +17334,38 @@ async function consumeBusinessOAuthRedirect(){
     sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
       ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
       :'Could not verify the consented Google signup. Return to signup and try again.');
+  }
+}
+
+/* nestly_v625: platform's mirror of consumeBusinessOAuthRedirect, deliberately thinner. There is
+   no separate admission RPC to call before persisting the session — platform authority is a
+   server-side DB predicate checked on every read, not a gate this function has to clear first.
+   So the only job here is: was this fragment expected (a pending attempt this tab started,
+   within the same window), and if so, hand the tokens to the real client. */
+async function consumePlatformOAuthRedirect(){
+  const search=new URLSearchParams(location.search);
+  if(search.get('oauth')!=='platform')return;
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,'').replace(/^\?/,'') );
+  const providerError=search.get('error_description')||search.get('error')||hash.get('error_description')||hash.get('error');
+  const oauthAccessToken=hash.get('access_token'),oauthRefreshToken=hash.get('refresh_token');
+  /* OAuth fragments contain credentials. Remove them from browser history before any network or
+     rendering work, exactly as the business flow does. */
+  history.replaceState(null,'','/admin');
+  const pendingAttempt=takePlatformGoogleOAuthAttempt();
+  if(!pendingAttempt||providerError){
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  if(!oauthAccessToken||!oauthRefreshToken){
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  try{
+    const {error}=await sb.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(error)throw error;
+  }catch{
+    await sb.auth.signOut({scope:'local'}).catch(()=>{});
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
   }
 }
 
@@ -53497,6 +53685,7 @@ async function renderPortal(slug){
 
 async function boot(){
   try{await consumeBusinessOAuthRedirect()}catch{}
+  try{await consumePlatformOAuthRedirect()}catch{}
   try{await consumePasswordRecoveryRedirect()}catch{}
   loadBuildIdentity();
   route();

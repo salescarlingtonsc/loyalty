@@ -76,7 +76,11 @@ export function stripeSubscriptionMatchesCommandV125(
   if (commandType === 'resume') {
     return subscription.cancel_at_period_end === false;
   }
-  if (!['change_cadence', 'change_capacity'].includes(commandType)) return false;
+  /* v621: change_branches was missing here, so a branch purchase that Stripe settled
+     synchronously ALWAYS failed verification and was persisted 'uncertain' — no branch on a
+     live subscription could ever complete. It verifies exactly like the other two item-shape
+     commands: the caller passes planUnits (base + billable branches) as expectedBaseQuantity. */
+  if (!['change_cadence', 'change_capacity', 'change_branches'].includes(commandType)) return false;
   const capacityModel = data.pricing_model === 'v124_customer_capacity';
   if (capacityModel && subscription.pending_update) return false;
   const items = subscription.items?.data || [];

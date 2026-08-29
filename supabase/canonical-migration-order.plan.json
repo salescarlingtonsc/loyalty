@@ -2986,6 +2986,48 @@
       "version": "20260830010000",
       "name": "nestly_v612_referral_immediate_when_no_floor",
       "sourcePath": "db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830020000",
+      "name": "nestly_v620_entitlement_authority",
+      "sourcePath": "db/migrations/20260830_nestly_v620_entitlement_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830030000",
+      "name": "nestly_v621_branch_payment_truth",
+      "sourcePath": "db/migrations/20260830_nestly_v621_branch_payment_truth.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830040000",
+      "name": "nestly_v622_sa_writes_become_rpcs",
+      "sourcePath": "db/migrations/20260830_nestly_v622_sa_writes_become_rpcs.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830050000",
+      "name": "nestly_v623_pii_read_audit",
+      "sourcePath": "db/migrations/20260830_nestly_v623_pii_read_audit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830060000",
+      "name": "nestly_v624_billing_ops_visibility",
+      "sourcePath": "db/migrations/20260830_nestly_v624_billing_ops_visibility.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830070000",
+      "name": "nestly_v625_platform_google_only",
+      "sourcePath": "db/migrations/20260830_nestly_v625_platform_google_only.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830080000",
+      "name": "nestly_v626_automation_writers_sa_only",
+      "sourcePath": "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql"
     }
   ]
 }

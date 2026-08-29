@@ -188,6 +188,91 @@ function renderSelfServePaymentPendingV286(onboarding){
   };
   setTimeout(poll,1200);
 }
+/* nestly_v620: a locked workspace whose lock is really "pay us" — the trial ran out, or a
+   previously-paid subscription lapsed — gets a screen with a direct one-click path back to
+   Stripe Checkout, instead of the generic "contact your representative" copy below. That copy
+   is right for a still-pending approval or a paused-for-some-other-reason subscription; it is
+   wrong for a lock the owner can clear themselves right now. get_business_entitlement_v620 is
+   callable by any staff of the business even while locked, so any teammate opening a locked
+   workspace resolves the same authoritative operational_state — this never guesses from the
+   control payload's own paused/rejected flags, which predate v620 and do not distinguish
+   trial_expired or payment_lapsed from the other lock reasons. */
+function renderLockedWorkspacePaymentV620(control,entitlement){
+  const trialExpired=entitlement.operational_state==='trial_expired';
+  const headline=trialExpired?'Your trial has ended':'Your subscription payment has lapsed';
+  const reason=String(entitlement.restriction_reason||'').trim();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceLockedPaymentTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <div class="entry-choice-icon" style="margin-top:18px">${CUI.icon('info',{size:24})}</div>
+    <h1 id="workspaceLockedPaymentTitle" style="font-size:1.65rem;margin:14px 0 6px">${esc(headline)}</h1>
+    ${reason?`<p class="muted" style="line-height:1.6">${esc(reason)}</p>`:''}
+    <div id="workspaceLockedPaymentError"></div>
+    <button class="btn" id="workspaceLockedPaymentGo" style="width:100%;margin-top:16px">Continue to secure payment</button>
+    <button class="btn ghost" id="workspaceLockedPaymentSignOut" style="width:100%;margin-top:10px">Sign out</button>
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  $('main').focus();
+  CUI.announce(headline+'.',{assertive:true});
+  wireAccountDeletionButton();
+  $('workspaceLockedPaymentSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  $('workspaceLockedPaymentGo').onclick=async()=>{
+    const button=$('workspaceLockedPaymentGo'),errorHost=$('workspaceLockedPaymentError');
+    button.disabled=true;errorHost.innerHTML='';
+    const businessId=String(control.business_id||'');
+    /* Mirrors the Settings billing card's execute path (loadBillingConfig) — same idempotency
+       attempt shape and the same sessionStorage slot key, so a retry here and a retry from
+       Settings for the same business would recover the same in-flight command rather than
+       racing two different ones. */
+    const {data:billing,error:billingError}=await sb.rpc('get_business_billing_v125',{p_business:businessId});
+    if(billingError||!billing){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
+      return;
+    }
+    const cadence='annual';
+    const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
+    const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
+    const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
+    const writeBillingAttempt=attempt=>{try{sessionStorage.setItem(billingAttemptSlot,JSON.stringify(attempt))}catch{}};
+    const clearBillingAttempt=key=>{try{const current=readBillingAttempt();if(!current||current.key===key)sessionStorage.removeItem(billingAttemptSlot)}catch{}};
+    const fingerprint=JSON.stringify({type:'create_checkout',cadence,capacity});
+    let attempt=readBillingAttempt();
+    if(!attempt||attempt.fingerprint!==fingerprint){attempt={fingerprint,key:crypto.randomUUID(),command_id:null};writeBillingAttempt(attempt)}
+    let requested=attempt.command_id?{command_id:attempt.command_id}:null,requestError=null;
+    if(!requested){
+      const response=await sb.rpc('request_billing_command_v124',{
+        p_business:businessId,p_command_type:'create_checkout',p_cadence:cadence,
+        p_customer_capacity:capacity,p_idempotency_key:attempt.key
+      });
+      requested=response.data;requestError=response.error;
+    }
+    if(requestError||!requested?.command_id){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm whether the billing request was saved. Try again; the exact request will be reused.</div>';
+      return;
+    }
+    attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}});
+    if(executed.error){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm Stripe’s result. Try again to recover the exact provider request.</div>';
+      return;
+    }
+    const result=executed.data||requested;
+    if(result.redirect_url){clearBillingAttempt(attempt.key);location.assign(result.redirect_url);return}
+    if(['failed','canceled'].includes(result.status)){
+      clearBillingAttempt(attempt.key);
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe did not complete this request. Try again.</div>';
+    }else if(result.status==='uncertain'){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
+    }else{
+      clearBillingAttempt(attempt.key);
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe did not return a checkout link. Try again.</div>';
+    }
+  };
+}
 function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -203,6 +288,17 @@ function renderBusinessWorkspaceControl(control={}){
       renderSelfServePaymentPendingV286(onboarding);
     });
     return;
+  }
+  if(control._entitlementCheckedV620!==true){
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:24px;margin-top:18px">Checking account status…</h1></section></main>`;
+    sb.rpc('get_business_entitlement_v620',{p_business:control.business_id}).then(({data,error})=>{
+      renderBusinessWorkspaceControl({...control,_entitlementCheckedV620:true,_entitlementV620:(!error&&data)?data:null});
+    });
+    return;
+  }
+  const entitlementStateV620=String(control._entitlementV620?.operational_state||'');
+  if(entitlementStateV620==='trial_expired'||entitlementStateV620==='payment_lapsed'){
+    return renderLockedWorkspacePaymentV620(control,control._entitlementV620);
   }
   const paused=subscription.workspace_paused===true;
   const rejected=approvalStatus==='rejected';
