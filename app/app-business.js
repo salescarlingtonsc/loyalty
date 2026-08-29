@@ -32680,6 +32680,7 @@ async function settingsPage(){
            four actions moved one tab across — same handlers, same confirms — and Cancel goes
            because the dialog already has three ways out (the ✕, the backdrop and Esc), all of which
            discard exactly the same way this button did. */''}
+      ${staffPersonActionsHtmlV603(s)}
       <div class="row staff-profile-save-v584" style="margin-top:12px"><span class="spacer"></span><button class="btn sm" onclick="saveStaffProfile('${s.id}',this)">Save profile</button></div>
     </div>`;
   }
@@ -32972,9 +32973,19 @@ async function settingsPage(){
                  cross, exactly as the owner drew it; a login still waiting on approval is neither,
                  and says so, because that one needs an action rather than a symbol. */''}
             <span class="staff-col-v226" data-staff-col="Branch">${branchSummaryV584}</span>
-            <span class="staff-col-v226" data-staff-col="App access">${appAccessCellV584}</span>
             <span class="staff-col-v226" data-staff-col="Position"><span class="pill ${s.role==='owner'?'ok':'off'}" data-merchant-content>${esc(s.title||ROLE_LABELS[s.role]||s.role)}</span></span>
             <span class="staff-col-v226" data-staff-col="Commission">${commissionSummary}</span>
+            ${/* nestly_v603 (owner photo: APP ACCESS ringed, "move back to after commission"). It
+                 was the fifth of seven columns, splitting Branch from Position and Commission —
+                 the three facts about the JOB — with a column about the login. Job first, access
+                 last. */''}
+            <span class="staff-col-v226" data-staff-col="App access">${appAccessCellV584}</span>
+            ${/* nestly_v603 (owner photo: "Put here" against the space beside Commission, with an
+                 arrow up from the Edit button on the row beneath). Edit is drawn IN the row now. It
+                 stays a span and not a button: the whole row is already the button that opens this
+                 editor, and a nested button is invalid HTML — so this is the chip that says what
+                 the row does, not a second control that does it. */''}
+            <span class="staff-col-v226 staff-edit-chip-v603" data-staff-col="">${s.role!=='owner'?`<span class="pill">${openProfileId===s.id?'Close':'Edit'}</span>`:''}</span>
           </button>
           <!-- V260: status pills and action buttons moved to their own row beneath the name/
                phone/email/position/commission grid, so .staff-row-open always renders at the
@@ -32992,7 +33003,8 @@ async function settingsPage(){
                  time-sensitive decision one click deeper is the opposite of what this page is for. */''}
             ${s.role!=='owner'?`${accessPendingV569?`<button class="btn sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',true,this)">Approve access</button>
             <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',false,this)">Decline</button>`:''}
-            <button class="btn ghost sm" onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}">${openProfileId===s.id?'Close':'Edit'}</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+            ${/* nestly_v603: the Edit button moved INTO the row, beside Commission, where the owner
+                 drew it. Leaving a second one here would be two controls doing one thing. */''}`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
           </div>
           ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}">${esc(s.full_name||'This teammate')} has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
         </div>
@@ -33009,7 +33021,7 @@ async function settingsPage(){
               <h3>${esc(group.title)} <span class="staff-group-count-v209">${members.length}</span></h3>
               <p class="muted small">${esc(group.sub)}</p>
             </div>
-            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>App access</span><span>Position</span><span>Commission</span></div>
+            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>Position</span><span>Commission</span><span>App access</span><span></span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
         }).join('')
@@ -33118,16 +33130,15 @@ async function settingsPage(){
       </label>`).join('')}
     </fieldset>`;
   }
-  /* nestly_v577 (owner, photo 12): the four actions the owner moved off the row. Identical
-     handlers to the ones the row used to carry — this is a relocation, not a rewrite. */
-  function staffProfileActionsHtmlV577(s){
+  /* nestly_v603: the two actions that are about the PERSON rather than about their login, moved
+     to the Profile tab where the owner drew them. Identical handlers and identical confirms — a
+     relocation, as v577 was. V285's reasoning still governs both: deactivating is what a shop does
+     when somebody leaves (access stops, the seat stops being billed, every past sale and
+     commission keeps the name), and Delete stays behind its own second confirm for the row created
+     by mistake. */
+  function staffPersonActionsHtmlV603(s){
     if(s.role==='owner')return '';
-    return `<div class="staff-profile-actions-v577">
-      <b class="small">Access and status</b>
-      <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
-        ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
-        ${/* nestly_v584: no "Modules" button — the module grid is on this same tab, directly below,
-             so the button opened what the reader is already looking at. */''}
+    return `<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
         ${/* V285's reasoning is unchanged and still governs these two: deactivating is what a shop
              does when somebody leaves (access stops, the seat stops being billed, every past sale
              and commission keeps the name), and Delete stays behind its own second confirm for the
@@ -33137,6 +33148,23 @@ async function settingsPage(){
              Same handler, same two-step confirm — only the label became the glyph everyone already
              reads as "remove". The accessible name still says the whole thing. */''}
         <button class="staff-delete-icon-v584" type="button" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)" title="Delete this teammate" ${workspaceTemplateAttributeV97('aria-label','deleteTeammateNamed',{name:s.full_name||'this teammate'})}>${CUI.icon('trash',{size:18})}</button>
+    </div>`;
+  }
+  /* nestly_v577 (owner, photo 12): the four actions the owner moved off the row. Identical
+     handlers to the ones the row used to carry — this is a relocation, not a rewrite. */
+  function staffProfileActionsHtmlV577(s){
+    if(s.role==='owner')return '';
+    return `<div class="staff-profile-actions-v577">
+      ${/* nestly_v603 (owner photo: "Access and status" struck through — "remove wording" — and
+           Deactivate + the dustbin ringed with an arrow up to the Profile tab). The heading went
+           because the tab it sits on is already called Access & Module, so it named the tab twice.
+           Deactivate and Delete moved to Profile: they are about the PERSON — somebody left, or
+           the row was created by mistake — not about what a login may reach, which is the only
+           thing the rest of this tab decides. What stays here is the one action that IS access. */''}
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+        ${/* nestly_v584: no "Modules" button — the module grid is on this same tab, directly below,
+             so the button opened what the reader is already looking at. */''}
       </div>
     </div>`;
   }

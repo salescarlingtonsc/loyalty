@@ -1321,7 +1321,11 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
 .metric-row-customer-v408:hover b{color:var(--brand-red-dark)}
 .dashboard-metric{display:block;width:100%;min-height:112px;padding:17px 18px;text-align:left;color:inherit;background:#fff;border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .2s var(--spring),box-shadow .2s var(--ease),border-color .2s}
 .staff-row-line{display:flex;flex-direction:column;align-items:stretch;gap:6px}
-:root{--staff-cols-v226:minmax(120px,1.2fr) minmax(100px,.85fr) minmax(150px,1.4fr) minmax(95px,.9fr) minmax(74px,.5fr) minmax(100px,.85fr) minmax(110px,.9fr)}
+:root{--staff-cols-v226:minmax(110px,1.1fr) minmax(94px,.8fr) minmax(130px,1.2fr) minmax(90px,.85fr) minmax(96px,.8fr) minmax(104px,.85fr) minmax(70px,.5fr) minmax(56px,.4fr)}
+.staff-row-open,.staff-col-head-v226{min-width:max-content}
+.staff-group-v209{overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.staff-col-v226{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.staff-edit-chip-v603{justify-self:end}
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}

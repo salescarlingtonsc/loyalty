@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="e83521001d774b9f66ae136b17346afeea264c489d43c4cab014aae6b585a15c"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="b2d56188701176d973466cc0b23e2a7cb55e590dd0e24f329d8ff79fad7b5d0c"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -1920,7 +1920,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 /* nestly_v584: two more columns — Branch and App access (owner photo 15 wrote both in by hand). */
-:root{--staff-cols-v226:minmax(120px,1.2fr) minmax(100px,.85fr) minmax(150px,1.4fr) minmax(95px,.9fr) minmax(74px,.5fr) minmax(100px,.85fr) minmax(110px,.9fr)}
+:root{--staff-cols-v226:minmax(110px,1.1fr) minmax(94px,.8fr) minmax(130px,1.2fr) minmax(90px,.85fr) minmax(96px,.8fr) minmax(104px,.85fr) minmax(70px,.5fr) minmax(56px,.4fr)}
+/* nestly_v603 (owner photo: the empty gaps between Name/Phone/Email ringed — "don't need so much
+   spaces, if wording too long can just swipe to see in each column"). Eight columns now (App
+   access moved after Commission, and Edit is drawn in the row), each narrower, and the grid
+   scrolls sideways rather than squeezing a name into two characters. Each cell keeps its content
+   on one line for the same reason: a wrapped cell makes every row in the group taller. */
+.staff-row-open,.staff-col-head-v226{min-width:max-content}
+.staff-group-v209{overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.staff-col-v226{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.staff-edit-chip-v603{justify-self:end}
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
@@ -5475,7 +5484,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e83521001d774b9f66ae136b17346afeea264c489d43c4cab014aae6b585a15c</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b2d56188701176d973466cc0b23e2a7cb55e590dd0e24f329d8ff79fad7b5d0c</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -15552,7 +15561,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'e83521001d774b9f66ae136b17346afeea264c489d43c4cab014aae6b585a15c',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'b2d56188701176d973466cc0b23e2a7cb55e590dd0e24f329d8ff79fad7b5d0c',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

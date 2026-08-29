@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2ec202f14d2790bfb926aa71aefa6f563f58c0fb684c1adb6973a9eed952f39a"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="42d40ad1aaaeb78d3c210faaa8576edf6aae968f5b4b49d0942c094aa8c98346"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -1921,7 +1921,16 @@ button.rewards-overview-card:focus-visible{outline:3px solid rgba(201,67,51,.25)
    not be read down a column. One shared template drives the header and every row, so the two
    cannot drift apart. Below 900px it stacks and each cell labels itself from data-staff-col. */
 /* nestly_v584: two more columns — Branch and App access (owner photo 15 wrote both in by hand). */
-:root{--staff-cols-v226:minmax(120px,1.2fr) minmax(100px,.85fr) minmax(150px,1.4fr) minmax(95px,.9fr) minmax(74px,.5fr) minmax(100px,.85fr) minmax(110px,.9fr)}
+:root{--staff-cols-v226:minmax(110px,1.1fr) minmax(94px,.8fr) minmax(130px,1.2fr) minmax(90px,.85fr) minmax(96px,.8fr) minmax(104px,.85fr) minmax(70px,.5fr) minmax(56px,.4fr)}
+/* nestly_v603 (owner photo: the empty gaps between Name/Phone/Email ringed — "don't need so much
+   spaces, if wording too long can just swipe to see in each column"). Eight columns now (App
+   access moved after Commission, and Edit is drawn in the row), each narrower, and the grid
+   scrolls sideways rather than squeezing a name into two characters. Each cell keeps its content
+   on one line for the same reason: a wrapped cell makes every row in the group taller. */
+.staff-row-open,.staff-col-head-v226{min-width:max-content}
+.staff-group-v209{overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.staff-col-v226{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.staff-edit-chip-v603{justify-self:end}
 .staff-row-open{display:grid;grid-template-columns:var(--staff-cols-v226);align-items:center;gap:6px 14px;width:100%;min-width:0;text-align:left;background:transparent;border:0;padding:8px 6px;margin:-8px -6px -2px;border-radius:var(--r-sm);color:inherit;min-height:44px}
 .staff-col-head-v226{display:grid;grid-template-columns:var(--staff-cols-v226);gap:6px 14px;padding:0 6px 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .staff-col-v226{min-width:0;overflow-wrap:anywhere}
@@ -6643,6 +6652,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'2ec202f14d2790bfb926aa71aefa6f563f58c0fb684c1adb6973a9eed952f39a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'42d40ad1aaaeb78d3c210faaa8576edf6aae968f5b4b49d0942c094aa8c98346',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
