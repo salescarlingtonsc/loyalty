@@ -19,6 +19,19 @@
      something larger and get a size where the wordmark is actually legible. -->
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/peekaa-192.png">
 <script>
+/* nestly_v603: the printed business QR encodes '?token=…' with no fragment (scanner apps drop
+   text after '#'). The landing page normally folds that into '#/join?token=…', but a scan that
+   reaches the app path directly with the query intact is folded here too, before the router
+   boots. Runs only when no '#/' route is present, so it can never clobber a real deep link. */
+(function foldQueryJoinTokenV603(){
+  try{
+    if(String(window.location.hash||'').indexOf('#/')===0)return;
+    var tokenMatch=/[?&]token=([A-Za-z0-9_-]{20,512})(?:&|$)/.exec(String(window.location.search||''));
+    if(tokenMatch)window.location.replace(window.location.pathname+'#/join?token='+tokenMatch[1]);
+  }catch(error){/* fall through to the normal boot */}
+})();
+</script>
+<script>
 /* V460: the Peekaa mark pops and settles in the browser tab the instant the app loads — drawn
    as a few canvas frames from the existing static icon (no extra image assets), then handed
    back to the static file. Decorative only: skipped under prefers-reduced-motion, and any
@@ -314,7 +327,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=e8cb619cd6cc","customer":"/app-customer.js?b=dc51b735ce50","business":"/app-business.js?b=b45061e15a9a","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=e8cb619cd6cc","customer":"/app-customer.js?b=dc51b735ce50","business":"/app-business.js?b=d910236248a9","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

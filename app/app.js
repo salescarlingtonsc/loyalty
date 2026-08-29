@@ -50512,9 +50512,16 @@ async function loadSignupConfig(host){
   let url='';
   const showJoinQr=async data=>{
     url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
+    /* nestly_v603 (owner: "website link works but qrcode does not work"). The tappable link and
+       the QR carried the SAME '#/join?token=…' URL, but a tapped link keeps its fragment while
+       several camera/scanner apps hand the browser only the part before the '#'. Those phones
+       arrived at the bare marketing page — the business never popped up, with no error anywhere.
+       The QR therefore encodes a fragment-free URL: the landing page reads ?token= and forwards
+       it into '#/join?token=…' itself. The visible link keeps the canonical hash form. */
+    const qrContentV603=window.NestlyNativeBridge.publicUrl(`/?token=${encodeURIComponent(data.join_token)}`);
     const qrEl=$('joinQr');qrEl.innerHTML='<span class="muted small">Rendering QR…</span>';
     try{await loadQrLibrary()}catch{if(qrEl.isConnected)qrEl.innerHTML='<span class="err small">QR renderer could not load. Retry.</span>';if($('joinQrStatus'))$('joinQrStatus').textContent='The QR image could not load. Retry without replacing the link.';return false}
-    if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+    if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:qrContentV603,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
     $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
     $('cpJoin').disabled=false;$('dlQr').disabled=false;if($('shareJoin'))$('shareJoin').disabled=false;
     /* nestly_v456: there is now a QR on screen, so the lead may say "print it" and revoking is a
