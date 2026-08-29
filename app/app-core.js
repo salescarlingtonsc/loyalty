@@ -686,6 +686,9 @@ function rememberPendingCustomerJoinToken(token){
    the tab, and an answer that does not survive that is an answer asked twice. The business slug
    learned from the preview rides along for the same reason — it is the fallback that opens the
    right business if the join reply itself is older than v587. */
+/* nestly_v599: "has this visit already been asked?", in memory only. A page load or a freshly
+   scanned token both clear it, which is what makes every real scan ask again. */
+let customerJoinAskedThisVisitV599=false;
 const CUSTOMER_JOIN_CONFIRMED_KEY_V596='nestly.customer.joinConfirmedV596';
 let customerJoinConfirmedV596=(()=>{try{
   const raw=JSON.parse(sessionStorage.getItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596)||'null');
@@ -699,9 +702,6 @@ function rememberCustomerJoinConfirmedV596(token,slug){
     else sessionStorage.removeItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596);
   }catch{}
   return customerJoinConfirmedV596;
-}
-function customerJoinAlreadyConfirmedV596(token){
-  return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
 }
 function customerRecoveryVerified(){
   try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
@@ -1471,6 +1471,10 @@ async function route(){
       const joinParams=new URLSearchParams(h.split('?')[1]||'');
       const joinToken=String(joinParams.get('token')||'').trim();
       rememberPendingCustomerJoinToken(joinToken);
+      /* nestly_v599: a token arriving on the URL is a SCAN. Somebody standing at a counter with
+         their phone camera open is asking to join, now, whatever they answered earlier — so the
+         sheet is armed again here rather than being suppressed by a stale answer. */
+      customerJoinAskedThisVisitV599=false;
       history.replaceState(null,'',`${location.pathname}${location.search}#/join`);
       h='#/join';
     }
@@ -1510,7 +1514,18 @@ async function route(){
          sign-up (mobile number and SMS code); Close drops the token and lands them on the
          ordinary Peekaa welcome. Skipped when this exact token has already been answered, which
          is what makes the resume after sign-up silent instead of a second prompt. */
-      if(pendingCustomerJoinToken&&!customerJoinAlreadyConfirmedV596(pendingCustomerJoinToken)){
+      /* nestly_v599 — THE v596 DEFECT. This asked only when the remembered answer did not already
+         cover this token, and that answer lives in sessionStorage. So the first scan showed the
+         sheet, and every scan afterwards on the same device skipped it and dropped the person on
+         the plain sign-in card — the exact symptom v596 was written to remove, now reappearing for
+         anybody who pressed Yes once without finishing sign-up. Reported by the owner scanning
+         their own QR a second time.
+         The remembered answer exists for ONE job: not re-asking on the far side of the sign-up,
+         and by then the person is signed in and this branch is not the one that runs. So it is not
+         consulted here at all. The in-memory flag below is only so a re-render of the same visit
+         does not stack a second sheet on the first; it resets on every scan and every page load. */
+      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599){
+        customerJoinAskedThisVisitV599=true;
         if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
         if(!isRouteCurrent())return;
         rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken,pendingCustomerJoinSlugV587);

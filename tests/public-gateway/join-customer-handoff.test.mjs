@@ -71,8 +71,16 @@ test('SPA preserves opaque join authority through registration and removes typed
   const signedOutJoin=route.match(/if\(!S\.user&&h==='#\/join'\)\{[\s\S]*?return renderCustomerRegistration\(isRouteCurrent\);\n\s*\}/)[0];
   assert.match(signedOutJoin,/confirmCustomerJoinV571\(pendingCustomerJoinToken,isRouteCurrent\)/,
     'the business is named before a stranger is asked to sign up');
-  assert.match(signedOutJoin,/!customerJoinAlreadyConfirmedV596\(pendingCustomerJoinToken\)/,
-    'and an answer already given is not asked for again after the sign-up hop');
+  /* nestly_v599: the remembered answer is deliberately NOT consulted here. v596 did, and the
+     result was that only the FIRST scan on a device ever showed the sheet — every scan afterwards
+     skipped it and dropped the person on the plain sign-in card. The answer exists to stop the
+     sheet re-appearing on the far side of the sign-up, where the person is signed in and a
+     different branch runs. Here, a scan is always answered; the in-memory flag only stops a
+     re-render of the same visit stacking a second sheet. */
+  assert.match(signedOutJoin,/!customerJoinAskedThisVisitV599/,
+    'a re-render of the same visit does not stack a second sheet');
+  assert.doesNotMatch(signedOutJoin,/customerJoinAlreadyConfirmedV596/,
+    'but a stored answer never suppresses a fresh scan');
   assert.match(signedOutJoin,/rememberCustomerJoinConfirmedV596\(pendingCustomerJoinToken,pendingCustomerJoinSlugV587\)/,
     'the answer, and the slug the preview taught us, are both kept');
   assert.match(registration,/customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\)/);

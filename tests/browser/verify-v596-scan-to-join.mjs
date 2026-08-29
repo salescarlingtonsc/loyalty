@@ -35,7 +35,7 @@ const chromium=playwright.chromium||playwright.default?.chromium;
 const REPO_ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PORT=Number(process.env.V596_PORT||4596);
 const ORIGIN=`http://127.0.0.1:${PORT}`;
-const MARKER='customerJoinAlreadyConfirmedV596';
+const MARKER='customerJoinAskedThisVisitV599';
 
 const buildServedTree=async()=>{
   const dir=await mkdtemp(path.join(tmpdir(),'v596-app-'));
@@ -200,6 +200,25 @@ try{
     ok(kept.token===TOKEN,'the join token is still held through sign-up');
     ok(String(kept.confirmed||'').includes(SLUG),
       `and the answer is remembered with the business (${kept.confirmed})`);
+    await context.close();
+  }
+
+  /* ---- 2b. A SECOND SCAN MUST ASK AGAIN (nestly_v599) ----
+     v596 consulted the remembered answer here, so the first scan showed the sheet and every scan
+     afterwards on the same device silently skipped it and dropped the person on the sign-in card.
+     Reported by the owner scanning their own QR twice. */
+  say('2b. scanning again after answering once still asks');
+  {
+    const {context,page}=await open({session:null});
+    ok(!!(await sheetText(page)),'the first scan asks');
+    await page.click('#customerJoinGoV571');
+    await page.waitForTimeout(1500);
+    ok(!(await sheetText(page)),'and the sheet closes');
+    /* the same QR, scanned again in the same session — a fresh navigation carrying the token */
+    await page.goto(`${ORIGIN}/index.html#/join?token=${TOKEN}`,{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(2600);
+    ok(!!(await sheetText(page)),'the SECOND scan asks again rather than skipping to sign-in');
+    ok(/Jess Salon/.test(await sheetText(page)),'and still names the business');
     await context.close();
   }
 

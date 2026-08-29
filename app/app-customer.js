@@ -216,6 +216,9 @@ function recordCustomerSessionStartV256(businessId,locale){
     context:{entry_point:'customer_app',locale,surface_version:'v255'}
   });
 }
+function customerJoinAlreadyConfirmedV596(token){
+  return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
+}
 function peekShareReferralV576(slug){
   try{
     const stored=JSON.parse(localStorage.getItem(SHARE_REFERRAL_STORE_KEY_V576)||'null');
