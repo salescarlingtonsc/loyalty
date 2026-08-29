@@ -64,7 +64,17 @@ test('SPA preserves opaque join authority through registration and removes typed
   const claim=app.match(/async function renderCustomerClaim\(\)[\s\S]*?(?=function renderCustomerWalletUnavailable)/)?.[0]||'';
 
   assert.match(route,/h\.startsWith\('#\/join\?'\)[\s\S]*rememberPendingCustomerJoinToken\(joinToken\)/);
-  assert.match(route,/if\(!S\.user&&h==='#\/join'\)return renderCustomerRegistration/);
+  /* nestly_v596: a signed-out scan still ends in registration — the opaque token is never traded
+     for a typed slug — but it now NAMES the business first. Before the sheet ran here the visitor
+     was dropped on the generic Peekaa sign-in card and the scan read as broken. */
+  assert.match(route,/if\(!S\.user&&h==='#\/join'\)\{[\s\S]*?return renderCustomerRegistration\(isRouteCurrent\);\n\s*\}/);
+  const signedOutJoin=route.match(/if\(!S\.user&&h==='#\/join'\)\{[\s\S]*?return renderCustomerRegistration\(isRouteCurrent\);\n\s*\}/)[0];
+  assert.match(signedOutJoin,/confirmCustomerJoinV571\(pendingCustomerJoinToken,isRouteCurrent\)/,
+    'the business is named before a stranger is asked to sign up');
+  assert.match(signedOutJoin,/!customerJoinAlreadyConfirmedV596\(pendingCustomerJoinToken\)/,
+    'and an answer already given is not asked for again after the sign-up hop');
+  assert.match(signedOutJoin,/rememberCustomerJoinConfirmedV596\(pendingCustomerJoinToken,pendingCustomerJoinSlugV587\)/,
+    'the answer, and the slug the preview taught us, are both kept');
   assert.match(registration,/customerRegistrationDestinationPriority\(pendingCustomerJoinToken,pendingCustomerBusinessSlug\)==='join'[\s\S]*nav\('#\/join'\)/);
   assert.match(app,/customer_join_business_from_qr_v89/);
   assert.match(app,/CUSTOMER_JOIN_SESSION_KEY='nestly\.customer\.pendingJoinToken'/);

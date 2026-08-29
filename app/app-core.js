@@ -670,6 +670,38 @@ function rememberPendingCustomerJoinToken(token){
     if(pendingCustomerJoinToken)sessionStorage.setItem(CUSTOMER_JOIN_SESSION_KEY,pendingCustomerJoinToken);
     else sessionStorage.removeItem(CUSTOMER_JOIN_SESSION_KEY);
   }catch{}
+  /* nestly_v596: an answer belongs to the token it answered. Dropping the token drops the
+     consent with it, so a later scan of a DIFFERENT QR can never inherit a yes. */
+  if(!pendingCustomerJoinToken)rememberCustomerJoinConfirmedV596('','');
+}
+/* nestly_v596 (owner, pre-go-live: "the qrcode scanned but failed to retrieve ... pops up Join
+   xxxx Programme? ... they only can choose yes and close button, and once pressing yes will land
+   inside the exact same business").
+   A customer who is NOT signed in is the ordinary case at a counter, and it was the broken one:
+   the router pocketed the token, stripped it from the URL and rendered the generic Peekaa
+   sign-in card, which never named the business. Nothing had failed — but nothing said so either,
+   so a scan looked dead. The confirmation sheet now runs BEFORE sign-in, and the answer is kept
+   here so the sheet is not asked a second time on the far side of the sign-up.
+   sessionStorage rather than a variable: phone sign-up runs through an SMS code and can reload
+   the tab, and an answer that does not survive that is an answer asked twice. The business slug
+   learned from the preview rides along for the same reason — it is the fallback that opens the
+   right business if the join reply itself is older than v587. */
+const CUSTOMER_JOIN_CONFIRMED_KEY_V596='nestly.customer.joinConfirmedV596';
+let customerJoinConfirmedV596=(()=>{try{
+  const raw=JSON.parse(sessionStorage.getItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596)||'null');
+  return raw&&typeof raw.token==='string'?{token:raw.token,slug:String(raw.slug||'')}:{token:'',slug:''};
+}catch{return {token:'',slug:''}}})();
+function rememberCustomerJoinConfirmedV596(token,slug){
+  customerJoinConfirmedV596={token:String(token||''),slug:String(slug||'')};
+  try{
+    if(customerJoinConfirmedV596.token)
+      sessionStorage.setItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596,JSON.stringify(customerJoinConfirmedV596));
+    else sessionStorage.removeItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596);
+  }catch{}
+  return customerJoinConfirmedV596;
+}
+function customerJoinAlreadyConfirmedV596(token){
+  return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
 }
 function customerRecoveryVerified(){
   try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
@@ -1461,7 +1493,19 @@ async function route(){
         :'';
       return renderCustomerRegistration(isRouteCurrent);
     }
-    if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
+    if(!S.user&&h==='#/join'){
+      /* nestly_v596: the scan is answered here, before sign-in, so the very first thing a new
+         customer sees is the name of the business they scanned. Yes carries on into the real
+         sign-up (mobile number and SMS code); Close drops the token and lands them on the
+         ordinary Peekaa welcome. Skipped when this exact token has already been answered, which
+         is what makes the resume after sign-up silent instead of a second prompt. */
+      if(pendingCustomerJoinToken&&!customerJoinAlreadyConfirmedV596(pendingCustomerJoinToken)){
+        if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
+        if(!isRouteCurrent())return;
+        rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken,pendingCustomerJoinSlugV587);
+      }
+      return renderCustomerRegistration(isRouteCurrent);
+    }
     /* nestly_v588: a fresh reference code arriving here is almost always a brand-new
        teammate, not a returning one — default to Create account. */
     if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('up',staffInviteCodeV151);
@@ -3532,6 +3576,69 @@ async function loadMemberQrIntoV327({card,slot,status},isCurrent){
     if(isCurrent()&&slot.isConnected)slot.innerHTML='<p class="muted small">Your QR could not be drawn on this device.</p>';
   });
 }
+/* nestly_v571 — the scan confirmation. Resolves the token to a business name through the public
+   gateway (read-only, writes nothing), then asks. Resolves true when the customer presses Join.
+   Pressing Cancel clears the pending token and returns them to their programmes, so a stale token
+   cannot silently re-fire on the next render. */
+/* nestly_v587 (owner: "customer scan business qrcode to join their program > pops up Join xxxx
+   Programme? make it super fun with the theme similar to our app > they only can choose yes and
+   close button > once pressing yes will land inside the exact same business").
+
+   Three things were wrong before this, and only the third was cosmetic:
+     1. the preview NEVER resolved. The gateway rejected the token's shape (see JOIN_TOKEN_PATTERN
+        in supabase/functions/_shared/validation.ts), so this returned nothing and the sheet fell
+        back to "Join this business?" — the owner's "scanned but failed to retrieve".
+     2. even when it resolved, the name was read from a key the payload has never had:
+        internal_public_join_page_v89 returns `name`, this read `business_name` / `business.name`.
+     3. and the sheet asked for a referral code, which the owner has now replaced with one Yes.
+
+   The referral FIELD is gone at the owner's instruction. Referral by shared LINK is untouched and
+   is the path that actually carries attribution today: applyShareReferralV576 remembers the code
+   from a ?ref= share and applies it after sign-in, so a friend who shares their link still gets
+   credit without anybody typing anything. */
+async function confirmCustomerJoinV571(token,isCurrent){
+  let preview=null;
+  try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
+  if(!isCurrent())return false;
+  /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
+     future payload that nests the business still names it. */
+  const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
+  pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='modal customer-surface';
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','customerJoinConfirmTitleV571');
+    overlay.innerHTML=`<section class="modal-card customer-join-sheet-v587">
+      <button class="customer-join-close-v587" type="button" id="customerJoinCancelV571" aria-label="${esc(ct('joinConfirmCancelV571'))}" title="${esc(ct('joinConfirmCancelV571'))}">${CUI.icon('close',{size:18})}</button>
+      <div class="customer-join-art-v587" aria-hidden="true"><span class="customer-join-art-glow-v587"></span>${brandWordmark()}</div>
+      <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
+      <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
+      <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
+      <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
+    </section>`;
+    document.body.appendChild(overlay);
+    const close=answer=>{overlay.remove();resolve(answer)};
+    /* Close and the backdrop are the same decision: not now. The token is dropped so a stale scan
+       cannot be replayed by a later render, and the customer lands somewhere real. */
+    const dismiss=()=>{
+      rememberPendingCustomerJoinToken('');pendingCustomerJoinSlugV587='';
+      close(false);nav('#/customer/programmes');
+    };
+    overlay.querySelector('#customerJoinCancelV571').onclick=dismiss;
+    overlay.addEventListener('mousedown',event=>{if(event.target===overlay)overlay.dataset.pressV587='1'});
+    overlay.addEventListener('click',event=>{
+      if(event.target!==overlay||overlay.dataset.pressV587!=='1')return;
+      overlay.dataset.pressV587='';dismiss();
+    });
+    overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    overlay.querySelector('#customerJoinGoV571').focus();
+  });
+}
+/* nestly_v587: the business the scanned QR belongs to, learned from the read-only preview, so a
+   successful join can open it even if the join reply itself is older than v587. */
+let pendingCustomerJoinSlugV587='';
 function renderCustomerWalletUnavailable(message='Customer wallet access is not available yet.'){
   setCustomerSurfaceDocumentV167();
   globalThis.document?.documentElement?.setAttribute('lang','en');

@@ -1656,6 +1656,38 @@ function rememberPendingCustomerJoinToken(token){
     if(pendingCustomerJoinToken)sessionStorage.setItem(CUSTOMER_JOIN_SESSION_KEY,pendingCustomerJoinToken);
     else sessionStorage.removeItem(CUSTOMER_JOIN_SESSION_KEY);
   }catch{}
+  /* nestly_v596: an answer belongs to the token it answered. Dropping the token drops the
+     consent with it, so a later scan of a DIFFERENT QR can never inherit a yes. */
+  if(!pendingCustomerJoinToken)rememberCustomerJoinConfirmedV596('','');
+}
+/* nestly_v596 (owner, pre-go-live: "the qrcode scanned but failed to retrieve ... pops up Join
+   xxxx Programme? ... they only can choose yes and close button, and once pressing yes will land
+   inside the exact same business").
+   A customer who is NOT signed in is the ordinary case at a counter, and it was the broken one:
+   the router pocketed the token, stripped it from the URL and rendered the generic Peekaa
+   sign-in card, which never named the business. Nothing had failed — but nothing said so either,
+   so a scan looked dead. The confirmation sheet now runs BEFORE sign-in, and the answer is kept
+   here so the sheet is not asked a second time on the far side of the sign-up.
+   sessionStorage rather than a variable: phone sign-up runs through an SMS code and can reload
+   the tab, and an answer that does not survive that is an answer asked twice. The business slug
+   learned from the preview rides along for the same reason — it is the fallback that opens the
+   right business if the join reply itself is older than v587. */
+const CUSTOMER_JOIN_CONFIRMED_KEY_V596='nestly.customer.joinConfirmedV596';
+let customerJoinConfirmedV596=(()=>{try{
+  const raw=JSON.parse(sessionStorage.getItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596)||'null');
+  return raw&&typeof raw.token==='string'?{token:raw.token,slug:String(raw.slug||'')}:{token:'',slug:''};
+}catch{return {token:'',slug:''}}})();
+function rememberCustomerJoinConfirmedV596(token,slug){
+  customerJoinConfirmedV596={token:String(token||''),slug:String(slug||'')};
+  try{
+    if(customerJoinConfirmedV596.token)
+      sessionStorage.setItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596,JSON.stringify(customerJoinConfirmedV596));
+    else sessionStorage.removeItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596);
+  }catch{}
+  return customerJoinConfirmedV596;
+}
+function customerJoinAlreadyConfirmedV596(token){
+  return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
 }
 function customerRecoveryVerified(){
   try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
@@ -3555,7 +3587,19 @@ async function route(){
         :'';
       return renderCustomerRegistration(isRouteCurrent);
     }
-    if(!S.user&&h==='#/join')return renderCustomerRegistration(isRouteCurrent);
+    if(!S.user&&h==='#/join'){
+      /* nestly_v596: the scan is answered here, before sign-in, so the very first thing a new
+         customer sees is the name of the business they scanned. Yes carries on into the real
+         sign-up (mobile number and SMS code); Close drops the token and lands them on the
+         ordinary Peekaa welcome. Skipped when this exact token has already been answered, which
+         is what makes the resume after sign-up silent instead of a second prompt. */
+      if(pendingCustomerJoinToken&&!customerJoinAlreadyConfirmedV596(pendingCustomerJoinToken)){
+        if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
+        if(!isRouteCurrent())return;
+        rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken,pendingCustomerJoinSlugV587);
+      }
+      return renderCustomerRegistration(isRouteCurrent);
+    }
     /* nestly_v588: a fresh reference code arriving here is almost always a brand-new
        teammate, not a returning one — default to Create account. */
     if(!S.user&&h==='#/business'&&staffInviteCodeV151)return renderStaffInviteAuthV151('up',staffInviteCodeV151);
@@ -7864,8 +7908,16 @@ async function renderCustomerQrJoin(){
      nothing. Only after the customer presses Join does the RPC below run.
      If that preview cannot be reached the confirmation still stands — it simply cannot name the
      business, which is a weaker prompt but never a silent join. */
-  if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
-  if(!isCurrent())return;
+  /* nestly_v596: a customer who already said yes on the far side of sign-up is not asked twice.
+     The slug the preview taught us is restored from the same record, because the sheet that
+     would normally set it is the step being skipped. */
+  if(customerJoinAlreadyConfirmedV596(token)){
+    pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(customerJoinConfirmedV596.slug)||pendingCustomerJoinSlugV587;
+  }else{
+    if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
+    if(!isCurrent())return;
+    rememberCustomerJoinConfirmedV596(token,pendingCustomerJoinSlugV587);
+  }
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);

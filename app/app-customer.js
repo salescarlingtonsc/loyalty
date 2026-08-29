@@ -2715,66 +2715,6 @@ async function renderCustomerProfile(requestedView){
   focusCustomerRoute();
 }
 
-/* nestly_v571 — the scan confirmation. Resolves the token to a business name through the public
-   gateway (read-only, writes nothing), then asks. Resolves true when the customer presses Join.
-   Pressing Cancel clears the pending token and returns them to their programmes, so a stale token
-   cannot silently re-fire on the next render. */
-/* nestly_v587 (owner: "customer scan business qrcode to join their program > pops up Join xxxx
-   Programme? make it super fun with the theme similar to our app > they only can choose yes and
-   close button > once pressing yes will land inside the exact same business").
-
-   Three things were wrong before this, and only the third was cosmetic:
-     1. the preview NEVER resolved. The gateway rejected the token's shape (see JOIN_TOKEN_PATTERN
-        in supabase/functions/_shared/validation.ts), so this returned nothing and the sheet fell
-        back to "Join this business?" — the owner's "scanned but failed to retrieve".
-     2. even when it resolved, the name was read from a key the payload has never had:
-        internal_public_join_page_v89 returns `name`, this read `business_name` / `business.name`.
-     3. and the sheet asked for a referral code, which the owner has now replaced with one Yes.
-
-   The referral FIELD is gone at the owner's instruction. Referral by shared LINK is untouched and
-   is the path that actually carries attribution today: applyShareReferralV576 remembers the code
-   from a ?ref= share and applies it after sign-in, so a friend who shares their link still gets
-   credit without anybody typing anything. */
-async function confirmCustomerJoinV571(token,isCurrent){
-  let preview=null;
-  try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
-  if(!isCurrent())return false;
-  /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
-     future payload that nests the business still names it. */
-  const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
-  pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
-  return new Promise(resolve=>{
-    const overlay=document.createElement('div');
-    overlay.className='modal customer-surface';
-    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-    overlay.setAttribute('aria-labelledby','customerJoinConfirmTitleV571');
-    overlay.innerHTML=`<section class="modal-card customer-join-sheet-v587">
-      <button class="customer-join-close-v587" type="button" id="customerJoinCancelV571" aria-label="${esc(ct('joinConfirmCancelV571'))}" title="${esc(ct('joinConfirmCancelV571'))}">${CUI.icon('close',{size:18})}</button>
-      <div class="customer-join-art-v587" aria-hidden="true"><span class="customer-join-art-glow-v587"></span>${brandWordmark()}</div>
-      <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
-      <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
-      <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
-      <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
-    </section>`;
-    document.body.appendChild(overlay);
-    const close=answer=>{overlay.remove();resolve(answer)};
-    /* Close and the backdrop are the same decision: not now. The token is dropped so a stale scan
-       cannot be replayed by a later render, and the customer lands somewhere real. */
-    const dismiss=()=>{
-      rememberPendingCustomerJoinToken('');pendingCustomerJoinSlugV587='';
-      close(false);nav('#/customer/programmes');
-    };
-    overlay.querySelector('#customerJoinCancelV571').onclick=dismiss;
-    overlay.addEventListener('mousedown',event=>{if(event.target===overlay)overlay.dataset.pressV587='1'});
-    overlay.addEventListener('click',event=>{
-      if(event.target!==overlay||overlay.dataset.pressV587!=='1')return;
-      overlay.dataset.pressV587='';dismiss();
-    });
-    overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
-    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
-    overlay.querySelector('#customerJoinGoV571').focus();
-  });
-}
 /* The customer-facing wording for every refusal the server can return. Kept beside the dialog
    so a new server reason is obvious here as an untranslated fallback rather than a blank line. */
 function customerReferralReasonTextV571(reason){
@@ -2788,9 +2728,6 @@ function customerReferralReasonTextV571(reason){
   return map[String(reason||'')]||ct('joinReferralUnknownV571');
 }
 let pendingCustomerJoinReferralV571='';
-/* nestly_v587: the business the scanned QR belongs to, learned from the read-only preview, so a
-   successful join can open it even if the join reply itself is older than v587. */
-let pendingCustomerJoinSlugV587='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
@@ -2807,8 +2744,16 @@ async function renderCustomerQrJoin(){
      nothing. Only after the customer presses Join does the RPC below run.
      If that preview cannot be reached the confirmation still stands — it simply cannot name the
      business, which is a weaker prompt but never a silent join. */
-  if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
-  if(!isCurrent())return;
+  /* nestly_v596: a customer who already said yes on the far side of sign-up is not asked twice.
+     The slug the preview taught us is restored from the same record, because the sheet that
+     would normally set it is the step being skipped. */
+  if(customerJoinAlreadyConfirmedV596(token)){
+    pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(customerJoinConfirmedV596.slug)||pendingCustomerJoinSlugV587;
+  }else{
+    if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
+    if(!isCurrent())return;
+    rememberCustomerJoinConfirmedV596(token,pendingCustomerJoinSlugV587);
+  }
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
