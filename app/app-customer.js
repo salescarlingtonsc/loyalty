@@ -2782,7 +2782,7 @@ let pendingCustomerJoinReferralV571='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
-  joinFunnelEmitV610('join_app_loaded',{signedIn:true});
+  joinFunnelEmitV610('join_app_loaded',{signedIn:true,build:joinFunnelBuildV610()});
   if(token){joinFunnelEmitV610('join_pending_scan_found',{signedIn:true});joinFunnelEmitV610('join_auth_completed');}
   if(!token){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});

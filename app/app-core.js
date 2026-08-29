@@ -143,6 +143,18 @@ function joinFunnelEmitV610(event,detail){
     fetch(url,{method:'POST',body:payload,headers:{'content-type':'text/plain'},keepalive:true,credentials:'omit'}).catch(()=>{});
   }catch{}
 }
+/* The /join page starts web journeys; the IN-APP scanner starts its own here — the owner's
+   real-device trace showed the in-app path reaching the business preview (200) and stalling,
+   and that path never touches /join, so it must open its own correlation id. */
+function joinFunnelStartV610(){
+  let cid='';
+  try{cid=(crypto.randomUUID&&crypto.randomUUID())||''}catch{}
+  if(!cid)cid='cid-'+Date.now().toString(36)+'-'+Math.floor(Math.random()*1e9).toString(36);
+  try{sessionStorage.setItem('nestly.join.funnelCid',cid)}catch{}
+  JOIN_FUNNEL_ONCE_V610.clear();
+  return cid;
+}
+const joinFunnelBuildV610=()=>{try{return String(buildIdentity?.shortSha||'')}catch{return ''}};
 /* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
    gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
    customer read below goes through this helper, which aborts at `ms` and normalises the outcome
@@ -1591,7 +1603,7 @@ async function route(){
          and by then the person is signed in and this branch is not the one that runs. So it is not
          consulted here at all. The in-memory flag below is only so a re-render of the same visit
          does not stack a second sheet on the first; it resets on every scan and every page load. */
-      joinFunnelEmitV610('join_app_loaded',{signedIn:false});
+      joinFunnelEmitV610('join_app_loaded',{signedIn:false,build:joinFunnelBuildV610()});
       if(pendingCustomerJoinToken)joinFunnelEmitV610('join_pending_scan_found',{signedIn:false});
       if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599
         &&!consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)){
@@ -3306,6 +3318,9 @@ function openCustomerJoinScanner(){
     kicker.textContent=ct('My Peekaa QR');
   };
   const showScan=()=>{
+    joinFunnelStartV610();
+    joinFunnelEmitV610('join_inapp_scan_opened',{build:joinFunnelBuildV610(),
+      standalone:navigator.standalone===true,swController:!!navigator.serviceWorker?.controller});
     myQrPanel.hidden=true;scanPanel.hidden=false;
     kicker.textContent=ct('addProgramme');
     startCamera();
@@ -3344,8 +3359,15 @@ function openCustomerJoinScanner(){
   });
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
-    if(!token){status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
+    if(!token){
+      let shapeV610='';
+      try{const u=new URL(String(value||''));shapeV610=u.host+u.pathname}catch{shapeV610='raw:'+String(value||'').length}
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'unrecognised',shape:shapeV610.slice(0,120)});
+      status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
+    joinFunnelEmitV610('join_inapp_scan_result',{accepted:true});
+    rememberPendingCustomerJoinToken(token);
+    joinFunnelEmitV610('join_pending_scan_saved');
+    close({restoreFocus:false});
     /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
        fires nothing, so the new token was remembered and never submitted. */
     if(location.hash==='#/join')route();else nav('#/join');
@@ -3379,10 +3401,11 @@ function openCustomerJoinScanner(){
   const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
   const startCamera=async()=>{
     if(closed)return;
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
+    if(!navigator.mediaDevices?.getUserMedia){joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'no_media_devices'});status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
     camera.disabled=true;camera.hidden=true;status.textContent=ct('Starting camera…');
     if(!await loadDecoder()){
       if(closed)return;
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'decoder_load'});
       camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent=ct('retry');
       status.textContent=ct(DECODER_LOAD_FAILURE);return;
     }
@@ -3393,6 +3416,7 @@ function openCustomerJoinScanner(){
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent=ct('Point the camera at the business QR.');scan();
     }catch{
       if(closed)return;
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'camera_unavailable'});
       camera.disabled=false;camera.hidden=false;
       status.textContent=ct('Camera access was not available. Choose a QR image or paste the QR link.');revealFallback();
     }
@@ -3710,7 +3734,11 @@ async function confirmCustomerJoinV571(token,isCurrent){
      the scan being abandoned (token cleared or replaced) or the person having navigated off the
      join route. Those are what is tested now; a competing repaint underneath is not a reason to
      not ask. */
-  if(pendingCustomerJoinToken!==token||location.hash!=='#/join')return false;
+  if(pendingCustomerJoinToken!==token||location.hash!=='#/join'){
+    joinFunnelEmitV610('join_client_error',{m:'confirm sheet refused: pending token or hash moved during preview'});
+    return false;
+  }
+  joinFunnelEmitV610('join_confirmation_render_attempted',{surface:'app-sheet'});
   /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
      future payload that nests the business still names it. */
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
@@ -3744,8 +3772,34 @@ async function confirmCustomerJoinV571(token,isCurrent){
       overlay.dataset.pressV587='';dismiss();
     });
     overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
-    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    overlay.querySelector('#customerJoinGoV571').addEventListener('pointerdown',()=>joinFunnelEmitV610('join_yes_pointerdown',{surface:'app-sheet'}));
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>{joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});close(true)};
     overlay.querySelector('#customerJoinGoV571').focus();
+    /* Same probe as the /join page: what a finger would meet at the Yes centre, two frames
+       after paint, with a timeout backstop because rAF sleeps on hidden pages. */
+    let sheetMeasuredV610=false;
+    const measureSheetYesV610=via=>{
+      if(sheetMeasuredV610)return;sheetMeasuredV610=true;
+      try{
+        const yes=overlay.querySelector('#customerJoinGoV571');
+        if(!yes||!yes.isConnected){joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',present:false,via});return}
+        const rect=yes.getBoundingClientRect();
+        const style=getComputedStyle(yes);
+        const cx=Math.round(rect.left+rect.width/2),cy=Math.round(rect.top+rect.height/2);
+        const onTop=document.elementFromPoint(cx,cy);
+        joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',present:true,via,
+          pageVisibility:document.visibilityState,
+          rect:{x:Math.round(rect.x),y:Math.round(rect.y),w:Math.round(rect.width),h:Math.round(rect.height)},
+          vp:`${window.innerWidth}x${window.innerHeight}`,
+          display:style.display,visibility:style.visibility,opacity:style.opacity,
+          pointerEvents:style.pointerEvents,
+          inViewport:rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<window.innerHeight,
+          topElement:onTop?`${onTop.tagName.toLowerCase()}${onTop.id?'#'+onTop.id:''}`:'',
+          topIsYes:onTop===yes||(onTop&&yes.contains(onTop))});
+      }catch(error){joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',via,measureError:String(error&&error.message||error).slice(0,200)})}
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(()=>measureSheetYesV610('raf')));
+    setTimeout(()=>measureSheetYesV610('timeout'),900);
   });
 }
 /* nestly_v587: the business the scanned QR belongs to, learned from the read-only preview, so a

@@ -20,7 +20,10 @@ const PAGE_EVENTS=['join_page_loaded','join_token_received','join_business_looku
   'join_confirmation_visible','join_yes_pointerdown','join_yes_click','join_pending_scan_saved',
   'join_navigation_started'];
 const APP_EVENTS=['join_app_loaded','join_pending_scan_found','join_auth_screen_shown',
-  'join_auth_completed','join_rpc_started','join_rpc_succeeded','join_rpc_failed','join_business_visible'];
+  'join_auth_completed','join_rpc_started','join_rpc_succeeded','join_rpc_failed','join_business_visible',
+  /* the owner's real-device trace showed the IN-APP scanner is the failing surface — it starts
+     its own journey and reports its own decode/camera outcomes and sheet visibility */
+  'join_inapp_scan_opened','join_inapp_scan_result'];
 
 test('the /join page emits every page-side stage',()=>{
   for(const event of PAGE_EVENTS)assert.ok(join.includes(`'${event}'`),`join.html emits ${event}`);
@@ -33,6 +36,17 @@ test('the visibility probe measures what a finger would meet, not what code appe
   assert.match(join,/getBoundingClientRect\(\)/);
   assert.match(join,/pointerEvents:style\.pointerEvents/);
   assert.match(join,/topIsYes:onTop===yes/);
+});
+
+test('the in-app scanner starts its own journey with the build sha',()=>{
+  const scanner=app.slice(app.indexOf('function openCustomerJoinScanner'),app.indexOf('function sortStaffWorkspaces'));
+  assert.match(scanner,/joinFunnelStartV610\(\);/,'a fresh correlation id per scan-panel open');
+  assert.match(scanner,/join_inapp_scan_opened',\{build:joinFunnelBuildV610\(\)/,
+    'the build sha settles instantly whether the installed app is stale');
+  assert.match(scanner,/reason:'unrecognised',shape:shapeV610/,'a rejected decode reports shape, never the raw value');
+  const sheet=app.slice(app.indexOf('async function confirmCustomerJoinV571'),app.indexOf('function customerReferralReasonTextV571'));
+  assert.match(sheet,/surface:'app-sheet',present:true,via/,'the in-app sheet has the same finger-level visibility probe');
+  assert.match(sheet,/confirm sheet refused: pending token or hash moved/,'a guard refusal is loud, not silent');
 });
 
 test('the app continues the journey and emits every app-side stage',()=>{

@@ -33,6 +33,8 @@ const EVENTS = new Set([
   'join_rpc_failed',
   'join_business_visible',
   'join_client_error',
+  'join_inapp_scan_opened',
+  'join_inapp_scan_result',
 ]);
 
 const ORIGINS = new Set(['https://www.peekaa.asia', 'https://peekaa.asia']);

@@ -25,8 +25,9 @@ const confirmSheet=app.slice(
   app.indexOf('function customerReferralReasonTextV571'));
 
 test('the sheet survives a competing repaint: its guard is the scan, not the render epoch',()=>{
+  /* v610 made the refusal loud (a funnel event) — the guard's condition is unchanged. */
   assert.match(confirmSheet,
-    /if\(pendingCustomerJoinToken!==token\|\|location\.hash!=='#\/join'\)return false;/,
+    /if\(pendingCustomerJoinToken!==token\|\|location\.hash!=='#\/join'\)\{[\s\S]{0,300}?return false;\s*\}/,
     'validity = same token still pending AND still on the join route');
   const afterFetch=confirmSheet.slice(confirmSheet.indexOf('publicGateway'));
   /* Anchored to a code line (the v604 note above it quotes the old statement in prose). */
