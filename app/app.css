@@ -1457,6 +1457,8 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-input-v301{width:100%;max-width:none;
   box-sizing:border-box;text-align:left;margin-inline:0}
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+.grow-points-form-card-v343.grow-points-form-modal-v410 .service-photo-uploader-v158{vertical-align:top}
+.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-points-form-actions-v584{margin-top:0!important;align-items:center}
 @media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
 @keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
@@ -3214,6 +3216,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .sales-filter-panel>.sales-filter-row>div{display:grid;grid-row:span 2;row-gap:6px;min-width:0}
 .sales-filter-panel>.sales-filter-row>div>label{margin:0;align-self:end;white-space:nowrap}
 .sales-filter-panel>.sales-filter-row>.btn{grid-row:span 2;align-self:end;white-space:nowrap}
+.sales-filter-panel>.row{grid-column:1/-1;grid-row:auto;align-self:start}
 .sales-filter-panel input[type=date]{width:150px}
 .sales-filter-panel input[type=search]{width:170px}
 .sales-filter-panel select{width:auto;min-width:130px}

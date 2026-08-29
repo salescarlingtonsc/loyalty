@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="52b39540b5bd9d6ddebdde7ace356209032501cf54df0e33535819988359ca11"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="ecac6b048f647e709c9883175b7fcfdd738b40a2295299fe15202382e6a97caa"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2201,6 +2201,18 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 /* line-height:2 belongs to the sentence form of this row; in the dialog it opened a ~19px gap
    between a label and the field it names, so the label read as floating between two fields. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+/* nestly_v593 (owner photo 3: the Choose photo row boxed, an arrow curving down to Save gift,
+   "align the save (shift it up)"). Two separate things opened the band between them.
+   (1) The uploader is an inline-block inside the photo paragraph's line box, so it sat on the
+   text baseline and the strut's descender left dead space UNDER a 44px-tall button — space that
+   belongs to a line of text this paragraph does not have. vertical-align:top takes the button off
+   the baseline and the line box becomes exactly the button.
+   (2) The action row carries an inline margin-top:10px from the days when this form was an inline
+   card with no gap of its own. Since v410 it is a flex column with gap:12px, so that margin was a
+   second gap stacked on the first, and only under the LAST field. The column's own gap is the
+   rhythm every other field is spaced by; the row now shares it. */
+.grow-points-form-card-v343.grow-points-form-modal-v410 .service-photo-uploader-v158{vertical-align:top}
+.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-points-form-actions-v584{margin-top:0!important;align-items:center}
 @media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
 @keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
@@ -5038,6 +5050,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    track, so auto-placement dropped it into the first free row-2 slot — column one, ahead of the
    fields it applies. Spanning two keeps it in document order, sitting on the controls' line. */
 .sales-filter-panel>.sales-filter-row>.btn{grid-row:span 2;align-self:end;white-space:nowrap}
+/* nestly_v593 (owner photo 4: a red box drawn round the whole filter bar, "do not allow
+   overlapping of boxes"). Every OTHER child of this grid carries a placement rule — field cells
+   and both buttons span the two explicit rows — but the result sentence ("Showing 55 sales · 31
+   Jul 2026 to 29 Aug 2026") had none. Auto-placement therefore dropped it into the first free
+   single-row slot, which is the first column: a 150px track, so the sentence wrapped to three
+   lines and rode up alongside the fields instead of sitting under them. It is a statement about
+   every filter above it, so it takes the full width on a row of its own, below the controls. */
+.sales-filter-panel>.row{grid-column:1/-1;grid-row:auto;align-self:start}
 .sales-filter-panel input[type=date]{width:150px}
 .sales-filter-panel input[type=search]{width:170px}
 .sales-filter-panel select{width:auto;min-width:130px}
@@ -5365,7 +5385,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 52b39540b5bd9d6ddebdde7ace356209032501cf54df0e33535819988359ca11</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · ecac6b048f647e709c9883175b7fcfdd738b40a2295299fe15202382e6a97caa</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -8953,7 +8973,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'52b39540b5bd9d6ddebdde7ace356209032501cf54df0e33535819988359ca11',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'ecac6b048f647e709c9883175b7fcfdd738b40a2295299fe15202382e6a97caa',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

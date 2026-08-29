@@ -39,8 +39,28 @@ test('closing an account is a real action, not a sentence with an address in it'
   assert.match(card, /speak to your assigned consultant/);
   assert.match(card, /replies within 30 days/);
   assert.match(card, /Legally required financial, fraud-prevention and security records may be retained/);
-  assert.match(app, /<a href="\/data-request\.html" id="pmDeleteAccount">/,
-    'the profile menu links to the request page instead of opening a dialog');
+  /* nestly_v593 (owner: "shift the entire account & privacy module into settings — put it at the
+     bottom of the page just a small button (so i dont see account & privacy in the drop down)").
+     The v188/v189 invariant is unchanged — closing an account is a real action that goes through
+     Peekaa, and it is never a self-service dialog. What moved is the DOOR: out of the account menu
+     every staff member opens, into one small button at the foot of Settings that reveals this same
+     card. Both halves are asserted, because deleting the row without adding the button would have
+     stranded the route entirely. */
+  /* The row is gone for an OWNER, who now has the button at the foot of Settings. It is kept for
+     everyone else: settingsPage() is owner-only, so deleting it outright would leave a
+     receptionist with no in-app route at all — the ⚖️ 5.1.1(v) exposure v131 records. */
+  assert.match(app, /\$\{S\.myRole==='owner'\?'':`<a href="\/data-request\.html" id="pmDeleteAccount">/,
+    'the account menu row must be owner-suppressed, not deleted');
+  assert.match(app, /function accountPrivacyFooterHtmlV593/,
+    'Settings must carry the small button that reveals the card');
+  assert.match(app, /accountPrivacyPanelV593.*innerHTML=accountDeletionCardHtml\(\)/s,
+    'the footer must reveal the SAME card, not a second copy of the copy');
+  assert.match(app, /\$\{accountPrivacyFooterHtmlV593\(\)\}<\/div>`;/,
+    'the button belongs at the foot of the Settings page, outside the tab panels');
+  /* The card still stands on its own on the pre-workspace and locked screens, where there is no
+     Settings page to reach it from — the persona chooser is the one place it was REMOVED. */
+  assert.match(app, /\$\{accountDeletionCardHtml\(\)\}\$\{legalLinks\(\)\}/,
+    'the locked/onboarding screens keep the card inline');
 });
 
 test('a request submitted before the change is still visible to the person who made it', () => {

@@ -247,9 +247,17 @@ function renderPersonaChoice(personas,{includeCustomer=true}={}){
       ${hasCustomer?`<a class="entry-choice" href="#/wallet"><span class="entry-choice-icon">${CUI.icon('customers',{size:24})}</span><div><h2>${esc(BRAND.customerLabel)}</h2><p class="muted">See your customer programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Open ${esc(BRAND.customerLabel)} ${CUI.icon('forward',{size:16})}</span></a>`:''}
     </div>
     <button class="btn ghost sm" id="personaChoiceSignOut" type="button" style="margin-top:18px">${CUI.icon('back',{size:16})}<span>Sign out</span></button>
-    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    ${/* nestly_v593 (owner, photo 1: the whole Account & privacy block boxed — "can i not show
+         this in this page? hide it inside account and privacy"). Choosing a destination is not
+         the moment to read about closing an account, and the block was taller than the three
+         workspace buttons this page exists for. What is removed is the BLOCK, not the ROUTE: the
+         v131 store-readiness suite records an ⚖️ App Store 5.1.1(v) constraint that every
+         signed-in surface must let a person START closing their account in the app, and this
+         screen is signed in with no workspace behind it yet. So it becomes the same one small
+         button Settings now uses, revealing the same card on demand. */''}
+    ${accountPrivacyFooterHtmlV593()}${legalLinks()}</section></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
-  wireAccountDeletionButton();
+  wireAccountPrivacyFooterV593();
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
 
@@ -334,6 +342,41 @@ async function renderApprovedBusinessActivation(inviteToken,isCurrent=()=>true){
     /* V286: a workspace opened by an admin after manual payment lands on the first-run guide,
        the same as the Stripe self-serve path. */
     nav(selfServeActivatedRouteV286(data.business_slug||slug));
+  };
+}
+
+/* V593 (owner, photo 1 + written instruction: "shift the entire account & privacy module into
+   settings — put it at the bottom of the page just a small button, not so huge (so i dont see
+   account & privacy in the drop down)"). Closing an account is a once-ever action, so inside the
+   workspace it gets a once-ever affordance: one small ghost button at the foot of Settings that
+   reveals the SAME accountDeletionCardHtml() card. No second copy of the copy, no second route —
+   the card and its status loader are unchanged, only where they are reached from. */
+function accountPrivacyFooterHtmlV593(){
+  return `<div class="settings-account-privacy-v593" style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">
+    <div class="row" style="align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="muted small">Account &amp; privacy</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost sm" id="accountPrivacyToggleV593" aria-expanded="false" aria-controls="accountPrivacyPanelV593">Close account or ask what data is held</button>
+    </div>
+    <div id="accountPrivacyPanelV593" hidden></div>
+  </div>`;
+}
+
+/* Renders the card only when the owner asks for it, then wires its status loader exactly as every
+   other host of the card does. Deferring the render also defers the RPC — a Settings visit that
+   never opens this panel makes no account-deletion lookup at all. */
+function wireAccountPrivacyFooterV593(){
+  const toggle=$('accountPrivacyToggleV593'),panel=$('accountPrivacyPanelV593');
+  if(!toggle||!panel)return;
+  toggle.onclick=()=>{
+    const open=panel.hidden;
+    panel.hidden=!open;
+    toggle.setAttribute('aria-expanded',String(open));
+    if(open&&!panel.dataset.filledV593){
+      panel.innerHTML=accountDeletionCardHtml();
+      panel.dataset.filledV593='1';
+      wireAccountDeletionButton();
+    }
   };
 }
 

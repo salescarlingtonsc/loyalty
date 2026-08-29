@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="778c5d1b1ea11d6c05877ecc17fed3d300d8eca46f5d48d160e3edeeb77f9899"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="2e52e7389dcc73d08055dc6c60c65175aca57c1cb18b92afd2cf31cd35390b10"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2200,6 +2200,18 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 /* line-height:2 belongs to the sentence form of this row; in the dialog it opened a ~19px gap
    between a label and the field it names, so the label read as floating between two fields. */
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+/* nestly_v593 (owner photo 3: the Choose photo row boxed, an arrow curving down to Save gift,
+   "align the save (shift it up)"). Two separate things opened the band between them.
+   (1) The uploader is an inline-block inside the photo paragraph's line box, so it sat on the
+   text baseline and the strut's descender left dead space UNDER a 44px-tall button — space that
+   belongs to a line of text this paragraph does not have. vertical-align:top takes the button off
+   the baseline and the line box becomes exactly the button.
+   (2) The action row carries an inline margin-top:10px from the days when this form was an inline
+   card with no gap of its own. Since v410 it is a flex column with gap:12px, so that margin was a
+   second gap stacked on the first, and only under the LAST field. The column's own gap is the
+   rhythm every other field is spaced by; the row now shares it. */
+.grow-points-form-card-v343.grow-points-form-modal-v410 .service-photo-uploader-v158{vertical-align:top}
+.grow-points-form-card-v343.grow-points-form-modal-v410 .grow-points-form-actions-v584{margin-top:0!important;align-items:center}
 @media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
 @keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
@@ -5037,6 +5049,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    track, so auto-placement dropped it into the first free row-2 slot — column one, ahead of the
    fields it applies. Spanning two keeps it in document order, sitting on the controls' line. */
 .sales-filter-panel>.sales-filter-row>.btn{grid-row:span 2;align-self:end;white-space:nowrap}
+/* nestly_v593 (owner photo 4: a red box drawn round the whole filter bar, "do not allow
+   overlapping of boxes"). Every OTHER child of this grid carries a placement rule — field cells
+   and both buttons span the two explicit rows — but the result sentence ("Showing 55 sales · 31
+   Jul 2026 to 29 Aug 2026") had none. Auto-placement therefore dropped it into the first free
+   single-row slot, which is the first column: a 150px track, so the sentence wrapped to three
+   lines and rode up alongside the fields instead of sitting under them. It is a statement about
+   every filter above it, so it takes the full width on a row of its own, below the controls. */
+.sales-filter-panel>.row{grid-column:1/-1;grid-row:auto;align-self:start}
 .sales-filter-panel input[type=date]{width:150px}
 .sales-filter-panel input[type=search]{width:170px}
 .sales-filter-panel select{width:auto;min-width:130px}
@@ -5685,9 +5705,17 @@ function renderSelfServePaymentPendingV286(onboarding){
       ${hasCustomer?`<a class="entry-choice" href="#/wallet"><span class="entry-choice-icon">${CUI.icon('customers',{size:24})}</span><div><h2>${esc(BRAND.customerLabel)}</h2><p class="muted">See your customer programmes, rewards, value, visits, bookings, and messages.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Open ${esc(BRAND.customerLabel)} ${CUI.icon('forward',{size:16})}</span></a>`:''}
     </div>
     <button class="btn ghost sm" id="personaChoiceSignOut" type="button" style="margin-top:18px">${CUI.icon('back',{size:16})}<span>Sign out</span></button>
-    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    ${/* nestly_v593 (owner, photo 1: the whole Account & privacy block boxed — "can i not show
+         this in this page? hide it inside account and privacy"). Choosing a destination is not
+         the moment to read about closing an account, and the block was taller than the three
+         workspace buttons this page exists for. What is removed is the BLOCK, not the ROUTE: the
+         v131 store-readiness suite records an ⚖️ App Store 5.1.1(v) constraint that every
+         signed-in surface must let a person START closing their account in the app, and this
+         screen is signed in with no workspace behind it yet. So it becomes the same one small
+         button Settings now uses, revealing the same card on demand. */''}
+    ${accountPrivacyFooterHtmlV593()}${legalLinks()}</section></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
-  wireAccountDeletionButton();
+  wireAccountPrivacyFooterV593();
   $('personaChoiceSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
 }
   function accountDeletionCardHtml(){
@@ -5706,6 +5734,41 @@ function renderSelfServePaymentPendingV286(onboarding){
     </div>
     <p class="muted small" style="margin-top:12px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
     <p class="muted small" style="margin-top:4px">Prefer to write yourself? <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p></section>`;
+}
+
+/* V593 (owner, photo 1 + written instruction: "shift the entire account & privacy module into
+   settings — put it at the bottom of the page just a small button, not so huge (so i dont see
+   account & privacy in the drop down)"). Closing an account is a once-ever action, so inside the
+   workspace it gets a once-ever affordance: one small ghost button at the foot of Settings that
+   reveals the SAME accountDeletionCardHtml() card. No second copy of the copy, no second route —
+   the card and its status loader are unchanged, only where they are reached from. */
+function accountPrivacyFooterHtmlV593(){
+  return `<div class="settings-account-privacy-v593" style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">
+    <div class="row" style="align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="muted small">Account &amp; privacy</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost sm" id="accountPrivacyToggleV593" aria-expanded="false" aria-controls="accountPrivacyPanelV593">Close account or ask what data is held</button>
+    </div>
+    <div id="accountPrivacyPanelV593" hidden></div>
+  </div>`;
+}
+
+/* Renders the card only when the owner asks for it, then wires its status loader exactly as every
+   other host of the card does. Deferring the render also defers the RPC — a Settings visit that
+   never opens this panel makes no account-deletion lookup at all. */
+function wireAccountPrivacyFooterV593(){
+  const toggle=$('accountPrivacyToggleV593'),panel=$('accountPrivacyPanelV593');
+  if(!toggle||!panel)return;
+  toggle.onclick=()=>{
+    const open=panel.hidden;
+    panel.hidden=!open;
+    toggle.setAttribute('aria-expanded',String(open));
+    if(open&&!panel.dataset.filledV593){
+      panel.innerHTML=accountDeletionCardHtml();
+      panel.dataset.filledV593='1';
+      wireAccountDeletionButton();
+    }
+  };
 }
 
 /* Shows an EXISTING request's state, if there is one. Never offers a new one. Silent on failure:

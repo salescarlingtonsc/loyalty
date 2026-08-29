@@ -22,9 +22,17 @@ function between(source,start,end){
    which is what this now checks. ⚖️ The native iOS build is the exposure: App Store guideline
    5.1.1(v) expects deletion to be INITIATED in-app, and an email address may not satisfy a
    reviewer. Recorded here because this is the store-readiness suite. */
+/* nestly_v593: a surface may now carry the route in either of two shapes — the card inline, or
+   the one small button that reveals that same card (accountPrivacyFooterHtmlV593, which fills
+   itself with accountDeletionCardHtml() and calls wireAccountDeletionButton()). The owner asked
+   for the block to stop dominating the workspace chooser; what this suite protects is that the
+   ROUTE exists on every signed-in surface, not which of the two shapes it takes. Both shapes end
+   at the same card and the same status read, so both are accepted — and a surface carrying
+   NEITHER still fails, which is the ⚖️ 5.1.1(v) exposure noted above. */
 function assertDeletionControl(source,label){
-  assert.match(source,/accountDeletionCardHtml\(\)/,`${label} must render the account & privacy route`);
-  assert.match(source,/wireAccountDeletionButton\(\)/,`${label} must show an existing request's status`);
+  const inline=/accountDeletionCardHtml\(\)/.test(source)&&/wireAccountDeletionButton\(\)/.test(source);
+  const behindButton=/accountPrivacyFooterHtmlV593\(\)/.test(source)&&/wireAccountPrivacyFooterV593\(\)/.test(source);
+  assert.ok(inline||behindButton,`${label} must render the account & privacy route`);
 }
 
 test('native business access is purchase-free and a signed-in return completes sign-out',async()=>{

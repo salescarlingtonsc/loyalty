@@ -7887,9 +7887,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
     host.innerHTML=`<div class="wallet-section-head"><div><h2>${esc(ct('Packages'))}</h2><p class="muted small">${esc(ct('Session balances and recent usage.'))}</p></div></div>${packageState.items.map(item=>{
       const packageId=String(item.client_package_id||item.id||'');
       const remaining=Math.max(0,Number(item.sessions_remaining||0));
+      /* nestly_v593: packages can now carry a deadline. The QR is an instruction to staff to
+         deduct a session, and an expired package is refused at that counter, so the card says the
+         window has closed rather than handing over a code that cannot be honoured. */
+      const expiredV593=!!item.expires_at&&new Date(item.expires_at).getTime()<Date.now();
       return `<div class="wallet-line"><div style="width:100%"><div class="row"><b>${esc(item.plan_name||'Package')}</b><span class="spacer"></span><span class="pill">${remaining} of ${Number(item.sessions_purchased||0)} left</span></div>
-      <p class="muted small" style="margin-top:4px">${esc(String(item.status||'').replaceAll('_',' '))}${item.expires_at?' · expires '+esc(walletDate(item.expires_at)):''}</p>
-      ${remaining>0&&packageId?`<button class="btn sm" type="button" data-customer-package-qr-v347="${esc(packageId)}" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>Show package QR</span></button>`:''}
+      <p class="muted small" style="margin-top:4px">${esc(expiredV593?ct('expired'):String(item.status||'').replaceAll('_',' '))}${item.expires_at?(expiredV593?' · ':' · '+esc(ct('expires'))+' ')+esc(walletDate(item.expires_at)):''}</p>
+      ${remaining>0&&packageId&&!expiredV593?`<button class="btn sm" type="button" data-customer-package-qr-v347="${esc(packageId)}" style="margin-top:10px">${CUI.icon('scan',{size:16})}<span>Show package QR</span></button>`:''}
       ${(item.usage_history||[]).length?`<div class="wallet-history">${collapsePackageUsageRuns(item.usage_history).map(use=>`<p class="muted small">${esc(walletDate(use.used_at,true))} · ${use.count>1?`${use.count} sessions ${esc(use.status)}`:esc(use.status)} · ${Number(use.remaining_after||0)} left</p>`).join('')}</div>`:''}</div></div>`;
     }).join('')}
       ${packageState.nextCursor?`<button class="btn ghost sm" id="walletPackagesMore" style="margin-top:12px">${esc(ct('Load more'))}</button>`:''}`;

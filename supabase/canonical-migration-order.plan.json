@@ -2866,6 +2866,12 @@
       "version": "20260829130000",
       "name": "nestly_v589_referral_switch_is_one_switch",
       "sourcePath": "db/migrations/20260829_nestly_v589_referral_switch_is_one_switch.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829170000",
+      "name": "nestly_v593_package_expiry",
+      "sourcePath": "db/migrations/20260829_nestly_v593_package_expiry.sql"
     }
   ]
 }

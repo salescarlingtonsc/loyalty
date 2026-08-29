@@ -2125,8 +2125,20 @@ function profileHtml(){
              the sidebar, and two doors to one page is the duplicated navigation flagged at V180.
              "move here" on Branches — it belongs in Operations setup beside Staff and Services,
              not in the account menu, so it moved to the sidebar and left here. -->
-        ${S.isSA?`<a href="#/platform" id="pmPlatform">${CUI.icon('platform',{size:20})}Platform</a>`:''}
-        <a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:20})}Account &amp; privacy</a>
+        ${/* nestly_v593 (owner, photo 2, both rows circled).
+             "Platform": it was rendered only when S.isSA — read once per session from the live
+             super_admins table, server-side — so a normal business never saw this row and the
+             console was never reachable from a tenant account. The owner's own login IS one of
+             the two super admins, which is why it appeared in their screenshot. Removed anyway:
+             #/platform keeps its own gate (route() sends a non-SA away), and a row only two
+             people in the world may follow does not belong in the menu every staff member opens.
+             It is still reachable at /admin.
+             "Account & privacy": the owner asked not to see it here, and an owner now reaches it
+             at the foot of Settings. It is kept for everyone ELSE, because settingsPage() is
+             owner-only — deleting the row outright would leave a receptionist with no in-app
+             route to close their account at all, which is the ⚖️ constraint the v131
+             store-readiness suite records against App Store 5.1.1(v). */''}
+        ${S.myRole==='owner'?'':`<a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:20})}Account &amp; privacy</a>`}
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:20})}Sign out</a>
       </div>`:''}
     </div>`;
@@ -2269,11 +2281,13 @@ function wireProfile(page){
       openBusinessQrModalV368();
     };
     const pmT=$('pmTeam');if(pmT) pmT.onclick=()=>{profileOpen=false};
-    const pmP=$('pmPlatform');if(pmP) pmP.onclick=()=>{profileOpen=false};
-    const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
+    /* nestly_v593: pmPlatform is no longer rendered, so its close-the-menu handler went with it.
+       pmDeleteAccount survives for non-owners and keeps its own, below. */
     /* v188: the profile menu links to the data-request page instead of opening a self-service
        deletion dialog; closing an account goes through Peekaa. */
     const pmD=$('pmDeleteAccount');if(pmD)pmD.onclick=()=>{profileOpen=false};
+    const pmW=$('pmWallet');if(pmW) pmW.onclick=()=>{profileOpen=false};
+
     /* V452: click-away is the shared controller's, installed once at boot rather than re-armed
        on every render of this menu. */
   }
@@ -28993,6 +29007,14 @@ async function packagesPage(options){
       <div class="split"><div><label for="kp">Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
       <div><label for="ks">Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
       <label for="kv">Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
+      ${/* nestly_v593 (owner, photo 5: "for each designed package - i need to have an expiry date
+           upon purchase. - how many days of expiry after purchase. - current model has no
+           expiry"). The clock starts at PURCHASE, so what is designed here is a LENGTH, not a
+           date — two customers buying this plan a month apart must not share one deadline.
+           Blank is a real answer and the one every package sold so far already has. */''}
+      <label for="kx">Expires after purchase <span class="muted">(optional)</span></label>
+      <div class="row" style="gap:8px;align-items:center"><input id="kx" type="number" min="1" max="3650" step="1" inputmode="numeric" placeholder="e.g. 90" style="max-width:140px"><span class="muted small">days</span></div>
+      <p class="muted small" style="margin-top:4px">Days a customer has to use every session after they buy. Leave blank and the package never expires. The deadline is fixed at purchase, so editing this later only changes packages sold from the new version onwards.</p>
       <div class="permission-banner" id="kDiscount" style="margin-top:14px"><b>Choose a service to calculate value</b><p class="muted small" style="margin-top:4px">Peekaa compares the package price with the exact service price × sessions.</p></div>
       <div class="row" style="margin-top:14px"><button class="btn" id="kadd">Save package</button><button class="btn ghost" id="kcancel" style="display:none">Cancel edit</button></div>
       ${S.myRole==='owner'&&preferencesAvailable?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
@@ -29001,7 +29023,7 @@ async function packagesPage(options){
           <span><b>Make package purchases eligible for loyalty points</b><small class="muted" style="display:block;margin-top:3px">Eligibility is evaluated once on the package price; points are earned only when an active published loyalty programme applies. Using sessions never earns points again.</small></span>
         </label>`:S.myRole==='owner'?`<div class="permission-banner" style="margin-top:20px"><b>Package points setting unavailable</b><p class="muted small" style="margin-top:4px">Peekaa cannot confirm whether package purchases earn points. The setting control is hidden; completed sale receipts remain authoritative.</p><button class="btn ghost sm" id="packagePreferencesRetry" style="margin-top:8px">Try again</button></div>`:''}`:''}
       <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
-        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''}</span>
+        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''} · ${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</span>
           <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'} — frozen. They keep their original price, sessions and service snapshot, so create a new version to change anything.`:'Not sold to anyone yet, so it can still be renamed or deleted.'}</div></div>
         <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
         ${canWrite?(packagePurchaseCount[p.id]?`${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}`
@@ -29019,8 +29041,16 @@ async function packagesPage(options){
   if($('packagePreferencesRetry'))$('packagePreferencesRetry').onclick=refreshPackagesV584;
   if(canWrite&&packagesViewV584==='plans'){
     const resetPackageForm=()=>{
-      $('kid').value='';$('kn').value='';$('kp').value='';$('ks').value='5';$('kv').value='';
+      $('kid').value='';$('kn').value='';$('kp').value='';$('ks').value='5';$('kv').value='';$('kx').value='';
       $('kFormTitle').textContent='Create a package';$('kadd').textContent='Save package';$('kcancel').style.display='none';renderPackageDiscount();
+    };
+    /* nestly_v593: one reader for the field, used by both the save call and the pre-save check,
+       so "what counts as blank" cannot differ between validating it and sending it. */
+    const packageExpiryDaysV593=()=>{
+      const raw=String($('kx')?.value||'').trim();
+      if(!raw)return null;
+      const days=Number(raw);
+      return Number.isFinite(days)?Math.trunc(days):NaN;
     };
     const renderPackageDiscount=()=>{
       const service=serviceById[$('kv').value],sessions=Number($('ks').value),price=Math.round(Number($('kp').value||0)*100);
@@ -29073,18 +29103,28 @@ async function packagesPage(options){
       const plan=(plans||[]).find(item=>item.id===button.dataset.editPackage);if(!plan)return;
       $('kid').value=plan.id;$('kn').value=plan.name;$('kp').value=(plan.price_cents/100).toFixed(2);
       $('ks').value=plan.sessions;$('kv').value=plan.service_id||'';
+      /* nestly_v593: a new version starts from what the live one says, expiry included — an owner
+         creating v2 to change the price must not silently drop v1's deadline by leaving the box
+         empty. `?? ''` and not `||''` so a value is carried and only a real NULL clears it. */
+      $('kx').value=plan.expiry_days??'';
       $('kFormTitle').textContent='Create a new package version';$('kadd').textContent='Save new version';$('kcancel').style.display='inline-flex';
       renderPackageDiscount();$('kn').focus();window.scrollTo({top:0,behavior:'smooth'});
     });
     $('kadd').onclick=async()=>{
       if($('kn').value.trim().length<2) return toast('Name it');
+      const expiryDaysV593=packageExpiryDaysV593();
+      if(expiryDaysV593!==null&&!(expiryDaysV593>=1&&expiryDaysV593<=3650))
+        return toast('Expiry must be between 1 and 3650 days, or left blank for no expiry.');
       const button=$('kadd');button.disabled=true;
       const existing=(plans||[]).find(plan=>plan.id===$('kid').value);
       const {data,error}=await sb.rpc('save_package_plan_v102',{
         p_business:S.biz.id,p_plan:$('kid').value||null,p_name:$('kn').value.trim(),
         p_price_cents:Math.round(parseFloat($('kp').value||'0')*100),
         p_sessions:parseInt($('ks').value||'1'),p_service:$('kv').value||null,
-        p_active:existing?existing.active:true
+        p_active:existing?existing.active:true,
+        /* nestly_v593: blank must reach the server as NULL ("never expires"), not 0 — the RPC
+           refuses 0 as a package that would be dead the moment it was sold. */
+        p_expiry_days:packageExpiryDaysV593()
       });
       button.disabled=false;
       if(error)return fail(error);
@@ -29125,10 +29165,18 @@ async function packagesPage(options){
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
 	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
     $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
-      ${visible.map(k=>`<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">v${Number(k.plan_version||1)} · ${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}</td>
+      ${visible.map(k=>{
+      /* nestly_v593: the server already reports 'expired' as the status of a package whose window
+         has closed (staff_list_package_entitlements_v102 derives it, it is not a stored value).
+         Offering "Use session" on one would put a member of staff in front of a customer holding
+         a button the till is about to refuse with package_expired, so the row states the deadline
+         and drops the action instead. */
+      const expiredV593=k.status==='expired';
+      return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">v${Number(k.plan_version||1)} · ${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${k.expires_at?`<div class="muted small">${expiredV593?'Expired':'Use by'} ${esc(sgt(k.expires_at))}</div>`:''}</td>
       <td>${k.remaining}/${k.sessions||'?'}</td>
-      <td><span class="pill ${k.status==='active'?'on':'off'}">${k.status.replace('_',' ')}</span></td>
-      <td>${canWrite&&k.remaining>0?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`).join('')}</table>
+      <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
+      <td>${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`;
+    }).join('')}</table>
       <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} customer packages · page ${packagePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
       ${packageHistory.length?`<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px"><b>Recent session correction history</b><p class="muted small" style="margin-top:4px">Use Undo session use only when a package session was deducted by mistake. It adds one session back and never refunds a payment. ${workspaceTemplateHtmlV97(workflow?.may_have_more?'packageHistoryWithOlder':'packageHistory',{shown:packageHistory.length,total:Number(workflow?.total_sales??packageHistory.length),limit:Number(workflow?.limit||100)})}</p><div class="cui-table-wrap"><table data-responsive="true" class="cui-table" style="margin-top:8px"><tr><th>When</th><th>Customer</th><th>Relationship</th><th>Result</th><th></th></tr>
         ${packageHistory.map(x=>`<tr><td>${sgt(x.occurred_at)}</td><td>${esc(x.customer_name||'Customer')}</td><td>${x.is_reversal
@@ -32105,8 +32153,9 @@ async function settingsPage(){
       <p class="muted small" style="margin:4px 0 8px">Reusable module sets — save one from a staff member's "Modules" panel below, then apply it to others. Example: Staff A → Dashboard + Customers. Staff B → Inventory only.</p>
       <div id="tplList">${CUI.skeletonGrid({cards:1,lines:3})}</div>
     </div>
-</section></div>`;
+</section>${accountPrivacyFooterHtmlV593()}</div>`;
   M().querySelector('.settings-page')?.setAttribute('data-workspace-i18n','');
+  wireAccountPrivacyFooterV593();
   /* Tabbed sections (ARIA tablist): every field stays in the DOM at once — only the active
      panel is shown — so each Save button keeps reading exactly the inputs it always did, no
      save semantics change. Roving tabindex + arrow/Home/End keys make the tabs keyboard-complete.

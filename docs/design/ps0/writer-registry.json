@@ -1285,7 +1285,7 @@
     {
       "id": "db.fn:public.sell_package_v102/5",
       "surface": "db_function",
-      "latest_file": "20260821000003_nestly_v409_canonical_points_balance.sql",
+      "latest_file": "20260829170000_nestly_v593_package_expiry.sql",
       "rows_written": "client_packages:INSERT, sales:INSERT, sale_intent_operations:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "sell_package_v102(p_business,p_client,p_plan,p_branch,p_idempotency_key)",
@@ -1293,7 +1293,7 @@
       "reads": "package_plans/services/branches/clients/staff; points_ledger by exact sale and customer",
       "idempotency": "business/key advisory lock + immutable SHA-256 request hash including branch + sale_intent_operations exact JSON replay",
       "locking": "advisory + staff FOR UPDATE + plan/branch FOR SHARE",
-      "package_membership": "atomically inserts one client_packages row with purchase snapshots",
+      "package_membership": "atomically inserts one client_packages row with purchase snapshots, including the nestly_v593 expiry term and the SGT end-of-day deadline derived from it (NULL = never expires)",
       "payment": "inserts one branch/staff-attributed package sale at the frozen plan price",
       "loyalty": "sale trigger applies the owner policy once; response points_earned is summed only from points_ledger rows bearing the exact sale_id and points_total is ledger-derived",
       "reversal": "sale remains compensatable through the canonical reversal provenance flow",
@@ -1355,7 +1355,7 @@
     {
       "id": "db.fn:public.use_package_session_v102/4",
       "surface": "db_function",
-      "latest_file": "20260821000003_nestly_v409_canonical_points_balance.sql",
+      "latest_file": "20260829170000_nestly_v593_package_expiry.sql",
       "rows_written": "client_packages:UPDATE, package_session_consumptions:INSERT, sales:INSERT",
       "detected_signals": "idem-signal, advisory-lock, for-update",
       "entry_point": "use_package_session_v102(p_business,p_client_package,p_branch,p_idempotency_key)",
@@ -1363,7 +1363,7 @@
       "reads": "frozen client_packages snapshots, branches/service_branches, points_ledger",
       "idempotency": "business/key advisory lock + immutable MD5 request payload including explicit branch + exact JSON result persisted on package_session_consumptions",
       "locking": "advisory + client package/staff FOR UPDATE + branch FOR SHARE",
-      "package_membership": "decrements exactly one remaining session and freezes the before/after evidence",
+      "package_membership": "decrements exactly one remaining session and freezes the before/after evidence; nestly_v593 refuses an expired entitlement with package_expired before any row is touched, while a replay returns the original result untested",
       "payment": "inserts a $0 service visit at the explicitly selected branch; no payment is created",
       "loyalty": "points_earned is fixed at zero for consumption and points_total is snapshotted from the ledger into the replay result",
       "reversal": "the consumption/sale remains linked to package_session_reversals for compensating restoration",
@@ -3349,7 +3349,7 @@
     },
     {
       "id": "browser.rpc:app/app.js:save_package_plan_v102",
-      "reason": "browser RPC 'save_package_plan_v102' replaces the former direct package_plans insert with an authorized package-module configuration writer. It derives and freezes list-price comparison snapshots from the linked tenant service and writes audit evidence, but it cannot sell a package, charge a customer, award points, consume a session, or write another customer-value row."
+      "reason": "browser RPC 'save_package_plan_v102' replaces the former direct package_plans insert with an authorized package-module configuration writer. It derives and freezes list-price comparison snapshots from the linked tenant service, records the optional nestly_v593 expiry term (days after purchase; the DATE itself is stamped by sell_package_v102, never here), and writes audit evidence, but it cannot sell a package, charge a customer, award points, consume a session, or write another customer-value row."
     },
     {
       "id": "browser.rpc:app/app.js:set_package_points_policy_v102",
