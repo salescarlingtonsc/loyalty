@@ -10417,7 +10417,15 @@ async function bookingsPage(){
     if(bookingRequestPageV584>=pageCountV584(br.length))bookingRequestPageV584=0;
     const visibleV584=pageSliceV584(br,bookingRequestPageV584);
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
-      ${visibleV584.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);return `<tr data-booking-row="${esc(b.id)}"${b.appointment_id?` class="booking-row-openable-v378" data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
+      ${visibleV584.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);
+      /* nestly_v594 (owner, photo 1: the one New row boxed in red — "please highlight those
+         appointments that yet to confirm"). Every row looked the same weight, so the single row
+         that still needs a decision had to be found by reading the Status column of all of them.
+         `actionable` is the SAME test the tick/cross buttons already use, so what is highlighted
+         is exactly what can still be acted on — a row that says New but is not decidable by this
+         member of staff is not marked, because it is not their action to take. */
+      const rowClassV594=[b.appointment_id?'booking-row-openable-v378':'',actionable?'booking-row-awaiting-v594':''].filter(Boolean).join(' ');
+      return `<tr data-booking-row="${esc(b.id)}"${rowClassV594?` class="${rowClassV594}"`:''}${b.appointment_id?` data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
         : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>

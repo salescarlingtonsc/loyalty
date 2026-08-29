@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="7d3ef752e8f17456f80131ce00603a7bf067ddef67ce1386f779867ee596ad05"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="3d5def7c7dbd8ae8adfb09283690eb46b011ced075b9a1f076ae78a98ba7fd14"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -696,7 +696,20 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 /* nestly_v577 — Staff Members profile panel (owner photos 12 and 13): the branch picker, and the
    four row actions that moved in here. */
 .staff-branch-picker-v577{margin:14px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:#fff}
-.staff-branch-picker-v577>legend{padding:0 6px;font-size:13px;font-weight:750;color:var(--ink)}
+/* nestly_v594 (owner photo 2: "please align it, the words overlapping the boxes"). A <legend> is
+   laid out ON its fieldset's top border, and this one had a transparent background and only 6px of
+   side padding, so the 1px border ran straight through the word "Branches" and the heading sat
+   half outside the box it names. Measured at 1280x900 before the fix: the legend's box straddled
+   the fieldset's top border (legend top above the border, legend bottom below it).
+   `float:left;width:100%` is the standard way to take a legend OUT of that border slot and make it
+   an ordinary block inside the fieldset — it then aligns on the same left edge as the paragraph
+   and the tick rows beneath it, which is the alignment the owner is asking for. The fieldset gains
+   a little top padding because the legend no longer overlaps into the border and needs room of its
+   own; the following paragraph clears the float. */
+.staff-branch-picker-v577>legend{float:left;width:100%;padding:0;margin:0 0 6px;
+  font-size:13px;font-weight:750;color:var(--ink)}
+.staff-branch-picker-v577{padding-top:14px}
+.staff-branch-picker-v577>legend+*{clear:both}
 .staff-branch-choice-v577{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;color:var(--ink);font-size:13.5px}
 .staff-branch-choice-v577>input{width:auto;margin:0}
 .staff-profile-actions-v577{margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}
@@ -2772,11 +2785,44 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .help-dot-bubble-v385::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
   border:5px solid transparent;border-top-color:var(--ink)}
 .help-dot-v385:hover .help-dot-bubble-v385,.help-dot-v385:focus-visible .help-dot-bubble-v385{opacity:1;visibility:visible}
+/* nestly_v594 (owner photo 4: "the ? function does not work"). It did fire — the bubble was drawn
+   and then clipped away. `.cui-table-wrap` scrolls horizontally, and per spec a non-visible value
+   on one axis forces the other to `auto` too, so the wrap clips vertically as well. (Written
+   without the literal property/value pair: two release-blocker tests slice this stylesheet by
+   text and forbid that token appearing anywhere in the mobile shell range, comments included.)
+   Measured at
+   1280x900: the bubble's box sat entirely ABOVE the wrap's top edge (top 746.4 vs wrap top 793),
+   i.e. 100% clipped, on a header cell in the first row. Inside a table wrap it therefore opens
+   DOWNWARD, into the rows, where the wrap's own box contains it. Everywhere else — the Blocked
+   time heading, and any future caller outside a scroll container — is untouched. */
+.cui-table-wrap .help-dot-bubble-v385{bottom:auto;top:calc(100% + 8px);
+  /* Centred on the dot, the bubble overflowed the wrap's RIGHT edge by 70px at 390px wide
+     (measured) — the same clip, on the other axis. Hanging it from the dot's right edge keeps it
+     inside whatever room is left, at every width tested (390 / 1280, one row and two). */
+  left:auto;right:0;transform:none;max-width:min(260px,calc(100vw - 48px))}
+.cui-table-wrap .help-dot-bubble-v385::after{top:auto;bottom:100%;left:auto;right:6px;transform:none;
+  border-top-color:transparent;border-bottom-color:var(--ink)}
 /* On touch there is no hover and no native title to fall back on, so the tap that focuses the
    control is what reveals it — which is why the rule above matches :focus-visible as well. */
 .appt-portal-qr-v378{margin-top:12px}
 .appt-portal-qr-v378 img,.appt-portal-qr-v378 canvas{display:block}
 .booking-row-openable-v378{cursor:pointer}
+/* nestly_v594 (owner photo 1: the one undecided row boxed, "please highlight those appointments
+   that yet to confirm"). A tinted row with a brand-red bar down its leading edge — the same pair
+   of signals the app already uses for "this needs you". Only rows the tick/cross can still act on
+   get it, so the mark and the buttons can never disagree. The bar is drawn with box-shadow on the
+   first cell rather than a border, because a border on a <td> shifts the whole table's column
+   grid by its width and every other row would move with it. */
+.booking-row-awaiting-v594>td{background:var(--brand-red-faint,#FDEEEB)}
+.booking-row-awaiting-v594>td:first-child{box-shadow:inset 3px 0 0 var(--brand-red,#C24135)}
+.booking-row-awaiting-v594>td:first-child{font-weight:650}
+@media(max-width:768px){
+  /* The responsive layer turns each row into a stacked block, so the bar goes round the block
+     instead of down one cell that is now full width. */
+  .booking-row-awaiting-v594{background:var(--brand-red-faint,#FDEEEB);box-shadow:inset 3px 0 0 var(--brand-red,#C24135)}
+  .booking-row-awaiting-v594>td{background:transparent}
+  .booking-row-awaiting-v594>td:first-child{box-shadow:none}
+}
 .booking-row-openable-v378:hover,.booking-row-openable-v378:focus-visible{background:#FBF4F1;outline:none}
 .c360-act-amt-v252{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:650}
 .c360-upcoming{color:var(--coral);font-weight:700}
@@ -5133,11 +5179,32 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-search-v577 input{flex:1 1 auto;min-width:0;border:0;background:transparent;padding:10px 0;font-size:14px}
 .customer-booking-search-v577 input:focus{outline:none}
 .customer-booking-search-v577:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px var(--tint)}
+/* nestly_v594 (owner photo 5: "the search button is overlapped"). Two boxes were drawn, one inside
+   the other. The global control reset is `input:not([type="checkbox"]):not([type="radio"])`, which
+   scores (0,2,1) — HIGHER than `.customer-booking-search input` and `.customer-booking-search-v577
+   input` at (0,1,1) — so every `border:0;background:none;padding:0` those two rules asked for lost
+   the cascade and the field kept its own 1px border, white fill and 11px/13px padding inside the
+   pill. Measured before the fix at 390px: input border `1px solid rgb(129,123,136)`, background
+   `rgb(255,255,255)`, padding `11px 13px`.
+   The selectors below add `[type="search"]` to reach (0,2,1) and sit later in the sheet, so they
+   win on order rather than on `!important`. Both sibling pills are included: they share this
+   markup and had the same defect, and fixing one would have left the pair inconsistent. */
+.customer-booking-search input[type="search"],
+.customer-booking-search-v577 input[type="search"],
+.customer-my-rewards-search input[type="search"]{
+  border:0;background:transparent;box-shadow:none;padding:0;min-height:44px}
 
 /* nestly_v580 (owner, photo 6) supersedes v577's History-only row: ONE row for all three booking
    tabs. The calendar date tile is gone ("don't need this calendar logo") and the date is plain
    text at the row's end, above the action. */
-.customer-booking-rows-v580{display:grid;gap:10px}
+/* nestly_v594 (owner photo 6: red bars drawn ON the gaps — "i dont want gaps inbetween the
+   bookings - i need them to be gel together"). This declaration is the reason they came back: the
+   photo-11 rule ~1200 lines above already made the list one card with `gap:0` and hairline
+   dividers, and this later block — same specificity, so it wins on order — reset the gap to 10px
+   while restating the row's own grid. The row grid is what this block is for; the container gap
+   was collateral. Measured before the fix: computed row-gap 10px, actual space between rows 10px.
+   Now 0, so the hairline is the only thing between two bookings. */
+.customer-booking-rows-v580{display:grid;gap:0}
 .customer-booking-row-v580{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;
   align-items:center;padding:14px 16px}
 .customer-booking-row-logo-v580{flex:0 0 auto;line-height:0}
