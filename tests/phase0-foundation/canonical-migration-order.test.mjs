@@ -116,10 +116,10 @@ test('materializer creates one byte-preserving 448451 and deterministic manifest
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v600_register_v361_bringback_cron' // tail — registers the manually-created v361 bring-back cron job in source
-    // previously: nestly_v599_browser_write_boundaries // the browser roles lose the writes nothing in the product uses
-    // (v599 itself moved earlier in this list: its real applied ledger version is 20260829094129,
-    // not the proposed 20260829190000 it was authored with)
+    'nestly_v598_shop_hours_are_the_default' // tail — v598 keeps the tail because its authored stamp (20260829180000) is the latest
+    // v599 (real ledger 20260829094129) and v600 (real ledger 20260829095932) were applied via MCP,
+    // which stamps with actual UTC apply time; both therefore sort BEFORE the afternoon-authored
+    // v586-v598 stamps and sit at their real chronological slots earlier in this list.
   );
   const recovery = JSON.parse(await readFile(path.join(root, recoveryRelativePath), 'utf8'));
   assert.equal(recovery.migrations[0].statementCount, 3);

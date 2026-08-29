@@ -4573,13 +4573,21 @@
     {
       "order": 482,
       "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
+      "semanticVersion": "v600",
+      "proposedDeployVersion": "20260829095932",
+      "sha256": "0d1bed87f662bfdde06595ddece83a84c2fe820dfbd5f8f2ee4105bf5a0dc0a9"
+    },
+    {
+      "order": 483,
+      "kind": "executable",
       "path": "db/migrations/20260829_nestly_v586_tier_basis_reaches_the_draft.sql",
       "semanticVersion": "v586",
       "proposedDeployVersion": "20260829100000",
       "sha256": "54ad9da9bf42b20c6e103d6c14637ff3d66e705b9e51fb4b079c1ddd15184e73"
     },
     {
-      "order": 483,
+      "order": 484,
       "kind": "executable",
       "path": "db/migrations/20260829_nestly_v587_join_qr_names_its_business.sql",
       "semanticVersion": "v587",
@@ -4587,7 +4595,7 @@
       "sha256": "15641b3d772e8e0e5489c605b9d4a345d7f54c1c9f897e1b5553047b7eb86cce"
     },
     {
-      "order": 484,
+      "order": 485,
       "kind": "executable",
       "path": "db/migrations/20260829_nestly_v588_staff_signup_flow_integrity.sql",
       "semanticVersion": "v588",
@@ -4595,7 +4603,7 @@
       "sha256": "ea5cfa45b4ee4c8a32d95ef9dae5ad1dbf0a25abdfdc9f023546c7c884b92cf2"
     },
     {
-      "order": 485,
+      "order": 486,
       "kind": "executable",
       "path": "db/migrations/20260829_nestly_v589_referral_switch_is_one_switch.sql",
       "semanticVersion": "v589",
@@ -4603,7 +4611,7 @@
       "sha256": "37749b7f96379895498a8766e4c6230a7c8698195639bdf524b62d7d3b12432c"
     },
     {
-      "order": 486,
+      "order": 487,
       "kind": "executable",
       "path": "db/migrations/20260829_nestly_v593_package_expiry.sql",
       "semanticVersion": "v593",
@@ -4611,20 +4619,12 @@
       "sha256": "926ff8b649356b083177991b90c35f254c883a0b49ac3ab34787a6e8e799acb5"
     },
     {
-      "order": 487,
+      "order": 488,
       "kind": "executable",
       "path": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql",
       "semanticVersion": "v598",
       "proposedDeployVersion": "20260829180000",
       "sha256": "98f0ebb7ba93f78ac58d87944bdc6dfdeb451af08662966c5b27f6c1fc9989d4"
-    },
-    {
-      "order": 488,
-      "kind": "executable",
-      "path": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
-      "semanticVersion": "v600",
-      "proposedDeployVersion": "20260829200000",
-      "sha256": "0d1bed87f662bfdde06595ddece83a84c2fe820dfbd5f8f2ee4105bf5a0dc0a9"
     }
   ]
 }

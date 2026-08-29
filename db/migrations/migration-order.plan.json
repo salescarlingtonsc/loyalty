@@ -2904,6 +2904,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
+      "semanticVersion": "v600",
+      "proposedDeployVersion": "20260829095932"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260829_nestly_v586_tier_basis_reaches_the_draft.sql",
       "semanticVersion": "v586",
       "proposedDeployVersion": "20260829100000"
@@ -2937,12 +2943,6 @@
       "path": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql",
       "semanticVersion": "v598",
       "proposedDeployVersion": "20260829180000"
-    },
-    {
-      "kind": "executable",
-      "path": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
-      "semanticVersion": "v600",
-      "proposedDeployVersion": "20260829200000"
     }
   ]
 }

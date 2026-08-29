@@ -4832,6 +4832,16 @@
     {
       "order": 483,
       "kind": "pending",
+      "version": "20260829095932",
+      "name": "nestly_v600_register_v361_bringback_cron",
+      "path": "supabase/migrations/20260829095932_nestly_v600_register_v361_bringback_cron.sql",
+      "octetLength": 1744,
+      "sha256": "0d1bed87f662bfdde06595ddece83a84c2fe820dfbd5f8f2ee4105bf5a0dc0a9",
+      "provenance": "local-source"
+    },
+    {
+      "order": 484,
+      "kind": "pending",
       "version": "20260829100000",
       "name": "nestly_v586_tier_basis_reaches_the_draft",
       "path": "supabase/migrations/20260829100000_nestly_v586_tier_basis_reaches_the_draft.sql",
@@ -4840,7 +4850,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 484,
+      "order": 485,
       "kind": "pending",
       "version": "20260829110000",
       "name": "nestly_v587_join_qr_names_its_business",
@@ -4850,7 +4860,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 485,
+      "order": 486,
       "kind": "pending",
       "version": "20260829120000",
       "name": "nestly_v588_staff_signup_flow_integrity",
@@ -4860,7 +4870,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 486,
+      "order": 487,
       "kind": "pending",
       "version": "20260829130000",
       "name": "nestly_v589_referral_switch_is_one_switch",
@@ -4870,7 +4880,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 487,
+      "order": 488,
       "kind": "pending",
       "version": "20260829170000",
       "name": "nestly_v593_package_expiry",
@@ -4880,23 +4890,13 @@
       "provenance": "local-source"
     },
     {
-      "order": 488,
+      "order": 489,
       "kind": "pending",
       "version": "20260829180000",
       "name": "nestly_v598_shop_hours_are_the_default",
       "path": "supabase/migrations/20260829180000_nestly_v598_shop_hours_are_the_default.sql",
       "octetLength": 13299,
       "sha256": "98f0ebb7ba93f78ac58d87944bdc6dfdeb451af08662966c5b27f6c1fc9989d4",
-      "provenance": "local-source"
-    },
-    {
-      "order": 489,
-      "kind": "pending",
-      "version": "20260829200000",
-      "name": "nestly_v600_register_v361_bringback_cron",
-      "path": "supabase/migrations/20260829200000_nestly_v600_register_v361_bringback_cron.sql",
-      "octetLength": 1744,
-      "sha256": "0d1bed87f662bfdde06595ddece83a84c2fe820dfbd5f8f2ee4105bf5a0dc0a9",
       "provenance": "local-source"
     }
   ]
