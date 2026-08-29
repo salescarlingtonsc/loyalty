@@ -732,6 +732,10 @@ function rememberCustomerJoinConfirmedV596(token,slug){
    window is what keeps v599's lesson intact: a record abandoned in an old tab expires, so it can
    never silently suppress the question on a later scan. */
 const CUSTOMER_JOIN_HANDOFF_KEY_V606='nestly.customer.joinHandoffV606';
+/* nestly_v609: the business's display NAME, learned from the /join page's handoff or the sheet's
+   preview. Only for copy — the sign-in funnel names what the scan is about to join, so the scan
+   never looks lost between "Yes, join" and the finished account. */
+let pendingCustomerJoinBusinessNameV609='';
 const CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606=10*60*1000;
 function consumeCustomerJoinHandoffV606(token){
   try{
@@ -740,6 +744,7 @@ function consumeCustomerJoinHandoffV606(token){
     if(!raw||typeof raw.token!=='string'||raw.token!==String(token||''))return false;
     if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
+    pendingCustomerJoinBusinessNameV609=String(raw.name||'').slice(0,120);
     rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
     return true;
   }catch{return false}
@@ -3686,6 +3691,7 @@ async function confirmCustomerJoinV571(token,isCurrent){
   /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
      future payload that nests the business still names it. */
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
+  pendingCustomerJoinBusinessNameV609=name.slice(0,120);
   pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
   return new Promise(resolve=>{
     const overlay=document.createElement('div');

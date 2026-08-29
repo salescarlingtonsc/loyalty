@@ -472,7 +472,7 @@ function renderConfirm(page,joinToken){
     try{
       sessionStorage.setItem('nestly.customer.pendingJoinToken',joinToken);
       sessionStorage.setItem('nestly.customer.joinConfirmedV596',JSON.stringify({token:joinToken,slug:String(page.slug||'')}));
-      sessionStorage.setItem('nestly.customer.joinHandoffV606',JSON.stringify({token:joinToken,slug:String(page.slug||''),at:Date.now()}));
+      sessionStorage.setItem('nestly.customer.joinHandoffV606',JSON.stringify({token:joinToken,slug:String(page.slug||''),name:name,at:Date.now()}));
     }catch{}
     location.href='/app#/join?token='+encodeURIComponent(joinToken);
   };

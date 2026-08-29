@@ -37,6 +37,7 @@ test('Yes hands off to the app with all three records, then opens the join route
   assert.match(yes,/sessionStorage\.setItem\('nestly\.customer\.pendingJoinToken',joinToken\)/);
   assert.match(yes,/'nestly\.customer\.joinConfirmedV596'/,'the signed-in resume must not re-ask');
   assert.match(yes,/'nestly\.customer\.joinHandoffV606'.*at:Date\.now\(\)/,'the handoff is timestamped');
+  assert.match(yes,/name:name/,'v609: the handoff carries the display name the funnel shows');
   assert.match(yes,/location\.href='\/app#\/join\?token='\+encodeURIComponent\(joinToken\)/);
 });
 
@@ -70,6 +71,13 @@ test('a fresh handoff for the same token is consumed exactly once',()=>{
   assert.deepEqual(remembered,[{token:'T'.repeat(24),slug:'jess-salon'}],
     'consuming also records the confirmation for the signed-in resume');
   assert.equal(consume('T'.repeat(24)),false,'a second consult finds nothing');
+});
+
+test('the sign-in funnel names the business the scan is about to join (v609)',()=>{
+  const shell=app.slice(app.indexOf('function customerRegistrationShell'),app.indexOf('function renderCustomerOtpVerification'));
+  assert.match(shell,/pendingCustomerJoinToken\s*\?/,'the strip renders only while a scan is pending');
+  assert.match(shell,/Scan received — you will join <b>\$\{esc\(pendingCustomerJoinBusinessNameV609\|\|'this business'\)\}<\/b>/,
+    'the scan must stay visible through sign-in, OTP and profile');
 });
 
 test('a stale or mismatched handoff never suppresses the question (the v599 lesson)',()=>{

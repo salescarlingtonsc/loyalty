@@ -1721,6 +1721,10 @@ function customerJoinAlreadyConfirmedV596(token){
    window is what keeps v599's lesson intact: a record abandoned in an old tab expires, so it can
    never silently suppress the question on a later scan. */
 const CUSTOMER_JOIN_HANDOFF_KEY_V606='nestly.customer.joinHandoffV606';
+/* nestly_v609: the business's display NAME, learned from the /join page's handoff or the sheet's
+   preview. Only for copy — the sign-in funnel names what the scan is about to join, so the scan
+   never looks lost between "Yes, join" and the finished account. */
+let pendingCustomerJoinBusinessNameV609='';
 const CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606=10*60*1000;
 function consumeCustomerJoinHandoffV606(token){
   try{
@@ -1729,6 +1733,7 @@ function consumeCustomerJoinHandoffV606(token){
     if(!raw||typeof raw.token!=='string'||raw.token!==String(token||''))return false;
     if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
+    pendingCustomerJoinBusinessNameV609=String(raw.name||'').slice(0,120);
     rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
     return true;
   }catch{return false}
@@ -4297,9 +4302,18 @@ function setCustomerSurfaceDocumentV167(){
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
+  /* nestly_v609 (owner walkthrough: "previously was working but now keep failing"). After the
+     /join page's Yes, the funnel used to open on a generic "Welcome to Peekaa" with no trace of
+     the scan — to the person holding the phone that IS a failure, even though the join was safely
+     recorded and resumes after sign-in. Every screen this shell hosts (sign-in, OTP, profile) now
+     says what the scan is about to join. Copy only: the join still fires exactly once, after
+     sign-in, through the recorded confirmation. */
+  const joinContextV609=pendingCustomerJoinToken
+    ?`<section class="card" style="margin-bottom:14px;padding:12px 16px"><div class="row" style="gap:10px">${CUI.icon('scan',{size:18})}<p class="small" style="margin:0">Scan received — you will join <b>${esc(pendingCustomerJoinBusinessNameV609||'this business')}</b> as soon as you sign in or create your account.</p></div></section>`
+    :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -7966,6 +7980,7 @@ async function confirmCustomerJoinV571(token,isCurrent){
   /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
      future payload that nests the business still names it. */
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
+  pendingCustomerJoinBusinessNameV609=name.slice(0,120);
   pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
   return new Promise(resolve=>{
     const overlay=document.createElement('div');

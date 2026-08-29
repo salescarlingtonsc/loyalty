@@ -680,9 +680,18 @@ function setCustomerThemePreferenceV190(preference){
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
+  /* nestly_v609 (owner walkthrough: "previously was working but now keep failing"). After the
+     /join page's Yes, the funnel used to open on a generic "Welcome to Peekaa" with no trace of
+     the scan — to the person holding the phone that IS a failure, even though the join was safely
+     recorded and resumes after sign-in. Every screen this shell hosts (sign-in, OTP, profile) now
+     says what the scan is about to join. Copy only: the join still fires exactly once, after
+     sign-in, through the recorded confirmation. */
+  const joinContextV609=pendingCustomerJoinToken
+    ?`<section class="card" style="margin-bottom:14px;padding:12px 16px"><div class="row" style="gap:10px">${CUI.icon('scan',{size:18})}<p class="small" style="margin:0">Scan received — you will join <b>${esc(pendingCustomerJoinBusinessNameV609||'this business')}</b> as soon as you sign in or create your account.</p></div></section>`
+    :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
