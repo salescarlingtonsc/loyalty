@@ -91,7 +91,9 @@ test('app shell: /app?token=… is folded into the join route, real routes are n
 
 test('the QR encodes the fragment-free URL; the visible link keeps the canonical hash form',()=>{
   const site=app.slice(app.indexOf('const showJoinQr=async data=>'),app.indexOf('setJoinQrLeadV456(\'Print this QR'));
-  assert.match(site,/const qrContentV603=window\.NestlyNativeBridge\.publicUrl\(`\/\?token=\$\{encodeURIComponent\(data\.join_token\)\}`\)/,
+  /* v606 moved the QR's landing from the root query to the dedicated /join page — still no
+     fragment anywhere in the scanned URL. */
+  assert.match(site,/const qrContentV603=window\.NestlyNativeBridge\.publicUrl\(`\/join\?token=\$\{encodeURIComponent\(data\.join_token\)\}`\)/,
     'the QR content has no # for a scanner to truncate at');
   assert.match(site,/new QRCode\(qrEl,\{text:qrContentV603,/,'and it is what the QR actually draws');
   assert.match(site,/url=publicAppUrl\(`join\?token=\$\{encodeURIComponent\(data\.join_token\)\}`\)/,

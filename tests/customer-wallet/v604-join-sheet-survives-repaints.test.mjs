@@ -35,7 +35,7 @@ test('the sheet survives a competing repaint: its guard is the scan, not the ren
 });
 
 test('signed-out flow: the Yes is recorded before the staleness bail',()=>{
-  const branch=app.slice(app.indexOf('customerJoinAskedThisVisitV599){'),app.indexOf('nestly_v588'));
+  const branch=app.slice(app.indexOf('consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)'),app.indexOf('nestly_v588'));
   const record=branch.indexOf('rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken');
   const bail=branch.indexOf('if(!isRouteCurrent())return;');
   assert.ok(record>=0&&bail>=0&&record<bail,
@@ -54,6 +54,8 @@ test('signed-in flow: a Yes on a stale invocation re-enters the route instead of
 });
 
 test('the ask-once flag still prevents a second sheet stacking on the first',()=>{
-  assert.match(app,/if\(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599\)\{\s*customerJoinAskedThisVisitV599=true;/,
-    'unchanged: one ask per visit, re-armed on every fresh scan (v599) and every page load');
+  /* v606 added the /join-page handoff consult to the same condition; the ask-once latch itself
+     is unchanged and still guards the sheet. */
+  assert.match(app,/if\(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599\s*&&!consumeCustomerJoinHandoffV606\(pendingCustomerJoinToken\)\)\{\s*customerJoinAskedThisVisitV599=true;/,
+    'one ask per visit, re-armed on every fresh scan (v599), skipped when /join already asked (v606)');
 });

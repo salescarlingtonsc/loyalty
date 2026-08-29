@@ -33763,7 +33763,10 @@ async function loadSignupConfig(host){
        arrived at the bare marketing page — the business never popped up, with no error anywhere.
        The QR therefore encodes a fragment-free URL: the landing page reads ?token= and forwards
        it into '#/join?token=…' itself. The visible link keeps the canonical hash form. */
-    const qrContentV603=window.NestlyNativeBridge.publicUrl(`/?token=${encodeURIComponent(data.join_token)}`);
+    /* nestly_v606: the QR lands on the dedicated /join page, which paints "Join <business>?"
+       immediately — one fetch, one card, no SPA boot in front of the question. The root
+       (?token=) and hash forms both still resolve for older prints. */
+    const qrContentV603=window.NestlyNativeBridge.publicUrl(`/join?token=${encodeURIComponent(data.join_token)}`);
     const qrEl=$('joinQr');qrEl.innerHTML='<span class="muted small">Rendering QR…</span>';
     try{await loadQrLibrary()}catch{if(qrEl.isConnected)qrEl.innerHTML='<span class="err small">QR renderer could not load. Retry.</span>';if($('joinQrStatus'))$('joinQrStatus').textContent='The QR image could not load. Retry without replacing the link.';return false}
     if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:qrContentV603,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});

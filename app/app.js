@@ -1710,6 +1710,24 @@ function rememberCustomerJoinConfirmedV596(token,slug){
 function customerJoinAlreadyConfirmedV596(token){
   return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
 }
+/* nestly_v606: the /join page asks "Join <business>?" BEFORE the app loads, and records the Yes
+   in this timestamped handoff. Consuming it (one-shot, removed on read) lets the signed-out join
+   route skip its own sheet instead of asking the same question twice in a row. The freshness
+   window is what keeps v599's lesson intact: a record abandoned in an old tab expires, so it can
+   never silently suppress the question on a later scan. */
+const CUSTOMER_JOIN_HANDOFF_KEY_V606='nestly.customer.joinHandoffV606';
+const CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606=10*60*1000;
+function consumeCustomerJoinHandoffV606(token){
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(CUSTOMER_JOIN_HANDOFF_KEY_V606)||'null');
+    sessionStorage.removeItem(CUSTOMER_JOIN_HANDOFF_KEY_V606);
+    if(!raw||typeof raw.token!=='string'||raw.token!==String(token||''))return false;
+    if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
+    pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
+    rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
+    return true;
+  }catch{return false}
+}
 function customerRecoveryVerified(){
   try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
 }
@@ -3639,7 +3657,8 @@ async function route(){
          and by then the person is signed in and this branch is not the one that runs. So it is not
          consulted here at all. The in-memory flag below is only so a re-render of the same visit
          does not stack a second sheet on the first; it resets on every scan and every page load. */
-      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599){
+      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599
+        &&!consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)){
         customerJoinAskedThisVisitV599=true;
         if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
         /* nestly_v604: the answer is recorded BEFORE the staleness bail. The sheet survives
@@ -50665,7 +50684,10 @@ async function loadSignupConfig(host){
        arrived at the bare marketing page — the business never popped up, with no error anywhere.
        The QR therefore encodes a fragment-free URL: the landing page reads ?token= and forwards
        it into '#/join?token=…' itself. The visible link keeps the canonical hash form. */
-    const qrContentV603=window.NestlyNativeBridge.publicUrl(`/?token=${encodeURIComponent(data.join_token)}`);
+    /* nestly_v606: the QR lands on the dedicated /join page, which paints "Join <business>?"
+       immediately — one fetch, one card, no SPA boot in front of the question. The root
+       (?token=) and hash forms both still resolve for older prints. */
+    const qrContentV603=window.NestlyNativeBridge.publicUrl(`/join?token=${encodeURIComponent(data.join_token)}`);
     const qrEl=$('joinQr');qrEl.innerHTML='<span class="muted small">Rendering QR…</span>';
     try{await loadQrLibrary()}catch{if(qrEl.isConnected)qrEl.innerHTML='<span class="err small">QR renderer could not load. Retry.</span>';if($('joinQrStatus'))$('joinQrStatus').textContent='The QR image could not load. Retry without replacing the link.';return false}
     if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:qrContentV603,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});

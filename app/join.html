@@ -439,6 +439,47 @@ function renderForm(page, joinToken){
     onToken:(token)=>{turnstileToken=token;refreshBtn()}}).then(control=>{turnstileControl=control});
 }
 
+/* ---- state: confirm (nestly_v606 — the scan's FIRST screen) ----
+   The owner's requirement is one word: immediate. The in-app sheet sits behind the SPA boot —
+   chunk downloads, session restore, router epochs — and on their own iPhone the business was
+   fetched (gateway 200 in the logs) yet the sheet never painted. This page has none of those
+   moving parts: one fetch, one card, painted straight into a 25KB document. The QR now lands
+   here (/join?token=…), the business pops up at once, and only after Yes does the SPA get
+   involved. The handoff writes:
+     - nestly.customer.pendingJoinToken       — the token the app's join route expects,
+     - nestly.customer.joinConfirmedV596      — so the signed-in resume never re-asks,
+     - nestly.customer.joinHandoffV606        — a timestamped "just said yes here" record the
+       app's signed-out route consumes to skip its own sheet. Timestamped so a stale record from
+       an abandoned tab can never suppress the question later (the v599 lesson). */
+function renderConfirm(page,joinToken){
+  destroyMountedTurnstiles();
+  const bc=/^#[0-9A-Fa-f]{6}$/.test(page.brand_color||'')?page.brand_color:'#FF6B5E';
+  const name=String(page.name||'').trim();
+  document.title=(name||'Join')+` — ${BRAND.productName}`;
+  root.innerHTML=`<div class="wrap" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)"><div class="join">
+    <div class="jhead"><div class="logo">${brandWordmark()}</div></div>
+    <div class="card"><div class="empty" style="padding:26px 4px">
+      <p class="small" style="letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--coral)">Rewards programme</p>
+      <h1 id="joinConfirmTitle" tabindex="-1" style="font-size:1.6rem;margin:10px 0 8px">${name?`Join ${esc(name)}?`:'Join this business?'}</h1>
+      <p class="muted" style="margin-bottom:20px">You will start collecting rewards here straight away.</p>
+      <button class="btn" id="joinYes" style="width:100%">${icon('check',20)}<span>Yes, join</span></button>
+      <button class="btn secondary" id="joinNotNow" style="width:100%;margin-top:10px"><span>Not now</span></button>
+      <p class="muted counter-fallback"><a href="#" id="joinCounterInstead" style="text-decoration:underline">No smartphone sign-in? Join at the counter with just your mobile number.</a></p>
+    </div></div>${legalLinks()}
+  </div></div>`;
+  $('joinConfirmTitle').focus();
+  $('joinYes').onclick=()=>{
+    try{
+      sessionStorage.setItem('nestly.customer.pendingJoinToken',joinToken);
+      sessionStorage.setItem('nestly.customer.joinConfirmedV596',JSON.stringify({token:joinToken,slug:String(page.slug||'')}));
+      sessionStorage.setItem('nestly.customer.joinHandoffV606',JSON.stringify({token:joinToken,slug:String(page.slug||''),at:Date.now()}));
+    }catch{}
+    location.href='/app#/join?token='+encodeURIComponent(joinToken);
+  };
+  $('joinNotNow').onclick=()=>{location.href='/app'};
+  $('joinCounterInstead').onclick=event=>{event.preventDefault();renderForm(page,joinToken)};
+}
+
 /* ---- boot ---- */
 async function init(){
   renderLoading();
@@ -454,7 +495,7 @@ async function init(){
     return;
   }
   if(!data){ renderInvalidLink(); return; }
-  renderForm(data, joinToken);
+  renderConfirm(data, joinToken);
 }
 
 init();

@@ -30,6 +30,10 @@
       "destination": "/index.gen.html"
     },
     {
+      "source": "/join",
+      "destination": "/join.html"
+    },
+    {
       "source": "/o/:id",
       "destination": "/api/offer-share?id=:id"
     },
