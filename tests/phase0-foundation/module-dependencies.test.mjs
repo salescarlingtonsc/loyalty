@@ -45,10 +45,17 @@ test('legacy module RPC remains owner-authorized while tenant settings are platf
     'editing the sector must never rewrite this firm\'s module entitlement');
 });
 
-test('settings explains dependencies without presenting editable sector entitlements', async () => {
+test('the workspace never presents editable sector entitlements', async () => {
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
-  assert.match(app, /from\('module_registry'\)\s*\.select\('module_key,requires_modules'\)/);
-  assert.match(app, /uses \$\{esc\(dependencyText\(m\)\)\}/);
+  /* nestly_v607 (owner: "dont need to show them the modules, just remove it. since only admin can
+     edit"). The module list explained each entitlement's dependencies — honest, and read-only,
+     which is exactly why it went: a list of things that look like settings and cannot be changed,
+     on a page the owner opens to see the plan they pay for. The dependency TEXT went with the list
+     it annotated. What this test still guards is what it always guarded: no editable entitlement
+     control anywhere in the workspace. */
+  assert.doesNotMatch(app, /settings-module-grid-v389/);
+  assert.doesNotMatch(app, /uses \$\{esc\(dependencyText\(m\)\)\}/);
   assert.doesNotMatch(app, /id="msave"/);
   assert.doesNotMatch(app, /industry:\$\('bi'\)\.value/);
+  assert.doesNotMatch(app, /id="sellsServices"/, 'nor the one entitlement pair that was editable');
 });

@@ -2967,6 +2967,12 @@
       "path": "db/migrations/20260829_nestly_v601_package_edit_retire_and_switch.sql",
       "semanticVersion": "v601",
       "proposedDeployVersion": "20260829190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v603_package_history_and_dates.sql",
+      "semanticVersion": "v603",
+      "proposedDeployVersion": "20260829200000"
     }
   ]
 }

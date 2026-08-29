@@ -66,7 +66,11 @@ test('staff row carries every detail on one line and opens an editable profile',
   for (const field of ['s.email', 's.phone', 'ROLE_LABELS[s.role]', 'commissionSummary']) {
     assert.ok(row.includes(field), `staff row is missing ${field}`);
   }
-  assert.ok(row.includes('toggleStaffProfile('), 'staff row must open a profile');
+  /* nestly_v603: the row no longer carries a second Edit button — the whole row is the control,
+     and the chip in its last cell says so. openStaffProfileFromRowV595 is what it calls, and that
+     calls toggleStaffProfile. */
+  assert.ok(row.includes('openStaffProfileFromRowV595('), 'staff row must open a profile');
+  assert.ok(row.includes('staff-edit-chip-v603'), 'and it says, in the row, that it opens one');
   assert.ok(app.includes('function staffProfilePanelHtml'), 'no profile panel');
 });
 

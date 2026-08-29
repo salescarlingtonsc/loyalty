@@ -105,7 +105,10 @@ test('photo 12 — Customer packages is its own destination under Serve & sell',
   assert.match(app, /packages:\(\)=>packagesPage\(\{view:'plans'\}\)/);
   /* It is a SURFACE, not an entitlement: the route guard resolves the alias and tests the real
      'packages' module, so a staff member without Packages cannot reach it by typing the hash. */
-  assert.match(app, /const SURFACE_MODULE_ALIAS_V584=Object\.freeze\(\{custpackages:'packages'\}\);/);
+  /* nestly_v606 added a second surface (Reminder & Notification, gated on the Settings module).
+     The pin now checks the ENTRY rather than the whole object, so a later surface does not have to
+     rewrite an assertion about this one. */
+  assert.match(app, /const SURFACE_MODULE_ALIAS_V584=Object\.freeze\(\{[^}]*custpackages:'packages'[^}]*\}\);/);
   assert.match(app, /const moduleGateKeyV584=SURFACE_MODULE_ALIAS_V584\[pageKey\]\|\|pageKey;/);
   assert.match(app, /&&!canReadModule\(moduleGateKeyV584\)\)\{/);
   // And a refresh from inside either view comes back to the view it was on.

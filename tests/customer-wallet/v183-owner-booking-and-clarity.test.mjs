@@ -268,14 +268,18 @@ test('the availability engine falls back to shop hours per weekday, and refuses 
 test('the business owns the switch, the opening hours and who is bookable',()=>{
   assert.match(app,/id="setStaffChoice"[^>]*\$\{S\.biz\.booking_staff_choice\?'checked':''\}/);
   assert.match(app,/Let customers choose a team member/);
-  /* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): this
-     handler moved from bookingsPage into wireBookingRulesV325, rendered by Customer Interface's
-     Appointment Setting step — same code, just relocated, so the end marker moved with it. */
-  const save=section(app,"$('setAvailabilitySave').onclick=",'function customerInterfacePreviewSideCardHtmlV325(');
-  assert.match(save,/sb\.from\('businesses'\)\.update\(\{booking_staff_choice:staffChoice\}\)/);
-  assert.match(save,/sb\.from\('branch_hours'\)\.upsert\(rows,\{onConflict:'branch_id,weekday'\}\)/);
-  assert.match(save,/sb\.from\('branch_hours'\)\.delete\(\)/,'unchecking a day removes its hours');
-  assert.match(save,/closes<=opens/,'an inverted or empty range is treated as closed, never saved');
+  /* nestly_v606 (owner mark: the hours grid ringed with an arrow to Branches — "branch opening
+     hour should put here"). One save became two, because the two settings belong to different
+     things: WHO a customer may pick is a business decision and stayed on Appointment Setting;
+     WHEN the doors are open belongs to a branch and moved onto that branch's own card, where the
+     grid finally names the branch it is editing. */
+  const switchSave=section(app,"const staffChoiceSaveV606=$('setStaffChoiceSaveV606');",'/* V325 (owner-authorized restructure)');
+  assert.match(switchSave,/sb\.from\('businesses'\)\.update\(\{booking_staff_choice:staffChoice\}\)/);
+  const hoursSave=section(app,'async function branchHoursEditorV606','async function branchesPage(');
+  assert.match(hoursSave,/sb\.from\('branch_hours'\)\.upsert\(open,\{onConflict:'branch_id,weekday'\}\)/);
+  assert.match(hoursSave,/sb\.from\('branch_hours'\)\.delete\(\)/,'unchecking a day removes its hours');
+  assert.match(hoursSave,/closes<=opens/,'an inverted or empty range is treated as closed, never saved');
+  assert.match(hoursSave,/\.eq\('branch_id',branch\.id\)/,'and it writes the branch whose card it was opened from');
   /* Who is bookable travels with the rota, to Staff Members. */
   const rotaSave=section(app,'async function saveStaffRotaV228','async function loadTeam');
   assert.match(rotaSave,/sb\.from\('staff'\)\.update\(\{customer_bookable:member\.customer_bookable\}\)/);

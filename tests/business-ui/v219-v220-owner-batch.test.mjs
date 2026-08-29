@@ -38,7 +38,7 @@ test('V219 Branches is reachable from Operations setup for an owner', () => {
   /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
      that the setup surfaces live HERE rather than in the account menu, not that the group is
      frozen, so the new row is admitted explicitly and everything it protects still holds. */
-  assert.match(app, /\{key:'setup',[^}]*items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]\}/);
+  assert.match(app, /\{key:'setup',[^}]*items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?(?:,'remindernotify')?\]\}/);
 });
 
 /* (3-repeat) "when selected the staff, it will show the user's next best timings - not other staff" */

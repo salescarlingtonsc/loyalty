@@ -97,7 +97,9 @@ test('packages and expenses retain reads while their write actions follow the ex
   assert.doesNotMatch(packages,/sb\.rpc\('sell_package_v102'/,
     'the removed handler held this page\'s only sell call; the till keeps its own');
   assert.match(packages,/canWrite&&k\.remaining>0/);
-  assert.match(packages,/canWrite&&x\.can_reverse/);
+  /* nestly_v603: the undo moved from the shared correction table into each package's own history
+     dialog, so the write is gated on the row it belongs to rather than on a business-wide list. */
+  assert.match(packages,/canWrite&&!entry\.reversed&&entry\.sale_id/);
   assert.match(packages,/id="packagesRetry"/);
 
   assert.match(expenses,/const canWrite=canWriteModule\('expenses'\)/);

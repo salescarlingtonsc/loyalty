@@ -2736,10 +2736,6 @@
       "reason": "nestly_v601 browser RPC: flips package_plans.active from the On/Off pill on the Packages screen, which the owner asked to become a real control. Deliberately NOT routed through save_package_plan_v102 — that call supersedes the plan and mints a new version, so pausing a package would breed one every time. Config, not customer value: it decides whether a package can be SOLD, never a balance, a session already bought, or a sale. Owner-gated by app.can_module_write(business,'packages'), refuses re-activating a retired plan, and audits both directions."
     },
     {
-      "id": "browser.rpc:app/app.js:business_set_sales_mix_v184",
-      "reason": "V184 owner toggle for \"do we sell services, products, or both\". Rewrites exactly two keys of businesses.enabled_modules and drops modules that hard-require a removed one; it cannot enable or disable any other module and touches no value table. The sector entitlement guard is bypassed transaction-locally and cleared immediately."
-    },
-    {
       "id": "browser.rpc:app/app.js:business_set_welcome_offer_v215",
       "reason": "V215 welcome-offer configuration. Owner-only write of ONE row per business: on/off, the minimum spend, the free item and an optional expiry. It mints nothing. The item's LABEL is read from the catalogue by the RPC rather than accepted from the browser, so an offer can never name an item the firm does not actually sell, and a non-existent or deactivated item is refused outright."
     },
@@ -3454,6 +3450,10 @@
     {
       "id": "browser.rpc:app/app.js:staff_list_visit_feedback_v145",
       "reason": "browser RPC 'staff_list_visit_feedback_v145' is a read-only, customer-filtered visit-feedback projection and performs no value write"
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_package_session_history_v603",
+      "reason": "nestly_v603 browser RPC: READ-ONLY (declared stable). Returns one client_package's own sessions — when each was used, the sale it was recorded against, and whether it was later undone — so the Customer packages row can open its own history instead of a shared business-wide list that could not say which package a correction belonged to. Writes nothing; the Undo action inside the dialog goes through the existing reversal writer. Gated by app.can_module(business,'packages') and refuses a package outside the caller's business."
     },
     {
       "id": "browser.rpc:app/app.js:staff_reschedule_and_confirm_booking_request_v329",

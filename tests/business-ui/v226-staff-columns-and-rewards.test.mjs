@@ -22,11 +22,19 @@ test('V226 the staff list is a real grid with one header per group', () => {
      two chips under each name struck out). Both facts were already on the row — one as a pill in
      a wrapped strip below the grid, the other only inside the profile — so neither could be read
      down a column, which is the whole point V226 exists for. */
-  assert.deepEqual(cols, ['Name', 'Phone', 'Email', 'Branch', 'App access', 'Position', 'Commission']);
+  /* nestly_v603 (owner photo: APP ACCESS ringed, "move back to after commission"; and "Put here"
+     against the space beside Commission, with an arrow up from the row's Edit button). Branch,
+     Position and Commission are the three facts about the JOB and now sit together; the column
+     about the LOGIN comes after them; the last cell carries the Edit chip, so it is named for
+     nothing and its header is deliberately blank. */
+  assert.deepEqual(cols, ['Name', 'Phone', 'Email', 'Branch', 'Position', 'Commission', 'App access']);
+  /* The eighth cell carries the Edit chip and is named for nothing, so the matcher above (which
+     requires a non-empty name) does not see it. Asserted separately so it cannot vanish. */
+  assert.match(row, /data-staff-col=""[^>]*>\$\{s\.role!=='owner'\?`<span class="pill">/);
   assert.ok(!row.includes('class="pill ok">App access active'), 'the access pill left the row for the column');
   assert.ok(!row.includes('class="pill on">Inherits enabled modules'), 'and so did the module pill');
   // Header and rows share one column template, so they cannot drift apart.
-  assert.match(app, /<div class="staff-col-head-v226"[^>]*><span>Name<\/span><span>Phone<\/span><span>Email<\/span><span>Branch<\/span><span>App access<\/span><span>Position<\/span><span>Commission<\/span><\/div>/);
+  assert.match(app, /<div class="staff-col-head-v226"[^>]*><span>Name<\/span><span>Phone<\/span><span>Email<\/span><span>Branch<\/span><span>Position<\/span><span>Commission<\/span><span>App access<\/span><span><\/span><\/div>/);
   assert.match(shell, /--staff-cols-v226:/);
   assert.match(shell, /\.staff-row-open\{display:grid;grid-template-columns:var\(--staff-cols-v226\)/);
   assert.match(shell, /\.staff-col-head-v226\{display:grid;grid-template-columns:var\(--staff-cols-v226\)/);

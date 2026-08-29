@@ -144,7 +144,16 @@ test('histories, reports, daily report and CSV carry reversal relationships and 
   assert.match(app,/const visits=Number\(summary\.visits\|\|0\)/);
   assert.match(app,/const uniqueCustomerRecords=Number\(summary\.unique_customers\|\|0\)/);
   assert.match(app,/loadReversalWorkflows\(null,100,'package'\)/);
-  assert.match(app,/Showing the newest[\s\S]*server limit[\s\S]*older rows are not shown/);
+  /* nestly_v603: the "showing the newest N of M (server limit L) · older rows are not shown"
+     caveat belonged to the shared, business-wide correction table, which WAS capped at 100 rows.
+     That table is gone — each package now opens its own history through
+     staff_package_session_history_v603, which returns that package's sessions in full, so there is
+     no truncation left to warn about. Warning about one anyway would be the more dangerous
+     outcome: a member of staff would distrust a list that is actually complete. */
+  assert.match(app,/staff_package_session_history_v603/,
+    'the per-package reader that replaced the capped shared list');
+  assert.doesNotMatch(app,/older rows are not shown/,
+    'no truncation caveat survives the table it described');
 });
 
 test('report CSV encoder follows RFC4180 quoting for commas, quotes and line breaks',()=>{

@@ -106,6 +106,38 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
   storageKey:'peekaa-public-join-anon-v1',persistSession:false,
   autoRefreshToken:false,detectSessionInUrl:false
 }});
+/* nestly_v610 — scan-journey funnel (diagnosis instrumentation, owner-directed).
+   One random correlation id per /join load; every boundary of the journey emits one event to
+   the log-only join-funnel edge function, so a single real-device scan can be read back stage
+   by stage from function_edge_logs. Never the raw token, never PII; sendBeacon so the
+   navigation-adjacent events survive leaving the page. The id is written to sessionStorage so
+   the app continues the SAME journey after "Yes, join". */
+const JOIN_FUNNEL_URL=`${SB_URL}/functions/v1/join-funnel`;
+const joinFunnelCid=(()=>{
+  let cid='';
+  try{cid=(crypto.randomUUID&&crypto.randomUUID())||''}catch{}
+  if(!cid)cid='cid-'+Date.now().toString(36)+'-'+Math.floor(Math.random()*1e9).toString(36);
+  try{sessionStorage.setItem('nestly.join.funnelCid',cid)}catch{}
+  return cid;
+})();
+function joinFunnel(event,detail){
+  try{
+    const payload=JSON.stringify({cid:joinFunnelCid,event,at:Date.now(),
+      detail:detail?JSON.stringify(detail).slice(0,1400):''});
+    if(navigator.sendBeacon&&navigator.sendBeacon(JOIN_FUNNEL_URL,new Blob([payload],{type:'text/plain'})))return;
+    fetch(JOIN_FUNNEL_URL,{method:'POST',body:payload,headers:{'content-type':'text/plain'},keepalive:true,credentials:'omit'}).catch(()=>{});
+  }catch{}
+}
+window.addEventListener('error',event=>joinFunnel('join_client_error',{m:String(event?.message||'').slice(0,300)}));
+window.addEventListener('unhandledrejection',event=>joinFunnel('join_client_error',{m:String(event?.reason?.message||event?.reason||'').slice(0,300)}));
+window.addEventListener('pageshow',event=>{if(event.persisted)joinFunnel('join_page_loaded',{persisted:true})});
+joinFunnel('join_page_loaded',{
+  vp:`${window.innerWidth}x${window.innerHeight}`,
+  swController:!!navigator.serviceWorker?.controller,
+  standalone:navigator.standalone===true,
+  referrerHost:(()=>{try{return document.referrer?new URL(document.referrer).host:''}catch{return ''}})()
+});
+
 const brandWordmark=()=>{
   const productName=String(BRAND?.productName||'Peekaa');
   const logoPath=String(BRAND?.logoPath||'/brand/peekaa-logo.png');
@@ -439,22 +471,101 @@ function renderForm(page, joinToken){
     onToken:(token)=>{turnstileToken=token;refreshBtn()}}).then(control=>{turnstileControl=control});
 }
 
+/* ---- state: confirm (nestly_v606 — the scan's FIRST screen) ----
+   The owner's requirement is one word: immediate. The in-app sheet sits behind the SPA boot —
+   chunk downloads, session restore, router epochs — and on their own iPhone the business was
+   fetched (gateway 200 in the logs) yet the sheet never painted. This page has none of those
+   moving parts: one fetch, one card, painted straight into a 25KB document. The QR now lands
+   here (/join?token=…), the business pops up at once, and only after Yes does the SPA get
+   involved. The handoff writes:
+     - nestly.customer.pendingJoinToken       — the token the app's join route expects,
+     - nestly.customer.joinConfirmedV596      — so the signed-in resume never re-asks,
+     - nestly.customer.joinHandoffV606        — a timestamped "just said yes here" record the
+       app's signed-out route consumes to skip its own sheet. Timestamped so a stale record from
+       an abandoned tab can never suppress the question later (the v599 lesson). */
+function renderConfirm(page,joinToken){
+  joinFunnel('join_confirmation_render_attempted');
+  destroyMountedTurnstiles();
+  const bc=/^#[0-9A-Fa-f]{6}$/.test(page.brand_color||'')?page.brand_color:'#FF6B5E';
+  const name=String(page.name||'').trim();
+  document.title=(name||'Join')+` — ${BRAND.productName}`;
+  root.innerHTML=`<div class="wrap" style="--coral:${bc};--grad:linear-gradient(100deg,${bc},#FFB86B)"><div class="join">
+    <div class="jhead"><div class="logo">${brandWordmark()}</div></div>
+    <div class="card"><div class="empty" style="padding:26px 4px">
+      <p class="small" style="letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--coral)">Rewards programme</p>
+      <h1 id="joinConfirmTitle" tabindex="-1" style="font-size:1.6rem;margin:10px 0 8px">${name?`Join ${esc(name)}?`:'Join this business?'}</h1>
+      <p class="muted" style="margin-bottom:20px">You will start collecting rewards here straight away.</p>
+      <button class="btn" id="joinYes" style="width:100%">${icon('check',20)}<span>Yes, join</span></button>
+      <button class="btn secondary" id="joinNotNow" style="width:100%;margin-top:10px"><span>Not now</span></button>
+      <p class="muted counter-fallback"><a href="#" id="joinCounterInstead" style="text-decoration:underline">No smartphone sign-in? Join at the counter with just your mobile number.</a></p>
+    </div></div>${legalLinks()}
+  </div></div>`;
+  $('joinConfirmTitle').focus();
+  /* Two frames after paint, measure what a FINGER would meet at the Yes button's centre:
+     geometry, computed visibility, and the element actually on top there. This is the
+     difference between "the code appended a card" and "the person could see and tap Yes". */
+  let visibilityMeasuredV610=false;
+  const measureYesVisibilityV610=via=>{
+    if(visibilityMeasuredV610)return;visibilityMeasuredV610=true;
+    try{
+      const yes=document.getElementById('joinYes');
+      if(!yes){joinFunnel('join_confirmation_visible',{present:false,via});return}
+      const rect=yes.getBoundingClientRect();
+      const style=getComputedStyle(yes);
+      const cx=Math.round(rect.left+rect.width/2),cy=Math.round(rect.top+rect.height/2);
+      const onTop=document.elementFromPoint(cx,cy);
+      joinFunnel('join_confirmation_visible',{
+        present:true,via,pageVisibility:document.visibilityState,
+        rect:{x:Math.round(rect.x),y:Math.round(rect.y),w:Math.round(rect.width),h:Math.round(rect.height)},
+        vp:`${window.innerWidth}x${window.innerHeight}`,
+        display:style.display,visibility:style.visibility,opacity:style.opacity,
+        pointerEvents:style.pointerEvents,
+        inViewport:rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<window.innerHeight,
+        topElement:onTop?`${onTop.tagName.toLowerCase()}${onTop.id?'#'+onTop.id:''}`:'',
+        topIsYes:onTop===yes||(onTop&&yes.contains(onTop))
+      });
+    }catch(error){joinFunnel('join_confirmation_visible',{via,measureError:String(error&&error.message||error).slice(0,200)})}
+  };
+  /* rAF is the honest "after paint" signal, but Safari suspends rAF in hidden pages — the
+     timeout fallback makes a missing event mean "the page died", never "the probe slept". */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>measureYesVisibilityV610('raf')));
+  setTimeout(()=>measureYesVisibilityV610('timeout'),900);
+  $('joinYes').addEventListener('pointerdown',()=>joinFunnel('join_yes_pointerdown'));
+  $('joinYes').onclick=()=>{
+    joinFunnel('join_yes_click');
+    try{
+      sessionStorage.setItem('nestly.customer.pendingJoinToken',joinToken);
+      sessionStorage.setItem('nestly.customer.joinConfirmedV596',JSON.stringify({token:joinToken,slug:String(page.slug||'')}));
+      sessionStorage.setItem('nestly.customer.joinHandoffV606',JSON.stringify({token:joinToken,slug:String(page.slug||''),name:name,at:Date.now()}));
+      joinFunnel('join_pending_scan_saved');
+    }catch(error){joinFunnel('join_client_error',{m:'pending scan not saved: '+String(error&&error.message||error).slice(0,200)})}
+    joinFunnel('join_navigation_started');
+    location.href='/app#/join?token='+encodeURIComponent(joinToken);
+  };
+  $('joinNotNow').onclick=()=>{location.href='/app'};
+  $('joinCounterInstead').onclick=event=>{event.preventDefault();renderForm(page,joinToken)};
+}
+
 /* ---- boot ---- */
 async function init(){
   renderLoading();
   const joinToken=getJoinToken();
+  joinFunnel('join_token_received',{present:!!joinToken,len:joinToken?joinToken.length:0});
   if(!joinToken){ renderInvalidLink(); return; }
   let data;
+  joinFunnel('join_business_lookup_started');
   try{
     data=await publicJoin({method:'GET',joinToken});
   }catch(err){
+    joinFunnel('join_business_lookup_failed',{status:Number(err?.status)||0});
     if(err?.status===404||err?.status===403){ renderExpiredLink(); return; }
     if(err?.status===429){ renderBusyGateway(err.retryAfter); return; }
     renderLoadError();
     return;
   }
-  if(!data){ renderInvalidLink(); return; }
-  renderForm(data, joinToken);
+  if(!data){ joinFunnel('join_business_lookup_failed',{status:200,empty:true}); renderInvalidLink(); return; }
+  joinFunnel('join_business_lookup_succeeded',{slug:String(data.slug||'')});
+  renderConfirm(data, joinToken);
 }
 
 init();

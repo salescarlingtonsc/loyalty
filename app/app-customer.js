@@ -9,6 +9,7 @@ const preAuthSb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{
   storageKey:'nestly-preauth-anon',persistSession:false,
   autoRefreshToken:false,detectSessionInUrl:false
 }});
+function joinFunnelEndV610(){try{sessionStorage.removeItem('nestly.join.funnelCid')}catch{}}
 async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurrent=()=>true){
   const {data,error}=await sb.auth.getSession();
   if(!isCurrent()){
@@ -680,9 +681,19 @@ function setCustomerThemePreferenceV190(preference){
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
+  /* nestly_v609 (owner walkthrough: "previously was working but now keep failing"). After the
+     /join page's Yes, the funnel used to open on a generic "Welcome to Peekaa" with no trace of
+     the scan — to the person holding the phone that IS a failure, even though the join was safely
+     recorded and resumes after sign-in. Every screen this shell hosts (sign-in, OTP, profile) now
+     says what the scan is about to join. Copy only: the join still fires exactly once, after
+     sign-in, through the recorded confirmation. */
+  if(pendingCustomerJoinToken)joinFunnelEmitV610('join_auth_screen_shown');
+  const joinContextV609=pendingCustomerJoinToken
+    ?`<section class="card" style="margin-bottom:14px;padding:12px 16px"><div class="row" style="gap:10px">${CUI.icon('scan',{size:18})}<p class="small" style="margin:0">Scan received — you will join <b>${esc(pendingCustomerJoinBusinessNameV609||'this business')}</b> as soon as you sign in or create your account.</p></div></section>`
+    :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -1929,14 +1940,49 @@ function customerBookingRowV580(group,item,tab){
 }
 /* Every appointment across every business on this tab, newest first. Requests are not
    appointments and have no appointment date to sort by, so they keep their own row below. */
+/* nestly_v605 (owner, Bookings photo: Ongoing showing one business card while History shows rows —
+   "i want format under Ongoing and Cancelled to follow History format").
+   v580 unified the APPOINTMENTS on all three tabs and deliberately left requests in a per-business
+   card, reasoning that a request has no appointment time to sort by. It does: preferred_at is the
+   time the customer asked for, and it is the only time on the card. So a request is a row like any
+   other, sorted by that, and the tabs stop looking like three different screens. The one thing a
+   request carries that an appointment does not — its status and Withdraw — travels with it. */
+function customerBookingRequestRowV605(group,item,tab){
+  const logo=customerBookingBusinessLogoV195(group);
+  const name=String(group.business_name||'').trim()||'Business';
+  const when=item.preferred_at||item.created_at||'';
+  const time=walletClockV580(when);
+  const service=String(item.service_name||'').trim()||'Booking request';
+  const detail=[service,time?`at ${time}`:'',item.party_size?`party of ${Number(item.party_size)}`:'']
+    .filter(Boolean).join(' · ');
+  const active=isActiveCustomerBookingRequest(item);
+  const statusLabel=active
+    ?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending'))
+    :String(item.status||'updated').replaceAll('_',' ');
+  const statusTone=active?(item.status==='waitlisted'?'new':'off'):'no';
+  return `<article class="card customer-booking-row-v580" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+    <div class="customer-booking-row-logo-v580">${logo}</div>
+    <div class="customer-booking-row-copy-v580">
+      <b data-merchant-content>${esc(name)}</b>
+      ${detail?`<p class="customer-booking-row-detail-v580" data-merchant-content>${esc(detail)}</p>`:''}
+    </div>
+    <div class="customer-booking-row-end-v580">
+      <time class="customer-booking-row-date-v580" datetime="${esc(when)}">${esc(walletDate(when)||'Time pending')}</time>
+      <span class="pill ${statusTone} customer-booking-act-v580">${esc(statusLabel)}</span>
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}
+    </div>
+  </article>`;
+}
 function customerBookingRowListV580(groups=[],tab='bookings'){
   const rows=[];
-  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item})));
-  rows.sort((a,b)=>String(b.item.starts_at||'').localeCompare(String(a.item.starts_at||'')));
-  return rows.map(({group,item})=>customerBookingRowV580(group,item,tab)).join('');
-}
-function customerBookingRequestRowV344(item){
-  return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
+  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item,when:item.starts_at||''})));
+  /* nestly_v605: requests join the same list rather than sitting in a block beneath it. */
+  groups.forEach(group=>group.tabRequests.forEach(item=>
+    rows.push({group,item,request:true,when:item.preferred_at||item.created_at||''})));
+  rows.sort((a,b)=>String(b.when).localeCompare(String(a.when)));
+  return rows.map(({group,item,request})=>request
+    ?customerBookingRequestRowV605(group,item,tab)
+    :customerBookingRowV580(group,item,tab)).join('');
 }
 function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to:''}){
   const inWindow=value=>customerBookingWithinRangeV196(value,range);
@@ -2180,8 +2226,9 @@ async function renderCustomerBookings(){
       .reduce((sum,group)=>sum+group.tabRequests.length+group.tabAppointments.length,0);
     const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingRange);
     const emptyCopy=(CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[2]||'Nothing here yet.';
-    /* nestly_v571 (owner, Bookings photo: "the business" struck out, "confirmation" written in). */
-    const requestHeading=currentBookingTab==='bookings'?'Awaiting confirmation':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
+    /* nestly_v605: requestHeading retired with the per-business request block it titled. Each
+       request is now a row that states its own status (Pending / Waitlisted / the outcome), so a
+       heading above a group of them said nothing the rows did not. */
     const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
     const partialMessages=[
       walletResult.error?'Confirmed appointments could not be discovered from your programmes.':'',
@@ -2219,7 +2266,8 @@ async function renderCustomerBookings(){
          they have no appointment time to sort by and carry their own decision, so they keep their
          business card and sit under the appointment rows. */''}
     ${groups.length?`<div class="customer-booking-list customer-booking-rows-v580">${customerBookingRowListV580(groups,currentBookingTab)}</div>
-      ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
+      ${/* nestly_v605: requests are rows in the list above now, sorted by the time the customer
+           asked for, so this per-business block underneath is the same records a second time. */''}`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
@@ -2734,6 +2782,8 @@ let pendingCustomerJoinReferralV571='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
+  joinFunnelEmitV610('join_app_loaded',{signedIn:true,build:joinFunnelBuildV610()});
+  if(token){joinFunnelEmitV610('join_pending_scan_found',{signedIn:true});joinFunnelEmitV610('join_auth_completed');}
   if(!token){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
@@ -2754,12 +2804,21 @@ async function renderCustomerQrJoin(){
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(customerJoinConfirmedV596.slug)||pendingCustomerJoinSlugV587;
   }else{
     if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
-    if(!isCurrent())return;
+    /* nestly_v604: record the Yes before the staleness bail (see the v604 note in
+       confirmCustomerJoinV571). If a wallet watcher repainted while the sheet was open, this
+       invocation is stale — but the person still pressed Yes on this token. Re-entering the
+       route lets a FRESH invocation find the recorded answer and carry straight into the join,
+       instead of the Yes dying with the stale epoch and the screen staying wherever it was. */
     rememberCustomerJoinConfirmedV596(token,pendingCustomerJoinSlugV587);
+    if(!isCurrent()){
+      if(location.hash==='#/join')route();
+      return;
+    }
   }
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
+  joinFunnelEmitV610('join_rpc_started');
   const {data,error}=await customerRpc('customer_join_business_from_qr_v89',{
     p_join_token:token,p_idempotency_key:attemptKey
   });
@@ -2776,6 +2835,7 @@ async function renderCustomerQrJoin(){
        Peekaa QR." The owner then went looking for a broken QR, replaced it (killing their real
        printed one), and scanned again — and was told the same thing. The message has to name the
        real reason, and offer the way through it. */
+    joinFunnelEmitV610('join_rpc_failed',{code:String(error.code||''),msg:String(error.message||'').slice(0,160)});
     const noCustomerAccountV602=String(error.code||'')==='42501'
       ||/customer identity is required|customer session required/i.test(String(error.message||''));
     if(!noCustomerAccountV602&&error.code!=='PGRST202'&&error.code!=='42883')rememberPendingCustomerJoinToken('');
@@ -2805,6 +2865,7 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   if(!['joined','already_joined','completed','linked'].includes(String(data?.outcome||data?.status||''))){
+    joinFunnelEmitV610('join_rpc_failed',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
     /* v286 (audit): this branch left the customer on a card still headed 'Joining this programme'
        with no action, and kept the dead token + write-attempt key so a later retry replayed the
        same failing join. It now matches the error branch: a way out, and a clean rescan. */
@@ -2813,6 +2874,7 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
+  joinFunnelEmitV610('join_rpc_succeeded',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
   /* nestly_v587 (owner: "once pressing yes will land inside the exact same business"). This read
      was always empty: customer_join_business_from_qr_v89 returned outcome + business_id and no
      slug at all, so every successful join fell back to the programmes list. v587 adds
@@ -2841,6 +2903,16 @@ async function renderCustomerQrJoin(){
   await maybeOfferCustomerPasskeySetup({isCurrent});
   if(!isCurrent())return;
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
+  /* The journey's last stage: the wallet route is live and has had two frames to paint.
+     setTimeout backstop for the same reason as the /join probe: rAF sleeps on hidden pages. */
+  let businessVisibleSentV610=false;
+  const emitBusinessVisibleV610=via=>{
+    if(businessVisibleSentV610)return;businessVisibleSentV610=true;
+    joinFunnelEmitV610('join_business_visible',{via,hash:String(location.hash||'').split('?')[0].slice(0,80)});
+    joinFunnelEndV610();
+  };
+  requestAnimationFrame(()=>requestAnimationFrame(()=>emitBusinessVisibleV610('raf')));
+  setTimeout(()=>emitBusinessVisibleV610('timeout'),900);
 }
 
 async function renderCustomerClaim(){

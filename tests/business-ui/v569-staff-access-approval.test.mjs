@@ -114,7 +114,10 @@ test('only a pending row offers the decision, and it explains what approving doe
      offers Approve / Decline / Edit and the four actions live in the panel Edit opens. Approve
      and Decline deliberately stayed on the row: they are a request waiting on the owner, and the
      owner did not ring them. */
-  assert.match(pending, /toggleStaffProfile\('s2'\)/);
+  /* nestly_v603: Edit moved into the row itself (the chip beside Commission), so a pending row
+     carries Approve and Decline and nothing that competes with them. The row still opens the
+     editor — through its own button, which is the whole row. */
+  assert.match(pending, /openStaffProfileFromRowV595\(event,'s2'\)/);
   assert.doesNotMatch(pending, /toggleModPanel\('s2'\)/);
   assert.doesNotMatch(pending, /setStaffActiveV285\('s2'/);
   assert.doesNotMatch(pending, /rmStaff\('s2'/);
@@ -124,10 +127,20 @@ test('only a pending row offers the decision, and it explains what approving doe
      that same tab, directly below these actions — a button that opens what you are already
      looking at is not an action. The other three are unchanged, Delete having become a dustbin
      with the same handler and the same confirm. */
-  const actionsPanel = app.slice(app.indexOf('function staffProfileActionsHtmlV577'));
-  for (const action of [/setStaffActiveV285\('\$\{s\.id\}'/, /rmStaff\('\$\{s\.id\}'/, /staffReferenceCodeV217\('\$\{s\.id\}'/]) {
-    assert.match(actionsPanel.slice(0, 2200), action);
+  /* nestly_v603 (owner photo: "Access and status" struck out with "remove wording"; Deactivate and
+     the dustbin ringed with an arrow up to the Profile tab). The three are still all reachable,
+     but they no longer share one panel: giving app access is about the LOGIN and stayed on Access
+     & Module, while deactivating and deleting are about the PERSON and moved to Profile. */
+  const accessPanel = app.slice(app.indexOf('function staffProfileActionsHtmlV577'));
+  assert.match(accessPanel.slice(0, 1600), /staffReferenceCodeV217\('\$\{s\.id\}'/);
+  assert.doesNotMatch(accessPanel.slice(0, 1600), /<b class="small">Access and status<\/b>/,
+    'the heading named the tab a second time');
+  const personPanel = app.slice(app.indexOf('function staffPersonActionsHtmlV603'));
+  for (const action of [/setStaffActiveV285\('\$\{s\.id\}'/, /rmStaff\('\$\{s\.id\}'/]) {
+    assert.match(personPanel.slice(0, 2200), action);
   }
+  assert.match(app, /\$\{staffPersonActionsHtmlV603\(s\)\}\n\s*<div class="row staff-profile-save-v584"/,
+    'and they sit on the Profile tab, above Save');
   /* nestly_v595 made `hidden` conditional so the dialog can open straight on this tab; the pairing
      this line exists to protect — actions and module grid on ONE tab — is unchanged. */
   assert.match(app, /<div data-staff-tabpanel-v584="access"\$\{openTabV595==='access'\?'':' hidden'\}>\$\{staffProfileActionsHtmlV577\(s\)\}\$\{modPanelHtml\(s\)\}<\/div>/,

@@ -30,10 +30,21 @@ test('V228 Bookings no longer owns the staff rota', () => {
      branch_hours or the shop hour rows at all. */
   assert.doesNotMatch(bookings, /branch_hours/);
   assert.doesNotMatch(bookings, /v183HourRowMarkup\('shop'/);
-  assert.match(bookingRules, /branch_hours/);
-  assert.match(bookingRules, /v183HourRowMarkup\('shop'/);
+  /* nestly_v606 (owner mark: the hours grid ringed with an arrow to Branches — "branch opening
+     hour should put here"). They moved a second time, and for the reason V325's own note implies:
+     hours belong to a BRANCH, and Appointment Setting is one screen for the whole business, so it
+     was editing whichever branch its loader happened to pick without ever naming it. They are on
+     each branch's own card now. What stays on Appointment Setting is the business-level switch
+     that decides whether a customer may choose their team member. */
+  assert.doesNotMatch(bookingRules, /branch_hours/);
+  assert.doesNotMatch(bookingRules, /v183HourRowMarkup\('shop'/);
+  assert.match(bookingRules, /setStaffChoice/, 'the business-level switch stayed');
+  const branchHoursStart=app.indexOf('async function branchHoursEditorV606');
+  const branchHours=app.slice(branchHoursStart, app.indexOf('async function branchesPage(', branchHoursStart));
+  assert.match(branchHours, /branch_hours/);
+  assert.match(branchHours, /v183HourRowMarkup\(scope,weekday,label/);
   // And it no longer claims to load something it does not.
-  assert.match(bookingRules, /Opening hours could not be loaded/);
+  assert.match(branchHours, /Opening hours could not be loaded/);
   assert.doesNotMatch(bookingRules, /Opening hours and team availability could not be loaded/);
 });
 

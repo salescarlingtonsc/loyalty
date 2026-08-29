@@ -13,7 +13,7 @@ test('team access is discoverable and distinguishes roster-only from signed-in a
   /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
      that the setup surfaces live HERE rather than in the account menu, not that the group is
      frozen, so the new row is admitted explicitly and everything it protects still holds. */
-  assert.match(source,/items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]/);
+  assert.match(source,/items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?(?:,'remindernotify')?\]/);
   /* nestly_v456 (audit A, A-REG-013). This line used to pin the literal "Add staff without app
      access" — which was importBtn, the CSV IMPORT control, wearing a label that described adding
      ONE person by hand. That is the same mislabel v439 unpicked when the identical control was

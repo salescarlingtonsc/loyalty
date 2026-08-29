@@ -122,6 +122,39 @@ function reportClientError(event){
 }
 window.addEventListener('error',reportClientError);
 window.addEventListener('unhandledrejection',reportClientError);
+/* nestly_v610 — scan-journey funnel (diagnosis instrumentation, owner-directed). The /join page
+   starts a journey and writes its correlation id to sessionStorage; the app continues the SAME
+   journey here so one real-device scan can be read back stage by stage from function_edge_logs.
+   Emits ONLY while a journey id exists — zero traffic for every ordinary visit. Never the raw
+   token, never PII. The single-shot stages dedupe per page load so re-renders do not spam. */
+const JOIN_FUNNEL_ONCE_V610=new Set();
+const JOIN_FUNNEL_SINGLE_SHOT_V610=new Set(['join_app_loaded','join_pending_scan_found','join_auth_screen_shown','join_auth_completed','join_business_visible']);
+function joinFunnelEmitV610(event,detail){
+  try{
+    const cid=sessionStorage.getItem('nestly.join.funnelCid')||'';
+    if(!cid)return;
+    if(JOIN_FUNNEL_SINGLE_SHOT_V610.has(event)){
+      if(JOIN_FUNNEL_ONCE_V610.has(event))return;
+      JOIN_FUNNEL_ONCE_V610.add(event);
+    }
+    const payload=JSON.stringify({cid,event,at:Date.now(),detail:detail?JSON.stringify(detail).slice(0,1400):''});
+    const url=`${SB_URL}/functions/v1/join-funnel`;
+    if(navigator.sendBeacon&&navigator.sendBeacon(url,new Blob([payload],{type:'text/plain'})))return;
+    fetch(url,{method:'POST',body:payload,headers:{'content-type':'text/plain'},keepalive:true,credentials:'omit'}).catch(()=>{});
+  }catch{}
+}
+/* The /join page starts web journeys; the IN-APP scanner starts its own here — the owner's
+   real-device trace showed the in-app path reaching the business preview (200) and stalling,
+   and that path never touches /join, so it must open its own correlation id. */
+function joinFunnelStartV610(){
+  let cid='';
+  try{cid=(crypto.randomUUID&&crypto.randomUUID())||''}catch{}
+  if(!cid)cid='cid-'+Date.now().toString(36)+'-'+Math.floor(Math.random()*1e9).toString(36);
+  try{sessionStorage.setItem('nestly.join.funnelCid',cid)}catch{}
+  JOIN_FUNNEL_ONCE_V610.clear();
+  return cid;
+}
+const joinFunnelBuildV610=()=>{try{return String(buildIdentity?.shortSha||'')}catch{return ''}};
 /* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
    gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
    customer read below goes through this helper, which aborts at `ms` and normalises the outcome
@@ -275,7 +308,12 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],support:['customers','WhatsApp Inbox'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  staffmembers:['staff','Staff Members'],settings:['settings','Subscription'],setup:['setup','Get started'],
+  /* nestly_v606 (owner mark on the Bring-back page: the WhatsApp automation and delivery blocks
+     ringed together, with "Reminder & Notification move under operations setup"). A SURFACE key,
+     not an entitlement — what it shows is owner-level workspace configuration, so it is gated on
+     the same module Settings is, through SURFACE_MODULE_ALIAS_V606 below. */
+  remindernotify:['appointments','Reminder & Notification'],
   /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
      that lives in Operations setup, never an entitlement a staff member can be granted. */
@@ -304,7 +342,7 @@ const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 /* nestly_v584: a surface that has its own rail row and route but no entitlement of its own —
    the value is the module whose read permission actually governs it. */
-const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages'});
+const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages',remindernotify:'settings'});
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -720,6 +758,29 @@ function rememberCustomerJoinConfirmedV596(token,slug){
     else sessionStorage.removeItem(CUSTOMER_JOIN_CONFIRMED_KEY_V596);
   }catch{}
   return customerJoinConfirmedV596;
+}
+/* nestly_v606: the /join page asks "Join <business>?" BEFORE the app loads, and records the Yes
+   in this timestamped handoff. Consuming it (one-shot, removed on read) lets the signed-out join
+   route skip its own sheet instead of asking the same question twice in a row. The freshness
+   window is what keeps v599's lesson intact: a record abandoned in an old tab expires, so it can
+   never silently suppress the question on a later scan. */
+const CUSTOMER_JOIN_HANDOFF_KEY_V606='nestly.customer.joinHandoffV606';
+/* nestly_v609: the business's display NAME, learned from the /join page's handoff or the sheet's
+   preview. Only for copy — the sign-in funnel names what the scan is about to join, so the scan
+   never looks lost between "Yes, join" and the finished account. */
+let pendingCustomerJoinBusinessNameV609='';
+const CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606=10*60*1000;
+function consumeCustomerJoinHandoffV606(token){
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(CUSTOMER_JOIN_HANDOFF_KEY_V606)||'null');
+    sessionStorage.removeItem(CUSTOMER_JOIN_HANDOFF_KEY_V606);
+    if(!raw||typeof raw.token!=='string'||raw.token!==String(token||''))return false;
+    if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
+    pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
+    pendingCustomerJoinBusinessNameV609=String(raw.name||'').slice(0,120);
+    rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
+    return true;
+  }catch{return false}
 }
 function customerRecoveryVerified(){
   try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
@@ -1542,11 +1603,19 @@ async function route(){
          and by then the person is signed in and this branch is not the one that runs. So it is not
          consulted here at all. The in-memory flag below is only so a re-render of the same visit
          does not stack a second sheet on the first; it resets on every scan and every page load. */
-      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599){
+      joinFunnelEmitV610('join_app_loaded',{signedIn:false,build:joinFunnelBuildV610()});
+      if(pendingCustomerJoinToken)joinFunnelEmitV610('join_pending_scan_found',{signedIn:false});
+      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599
+        &&!consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)){
         customerJoinAskedThisVisitV599=true;
         if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
-        if(!isRouteCurrent())return;
+        /* nestly_v604: the answer is recorded BEFORE the staleness bail. The sheet survives
+           competing repaints now, so by the time Yes lands this route invocation is often no
+           longer the current one — a later invocation has already painted sign-in underneath,
+           which is exactly the screen the person needs next. Losing the recorded Yes to that
+           ordering forced a second ask after sign-up; recording it first costs nothing. */
         rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken,pendingCustomerJoinSlugV587);
+        if(!isRouteCurrent())return;
       }
       return renderCustomerRegistration(isRouteCurrent);
     }
@@ -3249,6 +3318,9 @@ function openCustomerJoinScanner(){
     kicker.textContent=ct('My Peekaa QR');
   };
   const showScan=()=>{
+    joinFunnelStartV610();
+    joinFunnelEmitV610('join_inapp_scan_opened',{build:joinFunnelBuildV610(),
+      standalone:navigator.standalone===true,swController:!!navigator.serviceWorker?.controller});
     myQrPanel.hidden=true;scanPanel.hidden=false;
     kicker.textContent=ct('addProgramme');
     startCamera();
@@ -3287,8 +3359,15 @@ function openCustomerJoinScanner(){
   });
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
-    if(!token){status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
+    if(!token){
+      let shapeV610='';
+      try{const u=new URL(String(value||''));shapeV610=u.host+u.pathname}catch{shapeV610='raw:'+String(value||'').length}
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'unrecognised',shape:shapeV610.slice(0,120)});
+      status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
+    joinFunnelEmitV610('join_inapp_scan_result',{accepted:true});
+    rememberPendingCustomerJoinToken(token);
+    joinFunnelEmitV610('join_pending_scan_saved');
+    close({restoreFocus:false});
     /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
        fires nothing, so the new token was remembered and never submitted. */
     if(location.hash==='#/join')route();else nav('#/join');
@@ -3322,10 +3401,11 @@ function openCustomerJoinScanner(){
   const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
   const startCamera=async()=>{
     if(closed)return;
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
+    if(!navigator.mediaDevices?.getUserMedia){joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'no_media_devices'});status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
     camera.disabled=true;camera.hidden=true;status.textContent=ct('Starting camera…');
     if(!await loadDecoder()){
       if(closed)return;
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'decoder_load'});
       camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent=ct('retry');
       status.textContent=ct(DECODER_LOAD_FAILURE);return;
     }
@@ -3336,6 +3416,7 @@ function openCustomerJoinScanner(){
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent=ct('Point the camera at the business QR.');scan();
     }catch{
       if(closed)return;
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'camera_unavailable'});
       camera.disabled=false;camera.hidden=false;
       status.textContent=ct('Camera access was not available. Choose a QR image or paste the QR link.');revealFallback();
     }
@@ -3643,10 +3724,25 @@ async function loadMemberQrIntoV327({card,slot,status},isCurrent){
 async function confirmCustomerJoinV571(token,isCurrent){
   let preview=null;
   try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
-  if(!isCurrent())return false;
+  /* nestly_v604 — THE SILENT SCAN. The owner's phone logged this preview returning 200 with the
+     business, and then NOTHING appeared. The old guard here was `if(!isCurrent())return false` —
+     the render epoch. On a real phone another render routinely starts during this fetch (session
+     restore re-route, a wallet watcher repaint), so the epoch was already stale, the sheet was
+     thrown away unshown, and the caller's ask-once flag then suppressed every retry on the same
+     visit: gateway 200, blank screen, "nothing pops up". This sheet is a body-level modal that
+     outlives page repaints by construction — the only states that genuinely invalidate it are
+     the scan being abandoned (token cleared or replaced) or the person having navigated off the
+     join route. Those are what is tested now; a competing repaint underneath is not a reason to
+     not ask. */
+  if(pendingCustomerJoinToken!==token||location.hash!=='#/join'){
+    joinFunnelEmitV610('join_client_error',{m:'confirm sheet refused: pending token or hash moved during preview'});
+    return false;
+  }
+  joinFunnelEmitV610('join_confirmation_render_attempted',{surface:'app-sheet'});
   /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
      future payload that nests the business still names it. */
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
+  pendingCustomerJoinBusinessNameV609=name.slice(0,120);
   pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
@@ -3676,8 +3772,34 @@ async function confirmCustomerJoinV571(token,isCurrent){
       overlay.dataset.pressV587='';dismiss();
     });
     overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
-    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    overlay.querySelector('#customerJoinGoV571').addEventListener('pointerdown',()=>joinFunnelEmitV610('join_yes_pointerdown',{surface:'app-sheet'}));
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>{joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});close(true)};
     overlay.querySelector('#customerJoinGoV571').focus();
+    /* Same probe as the /join page: what a finger would meet at the Yes centre, two frames
+       after paint, with a timeout backstop because rAF sleeps on hidden pages. */
+    let sheetMeasuredV610=false;
+    const measureSheetYesV610=via=>{
+      if(sheetMeasuredV610)return;sheetMeasuredV610=true;
+      try{
+        const yes=overlay.querySelector('#customerJoinGoV571');
+        if(!yes||!yes.isConnected){joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',present:false,via});return}
+        const rect=yes.getBoundingClientRect();
+        const style=getComputedStyle(yes);
+        const cx=Math.round(rect.left+rect.width/2),cy=Math.round(rect.top+rect.height/2);
+        const onTop=document.elementFromPoint(cx,cy);
+        joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',present:true,via,
+          pageVisibility:document.visibilityState,
+          rect:{x:Math.round(rect.x),y:Math.round(rect.y),w:Math.round(rect.width),h:Math.round(rect.height)},
+          vp:`${window.innerWidth}x${window.innerHeight}`,
+          display:style.display,visibility:style.visibility,opacity:style.opacity,
+          pointerEvents:style.pointerEvents,
+          inViewport:rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<window.innerHeight,
+          topElement:onTop?`${onTop.tagName.toLowerCase()}${onTop.id?'#'+onTop.id:''}`:'',
+          topIsYes:onTop===yes||(onTop&&yes.contains(onTop))});
+      }catch(error){joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',via,measureError:String(error&&error.message||error).slice(0,200)})}
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(()=>measureSheetYesV610('raf')));
+    setTimeout(()=>measureSheetYesV610('timeout'),900);
   });
 }
 /* nestly_v587: the business the scanned QR belongs to, learned from the read-only preview, so a
@@ -6882,8 +7004,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   importPartial:Object.freeze({en:'Imported {count}, then failed: {error}','zh-CN':'已导入 {count} 个，随后失败：{error}',ms:'{count} diimport, kemudian gagal: {error}'}),
   customersImported:Object.freeze({en:'Imported {count} customers 🎉','zh-CN':'已导入 {count} 位顾客 🎉',ms:'{count} pelanggan diimport 🎉'}),
   customersImportPreview:Object.freeze({en:'✓ {count} imported.','zh-CN':'✓ 已导入 {count} 个。',ms:'✓ {count} diimport.'}),
-  packageHistory:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}).','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}).'}),
-  packageHistoryWithOlder:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}) · older rows are not shown.','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）· 较早记录未显示。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}) · rekod lebih lama tidak dipaparkan.'}),
   appointmentChanged:Object.freeze({en:'{result}.{confirmation}','zh-CN':'{result}。{confirmation}',ms:'{result}. {confirmation}'}),
   appointmentStatus:Object.freeze({en:'Appointment {status}','zh-CN':'预约状态：{status}',ms:'Status janji temu: {status}'}),
   exactSnapshotMismatch:Object.freeze({en:'The fixed snapshot expected {expected} records but returned {actual}. No partial CSV was downloaded.','zh-CN':'固定快照应有 {expected} 条记录，但只返回 {actual} 条。未下载不完整 CSV。',ms:'Syot kilat tetap menjangka {expected} rekod tetapi mengembalikan {actual}. CSV separa tidak dimuat turun.'}),
@@ -6917,7 +7037,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* V267: the id is gone from these two. A staff member reading the session-correction table
      cannot do anything with a UUID, and the owner asked "what is this?" the first time they
      met one. The relationship is what matters and the counterpart row is in the same table. */
-  reversalOf:Object.freeze({en:'Reversal of an earlier session use','zh-CN':'冲销较早的次数使用','ms':'Pembalikan penggunaan sesi terdahulu'}),
   usedSessionReversedBy:Object.freeze({en:'Used session → later reversed','zh-CN':'已用次数 → 之后已冲销','ms':'Sesi digunakan → dibalikkan kemudian'}),
   preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
   imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
@@ -6999,13 +7118,18 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
   'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
-  'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
+  'customersImported','customersImportPreview',
+  /* nestly_v603: packageHistory and packageHistoryWithOlder retired with the shared "Recent
+     session correction history" block they described. Every package now opens its own history
+     from its own row, where a business-wide "showing the newest N of M" caveat is not true of
+     anything on screen. A named template with no render path is a translated sentence nobody can
+     ever read, which is why v97 refuses one. */
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
   'qrReadyExpires','qrReadyRevoked','qrReadyQrsRevoked','qrReadyExpiresRevoked',
   'qrReadyExpiresQrsRevoked','activeQrRevoked',
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
-  'availableStaff','availableStaffMany','reversalOf',
+  'availableStaff','availableStaffMany',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
   'performancePeriodRange','scheduleHeadingDay','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
   'sortByAscending','sortByDescending','bottlePercentLeft',

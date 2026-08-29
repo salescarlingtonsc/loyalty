@@ -10,6 +10,12 @@
    at its new canonical path before anything renders. */
 (function forwardLegacyAppEntriesV274(){
   try{
+    /* nestly_v603: the printed business QR encodes '?token=…' with NO fragment, because several
+       camera/scanner apps drop everything after '#' when handing a scanned URL to the browser —
+       which is why "website link works but qrcode does not work". This branch must run before
+       the signed-in replace('/app') below, or a signed-in owner's scan would lose the token. */
+    var tokenMatch=/[?&]token=([A-Za-z0-9_-]{20,512})(?:&|$)/.exec(String(window.location.search||''));
+    if(tokenMatch){window.location.replace('/app#/join?token='+tokenMatch[1]);return}
     var hash=String(window.location.hash||'');
     if(hash.indexOf('#/')===0){window.location.replace('/app'+hash);return}
     /* A returning signed-in user should not be shown the marketing page. The Supabase

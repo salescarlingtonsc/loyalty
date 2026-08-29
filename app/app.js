@@ -128,6 +128,40 @@ function reportClientError(event){
 }
 window.addEventListener('error',reportClientError);
 window.addEventListener('unhandledrejection',reportClientError);
+/* nestly_v610 — scan-journey funnel (diagnosis instrumentation, owner-directed). The /join page
+   starts a journey and writes its correlation id to sessionStorage; the app continues the SAME
+   journey here so one real-device scan can be read back stage by stage from function_edge_logs.
+   Emits ONLY while a journey id exists — zero traffic for every ordinary visit. Never the raw
+   token, never PII. The single-shot stages dedupe per page load so re-renders do not spam. */
+const JOIN_FUNNEL_ONCE_V610=new Set();
+const JOIN_FUNNEL_SINGLE_SHOT_V610=new Set(['join_app_loaded','join_pending_scan_found','join_auth_screen_shown','join_auth_completed','join_business_visible']);
+function joinFunnelEmitV610(event,detail){
+  try{
+    const cid=sessionStorage.getItem('nestly.join.funnelCid')||'';
+    if(!cid)return;
+    if(JOIN_FUNNEL_SINGLE_SHOT_V610.has(event)){
+      if(JOIN_FUNNEL_ONCE_V610.has(event))return;
+      JOIN_FUNNEL_ONCE_V610.add(event);
+    }
+    const payload=JSON.stringify({cid,event,at:Date.now(),detail:detail?JSON.stringify(detail).slice(0,1400):''});
+    const url=`${SB_URL}/functions/v1/join-funnel`;
+    if(navigator.sendBeacon&&navigator.sendBeacon(url,new Blob([payload],{type:'text/plain'})))return;
+    fetch(url,{method:'POST',body:payload,headers:{'content-type':'text/plain'},keepalive:true,credentials:'omit'}).catch(()=>{});
+  }catch{}
+}
+function joinFunnelEndV610(){try{sessionStorage.removeItem('nestly.join.funnelCid')}catch{}}
+/* The /join page starts web journeys; the IN-APP scanner starts its own here — the owner's
+   real-device trace showed the in-app path reaching the business preview (200) and stalling,
+   and that path never touches /join, so it must open its own correlation id. */
+function joinFunnelStartV610(){
+  let cid='';
+  try{cid=(crypto.randomUUID&&crypto.randomUUID())||''}catch{}
+  if(!cid)cid='cid-'+Date.now().toString(36)+'-'+Math.floor(Math.random()*1e9).toString(36);
+  try{sessionStorage.setItem('nestly.join.funnelCid',cid)}catch{}
+  JOIN_FUNNEL_ONCE_V610.clear();
+  return cid;
+}
+const joinFunnelBuildV610=()=>{try{return String(buildIdentity?.shortSha||'')}catch{return ''}};
 /* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
    gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
    customer read below goes through this helper, which aborts at `ms` and normalises the outcome
@@ -531,7 +565,12 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],support:['customers','WhatsApp Inbox'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  staffmembers:['staff','Staff Members'],settings:['settings','Subscription'],setup:['setup','Get started'],
+  /* nestly_v606 (owner mark on the Bring-back page: the WhatsApp automation and delivery blocks
+     ringed together, with "Reminder & Notification move under operations setup"). A SURFACE key,
+     not an entitlement — what it shows is owner-level workspace configuration, so it is gated on
+     the same module Settings is, through SURFACE_MODULE_ALIAS_V606 below. */
+  remindernotify:['appointments','Reminder & Notification'],
   /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
      that lives in Operations setup, never an entitlement a staff member can be granted. */
@@ -595,7 +634,7 @@ const isBarSectorV275=()=>String(S.biz?.industry||'').toLowerCase()==='bar';
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 /* nestly_v584: a surface that has its own rail row and route but no entitlement of its own —
    the value is the module whose read permission actually governs it. */
-const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages'});
+const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages',remindernotify:'settings'});
 /* V276 (owner, 2026-08-11, looking at a real bar tenant: "i dont see the full suite of modules
    ready for production"). V246 recorded the owner's ruling that the SECTOR decides the serving
    model — an F&B floor seats parties at tables (Bookings + Waitlist) while a service sector books
@@ -771,7 +810,7 @@ const NAVGROUPS=[
   {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel']},
   /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
      list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
-  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup']}
+  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup','remindernotify']}
 ];
 let navOpen={};
 /* Global top-bar action state (no localStorage in this stack — plain in-session vars). A global
@@ -1709,6 +1748,29 @@ function rememberCustomerJoinConfirmedV596(token,slug){
 }
 function customerJoinAlreadyConfirmedV596(token){
   return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
+}
+/* nestly_v606: the /join page asks "Join <business>?" BEFORE the app loads, and records the Yes
+   in this timestamped handoff. Consuming it (one-shot, removed on read) lets the signed-out join
+   route skip its own sheet instead of asking the same question twice in a row. The freshness
+   window is what keeps v599's lesson intact: a record abandoned in an old tab expires, so it can
+   never silently suppress the question on a later scan. */
+const CUSTOMER_JOIN_HANDOFF_KEY_V606='nestly.customer.joinHandoffV606';
+/* nestly_v609: the business's display NAME, learned from the /join page's handoff or the sheet's
+   preview. Only for copy — the sign-in funnel names what the scan is about to join, so the scan
+   never looks lost between "Yes, join" and the finished account. */
+let pendingCustomerJoinBusinessNameV609='';
+const CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606=10*60*1000;
+function consumeCustomerJoinHandoffV606(token){
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(CUSTOMER_JOIN_HANDOFF_KEY_V606)||'null');
+    sessionStorage.removeItem(CUSTOMER_JOIN_HANDOFF_KEY_V606);
+    if(!raw||typeof raw.token!=='string'||raw.token!==String(token||''))return false;
+    if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
+    pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
+    pendingCustomerJoinBusinessNameV609=String(raw.name||'').slice(0,120);
+    rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
+    return true;
+  }catch{return false}
 }
 function customerRecoveryVerified(){
   try{return sessionStorage.getItem(CUSTOMER_RECOVERY_SESSION_KEY)||''}catch{return ''}
@@ -3639,11 +3701,19 @@ async function route(){
          and by then the person is signed in and this branch is not the one that runs. So it is not
          consulted here at all. The in-memory flag below is only so a re-render of the same visit
          does not stack a second sheet on the first; it resets on every scan and every page load. */
-      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599){
+      joinFunnelEmitV610('join_app_loaded',{signedIn:false,build:joinFunnelBuildV610()});
+      if(pendingCustomerJoinToken)joinFunnelEmitV610('join_pending_scan_found',{signedIn:false});
+      if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599
+        &&!consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)){
         customerJoinAskedThisVisitV599=true;
         if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
-        if(!isRouteCurrent())return;
+        /* nestly_v604: the answer is recorded BEFORE the staleness bail. The sheet survives
+           competing repaints now, so by the time Yes lands this route invocation is often no
+           longer the current one — a later invocation has already painted sign-in underneath,
+           which is exactly the screen the person needs next. Losing the recorded Yes to that
+           ordering forced a second ask after sign-up; recording it first costs nothing. */
         rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken,pendingCustomerJoinSlugV587);
+        if(!isRouteCurrent())return;
       }
       return renderCustomerRegistration(isRouteCurrent);
     }
@@ -4268,9 +4338,19 @@ function setCustomerSurfaceDocumentV167(){
 function customerRegistrationShell(body){
   destroyMountedTurnstiles();
   setCustomerSurfaceDocumentV167();
+  /* nestly_v609 (owner walkthrough: "previously was working but now keep failing"). After the
+     /join page's Yes, the funnel used to open on a generic "Welcome to Peekaa" with no trace of
+     the scan — to the person holding the phone that IS a failure, even though the join was safely
+     recorded and resumes after sign-in. Every screen this shell hosts (sign-in, OTP, profile) now
+     says what the scan is about to join. Copy only: the join still fires exactly once, after
+     sign-in, through the recorded confirmation. */
+  if(pendingCustomerJoinToken)joinFunnelEmitV610('join_auth_screen_shown');
+  const joinContextV609=pendingCustomerJoinToken
+    ?`<section class="card" style="margin-bottom:14px;padding:12px 16px"><div class="row" style="gap:10px">${CUI.icon('scan',{size:18})}<p class="small" style="margin:0">Scan received — you will join <b>${esc(pendingCustomerJoinBusinessNameV609||'this business')}</b> as soon as you sign in or create your account.</p></div></section>`
+    :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -6130,6 +6210,9 @@ function openCustomerJoinScanner(){
     kicker.textContent=ct('My Peekaa QR');
   };
   const showScan=()=>{
+    joinFunnelStartV610();
+    joinFunnelEmitV610('join_inapp_scan_opened',{build:joinFunnelBuildV610(),
+      standalone:navigator.standalone===true,swController:!!navigator.serviceWorker?.controller});
     myQrPanel.hidden=true;scanPanel.hidden=false;
     kicker.textContent=ct('addProgramme');
     startCamera();
@@ -6168,8 +6251,15 @@ function openCustomerJoinScanner(){
   });
   const accept=value=>{
     const token=customerJoinTokenFromQr(value);
-    if(!token){status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
-    rememberPendingCustomerJoinToken(token);close({restoreFocus:false});
+    if(!token){
+      let shapeV610='';
+      try{const u=new URL(String(value||''));shapeV610=u.host+u.pathname}catch{shapeV610='raw:'+String(value||'').length}
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'unrecognised',shape:shapeV610.slice(0,120)});
+      status.textContent=ct('That is not an active Peekaa business QR. Ask the business to generate its latest join QR.');return false}
+    joinFunnelEmitV610('join_inapp_scan_result',{accepted:true});
+    rememberPendingCustomerJoinToken(token);
+    joinFunnelEmitV610('join_pending_scan_saved');
+    close({restoreFocus:false});
     /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
        fires nothing, so the new token was remembered and never submitted. */
     if(location.hash==='#/join')route();else nav('#/join');
@@ -6203,10 +6293,11 @@ function openCustomerJoinScanner(){
   const loadDecoder=async()=>{try{await loadScannerLibrary();return true}catch{return false}};
   const startCamera=async()=>{
     if(closed)return;
-    if(!navigator.mediaDevices?.getUserMedia){status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
+    if(!navigator.mediaDevices?.getUserMedia){joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'no_media_devices'});status.textContent=ct('Camera is unavailable in this browser. Choose a QR image or paste the QR link.');revealFallback();return}
     camera.disabled=true;camera.hidden=true;status.textContent=ct('Starting camera…');
     if(!await loadDecoder()){
       if(closed)return;
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'decoder_load'});
       camera.disabled=false;camera.hidden=false;if(cameraLabel)cameraLabel.textContent=ct('retry');
       status.textContent=ct(DECODER_LOAD_FAILURE);return;
     }
@@ -6217,6 +6308,7 @@ function openCustomerJoinScanner(){
       video.srcObject=stream;frame.hidden=false;await video.play();status.textContent=ct('Point the camera at the business QR.');scan();
     }catch{
       if(closed)return;
+      joinFunnelEmitV610('join_inapp_scan_result',{accepted:false,reason:'camera_unavailable'});
       camera.disabled=false;camera.hidden=false;
       status.textContent=ct('Camera access was not available. Choose a QR image or paste the QR link.');revealFallback();
     }
@@ -6960,14 +7052,49 @@ function customerBookingRowV580(group,item,tab){
 }
 /* Every appointment across every business on this tab, newest first. Requests are not
    appointments and have no appointment date to sort by, so they keep their own row below. */
+/* nestly_v605 (owner, Bookings photo: Ongoing showing one business card while History shows rows —
+   "i want format under Ongoing and Cancelled to follow History format").
+   v580 unified the APPOINTMENTS on all three tabs and deliberately left requests in a per-business
+   card, reasoning that a request has no appointment time to sort by. It does: preferred_at is the
+   time the customer asked for, and it is the only time on the card. So a request is a row like any
+   other, sorted by that, and the tabs stop looking like three different screens. The one thing a
+   request carries that an appointment does not — its status and Withdraw — travels with it. */
+function customerBookingRequestRowV605(group,item,tab){
+  const logo=customerBookingBusinessLogoV195(group);
+  const name=String(group.business_name||'').trim()||'Business';
+  const when=item.preferred_at||item.created_at||'';
+  const time=walletClockV580(when);
+  const service=String(item.service_name||'').trim()||'Booking request';
+  const detail=[service,time?`at ${time}`:'',item.party_size?`party of ${Number(item.party_size)}`:'']
+    .filter(Boolean).join(' · ');
+  const active=isActiveCustomerBookingRequest(item);
+  const statusLabel=active
+    ?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending'))
+    :String(item.status||'updated').replaceAll('_',' ');
+  const statusTone=active?(item.status==='waitlisted'?'new':'off'):'no';
+  return `<article class="card customer-booking-row-v580" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+    <div class="customer-booking-row-logo-v580">${logo}</div>
+    <div class="customer-booking-row-copy-v580">
+      <b data-merchant-content>${esc(name)}</b>
+      ${detail?`<p class="customer-booking-row-detail-v580" data-merchant-content>${esc(detail)}</p>`:''}
+    </div>
+    <div class="customer-booking-row-end-v580">
+      <time class="customer-booking-row-date-v580" datetime="${esc(when)}">${esc(walletDate(when)||'Time pending')}</time>
+      <span class="pill ${statusTone} customer-booking-act-v580">${esc(statusLabel)}</span>
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}
+    </div>
+  </article>`;
+}
 function customerBookingRowListV580(groups=[],tab='bookings'){
   const rows=[];
-  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item})));
-  rows.sort((a,b)=>String(b.item.starts_at||'').localeCompare(String(a.item.starts_at||'')));
-  return rows.map(({group,item})=>customerBookingRowV580(group,item,tab)).join('');
-}
-function customerBookingRequestRowV344(item){
-  return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
+  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item,when:item.starts_at||''})));
+  /* nestly_v605: requests join the same list rather than sitting in a block beneath it. */
+  groups.forEach(group=>group.tabRequests.forEach(item=>
+    rows.push({group,item,request:true,when:item.preferred_at||item.created_at||''})));
+  rows.sort((a,b)=>String(b.when).localeCompare(String(a.when)));
+  return rows.map(({group,item,request})=>request
+    ?customerBookingRequestRowV605(group,item,tab)
+    :customerBookingRowV580(group,item,tab)).join('');
 }
 function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to:''}){
   const inWindow=value=>customerBookingWithinRangeV196(value,range);
@@ -7211,8 +7338,9 @@ async function renderCustomerBookings(){
       .reduce((sum,group)=>sum+group.tabRequests.length+group.tabAppointments.length,0);
     const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingRange);
     const emptyCopy=(CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[2]||'Nothing here yet.';
-    /* nestly_v571 (owner, Bookings photo: "the business" struck out, "confirmation" written in). */
-    const requestHeading=currentBookingTab==='bookings'?'Awaiting confirmation':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
+    /* nestly_v605: requestHeading retired with the per-business request block it titled. Each
+       request is now a row that states its own status (Pending / Waitlisted / the outcome), so a
+       heading above a group of them said nothing the rows did not. */
     const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
     const partialMessages=[
       walletResult.error?'Confirmed appointments could not be discovered from your programmes.':'',
@@ -7250,7 +7378,8 @@ async function renderCustomerBookings(){
          they have no appointment time to sort by and carry their own decision, so they keep their
          business card and sit under the appointment rows. */''}
     ${groups.length?`<div class="customer-booking-list customer-booking-rows-v580">${customerBookingRowListV580(groups,currentBookingTab)}</div>
-      ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
+      ${/* nestly_v605: requests are rows in the list above now, sorted by the time the customer
+           asked for, so this per-business block underneath is the same records a second time. */''}`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
@@ -7886,10 +8015,25 @@ async function renderCustomerProfile(requestedView){
 async function confirmCustomerJoinV571(token,isCurrent){
   let preview=null;
   try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
-  if(!isCurrent())return false;
+  /* nestly_v604 — THE SILENT SCAN. The owner's phone logged this preview returning 200 with the
+     business, and then NOTHING appeared. The old guard here was `if(!isCurrent())return false` —
+     the render epoch. On a real phone another render routinely starts during this fetch (session
+     restore re-route, a wallet watcher repaint), so the epoch was already stale, the sheet was
+     thrown away unshown, and the caller's ask-once flag then suppressed every retry on the same
+     visit: gateway 200, blank screen, "nothing pops up". This sheet is a body-level modal that
+     outlives page repaints by construction — the only states that genuinely invalidate it are
+     the scan being abandoned (token cleared or replaced) or the person having navigated off the
+     join route. Those are what is tested now; a competing repaint underneath is not a reason to
+     not ask. */
+  if(pendingCustomerJoinToken!==token||location.hash!=='#/join'){
+    joinFunnelEmitV610('join_client_error',{m:'confirm sheet refused: pending token or hash moved during preview'});
+    return false;
+  }
+  joinFunnelEmitV610('join_confirmation_render_attempted',{surface:'app-sheet'});
   /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
      future payload that nests the business still names it. */
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
+  pendingCustomerJoinBusinessNameV609=name.slice(0,120);
   pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
@@ -7919,8 +8063,34 @@ async function confirmCustomerJoinV571(token,isCurrent){
       overlay.dataset.pressV587='';dismiss();
     });
     overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
-    overlay.querySelector('#customerJoinGoV571').onclick=()=>close(true);
+    overlay.querySelector('#customerJoinGoV571').addEventListener('pointerdown',()=>joinFunnelEmitV610('join_yes_pointerdown',{surface:'app-sheet'}));
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>{joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});close(true)};
     overlay.querySelector('#customerJoinGoV571').focus();
+    /* Same probe as the /join page: what a finger would meet at the Yes centre, two frames
+       after paint, with a timeout backstop because rAF sleeps on hidden pages. */
+    let sheetMeasuredV610=false;
+    const measureSheetYesV610=via=>{
+      if(sheetMeasuredV610)return;sheetMeasuredV610=true;
+      try{
+        const yes=overlay.querySelector('#customerJoinGoV571');
+        if(!yes||!yes.isConnected){joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',present:false,via});return}
+        const rect=yes.getBoundingClientRect();
+        const style=getComputedStyle(yes);
+        const cx=Math.round(rect.left+rect.width/2),cy=Math.round(rect.top+rect.height/2);
+        const onTop=document.elementFromPoint(cx,cy);
+        joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',present:true,via,
+          pageVisibility:document.visibilityState,
+          rect:{x:Math.round(rect.x),y:Math.round(rect.y),w:Math.round(rect.width),h:Math.round(rect.height)},
+          vp:`${window.innerWidth}x${window.innerHeight}`,
+          display:style.display,visibility:style.visibility,opacity:style.opacity,
+          pointerEvents:style.pointerEvents,
+          inViewport:rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<window.innerHeight,
+          topElement:onTop?`${onTop.tagName.toLowerCase()}${onTop.id?'#'+onTop.id:''}`:'',
+          topIsYes:onTop===yes||(onTop&&yes.contains(onTop))});
+      }catch(error){joinFunnelEmitV610('join_confirmation_visible',{surface:'app-sheet',via,measureError:String(error&&error.message||error).slice(0,200)})}
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(()=>measureSheetYesV610('raf')));
+    setTimeout(()=>measureSheetYesV610('timeout'),900);
   });
 }
 /* The customer-facing wording for every refusal the server can return. Kept beside the dialog
@@ -7942,6 +8112,8 @@ let pendingCustomerJoinSlugV587='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
+  joinFunnelEmitV610('join_app_loaded',{signedIn:true,build:joinFunnelBuildV610()});
+  if(token){joinFunnelEmitV610('join_pending_scan_found',{signedIn:true});joinFunnelEmitV610('join_auth_completed');}
   if(!token){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
@@ -7962,12 +8134,21 @@ async function renderCustomerQrJoin(){
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(customerJoinConfirmedV596.slug)||pendingCustomerJoinSlugV587;
   }else{
     if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
-    if(!isCurrent())return;
+    /* nestly_v604: record the Yes before the staleness bail (see the v604 note in
+       confirmCustomerJoinV571). If a wallet watcher repainted while the sheet was open, this
+       invocation is stale — but the person still pressed Yes on this token. Re-entering the
+       route lets a FRESH invocation find the recorded answer and carry straight into the join,
+       instead of the Yes dying with the stale epoch and the screen staying wherever it was. */
     rememberCustomerJoinConfirmedV596(token,pendingCustomerJoinSlugV587);
+    if(!isCurrent()){
+      if(location.hash==='#/join')route();
+      return;
+    }
   }
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
+  joinFunnelEmitV610('join_rpc_started');
   const {data,error}=await customerRpc('customer_join_business_from_qr_v89',{
     p_join_token:token,p_idempotency_key:attemptKey
   });
@@ -7984,6 +8165,7 @@ async function renderCustomerQrJoin(){
        Peekaa QR." The owner then went looking for a broken QR, replaced it (killing their real
        printed one), and scanned again — and was told the same thing. The message has to name the
        real reason, and offer the way through it. */
+    joinFunnelEmitV610('join_rpc_failed',{code:String(error.code||''),msg:String(error.message||'').slice(0,160)});
     const noCustomerAccountV602=String(error.code||'')==='42501'
       ||/customer identity is required|customer session required/i.test(String(error.message||''));
     if(!noCustomerAccountV602&&error.code!=='PGRST202'&&error.code!=='42883')rememberPendingCustomerJoinToken('');
@@ -8013,6 +8195,7 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   if(!['joined','already_joined','completed','linked'].includes(String(data?.outcome||data?.status||''))){
+    joinFunnelEmitV610('join_rpc_failed',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
     /* v286 (audit): this branch left the customer on a card still headed 'Joining this programme'
        with no action, and kept the dead token + write-attempt key so a later retry replayed the
        same failing join. It now matches the error branch: a way out, and a clean rescan. */
@@ -8021,6 +8204,7 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
+  joinFunnelEmitV610('join_rpc_succeeded',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
   /* nestly_v587 (owner: "once pressing yes will land inside the exact same business"). This read
      was always empty: customer_join_business_from_qr_v89 returned outcome + business_id and no
      slug at all, so every successful join fell back to the programmes list. v587 adds
@@ -8049,6 +8233,16 @@ async function renderCustomerQrJoin(){
   await maybeOfferCustomerPasskeySetup({isCurrent});
   if(!isCurrent())return;
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
+  /* The journey's last stage: the wallet route is live and has had two frames to paint.
+     setTimeout backstop for the same reason as the /join probe: rAF sleeps on hidden pages. */
+  let businessVisibleSentV610=false;
+  const emitBusinessVisibleV610=via=>{
+    if(businessVisibleSentV610)return;businessVisibleSentV610=true;
+    joinFunnelEmitV610('join_business_visible',{via,hash:String(location.hash||'').split('?')[0].slice(0,80)});
+    joinFunnelEndV610();
+  };
+  requestAnimationFrame(()=>requestAnimationFrame(()=>emitBusinessVisibleV610('raf')));
+  setTimeout(()=>emitBusinessVisibleV610('timeout'),900);
 }
 
 async function renderCustomerClaim(){
@@ -17681,7 +17875,9 @@ function profileHtml(){
              same card in a dialog, because printing, replacing and revoking a QR needs more room
              than a dropdown row. */''}
         ${S.myRole==='owner'?`<a href="#" id="pmBusinessQrV368">${CUI.icon('scan',{size:20})}My Business QR</a>`:''}
-        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:20})}Settings</a>`:''}
+        ${/* nestly_v607: the owner struck "Settings" out in the menu too and wrote Subscription.
+             The route is unchanged — the page it opens is the plan now, and nothing else. */''}
+        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:20})}Subscription</a>`:''}
         <!-- V209 (owner annotations): "remove this" on Team & staff — Staff Members is already in
              the sidebar, and two doors to one page is the duplicated navigation flagged at V180.
              "move here" on Branches — it belongs in Operations setup beside Staff and Services,
@@ -18962,8 +19158,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   importPartial:Object.freeze({en:'Imported {count}, then failed: {error}','zh-CN':'已导入 {count} 个，随后失败：{error}',ms:'{count} diimport, kemudian gagal: {error}'}),
   customersImported:Object.freeze({en:'Imported {count} customers 🎉','zh-CN':'已导入 {count} 位顾客 🎉',ms:'{count} pelanggan diimport 🎉'}),
   customersImportPreview:Object.freeze({en:'✓ {count} imported.','zh-CN':'✓ 已导入 {count} 个。',ms:'✓ {count} diimport.'}),
-  packageHistory:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}).','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}).'}),
-  packageHistoryWithOlder:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}) · older rows are not shown.','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）· 较早记录未显示。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}) · rekod lebih lama tidak dipaparkan.'}),
   appointmentChanged:Object.freeze({en:'{result}.{confirmation}','zh-CN':'{result}。{confirmation}',ms:'{result}. {confirmation}'}),
   appointmentStatus:Object.freeze({en:'Appointment {status}','zh-CN':'预约状态：{status}',ms:'Status janji temu: {status}'}),
   exactSnapshotMismatch:Object.freeze({en:'The fixed snapshot expected {expected} records but returned {actual}. No partial CSV was downloaded.','zh-CN':'固定快照应有 {expected} 条记录，但只返回 {actual} 条。未下载不完整 CSV。',ms:'Syot kilat tetap menjangka {expected} rekod tetapi mengembalikan {actual}. CSV separa tidak dimuat turun.'}),
@@ -18997,7 +19191,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* V267: the id is gone from these two. A staff member reading the session-correction table
      cannot do anything with a UUID, and the owner asked "what is this?" the first time they
      met one. The relationship is what matters and the counterpart row is in the same table. */
-  reversalOf:Object.freeze({en:'Reversal of an earlier session use','zh-CN':'冲销较早的次数使用','ms':'Pembalikan penggunaan sesi terdahulu'}),
   usedSessionReversedBy:Object.freeze({en:'Used session → later reversed','zh-CN':'已用次数 → 之后已冲销','ms':'Sesi digunakan → dibalikkan kemudian'}),
   preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
   imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
@@ -19079,13 +19272,18 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
   'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
-  'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
+  'customersImported','customersImportPreview',
+  /* nestly_v603: packageHistory and packageHistoryWithOlder retired with the shared "Recent
+     session correction history" block they described. Every package now opens its own history
+     from its own row, where a business-wide "showing the newest N of M" caveat is not true of
+     anything on screen. A named template with no render path is a translated sentence nobody can
+     ever read, which is why v97 refuses one. */
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
   'qrReadyExpires','qrReadyRevoked','qrReadyQrsRevoked','qrReadyExpiresRevoked',
   'qrReadyExpiresQrsRevoked','activeQrRevoked',
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
-  'availableStaff','availableStaffMany','reversalOf',
+  'availableStaff','availableStaffMany',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
   'performancePeriodRange','scheduleHeadingDay','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
   'sortByAscending','sortByDescending','bottlePercentLeft',
@@ -19365,7 +19563,7 @@ function renderShell(page){
     waitlist:waitlistPage,inventory:inventoryPage,packages:()=>packagesPage({view:'plans'}),custpackages:()=>packagesPage({view:'customers'}),reports:reportsPage,customerintel:customerIntelligencePage,support:supportInboxPageV531,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
-    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
+    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,remindernotify:reminderNotificationPageV606,
     'customer-interface':customerInterfacePageV243};
   /* V286: a hash with no page used to render the Dashboard while location.hash still read the
      route that was asked for — the one refusal in the router that answered silently. A staff
@@ -33016,8 +33214,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="grow-tiers-page-v343">
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
-      <div id="growWaAutomationCardV583"></div>
-      <div id="growBbWhatsappStripV551"></div>
+      ${/* nestly_v606: the two WhatsApp cards moved to Operations setup -> Reminder & Notification.
+           They govern every message Peekaa sends, not this one campaign. */''}
       <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
@@ -45832,6 +46030,18 @@ async function inventoryPage(){
    counter action (use a session for the person in front of you). They are now two destinations,
    so the daily one is one tap from the rail instead of two. ONE builder still renders both —
    same markup, same ids, same handlers — with `view` deciding which half is on screen. */
+/* nestly_v603: the owner asked for dd/mm/yy on the two new Customer packages columns. sgt()
+   prints a full date AND time, which is right for an audit row and far too wide for a table
+   column. A function declaration, not a const inside the page: the row renderer runs before the
+   page's own body finishes, and a const there sits in the temporal dead zone when it does. */
+function packageDayV603(value){
+  /* nestly_v608: sgt() prints a date AND a time ("2026-07-01 10:00"), and splitting on a comma it
+     does not contain left the time on both new columns — the owner asked for dd/mm/yy. Reuses the
+     app's existing short-date formatter, which is already Asia/Singapore and already the shape
+     every other short date on this workspace prints. Caught by LOOKING at the rendered row; the
+     source-level test could not have seen it. */
+  return value?promotionDateShortV324(value)||'—':'—';
+}
 async function packagesPage(options){
   const packagesViewV584=options&&options.view==='customers'?'customers':'plans';
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -46124,7 +46334,7 @@ async function packagesPage(options){
 	    const filtered=packageRows.filter(k=>!query||[k.client_name,k.client_phone,k.plan_name].some(value=>String(value||'').toLowerCase().includes(query)));
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
 	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
-    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
+    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th>Left</th><th>Status</th><th></th></tr>
       ${visible.map(k=>{
       /* nestly_v593: the server already reports 'expired' as the status of a package whose window
          has closed (staff_list_package_entitlements_v102 derives it, it is not a stored value).
@@ -46133,17 +46343,66 @@ async function packagesPage(options){
          and drops the action instead. */
       const expiredV593=k.status==='expired';
       return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${k.expires_at?`<div class="muted small">${expiredV593?'Expired':'Use by'} ${esc(sgt(k.expires_at))}</div>`:''}</td>
+      ${/* nestly_v603 (owner: "Add! Date Bought dd/mm/yy  Last Used dd/mm/yy"). Bought is in the
+           payload already; last used is v603's, and it counts only sessions that were not undone.
+           An em dash rather than a blank so an untouched package reads as "never used" instead of
+           looking like a column that failed to load. */''}
+      <td>${esc(packageDayV603(k.purchased_at))}</td>
+      <td>${k.last_used_at?esc(packageDayV603(k.last_used_at)):'<span class="muted">—</span>'}</td>
       <td>${k.remaining}/${k.sessions||'?'}</td>
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
-      <td>${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`;
+      <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
     }).join('')}</table>
       <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} customer packages · page ${packagePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
-      ${packageHistory.length?`<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px"><b>Recent session correction history</b><p class="muted small" style="margin-top:4px">Use Undo session use only when a package session was deducted by mistake. It adds one session back and never refunds a payment. ${workspaceTemplateHtmlV97(workflow?.may_have_more?'packageHistoryWithOlder':'packageHistory',{shown:packageHistory.length,total:Number(workflow?.total_sales??packageHistory.length),limit:Number(workflow?.limit||100)})}</p><div class="cui-table-wrap"><table data-responsive="true" class="cui-table" style="margin-top:8px"><tr><th>When</th><th>Customer</th><th>Relationship</th><th>Result</th><th></th></tr>
-        ${packageHistory.map(x=>`<tr><td>${sgt(x.occurred_at)}</td><td>${esc(x.customer_name||'Customer')}</td><td>${x.is_reversal
-          ?workspaceTemplateHtmlV97('reversalOf',{id:x.original_sale_id||''})
-          :x.reversal_sale_id?workspaceTemplateHtmlV97('usedSessionReversedBy',{id:x.reversal_sale_id})
-          :'<span data-workspace-i18n>Used session</span>'}</td><td>${x.reversal_sale_id||x.is_reversal?'<span class="pill ok">Session added back · no refund</span>':'<span class="pill new">session used</span>'}</td><td>${canWrite&&x.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${x.id}">Undo session use</button>`:x.refusal_reason?`<span class="muted small">${esc(x.refusal_reason)}</span>`:''}</td></tr>`).join('')}</table></div></div>`:''}</div>`
+      ${/* nestly_v603 (owner: "History" written beside Use session, with a line down to this
+           block; asked which was meant and the owner chose per-row History and deleting the
+           section). Every row now opens its own history, so a shared list of the whole business's
+           corrections underneath is a second place saying the same thing less precisely — it
+           could never tell you WHICH package a correction belonged to. Undo session use lives in
+           the per-row dialog, on the rows it actually applies to. */''}</div>`
       :CUI.emptyState({iconName:'packages',title:'No customer packages yet',body:'Sold packages will appear here after a customer purchases prepaid sessions.'});
+    /* nestly_v603: one package's own history, opened from its row. It reads
+       staff_package_session_history_v603, which is keyed on the package rather than on the
+       business, so the list is exactly this customer's sessions on this package — the thing the
+       shared block underneath could never tell you. Undo is offered on the same
+       data-reverse-kind/data-reverse-id contract the existing reversal wiring already binds. */
+    document.querySelectorAll('[data-package-history-v603]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.packageHistoryV603;
+      const planName=button.dataset.packageHistoryName||'this package';
+      const customerName=button.dataset.packageHistoryCustomer||'';
+      CUI.setButtonBusy(button,{busy:true,label:'Opening…'});
+      const {data,error}=await sb.rpc('staff_package_session_history_v603',
+        {p_business:S.biz.id,p_client_package:id});
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      if(error)return toast(ownerErrorText(error));
+      const used=Array.isArray(data?.sessions_used)?data.sessions_used:[];
+      const dialog=document.createElement('div');
+      dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+      dialog.setAttribute('aria-labelledby','packageHistoryTitleV603');
+      dialog.innerHTML=`<div class="modal-card" style="width:min(620px,100%)">
+        <div class="row"><div><p class="eyebrow">Package history</p><h2 id="packageHistoryTitleV603" style="margin-top:4px" data-merchant-content>${esc(planName)}</h2>
+        <p class="muted small" style="margin-top:4px">${customerName?`${esc(customerName)} · `:''}${esc(String(data?.remaining??'?'))} of ${esc(String(data?.sessions??'?'))} left · bought ${esc(packageDayV603(data?.purchased_at))}${data?.expires_at?` · use by ${esc(packageDayV603(data.expires_at))}`:''}</p></div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm" id="packageHistoryCloseV603">Close</button></div>
+        ${used.length?`<p class="muted small" style="margin-top:12px">Use Undo session use only when a package session was deducted by mistake. It adds one session back and never refunds a payment.</p>
+        <div class="cui-table-wrap"><table data-responsive="true" class="cui-table" style="margin-top:8px"><tr><th>When</th><th>Result</th><th></th></tr>
+          ${used.map(entry=>`<tr><td>${esc(sgt(entry.used_at))}</td>
+            ${/* nestly_v603: the two translated sentences the retired block used to carry keep their
+                 home here, where they are MORE precise than they were — every row already belongs
+                 to one package and one customer, so "reversed" needs no sale id to disambiguate. */''}
+            <td>${entry.reversed
+              ?`<span class="pill ok">Session added back · no refund</span><div class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('usedSessionReversedBy',{id:entry.sale_id||''})}</div>`
+              :'<span class="pill new">session used</span>'}</td>
+            <td>${canWrite&&!entry.reversed&&entry.sale_id?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${esc(entry.sale_id)}">Undo session use</button>`:''}</td></tr>`).join('')}
+        </table></div>`
+        :`<p class="muted small" style="margin-top:14px">No sessions have been used on this package yet.</p>`}
+      </div>`;
+      document.body.append(dialog);
+      let deactivate=null;
+      const close=()=>{if(deactivate){const d=deactivate;deactivate=null;d({restoreFocus:true})}else dialog.remove()};
+      deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#packageHistoryCloseV603'});
+      $('packageHistoryCloseV603').onclick=close;
+      if(canWrite)bindReversalButtons(refreshPackagesV584);
+    });
     const prev=$('packagesPrev'),next=$('packagesNext');
     if(prev)prev.onclick=()=>{packagePage=Math.max(0,packagePage-1);renderPackages()};
     if(next)next.onclick=()=>{packagePage+=1;renderPackages()};
@@ -46207,6 +46466,84 @@ function branchBillingSentenceV280(counts){
 async function saveBranchFieldsV325(branchId,fields){
   return sb.from('branches').update(fields).eq('id',branchId).eq('business_id',S.biz.id);
 }
+/* nestly_v606 (owner: "Reminder & Notification move under operations setup"). The two WhatsApp
+   cards were on the Bring-back page, which meant the switch that stops EVERY booking confirmation
+   and EVERY appointment reminder lived inside one campaign — an owner turning off a bring-back
+   offer had no reason to look there, and an owner looking for their reminders had no reason to
+   open bring-back. They are workspace configuration, so they sit with the rest of it.
+   Nothing about them changed: the same two cards, the same two loaders, the same RPCs and the
+   same owner-only gate. Only the page they are drawn on. */
+async function reminderNotificationPageV606(){
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('appointments',{size:24})}<div><h1>Reminder &amp; Notification</h1><p class="muted small">What Peekaa sends your customers on your behalf, and how it reaches them.</p></div></div></div>
+    <div id="growWaAutomationCardV583"></div>
+    <div id="growBbWhatsappStripV551"></div>`;
+  if(!isCurrent())return;
+  await Promise.all([
+    loadGrowWaAutomationCardV583(routeMain).catch(()=>{}),
+    loadGrowBbWhatsappStripV551(routeMain).catch(()=>{})
+  ]);
+}
+/* nestly_v606 (owner mark: the opening-hours grid ringed with an arrow to Branches — "branch
+   opening hour should put here"). Hours belong to a BRANCH. They were edited on Customer Action,
+   one screen for the whole business, which meant an owner setting a second branch's hours had to
+   go somewhere that never mentioned that branch — and the grid silently governed whichever branch
+   the loader happened to pick. It is drawn on Branches now, beside everything else that is true of
+   a branch. Same table, same upsert/delete, same shape of grid. */
+async function branchHoursEditorV606(host,branch){
+  if(!host||!branch)return;
+  const scope='shop';
+  host.setAttribute('aria-busy','true');
+  host.innerHTML='<p class="muted small">Loading opening hours…</p>';
+  const {data:hours,error}=await sb.from('branch_hours')
+    .select('weekday,opens_at,closes_at').eq('business_id',S.biz.id).eq('branch_id',branch.id);
+  if(!host.isConnected)return;
+  host.setAttribute('aria-busy','false');
+  if(error){
+    host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
+    return;
+  }
+  const byWeekday=new Map((hours||[]).map(row=>[Number(row.weekday),row]));
+  const fallback={opens:'10:00',closes:'19:00'};
+  host.innerHTML=`<div class="v183-hours">
+    ${WEEKDAY_NAMES_V600.map((label,weekday)=>v183HourRowMarkup(scope,weekday,label,byWeekday.get(weekday)||null,fallback)).join('')}
+  </div>
+  <div class="row" style="margin-top:12px"><button class="btn sm" data-branch-hours-save-v606>Save opening hours</button></div>
+  <div data-branch-hours-error-v606 role="status"></div>`;
+  host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
+    const weekday=box.dataset.dayClosed;
+    const opens=host.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+    const closes=host.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+    if(opens)opens.disabled=box.checked;
+    if(closes)closes.disabled=box.checked;
+  });
+  const save=host.querySelector('[data-branch-hours-save-v606]');
+  const err=host.querySelector('[data-branch-hours-error-v606]');
+  save.onclick=async()=>{
+    save.disabled=true;err.innerHTML='';
+    const open=[],closed=[];
+    host.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
+      const weekday=Number(box.dataset.dayClosed);
+      const opens=host.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+      const closes=host.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+      /* An inverted or blank range is recorded as closed rather than half-saved — the rule the
+         previous editor used, kept verbatim. */
+      if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
+      open.push({business_id:S.biz.id,branch_id:branch.id,weekday,opens_at:opens,closes_at:closes});
+    });
+    const results=await Promise.all([
+      open.length?sb.from('branch_hours').upsert(open,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
+      closed.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branch.id).in('weekday',closed):Promise.resolve({error:null})
+    ]);
+    if(!host.isConnected)return;
+    save.disabled=false;
+    const failure=results.find(result=>result?.error);
+    if(failure){err.innerHTML=`<div class="err">${esc(humanErrorV295(failure.error,'Those hours could not be saved.'))}</div>`;return}
+    /* Plain, uninterpolated: the card this editor is drawn inside already names the branch, so
+       repeating it in the toast would be a merchant name inside interface copy for no gain. */
+    toast('Opening hours saved');
+  };
+}
 async function branchesPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -46214,7 +46551,7 @@ async function branchesPage(){
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
-  let branchList=[],staffList=[],openAssignId=null,editId=null,branchAddAttemptKey=null;
+  let branchList=[],staffList=[],openAssignId=null,editId=null,branchAddAttemptKey=null,openHoursIdV606=null;
   $('addBr').onclick=()=>openForm(null);
   function openForm(b){
     editId=b?b.id:null;
@@ -46317,7 +46654,15 @@ async function branchesPage(){
                inside Edit); deleting one is rare, irreversible and billing-relevant, so it asks
                for the branch's name to be typed back. The default branch is never deletable. -->
           ${b.is_default?'':`<button class="btn ghost sm" data-name="${esc(b.name)}" onclick="deleteBranchV285('${b.id}',this)">Delete</button>`}
+          ${/* nestly_v606: opening hours are a fact about THIS branch, so they open from its own
+               card rather than from a business-wide screen that never named it. */''}
+          <button class="btn ghost sm" type="button" data-branch-hours-open-v606="${b.id}" aria-expanded="${openHoursIdV606===b.id?'true':'false'}">${openHoursIdV606===b.id?'Close hours':'Opening hours'}</button>
         </div>
+        ${openHoursIdV606===b.id?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Opening hours</b>
+          <p class="muted small" style="margin-top:4px">Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
+          <div data-branch-hours-host-v606="${b.id}" style="margin-top:12px"></div>
+        </div>`:''}
         ${openAssignId===b.id?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div class="row" style="gap:10px;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap">
             <p class="muted small" style="margin:0;flex:1;min-width:220px">Tick who works here. Staff assigned here see only this branch's data — owners & managers see every branch regardless of assignment.</p>
@@ -46328,6 +46673,18 @@ async function branchesPage(){
         </div>`:''}
       </div>`;
     }).join('');
+    /* nestly_v606: the toggle and the editor it fills. One card open at a time — two grids of the
+       same seven weekdays on one screen is how the wrong branch gets edited. */
+    document.querySelectorAll('[data-branch-hours-open-v606]').forEach(button=>button.onclick=()=>{
+      const id=button.dataset.branchHoursOpenV606;
+      openHoursIdV606=openHoursIdV606===id?null:id;
+      load();
+    });
+    if(openHoursIdV606){
+      const host=document.querySelector(`[data-branch-hours-host-v606="${CSS.escape(openHoursIdV606)}"]`);
+      const branch=branchList.find(item=>item.id===openHoursIdV606);
+      if(host&&branch)branchHoursEditorV606(host,branch);
+    }
   }
   window.editBranch=(id)=>{const b=branchList.find(x=>x.id===id);if(b) openForm(b);};
   window.toggleAssign=(id)=>{openAssignId=openAssignId===id?null:id;load();};
@@ -49098,7 +49455,7 @@ async function settingsPage(){
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
-  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div></div>
+  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Subscription</h1><p class="muted small">Your Peekaa plan and what it covers.</p></div></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
@@ -49113,26 +49470,15 @@ async function settingsPage(){
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue" hidden>Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team" hidden>Team &amp; permissions</button>
     </div>
-    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1"><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
-      <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
-      <label class="row sales-mix-row"><input type="checkbox" id="sellsServices" ${(S.biz.enabled_modules||[]).includes('services')?'checked':''}> <span><b>Services</b><br><span class="muted small">Bookable treatments, classes or appointments.</span></span></label>
-      <label class="row sales-mix-row"><input type="checkbox" id="sellsProducts" ${(S.biz.enabled_modules||[]).includes('inventory')?'checked':''}> <span><b>Products</b><br><span class="muted small">Physical items you stock and sell.</span></span></label>
-      <div class="row" style="margin-top:12px"><button class="btn sm" id="salesMixSave">Save</button><span class="muted small" id="salesMixStatus" role="status" aria-live="polite"></span></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">`:''}<b>Modules</b><p class="muted small" style="margin:6px 0 10px">Everything else is set by Peekaa for your sector. Contact Peekaa if your business needs a different module entitlement.</p>
-      ${/* V389 (owner, photo 1: "the modules are lump together, very messy ... i need you to have a
-            structure and frame it easier to read").
-            The mess had a cause, not just a look. `.chip` is styled in this app's stylesheet, but
-            it sets a background, a radius and padding and NO display — it is a <span>, so it is
-            inline. What made that work elsewhere is its container `.platform-module-list`, whose
-            `display:flex` blockified it; and that rule lives only in platform-console.css, which
-            app.js fetches on demand for #/platform routes (loadPlatformConsoleAssetsV184) and
-            which this page never loads. So each chip stayed inline, and a padded background on a
-            wrapping inline element paints exactly the overlap in the owner's photo.
-            So this list gets its OWN class and its own rules in this app's stylesheet, rather than
-            borrowing a console's. The console keeps .platform-module-list for its own lists.
-            One module per framed cell, name first and its dependencies on a quieter second line —
-            "uses Customers, Sales & refunds" is a footnote, not half the title. */''}
-      <div class="settings-module-grid-v389" aria-label="Enabled modules">${mods.filter(m=>(S.biz.enabled_modules||[]).includes(m)).map(m=>`<div class="settings-module-v389"><span class="settings-module-name-v389">${CUI.icon(MODULES[m][0],{size:16})}<b>${esc(MODULES[m][1])}</b></span>${dependencyText(m)?`<span class="settings-module-uses-v389">uses ${esc(dependencyText(m))}</span>`:''}</div>`).join('')||'<p class="muted small">No optional modules are assigned.</p>'}</div></div>
+    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1">
+      ${/* nestly_v607 (owner markup: "Settings" struck through and "Subscription" written in, on
+           the page and in the profile menu; "click to edit modules" answered with "dont need to
+           show them the modules, just remove it. since only admin can edit").
+           "What do you sell?" and the Modules list are gone. Both described ENTITLEMENT, which
+           Peekaa grants and an owner cannot change — the page said so itself ("Contact Peekaa if
+           your business needs a different module entitlement"), so it was a read-only list of
+           things that look like settings. What remains is the one thing on this page the owner
+           actually owns: the plan they pay for. */''}
       <div class="card" id="billingWrap">${CUI.skeletonGrid({cards:2,lines:3})}</div></div></section>
     <section class="settings-panel" id="setpanel-catalogue" role="tabpanel" aria-labelledby="settab-catalogue" tabindex="-1" hidden>
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
@@ -49419,6 +49765,7 @@ async function settingsPage(){
            four actions moved one tab across — same handlers, same confirms — and Cancel goes
            because the dialog already has three ways out (the ✕, the backdrop and Esc), all of which
            discard exactly the same way this button did. */''}
+      ${staffPersonActionsHtmlV603(s)}
       <div class="row staff-profile-save-v584" style="margin-top:12px"><span class="spacer"></span><button class="btn sm" onclick="saveStaffProfile('${s.id}',this)">Save profile</button></div>
     </div>`;
   }
@@ -49711,9 +50058,19 @@ async function settingsPage(){
                  cross, exactly as the owner drew it; a login still waiting on approval is neither,
                  and says so, because that one needs an action rather than a symbol. */''}
             <span class="staff-col-v226" data-staff-col="Branch">${branchSummaryV584}</span>
-            <span class="staff-col-v226" data-staff-col="App access">${appAccessCellV584}</span>
             <span class="staff-col-v226" data-staff-col="Position"><span class="pill ${s.role==='owner'?'ok':'off'}" data-merchant-content>${esc(s.title||ROLE_LABELS[s.role]||s.role)}</span></span>
             <span class="staff-col-v226" data-staff-col="Commission">${commissionSummary}</span>
+            ${/* nestly_v603 (owner photo: APP ACCESS ringed, "move back to after commission"). It
+                 was the fifth of seven columns, splitting Branch from Position and Commission —
+                 the three facts about the JOB — with a column about the login. Job first, access
+                 last. */''}
+            <span class="staff-col-v226" data-staff-col="App access">${appAccessCellV584}</span>
+            ${/* nestly_v603 (owner photo: "Put here" against the space beside Commission, with an
+                 arrow up from the Edit button on the row beneath). Edit is drawn IN the row now. It
+                 stays a span and not a button: the whole row is already the button that opens this
+                 editor, and a nested button is invalid HTML — so this is the chip that says what
+                 the row does, not a second control that does it. */''}
+            <span class="staff-col-v226 staff-edit-chip-v603" data-staff-col="">${s.role!=='owner'?`<span class="pill">${openProfileId===s.id?'Close':'Edit'}</span>`:''}</span>
           </button>
           <!-- V260: status pills and action buttons moved to their own row beneath the name/
                phone/email/position/commission grid, so .staff-row-open always renders at the
@@ -49731,7 +50088,8 @@ async function settingsPage(){
                  time-sensitive decision one click deeper is the opposite of what this page is for. */''}
             ${s.role!=='owner'?`${accessPendingV569?`<button class="btn sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',true,this)">Approve access</button>
             <button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="decideStaffAccessV569('${s.id}',false,this)">Decline</button>`:''}
-            <button class="btn ghost sm" onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}">${openProfileId===s.id?'Close':'Edit'}</button>`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
+            ${/* nestly_v603: the Edit button moved INTO the row, beside Commission, where the owner
+                 drew it. Leaving a second one here would be two controls doing one thing. */''}`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
           </div>
           ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}">${esc(s.full_name||'This teammate')} has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
         </div>
@@ -49748,7 +50106,7 @@ async function settingsPage(){
               <h3>${esc(group.title)} <span class="staff-group-count-v209">${members.length}</span></h3>
               <p class="muted small">${esc(group.sub)}</p>
             </div>
-            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>App access</span><span>Position</span><span>Commission</span></div>
+            <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>Position</span><span>Commission</span><span>App access</span><span></span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
         }).join('')
@@ -49857,16 +50215,15 @@ async function settingsPage(){
       </label>`).join('')}
     </fieldset>`;
   }
-  /* nestly_v577 (owner, photo 12): the four actions the owner moved off the row. Identical
-     handlers to the ones the row used to carry — this is a relocation, not a rewrite. */
-  function staffProfileActionsHtmlV577(s){
+  /* nestly_v603: the two actions that are about the PERSON rather than about their login, moved
+     to the Profile tab where the owner drew them. Identical handlers and identical confirms — a
+     relocation, as v577 was. V285's reasoning still governs both: deactivating is what a shop does
+     when somebody leaves (access stops, the seat stops being billed, every past sale and
+     commission keeps the name), and Delete stays behind its own second confirm for the row created
+     by mistake. */
+  function staffPersonActionsHtmlV603(s){
     if(s.role==='owner')return '';
-    return `<div class="staff-profile-actions-v577">
-      <b class="small">Access and status</b>
-      <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
-        ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
-        ${/* nestly_v584: no "Modules" button — the module grid is on this same tab, directly below,
-             so the button opened what the reader is already looking at. */''}
+    return `<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
         ${/* V285's reasoning is unchanged and still governs these two: deactivating is what a shop
              does when somebody leaves (access stops, the seat stops being billed, every past sale
              and commission keeps the name), and Delete stays behind its own second confirm for the
@@ -49876,6 +50233,23 @@ async function settingsPage(){
              Same handler, same two-step confirm — only the label became the glyph everyone already
              reads as "remove". The accessible name still says the whole thing. */''}
         <button class="staff-delete-icon-v584" type="button" data-name="${esc(s.full_name||'this teammate')}" onclick="rmStaff('${s.id}',this)" title="Delete this teammate" ${workspaceTemplateAttributeV97('aria-label','deleteTeammateNamed',{name:s.full_name||'this teammate'})}>${CUI.icon('trash',{size:18})}</button>
+    </div>`;
+  }
+  /* nestly_v577 (owner, photo 12): the four actions the owner moved off the row. Identical
+     handlers to the ones the row used to carry — this is a relocation, not a rewrite. */
+  function staffProfileActionsHtmlV577(s){
+    if(s.role==='owner')return '';
+    return `<div class="staff-profile-actions-v577">
+      ${/* nestly_v603 (owner photo: "Access and status" struck through — "remove wording" — and
+           Deactivate + the dustbin ringed with an arrow up to the Profile tab). The heading went
+           because the tab it sits on is already called Access & Module, so it named the tab twice.
+           Deactivate and Delete moved to Profile: they are about the PERSON — somebody left, or
+           the row was created by mistake — not about what a login may reach, which is the only
+           thing the rest of this tab decides. What stays here is the one action that IS access. */''}
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        ${!s.user_id&&s.active!==false?`<button class="btn ghost sm" data-name="${esc(s.full_name||'this teammate')}" onclick="staffReferenceCodeV217('${s.id}',this)">Give app access</button>`:''}
+        ${/* nestly_v584: no "Modules" button — the module grid is on this same tab, directly below,
+             so the button opened what the reader is already looking at. */''}
       </div>
     </div>`;
   }
@@ -50181,25 +50555,8 @@ async function settingsPage(){
      dependency resolver rewrites enabled_modules on every write and would otherwise put
      services straight back, making the toggle look broken. The server reports what else it
      switched off and we say so plainly rather than letting the owner discover it later. */
-  const salesMixSave=$('salesMixSave');
-  if(salesMixSave)salesMixSave.onclick=async()=>{
-    const status=$('salesMixStatus');
-    const sellsServices=$('sellsServices').checked,sellsProducts=$('sellsProducts').checked;
-    if(!sellsServices&&!sellsProducts){
-      if(status)status.textContent='Pick at least one — a business has to sell something.';return;
-    }
-    CUI.setButtonBusy(salesMixSave,{busy:true,label:'Saving…'});
-    const {data,error}=await sb.rpc('business_set_sales_mix_v184',{
-      p_business:S.biz.id,p_sells_services:sellsServices,p_sells_products:sellsProducts});
-    if(salesMixSave.isConnected)CUI.setButtonBusy(salesMixSave,{busy:false});
-    if(error){if(status)status.textContent=ownerErrorText(error);return}
-    const alsoOff=Array.isArray(data?.also_disabled)?data.also_disabled:[];
-    S.biz.enabled_modules=[...(S.biz.enabled_modules||[])];
-    if(status)status.textContent=alsoOff.length
-      ?`Saved. ${alsoOff.map(m=>MODULES[m]?MODULES[m][1]:m).join(' and ')} turned off too — it needs what you just removed.`
-      :'Saved. Reloading the menu…';
-    setTimeout(()=>location.reload(),alsoOff.length?2200:600);
-  };
+  /* nestly_v607: the sell-mix control was struck out with the modules list beside it. Its
+     server RPC is untouched and still Peekaa's to call; nothing in the app calls it. */
   loadBillingConfig();
 }
 /* ---------- V142 merchant-owned customer payments ---------- */
@@ -50512,9 +50869,19 @@ async function loadSignupConfig(host){
   let url='';
   const showJoinQr=async data=>{
     url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
+    /* nestly_v603 (owner: "website link works but qrcode does not work"). The tappable link and
+       the QR carried the SAME '#/join?token=…' URL, but a tapped link keeps its fragment while
+       several camera/scanner apps hand the browser only the part before the '#'. Those phones
+       arrived at the bare marketing page — the business never popped up, with no error anywhere.
+       The QR therefore encodes a fragment-free URL: the landing page reads ?token= and forwards
+       it into '#/join?token=…' itself. The visible link keeps the canonical hash form. */
+    /* nestly_v606: the QR lands on the dedicated /join page, which paints "Join <business>?"
+       immediately — one fetch, one card, no SPA boot in front of the question. The root
+       (?token=) and hash forms both still resolve for older prints. */
+    const qrContentV603=window.NestlyNativeBridge.publicUrl(`/join?token=${encodeURIComponent(data.join_token)}`);
     const qrEl=$('joinQr');qrEl.innerHTML='<span class="muted small">Rendering QR…</span>';
     try{await loadQrLibrary()}catch{if(qrEl.isConnected)qrEl.innerHTML='<span class="err small">QR renderer could not load. Retry.</span>';if($('joinQrStatus'))$('joinQrStatus').textContent='The QR image could not load. Retry without replacing the link.';return false}
-    if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+    if(!qrEl.isConnected)return;qrEl.innerHTML='';new QRCode(qrEl,{text:qrContentV603,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
     $('joinQrLink').innerHTML=`<a class="portal-link" target="_blank" rel="noopener noreferrer" href="${esc(url)}">${esc(url)}</a>`;
     $('cpJoin').disabled=false;$('dlQr').disabled=false;if($('shareJoin'))$('shareJoin').disabled=false;
     /* nestly_v456: there is now a QR on screen, so the lead may say "print it" and revoking is a
@@ -51163,8 +51530,14 @@ function bookingRulesCardHtmlV325(){
       <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
       <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
-      <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
-      <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
+      ${/* nestly_v606 (owner mark, photo: the whole opening-hours grid ringed with an arrow to
+           Branches — "branch opening hour should put here"). Hours belong to a BRANCH: this page
+           is one screen for the whole business, and it was asking the owner to set one branch's
+           hours here while every other fact about that branch lives on Branches. The grid moved;
+           this switch did not, because who a customer may pick is a business decision and the
+           owner's own mark on the next photo put it here. */''}
+      <p class="muted small" style="margin-top:14px">Opening hours are set on each branch — <a href="#/branches">open Branches</a>.</p>
+      <div style="margin-top:14px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
       <div id="setAvailabilityErr" role="status"></div>
     </div>
     ${bookingConfirmationTemplateCardHtmlV330()}`;
@@ -51272,70 +51645,21 @@ function wireBookingRulesV325(isCurrent=()=>true){
       toast('WhatsApp confirmation message saved');
     };
   }
-  const loadBookingAvailability=async()=>{
-    const host=$('setAvailabilityBody');if(!host)return;
-    const [branchResult,hoursResult]=await Promise.all([
-      sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
-      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
-    ]);
-    if(!isCurrent()||!host.isConnected)return;
-    host.setAttribute('aria-busy','false');
-    if(branchResult.error||hoursResult.error){
-      host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
-      const save=$('setAvailabilitySave');if(save)save.disabled=true;
-      return;
-    }
-    const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
-    const branch=branches[0]||null;
-    const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
-    host.dataset.branchId=branch?.id||'';
-    host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
-      <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
-      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
-        v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
-`;
-    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
-      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
-      const within=box.closest('.v183-hours')||host;
-      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
-      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
-      if(opens)opens.disabled=box.checked;
-      if(closes)closes.disabled=box.checked;
-    });
-  };
-  loadBookingAvailability();
-  if(!$('setAvailabilitySave'))return;
-  $('setAvailabilitySave').onclick=async()=>{
-    const host=$('setAvailabilityBody'),save=$('setAvailabilitySave'),err=$('setAvailabilityErr');
-    const branchId=host?.dataset?.branchId||'';
-    save.disabled=true;err.innerHTML='';
+  /* nestly_v606: the hours grid and its save moved to Branches, where a branch's own facts live.
+     What stays here is the one business-level switch this card still owns. */
+  const staffChoiceSaveV606=$('setStaffChoiceSaveV606');
+  if(!staffChoiceSaveV606)return;
+  staffChoiceSaveV606.onclick=async()=>{
+    const err=$('setAvailabilityErr');
+    staffChoiceSaveV606.disabled=true;if(err)err.innerHTML='';
     const staffChoice=$('setStaffChoice').checked;
-    const readDayGrid=(scope,within)=>{
-      const open=[],closed=[];
-      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
-        const weekday=Number(box.dataset.dayClosed);
-        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
-        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
-        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
-        open.push({weekday,opens,closes});
-      });
-      return {open,closed};
-    };
-    const shop=readDayGrid('shop',host);
-    const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
-    const closedDays=shop.closed;
-    const results=await Promise.all([
-      (invalidateBusinessRecordCacheV370(),sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id)),
-      branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
-      branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
-    ]);
+    invalidateBusinessRecordCacheV370();
+    const {error}=await sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id);
     if(!isCurrent())return;
-    save.disabled=false;
-    const failure=results.find(result=>result?.error);
-    if(failure){err.innerHTML=`<div class="err">${esc(failure.error.message)}</div>`;return}
+    staffChoiceSaveV606.disabled=false;
+    if(error){if(err)err.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That could not be saved.'))}</div>`;return}
     S.biz.booking_staff_choice=staffChoice;
-    toast('Customer booking availability saved');
-    loadBookingAvailability();
+    toast(staffChoice?'Customers can choose a team member':'Customers pick a time and you assign the person');
   };
 }
 /* V325 (owner-authorized restructure). A second, small phone-frame preview for the persistent
