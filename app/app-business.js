@@ -32302,6 +32302,12 @@ async function settingsPage(){
   /* team + per-staff module permissions (v74) */
   let openModId=null;   // staff.id whose "Modules" panel is expanded, or null
   let openProfileId=null; // V180: staff.id whose editable profile is expanded, or null
+  /* nestly_v595 (owner: "best if can do a pop up — modules / app access all inside the pop up").
+     Which tab the editor opens on. The dialog is re-rendered in place by loadTeam() on every
+     change, so the choice has to live outside it or every save would bounce the owner back to
+     Profile. Reset to 'profile' when the dialog closes, so the next row opens where it always
+     did unless the App access cell was the thing clicked. */
+  let staffEditTabV595='profile';
   let staffEditDeactivateV584=null; // nestly_v584: the open editor dialog's deactivator, if any
   const panelSel={};    // staff.id -> {mode:'inherit'|'explicit', perms:{module:'r'|'rw'}}
                          // panel edits kept in JS state (not read back from the DOM) so they
@@ -32371,6 +32377,9 @@ async function settingsPage(){
      builders with the same ids, so every existing handler finds the same node it always did. */
   function staffEditDialogHtmlV584(s){
     const showAccess=s.role!=='owner';
+    /* nestly_v595: an owner has no Access & Module tab (they inherit everything), so a request to
+       open on it falls back rather than opening a dialog with nothing selected. */
+    const openTabV595=showAccess&&staffEditTabV595==='access'?'access':'profile';
     return `<div class="modal" id="staffEditModalV584" role="dialog" aria-modal="true" aria-labelledby="staffEditTitleV584" tabindex="-1">
       <section class="modal-card staff-edit-card-v584">
         <div class="row" style="align-items:flex-start;gap:10px">
@@ -32379,11 +32388,11 @@ async function settingsPage(){
           <button type="button" class="btn ghost sm icon-only" onclick="toggleStaffProfile('${s.id}')" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button>
         </div>
         ${showAccess?`<div class="v150-segment staff-edit-tabs-v584" role="tablist" aria-label="Team member sections">
-          <button type="button" role="tab" data-staff-tab-v584="profile" aria-selected="true" aria-pressed="true">Profile</button>
-          <button type="button" role="tab" data-staff-tab-v584="access" aria-selected="false" aria-pressed="false">Access &amp; Module</button>
+          <button type="button" role="tab" data-staff-tab-v584="profile" aria-selected="${openTabV595==='profile'?'true':'false'}" aria-pressed="${openTabV595==='profile'?'true':'false'}">Profile</button>
+          <button type="button" role="tab" data-staff-tab-v584="access" aria-selected="${openTabV595==='access'?'true':'false'}" aria-pressed="${openTabV595==='access'?'true':'false'}">Access &amp; Module</button>
         </div>`:''}
-        <div data-staff-tabpanel-v584="profile">${staffProfilePanelHtml(s)}</div>
-        ${showAccess?`<div data-staff-tabpanel-v584="access" hidden>${staffProfileActionsHtmlV577(s)}${modPanelHtml(s)}</div>`:''}
+        <div data-staff-tabpanel-v584="profile"${openTabV595==='profile'?'':' hidden'}>${staffProfilePanelHtml(s)}</div>
+        ${showAccess?`<div data-staff-tabpanel-v584="access"${openTabV595==='access'?'':' hidden'}>${staffProfileActionsHtmlV577(s)}${modPanelHtml(s)}</div>`:''}
       </section></div>`;
   }
   /* V180: the editable profile behind a staff row. Role stays on the existing
@@ -32622,18 +32631,36 @@ async function settingsPage(){
         :staffBranchListV577===null?'<span class="muted small">—</span>'
         :branchNamesV584.length?`<span class="muted small" data-merchant-content>${esc(branchNamesV584.join(', '))}</span>`
         :'<span class="muted small">Unassigned</span>';
+      /* nestly_v595 (owner: "i need to give app access to staff that i already added — where do I
+         activate it and select the modules?"). The answer was already two clicks away (Edit ->
+         Access & Module), but the cell that states the answer — a bare ✕ — looked like a readout,
+         not a door. It is now the door: clicking it opens the SAME editor dialog straight on the
+         Access & Module tab, where "Give app access" and the per-module Off/Read/Edit grid both
+         live. No new surface and no new RPC — only a shortcut into the one that exists.
+         It stays a <span>, not a <button>: the whole row is already a button, and a nested button
+         is invalid HTML. The row's own click handler reads which column was hit (see
+         openStaffProfileFromRowV595), so the two destinations come from one control. */
+      /* The mark alone could not carry the affordance: a dotted underline does not paint under a
+         circular badge, so the first attempt was invisible in a rendered screenshot. The door
+         therefore says, in words, what it opens — which is also the literal question the owner
+         asked ("where do I activate it and select the modules?"). The words differ by state
+         because the action does: a teammate with no login needs access GRANTED, one who already
+         signs in needs their modules changed. */
+      const appAccessDoorV595=(mark,label,cta)=>`<span class="staff-access-door-v595" data-workspace-i18n data-staff-access-open-v595 title="${esc(label)} — open app access &amp; modules">${mark}<span class="staff-access-cta-v595">${esc(cta)}</span></span>`;
       const appAccessCellV584=accessStateV569==='rejected'
-        ?'<span class="staff-access-mark-v584 is-no" title="App access declined" aria-label="App access declined">\u2715</span>'
+        ?appAccessDoorV595('<span class="staff-access-mark-v584 is-no" aria-label="App access declined">\u2715</span>','App access declined','Give access')
+        /* A pending row is left exactly as it was: it already carries Approve/Decline on the row
+           itself (v569), and a third call to action beside them would compete with the decision. */
         :accessPendingV569?'<span class="pill warn">Waiting</span>'
-        :s.user_id?'<span class="staff-access-mark-v584 is-yes" title="Can sign in" aria-label="Can sign in">\u2713</span>'
-        :'<span class="staff-access-mark-v584 is-no" title="No app access" aria-label="No app access">\u2715</span>';
+        :s.user_id?appAccessDoorV595('<span class="staff-access-mark-v584 is-yes" aria-label="Can sign in">\u2713</span>','Can sign in','Modules')
+        :appAccessDoorV595('<span class="staff-access-mark-v584 is-no" aria-label="No app access">\u2715</span>','No app access','Give access');
       const pct=bps=>bps===null||bps===undefined?'—':`${(Number(bps)/100).toFixed(Number(bps)%100?2:0)}%`;
       const commissionSummary=s.commission_service_bps==null&&s.commission_product_bps==null
         ?'<span class="muted small">Commission not set</span>'
         :`<span class="muted small">Svc ${esc(pct(s.commission_service_bps))} · Prod ${esc(pct(s.commission_product_bps))}</span>`;
       return `<div class="team-member-card">
         <div class="staff-row-line">
-          <button type="button" class="staff-row-open" data-merchant-content onclick="toggleStaffProfile('${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
+          <button type="button" class="staff-row-open" data-merchant-content onclick="openStaffProfileFromRowV595(event,'${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
             <!-- V226 (owner drew the columns by hand: Name | phone | email | Position |
                  Commission, captioned "I want clear segmentation"). The row was a flex wrap, so
                  the same field landed at a different x-position on every line and nothing could
@@ -32711,6 +32738,7 @@ async function settingsPage(){
       staffEditDeactivateV584=CUI.activateDialog(staffDialogV584,{
         onClose:()=>{
           staffEditDeactivateV584=null;
+          staffEditTabV595='profile';
           if(openProfileId===openedForV584){openProfileId=null;loadTeam()}
         },
         inheritHistoryId:CUI.currentDialogHistoryId?.()||0,
@@ -32718,6 +32746,8 @@ async function settingsPage(){
       const staffTabsV584=[...staffDialogV584.querySelectorAll('[data-staff-tab-v584]')];
       staffTabsV584.forEach(tab=>tab.onclick=()=>{
         const want=tab.dataset.staffTabV584;
+        /* nestly_v595: remembered, so a save inside the Access tab re-renders back into it. */
+        staffEditTabV595=want==='access'?'access':'profile';
         staffTabsV584.forEach(other=>{
           const on=other===tab;
           other.setAttribute('aria-selected',on?'true':'false');
@@ -32951,7 +32981,18 @@ async function settingsPage(){
     deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#staffReferenceCopyV217'});
   };
   window.rvInv=async(id)=>{const {error}=await sb.from('staff_invites').update({status:'revoked'}).eq('id',id);if(error)return fail(error);toast('Invite revoked');loadTeam();};
-  window.toggleStaffProfile=(staffId)=>{openProfileId=(openProfileId===staffId)?null:staffId;loadTeam();};
+  window.toggleStaffProfile=(staffId,tab)=>{
+    staffEditTabV595=tab==='access'?'access':'profile';
+    openProfileId=(openProfileId===staffId)?null:staffId;
+    if(openProfileId===null)staffEditTabV595='profile';
+    loadTeam();
+  };
+  /* nestly_v595: one row, two destinations. Anything in the App access column opens the editor on
+     Access & Module; anywhere else on the row opens it where it always opened. */
+  window.openStaffProfileFromRowV595=(event,staffId)=>{
+    const wantsAccess=!!event?.target?.closest?.('[data-staff-access-open-v595]');
+    toggleStaffProfile(staffId,wantsAccess?'access':'profile');
+  };
   window.saveStaffProfile=async(staffId,btn)=>{
     const row=teamRowsById.get(staffId);if(!row)return;
     const read=id=>document.getElementById(`${id}-${staffId}`);

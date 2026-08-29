@@ -72,7 +72,10 @@ test('the row states the real access_state, not merely "they have a login"', () 
      access_state; only where it is drawn moved — from a pill in a wrapped strip below the grid to
      a tick or a cross in its own column, which is what lets it be compared down the list. */
   const approved = row({ id: 's1', full_name: 'Kelvin', role: 'staff', user_id: 'u1', access_state: 'approved' });
-  assert.match(approved, /data-staff-col="App access"><span class="staff-access-mark-v584 is-yes"/);
+  /* nestly_v595 wrapped the mark in the door span that opens the editor on Access & Module. The
+     FACT under test is still the mark itself, so the assertion keeps the column and the mark and
+     tolerates the door between them. */
+  assert.match(approved, /data-staff-col="App access">.*?class="staff-access-mark-v584 is-yes"/);
   assert.ok(!approved.includes('Waiting'));
 
   /* The bug: this row said "App access active" while every sign-in was refused. A tick would be
@@ -84,14 +87,20 @@ test('the row states the real access_state, not merely "they have a login"', () 
   /* decide_staff_access_v207 detaches user_id when it declines, so the declined row is judged on
      access_state first — otherwise it would be indistinguishable from a never-invited one. */
   const rejected = row({ id: 's3', full_name: 'Sam', role: 'staff', user_id: null, access_state: 'rejected' });
-  assert.match(rejected, /staff-access-mark-v584 is-no" title="App access declined"/);
+  /* nestly_v595 moved the human-readable title onto the door span that wraps the mark (the door
+     is what a pointer lands on, so it is what should carry the tooltip) and left the mark its
+     aria-label. Both halves are asserted so neither can quietly disappear. */
+  assert.match(rejected, /data-staff-access-open-v595 title="App access declined — open app access &amp; modules"/);
+  assert.match(rejected, /staff-access-mark-v584 is-no" aria-label="App access declined"/);
 
   const noLogin = row({ id: 's4', full_name: 'Rota Only', role: 'staff', user_id: null, access_state: null });
-  assert.match(noLogin, /staff-access-mark-v584 is-no" title="No app access"/);
+  /* nestly_v595: same split as the declined row — tooltip on the door, label on the mark. */
+  assert.match(noLogin, /data-staff-access-open-v595 title="No app access — open app access &amp; modules"/);
+  assert.match(noLogin, /staff-access-mark-v584 is-no" aria-label="No app access"/);
 
   /* Rows predating the column must not be mass-flagged as waiting. */
   const legacy = row({ id: 's5', full_name: 'Old Hand', role: 'staff', user_id: 'u5', access_state: null });
-  assert.match(legacy, /data-staff-col="App access"><span class="staff-access-mark-v584 is-yes"/);
+  assert.match(legacy, /data-staff-col="App access">.*?class="staff-access-mark-v584 is-yes"/);
 });
 
 test('only a pending row offers the decision, and it explains what approving does', () => {
@@ -119,7 +128,9 @@ test('only a pending row offers the decision, and it explains what approving doe
   for (const action of [/setStaffActiveV285\('\$\{s\.id\}'/, /rmStaff\('\$\{s\.id\}'/, /staffReferenceCodeV217\('\$\{s\.id\}'/]) {
     assert.match(actionsPanel.slice(0, 2200), action);
   }
-  assert.match(app, /<div data-staff-tabpanel-v584="access" hidden>\$\{staffProfileActionsHtmlV577\(s\)\}\$\{modPanelHtml\(s\)\}<\/div>/,
+  /* nestly_v595 made `hidden` conditional so the dialog can open straight on this tab; the pairing
+     this line exists to protect — actions and module grid on ONE tab — is unchanged. */
+  assert.match(app, /<div data-staff-tabpanel-v584="access"\$\{openTabV595==='access'\?'':' hidden'\}>\$\{staffProfileActionsHtmlV577\(s\)\}\$\{modPanelHtml\(s\)\}<\/div>/,
     'the module grid sits on the same tab as the access actions');
 
   for (const settled of [
@@ -234,4 +245,64 @@ test('a declined teammate gets no retry button — only a new invite changes tha
   assert.match(declined, /accountDeletionCardHtml\(\)/);
   assert.match(declined, /legalLinks\(\)/);
   assert.match(declined, /wireAccountDeletionButton\(\)/);
+});
+
+
+/* nestly_v595 (owner: "i need to give app access to staff that i already added — where do I
+   activate it?", then "best if can do a pop up — modules / app access all inside the pop up").
+   The destination already existed; the ✕ that states the answer did not lead to it. These tests
+   EXECUTE the shipped routing rather than grepping for the attribute, because the attribute being
+   present proves nothing about which tab the click asks for — the failure mode this file was
+   written about. */
+const makeRowRouterV595 = () => {
+  const opened = [];
+  const window = {};
+  new Function('window', `
+    let openProfileId=null, staffEditTabV595='profile';
+    const loadTeam=()=>{};
+    ${statement('window.toggleStaffProfile=(staffId,tab)=>{', "window.openStaffProfileFromRowV595=(event,staffId)=>{\n    const wantsAccess=!!event?.target?.closest?.('[data-staff-access-open-v595]');\n    toggleStaffProfile(staffId,wantsAccess?'access':'profile');\n  };")}
+    const toggleStaffProfile=window.toggleStaffProfile;
+    window.__read=()=>({openProfileId,staffEditTabV595});
+  `)(window);
+  return { window, opened };
+};
+
+test('the App access cell opens the editor on Access & Module; the rest of the row does not', () => {
+  const { window } = makeRowRouterV595();
+  const doorTarget = { closest: sel => (sel === '[data-staff-access-open-v595]' ? {} : null) };
+  const plainTarget = { closest: () => null };
+
+  window.openStaffProfileFromRowV595({ target: doorTarget }, 'devi');
+  assert.deepEqual(window.__read(), { openProfileId: 'devi', staffEditTabV595: 'access' },
+    'clicking the access column must land on the tab that grants access');
+
+  window.openStaffProfileFromRowV595({ target: doorTarget }, 'devi'); // toggles shut
+  window.openStaffProfileFromRowV595({ target: plainTarget }, 'devi');
+  assert.deepEqual(window.__read(), { openProfileId: 'devi', staffEditTabV595: 'profile' },
+    'every other column keeps opening where it always opened');
+});
+
+test('closing the editor forgets the access tab, so the next row opens on Profile', () => {
+  const { window } = makeRowRouterV595();
+  const doorTarget = { closest: () => ({}) };
+  window.openStaffProfileFromRowV595({ target: doorTarget }, 'devi');
+  assert.equal(window.__read().staffEditTabV595, 'access');
+  window.toggleStaffProfile('devi'); // same id again = close
+  assert.deepEqual(window.__read(), { openProfileId: null, staffEditTabV595: 'profile' });
+});
+
+test('the access column is a span, never a nested button inside the row button', () => {
+  const rendered = row({ id: 's9', full_name: 'Devi', role: 'staff', user_id: null, access_state: '' });
+  const cell = rendered.slice(rendered.indexOf('data-staff-col="App access"'));
+  const doorOpen = cell.indexOf('data-staff-access-open-v595');
+  assert.ok(doorOpen > 0, 'the cell carries the door hook the row handler reads');
+  assert.ok(!/<button/.test(cell.slice(0, doorOpen + 200)),
+    'a <button> here would be nested inside .staff-row-open and is invalid HTML');
+});
+
+test('an owner row still has no Access & Module tab to open', () => {
+  const dialog = app.slice(app.indexOf('function staffEditDialogHtmlV584'));
+  assert.match(dialog.slice(0, 1200),
+    /const openTabV595=showAccess&&staffEditTabV595==='access'\?'access':'profile'/,
+    'a request for a tab that does not exist must fall back rather than hide both panels');
 });

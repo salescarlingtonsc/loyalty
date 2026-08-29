@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="66588b0fa10d39eb7bf58339f078ee57ee17347b23d20ff7cbdeb553d8ed2b8b"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="e65ce38942e1128e6996e488db5d59bcb60bcbed76b5cdba6e7ffedd142ebe8f"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5379,6 +5379,22 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   font-size:14px;font-weight:800;line-height:1}
 .staff-access-mark-v584.is-yes{color:var(--green,#177245);background:var(--success-bg,#E8F5EC)}
 .staff-access-mark-v584.is-no{color:var(--muted);background:var(--tint)}
+/* nestly_v595: the App access cell is a door into the editor's Access & Module tab, so it has to
+   look like one. A dashed underline plus the row's own pointer cursor is the lightest affordance
+   that reads as "clickable" without turning a status column into a button bar — and it must be a
+   <span>, because the whole row is already a <button> and a nested button is invalid HTML. The
+   hover state borrows the brand red the rest of the app uses for "this does something". */
+.staff-access-door-v595{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px 7px;
+  padding:2px 6px 2px 2px;border-radius:12px}
+/* The words are the affordance. An underline was tried first and is invisible here — text
+   decoration does not paint under the circular badge that is the cell's only other content. */
+.staff-access-cta-v595{font-size:11.5px;font-weight:750;letter-spacing:.02em;white-space:nowrap;
+  color:var(--brand-red,#C24135);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb,var(--brand-red,#C24135) 40%,transparent)}
+.staff-row-open:hover .staff-access-door-v595,
+.staff-row-open:focus-visible .staff-access-door-v595{background:var(--brand-red-faint,#FDEEEB)}
+.staff-row-open:hover .staff-access-cta-v595{text-decoration-color:var(--brand-red,#C24135)}
+@media(max-width:768px){.staff-access-cta-v595{font-size:12.5px}}
 .staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
 .staff-edit-tabs-v584{margin:14px 0 4px}
 .staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
@@ -5452,7 +5468,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 66588b0fa10d39eb7bf58339f078ee57ee17347b23d20ff7cbdeb553d8ed2b8b</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · e65ce38942e1128e6996e488db5d59bcb60bcbed76b5cdba6e7ffedd142ebe8f</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -9040,7 +9056,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'66588b0fa10d39eb7bf58339f078ee57ee17347b23d20ff7cbdeb553d8ed2b8b',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'e65ce38942e1128e6996e488db5d59bcb60bcbed76b5cdba6e7ffedd142ebe8f',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

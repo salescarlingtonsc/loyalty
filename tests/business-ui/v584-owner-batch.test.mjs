@@ -137,7 +137,11 @@ test('photos 15 and 16 — the staff editor is a dialog with two tabs and a dust
   assert.match(app, /function staffEditDialogHtmlV584\(s\)\{/);
   assert.match(app, /data-staff-tab-v584="profile"/);
   assert.match(app, /data-staff-tab-v584="access"/);
-  assert.match(app, /<div data-staff-tabpanel-v584="access" hidden>\$\{staffProfileActionsHtmlV577\(s\)\}\$\{modPanelHtml\(s\)\}<\/div>/);
+  /* nestly_v595 made `hidden` conditional so the App access cell can open the dialog straight on
+     this tab. What photo 16 asked for — the access actions and the module grid on ONE tab — is
+     unchanged, and the default is still Profile. */
+  assert.match(app, /<div data-staff-tabpanel-v584="access"\$\{openTabV595==='access'\?'':' hidden'\}>\$\{staffProfileActionsHtmlV577\(s\)\}\$\{modPanelHtml\(s\)\}<\/div>/);
+  assert.match(app, /const openTabV595=showAccess&&staffEditTabV595==='access'\?'access':'profile'/);
   // Delete is the dustbin, with the same handler and the same confirm behind it.
   assert.match(app, /class="staff-delete-icon-v584"[^>]*onclick="rmStaff\('\$\{s\.id\}',this\)"/);
   const cui = readFileSync(new URL('../../app/customer-ui.js', import.meta.url), 'utf8');

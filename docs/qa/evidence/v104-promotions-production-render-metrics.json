@@ -1,6 +1,6 @@
 {
   "desktop1440": {
-    "sourceHash": "f2f865d0cbf443a046830ae0a8bbb14d6fc01757583bcf2d047c18dc0d50ad26",
+    "sourceHash": "513f3158e5a4849db72444d5a3d88028ea348e6e2675e5455fc15b6e1a92f2c7",
     "viewport": {
       "clientWidth": 1440,
       "scrollWidth": 1440
@@ -212,7 +212,7 @@
     }
   },
   "mobile390": {
-    "sourceHash": "f2f865d0cbf443a046830ae0a8bbb14d6fc01757583bcf2d047c18dc0d50ad26",
+    "sourceHash": "513f3158e5a4849db72444d5a3d88028ea348e6e2675e5455fc15b6e1a92f2c7",
     "viewport": {
       "clientWidth": 390,
       "scrollWidth": 390
@@ -382,7 +382,7 @@
     "modal": null
   },
   "mobile412": {
-    "sourceHash": "f2f865d0cbf443a046830ae0a8bbb14d6fc01757583bcf2d047c18dc0d50ad26",
+    "sourceHash": "513f3158e5a4849db72444d5a3d88028ea348e6e2675e5455fc15b6e1a92f2c7",
     "viewport": {
       "clientWidth": 412,
       "scrollWidth": 412

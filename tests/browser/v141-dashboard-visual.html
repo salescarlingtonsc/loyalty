@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="38aaa05657c000e4f63d96d16bae4cfccf98b81549ebd32e8fc0d1ad0ab00a80"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="3451ff8d0cde3bb9cc9291adb9af50f69918e59da843c2627abea0064b90c992"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -5380,6 +5380,22 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   font-size:14px;font-weight:800;line-height:1}
 .staff-access-mark-v584.is-yes{color:var(--green,#177245);background:var(--success-bg,#E8F5EC)}
 .staff-access-mark-v584.is-no{color:var(--muted);background:var(--tint)}
+/* nestly_v595: the App access cell is a door into the editor's Access & Module tab, so it has to
+   look like one. A dashed underline plus the row's own pointer cursor is the lightest affordance
+   that reads as "clickable" without turning a status column into a button bar — and it must be a
+   <span>, because the whole row is already a <button> and a nested button is invalid HTML. The
+   hover state borrows the brand red the rest of the app uses for "this does something". */
+.staff-access-door-v595{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px 7px;
+  padding:2px 6px 2px 2px;border-radius:12px}
+/* The words are the affordance. An underline was tried first and is invisible here — text
+   decoration does not paint under the circular badge that is the cell's only other content. */
+.staff-access-cta-v595{font-size:11.5px;font-weight:750;letter-spacing:.02em;white-space:nowrap;
+  color:var(--brand-red,#C24135);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb,var(--brand-red,#C24135) 40%,transparent)}
+.staff-row-open:hover .staff-access-door-v595,
+.staff-row-open:focus-visible .staff-access-door-v595{background:var(--brand-red-faint,#FDEEEB)}
+.staff-row-open:hover .staff-access-cta-v595{text-decoration-color:var(--brand-red,#C24135)}
+@media(max-width:768px){.staff-access-cta-v595{font-size:12.5px}}
 .staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
 .staff-edit-tabs-v584{margin:14px 0 4px}
 .staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
@@ -6619,6 +6635,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'38aaa05657c000e4f63d96d16bae4cfccf98b81549ebd32e8fc0d1ad0ab00a80',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'3451ff8d0cde3bb9cc9291adb9af50f69918e59da843c2627abea0064b90c992',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

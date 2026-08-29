@@ -3361,6 +3361,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   font-size:14px;font-weight:800;line-height:1}
 .staff-access-mark-v584.is-yes{color:var(--green,#177245);background:var(--success-bg,#E8F5EC)}
 .staff-access-mark-v584.is-no{color:var(--muted);background:var(--tint)}
+.staff-access-door-v595{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px 7px;
+  padding:2px 6px 2px 2px;border-radius:12px}
+.staff-access-cta-v595{font-size:11.5px;font-weight:750;letter-spacing:.02em;white-space:nowrap;
+  color:var(--brand-red,#C24135);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb,var(--brand-red,#C24135) 40%,transparent)}
+.staff-row-open:hover .staff-access-door-v595,
+.staff-row-open:focus-visible .staff-access-door-v595{background:var(--brand-red-faint,#FDEEEB)}
+.staff-row-open:hover .staff-access-cta-v595{text-decoration-color:var(--brand-red,#C24135)}
+@media(max-width:768px){.staff-access-cta-v595{font-size:12.5px}}
 .staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
 .staff-edit-tabs-v584{margin:14px 0 4px}
 .staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
