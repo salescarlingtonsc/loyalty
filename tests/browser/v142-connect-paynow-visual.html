@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="e65ce38942e1128e6996e488db5d59bcb60bcbed76b5cdba6e7ffedd142ebe8f"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="3b1098785ebc8b33686614bf88f90c45a9d61739214bf06fa32db0eb238dcf0f"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5468,7 +5468,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · e65ce38942e1128e6996e488db5d59bcb60bcbed76b5cdba6e7ffedd142ebe8f</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3b1098785ebc8b33686614bf88f90c45a9d61739214bf06fa32db0eb238dcf0f</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6167,7 +6167,10 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
   ].filter(Boolean);
   return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
     <div class="c360-summary-row-v294">
-      <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)} · v${entry.planVersion}</span>
+      ${/* nestly_v601 (owner photo 2: "dont label it as V1 / V2 etc. that is incorrect"). The
+           version is Peekaa's bookkeeping — it is what keeps this customer's price and sessions
+           frozen at what they paid — and never something a person reading the row needs. */''}
+      <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)}</span>
       <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
     </div>
     <p class="small" style="margin-top:8px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
@@ -9056,7 +9059,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'e65ce38942e1128e6996e488db5d59bcb60bcbed76b5cdba6e7ffedd142ebe8f',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'3b1098785ebc8b33686614bf88f90c45a9d61739214bf06fa32db0eb238dcf0f',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

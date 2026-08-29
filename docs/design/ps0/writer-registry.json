@@ -2732,6 +2732,10 @@
       "reason": "browser RPC 'business_set_customer_capabilities_v89' is an owner/super-admin control-plane writer for default-closed customer action switches plus audit evidence. It changes feature availability only; it cannot create a booking, redemption, sale, payment, ledger movement, or other customer-value row."
     },
     {
+      "id": "browser.rpc:app/app.js:business_set_package_active_v601",
+      "reason": "nestly_v601 browser RPC: flips package_plans.active from the On/Off pill on the Packages screen, which the owner asked to become a real control. Deliberately NOT routed through save_package_plan_v102 — that call supersedes the plan and mints a new version, so pausing a package would breed one every time. Config, not customer value: it decides whether a package can be SOLD, never a balance, a session already bought, or a sale. Owner-gated by app.can_module_write(business,'packages'), refuses re-activating a retired plan, and audits both directions."
+    },
+    {
       "id": "browser.rpc:app/app.js:business_set_sales_mix_v184",
       "reason": "V184 owner toggle for \"do we sell services, products, or both\". Rewrites exactly two keys of businesses.enabled_modules and drops modules that hard-require a removed one; it cannot enable or disable any other module and touches no value table. The sector entitlement guard is bypassed transaction-locally and cleared immediately."
     },
