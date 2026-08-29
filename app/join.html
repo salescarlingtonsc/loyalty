@@ -504,16 +504,18 @@ function renderConfirm(page,joinToken){
   /* Two frames after paint, measure what a FINGER would meet at the Yes button's centre:
      geometry, computed visibility, and the element actually on top there. This is the
      difference between "the code appended a card" and "the person could see and tap Yes". */
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  let visibilityMeasuredV610=false;
+  const measureYesVisibilityV610=via=>{
+    if(visibilityMeasuredV610)return;visibilityMeasuredV610=true;
     try{
       const yes=document.getElementById('joinYes');
-      if(!yes){joinFunnel('join_confirmation_visible',{present:false});return}
+      if(!yes){joinFunnel('join_confirmation_visible',{present:false,via});return}
       const rect=yes.getBoundingClientRect();
       const style=getComputedStyle(yes);
       const cx=Math.round(rect.left+rect.width/2),cy=Math.round(rect.top+rect.height/2);
       const onTop=document.elementFromPoint(cx,cy);
       joinFunnel('join_confirmation_visible',{
-        present:true,
+        present:true,via,pageVisibility:document.visibilityState,
         rect:{x:Math.round(rect.x),y:Math.round(rect.y),w:Math.round(rect.width),h:Math.round(rect.height)},
         vp:`${window.innerWidth}x${window.innerHeight}`,
         display:style.display,visibility:style.visibility,opacity:style.opacity,
@@ -522,8 +524,12 @@ function renderConfirm(page,joinToken){
         topElement:onTop?`${onTop.tagName.toLowerCase()}${onTop.id?'#'+onTop.id:''}`:'',
         topIsYes:onTop===yes||(onTop&&yes.contains(onTop))
       });
-    }catch(error){joinFunnel('join_confirmation_visible',{measureError:String(error&&error.message||error).slice(0,200)})}
-  }));
+    }catch(error){joinFunnel('join_confirmation_visible',{via,measureError:String(error&&error.message||error).slice(0,200)})}
+  };
+  /* rAF is the honest "after paint" signal, but Safari suspends rAF in hidden pages — the
+     timeout fallback makes a missing event mean "the page died", never "the probe slept". */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>measureYesVisibilityV610('raf')));
+  setTimeout(()=>measureYesVisibilityV610('timeout'),900);
   $('joinYes').addEventListener('pointerdown',()=>joinFunnel('join_yes_pointerdown'));
   $('joinYes').onclick=()=>{
     joinFunnel('join_yes_click');

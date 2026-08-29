@@ -2903,11 +2903,16 @@ async function renderCustomerQrJoin(){
   await maybeOfferCustomerPasskeySetup({isCurrent});
   if(!isCurrent())return;
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
-  /* The journey's last stage: the wallet route is live and has had two frames to paint. */
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    joinFunnelEmitV610('join_business_visible',{hash:String(location.hash||'').split('?')[0].slice(0,80)});
+  /* The journey's last stage: the wallet route is live and has had two frames to paint.
+     setTimeout backstop for the same reason as the /join probe: rAF sleeps on hidden pages. */
+  let businessVisibleSentV610=false;
+  const emitBusinessVisibleV610=via=>{
+    if(businessVisibleSentV610)return;businessVisibleSentV610=true;
+    joinFunnelEmitV610('join_business_visible',{via,hash:String(location.hash||'').split('?')[0].slice(0,80)});
     joinFunnelEndV610();
-  }));
+  };
+  requestAnimationFrame(()=>requestAnimationFrame(()=>emitBusinessVisibleV610('raf')));
+  setTimeout(()=>emitBusinessVisibleV610('timeout'),900);
 }
 
 async function renderCustomerClaim(){
