@@ -6965,14 +6965,49 @@ function customerBookingRowV580(group,item,tab){
 }
 /* Every appointment across every business on this tab, newest first. Requests are not
    appointments and have no appointment date to sort by, so they keep their own row below. */
+/* nestly_v605 (owner, Bookings photo: Ongoing showing one business card while History shows rows —
+   "i want format under Ongoing and Cancelled to follow History format").
+   v580 unified the APPOINTMENTS on all three tabs and deliberately left requests in a per-business
+   card, reasoning that a request has no appointment time to sort by. It does: preferred_at is the
+   time the customer asked for, and it is the only time on the card. So a request is a row like any
+   other, sorted by that, and the tabs stop looking like three different screens. The one thing a
+   request carries that an appointment does not — its status and Withdraw — travels with it. */
+function customerBookingRequestRowV605(group,item,tab){
+  const logo=customerBookingBusinessLogoV195(group);
+  const name=String(group.business_name||'').trim()||'Business';
+  const when=item.preferred_at||item.created_at||'';
+  const time=walletClockV580(when);
+  const service=String(item.service_name||'').trim()||'Booking request';
+  const detail=[service,time?`at ${time}`:'',item.party_size?`party of ${Number(item.party_size)}`:'']
+    .filter(Boolean).join(' · ');
+  const active=isActiveCustomerBookingRequest(item);
+  const statusLabel=active
+    ?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending'))
+    :String(item.status||'updated').replaceAll('_',' ');
+  const statusTone=active?(item.status==='waitlisted'?'new':'off'):'no';
+  return `<article class="card customer-booking-row-v580" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+    <div class="customer-booking-row-logo-v580">${logo}</div>
+    <div class="customer-booking-row-copy-v580">
+      <b data-merchant-content>${esc(name)}</b>
+      ${detail?`<p class="customer-booking-row-detail-v580" data-merchant-content>${esc(detail)}</p>`:''}
+    </div>
+    <div class="customer-booking-row-end-v580">
+      <time class="customer-booking-row-date-v580" datetime="${esc(when)}">${esc(walletDate(when)||'Time pending')}</time>
+      <span class="pill ${statusTone} customer-booking-act-v580">${esc(statusLabel)}</span>
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}
+    </div>
+  </article>`;
+}
 function customerBookingRowListV580(groups=[],tab='bookings'){
   const rows=[];
-  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item})));
-  rows.sort((a,b)=>String(b.item.starts_at||'').localeCompare(String(a.item.starts_at||'')));
-  return rows.map(({group,item})=>customerBookingRowV580(group,item,tab)).join('');
-}
-function customerBookingRequestRowV344(item){
-  return `<div class="wallet-appt"><div><b>${esc(walletDate(item.preferred_at,true)||walletDate(item.created_at,true)||'Preferred time pending')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Booking request')} · ${esc(String(item.status||'pending').replaceAll('_',' '))}${item.party_size?` · party of ${Number(item.party_size)}`:''}</p></div><span class="spacer"></span><span class="pill ${isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?'new':'off'):'no'}">${esc(isActiveCustomerBookingRequest(item)?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending')):String(item.status||'updated').replaceAll('_',' '))}</span>${isActiveCustomerBookingRequest(item)&&item.request_id?`<button class="btn ghost sm" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}</div>`;
+  groups.forEach(group=>group.tabAppointments.forEach(item=>rows.push({group,item,when:item.starts_at||''})));
+  /* nestly_v605: requests join the same list rather than sitting in a block beneath it. */
+  groups.forEach(group=>group.tabRequests.forEach(item=>
+    rows.push({group,item,request:true,when:item.preferred_at||item.created_at||''})));
+  rows.sort((a,b)=>String(b.when).localeCompare(String(a.when)));
+  return rows.map(({group,item,request})=>request
+    ?customerBookingRequestRowV605(group,item,tab)
+    :customerBookingRowV580(group,item,tab)).join('');
 }
 function customerBookingTabGroupsV178(groups=[],tab='bookings',range={from:'',to:''}){
   const inWindow=value=>customerBookingWithinRangeV196(value,range);
@@ -7216,8 +7251,9 @@ async function renderCustomerBookings(){
       .reduce((sum,group)=>sum+group.tabRequests.length+group.tabAppointments.length,0);
     const groups=customerBookingTabGroupsV178(allGroups,currentBookingTab,currentBookingRange);
     const emptyCopy=(CUSTOMER_BOOKING_TABS_V178.find(([tab])=>tab===currentBookingTab)||[])[2]||'Nothing here yet.';
-    /* nestly_v571 (owner, Bookings photo: "the business" struck out, "confirmation" written in). */
-    const requestHeading=currentBookingTab==='bookings'?'Awaiting confirmation':currentBookingTab==='cancelled'?'Cancelled requests':'Earlier request updates';
+    /* nestly_v605: requestHeading retired with the per-business request block it titled. Each
+       request is now a row that states its own status (Pending / Waitlisted / the outcome), so a
+       heading above a group of them said nothing the rows did not. */
     const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
     const partialMessages=[
       walletResult.error?'Confirmed appointments could not be discovered from your programmes.':'',
@@ -7255,7 +7291,8 @@ async function renderCustomerBookings(){
          they have no appointment time to sort by and carry their own decision, so they keep their
          business card and sit under the appointment rows. */''}
     ${groups.length?`<div class="customer-booking-list customer-booking-rows-v580">${customerBookingRowListV580(groups,currentBookingTab)}</div>
-      ${groups.some(group=>group.tabRequests.length)?`<div class="customer-booking-list">${groups.filter(group=>group.tabRequests.length).map(group=>`<section class="card customer-booking-business" data-booking-search-item data-booking-search-name="${esc(String(group.business_name||'').toLowerCase())}"><div class="wallet-section-head">${customerBookingBusinessLogoV195(group)}<div><h2>${esc(group.business_name||'Business')}</h2></div></div><h3 style="font-size:1rem;margin-top:14px">${esc(requestHeading)}</h3>${group.tabRequests.map(customerBookingRequestRowV344).join('')}</section>`).join('')}</div>`:''}`
+      ${/* nestly_v605: requests are rows in the list above now, sorted by the time the customer
+           asked for, so this per-business block underneath is the same records a second time. */''}`
       :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();

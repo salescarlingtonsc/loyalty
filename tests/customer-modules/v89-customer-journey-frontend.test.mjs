@@ -225,7 +225,17 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
     'a movable booking keeps Reschedule');
   assert.match(bookingRow,/data-repeat-booking data-business-slug=/,
     'a past visit keeps its Book action');
-  assert.match(bookings,/customerBookingRequestRowV344/,'and so is Withdraw on a pending request');
+  /* nestly_v605 (owner: "i want format under Ongoing and Cancelled to follow History format").
+     v580 unified the appointments and left requests in a per-business card, which is why Ongoing —
+     where a pending request usually sits alone — looked nothing like History. A request is a row
+     now too, sorted by the time the customer asked for, and it keeps the one thing an appointment
+     row has no need of: Withdraw. */
+  assert.match(app,/function customerBookingRequestRowV605\(group,item,tab\)/);
+  assert.match(app,/rows\.push\(\{group,item,request:true,when:item\.preferred_at\|\|item\.created_at\|\|''\}\)/,
+    'requests join the same sorted list rather than a block beneath it');
+  const requestRow=section(app,'function customerBookingRequestRowV605','function customerBookingRowListV580');
+  assert.match(requestRow,/data-withdraw-request=/,'and so is Withdraw on a pending request');
+  assert.match(requestRow,/class="card customer-booking-row-v580"/,'in the same row shape as History');
 });
 
 /* nestly_v548 (owner photo 1, the "Cubbly SPA / Book now" chip struck out: "remove this", then

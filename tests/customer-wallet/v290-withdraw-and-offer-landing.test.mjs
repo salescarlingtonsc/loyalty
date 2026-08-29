@@ -27,8 +27,13 @@ test('the withdraw control exists only on active requests and goes through the v
      it is matched against the file rather than that one slice; the HANDLER assertions below stay
      scoped to the bookings section, which is where they still live. The gate itself is unchanged:
      only an active request the customer owns gets the control. */
-  assert.match(appJs, /isActiveCustomerBookingRequest\(item\)&&item\.request_id\?`<button class="btn ghost sm" type="button" data-withdraw-request=/,
+  /* nestly_v605: the request row took the shared booking-row shape (owner: "i want format under
+     Ongoing and Cancelled to follow History format"), so the button carries that row's action
+     class. The GATE is untouched: only an active request the customer owns gets the control. */
+  assert.match(appJs, /active&&item\.request_id\?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-withdraw-request=/,
     'only a pending/waitlisted request the customer owns gets the button');
+  assert.match(appJs, /const active=isActiveCustomerBookingRequest\(item\);/,
+    'and "active" is that same check, named once');
   assert.match(bookings, /customerRpc\('customer_withdraw_booking_request_v290',\{p_request:button\.dataset\.withdrawRequest\}\)/);
   assert.match(bookings, /if\(!await confirmActionV386\('Withdraw this booking request\?/, 'a destructive act asks first');
   assert.match(bookings, /button\.disabled=true;button\.setAttribute\('aria-busy','true'\)/, 'the tap goes busy');

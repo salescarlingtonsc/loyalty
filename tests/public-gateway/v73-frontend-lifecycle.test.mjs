@@ -137,10 +137,13 @@ test('customer booking requests split active from recent terminal outcomes and H
   const bookings=section('async function renderCustomerBookings(){','async function renderCustomerMessages(){');
   // v178 (owner sketch): the same composed groups are now split across Bookings | Cancelled |
   // History tabs, so the page reads tabRequests/tabAppointments rather than the raw buckets.
-  assert.match(bookings,/Earlier request updates/);
-  assert.match(bookings,/Cancelled requests/);
-  assert.match(bookings,/group\.tabRequests/);
-  assert.match(bookings,/group\.tabAppointments/);
+  /* nestly_v605 (owner: "i want format under Ongoing and Cancelled to follow History format").
+     The per-tab request HEADINGS went with the per-business block they titled — each request is
+     now a row in the same list as the appointments, stating its own status, so a heading above a
+     group of them said nothing the rows did not. The tab split itself is unchanged. */
+  assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
+  assert.match(app,/group\.tabRequests\.forEach\(item=>/,'requests still come from the tab split');
+  assert.match(app,/group\.tabAppointments\.forEach\(item=>/);
   assert.match(bookings,/customerBookingTabGroupsV178\(allGroups,currentBookingTab,currentBookingRange\)/);
   assert.match(app,/bookingRequestResult\.data\.items\.filter\(isActiveCustomerBookingRequest\)\.length/);
 });
