@@ -2821,9 +2821,57 @@
     },
     {
       "kind": "pending",
+      "version": "20260828135225",
+      "name": "nestly_v590_cron_run_history_retention",
+      "sourcePath": "db/migrations/20260828_nestly_v590_cron_run_history_retention.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828135527",
+      "name": "nestly_v590_cron_run_history_retention_fn",
+      "sourcePath": "db/migrations/20260828_nestly_v590_cron_run_history_retention_fn.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260828140000",
       "name": "nestly_v581_appointment_branch_address",
       "sourcePath": "db/migrations/20260828_nestly_v581_appointment_branch_address.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828141250",
+      "name": "nestly_v591a_webhook_consumer_markers",
+      "sourcePath": "db/migrations/20260828_nestly_v591a_webhook_consumer_markers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828141323",
+      "name": "nestly_v591b_support_status_ingest_process_once",
+      "sourcePath": "db/migrations/20260828_nestly_v591b_support_status_ingest_process_once.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828141352",
+      "name": "nestly_v591c_retention_ingest_process_once",
+      "sourcePath": "db/migrations/20260828_nestly_v591c_retention_ingest_process_once.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828141416",
+      "name": "nestly_v591d_retention_optout_process_once",
+      "sourcePath": "db/migrations/20260828_nestly_v591d_retention_optout_process_once.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828141459",
+      "name": "nestly_v591e_sv_tender_release_no_empty_write",
+      "sourcePath": "db/migrations/20260828_nestly_v591e_sv_tender_release_no_empty_write.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260828141707",
+      "name": "nestly_v592_support_tick_dispatcher",
+      "sourcePath": "db/migrations/20260828_nestly_v592_support_tick_dispatcher.sql"
     },
     {
       "kind": "pending",
@@ -2842,6 +2890,12 @@
       "version": "20260828190000",
       "name": "nestly_v583_owner_automation_toggles",
       "sourcePath": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829094129",
+      "name": "nestly_v599_browser_write_boundaries",
+      "sourcePath": "db/migrations/20260829_nestly_v599_browser_write_boundaries.sql"
     },
     {
       "kind": "pending",
@@ -2881,9 +2935,9 @@
     },
     {
       "kind": "pending",
-      "version": "20260829190000",
-      "name": "nestly_v599_browser_write_boundaries",
-      "sourcePath": "db/migrations/20260829_nestly_v599_browser_write_boundaries.sql"
+      "version": "20260829200000",
+      "name": "nestly_v600_register_v361_bringback_cron",
+      "sourcePath": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql"
     }
   ]
 }

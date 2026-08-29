@@ -465,6 +465,22 @@ function parseMigrationFilename(fileName) {
   };
 }
 
+// Normally a higher semantic version was also written later, so file dates rise monotonically
+// alongside it. nestly_v590-v592 break that pattern on purpose: they are VERBATIM source-recovery
+// mirrors of production migrations that were actually applied on 2026-08-28 (drift closure,
+// recovered and committed to source on 2026-08-29 -- see
+// docs/qa/SECURITY-CRON-FOLLOWUP-2026-08-29.md section 2), while v586-v589 carry the later
+// 2026-08-29 authoring date from an unrelated, higher-numbered-later-in-time workstream. Their
+// real production dates cannot be changed without breaking the "mirror the applied migration
+// exactly" guarantee this recovery exists to provide, so the one resulting adjacent regression is
+// recorded here rather than silenced generally.
+const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
+  // localeCompare's tie-break within the same (major, variant) semantic pair sorts the "_fn"
+  // filename ahead of its plainer sibling, so the actual reported transition lands here rather
+  // than on the alphabetically-simpler v590 name.
+  '20260829_nestly_v589_referral_switch_is_one_switch.sql -> 20260828_nestly_v590_cron_run_history_retention_fn.sql'
+]);
+
 export async function checkMigrationFilenameSanity(root = repoRoot) {
   const migrationsDir = path.join(root, 'db', 'migrations');
   const files = (await readdir(migrationsDir))
@@ -488,9 +504,12 @@ export async function checkMigrationFilenameSanity(root = repoRoot) {
   });
 
   for (let index = 1; index < orderedBySemantic.length; index += 1) {
+    const prior = orderedBySemantic[index - 1];
+    const current = orderedBySemantic[index];
+    if (current.dateNumber >= prior.dateNumber) continue;
     assert.ok(
-      orderedBySemantic[index].dateNumber >= orderedBySemantic[index - 1].dateNumber,
-      `Migration date order regresses from ${orderedBySemantic[index - 1].fileName} to ${orderedBySemantic[index].fileName}.`
+      KNOWN_DATE_ORDER_REGRESSIONS.has(`${prior.fileName} -> ${current.fileName}`),
+      `Migration date order regresses from ${prior.fileName} to ${current.fileName}.`
     );
   }
 }

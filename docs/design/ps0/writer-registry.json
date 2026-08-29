@@ -1695,7 +1695,7 @@
     {
       "id": "db.fn:app.run_sv_tender_release/1",
       "surface": "db_delegating_entrypoint",
-      "latest_file": "20260725100000_frenly_v69_controlled_cutover.sql",
+      "latest_file": "20260828141459_nestly_v591e_sv_tender_release_no_empty_write.sql",
       "rows_written": "no direct tracked write; via public.sv_release_expired_checkout_tenders: checkout_sv_tenders:UPDATE and, through app.sv_release_core, sv_operations:INSERT, sv_reservations:UPDATE. Also audit_log:INSERT (untracked) for a per-business failure.",
       "detected_signals": "cron-driven, per-business subtransaction",
       "entry_point": "app.run_sv_tender_release(limit)  [cron 'frenly-sv-tender-release', */3 * * * * ]",

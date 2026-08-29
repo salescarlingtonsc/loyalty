@@ -2826,9 +2826,57 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v590_cron_run_history_retention.sql",
+      "semanticVersion": "v590",
+      "proposedDeployVersion": "20260828135225"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v590_cron_run_history_retention_fn.sql",
+      "semanticVersion": "v590",
+      "proposedDeployVersion": "20260828135527"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260828_nestly_v581_appointment_branch_address.sql",
       "semanticVersion": "v581",
       "proposedDeployVersion": "20260828140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v591a_webhook_consumer_markers.sql",
+      "semanticVersion": "v591a",
+      "proposedDeployVersion": "20260828141250"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v591b_support_status_ingest_process_once.sql",
+      "semanticVersion": "v591b",
+      "proposedDeployVersion": "20260828141323"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v591c_retention_ingest_process_once.sql",
+      "semanticVersion": "v591c",
+      "proposedDeployVersion": "20260828141352"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v591d_retention_optout_process_once.sql",
+      "semanticVersion": "v591d",
+      "proposedDeployVersion": "20260828141416"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v591e_sv_tender_release_no_empty_write.sql",
+      "semanticVersion": "v591e",
+      "proposedDeployVersion": "20260828141459"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260828_nestly_v592_support_tick_dispatcher.sql",
+      "semanticVersion": "v592",
+      "proposedDeployVersion": "20260828141707"
     },
     {
       "kind": "executable",
@@ -2847,6 +2895,12 @@
       "path": "db/migrations/20260828_nestly_v583_owner_automation_toggles.sql",
       "semanticVersion": "v583",
       "proposedDeployVersion": "20260828190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v599_browser_write_boundaries.sql",
+      "semanticVersion": "v599",
+      "proposedDeployVersion": "20260829094129"
     },
     {
       "kind": "executable",
@@ -2886,9 +2940,9 @@
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260829_nestly_v599_browser_write_boundaries.sql",
-      "semanticVersion": "v599",
-      "proposedDeployVersion": "20260829190000"
+      "path": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
+      "semanticVersion": "v600",
+      "proposedDeployVersion": "20260829200000"
     }
   ]
 }

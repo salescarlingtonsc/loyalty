@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 435,
-  "itemCount": 480,
+  "pendingCount": 444,
+  "itemCount": 489,
   "items": [
     {
       "order": 1,
@@ -4702,6 +4702,26 @@
     {
       "order": 470,
       "kind": "pending",
+      "version": "20260828135225",
+      "name": "nestly_v590_cron_run_history_retention",
+      "path": "supabase/migrations/20260828135225_nestly_v590_cron_run_history_retention.sql",
+      "octetLength": 1327,
+      "sha256": "8b786e52a1dc0debbbc68f4b399fa9714aa79b473b0a4da7f1c671b3fd239e79",
+      "provenance": "local-source"
+    },
+    {
+      "order": 471,
+      "kind": "pending",
+      "version": "20260828135527",
+      "name": "nestly_v590_cron_run_history_retention_fn",
+      "path": "supabase/migrations/20260828135527_nestly_v590_cron_run_history_retention_fn.sql",
+      "octetLength": 3714,
+      "sha256": "3a1c49959d5224c03981b7c219dd12620bc4dd495bf9fdd20f85310ef7286765",
+      "provenance": "local-source"
+    },
+    {
+      "order": 472,
+      "kind": "pending",
       "version": "20260828140000",
       "name": "nestly_v581_appointment_branch_address",
       "path": "supabase/migrations/20260828140000_nestly_v581_appointment_branch_address.sql",
@@ -4710,7 +4730,67 @@
       "provenance": "local-source"
     },
     {
-      "order": 471,
+      "order": 473,
+      "kind": "pending",
+      "version": "20260828141250",
+      "name": "nestly_v591a_webhook_consumer_markers",
+      "path": "supabase/migrations/20260828141250_nestly_v591a_webhook_consumer_markers.sql",
+      "octetLength": 2139,
+      "sha256": "b0c494f770ffafaebfcd973e175315b13eb0f755f5f175630b69cadc47fc9c9c",
+      "provenance": "local-source"
+    },
+    {
+      "order": 474,
+      "kind": "pending",
+      "version": "20260828141323",
+      "name": "nestly_v591b_support_status_ingest_process_once",
+      "path": "supabase/migrations/20260828141323_nestly_v591b_support_status_ingest_process_once.sql",
+      "octetLength": 5289,
+      "sha256": "c681c9cca51049a45489ea805bb59d558f9654ac86537fa1612e7b0767f98d8b",
+      "provenance": "local-source"
+    },
+    {
+      "order": 475,
+      "kind": "pending",
+      "version": "20260828141352",
+      "name": "nestly_v591c_retention_ingest_process_once",
+      "path": "supabase/migrations/20260828141352_nestly_v591c_retention_ingest_process_once.sql",
+      "octetLength": 5239,
+      "sha256": "eeaa91ff8512e620abbcbe0b73fe017a3292f6f9f4d4e9a1948200b1663a3ab4",
+      "provenance": "local-source"
+    },
+    {
+      "order": 476,
+      "kind": "pending",
+      "version": "20260828141416",
+      "name": "nestly_v591d_retention_optout_process_once",
+      "path": "supabase/migrations/20260828141416_nestly_v591d_retention_optout_process_once.sql",
+      "octetLength": 5255,
+      "sha256": "2b4bbccebfb602efa4a1628d880f5a3aaff38c56fc21d4561c9b81f5d8f50a01",
+      "provenance": "local-source"
+    },
+    {
+      "order": 477,
+      "kind": "pending",
+      "version": "20260828141459",
+      "name": "nestly_v591e_sv_tender_release_no_empty_write",
+      "path": "supabase/migrations/20260828141459_nestly_v591e_sv_tender_release_no_empty_write.sql",
+      "octetLength": 3088,
+      "sha256": "a7fbc076c5b44a51fe99df7c4794d69be64360cf0bef2060f7084d4f4beb9884",
+      "provenance": "local-source"
+    },
+    {
+      "order": 478,
+      "kind": "pending",
+      "version": "20260828141707",
+      "name": "nestly_v592_support_tick_dispatcher",
+      "path": "supabase/migrations/20260828141707_nestly_v592_support_tick_dispatcher.sql",
+      "octetLength": 3070,
+      "sha256": "775aed6ac462f203a8a7b3c9434634f09c95ad7d2e4b6d0c020a16eb63865c96",
+      "provenance": "local-source"
+    },
+    {
+      "order": 479,
       "kind": "pending",
       "version": "20260828170000",
       "name": "nestly_v581_short_notice_and_reschedule",
@@ -4720,7 +4800,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 472,
+      "order": 480,
       "kind": "pending",
       "version": "20260828180000",
       "name": "nestly_v582_whatsapp_feeds_recovery_attribution",
@@ -4730,7 +4810,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 473,
+      "order": 481,
       "kind": "pending",
       "version": "20260828190000",
       "name": "nestly_v583_owner_automation_toggles",
@@ -4740,7 +4820,17 @@
       "provenance": "local-source"
     },
     {
-      "order": 474,
+      "order": 482,
+      "kind": "pending",
+      "version": "20260829094129",
+      "name": "nestly_v599_browser_write_boundaries",
+      "path": "supabase/migrations/20260829094129_nestly_v599_browser_write_boundaries.sql",
+      "octetLength": 18151,
+      "sha256": "cb28672e7c4a8c06fd91189b566ac18f053b856d0152ff7e8f75511b27c2f618",
+      "provenance": "local-source"
+    },
+    {
+      "order": 483,
       "kind": "pending",
       "version": "20260829100000",
       "name": "nestly_v586_tier_basis_reaches_the_draft",
@@ -4750,7 +4840,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 475,
+      "order": 484,
       "kind": "pending",
       "version": "20260829110000",
       "name": "nestly_v587_join_qr_names_its_business",
@@ -4760,7 +4850,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 476,
+      "order": 485,
       "kind": "pending",
       "version": "20260829120000",
       "name": "nestly_v588_staff_signup_flow_integrity",
@@ -4770,7 +4860,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 477,
+      "order": 486,
       "kind": "pending",
       "version": "20260829130000",
       "name": "nestly_v589_referral_switch_is_one_switch",
@@ -4780,7 +4870,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 478,
+      "order": 487,
       "kind": "pending",
       "version": "20260829170000",
       "name": "nestly_v593_package_expiry",
@@ -4790,7 +4880,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 479,
+      "order": 488,
       "kind": "pending",
       "version": "20260829180000",
       "name": "nestly_v598_shop_hours_are_the_default",
@@ -4800,13 +4890,13 @@
       "provenance": "local-source"
     },
     {
-      "order": 480,
+      "order": 489,
       "kind": "pending",
-      "version": "20260829190000",
-      "name": "nestly_v599_browser_write_boundaries",
-      "path": "supabase/migrations/20260829190000_nestly_v599_browser_write_boundaries.sql",
-      "octetLength": 18151,
-      "sha256": "cb28672e7c4a8c06fd91189b566ac18f053b856d0152ff7e8f75511b27c2f618",
+      "version": "20260829200000",
+      "name": "nestly_v600_register_v361_bringback_cron",
+      "path": "supabase/migrations/20260829200000_nestly_v600_register_v361_bringback_cron.sql",
+      "octetLength": 1744,
+      "sha256": "0d1bed87f662bfdde06595ddece83a84c2fe820dfbd5f8f2ee4105bf5a0dc0a9",
       "provenance": "local-source"
     }
   ]

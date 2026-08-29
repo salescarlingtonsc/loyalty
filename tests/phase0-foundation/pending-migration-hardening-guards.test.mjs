@@ -59,7 +59,7 @@ export const CANONICAL_SEARCH_PATH = ['pg_catalog', 'public', 'app', 'pg_temp'];
 // A migration may INSERT extra schemas between `public`/`app` and the trailing `pg_temp` when the
 // body resolves objects that live outside them. Extras are allowlisted by name so a typo or a junk
 // schema still fails, and the exact set of functions using one is pinned below.
-const ALLOWED_EXTRA_SCHEMAS = new Set(['extensions']);
+const ALLOWED_EXTRA_SCHEMAS = new Set(['extensions', 'cron']);
 
 // Pinned inventory of pending definer functions whose search_path is a canonical SUPERSET. Adding a
 // new one is a deliberate act that must be reviewed, so it has to be recorded here.
@@ -97,6 +97,14 @@ const KNOWN_SEARCH_PATH_SUPERSETS = [
   // staff_scan_member_qr_v327) call it and app.v89_sha256 but never extensions.* directly, so their
   // own search_path stays canonical with no extra schema.
   'nestly_v327_global_customer_qr :: app.v327_member_qr_token :: extensions',
+  // nestly_v590_cron_run_history_retention_fn is a VERBATIM MIRROR of an already-applied
+  // production migration (drift closure 2026-08-29 -- see
+  // docs/qa/SECURITY-CRON-FOLLOWUP-2026-08-29.md section 2). Its function queries
+  // cron.job_run_details directly (not through app/public wrappers), so the live definition
+  // pins `cron` between `app` and `pg_temp`. Rewriting the search_path to drop it would make
+  // this file byte-diverge from the migration production already applied, defeating the whole
+  // point of the mirror.
+  'nestly_v590_cron_run_history_retention_fn :: app.purge_cron_run_history_v590 :: cron',
 ];
 
 // Pinned inventory of pending definer functions whose search_path is a strict canonical SUBSET —
