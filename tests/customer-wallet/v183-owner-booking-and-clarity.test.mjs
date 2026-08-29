@@ -236,15 +236,13 @@ test('a rota save is scoped, ordered and refuses to publish an empty rota',()=>{
   assert.match(save,/return;\s*\}\s*const results=await Promise\.all/,'the guard aborts before ANY write');
   assert.match(save,/sb\.from\('staff_hours'\)\.upsert\([\s\S]{0,220}\{onConflict:'staff_id,weekday'\}\)/);
   assert.match(save,/sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\.in\('weekday',rota\.closed\)/);
-  /* nestly_v598: unticking still clears the whole rota — that is what restores shop hours — but
-     it now also clears every weekly day off that rota stated, because a day off is no longer
-     implied by a missing hours row and would otherwise outlive the rota that expressed it. */
-  assert.match(save,/:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\),\n\s*sb\.from\('staff_recurring_off_days'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\]/,
-    'unticking clears the whole rota and the days off it stated');
-  assert.match(save,/sb\.from\('staff_recurring_off_days'\)\.upsert\(rota\.closed\.map/,
-    'a ticked Closed day is STATED as a weekly day off, not left to be inferred from an absent row');
-  assert.match(save,/sb\.from\('staff_recurring_off_days'\)\.delete\(\)[\s\S]{0,120}rota\.open\.map\(day=>day\.weekday\)/,
-    'and re-opening a day withdraws that statement');
+  /* nestly_v600 (owner ruling): repeating days off live in the Block time dialog, next to the
+     one-off blocks. This screen writes HOURS ONLY — v598 briefly wrote days off from here as
+     well, and two screens editing one thing is two screens that can disagree. */
+  assert.match(save,/:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\]/,
+    'unticking clears the whole rota, which is what restores shop hours');
+  assert.doesNotMatch(save,/staff_recurring_off_days/,
+    'and the roster never writes a day off — Block time is its one home');
 });
 
 /* nestly_v598 supersedes v183's rule here (owner ruling 2026-08-29: "all employees will work on

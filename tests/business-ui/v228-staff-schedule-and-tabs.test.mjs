@@ -53,10 +53,9 @@ test('V228 the rota renders and saves from Staff Members', () => {
   assert.match(save, /sb\.from\('staff_hours'\)\.upsert\([\s\S]*\{onConflict:'staff_id,weekday'\}\)/);
   // The guard that stops an empty rota silently reverting someone to shop hours survives.
   assert.match(save, /works their own hours but has no open day/);
-  // Unticking still clears the rota, which is what returns them to shop hours. nestly_v598: it
-  // now clears the weekly days off that rota stated too — a day off is no longer implied by an
-  // absent hours row, so leaving those behind would keep somebody off after their rota was gone.
-  assert.match(save, /:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\),\n\s*sb\.from\('staff_recurring_off_days'\)\.delete\(\)/);
+  // Unticking still clears the rota, which is what returns them to shop hours. nestly_v600: this
+  // screen writes hours only — a repeating day off is set in Block time, its single home.
+  assert.match(save, /:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\]/);
 });
 
 test('V228 the shared weekday row is defined once, not duplicated', () => {

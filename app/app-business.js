@@ -10305,6 +10305,10 @@ function sectionTabsV200(root,{key='',label='Sections'}={}){
 const V183_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 /* v183b: one weekday row, reused by the shop hours grid and by each person's own rota.
    `scope` namespaces the data attributes so a rota row can never be mistaken for a shop row. */
+/* nestly_v600: weekday names in the order Postgres counts them (extract(dow) — 0 is Sunday), so
+   a tick's index IS the weekday stored in staff_recurring_off_days. Any other order here silently
+   books people on the wrong day. */
+const WEEKDAY_NAMES_V600=Object.freeze(['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']);
 const v183HourRowMarkup=(scope,weekday,label,row,fallback)=>`<div class="v183-hours-row">
   <label style="margin:0" for="v183Open-${esc(scope)}-${weekday}">${esc(label)}</label>
   <label class="v183-hours-open" for="v183Closed-${esc(scope)}-${weekday}"><input type="checkbox" id="v183Closed-${esc(scope)}-${weekday}" data-day-closed="${weekday}" data-day-scope="${esc(scope)}" style="width:auto" ${row?'':'checked'}> Closed</label>
@@ -25410,6 +25414,25 @@ async function appointmentsPage(){
     dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)"><div class="row"><div><h2 id="blockTimeTitle">${editingBlockV291?'Edit blocked time':'Block time'}</h2><p class="muted small" style="margin-top:4px">Mark one team member unavailable in this branch. Customers never see the reason.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="blockTimeClose" aria-label="Close blocked time">Close</button></div>
       ${people.length?`<form id="blockTimeForm" style="margin-top:16px">
         <label for="blockTimeStaff">Team member</label><select id="blockTimeStaff" required>${people.map(person=>`<option value="${person.id}" ${editingBlockV291&&editingBlockV291.staff_id===person.id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select>
+        ${editingBlockV291?'':`
+        <!-- nestly_v600 (owner: "i need to be able to set recurring off days for them. and easily
+             amend the off days if i want to. (like every wednesday & sunday) on top of current ad
+             hoc block time"). Owner ruling: this dialog is the ONE home for both, so a repeating
+             day off is set where a one-off block is set, rather than on a second screen that can
+             disagree with this one. The weekday ticks are the person's CURRENT days off, so the
+             same control that sets them is the control that amends them: untick and save. -->
+        <div class="v150-segment" role="group" aria-label="Kind of block" style="margin-top:14px">
+          <button type="button" id="blockModeOnceV600" aria-pressed="true">Specific dates</button>
+          <button type="button" id="blockModeWeeklyV600" aria-pressed="false">Every week</button>
+        </div>
+        <div id="blockWeeklyV600" hidden style="margin-top:12px">
+          <p class="muted small">Tick the days this person never works. It repeats every week until you change it, and nothing can be booked with them on those days.</p>
+          <div id="blockWeeklyDaysV600" class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">
+            ${WEEKDAY_NAMES_V600.map((dayName,weekday)=>`<label class="checkrow" style="margin:0;flex:0 0 auto" for="blockWeekly-${weekday}"><input type="checkbox" id="blockWeekly-${weekday}" data-weekly-off-v600="${weekday}" style="width:auto"> ${esc(dayName)}</label>`).join('')}
+          </div>
+          <p class="muted small" id="blockWeeklyHintV600" style="margin-top:10px"></p>
+        </div>`}
+        <div id="blockOnceV600">
         ${editingBlockV291
           ?`<label for="blockTimeDate">Date</label><input id="blockTimeDate" type="date" required value="${esc(editParts.date)}">`
           :`<div class="split"><div><label for="blockTimeDate">First day</label><input id="blockTimeDate" type="date" required value="${esc(date)}"></div><div><label for="blockTimeDateEnd">Last day (optional)</label><input id="blockTimeDateEnd" type="date" min="${esc(date)}" value=""></div></div>
@@ -25420,6 +25443,7 @@ async function appointmentsPage(){
         </label>
         <div class="split" id="blockTimeHoursV468" ${editingAllDayV468?'hidden':''}><div><label for="blockTimeStart">Start</label><input id="blockTimeStart" type="time" step="900" required value="${esc(editParts&&!editingAllDayV468?editParts.start:'14:00')}"></div><div><label for="blockTimeEnd">End</label><input id="blockTimeEnd" type="time" step="900" required value="${esc(editParts&&!editingAllDayV468?editParts.end:'15:00')}"></div></div>
         <label for="blockTimeReason">Reason (optional)</label><input id="blockTimeReason" maxlength="160" autocomplete="off" placeholder="e.g. Supplier training" value="${esc(editingBlockV291?.reason||'')}">
+        </div>
         ${editingBlockV291?'<p class="muted small" style="margin-top:8px">Saving removes this blocked time and writes the corrected one. If the new time is refused, the original is put back.</p>':''}
         <div id="blockTimeError" role="alert"></div><div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="blockTimeCancel">Cancel</button><button type="submit" class="btn" id="blockTimeSave">${editingBlockV291?'Save changes':'Save block'}</button></div>
       </form>`:`<div class="cui-empty" style="margin-top:18px">${CUI.icon('staff',{size:32})}<h3>No team member assigned</h3><p>Assign an active team member to this branch before blocking time.</p></div>`}
@@ -25430,6 +25454,74 @@ async function appointmentsPage(){
     $('blockTimeClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     if(!people.length)return;
     $('blockTimeCancel').onclick=close;
+    /* nestly_v600: the repeating half of this dialog. The ticks are read from the days off this
+       person already has, so opening the dialog IS the amend screen — there is nothing else to
+       find. Switching mode hides the date/time half rather than leaving live fields on screen
+       that no longer decide anything (the rule V468 set for All day). */
+    const weeklyPanelV600=$('blockWeeklyV600'),oncePanelV600=$('blockOnceV600');
+    let blockModeV600='once';
+    const weeklyOffForV600=staffId=>(staffWeeklyOff||[])
+      .filter(row=>row.staff_id===staffId).map(row=>Number(row.weekday));
+    const paintWeeklyV600=()=>{
+      if(!weeklyPanelV600)return;
+      const staffId=$('blockTimeStaff').value;
+      const current=weeklyOffForV600(staffId);
+      weeklyPanelV600.querySelectorAll('[data-weekly-off-v600]').forEach(box=>{
+        box.checked=current.includes(Number(box.dataset.weeklyOffV600));
+      });
+      const hint=$('blockWeeklyHintV600');
+      if(hint)hint.textContent=current.length
+        ?`Currently off every ${current.sort((a,b)=>a-b).map(day=>WEEKDAY_NAMES_V600[day]).join(' and ')}.`
+        :'No repeating days off yet.';
+    };
+    const setBlockModeV600=mode=>{
+      if(!weeklyPanelV600||!oncePanelV600)return;
+      blockModeV600=mode;
+      weeklyPanelV600.hidden=mode!=='weekly';
+      oncePanelV600.hidden=mode==='weekly';
+      $('blockModeOnceV600').setAttribute('aria-pressed',String(mode==='once'));
+      $('blockModeWeeklyV600').setAttribute('aria-pressed',String(mode==='weekly'));
+      $('blockTimeSave').textContent=mode==='weekly'?'Save days off':'Save block';
+      /* The date and time inputs are `required`; left required while hidden they block submit with
+         a validation bubble pointing at nothing the owner can see. */
+      ['blockTimeDate','blockTimeStart','blockTimeEnd'].forEach(id=>{
+        const field=$(id);if(field)field.required=mode!=='weekly';
+      });
+      if(mode==='weekly')paintWeeklyV600();
+    };
+    if(weeklyPanelV600){
+      $('blockModeOnceV600').onclick=()=>setBlockModeV600('once');
+      $('blockModeWeeklyV600').onclick=()=>setBlockModeV600('weekly');
+      $('blockTimeStaff').addEventListener('change',()=>{if(blockModeV600==='weekly')paintWeeklyV600()});
+      paintWeeklyV600();
+    }
+    const saveWeeklyOffV600=async()=>{
+      const staffId=$('blockTimeStaff').value;
+      const wanted=[...weeklyPanelV600.querySelectorAll('[data-weekly-off-v600]')]
+        .filter(box=>box.checked).map(box=>Number(box.dataset.weeklyOffV600));
+      const had=weeklyOffForV600(staffId);
+      const added=wanted.filter(day=>!had.includes(day));
+      const removed=had.filter(day=>!wanted.includes(day));
+      if(!added.length&&!removed.length){close();return}
+      const save=$('blockTimeSave');CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
+      const writes=[];
+      if(added.length)writes.push(sb.from('staff_recurring_off_days')
+        .upsert(added.map(weekday=>({business_id:S.biz.id,staff_id:staffId,weekday})),{onConflict:'staff_id,weekday'}));
+      if(removed.length)writes.push(sb.from('staff_recurring_off_days').delete()
+        .eq('business_id',S.biz.id).eq('staff_id',staffId).in('weekday',removed));
+      const results=await Promise.all(writes);
+      if(save.isConnected)CUI.setButtonBusy(save,{busy:false});
+      const failure=results.find(result=>result?.error);
+      if(failure){
+        const box=$('blockTimeError');
+        if(box)box.innerHTML=`<div class="err">${esc(humanErrorV295(failure.error,'Those days off could not be saved.'))}</div>`;
+        return;
+      }
+      toast(wanted.length
+        ?`Off every ${wanted.sort((a,b)=>a-b).map(day=>WEEKDAY_NAMES_V600[day]).join(' and ')}`
+        :'Repeating days off removed');
+      close();loadCalendar().catch(fail);
+    };
     /* V468: ticking All day does not just ignore the hour inputs, it hides them. Leaving two live
        time fields on screen that no longer decide anything is how an owner ends up believing a
        whole-day MC runs 14:00–15:00. */
@@ -25448,6 +25540,10 @@ async function appointmentsPage(){
     };
     $('blockTimeForm').onsubmit=async event=>{
       event.preventDefault();
+      /* nestly_v600: one form, two things it can save. The repeating half writes weekdays, not a
+         date range, so it takes the whole submit rather than threading a second shape through the
+         block writer below. */
+      if(blockModeV600==='weekly')return saveWeeklyOffV600();
       const errorHost=$('blockTimeError'),save=$('blockTimeSave');
       const allDayV468=!!$('blockTimeAllDay')?.checked;
       const dateValue=$('blockTimeDate').value;
@@ -32582,21 +32678,17 @@ async function settingsPage(){
     }
     const results=await Promise.all([
       ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
-      /* nestly_v598: since the shop's hours are everyone's default, deleting a weekday's row no
-         longer means "off that day" — it means "works the shop's hours". Ticking Closed therefore
-         has to SAY so, in staff_recurring_off_days, which is the record the availability engine
-         and the calendar both refuse on. Unticking a day removes that statement again. Without
-         this the tick would silently do nothing, which is the failure mode this whole change was
-         made to remove. */
+      /* nestly_v600 (owner ruling, asked and answered): repeating days off live in ONE place, the
+         Block time dialog, next to the one-off blocks they belong with. v598 briefly wrote them
+         from here too; two screens editing one thing is two screens that can disagree, so this
+         one writes HOURS only. A day left unticked here has no personal hours, which since v598
+         means "works the shop's hours" — it does not mean off, and this save no longer claims it
+         does. Marking somebody off every Wednesday is done in Block time -> Every week. */
       ...rotas.flatMap(rota=>rota.wantsRota
         ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
-          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null}),
-          rota.closed.length?sb.from('staff_recurring_off_days').upsert(rota.closed.map(weekday=>({business_id:S.biz.id,staff_id:rota.staffId,weekday})),{onConflict:'staff_id,weekday'}):Promise.resolve({error:null}),
-          rota.open.length?sb.from('staff_recurring_off_days').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.open.map(day=>day.weekday)):Promise.resolve({error:null})]
-        /* Unticking clears the whole rota AND every day off it stated, which is what returns this
-           person to the shop's hours on every day the shop is open. */
-        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId),
-          sb.from('staff_recurring_off_days').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
+          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
+        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
+        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
     ]);
     save.disabled=false;
     const failure=results.find(result=>result?.error);
