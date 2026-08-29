@@ -169,7 +169,7 @@ test('V275 the nav advertises Bottles to bars only, and no other sector gained a
      prepaid session for the person in front of you), which is doing, not money history. */
   assert.match(app, /label:'Serve & sell',items:\['till','appointments','bookings','waitlist','custpackages'\]/);
   assert.match(app, /\{key:'bottles',icon:'bottle',flat:'Bottles',items:\['bottles'\]\}/);
-  assert.match(app, /label:'Operations setup',items:\['staffmembers','branches','services','inventory','packages','bottlesetup'\]/);
+  assert.match(app, /label:'Operations setup',items:\['staffmembers','branches','services','inventory','packages','bottlesetup','remindernotify'\]/);
   // Every other sector's module list is untouched: 'bottles' appears in exactly one INDUSTRIES
   // entry (bar) and never in ALLMODS, so it cannot arrive by default anywhere else.
   const industries = app.slice(app.indexOf('const INDUSTRIES={'), app.indexOf('const MODULES={'))

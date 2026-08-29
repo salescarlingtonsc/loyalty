@@ -269,7 +269,7 @@ const NAVGROUPS=[
   {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel']},
   /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
      list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
-  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup']}
+  {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup','remindernotify']}
 ];
 let navOpen={};
 let pendingCustomerInactivity=null;
@@ -2982,7 +2982,7 @@ function renderShell(page){
     waitlist:waitlistPage,inventory:inventoryPage,packages:()=>packagesPage({view:'plans'}),custpackages:()=>packagesPage({view:'customers'}),reports:reportsPage,customerintel:customerIntelligencePage,support:supportInboxPageV531,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
-    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,
+    setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,remindernotify:reminderNotificationPageV606,
     'customer-interface':customerInterfacePageV243};
   /* V286: a hash with no page used to render the Dashboard while location.hash still read the
      route that was asked for — the one refusal in the router that answered silently. A staff
@@ -16594,8 +16594,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="grow-tiers-page-v343">
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
-      <div id="growWaAutomationCardV583"></div>
-      <div id="growBbWhatsappStripV551"></div>
+      ${/* nestly_v606: the two WhatsApp cards moved to Operations setup -> Reminder & Notification.
+           They govern every message Peekaa sends, not this one campaign. */''}
       <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
@@ -29515,6 +29515,84 @@ function branchBillingSentenceV280(counts){
 async function saveBranchFieldsV325(branchId,fields){
   return sb.from('branches').update(fields).eq('id',branchId).eq('business_id',S.biz.id);
 }
+/* nestly_v606 (owner: "Reminder & Notification move under operations setup"). The two WhatsApp
+   cards were on the Bring-back page, which meant the switch that stops EVERY booking confirmation
+   and EVERY appointment reminder lived inside one campaign — an owner turning off a bring-back
+   offer had no reason to look there, and an owner looking for their reminders had no reason to
+   open bring-back. They are workspace configuration, so they sit with the rest of it.
+   Nothing about them changed: the same two cards, the same two loaders, the same RPCs and the
+   same owner-only gate. Only the page they are drawn on. */
+async function reminderNotificationPageV606(){
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('appointments',{size:24})}<div><h1>Reminder &amp; Notification</h1><p class="muted small">What Peekaa sends your customers on your behalf, and how it reaches them.</p></div></div></div>
+    <div id="growWaAutomationCardV583"></div>
+    <div id="growBbWhatsappStripV551"></div>`;
+  if(!isCurrent())return;
+  await Promise.all([
+    loadGrowWaAutomationCardV583(routeMain).catch(()=>{}),
+    loadGrowBbWhatsappStripV551(routeMain).catch(()=>{})
+  ]);
+}
+/* nestly_v606 (owner mark: the opening-hours grid ringed with an arrow to Branches — "branch
+   opening hour should put here"). Hours belong to a BRANCH. They were edited on Customer Action,
+   one screen for the whole business, which meant an owner setting a second branch's hours had to
+   go somewhere that never mentioned that branch — and the grid silently governed whichever branch
+   the loader happened to pick. It is drawn on Branches now, beside everything else that is true of
+   a branch. Same table, same upsert/delete, same shape of grid. */
+async function branchHoursEditorV606(host,branch){
+  if(!host||!branch)return;
+  const scope='shop';
+  host.setAttribute('aria-busy','true');
+  host.innerHTML='<p class="muted small">Loading opening hours…</p>';
+  const {data:hours,error}=await sb.from('branch_hours')
+    .select('weekday,opens_at,closes_at').eq('business_id',S.biz.id).eq('branch_id',branch.id);
+  if(!host.isConnected)return;
+  host.setAttribute('aria-busy','false');
+  if(error){
+    host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
+    return;
+  }
+  const byWeekday=new Map((hours||[]).map(row=>[Number(row.weekday),row]));
+  const fallback={opens:'10:00',closes:'19:00'};
+  host.innerHTML=`<div class="v183-hours">
+    ${WEEKDAY_NAMES_V600.map((label,weekday)=>v183HourRowMarkup(scope,weekday,label,byWeekday.get(weekday)||null,fallback)).join('')}
+  </div>
+  <div class="row" style="margin-top:12px"><button class="btn sm" data-branch-hours-save-v606>Save opening hours</button></div>
+  <div data-branch-hours-error-v606 role="status"></div>`;
+  host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
+    const weekday=box.dataset.dayClosed;
+    const opens=host.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+    const closes=host.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
+    if(opens)opens.disabled=box.checked;
+    if(closes)closes.disabled=box.checked;
+  });
+  const save=host.querySelector('[data-branch-hours-save-v606]');
+  const err=host.querySelector('[data-branch-hours-error-v606]');
+  save.onclick=async()=>{
+    save.disabled=true;err.innerHTML='';
+    const open=[],closed=[];
+    host.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
+      const weekday=Number(box.dataset.dayClosed);
+      const opens=host.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+      const closes=host.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
+      /* An inverted or blank range is recorded as closed rather than half-saved — the rule the
+         previous editor used, kept verbatim. */
+      if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
+      open.push({business_id:S.biz.id,branch_id:branch.id,weekday,opens_at:opens,closes_at:closes});
+    });
+    const results=await Promise.all([
+      open.length?sb.from('branch_hours').upsert(open,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
+      closed.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branch.id).in('weekday',closed):Promise.resolve({error:null})
+    ]);
+    if(!host.isConnected)return;
+    save.disabled=false;
+    const failure=results.find(result=>result?.error);
+    if(failure){err.innerHTML=`<div class="err">${esc(humanErrorV295(failure.error,'Those hours could not be saved.'))}</div>`;return}
+    /* Plain, uninterpolated: the card this editor is drawn inside already names the branch, so
+       repeating it in the toast would be a merchant name inside interface copy for no gain. */
+    toast('Opening hours saved');
+  };
+}
 async function branchesPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -29522,7 +29600,7 @@ async function branchesPage(){
     <div class="row">${importBtn('branches')}<button class="btn" id="addBr">+ Add branch</button></div></div>
     <div class="card" id="brForm" style="display:none;margin-bottom:16px"></div>
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
-  let branchList=[],staffList=[],openAssignId=null,editId=null,branchAddAttemptKey=null;
+  let branchList=[],staffList=[],openAssignId=null,editId=null,branchAddAttemptKey=null,openHoursIdV606=null;
   $('addBr').onclick=()=>openForm(null);
   function openForm(b){
     editId=b?b.id:null;
@@ -29625,7 +29703,15 @@ async function branchesPage(){
                inside Edit); deleting one is rare, irreversible and billing-relevant, so it asks
                for the branch's name to be typed back. The default branch is never deletable. -->
           ${b.is_default?'':`<button class="btn ghost sm" data-name="${esc(b.name)}" onclick="deleteBranchV285('${b.id}',this)">Delete</button>`}
+          ${/* nestly_v606: opening hours are a fact about THIS branch, so they open from its own
+               card rather than from a business-wide screen that never named it. */''}
+          <button class="btn ghost sm" type="button" data-branch-hours-open-v606="${b.id}" aria-expanded="${openHoursIdV606===b.id?'true':'false'}">${openHoursIdV606===b.id?'Close hours':'Opening hours'}</button>
         </div>
+        ${openHoursIdV606===b.id?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Opening hours</b>
+          <p class="muted small" style="margin-top:4px">Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
+          <div data-branch-hours-host-v606="${b.id}" style="margin-top:12px"></div>
+        </div>`:''}
         ${openAssignId===b.id?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div class="row" style="gap:10px;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap">
             <p class="muted small" style="margin:0;flex:1;min-width:220px">Tick who works here. Staff assigned here see only this branch's data — owners & managers see every branch regardless of assignment.</p>
@@ -29636,6 +29722,18 @@ async function branchesPage(){
         </div>`:''}
       </div>`;
     }).join('');
+    /* nestly_v606: the toggle and the editor it fills. One card open at a time — two grids of the
+       same seven weekdays on one screen is how the wrong branch gets edited. */
+    document.querySelectorAll('[data-branch-hours-open-v606]').forEach(button=>button.onclick=()=>{
+      const id=button.dataset.branchHoursOpenV606;
+      openHoursIdV606=openHoursIdV606===id?null:id;
+      load();
+    });
+    if(openHoursIdV606){
+      const host=document.querySelector(`[data-branch-hours-host-v606="${CSS.escape(openHoursIdV606)}"]`);
+      const branch=branchList.find(item=>item.id===openHoursIdV606);
+      if(host&&branch)branchHoursEditorV606(host,branch);
+    }
   }
   window.editBranch=(id)=>{const b=branchList.find(x=>x.id===id);if(b) openForm(b);};
   window.toggleAssign=(id)=>{openAssignId=openAssignId===id?null:id;load();};
@@ -34418,8 +34516,14 @@ function bookingRulesCardHtmlV325(){
       <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
       <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
-      <div id="setAvailabilityBody" aria-busy="true" style="margin-top:14px"><p class="muted small">Loading opening hours…</p></div>
-      <div style="margin-top:14px"><button class="btn sm" id="setAvailabilitySave">Save availability</button></div>
+      ${/* nestly_v606 (owner mark, photo: the whole opening-hours grid ringed with an arrow to
+           Branches — "branch opening hour should put here"). Hours belong to a BRANCH: this page
+           is one screen for the whole business, and it was asking the owner to set one branch's
+           hours here while every other fact about that branch lives on Branches. The grid moved;
+           this switch did not, because who a customer may pick is a business decision and the
+           owner's own mark on the next photo put it here. */''}
+      <p class="muted small" style="margin-top:14px">Opening hours are set on each branch — <a href="#/branches">open Branches</a>.</p>
+      <div style="margin-top:14px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
       <div id="setAvailabilityErr" role="status"></div>
     </div>
     ${bookingConfirmationTemplateCardHtmlV330()}`;
@@ -34527,70 +34631,21 @@ function wireBookingRulesV325(isCurrent=()=>true){
       toast('WhatsApp confirmation message saved');
     };
   }
-  const loadBookingAvailability=async()=>{
-    const host=$('setAvailabilityBody');if(!host)return;
-    const [branchResult,hoursResult]=await Promise.all([
-      sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id).order('is_default',{ascending:false}),
-      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
-    ]);
-    if(!isCurrent()||!host.isConnected)return;
-    host.setAttribute('aria-busy','false');
-    if(branchResult.error||hoursResult.error){
-      host.innerHTML='<p class="err small">Opening hours could not be loaded. Nothing has been changed.</p>';
-      const save=$('setAvailabilitySave');if(save)save.disabled=true;
-      return;
-    }
-    const branches=(branchResult.data||[]).filter(branch=>branch.active!==false);
-    const branch=branches[0]||null;
-    const hours=new Map((hoursResult.data||[]).filter(row=>!branch||row.branch_id===branch.id).map(row=>[Number(row.weekday),row]));
-    host.dataset.branchId=branch?.id||'';
-    host.innerHTML=`${branch?'':'<p class="muted small">Add a branch first to publish opening hours.</p>'}
-      <p class="muted small" style="margin-bottom:8px">Opening hours${branch?` for ${esc(branch.name||'your branch')}`:''}. Customers only ever see times inside these hours, minus anything already booked or blocked.</p>
-      <div class="v183-hours">${V183_DAYS.map((label,weekday)=>
-        v183HourRowMarkup('shop',weekday,label,hours.get(weekday),{opens:'09:00',closes:'18:00'})).join('')}</div>
-`;
-    host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
-      const scope=box.dataset.dayScope,weekday=box.dataset.dayClosed;
-      const within=box.closest('.v183-hours')||host;
-      const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
-      const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`);
-      if(opens)opens.disabled=box.checked;
-      if(closes)closes.disabled=box.checked;
-    });
-  };
-  loadBookingAvailability();
-  if(!$('setAvailabilitySave'))return;
-  $('setAvailabilitySave').onclick=async()=>{
-    const host=$('setAvailabilityBody'),save=$('setAvailabilitySave'),err=$('setAvailabilityErr');
-    const branchId=host?.dataset?.branchId||'';
-    save.disabled=true;err.innerHTML='';
+  /* nestly_v606: the hours grid and its save moved to Branches, where a branch's own facts live.
+     What stays here is the one business-level switch this card still owns. */
+  const staffChoiceSaveV606=$('setStaffChoiceSaveV606');
+  if(!staffChoiceSaveV606)return;
+  staffChoiceSaveV606.onclick=async()=>{
+    const err=$('setAvailabilityErr');
+    staffChoiceSaveV606.disabled=true;if(err)err.innerHTML='';
     const staffChoice=$('setStaffChoice').checked;
-    const readDayGrid=(scope,within)=>{
-      const open=[],closed=[];
-      within.querySelectorAll(`[data-day-closed][data-day-scope="${CSS.escape(scope)}"]`).forEach(box=>{
-        const weekday=Number(box.dataset.dayClosed);
-        const opens=within.querySelector(`[data-day-opens="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
-        const closes=within.querySelector(`[data-day-closes="${weekday}"][data-day-scope="${CSS.escape(scope)}"]`)?.value||'';
-        if(box.checked||!opens||!closes||closes<=opens){closed.push(weekday);return}
-        open.push({weekday,opens,closes});
-      });
-      return {open,closed};
-    };
-    const shop=readDayGrid('shop',host);
-    const rows=shop.open.map(day=>({business_id:S.biz.id,branch_id:branchId,weekday:day.weekday,opens_at:day.opens,closes_at:day.closes}));
-    const closedDays=shop.closed;
-    const results=await Promise.all([
-      (invalidateBusinessRecordCacheV370(),sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id)),
-      branchId&&rows.length?sb.from('branch_hours').upsert(rows,{onConflict:'branch_id,weekday'}):Promise.resolve({error:null}),
-      branchId&&closedDays.length?sb.from('branch_hours').delete().eq('business_id',S.biz.id).eq('branch_id',branchId).in('weekday',closedDays):Promise.resolve({error:null}),
-    ]);
+    invalidateBusinessRecordCacheV370();
+    const {error}=await sb.from('businesses').update({booking_staff_choice:staffChoice}).eq('id',S.biz.id);
     if(!isCurrent())return;
-    save.disabled=false;
-    const failure=results.find(result=>result?.error);
-    if(failure){err.innerHTML=`<div class="err">${esc(failure.error.message)}</div>`;return}
+    staffChoiceSaveV606.disabled=false;
+    if(error){if(err)err.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That could not be saved.'))}</div>`;return}
     S.biz.booking_staff_choice=staffChoice;
-    toast('Customer booking availability saved');
-    loadBookingAvailability();
+    toast(staffChoice?'Customers can choose a team member':'Customers pick a time and you assign the person');
   };
 }
 /* V325 (owner-authorized restructure). A second, small phone-frame preview for the persistent

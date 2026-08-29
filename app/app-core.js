@@ -276,6 +276,11 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],support:['customers','WhatsApp Inbox'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
   staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  /* nestly_v606 (owner mark on the Bring-back page: the WhatsApp automation and delivery blocks
+     ringed together, with "Reminder & Notification move under operations setup"). A SURFACE key,
+     not an entitlement — what it shows is owner-level workspace configuration, so it is gated on
+     the same module Settings is, through SURFACE_MODULE_ALIAS_V606 below. */
+  remindernotify:['appointments','Reminder & Notification'],
   /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
      that lives in Operations setup, never an entitlement a staff member can be granted. */
@@ -304,7 +309,7 @@ const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 /* nestly_v584: a surface that has its own rail row and route but no entitlement of its own —
    the value is the module whose read permission actually governs it. */
-const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages'});
+const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages',remindernotify:'settings'});
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]

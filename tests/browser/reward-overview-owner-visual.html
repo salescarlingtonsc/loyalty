@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="b2d56188701176d973466cc0b23e2a7cb55e590dd0e24f329d8ff79fad7b5d0c"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="316302684b9e44fafd9f08a3073db65052555247d4dfc85fcbab1b15db3a6b97"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5484,7 +5484,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · b2d56188701176d973466cc0b23e2a7cb55e590dd0e24f329d8ff79fad7b5d0c</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 316302684b9e44fafd9f08a3073db65052555247d4dfc85fcbab1b15db3a6b97</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -12459,8 +12459,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :`<div class="grow-tiers-page-v343">
       <div class="grow-tier-basis-card-v343"><span><b>How bring-back works</b>
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
-      <div id="growWaAutomationCardV583"></div>
-      <div id="growBbWhatsappStripV551"></div>
+      ${/* nestly_v606: the two WhatsApp cards moved to Operations setup -> Reminder & Notification.
+           They govern every message Peekaa sends, not this one campaign. */''}
       <div id="growBbAttentionV571"></div>
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
@@ -15561,7 +15561,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'b2d56188701176d973466cc0b23e2a7cb55e590dd0e24f329d8ff79fad7b5d0c',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'316302684b9e44fafd9f08a3073db65052555247d4dfc85fcbab1b15db3a6b97',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

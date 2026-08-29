@@ -20,7 +20,7 @@ test('the owner reaches branches from Operations setup, not the account menu', (
   /* V275: the Operations setup group gained a bar-only "Bottle keep" row. This assertion guards
      that the setup surfaces live HERE rather than in the account menu, not that the group is
      frozen, so the new row is admitted explicitly and everything it protects still holds. */
-  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?\]/);
+  assert.match(app, /items:\['staffmembers','branches','services','inventory','packages'(?:,'bottlesetup')?(?:,'remindernotify')?\]/);
   assert.doesNotMatch(app, /id="pmAddBranch"/);
 });
 

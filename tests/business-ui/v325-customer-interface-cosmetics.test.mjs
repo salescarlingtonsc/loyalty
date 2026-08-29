@@ -228,11 +228,15 @@ test('V325 the booking-rules card renders under Appointment Setting with every r
      under Services; the assertions below that they reach the service save still hold. */
   assert.doesNotMatch(page, /serviceBufferPointerCardHtmlV325\(\)/);
   assert.doesNotMatch(app, /function serviceBufferPointerCardHtmlV325\(/);
-  for (const id of ['aac', 'setHold', 'setOverflow', 'setAutoConfirm', 'setSave', 'setStaffChoice', 'setAvailabilityBody', 'setAvailabilitySave']) {
+  /* nestly_v606 (owner mark: the hours grid ringed with an arrow to Branches). setAvailabilityBody
+     and setAvailabilitySave left this card with the grid they held — hours belong to a branch, and
+     this screen is one screen for the whole business. setStaffChoice stayed, and gained its own
+     save, because who a customer may pick is a business decision. */
+  for (const id of ['aac', 'setHold', 'setOverflow', 'setAutoConfirm', 'setSave', 'setStaffChoice', 'setStaffChoiceSaveV606']) {
     assert.match(bookingRules, new RegExp(`id="${id}"`), `${id} must still be part of the relocated card`);
   }
   // Every id above appears exactly once across the whole bundle — no duplicate copy left in Bookings.
-  for (const id of ['aac', 'setHold', 'setOverflow', 'setAutoConfirm', 'setSave', 'setStaffChoice', 'setAvailabilityBody', 'setAvailabilitySave', 'setAvailabilityErr']) {
+  for (const id of ['aac', 'setHold', 'setOverflow', 'setAutoConfirm', 'setSave', 'setStaffChoice', 'setAvailabilityErr']) {
     assert.equal((app.match(new RegExp(`id="${id}"`, 'g')) || []).length, 1, `${id} must be defined exactly once`);
   }
   assert.match(page, /wireBookingRulesV325\(\(\)=>customerInterfaceHostV288\.isConnected&&M\(\)===customerInterfaceHostV288\);/);
