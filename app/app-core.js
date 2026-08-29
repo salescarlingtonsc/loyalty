@@ -1115,14 +1115,25 @@ function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',
     </div>`;
     document.body.append(dialog);
     let settled=false,deactivate=null;
+    /* nestly_v597: a confirmation is almost always raised from INSIDE another dialog — "Replace
+       join QR" and "Revoke all QRs" both sit in the My Business QR modal. Each dialog pushes its
+       own history entry and pops it on close, so answering the confirmation ran history.back(),
+       whose popstate the dialog underneath was still listening for: cancelling a replace shut the
+       whole QR panel and dropped the owner back on the dashboard. The confirmation now BORROWS
+       the open dialog's entry rather than stacking a second one (inheritHistoryId) and hands it
+       back untouched on close (handOffHistory) — the entry belongs to the dialog that is staying.
+       With nothing underneath, currentDialogHistoryId() is 0, so it pushes and pops exactly as
+       it always did. */
+    const stackedOnDialogV597=Number(CUI.currentDialogHistoryId?.()||0);
     const finish=value=>{
       if(settled)return;
       settled=true;
       const close=deactivate;deactivate=null;
-      if(close)close({restoreFocus:true});else dialog.remove();
+      if(close)close({restoreFocus:true,handOffHistory:stackedOnDialogV597>0});else dialog.remove();
       resolve(value);
     };
-    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#confirmActionCancelV386'});
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(false),initialFocus:'#confirmActionCancelV386',
+      inheritHistoryId:stackedOnDialogV597});
     dialog.onclick=event=>{if(event.target===dialog)finish(false)};
     dialog.querySelector('#confirmActionOkV386').onclick=()=>finish(true);
     dialog.querySelector('#confirmActionCancelV386').onclick=()=>finish(false);

@@ -33421,6 +33421,17 @@ async function loadSignupConfig(host){
     if(available)button.removeAttribute('title');
     else button.title=joinQrNothingToRevokeTextV456();
   };
+  /* nestly_v597: "Generate" is the thing to do when there is no QR, so it leads. "Replace" is the
+     thing to do almost never, so it steps back to a quiet control — the emphasis has to match the
+     consequence, not the other way round. One place decides the label and the weight together so
+     the two cannot drift apart across the five sites that used to set the label alone. */
+  const setJoinQrActionV597=mode=>{
+    const button=$('createJoinQr');if(!button)return;
+    const replace=mode==='replace';
+    const label=button.querySelector('span');
+    if(label)label.textContent=replace?'Replace join QR':'Generate join QR';
+    button.className=replace?'btn ghost sm':'btn sm';
+  };
   let url='';
   const showJoinQr=async data=>{
     url=publicAppUrl(`join?token=${encodeURIComponent(data.join_token)}`);
@@ -33433,7 +33444,7 @@ async function loadSignupConfig(host){
        real act with a real consequence. */
     setJoinQrLeadV456('Print this QR for your counter.');
     setRevokeAvailableV456(true);
-    $('createJoinQr').querySelector('span').textContent='Replace join QR';
+    setJoinQrActionV597('replace');
     const expires=data.expires_at?sgt(data.expires_at):'',replaced=Number(data.replaced_count||0);
     const key=expires&&replaced
       ?(replaced===1?'qrReadyExpiresRevoked':'qrReadyExpiresQrsRevoked')
@@ -33444,7 +33455,21 @@ async function loadSignupConfig(host){
     window.NestlyNativeBridge?.haptic?.('Light').catch(()=>{});
     return true;
   };
+  /* nestly_v597 (owner, pre-go-live: "i still not able to scan the qrcode now"). Their printed
+     code had been silently killed. This one button is BOTH "Generate" (nothing exists yet) and
+     "Replace" (destroy the live code and mint another), and in the Replace state it rotated on a
+     single tap with no confirmation — while Revoke, the *less* destructive of the two because it
+     leaves no misleading new code behind, has always asked. Worse, it renders as the primary
+     control in the row, directly under copy that reads "This is your permanent sign-up code.
+     Print it once — it stays the same". The most prominent, unconfirmed button on the screen
+     invalidated every counter QR, poster and saved copy the business had in the world.
+     Replacing now asks, in the words that matter (printed copies stop working). Generating a
+     first QR destroys nothing, so it still goes through on one tap. */
+  const joinQrIsReplaceV597=()=>
+    ($('createJoinQr')?.querySelector('span')?.textContent||'').trim().toLowerCase().startsWith('replace');
   const generateJoinQr=async()=>{
+    if(joinQrIsReplaceV597()&&!await confirmActionV386(
+      'Replace this business QR? The code on every printed poster, counter card and saved copy stops working immediately, and customers scanning an old one cannot join. Replace it only if that copy is lost.'))return;
     const button=$('createJoinQr');button.disabled=true;$('joinQrStatus').textContent='Creating a business-bound QR…';
     const {data,error}=await sb.rpc('business_rotate_customer_join_qr_v90',{p_business:S.biz.id});
     if(!button.isConnected)return;
@@ -33485,7 +33510,7 @@ async function loadSignupConfig(host){
        from the state before the press. */
     setJoinQrLeadV456('Your counter QR is how a customer joins this business. Generate one to print for your counter.');
     setRevokeAvailableV456(false);
-    $('createJoinQr').querySelector('span').textContent='Generate join QR';
+    setJoinQrActionV597('generate');
     const revoked=Number(data?.revoked_count||0);
     $('joinQrStatus').innerHTML=workspaceTemplateHtmlV97(revoked===1?'activeQrRevoked':'activeQrsRevoked',{count:revoked});
   };
@@ -33509,7 +33534,7 @@ async function loadSignupConfig(host){
        compromised print rather than the only way to see what you already have. */
     await showJoinQr(statusResult.data);
     if(statusResult.data.created!==true){
-      $('createJoinQr').querySelector('span').textContent='Replace join QR';
+      setJoinQrActionV597('replace');
       $('joinQrStatus').innerHTML='This is your permanent sign-up code. Print it once — it stays the same, so a saved or printed copy never stops working. Replace it only if that copy is lost.';
     }
   }else if(Number(statusResult.data?.active_count||0)>0){
@@ -33519,7 +33544,7 @@ async function loadSignupConfig(host){
        revoke even though there is nothing on screen to print. */
     setJoinQrLeadV456('An active QR exists for this business but is not shown in this session. Replace it to print a fresh copy.');
     setRevokeAvailableV456(true);
-    $('createJoinQr').querySelector('span').textContent='Replace join QR';
+    setJoinQrActionV597('replace');
   }else{
     $('joinQrStatus').textContent='No active QR exists. Turn on new sign-ups, then generate one.';
     /* nestly_v456: the state the audit caught — nothing exists, so nothing can be printed and

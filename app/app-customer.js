@@ -6270,6 +6270,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
      business with 42501 before they refuse anything else. */
   if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
   if(summaryError||capabilitiesError)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
+  /* nestly_v597: an empty reply with NO error was the one shape this guard never covered, and the
+     renderer below reads summary.business / summary.loyalty / summary.packages straight off it.
+     A null therefore threw an uncaught TypeError mid-render, which paints nothing at all — the
+     customer gets a white screen with no message and no way out, the worst of the three possible
+     outcomes and the hardest to report. Treated as what it is: the business could not be loaded,
+     shown with the same retry the error branch above already offers. */
+  if(!summary||typeof summary!=='object')return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug);
   /* V370: with the actionable wallet feature OFF there is no card to pulse against, so the poll
      baseline comes from the same three summary sections the page draws its balances from. With it
      ON the card was already seeded above and this must not overwrite it with a different shape. */
