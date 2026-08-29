@@ -241,7 +241,7 @@ async function applyShareReferralV576(slug){
   const key=`${slug}:${code}`;
   if(attemptedShareReferralV576.has(key))return;
   attemptedShareReferralV576.add(key);
-  const {data,error}=await sb.rpc('customer_apply_referral_code_v571',{
+  const {data,error}=await sb.rpc('customer_apply_referral_code_v612',{
     p_business_slug:slug,p_code:code,
     p_idempotency_key:writeAttemptKey('nestly.customer.shareRefApply',key)
   }).then(result=>result,thrown=>({data:null,error:thrown}));
@@ -249,7 +249,7 @@ async function applyShareReferralV576(slug){
   const reason=String(data?.reason||'');
   if(data?.applied===true||['self_referral','already_referred','unknown_code','referrals_off'].includes(reason)){
     clearShareReferralV576();
-    if(data?.applied===true&&reason==='ok')toast('Referral code applied — your friend gets the credit.');
+    if(data?.applied===true&&reason==='ok')toast(customerReferralAppliedTextV612(data));
   }
 }
 function takePendingCustomerDestination(fallback=''){
@@ -2768,6 +2768,16 @@ async function renderCustomerProfile(requestedView){
 
 /* The customer-facing wording for every refusal the server can return. Kept beside the dialog
    so a new server reason is obvious here as an untranslated fallback rather than a blank line. */
+/* nestly_v612: what an APPLIED code means, in the customer's terms. */
+function customerReferralAppliedTextV612(result){
+  const settled=String(result?.settled||'');
+  if(settled==='immediate')return ct('joinReferralPaidNowV612');
+  if(settled==='on_spend'){
+    const floor=Number(result?.min_spend_cents||0);
+    return ct('joinReferralPaidOnSpendV612',{floor:floor>0?money(floor):''});
+  }
+  return ct('joinReferralRecordedV612');
+}
 function customerReferralReasonTextV571(reason){
   const map={
     unknown_code:ct('joinReferralUnknownV571'),
@@ -2778,7 +2788,6 @@ function customerReferralReasonTextV571(reason){
   };
   return map[String(reason||'')]||ct('joinReferralUnknownV571');
 }
-let pendingCustomerJoinReferralV571='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
@@ -2889,15 +2898,18 @@ async function renderCustomerQrJoin(){
   const referralCodeV571=pendingCustomerJoinReferralV571;pendingCustomerJoinReferralV571='';
   pendingCustomerJoinSlugV587='';
   if(referralCodeV571&&slug){
-    const {data:referralResult}=await sb.rpc('customer_apply_referral_code_v571',{
+    const {data:referralResult}=await sb.rpc('customer_apply_referral_code_v612',{
       p_business_slug:slug,p_code:referralCodeV571,
       p_idempotency_key:writeAttemptKey('nestly.customer.joinReferral',`${slug}:${referralCodeV571}`)
     }).then(result=>result,()=>({data:null}));
     if(!isCurrent())return;
     /* Applied or not, the join stands. The customer is told which happened rather than left to
-       assume a code was honoured. */
+       assume a code was honoured — and nestly_v612 tells them WHICH promise they are holding:
+       paid now (no spend requirement), or paid the moment their spending reaches the floor. */
     if(referralResult&&referralResult.applied===false)
       toast(customerReferralReasonTextV571(referralResult.reason));
+    else if(referralResult&&referralResult.applied===true)
+      toast(customerReferralAppliedTextV612(referralResult));
   }
   status.textContent='Programme joined. Opening your wallet…';
   await maybeOfferCustomerPasskeySetup({isCurrent});

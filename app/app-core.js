@@ -778,6 +778,8 @@ function consumeCustomerJoinHandoffV606(token){
     if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
     pendingCustomerJoinBusinessNameV609=String(raw.name||'').slice(0,120);
+    /* nestly_v612: the /join page's referral code rides the same handoff. */
+    if(raw.ref)pendingCustomerJoinReferralV571=String(raw.ref).trim().toUpperCase().slice(0,32);
     rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
     return true;
   }catch{return false}
@@ -2160,6 +2162,7 @@ const CUSTOMER_COPY=Object.freeze({
     programmesIntro:'Pick a business to open its rewards, benefits, bookings and activity.',
     joinReferralLabelV571:'Referral code (optional)',joinReferralPlaceholderV571:'If a friend gave you one',joinReferralUnknownV571:'That referral code is not recognised at this business.',joinReferralSelfV571:'That is your own code — ask your friend for theirs.',joinReferralAlreadyV571:'A referral is already recorded for you here.',joinReferralOffV571:'This business is not running a referral programme.',
     joinConfirmTitleV571:'Join {business}?',joinConfirmTitleUnknownV571:'Join this business?',joinConfirmBodyV571:'You will start collecting rewards here straight away.',joinConfirmCancelV571:'Close',joinConfirmGoV571:'Join',joinConfirmKickerV587:'Rewards programme',joinConfirmGoV587:'Yes, join',
+    joinReferralPaidNowV612:'Referral applied — you and your friend have both been rewarded.',joinReferralPaidOnSpendV612:'Referral applied — you and your friend are rewarded once you spend {floor} here.',joinReferralRecordedV612:'Referral recorded — the reward follows once the programme is fully set up.',
     addProgramme:'Scan to join',openProgramme:'Open {business} rewards',localBusiness:'Local business',
     referralHeading:'Quote this! ❤️',
     /* v322 (owner ruling R1/R4): "no more store credits" — a referral pays POINTS. {reward} is now
@@ -2361,6 +2364,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'语言',english:'English',chinese:'简体中文',backProgrammes:'返回我的奖励',
     chooseProgramme:'选择一家奖励商家',yourProgrammes:'我的奖励',
     programmesIntro:'选择一家商家，查看它的奖励、权益、预约和活动记录。',
+    joinReferralPaidNowV612:'推荐已生效——您和朋友都已获得奖励。',joinReferralPaidOnSpendV612:'推荐已生效——您在此消费满{floor}后，您和朋友都会获得奖励。',joinReferralRecordedV612:'推荐已记录——待商家完成设置后即可发放奖励。',
     joinReferralLabelV571:'推荐码（选填）',joinReferralPlaceholderV571:'如果朋友给过您',joinReferralUnknownV571:'此商家无法识别该推荐码。',joinReferralSelfV571:'这是您自己的代码——请向朋友索取。',joinReferralAlreadyV571:'您在此处已记录了一条推荐。',joinReferralOffV571:'此商家目前没有推荐计划。',
     joinConfirmTitleV571:'加入{business}？',joinConfirmTitleUnknownV571:'加入此商家？',joinConfirmBodyV571:'您将立即开始在这里累积奖励。',joinConfirmCancelV571:'关闭',joinConfirmGoV571:'加入',joinConfirmKickerV587:'奖励计划',joinConfirmGoV587:'好，加入',
     addProgramme:'扫码加入',openProgramme:'打开{business}的奖励',localBusiness:'本地商家',
@@ -2586,6 +2590,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'Bahasa',english:'English',chinese:'简体中文',backProgrammes:'Kembali ke Ganjaran Saya',
     chooseProgramme:'Pilih perniagaan ganjaran',yourProgrammes:'Ganjaran Saya',
     programmesIntro:'Pilih perniagaan untuk membuka ganjaran, manfaat, tempahan dan aktivitinya.',
+    joinReferralPaidNowV612:'Rujukan digunakan — anda dan rakan anda kedua-duanya telah diberi ganjaran.',joinReferralPaidOnSpendV612:'Rujukan digunakan — anda dan rakan anda diberi ganjaran setelah anda berbelanja {floor} di sini.',joinReferralRecordedV612:'Rujukan direkodkan — ganjaran menyusul setelah program siap sepenuhnya.',
     joinReferralLabelV571:'Kod rujukan (pilihan)',joinReferralPlaceholderV571:'Jika rakan memberi anda satu',joinReferralUnknownV571:'Kod rujukan itu tidak dikenali di perniagaan ini.',joinReferralSelfV571:'Itu kod anda sendiri — minta kod rakan anda.',joinReferralAlreadyV571:'Rujukan telah pun direkodkan untuk anda di sini.',joinReferralOffV571:'Perniagaan ini tidak menjalankan program rujukan.',
     joinConfirmTitleV571:'Sertai {business}?',joinConfirmTitleUnknownV571:'Sertai perniagaan ini?',joinConfirmBodyV571:'Anda akan mula mengumpul ganjaran di sini dengan serta-merta.',joinConfirmCancelV571:'Tutup',joinConfirmGoV571:'Sertai',joinConfirmKickerV587:'Program ganjaran',joinConfirmGoV587:'Ya, sertai',
     addProgramme:'Imbas untuk sertai',openProgramme:'Buka ganjaran {business}',localBusiness:'Perniagaan tempatan',
@@ -2811,6 +2816,7 @@ const CUSTOMER_COPY=Object.freeze({
     language:'மொழி',english:'English',chinese:'简体中文',backProgrammes:'என் வெகுமதிகளுக்குத் திரும்பு',
     chooseProgramme:'வெகுமதி வணிகத்தைத் தேர்ந்தெடுக்கவும்',yourProgrammes:'என் வெகுமதிகள்',
     programmesIntro:'வெகுமதிகள், சலுகைகள், முன்பதிவுகள் மற்றும் செயல்பாடுகளைத் திறக்க ஒரு வணிகத்தைத் தேர்ந்தெடுக்கவும்.',
+    joinReferralPaidNowV612:'பரிந்துரை பயன்படுத்தப்பட்டது — நீங்களும் உங்கள் நண்பரும் வெகுமதி பெற்றீர்கள்.',joinReferralPaidOnSpendV612:'பரிந்துரை பயன்படுத்தப்பட்டது — இங்கே {floor} செலவழித்ததும் இருவருக்கும் வெகுமதி.',joinReferralRecordedV612:'பரிந்துரை பதிவானது — திட்டம் முழுமையாக அமைந்ததும் வெகுமதி வழங்கப்படும்.',
     joinReferralLabelV571:'பரிந்துரை குறியீடு (ஐச்சிகம்)',joinReferralPlaceholderV571:'நண்பர் கொடுத்திருந்தால்',joinReferralUnknownV571:'அந்த குறியீடு இந்த வணிகத்தில் அடையாளம் காணப்படவில்லை.',joinReferralSelfV571:'அது உங்கள் சொந்த குறியீடு.',joinReferralAlreadyV571:'உங்களுக்காக ஏகனவே ஒரு பரிந்துரை பதிவு உள்ளது.',joinReferralOffV571:'இந்த வணிகம் பரிந்துரை திட்டத்தை நடத்தவில்லை.',
     joinConfirmTitleV571:'{business} இல் சேரவா?',joinConfirmTitleUnknownV571:'இந்த வணிகத்தில் சேரவா?',joinConfirmBodyV571:'நீங்கள் இங்கே உடனடியாக வெகுமதிகளைச் சேகரிக்கத் தொடங்குவீர்கள்.',joinConfirmCancelV571:'மூடு',joinConfirmGoV571:'சேர',joinConfirmKickerV587:'வெகுமதி திட்டம்',joinConfirmGoV587:'ஆம், சேர',
     addProgramme:'சேர QR ஸ்கேன் செய்யவும்',openProgramme:'{business} வெகுமதிகளைத் திற',localBusiness:'உள்ளூர் வணிகம்',
@@ -3768,6 +3774,8 @@ async function confirmCustomerJoinV571(token,isCurrent){
       <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
       <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
       <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
+      <label class="small" for="customerJoinReferralV612" style="display:block;text-align:left;margin:2px 2px 6px;font-weight:600">${esc(ct('joinReferralLabelV571'))}</label>
+      <input id="customerJoinReferralV612" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(ct('joinReferralPlaceholderV571'))}" style="margin-bottom:14px">
       <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
     </section>`;
     document.body.appendChild(overlay);
@@ -3786,7 +3794,18 @@ async function confirmCustomerJoinV571(token,isCurrent){
     });
     overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
     overlay.querySelector('#customerJoinGoV571').addEventListener('pointerdown',()=>joinFunnelEmitV610('join_yes_pointerdown',{surface:'app-sheet'}));
-    overlay.querySelector('#customerJoinGoV571').onclick=()=>{joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});close(true)};
+    overlay.querySelector('#customerJoinGoV571').onclick=()=>{
+      joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});
+      /* nestly_v612 (owner): the sheet takes an optional referral code again — v587 removed the
+         field, the owner has now asked for it back with two-sided rewards. The code rides two
+         rails: the in-memory pending slot applies it right after this join, and the v576 share
+         store survives a sign-up or a page load and auto-applies on the wallet render. */
+      const referralCodeV612=String(overlay.querySelector('#customerJoinReferralV612')?.value||'').trim().toUpperCase().slice(0,32);
+      if(referralCodeV612){
+        pendingCustomerJoinReferralV571=referralCodeV612;
+        if(pendingCustomerJoinSlugV587)rememberShareReferralV576(pendingCustomerJoinSlugV587,referralCodeV612);
+      }
+      close(true)};
     overlay.querySelector('#customerJoinGoV571').focus();
     /* Same probe as the /join page: what a finger would meet at the Yes centre, two frames
        after paint, with a timeout backstop because rAF sleeps on hidden pages. */
@@ -3815,6 +3834,7 @@ async function confirmCustomerJoinV571(token,isCurrent){
     setTimeout(()=>measureSheetYesV610('timeout'),900);
   });
 }
+let pendingCustomerJoinReferralV571='';
 /* nestly_v587: the business the scanned QR belongs to, learned from the read-only preview, so a
    successful join can open it even if the join reply itself is older than v587. */
 let pendingCustomerJoinSlugV587='';

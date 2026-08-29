@@ -31,7 +31,7 @@ const section = (source, from, to) => {
 test('v571 the referral is applied AFTER the join, never before it', () => {
   const join = section(appJs, 'async function renderCustomerQrJoin()', 'async function renderCustomerClaim()');
   const joinCall = join.indexOf("customerRpc('customer_join_business_from_qr_v89'");
-  const applyCall = join.indexOf("sb.rpc('customer_apply_referral_code_v571'");
+  const applyCall = join.indexOf("sb.rpc('customer_apply_referral_code_v612'");
   assert.ok(joinCall > -1, 'the join still happens');
   assert.ok(applyCall > -1, 'the attribution happens');
   assert.ok(applyCall > joinCall,
@@ -42,25 +42,25 @@ test('v571 the referral is applied AFTER the join, never before it', () => {
   assert.ok(applyCall > refusal, 'attribution sits past every join-failure return');
 });
 
-/* nestly_v587 (owner: the scan sheet "only can choose yes and close button"). The referral FIELD
-   is gone from the join sheet, so the pre-check it guarded — customer_check_referral_code_v571 —
-   has no caller and the three assertions about its failure modes have nothing left to describe.
-   What v571 was really protecting is unchanged and is asserted instead: a referral can still never
-   be the reason somebody fails to join, and the code path that carries attribution today is the
-   shared LINK (applyShareReferralV576), which needs nobody to type anything. */
-test('nestly_v587 the join sheet asks one question and takes one answer', () => {
+/* nestly_v612 (owner, reversing the v587 removal): "allow user to key in referral code so both
+   parties get the rewards." The field is back — OPTIONAL, applied only after the join, with no
+   pre-check that could block a Yes. What v571 protected is untouched: a referral can still never
+   be the reason somebody fails to join. */
+test('nestly_v612 the join sheet takes an optional referral code without blocking the Yes', () => {
   const dialog = section(appJs, 'async function confirmCustomerJoinV571(', 'let pendingCustomerJoinReferralV571');
-  assert.doesNotMatch(dialog, /customerJoinReferralV571/, 'no referral field on the sheet');
-  assert.doesNotMatch(dialog, /customer_check_referral_code_v571/, 'and no pre-check to block on');
+  assert.match(dialog, /id="customerJoinReferralV612"/, 'the optional field is on the sheet');
+  assert.doesNotMatch(dialog, /customer_check_referral_code_v571/, 'still no pre-check to block on');
   assert.match(dialog, /id="customerJoinGoV571"/, 'one Yes');
   assert.match(dialog, /id="customerJoinCancelV571"[^>]*aria-label/, 'and one close, which is a real control');
+  assert.match(dialog, /rememberShareReferralV576\(pendingCustomerJoinSlugV587,referralCodeV612\)/,
+    'the typed code survives sign-up through the v576 share store');
   // The preview names the business from the key the server actually sends.
   assert.match(dialog, /preview\?\.name\|\|preview\?\.business_name/);
 });
 
 test('nestly_v587 referral by shared link still needs nobody to type a code', () => {
   assert.match(appJs, /async function applyShareReferralV576\(slug\)\{/);
-  assert.match(appJs, /customer_apply_referral_code_v571/);
+  assert.match(appJs, /customer_apply_referral_code_v612/);
 });
 
 test('v571 the attribution key is stable across a retried join', () => {

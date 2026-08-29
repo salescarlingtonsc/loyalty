@@ -2973,6 +2973,12 @@
       "path": "db/migrations/20260829_nestly_v603_package_history_and_dates.sql",
       "semanticVersion": "v603",
       "proposedDeployVersion": "20260829200000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql",
+      "semanticVersion": "v612",
+      "proposedDeployVersion": "20260830010000"
     }
   ]
 }

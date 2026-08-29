@@ -494,7 +494,9 @@ function renderConfirm(page,joinToken){
     <div class="card"><div class="empty" style="padding:26px 4px">
       <p class="small" style="letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--coral)">Rewards programme</p>
       <h1 id="joinConfirmTitle" tabindex="-1" style="font-size:1.6rem;margin:10px 0 8px">${name?`Join ${esc(name)}?`:'Join this business?'}</h1>
-      <p class="muted" style="margin-bottom:20px">You will start collecting rewards here straight away.</p>
+      <p class="muted" style="margin-bottom:16px">You will start collecting rewards here straight away.</p>
+      <label class="small" for="joinReferral" style="display:block;text-align:left;margin:0 2px 6px;font-weight:600">Referral code (optional)</label>
+      <input id="joinReferral" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="If a friend gave you one" style="margin-bottom:16px">
       <button class="btn" id="joinYes" style="width:100%">${icon('check',20)}<span>Yes, join</span></button>
       <button class="btn secondary" id="joinNotNow" style="width:100%;margin-top:10px"><span>Not now</span></button>
       <p class="muted counter-fallback"><a href="#" id="joinCounterInstead" style="text-decoration:underline">No smartphone sign-in? Join at the counter with just your mobile number.</a></p>
@@ -533,10 +535,19 @@ function renderConfirm(page,joinToken){
   $('joinYes').addEventListener('pointerdown',()=>joinFunnel('join_yes_pointerdown'));
   $('joinYes').onclick=()=>{
     joinFunnel('join_yes_click');
+    /* nestly_v612 (owner): the confirm card takes an optional referral code — both parties are
+       rewarded, immediately when the programme sets no spend requirement. The code rides the
+       handoff into the app AND the v576 share store (localStorage, 30 days, per business), so it
+       survives sign-up and is auto-applied once the customer is a verified member. */
+    const referralCode=String($('joinReferral')?.value||'').trim().toUpperCase().slice(0,32);
+    try{
+      if(referralCode&&page.slug)localStorage.setItem('nestly.customer.shareReferralV576',
+        JSON.stringify({slug:String(page.slug||'').toLowerCase(),code:referralCode,at:Date.now()}));
+    }catch{}
     try{
       sessionStorage.setItem('nestly.customer.pendingJoinToken',joinToken);
       sessionStorage.setItem('nestly.customer.joinConfirmedV596',JSON.stringify({token:joinToken,slug:String(page.slug||'')}));
-      sessionStorage.setItem('nestly.customer.joinHandoffV606',JSON.stringify({token:joinToken,slug:String(page.slug||''),name:name,at:Date.now()}));
+      sessionStorage.setItem('nestly.customer.joinHandoffV606',JSON.stringify({token:joinToken,slug:String(page.slug||''),name:name,ref:referralCode,at:Date.now()}));
       joinFunnel('join_pending_scan_saved');
     }catch(error){joinFunnel('join_client_error',{m:'pending scan not saved: '+String(error&&error.message||error).slice(0,200)})}
     joinFunnel('join_navigation_started');

@@ -2968,6 +2968,12 @@
       "version": "20260829200000",
       "name": "nestly_v603_package_history_and_dates",
       "sourcePath": "db/migrations/20260829_nestly_v603_package_history_and_dates.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830010000",
+      "name": "nestly_v612_referral_immediate_when_no_floor",
+      "sourcePath": "db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql"
     }
   ]
 }
