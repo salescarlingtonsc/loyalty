@@ -1,0 +1,33 @@
+object_type,schema_name,object_name,signature_or_id,live_definition_or_state,acl_or_roles,evidence_method
+migration,supabase_migrations,nestly_v590_cron_run_history_retention,20260828135225,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v590_cron_run_history_retention_fn,20260828135527,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v591a_webhook_consumer_markers,20260828141250,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v591b_support_status_ingest_process_once,20260828141323,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v591c_retention_ingest_process_once,20260828141352,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v591d_retention_optout_process_once,20260828141416,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v591e_sv_tender_release_no_empty_write,20260828141459,applied in production,ledger row,select from supabase_migrations.schema_migrations
+migration,supabase_migrations,nestly_v592_support_tick_dispatcher,20260828141707,applied in production,ledger row,select from supabase_migrations.schema_migrations
+function,app,purge_cron_run_history_v590,"integer,integer,integer,integer",SECURITY DEFINER; deletes completed cron history older than 7 days when succeeded or 90 days otherwise; max 20000 rows per run; writes audit_log,"{postgres=X/postgres}",pg_get_functiondef
+function,app,v591_max_attempts,none,returns integer 5; immutable helper,"{postgres=X/postgres}",pg_get_functiondef
+function,app,support_ingest_status_v535,integer,v591 per-consumer marker anti-join; statuses entry_kinds; success marker and retry/attempt cap,"{postgres=X/postgres,service_role=X/postgres}",pg_get_functiondef
+function,app,v551_ingest_retention_status,integer,v591 per-consumer marker anti-join; retention status ingestion and outreach transition,"{postgres=X/postgres,service_role=X/postgres}",pg_get_functiondef
+function,app,v551_ingest_retention_optout,integer,v591 per-consumer marker anti-join; STOP/unsubscribe consent withdrawal and send suppression,"{postgres=X/postgres,service_role=X/postgres}",pg_get_functiondef
+function,app,run_sv_tender_release,integer,v591 probes for reserved tenders before sv_automation_begin; empty run returns 0 without a row,"{postgres=X/postgres}",pg_get_functiondef
+function,app,support_tick_v592,none,v592 sequentially runs inbound, dispatch and status workers; catches worker errors and writes SUPPORT_TICK_WORKER_ERROR,"{postgres=X/postgres,service_role=X/postgres}",pg_get_functiondef
+table,public,whatsapp_webhook_event_consumers,none,RLS enabled; owner postgres; no policies; event_id FK cascades from whatsapp_webhook_events,"{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",pg_class/pg_policy/pg_constraint
+column,public,whatsapp_webhook_event_consumers,event_id uuid,NOT NULL,,information_schema.columns
+column,public,whatsapp_webhook_event_consumers,consumer text,NOT NULL,,information_schema.columns
+column,public,whatsapp_webhook_event_consumers,processed_at timestamptz,NULL,,information_schema.columns
+column,public,whatsapp_webhook_event_consumers,attempts integer,NOT NULL DEFAULT 0,,information_schema.columns
+column,public,whatsapp_webhook_event_consumers,last_error text,NULL,,information_schema.columns
+column,public,whatsapp_webhook_event_consumers,first_seen_at timestamptz,NOT NULL DEFAULT now(),,information_schema.columns
+constraint,public,whatsapp_webhook_event_consumers,whatsapp_webhook_event_consumers_pkey,PRIMARY KEY (event_id, consumer),,pg_constraint
+constraint,public,whatsapp_webhook_event_consumers,whatsapp_webhook_event_consumers_event_id_fkey,FOREIGN KEY (event_id) REFERENCES whatsapp_webhook_events(id) ON DELETE CASCADE,,pg_constraint
+index,public,whatsapp_webhook_event_consumers,whatsapp_webhook_event_consumers_pkey,UNIQUE btree (event_id, consumer),,pg_indexes
+policy,public,whatsapp_webhook_event_consumers,none,RLS has no policies; anon/authenticated denied,,pg_policy
+trigger,public,whatsapp_webhook_event_consumers,none,no non-internal triggers,,pg_trigger
+cron,cron,nestly-v590-cron-history-retention,jobid 49,"53 2 * * *; select app.purge_cron_run_history_v590()",active,cron.job
+cron,cron,nestly-v592-support-tick,jobid 50,"* * * * *; select app.support_tick_v592()",active,cron.job
+cron,cron,nestly-v531-support-inbound-router,retired by v592,"* * * * *; unscheduled by v592",inactive/absent,cron.job and v592 unschedule
+cron,cron,nestly-v536-support-dispatch,retired by v592,"* * * * *; unscheduled by v592",inactive/absent,cron.job and v592 unschedule
+cron,cron,nestly-v536-support-status-ingest,retired by v592,"* * * * *; unscheduled by v592",inactive/absent,cron.job and v592 unschedule
