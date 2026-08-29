@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 444,
-  "itemCount": 489,
+  "pendingCount": 446,
+  "itemCount": 491,
   "items": [
     {
       "order": 1,
@@ -4852,6 +4852,16 @@
     {
       "order": 485,
       "kind": "pending",
+      "version": "20260829102308",
+      "name": "nestly_v601_pause_featureless_cron",
+      "path": "supabase/migrations/20260829102308_nestly_v601_pause_featureless_cron.sql",
+      "octetLength": 2695,
+      "sha256": "366e196da696652156adc3820110a1dc47adc18cef31ea0576a6bb55ef49a856",
+      "provenance": "local-source"
+    },
+    {
+      "order": 486,
+      "kind": "pending",
       "version": "20260829110000",
       "name": "nestly_v587_join_qr_names_its_business",
       "path": "supabase/migrations/20260829110000_nestly_v587_join_qr_names_its_business.sql",
@@ -4860,7 +4870,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 486,
+      "order": 487,
       "kind": "pending",
       "version": "20260829120000",
       "name": "nestly_v588_staff_signup_flow_integrity",
@@ -4870,7 +4880,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 487,
+      "order": 488,
       "kind": "pending",
       "version": "20260829130000",
       "name": "nestly_v589_referral_switch_is_one_switch",
@@ -4880,7 +4890,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 488,
+      "order": 489,
       "kind": "pending",
       "version": "20260829170000",
       "name": "nestly_v593_package_expiry",
@@ -4890,13 +4900,23 @@
       "provenance": "local-source"
     },
     {
-      "order": 489,
+      "order": 490,
       "kind": "pending",
       "version": "20260829180000",
       "name": "nestly_v598_shop_hours_are_the_default",
       "path": "supabase/migrations/20260829180000_nestly_v598_shop_hours_are_the_default.sql",
       "octetLength": 13299,
       "sha256": "98f0ebb7ba93f78ac58d87944bdc6dfdeb451af08662966c5b27f6c1fc9989d4",
+      "provenance": "local-source"
+    },
+    {
+      "order": 491,
+      "kind": "pending",
+      "version": "20260829190000",
+      "name": "nestly_v602_same_business_references",
+      "path": "supabase/migrations/20260829190000_nestly_v602_same_business_references.sql",
+      "octetLength": 23355,
+      "sha256": "45301b41b6aac9988acd23329546981532ffa348e29d485097680b50ccca691b",
       "provenance": "local-source"
     }
   ]

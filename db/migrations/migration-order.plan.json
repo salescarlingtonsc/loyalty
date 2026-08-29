@@ -2916,6 +2916,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v601_pause_featureless_cron.sql",
+      "semanticVersion": "v601",
+      "proposedDeployVersion": "20260829102308"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260829_nestly_v587_join_qr_names_its_business.sql",
       "semanticVersion": "v587",
       "proposedDeployVersion": "20260829110000"
@@ -2943,6 +2949,12 @@
       "path": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql",
       "semanticVersion": "v598",
       "proposedDeployVersion": "20260829180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v602_same_business_references.sql",
+      "semanticVersion": "v602",
+      "proposedDeployVersion": "20260829190000"
     }
   ]
 }

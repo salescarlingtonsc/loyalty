@@ -2911,6 +2911,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260829102308",
+      "name": "nestly_v601_pause_featureless_cron",
+      "sourcePath": "db/migrations/20260829_nestly_v601_pause_featureless_cron.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260829110000",
       "name": "nestly_v587_join_qr_names_its_business",
       "sourcePath": "db/migrations/20260829_nestly_v587_join_qr_names_its_business.sql"
@@ -2938,6 +2944,12 @@
       "version": "20260829180000",
       "name": "nestly_v598_shop_hours_are_the_default",
       "sourcePath": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829190000",
+      "name": "nestly_v602_same_business_references",
+      "sourcePath": "db/migrations/20260829_nestly_v602_same_business_references.sql"
     }
   ]
 }
