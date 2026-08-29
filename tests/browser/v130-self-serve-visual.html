@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="07df6b2f8709230da07caf08823414cbed0c1abb7cee500e03612184577cdc5c"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="4674ca5ddc0f7206fd1db5c6d000fce7801362f788f08cf2ae580a5ac1114252"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2623,6 +2623,14 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
 /* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
    so the figures stack ABOVE the programme list rather than floating between two cards. */
+/* nestly_v603 (owner photo 8: the four period options ringed as a stacked list — "make into sub
+   tab so cleaner"). They were already buttons, but this segment sits inside a wrapping filter bar,
+   so once the bar ran out of width the four pills folded into a column and read as an open
+   dropdown. They now stay on one line and the strip scrolls if the bar is narrow, which is the
+   treatment .v150-segment already gives itself on small screens. */
+.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388::-webkit-scrollbar{display:none}
+.grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
 /* V442: Package detail sits UNDER the summary card, in the right column the owner circled.
    Grid cells are auto-placed in DOM order, so the two share one cell rather than the package

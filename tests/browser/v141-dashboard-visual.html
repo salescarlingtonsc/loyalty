@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="3451ff8d0cde3bb9cc9291adb9af50f69918e59da843c2627abea0064b90c992"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="2ec202f14d2790bfb926aa71aefa6f563f58c0fb684c1adb6973a9eed952f39a"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2625,6 +2625,14 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
 /* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
    so the figures stack ABOVE the programme list rather than floating between two cards. */
+/* nestly_v603 (owner photo 8: the four period options ringed as a stacked list — "make into sub
+   tab so cleaner"). They were already buttons, but this segment sits inside a wrapping filter bar,
+   so once the bar ran out of width the four pills folded into a column and read as an open
+   dropdown. They now stay on one line and the strip scrolls if the bar is narrow, which is the
+   treatment .v150-segment already gives itself on small screens. */
+.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388::-webkit-scrollbar{display:none}
+.grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
 /* V442: Package detail sits UNDER the summary card, in the right column the owner circled.
    Grid cells are auto-placed in DOM order, so the two share one cell rather than the package
@@ -6635,6 +6643,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'3451ff8d0cde3bb9cc9291adb9af50f69918e59da843c2627abea0064b90c992',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'2ec202f14d2790bfb926aa71aefa6f563f58c0fb684c1adb6973a9eed952f39a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

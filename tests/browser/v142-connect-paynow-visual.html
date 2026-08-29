@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="3b1098785ebc8b33686614bf88f90c45a9d61739214bf06fa32db0eb238dcf0f"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="bfb54ee15154dab19b54cd88a5937c380eb5423cfbbed00b01ede88343b2bf95"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2624,6 +2624,14 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
 /* V295: 960px is where .split collapses to one column. The summary card is ordered first there,
    so the figures stack ABOVE the programme list rather than floating between two cards. */
+/* nestly_v603 (owner photo 8: the four period options ringed as a stacked list — "make into sub
+   tab so cleaner"). They were already buttons, but this segment sits inside a wrapping filter bar,
+   so once the bar ran out of width the four pills folded into a column and read as an open
+   dropdown. They now stay on one line and the strip scrolls if the bar is narrow, which is the
+   treatment .v150-segment already gives itself on small screens. */
+.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388::-webkit-scrollbar{display:none}
+.grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
 /* V442: Package detail sits UNDER the summary card, in the right column the owner circled.
    Grid cells are auto-placed in DOM order, so the two share one cell rather than the package
@@ -5468,7 +5476,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3b1098785ebc8b33686614bf88f90c45a9d61739214bf06fa32db0eb238dcf0f</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · bfb54ee15154dab19b54cd88a5937c380eb5423cfbbed00b01ede88343b2bf95</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -9059,7 +9067,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'3b1098785ebc8b33686614bf88f90c45a9d61739214bf06fa32db0eb238dcf0f',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'bfb54ee15154dab19b54cd88a5937c380eb5423cfbbed00b01ede88343b2bf95',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -1725,6 +1725,9 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-summary-value-v294{font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
 .c360-summary-card-v294 .c360-points-expiry{margin-top:2px}
 .c360-summary-card-v294 .customer360-points-paused-v259{margin-top:2px}
+.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388::-webkit-scrollbar{display:none}
+.grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
 .c360-summary-stack-v442{display:grid;gap:16px;min-width:0;max-width:100%}
 @media(max-width:960px){.c360-summary-stack-v442{order:-1;width:100%}}

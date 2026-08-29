@@ -369,7 +369,11 @@ test('V267 no operational surface prints a bare record id for a reversal', () =>
   // Packages session-correction history, in all three shipped languages.
   assert.doesNotMatch(app, /Reversal of \{id\}/);
   assert.doesNotMatch(app, /reversed by \{id\}/);
-  assert.match(app, /reversalOf:Object\.freeze\(\{en:'Reversal of an earlier session use'/);
+  /* nestly_v603: reversalOf retired with the shared "Recent session correction history" block it
+     described. Inside one package's own history there is no other package to disambiguate a
+     correction from, so naming the reversed sale added nothing a reader could use.
+     usedSessionReversedBy survives and is rendered there. */
+  assert.match(app, /usedSessionReversedBy:Object\.freeze\(\{en:'Used session → later reversed'/);
   assert.match(app, /usedSessionReversedBy:Object\.freeze\(\{en:'Used session → later reversed'/);
 
   // Daily report's all-sales table no longer echoes the id next to "reversal of".

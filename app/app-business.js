@@ -29083,6 +29083,14 @@ async function inventoryPage(){
    counter action (use a session for the person in front of you). They are now two destinations,
    so the daily one is one tap from the rail instead of two. ONE builder still renders both —
    same markup, same ids, same handlers — with `view` deciding which half is on screen. */
+/* nestly_v603: the owner asked for dd/mm/yy on the two new Customer packages columns. sgt()
+   prints a full date AND time, which is right for an audit row and far too wide for a table
+   column. A function declaration, not a const inside the page: the row renderer runs before the
+   page's own body finishes, and a const there sits in the temporal dead zone when it does. */
+function packageDayV603(value){
+  const text=value?sgt(value):'';
+  return text?String(text).split(',')[0].trim()||text:'—';
+}
 async function packagesPage(options){
   const packagesViewV584=options&&options.view==='customers'?'customers':'plans';
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -29375,7 +29383,7 @@ async function packagesPage(options){
 	    const filtered=packageRows.filter(k=>!query||[k.client_name,k.client_phone,k.plan_name].some(value=>String(value||'').toLowerCase().includes(query)));
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
 	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
-    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Left</th><th>Status</th><th></th></tr>
+    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th>Left</th><th>Status</th><th></th></tr>
       ${visible.map(k=>{
       /* nestly_v593: the server already reports 'expired' as the status of a package whose window
          has closed (staff_list_package_entitlements_v102 derives it, it is not a stored value).
@@ -29384,17 +29392,66 @@ async function packagesPage(options){
          and drops the action instead. */
       const expiredV593=k.status==='expired';
       return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${k.expires_at?`<div class="muted small">${expiredV593?'Expired':'Use by'} ${esc(sgt(k.expires_at))}</div>`:''}</td>
+      ${/* nestly_v603 (owner: "Add! Date Bought dd/mm/yy  Last Used dd/mm/yy"). Bought is in the
+           payload already; last used is v603's, and it counts only sessions that were not undone.
+           An em dash rather than a blank so an untouched package reads as "never used" instead of
+           looking like a column that failed to load. */''}
+      <td>${esc(packageDayV603(k.purchased_at))}</td>
+      <td>${k.last_used_at?esc(packageDayV603(k.last_used_at)):'<span class="muted">—</span>'}</td>
       <td>${k.remaining}/${k.sessions||'?'}</td>
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
-      <td>${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`;
+      <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
     }).join('')}</table>
       <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} customer packages · page ${packagePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
-      ${packageHistory.length?`<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px"><b>Recent session correction history</b><p class="muted small" style="margin-top:4px">Use Undo session use only when a package session was deducted by mistake. It adds one session back and never refunds a payment. ${workspaceTemplateHtmlV97(workflow?.may_have_more?'packageHistoryWithOlder':'packageHistory',{shown:packageHistory.length,total:Number(workflow?.total_sales??packageHistory.length),limit:Number(workflow?.limit||100)})}</p><div class="cui-table-wrap"><table data-responsive="true" class="cui-table" style="margin-top:8px"><tr><th>When</th><th>Customer</th><th>Relationship</th><th>Result</th><th></th></tr>
-        ${packageHistory.map(x=>`<tr><td>${sgt(x.occurred_at)}</td><td>${esc(x.customer_name||'Customer')}</td><td>${x.is_reversal
-          ?workspaceTemplateHtmlV97('reversalOf',{id:x.original_sale_id||''})
-          :x.reversal_sale_id?workspaceTemplateHtmlV97('usedSessionReversedBy',{id:x.reversal_sale_id})
-          :'<span data-workspace-i18n>Used session</span>'}</td><td>${x.reversal_sale_id||x.is_reversal?'<span class="pill ok">Session added back · no refund</span>':'<span class="pill new">session used</span>'}</td><td>${canWrite&&x.can_reverse?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${x.id}">Undo session use</button>`:x.refusal_reason?`<span class="muted small">${esc(x.refusal_reason)}</span>`:''}</td></tr>`).join('')}</table></div></div>`:''}</div>`
+      ${/* nestly_v603 (owner: "History" written beside Use session, with a line down to this
+           block; asked which was meant and the owner chose per-row History and deleting the
+           section). Every row now opens its own history, so a shared list of the whole business's
+           corrections underneath is a second place saying the same thing less precisely — it
+           could never tell you WHICH package a correction belonged to. Undo session use lives in
+           the per-row dialog, on the rows it actually applies to. */''}</div>`
       :CUI.emptyState({iconName:'packages',title:'No customer packages yet',body:'Sold packages will appear here after a customer purchases prepaid sessions.'});
+    /* nestly_v603: one package's own history, opened from its row. It reads
+       staff_package_session_history_v603, which is keyed on the package rather than on the
+       business, so the list is exactly this customer's sessions on this package — the thing the
+       shared block underneath could never tell you. Undo is offered on the same
+       data-reverse-kind/data-reverse-id contract the existing reversal wiring already binds. */
+    document.querySelectorAll('[data-package-history-v603]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.packageHistoryV603;
+      const planName=button.dataset.packageHistoryName||'this package';
+      const customerName=button.dataset.packageHistoryCustomer||'';
+      CUI.setButtonBusy(button,{busy:true,label:'Opening…'});
+      const {data,error}=await sb.rpc('staff_package_session_history_v603',
+        {p_business:S.biz.id,p_client_package:id});
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      if(error)return toast(ownerErrorText(error));
+      const used=Array.isArray(data?.sessions_used)?data.sessions_used:[];
+      const dialog=document.createElement('div');
+      dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+      dialog.setAttribute('aria-labelledby','packageHistoryTitleV603');
+      dialog.innerHTML=`<div class="modal-card" style="width:min(620px,100%)">
+        <div class="row"><div><p class="eyebrow">Package history</p><h2 id="packageHistoryTitleV603" style="margin-top:4px" data-merchant-content>${esc(planName)}</h2>
+        <p class="muted small" style="margin-top:4px">${customerName?`${esc(customerName)} · `:''}${esc(String(data?.remaining??'?'))} of ${esc(String(data?.sessions??'?'))} left · bought ${esc(packageDayV603(data?.purchased_at))}${data?.expires_at?` · use by ${esc(packageDayV603(data.expires_at))}`:''}</p></div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm" id="packageHistoryCloseV603">Close</button></div>
+        ${used.length?`<p class="muted small" style="margin-top:12px">Use Undo session use only when a package session was deducted by mistake. It adds one session back and never refunds a payment.</p>
+        <div class="cui-table-wrap"><table data-responsive="true" class="cui-table" style="margin-top:8px"><tr><th>When</th><th>Result</th><th></th></tr>
+          ${used.map(entry=>`<tr><td>${esc(sgt(entry.used_at))}</td>
+            ${/* nestly_v603: the two translated sentences the retired block used to carry keep their
+                 home here, where they are MORE precise than they were — every row already belongs
+                 to one package and one customer, so "reversed" needs no sale id to disambiguate. */''}
+            <td>${entry.reversed
+              ?`<span class="pill ok">Session added back · no refund</span><div class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('usedSessionReversedBy',{id:entry.sale_id||''})}</div>`
+              :'<span class="pill new">session used</span>'}</td>
+            <td>${canWrite&&!entry.reversed&&entry.sale_id?`<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${esc(entry.sale_id)}">Undo session use</button>`:''}</td></tr>`).join('')}
+        </table></div>`
+        :`<p class="muted small" style="margin-top:14px">No sessions have been used on this package yet.</p>`}
+      </div>`;
+      document.body.append(dialog);
+      let deactivate=null;
+      const close=()=>{if(deactivate){const d=deactivate;deactivate=null;d({restoreFocus:true})}else dialog.remove()};
+      deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#packageHistoryCloseV603'});
+      $('packageHistoryCloseV603').onclick=close;
+      if(canWrite)bindReversalButtons(refreshPackagesV584);
+    });
     const prev=$('packagesPrev'),next=$('packagesNext');
     if(prev)prev.onclick=()=>{packagePage=Math.max(0,packagePage-1);renderPackages()};
     if(next)next.onclick=()=>{packagePage+=1;renderPackages()};

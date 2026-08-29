@@ -376,8 +376,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      Confirm and Decline words with a tick and a cross, so the words moved into the accessible
      name) and deleteTeammateNamed (photo 16 did the same to the staff editor's Delete), and RETIRES
      nine: the booking-import strings went with the bookings CSV importer the owner deleted along
-     with the Booking settings tab (photo 13). 148 + 3 - 9 = 142. */
-  assert.equal(keys.length,142,'mixed-interface interpolation inventory changed without review');
+     with the Booking settings tab (photo 13). 148 + 3 - 9 = 142.
+     nestly_v603: -2. packageHistory and packageHistoryWithOlder retired with the shared "Recent
+     session correction history" block they described — every package now opens its own history
+     from its own row, where a business-wide "showing the newest N of M" caveat is true of
+     nothing on screen. reversalOf goes with them: it named the sale a correction reversed, and
+     inside one package's own history there is nothing to disambiguate. usedSessionReversedBy is
+     KEPT and rendered in that dialog. 142 - 3 = 139. */
+  assert.equal(keys.length,139,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -617,15 +623,23 @@ test('v97 package and sales tables split interface prose from customer, package 
   const sales=section('async function salesPage','async function servicesPage');
   const packages=section('async function packagesPage','async function branchesPage');
   assert.match(sales,/data-workspace-i18n>Package session · no payment refund<\/span>/);
-  assert.match(packages,/workspaceTemplateHtmlV97\('reversalOf',\{id:x\.original_sale_id\|\|''\}\)/);
-  assert.match(packages,/workspaceTemplateHtmlV97\('usedSessionReversedBy',\{id:x\.reversal_sale_id\}\)/);
-  assert.match(packages,/<span data-workspace-i18n>Used session<\/span>/);
+  /* nestly_v603 (owner: per-row History, and delete the shared block). The business-wide
+     correction table these three lines described is gone; each package opens its own history
+     instead, where "reversal of <sale>" and "used session, reversed by <sale>" have nothing to
+     disambiguate — every row already belongs to one package and one customer. The two pills
+     below survive, because they are what a member of staff actually reads. */
+  assert.doesNotMatch(packages,/Recent session correction history/);
+  assert.match(packages,/staff_package_session_history_v603/,'the per-row history reader');
+  assert.match(packages,/data-package-history-v603="\$\{k\.client_package_id\}"/,'one History button per row');
   // Reworded to plainer English ("Session added back") in line with the low-literacy-first
   // UX direction. The pill still exists and is still a translated string; only the wording moved.
   assert.match(packages,/<span class="pill ok">Session added back · no refund<\/span>/);
   assert.match(packages,/<span class="pill new">session used<\/span>/);
   assert.match(packages,/>Undo session use<\/button>/);
-  assert.match(packages,/<td>\$\{esc\(x\.customer_name\|\|'Customer'\)\}<\/td>/);
+  /* nestly_v603: the shared correction table named its customer on every row because it spanned
+     the whole business. A per-package history names the customer ONCE, in the dialog's own
+     subtitle, and never repeats it down a column where it is the same value every time. */
+  assert.match(packages,/\$\{customerName\?`\$\{esc\(customerName\)\} · `:''\}/);
   assert.match(app,/isWorkspaceTableDataNodeV97/);
 });
 

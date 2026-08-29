@@ -6882,8 +6882,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   importPartial:Object.freeze({en:'Imported {count}, then failed: {error}','zh-CN':'已导入 {count} 个，随后失败：{error}',ms:'{count} diimport, kemudian gagal: {error}'}),
   customersImported:Object.freeze({en:'Imported {count} customers 🎉','zh-CN':'已导入 {count} 位顾客 🎉',ms:'{count} pelanggan diimport 🎉'}),
   customersImportPreview:Object.freeze({en:'✓ {count} imported.','zh-CN':'✓ 已导入 {count} 个。',ms:'✓ {count} diimport.'}),
-  packageHistory:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}).','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}).'}),
-  packageHistoryWithOlder:Object.freeze({en:'Showing the newest {shown} of {total} accessible package-session rows (server limit {limit}) · older rows are not shown.','zh-CN':'显示最新 {shown}／{total} 条可访问的配套次数记录（服务器上限 {limit}）· 较早记录未显示。',ms:'Menunjukkan {shown} daripada {total} rekod sesi pakej terbaharu yang boleh diakses (had pelayan {limit}) · rekod lebih lama tidak dipaparkan.'}),
   appointmentChanged:Object.freeze({en:'{result}.{confirmation}','zh-CN':'{result}。{confirmation}',ms:'{result}. {confirmation}'}),
   appointmentStatus:Object.freeze({en:'Appointment {status}','zh-CN':'预约状态：{status}',ms:'Status janji temu: {status}'}),
   exactSnapshotMismatch:Object.freeze({en:'The fixed snapshot expected {expected} records but returned {actual}. No partial CSV was downloaded.','zh-CN':'固定快照应有 {expected} 条记录，但只返回 {actual} 条。未下载不完整 CSV。',ms:'Syot kilat tetap menjangka {expected} rekod tetapi mengembalikan {actual}. CSV separa tidak dimuat turun.'}),
@@ -6917,7 +6915,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* V267: the id is gone from these two. A staff member reading the session-correction table
      cannot do anything with a UUID, and the owner asked "what is this?" the first time they
      met one. The relationship is what matters and the counterpart row is in the same table. */
-  reversalOf:Object.freeze({en:'Reversal of an earlier session use','zh-CN':'冲销较早的次数使用','ms':'Pembalikan penggunaan sesi terdahulu'}),
   usedSessionReversedBy:Object.freeze({en:'Used session → later reversed','zh-CN':'已用次数 → 之后已冲销','ms':'Sesi digunakan → dibalikkan kemudian'}),
   preparingExport:Object.freeze({en:'Preparing {current} of {total}…','zh-CN':'正在准备第 {current}／{total} 条…',ms:'Menyediakan {current} daripada {total}…'}),
   imageCleanupPending:Object.freeze({en:'{count} previous image cleanup item is still pending and will retry.','zh-CN':'仍有 {count} 个先前的图片清理项目待处理，系统将重试。',ms:'{count} tugas pembersihan imej terdahulu masih belum selesai dan akan dicuba semula.'}),
@@ -6999,13 +6996,18 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
   'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
-  'customersImported','customersImportPreview','packageHistory','packageHistoryWithOlder',
+  'customersImported','customersImportPreview',
+  /* nestly_v603: packageHistory and packageHistoryWithOlder retired with the shared "Recent
+     session correction history" block they described. Every package now opens its own history
+     from its own row, where a business-wide "showing the newest N of M" caveat is not true of
+     anything on screen. A named template with no render path is a translated sentence nobody can
+     ever read, which is why v97 refuses one. */
   'appointmentChanged','appointmentStatus','exactSnapshotMismatch','qrReady',
   'qrReadyExpires','qrReadyRevoked','qrReadyQrsRevoked','qrReadyExpiresRevoked',
   'qrReadyExpiresQrsRevoked','activeQrRevoked',
   'activeQrsRevoked','activeQrExists','activeQrExistsUntil',
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
-  'availableStaff','availableStaffMany','reversalOf',
+  'availableStaff','availableStaffMany',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
   'performancePeriodRange','scheduleHeadingDay','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
   'sortByAscending','sortByDescending','bottlePercentLeft',
