@@ -2766,7 +2766,41 @@ async function renderCustomerQrJoin(){
   if(!isCurrent())return;
   const status=$('customerQrJoinStatus');
   if(error){
-    if(error.code!=='PGRST202'&&error.code!=='42883')rememberPendingCustomerJoinToken('');
+    /* nestly_v602 — THE ROOT CAUSE OF "the qrcode still pops nothing out and i still failed to
+       join". Reproduced against production with the owner's own account: the QR is perfectly
+       valid (the gateway returns the business, the row is active and unexpired), and
+       customer_join_business_from_qr_v89 refuses with 42501 "an independent active customer
+       identity is required" — because a Peekaa BUSINESS login has no customer side. Every error
+       that was not a missing-function code landed in one sentence, so that refusal was reported
+       as "This QR is expired, paused, or no longer valid. Ask the business for its current
+       Peekaa QR." The owner then went looking for a broken QR, replaced it (killing their real
+       printed one), and scanned again — and was told the same thing. The message has to name the
+       real reason, and offer the way through it. */
+    const noCustomerAccountV602=String(error.code||'')==='42501'
+      ||/customer identity is required|customer session required/i.test(String(error.message||''));
+    if(!noCustomerAccountV602&&error.code!=='PGRST202'&&error.code!=='42883')rememberPendingCustomerJoinToken('');
+    if(noCustomerAccountV602){
+      /* The token is deliberately KEPT: signing out drops the business session but carries the
+         scan through (resetClientSessionState preserves it), so the signed-out join flow v596
+         built picks it up — sheet, sign-up, join, land in the business. */
+      status.innerHTML=`<span class="err">You are signed in with a business account, and a business account has no customer side — so it cannot collect rewards. This QR is fine.</span>
+        <p class="muted small" style="margin-top:10px">Join as a customer instead: sign out and continue, and your scan is carried over.</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn sm" id="customerJoinSwitchV602">Continue as a customer</button><a class="btn ghost sm" href="#/dashboard">Back to my workspace</a></div>`;
+      status.closest('.card')?.setAttribute('aria-busy','false');
+      const switchButton=$('customerJoinSwitchV602');
+      if(switchButton)switchButton.onclick=async()=>{
+        CUI.setButtonBusy(switchButton,{busy:true,label:'Signing out…'});
+        killChannels();await sb.auth.signOut();
+        resetClientSessionState({preserveInvitation:true});
+        /* Re-enter the signed-OUT join flow in place. The render epoch is bumped first so this
+           screen's own in-flight paint cannot land on top of the one that replaces it — the join
+           card and the sign-up share a surface, and a late repaint here would put the owner back
+           on the error they just acted on. */
+        customerWalletRenderEpoch+=1;
+        if(location.hash==='#/join')route();else nav('#/join');
+      };
+      return;
+    }
     status.innerHTML=`<span class="err">${error.code==='PGRST202'||error.code==='42883'?'Something’s not working right now. Please try again shortly.':'This QR is expired, paused, or no longer valid. Ask the business for its current Peekaa QR.'}</span><br><a class="btn ghost sm" href="#/customer/programmes" style="margin-top:12px">Back to programmes</a>`;
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
