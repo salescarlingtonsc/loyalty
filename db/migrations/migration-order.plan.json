@@ -2877,6 +2877,12 @@
       "path": "db/migrations/20260829_nestly_v593_package_expiry.sql",
       "semanticVersion": "v593",
       "proposedDeployVersion": "20260829170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql",
+      "semanticVersion": "v598",
+      "proposedDeployVersion": "20260829180000"
     }
   ]
 }

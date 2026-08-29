@@ -2872,6 +2872,12 @@
       "version": "20260829170000",
       "name": "nestly_v593_package_expiry",
       "sourcePath": "db/migrations/20260829_nestly_v593_package_expiry.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260829180000",
+      "name": "nestly_v598_shop_hours_are_the_default",
+      "sourcePath": "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql"
     }
   ]
 }

@@ -25116,7 +25116,7 @@ async function appointmentsPage(){
     {data:branches,error:branchError},{data:staffBranches,error:staffBranchError},
     {data:serviceBranches,error:serviceBranchError},{data:staffHours,error:staffHoursError},
     {data:staffOffDays,error:staffOffDaysError},{data:branchHours,error:branchHoursError},
-    {data:branchBreaks,error:branchBreaksError}
+    {data:branchBreaks,error:branchBreaksError},{data:staffWeeklyOff,error:staffWeeklyOffError}
   ]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone,phone_norm,email',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,price_cents,duration_min,buffer_before_min,buffer_after_min',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
@@ -25127,11 +25127,15 @@ async function appointmentsPage(){
     fetchAllRowsResult(()=>sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday')),
     fetchAllRowsResult(()=>sb.from('staff_off_days').select('staff_id,starts_on,ends_on,reason',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('starts_on')),
     fetchAllRowsResult(()=>sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at',{count:'exact'}).eq('business_id',S.biz.id).order('branch_id').order('weekday')),
-    fetchAllRowsResult(()=>sb.from('branch_breaks').select('branch_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('branch_id').order('weekday').order('starts_at'))
+    fetchAllRowsResult(()=>sb.from('branch_breaks').select('branch_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('branch_id').order('weekday').order('starts_at')),
+    /* nestly_v598: a weekly day off is now the ONLY thing that means "this person does not work
+       this weekday". It used to be inferred from a missing staff_hours row, which is why a shop
+       that opened on Sunday still showed every teammate as unavailable. */
+    fetchAllRowsResult(()=>sb.from('staff_recurring_off_days').select('staff_id,weekday',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday'))
   ]);
   if(!isCurrent())return;
   const loadError=clientError||serviceError||staffError||branchError||staffBranchError||serviceBranchError||
-    staffHoursError||staffOffDaysError||branchHoursError||branchBreaksError;
+    staffHoursError||staffOffDaysError||branchHoursError||branchBreaksError||staffWeeklyOffError;
   if(loadError)throw loadError;
   const clients=cl||[],staff=stf||[];
   const customerPhone=client=>String(client?.phone||client?.phone_norm||'').trim();
@@ -26311,13 +26315,25 @@ async function appointmentsPage(){
     const leave=(staffOffDays||[]).find(row=>row.staff_id===personId&&row.starts_on<=day&&row.ends_on>=day);
     if(leave)return {state:'off',label:'Off',reason:leave.reason||'Time off',breaks:[]};
     const weekday=dayWeekday(day);
-    const staffRow=(staffHours||[]).find(row=>row.staff_id===personId&&Number(row.weekday)===weekday);
-    if(!staffRow)return {state:'unknown',label:'Working hours not set',breaks:[]};
+    /* nestly_v598 (owner ruling: "all employees will work on everyday of the working hours -
+       until the owner block the employees schedule"). This calendar used to demand a personal
+       staff_hours row and print "Working hours not set" without one — so a shop that opened on
+       Sunday showed all three teammates as having no hours, which reads as "your setting did not
+       save" rather than "nobody works that day". Worse, it disagreed with what customers were
+       actually offered. The order below is now the same one
+       public.internal_public_booking_availability applies: a stated day off wins, then this
+       person's own hours for this weekday, then the shop's. */
+    const weeklyOff=(staffWeeklyOff||[]).some(row=>row.staff_id===personId&&Number(row.weekday)===weekday);
+    if(weeklyOff)return {state:'off',label:'Off',reason:'Set as a day off every week.',breaks:[]};
     const branchRow=(branchHours||[]).find(row=>row.branch_id===branchId&&Number(row.weekday)===weekday);
+    const staffRow=(staffHours||[]).find(row=>row.staff_id===personId&&Number(row.weekday)===weekday);
     if(!branchRow)return {state:'off',label:'Branch closed',reason:'No opening hours are recorded for this weekday.',breaks:[]};
-    const staffStart=clockMinutes(staffRow.starts_at),staffEnd=clockMinutes(staffRow.ends_at);
     const branchStart=clockMinutes(branchRow.opens_at);
     const branchEnd=clockMinutes(branchRow.closes_at);
+    /* No personal row means "works the shop's hours" — the shop's window IS this person's window,
+       rather than an upper bound intersected with hours they do not have. */
+    const staffStart=staffRow?clockMinutes(staffRow.starts_at):branchStart;
+    const staffEnd=staffRow?clockMinutes(staffRow.ends_at):branchEnd;
     const start=Math.max(staffStart??0,branchStart??0),end=Math.min(staffEnd??1440,branchEnd??1440);
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return {state:'unknown',label:'Working hours not set',breaks:[]};
     const breaks=(branchBreaks||[]).filter(row=>row.branch_id===branchId&&Number(row.weekday)===weekday)
@@ -32464,13 +32480,19 @@ async function settingsPage(){
      hours stay in Bookings, because they belong to the branch, not to a person. */
   async function loadStaffRotaV228(){
     const host=$('staffRotaBodyV228');if(!host)return;
-    const [staffResult,rotaResult]=await Promise.all([
+    /* nestly_v598: the grid now has THREE states to draw, not two — own hours, a stated day off,
+       and "works the shop's hours". The shop's own hours are read so the third state can be shown
+       as the times it actually means; the days-off table is read because a tick no longer lives
+       in the absence of an hours row. */
+    const [staffResult,rotaResult,offResult,shopResult]=await Promise.all([
       sb.from('staff').select('id,full_name,title,active,customer_bookable').eq('business_id',S.biz.id).order('full_name'),
-      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id)
+      sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at').eq('business_id',S.biz.id),
+      sb.from('staff_recurring_off_days').select('staff_id,weekday').eq('business_id',S.biz.id),
+      sb.from('branch_hours').select('branch_id,weekday,opens_at,closes_at').eq('business_id',S.biz.id)
     ]);
     if(!host.isConnected)return;
     $('staffRotaCardV228')?.setAttribute('aria-busy','false');
-    if(staffResult.error||rotaResult.error){
+    if(staffResult.error||rotaResult.error||offResult.error||shopResult.error){
       host.innerHTML='<p class="err small">Working hours could not be loaded. Nothing has been changed.</p>';
       const save=$('staffRotaSaveV228');if(save)save.disabled=true;
       return;
@@ -32483,6 +32505,28 @@ async function settingsPage(){
       const key=String(row.staff_id||'');
       if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
       rotaByStaff.get(key).set(Number(row.weekday),{opens_at:row.starts_at,closes_at:row.ends_at});
+    }
+    /* nestly_v598 — THE TRAP THIS AVOIDS. The save reads the grid back and records any day whose
+       times are blank as a day off. Before this, a weekday the shop had opened but nobody had
+       personal hours for drew as an empty row, so merely pressing Save on this screen would have
+       written a day off and re-broken the very day the owner had just opened. Those days are
+       drawn with the shop's own hours instead, so saving records what the screen says: this
+       person works the shop's hours. A day the shop is shut stays blank, and a stated day off is
+       ticked from its own record. */
+    const shopByWeekday=new Map();
+    for(const row of shopResult.data||[]){
+      const weekday=Number(row.weekday);
+      if(!shopByWeekday.has(weekday))shopByWeekday.set(weekday,{opens_at:row.opens_at,closes_at:row.closes_at});
+    }
+    const weeklyOff=new Set((offResult.data||[]).map(row=>`${row.staff_id}:${Number(row.weekday)}`));
+    for(const member of team){
+      const key=String(member.id||'');
+      if(!rotaByStaff.has(key))rotaByStaff.set(key,new Map());
+      const days=rotaByStaff.get(key);
+      for(const [weekday,shop] of shopByWeekday){
+        if(days.has(weekday)||weeklyOff.has(`${key}:${weekday}`))continue;
+        days.set(weekday,{opens_at:shop.opens_at,closes_at:shop.closes_at});
+      }
     }
     host.innerHTML=staffRotaSectionMarkupV228(team,rotaByStaff);
     host.querySelectorAll('[data-day-closed]').forEach(box=>box.onchange=()=>{
@@ -32538,11 +32582,21 @@ async function settingsPage(){
     }
     const results=await Promise.all([
       ...bookable.map(member=>sb.from('staff').update({customer_bookable:member.customer_bookable}).eq('id',member.id).eq('business_id',S.biz.id)),
+      /* nestly_v598: since the shop's hours are everyone's default, deleting a weekday's row no
+         longer means "off that day" — it means "works the shop's hours". Ticking Closed therefore
+         has to SAY so, in staff_recurring_off_days, which is the record the availability engine
+         and the calendar both refuse on. Unticking a day removes that statement again. Without
+         this the tick would silently do nothing, which is the failure mode this whole change was
+         made to remove. */
       ...rotas.flatMap(rota=>rota.wantsRota
         ?[sb.from('staff_hours').upsert(rota.open.map(day=>({business_id:S.biz.id,staff_id:rota.staffId,weekday:day.weekday,starts_at:day.opens,ends_at:day.closes})),{onConflict:'staff_id,weekday'}),
-          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null})]
-        /* Unticking clears the whole rota, which is what returns this person to shop hours. */
-        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
+          rota.closed.length?sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.closed):Promise.resolve({error:null}),
+          rota.closed.length?sb.from('staff_recurring_off_days').upsert(rota.closed.map(weekday=>({business_id:S.biz.id,staff_id:rota.staffId,weekday})),{onConflict:'staff_id,weekday'}):Promise.resolve({error:null}),
+          rota.open.length?sb.from('staff_recurring_off_days').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId).in('weekday',rota.open.map(day=>day.weekday)):Promise.resolve({error:null})]
+        /* Unticking clears the whole rota AND every day off it stated, which is what returns this
+           person to the shop's hours on every day the shop is open. */
+        :[sb.from('staff_hours').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId),
+          sb.from('staff_recurring_off_days').delete().eq('business_id',S.biz.id).eq('staff_id',rota.staffId)])
     ]);
     save.disabled=false;
     const failure=results.find(result=>result?.error);

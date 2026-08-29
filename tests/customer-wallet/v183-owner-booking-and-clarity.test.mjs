@@ -6,6 +6,7 @@ const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')
   +'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const customerUi=readFileSync(new URL('../../app/customer-ui.js',import.meta.url),'utf8');
 const migration=readFileSync(new URL('../../db/migrations/20260806_nestly_v183_customer_staff_choice_and_live_availability.sql',import.meta.url),'utf8');
+const v598=readFileSync(new URL('../../db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql',import.meta.url),'utf8');
 const gateway=readFileSync(new URL('../../supabase/functions/public-booking/index.ts',import.meta.url),'utf8');
 const validation=readFileSync(new URL('../../supabase/functions/_shared/validation.ts',import.meta.url),'utf8');
 const security=readFileSync(new URL('../../supabase/functions/_shared/security.ts',import.meta.url),'utf8');
@@ -235,18 +236,35 @@ test('a rota save is scoped, ordered and refuses to publish an empty rota',()=>{
   assert.match(save,/return;\s*\}\s*const results=await Promise\.all/,'the guard aborts before ANY write');
   assert.match(save,/sb\.from\('staff_hours'\)\.upsert\([\s\S]{0,220}\{onConflict:'staff_id,weekday'\}\)/);
   assert.match(save,/sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\.in\('weekday',rota\.closed\)/);
-  assert.match(save,/:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\]/,
-    'unticking clears the whole rota — that is what restores shop hours');
+  /* nestly_v598: unticking still clears the whole rota — that is what restores shop hours — but
+     it now also clears every weekly day off that rota stated, because a day off is no longer
+     implied by a missing hours row and would otherwise outlive the rota that expressed it. */
+  assert.match(save,/:\[sb\.from\('staff_hours'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\),\n\s*sb\.from\('staff_recurring_off_days'\)\.delete\(\)\.eq\('business_id',S\.biz\.id\)\.eq\('staff_id',rota\.staffId\)\]/,
+    'unticking clears the whole rota and the days off it stated');
+  assert.match(save,/sb\.from\('staff_recurring_off_days'\)\.upsert\(rota\.closed\.map/,
+    'a ticked Closed day is STATED as a weekly day off, not left to be inferred from an absent row');
+  assert.match(save,/sb\.from\('staff_recurring_off_days'\)\.delete\(\)[\s\S]{0,120}rota\.open\.map\(day=>day\.weekday\)/,
+    'and re-opening a day withdraws that statement');
 });
 
-test('the availability engine prefers a rota over shop hours and offers nothing on an unrostered day',()=>{
-  const windows=section(migration,'), windows as (','), slots as (');
+/* nestly_v598 supersedes v183's rule here (owner ruling 2026-08-29: "all employees will work on
+   everyday of the working hours - until the owner block the employees schedule"). v183 joined the
+   shop's hours ONLY for a person with no rota at all, so a rota covering Mon-Sat made Sunday
+   unbookable even after the shop opened on Sunday — measured on production as Cubbly's Sunday.
+   The assertion now reads the v598 migration, which is what production runs; v183's file is left
+   as the history it is. */
+test('the availability engine falls back to shop hours per weekday, and refuses a stated day off',()=>{
+  const windows=section(v598,'), windows as (','), slots as (');
   assert.match(windows,/coalesce\(own\.starts_at, branch\.opens_at\) as starts_at/);
-  assert.match(windows,/on own\.business_id = v_business\.id[\s\S]{0,200}own\.weekday = extract\(dow from calendar\.day\)::smallint/);
-  assert.match(windows,/\) branch on not exists \(\s*select 1 from public\.staff_hours any_row/,
-    'branch hours are joined ONLY for a person with no rota at all');
+  assert.match(windows,/on own\.business_id = v_business\.id[\s\S]{0,200}own\.weekday = extract\(dow from calendar\.day\)::smallint/,
+    'a personal row still overrides, and only for the weekday it names');
+  assert.match(windows,/\) branch on true/,
+    'the shop is every teammate\'s default window on every open weekday');
+  assert.doesNotMatch(windows,/branch on not exists/,'the old rota-wide gate is gone');
   assert.match(windows,/where coalesce\(own\.starts_at, branch\.opens_at\) is not null/,
-    'a rostered person with no row for that weekday simply has no window');
+    'a day the shop is shut, with no personal hours, still has no window');
+  assert.match(windows,/from public\.staff_recurring_off_days recurring/,
+    'and being unavailable is STATED — a weekly day off is refused here');
 });
 
 test('the business owns the switch, the opening hours and who is bookable',()=>{
