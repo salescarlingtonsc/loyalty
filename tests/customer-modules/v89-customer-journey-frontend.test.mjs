@@ -353,9 +353,11 @@ test('Quick Earn scanner follows front-desk and manager loyalty-write assignment
   assert.equal(canScan(frontDeskReadOnly),false);
   assert.equal(canScan(managerLoyaltyOff),false);
   assert.equal(canScan({...frontDeskRw,clientsReadable:false}),false);
-  /* V253: a View-sales-history action joined the header, so the actions slot became a template
-     literal. The loyalty-write gate on the scanner is unchanged and still what this pins. */
-  assert.match(app,/actions:`\$\{canScanRedemption\(\)\?CUI\.action\(\{id:'tScanRedemption'/);
+  /* V253 put the scan in the page-header actions; nestly_v613 moved it to the row of ways to
+     START a sale at the foot of the keypad, beside Walk-in sale, where the owner drew it. The
+     loyalty-write gate is unchanged and is still what this pins — only where the gated button is
+     rendered has moved. */
+  assert.match(app,/\$\{canScanRedemption\(\)\?`<button class="btn ghost sm" id="tScanRedemption"/);
   assert.match(app,/if\(canScanRedemption\(\)\)\$\(\'tScanRedemption\'\)\.onclick/);
   assert.match(app,/Redemption scanning requires Loyalty write access/);
 });

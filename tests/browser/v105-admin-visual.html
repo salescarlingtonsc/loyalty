@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="9b20971039d34767625ca621066905d11164036514625d543c854676b9fec956">
+<meta name="v105-production-component-sha256" content="ebff9ede5e548206e3f61683ee99f24c40160c4ee0e1bcf14a39a0a251f1359f">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3049,6 +3049,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:999px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
+/* nestly_v613 (owner photo: "why got overlapping word here" beside the Success sounds switch).
+   The state word sat in a shrinkable flex item next to a fixed-width switch, so on a narrow
+   phone it wrapped to its min-content width and the second line ran under the switch. It no
+   longer shrinks and no longer wraps; the head wraps instead, which moves the whole toggle onto
+   its own line rather than letting two things share one. */
+.customer-sound-toggle{flex:0 0 auto;flex-wrap:nowrap}
+.customer-sound-toggle>span:not(.cui-switch){white-space:nowrap;flex:0 0 auto}
+#customerExperiencePreferences .wallet-section-head{flex-wrap:wrap;row-gap:8px}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
 /* v296: the account menu is gone; the push-state colour belongs to the control itself. */
@@ -4342,7 +4350,14 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
 .customer-referral-card-v300{padding:16px!important}.customer-referral-card-v300 .wallet-section-head h2{font-size:17px!important;line-height:1.08!important}.customer-referral-card-v300 .wallet-section-head p{max-width:100%;font-size:12.5px!important;line-height:1.28!important}
 .customer-referral-code-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;align-items:stretch!important;width:100%!important}.customer-referral-code{grid-column:1/-1;justify-content:center;max-width:100%;min-width:0!important;font-size:18px!important;letter-spacing:.16em!important}.customer-referral-code-row .btn{width:100%;min-width:0!important;justify-content:center}
-@media(max-width:380px){.customer-business-balance-v347{font-size:clamp(28px,8vw,38px)!important}.customer-business-summary-actions-v349{grid-template-columns:1fr!important}.customer-referral-code{font-size:16px!important}}
+/* nestly_v613 (owner photo 3: Claim reward and Book now ringed TOGETHER as one row — "i want
+   this format" — with the full-width Book now bar beneath them struck out). They were already
+   side by side above 380px; the phone the owner photographed is narrower, and this media query
+   was the only thing stacking them. Dropped. At 375px the card's 335px of inner width minus the
+   10px gap gives each button 162px — above the 150px v491 was protecting and wider than the
+   158px v532 measured and accepted at 390px, so nothing is squashed by removing it. The balance
+   and referral-code clamps in the same query are unrelated and stay. */
+@media(max-width:380px){.customer-business-balance-v347{font-size:clamp(28px,8vw,38px)!important}.customer-referral-code{font-size:16px!important}}
 /* V364: optical alignment fixes for compact customer cards and pills. */
 .customer-home-offer-countdown,.customer-offer-new{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;white-space:nowrap!important}
 .customer-home-offer-countdown{min-height:26px!important;padding:0 12px!important}
@@ -5242,6 +5257,32 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
+/* nestly_v613. The withdraw control is an X now (owner: "change to X button"), so it is sized as
+   an icon target rather than a text button. The end column keeps its stack — date, status, action —
+   which is the order the owner photographed; only the action stopped being a full-width word. */
+.customer-booking-withdraw-v613{width:32px;min-width:32px;height:32px;padding:0;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:50%;line-height:0}
+/* nestly_v613. The row opens its own details ("can click to see details"), so it must look and
+   behave like a control. The buttons inside it keep their own cursor and their own click. */
+.customer-booking-row-detailed-v613{cursor:pointer}
+.customer-booking-row-detailed-v613:focus-visible{outline:2px solid var(--peekaa-red,var(--coral));outline-offset:2px}
+.customer-booking-row-detailed-v613 button,.customer-booking-row-detailed-v613 a{cursor:pointer}
+/* nestly_v613. The two ways to start a sale without typing a number, drawn by the owner as one
+   row at the foot of the keypad. A branch that offers only one of them gets a single full-width
+   button rather than a half-width one stranded beside a gap. */
+.till-entry-starts-v613{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.till-entry-starts-v613:has(>:only-child){grid-template-columns:1fr}
+.till-entry-starts-v613>.btn{width:100%;min-width:0}
+/* nestly_v613. The service editor's branch picker — the owner's "can add which branch have
+   only". Laid out as wrapping choices rather than a multi-select, because a shop with three
+   branches should see all three at once. */
+.svc-branch-picker-v613{margin-top:14px}
+.svc-branch-picker-v613 [role="group"]{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px}
+.svc-branch-choice-v613{display:inline-flex;align-items:center;gap:7px;min-height:34px;color:var(--ink);cursor:pointer}
+.svc-branch-choice-v613 input{width:auto;min-height:0}
+.customer-booking-detail-list-v613{display:grid;gap:10px;margin:12px 0 0}
+.customer-booking-detail-list-v613 dt{margin:0}
+.customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
@@ -5420,15 +5461,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    hover state borrows the brand red the rest of the app uses for "this does something". */
 .staff-access-door-v595{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px 7px;
   padding:2px 6px 2px 2px;border-radius:12px}
-/* The words are the affordance. An underline was tried first and is invisible here — text
-   decoration does not paint under the circular badge that is the cell's only other content. */
-.staff-access-cta-v595{font-size:11.5px;font-weight:750;letter-spacing:.02em;white-space:nowrap;
-  color:var(--brand-red,#C24135);text-decoration:underline;text-underline-offset:3px;
-  text-decoration-color:color-mix(in srgb,var(--brand-red,#C24135) 40%,transparent)}
+/* nestly_v613 (owner: the words "Modules" and "Give access" struck out — the badge is the door).
+   With the label gone the affordance has to live on the badge itself, so it takes a ring on row
+   hover and focus rather than the vanished underline. The title and aria-label still say what it
+   opens, which is what a screen reader had from the words. */
+.staff-access-door-v595{padding:2px;cursor:pointer}
 .staff-row-open:hover .staff-access-door-v595,
 .staff-row-open:focus-visible .staff-access-door-v595{background:var(--brand-red-faint,#FDEEEB)}
-.staff-row-open:hover .staff-access-cta-v595{text-decoration-color:var(--brand-red,#C24135)}
-@media(max-width:768px){.staff-access-cta-v595{font-size:12.5px}}
+.staff-row-open:hover .staff-access-mark-v584,
+.staff-row-open:focus-visible .staff-access-mark-v584{box-shadow:0 0 0 2px var(--brand-red,#C24135)}
 .staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
 .staff-edit-tabs-v584{margin:14px 0 4px}
 .staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
@@ -6310,7 +6351,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 9b20971039d3</span>
+<span class="v105-provenance">v105 production-component harness · ebff9ede5e54</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6435,7 +6476,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'9b20971039d34767625ca621066905d11164036514625d543c854676b9fec956',
+  sourceHash:'ebff9ede5e548206e3f61683ee99f24c40160c4ee0e1bcf14a39a0a251f1359f',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

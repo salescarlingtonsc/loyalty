@@ -68,7 +68,10 @@ test('services and inventory render explicit read-only states and bind mutations
   assert.match(inventory,/const canWrite=canWriteModule\('inventory'\)/);
   /* V221 renamed the module to Products; the read-only state it guards is unchanged. */
   assert.match(inventory,/Read-only product access/);
-  assert.match(inventory,/canWrite\?importBtn\('inventory'\):''/);
+  /* nestly_v613: the title bar carries Import AND Add now, the Services shape, so the gate reads
+     as one concatenation rather than a lone importBtn. Both controls are still behind canWrite,
+     which is the only thing the role matrix cares about. */
+  assert.match(inventory,/canWrite\?importBtn\('inventory'\)\+CUI\.action\(\{id:'openProductForm'/);
   assert.match(inventory,/if\(canWrite\)\$\('padd2'\)\.onclick/);
   /* nestly_v584 (owner photo 9: "Remove stock taking feature", confirmed as everywhere in the
      app). The receive-batch handler is gone with the control it was bound to, so there is no

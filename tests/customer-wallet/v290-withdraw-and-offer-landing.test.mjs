@@ -30,8 +30,14 @@ test('the withdraw control exists only on active requests and goes through the v
   /* nestly_v605: the request row took the shared booking-row shape (owner: "i want format under
      Ongoing and Cancelled to follow History format"), so the button carries that row's action
      class. The GATE is untouched: only an active request the customer owns gets the control. */
-  assert.match(appJs, /active&&item\.request_id\?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-withdraw-request=/,
+  /* nestly_v613 (owner photo: the Withdraw button ringed with the status pill — "change to X
+     button"). The word became an icon; the GATE, the contract and the handler are untouched, so
+     that is what is pinned — an X with no accessible name would be the real regression, and the
+     label it lost as text it keeps as aria-label. */
+  assert.match(appJs, /active&&item\.request_id\?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request=/,
     'only a pending/waitlisted request the customer owns gets the button');
+  assert.match(appJs, /customer-booking-withdraw-v613[^`]*aria-label="\$\{esc\(ct\('Withdraw'\)\)\}"/,
+    'the icon still says "Withdraw" to a screen reader');
   assert.match(appJs, /const active=isActiveCustomerBookingRequest\(item\);/,
     'and "active" is that same check, named once');
   assert.match(bookings, /customerRpc\('customer_withdraw_booking_request_v290',\{p_request:button\.dataset\.withdrawRequest\}\)/);

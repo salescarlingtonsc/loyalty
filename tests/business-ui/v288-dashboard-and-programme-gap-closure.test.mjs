@@ -71,8 +71,13 @@ test('V288 the Customers page can actually show the 60+ audience', () => {
   // And nameable as an audience for export / campaign prep.
   assert.match(app, /'60_plus':\{label:'Inactive 60\+ days'/);
   assert.match(app, /if\(!never&&days>=60\)buckets\['60_plus'\]\.customers\.push\(customer\);/);
-  // The help text no longer claims every option is mutually exclusive.
-  assert.match(app, /Inactive 60\+ days is the combined 60–89 and 90\+ audience/);
+  /* nestly_v613 (owner photo: the whole help paragraph struck through — "delete this"). What V288
+     was protecting is that the 60+ audience is REACHABLE and correctly composed, and every
+     assertion above still proves that from the option, the bucket and the reducer. The removed
+     sentence only explained them; the aria-describedby that pointed at it went with it, so the
+     select cannot describe a node that is no longer rendered. */
+  assert.doesNotMatch(app, /Inactive 60\+ days is the combined 60–89 and 90\+ audience/);
+  assert.doesNotMatch(app, /aria-describedby="clientFilterHelp"/);
 });
 
 /* ------------------------------------------------------------------ MAJOR 3 */

@@ -2976,6 +2976,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v613_bespoke_customer_package.sql",
+      "semanticVersion": "v613",
+      "proposedDeployVersion": "20260829191021"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260829_nestly_v603_package_history_and_dates.sql",
       "semanticVersion": "v603",
       "proposedDeployVersion": "20260829200000"

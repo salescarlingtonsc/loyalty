@@ -12,9 +12,16 @@ function section(start,end){
 
 test('Record sale page header carries a View sales history button next to Scan customer QR, styled the same way', ()=>{
   const drawStep1=section('function drawStep1(){','const inp=$(\'tPhone\');');
-  // Both actions are built with CUI.action(...) using the ghost/secondary variant pattern.
-  assert.match(drawStep1,/CUI\.action\(\{id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'\}\)/);
+  /* nestly_v613 (owner photo: "Scan customer QR" struck out of the page head and redrawn as a
+     "Scan" button beside "Walk-in Sale" at the foot of the keypad). Scanning is a way to START a
+     sale, so it sits with the other ways to start one; View sales history stays a page-level
+     action and keeps its CUI.action shape. Both controls still exist on this step, still under
+     their own permission gate — only the scan's HOME moved. */
+  assert.match(drawStep1,/id="tScanRedemption"[^>]*>\$\{CUI\.icon\('scan',\{size:16\}\)\} Scan</);
+  assert.match(drawStep1,/canScanRedemption\(\)\?`<button class="btn ghost sm" id="tScanRedemption"/);
   assert.match(drawStep1,/CUI\.action\(\{id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'\}\)/);
+  // The scan is no longer one of the page-header actions.
+  assert.doesNotMatch(drawStep1,/CUI\.action\(\{id:'tScanRedemption'/);
 });
 
 test('View sales history targets the existing #/sales ledger route via the nav() helper', ()=>{

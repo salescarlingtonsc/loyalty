@@ -186,7 +186,9 @@ test('photo 8: one message is one row, and the settings live behind a control',(
      the preferences are never stranded, and the dialog borrows the live node. */
   assert.match(inbox,/id="customerInboxSettingsV386" class="customer-inbox-settings-v386"/,
     'still rendered unconditionally');
-  assert.match(inbox,/data-inbox-settings-v549/,'and it has a door again');
+  /* nestly_v613: the door is in the page head now, so it is asserted against the file rather
+     than the inbox renderer's slice. Still one door, still opening the same dialog. */
+  assert.match(app,/id="customerInboxSettingsHeadV613"/,'and it has a door again');
   assert.match(inbox,/customerInAppInboxPreferences/,'the reminder preferences survive the gear');
   /* nestly_v549: the device card is NO LONGER moved into the inbox card. v386 did that and every
      re-render ran `host.innerHTML=` over it, so one tap on Unread destroyed the card AND the

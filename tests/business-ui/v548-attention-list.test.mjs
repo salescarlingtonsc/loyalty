@@ -166,12 +166,20 @@ test('V550 a Message tap records outreach evidence without blocking the wa.me na
 /* nestly_v571 (owner ruling): the card left the Dashboard for the Bring-back module in Rewards
    Programme, where the vouchers this audience is being argued for are configured. These assertions
    move with it — and the Dashboard one is kept as a negative, so the card cannot drift back. */
-test('V571 the Bring-back module hosts the card and calls the loader at first paint', () => {
-  assert.ok(app.includes('<div id="growBbAttentionV571"></div>'), 'the Bring-back view markup hosts the card');
-  assert.ok(app.includes('loadAttentionListV571(outerMain,null)'),
-    'the Bring-back view loads the card business-wide, not narrowed by the header branch picker');
+/* nestly_v613 (owner photo: the whole "Customers to bring back" card struck corner to corner —
+   "delete this"). The card no longer mounts anywhere. The loader and every assertion above it are
+   deliberately kept: they still execute the real renderer against the real RPC shape, so the
+   server contract stays under test and re-mounting the card is one line. What this test now
+   guards is that it is mounted NOWHERE — neither in Bring-back nor back on the Dashboard. */
+test('V613 the attention card is mounted nowhere, and its loader is still whole', () => {
+  assert.ok(!app.includes('<div id="growBbAttentionV571"></div>'),
+    'the Bring-back view no longer hosts the card');
+  assert.ok(!app.includes('loadAttentionListV571(outerMain'),
+    'nothing calls the loader at paint any more');
   assert.ok(!app.includes('dashboardAttentionV548'),
-    'the Dashboard no longer hosts or loads the attention card');
+    'the Dashboard does not host or load the attention card either');
+  assert.ok(block.includes('async function loadAttentionListV571('),
+    'the loader itself is intact, so the server contract above stays under test');
 });
 
 test('V548 the browser never re-derives the server judgement', () => {

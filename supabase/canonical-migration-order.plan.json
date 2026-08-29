@@ -2971,6 +2971,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260829191021",
+      "name": "nestly_v613_bespoke_customer_package",
+      "sourcePath": "db/migrations/20260830_nestly_v613_bespoke_customer_package.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260829200000",
       "name": "nestly_v603_package_history_and_dates",
       "sourcePath": "db/migrations/20260829_nestly_v603_package_history_and_dates.sql"

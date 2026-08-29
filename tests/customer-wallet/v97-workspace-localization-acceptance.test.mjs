@@ -383,7 +383,9 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nothing on screen. reversalOf goes with them: it named the sale a correction reversed, and
      inside one package's own history there is nothing to disambiguate. usedSessionReversedBy is
      KEPT and rendered in that dialog. 142 - 3 = 139. */
-  assert.equal(keys.length,139,'mixed-interface interpolation inventory changed without review');
+  /* nestly_v613 adds two: bespokePackageFor (the customer a one-off package is being built for)
+     and serviceBranchesFailed (the branch write that failed after the service itself saved). */
+  assert.equal(keys.length,141,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

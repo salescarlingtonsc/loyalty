@@ -263,10 +263,18 @@ test('Terra C46: customer wallet UI has an accessible stale-guarded bell and lau
      renderPreferences has something to fill; the dialog BORROWS that live node rather than
      rebuilding it, which is why there can never be two of it. */
   assert.match(inbox, /id="customerInboxSettingsV386"/);
-  assert.match(inbox, /data-inbox-settings-v549/, 'the door the owner drew');
+  /* nestly_v613 (owner photo 1: the round control ringed in the filter row, an arrow to a gear
+     drawn beside the page title — "move here", "change the icon to settings icon"). The door left
+     the section head for the PAGE head, which renderCustomerMessages owns, so it is asserted
+     against the whole file rather than this slice. It is the same door: same dialog, same borrow,
+     same teardown — all still pinned below. */
+  assert.match(app, /id="customerInboxSettingsHeadV613"[^>]*aria-haspopup="dialog"/,
+    'the door the owner drew, in the page head, saying what it opens before it is pressed');
+  assert.match(app, /settingsDoorV613\.onclick=openInboxSettingsModalV549/,
+    'and it is wired to the one dialog opener');
+  assert.doesNotMatch(inbox, /data-inbox-settings-v549/, 'the filter row no longer carries it');
   assert.match(inbox, /id="customerInboxSettingsModalV549" role="dialog" aria-modal="true"/,
     'and it opens a real dialog, not an inline panel');
-  assert.match(inbox, /aria-haspopup','dialog'/, 'the button says so before it is pressed');
   assert.match(inbox, /body\.appendChild\(panel\)/, 'the dialog borrows the live panel');
   assert.match(inbox, /if\(inboxSettingsDeactivateV549\)closeInboxSettingsModalV549\(\)/,
     'a re-render tears the dialog down before it can be left holding discarded nodes');

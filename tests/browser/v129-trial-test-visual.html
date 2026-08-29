@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="19b83f17ec60b19aa214ccd2587f090c21b0e1bdedeafbd6e046f587d382c489"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d87ab81143042b2b80b7242b891a0030329dfabe837321faab063b04dbf56d86"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3043,6 +3043,14 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:999px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
+/* nestly_v613 (owner photo: "why got overlapping word here" beside the Success sounds switch).
+   The state word sat in a shrinkable flex item next to a fixed-width switch, so on a narrow
+   phone it wrapped to its min-content width and the second line ran under the switch. It no
+   longer shrinks and no longer wraps; the head wraps instead, which moves the whole toggle onto
+   its own line rather than letting two things share one. */
+.customer-sound-toggle{flex:0 0 auto;flex-wrap:nowrap}
+.customer-sound-toggle>span:not(.cui-switch){white-space:nowrap;flex:0 0 auto}
+#customerExperiencePreferences .wallet-section-head{flex-wrap:wrap;row-gap:8px}
 .customer-sound-toggle input{width:22px;min-height:22px;accent-color:var(--coral)}
 .customer-sound-toggle:has(input:disabled){opacity:.58;cursor:not-allowed}
 /* v296: the account menu is gone; the push-state colour belongs to the control itself. */
@@ -4336,7 +4344,14 @@ button.customer-inbox-row-main-v386:hover{background:var(--tint);border-radius:1
 .customer-business-book-inline-v349{background:transparent!important;border:1px solid rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:none!important}
 .customer-referral-card-v300{padding:16px!important}.customer-referral-card-v300 .wallet-section-head h2{font-size:17px!important;line-height:1.08!important}.customer-referral-card-v300 .wallet-section-head p{max-width:100%;font-size:12.5px!important;line-height:1.28!important}
 .customer-referral-code-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;align-items:stretch!important;width:100%!important}.customer-referral-code{grid-column:1/-1;justify-content:center;max-width:100%;min-width:0!important;font-size:18px!important;letter-spacing:.16em!important}.customer-referral-code-row .btn{width:100%;min-width:0!important;justify-content:center}
-@media(max-width:380px){.customer-business-balance-v347{font-size:clamp(28px,8vw,38px)!important}.customer-business-summary-actions-v349{grid-template-columns:1fr!important}.customer-referral-code{font-size:16px!important}}
+/* nestly_v613 (owner photo 3: Claim reward and Book now ringed TOGETHER as one row — "i want
+   this format" — with the full-width Book now bar beneath them struck out). They were already
+   side by side above 380px; the phone the owner photographed is narrower, and this media query
+   was the only thing stacking them. Dropped. At 375px the card's 335px of inner width minus the
+   10px gap gives each button 162px — above the 150px v491 was protecting and wider than the
+   158px v532 measured and accepted at 390px, so nothing is squashed by removing it. The balance
+   and referral-code clamps in the same query are unrelated and stay. */
+@media(max-width:380px){.customer-business-balance-v347{font-size:clamp(28px,8vw,38px)!important}.customer-referral-code{font-size:16px!important}}
 /* V364: optical alignment fixes for compact customer cards and pills. */
 .customer-home-offer-countdown,.customer-offer-new{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;white-space:nowrap!important}
 .customer-home-offer-countdown{min-height:26px!important;padding:0 12px!important}
@@ -5236,6 +5251,32 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
+/* nestly_v613. The withdraw control is an X now (owner: "change to X button"), so it is sized as
+   an icon target rather than a text button. The end column keeps its stack — date, status, action —
+   which is the order the owner photographed; only the action stopped being a full-width word. */
+.customer-booking-withdraw-v613{width:32px;min-width:32px;height:32px;padding:0;display:inline-flex;
+  align-items:center;justify-content:center;border-radius:50%;line-height:0}
+/* nestly_v613. The row opens its own details ("can click to see details"), so it must look and
+   behave like a control. The buttons inside it keep their own cursor and their own click. */
+.customer-booking-row-detailed-v613{cursor:pointer}
+.customer-booking-row-detailed-v613:focus-visible{outline:2px solid var(--peekaa-red,var(--coral));outline-offset:2px}
+.customer-booking-row-detailed-v613 button,.customer-booking-row-detailed-v613 a{cursor:pointer}
+/* nestly_v613. The two ways to start a sale without typing a number, drawn by the owner as one
+   row at the foot of the keypad. A branch that offers only one of them gets a single full-width
+   button rather than a half-width one stranded beside a gap. */
+.till-entry-starts-v613{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.till-entry-starts-v613:has(>:only-child){grid-template-columns:1fr}
+.till-entry-starts-v613>.btn{width:100%;min-width:0}
+/* nestly_v613. The service editor's branch picker — the owner's "can add which branch have
+   only". Laid out as wrapping choices rather than a multi-select, because a shop with three
+   branches should see all three at once. */
+.svc-branch-picker-v613{margin-top:14px}
+.svc-branch-picker-v613 [role="group"]{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:6px}
+.svc-branch-choice-v613{display:inline-flex;align-items:center;gap:7px;min-height:34px;color:var(--ink);cursor:pointer}
+.svc-branch-choice-v613 input{width:auto;min-height:0}
+.customer-booking-detail-list-v613{display:grid;gap:10px;margin:12px 0 0}
+.customer-booking-detail-list-v613 dt{margin:0}
+.customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
@@ -5414,15 +5455,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    hover state borrows the brand red the rest of the app uses for "this does something". */
 .staff-access-door-v595{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px 7px;
   padding:2px 6px 2px 2px;border-radius:12px}
-/* The words are the affordance. An underline was tried first and is invisible here — text
-   decoration does not paint under the circular badge that is the cell's only other content. */
-.staff-access-cta-v595{font-size:11.5px;font-weight:750;letter-spacing:.02em;white-space:nowrap;
-  color:var(--brand-red,#C24135);text-decoration:underline;text-underline-offset:3px;
-  text-decoration-color:color-mix(in srgb,var(--brand-red,#C24135) 40%,transparent)}
+/* nestly_v613 (owner: the words "Modules" and "Give access" struck out — the badge is the door).
+   With the label gone the affordance has to live on the badge itself, so it takes a ring on row
+   hover and focus rather than the vanished underline. The title and aria-label still say what it
+   opens, which is what a screen reader had from the words. */
+.staff-access-door-v595{padding:2px;cursor:pointer}
 .staff-row-open:hover .staff-access-door-v595,
 .staff-row-open:focus-visible .staff-access-door-v595{background:var(--brand-red-faint,#FDEEEB)}
-.staff-row-open:hover .staff-access-cta-v595{text-decoration-color:var(--brand-red,#C24135)}
-@media(max-width:768px){.staff-access-cta-v595{font-size:12.5px}}
+.staff-row-open:hover .staff-access-mark-v584,
+.staff-row-open:focus-visible .staff-access-mark-v584{box-shadow:0 0 0 2px var(--brand-red,#C24135)}
 .staff-edit-card-v584{max-width:760px;width:min(760px,100%)}
 .staff-edit-tabs-v584{margin:14px 0 4px}
 .staff-edit-card-v584 .staff-profile-panel{background:transparent;border:0;box-shadow:none;padding:0;margin-top:10px}
@@ -5496,7 +5537,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 19b83f17ec60b19aa214ccd2587f090c21b0e1bdedeafbd6e046f587d382c489</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d87ab81143042b2b80b7242b891a0030329dfabe837321faab063b04dbf56d86</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6256,7 +6297,10 @@ async function clientsPage(){
          only the first was ever read by getElementById, so the second was dead UI. One bar now
          renders, carrying the union of both bars' inactivity buckets (incl. all_inactive, which
          the dashboard drill targets). -->
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div>${/* nestly_v613 (owner photo: the paragraph struck through — "delete this"). The three
+         option labels already say what each bucket is, and the sentence explaining that they do
+         not overlap was longer than the filter it described. The select therefore no longer
+         describes itself through a removed node — aria-describedby went with the paragraph. */''}</div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -8830,7 +8874,11 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${/* nestly_v613 (owner photo: "Scan customer QR" struck out in the page head, and a two-button
+         row drawn at the foot of the keypad — "Walk-in Sale" beside "Scan"). The scan is a way to
+         START a sale, like the keypad and like a walk-in; it belongs with them, not in the row of
+         page-level actions beside sales history. The button keeps its id, so the same handler and
+         the same v-earlier auto-open (#tScanRedemption.click()) still find it. */''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
@@ -8840,9 +8888,12 @@ async function tillPage(){
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
-        ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>
-        <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
+        ${(canOfferWalkin()||canScanRedemption())?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        <div class="till-entry-starts-v613">
+          ${canOfferWalkin()?`<button class="btn ghost sm" id="tWalkin" style="padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>`:''}
+          ${canScanRedemption()?`<button class="btn ghost sm" id="tScanRedemption" style="padding:12px">${CUI.icon('scan',{size:16})} Scan</button>`:''}
+        </div>
+        ${canOfferWalkin()?'<p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>':''}`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
     const inp=$('tPhone');
@@ -9045,7 +9096,9 @@ async function tillPage(){
       sb.rpc('business_get_checkout_catalogue_v94',{
         p_business:S.biz.id,p_branch:tillBranchId,p_include_inactive:false
       }),
-      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
+      /* nestly_v613: the same exclusion the Packages page applies — a package built for one
+         customer must never be offered to the next person at the counter. */
+      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).is('bespoke_for_client',null).order('name')
         :Promise.resolve({data:null,error:null}),
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
@@ -11437,6 +11490,16 @@ async function servicesPage(){
   /* Keep the list in memory so an add reflects INSTANTLY (one insert round-trip that
      returns the row, then local splice + re-render) instead of a second full re-fetch. */
   let svCache=[];
+  /* nestly_v613 (owner, on the Edit service dialog: "can add which branch have only"). The
+     restriction itself is not new — public.service_branches has existed since v11a, and it is
+     already ENFORCED in all three places a service can be chosen: the till reads
+     business_get_checkout_catalogue_v94 (which takes p_branch), the appointments picker filters on
+     it client-side, the customer-facing readers apply the same rule, and sell_package_v102 refuses
+     a branch that does not offer the package's service. What was missing was any way for an owner
+     to SET it. The convention those readers share is the one this editor writes: no rows at all
+     means "offered everywhere", and any rows mean "only these". */
+  let branchListV613=[],serviceBranchMapV613=new Map(),branchLoadFailedV613=false;
+  const serviceBranchIdsV613=serviceId=>serviceBranchMapV613.get(serviceId)||new Set();
   function renderSvc(){
     const sv=svCache;
     /* nestly_v584 (owner photo 17). Three marks on one screen, all pulling the same way:
@@ -11475,6 +11538,19 @@ async function servicesPage(){
             <div><label for="svcEditCommissionV584">Commission override %</label><input id="svcEditCommissionV584" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(commissionPctV584(s.commission_bps))}"></div>
           </div>
           <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission.</p>
+          ${/* nestly_v613: only drawn for a firm that HAS more than one branch — a single-branch
+               shop has no choice to make and the control would only be a question with one answer. */''}
+          ${branchListV613.length>1?`<div class="svc-branch-picker-v613">
+            <label id="svcEditBranchesLabelV613">Offered at</label>
+            ${branchLoadFailedV613
+              ?'<p class="err small">The branch list could not be loaded, so this cannot be changed right now. Reload the page and try again.</p>'
+              :`<div role="group" aria-labelledby="svcEditBranchesLabelV613">${branchListV613.map(branch=>{
+                  const assigned=serviceBranchIdsV613(s.id);
+                  const on=assigned.size===0||assigned.has(branch.id);
+                  return `<label class="svc-branch-choice-v613"><input type="checkbox" data-svc-branch-v613="${esc(branch.id)}" ${on?'checked':''}><span data-merchant-content>${esc(branch.name)}</span></label>`;
+                }).join('')}</div>
+              <p class="muted small help">Untick a branch and this service stops being offered there — it disappears from that branch's Record sale, its appointment picker and its customer booking page. Every branch ticked means it is offered everywhere.</p>`}
+          </div>`:''}
           <div class="row" style="margin-top:14px"><button class="btn ghost sm" data-svc-cancel="1">Cancel</button><span class="muted small" id="svcEditStatus" role="status" aria-live="polite"></span><span class="spacer"></span><button class="btn sm" data-svc-save="${s.id}">Save changes</button></div>
         </section></div>`);
     }
@@ -11551,10 +11627,51 @@ async function servicesPage(){
       if(error){if(status)status.textContent=ownerErrorText(error);return}
       const row=svCache.find(x=>x.id===id);
       if(row&&data&&data[0])Object.assign(row,data[0]);
+      /* nestly_v613: branch availability is written after the service row, as a diff against what
+         was loaded, so a dialog opened on an unchanged service issues no writes at all. Failing
+         here is reported and does NOT roll back the fields above — those are already saved, and
+         claiming otherwise would be the worse lie. */
+      const branchError=await saveServiceBranchesV613(id,status);
+      if(branchError)return;
       editingServiceId=null;
       if(closeServiceDialogV584){const close=closeServiceDialogV584;closeServiceDialogV584=null;close()}
       renderSvc();toast('Service updated');
     });
+  }
+  /* nestly_v613. "All branches ticked" is stored as NO ROWS, not as one row per branch: that is
+     the state every reader already treats as "offered everywhere", and it is also the state a
+     newly added branch inherits — writing an explicit row per branch today would silently exclude
+     tomorrow's branch from a service the owner believes is universal. Zero ticked is refused,
+     because the schema has no way to say "nowhere" and would read it back as "everywhere". */
+  async function saveServiceBranchesV613(serviceId,status){
+    if(branchListV613.length<2)return null;
+    const boxes=[...document.querySelectorAll('[data-svc-branch-v613]')];
+    if(!boxes.length)return null;
+    if(branchLoadFailedV613){
+      if(status)status.textContent='The branch list could not be loaded, so branch availability was not changed.';
+      return true;
+    }
+    const picked=new Set(boxes.filter(box=>box.checked).map(box=>box.dataset.svcBranchV613));
+    if(!picked.size){
+      if(status)status.textContent='Choose at least one branch. A service has to be offered somewhere.';
+      return true;
+    }
+    const before=serviceBranchIdsV613(serviceId);
+    const wantRows=picked.size===branchListV613.length?new Set():picked;
+    const add=[...wantRows].filter(branchId=>!before.has(branchId));
+    const remove=[...before].filter(branchId=>!wantRows.has(branchId));
+    if(!add.length&&!remove.length)return null;
+    const [insertResult,deleteResult]=await Promise.all([
+      add.length?sb.from('service_branches').insert(add.map(branchId=>({business_id:S.biz.id,service_id:serviceId,branch_id:branchId}))):Promise.resolve({error:null}),
+      remove.length?sb.from('service_branches').delete().eq('business_id',S.biz.id).eq('service_id',serviceId).in('branch_id',remove):Promise.resolve({error:null})
+    ]);
+    const branchWriteError=insertResult.error||deleteResult.error;
+    if(branchWriteError){
+      if(status)status.textContent=workspaceTemplateTextV97('serviceBranchesFailed',{error:ownerErrorText(branchWriteError)});
+      return true;
+    }
+    serviceBranchMapV613.set(serviceId,wantRows);
+    return null;
   }
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
@@ -11563,10 +11680,22 @@ async function servicesPage(){
     const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
   };
   async function load(){
-    const [servicesResult,mediaMap]=await Promise.all([
+    const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613]=await Promise.all([
       sb.from('services').select('*').eq('business_id',S.biz.id).order('name'),
-      canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map())
+      canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map()),
+      sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+      sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
     ]);
+    /* nestly_v613: a failed branch read must not be drawn as "this service is offered everywhere"
+       — that is a real setting, and inventing it would be the same class of lie v584 removed from
+       the staff roster. The picker says it could not be loaded instead, and refuses to save. */
+    branchLoadFailedV613=!!(branchesResultV613.error||serviceBranchesResultV613.error);
+    branchListV613=branchesResultV613.data||[];
+    serviceBranchMapV613=new Map();
+    (serviceBranchesResultV613.data||[]).forEach(row=>{
+      if(!serviceBranchMapV613.has(row.service_id))serviceBranchMapV613.set(row.service_id,new Set());
+      serviceBranchMapV613.get(row.service_id).add(row.branch_id);
+    });
     const {data:sv,error}=servicesResult;
     if(!isCurrent())return;
     if(error){
@@ -11585,15 +11714,37 @@ async function servicesPage(){
      inside the service's own editor now, so a service is edited in one place. loadCommissionConfig
      and its separate card are deleted rather than left mounted on a node that no longer exists. */
   /* bundles */
+  /* nestly_v613 (owner photo: an arrow from the Bundles row's Edit button — "when click is
+     pop-up"). The bundle form used to open in place, at the TOP of the card, above the catalogue
+     — so on a list of any length the row you pressed Edit on scrolled out of sight and the form
+     you were typing into was somewhere else. It is a dialog now, the same one v584 gave the
+     service editor, and for the same reason. This is a MOVE, not a rewrite: the form keeps every
+     id (#bnm, #bpr, #bsv, #badd3, #cancelBundleForm, #bundleFormTitleV285), so openBundleEditV285,
+     closeBundleFormV285 and the save handler are untouched — only where the node sits, and the
+     activate/deactivate around it, are new. */
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
-    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
-      ${canWrite?`
-      <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
-      <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
-      <label>Included services</label><div id="bsv" class="small"></div>
-      <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
+    <div class="card">
       <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
-      <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div></div>`);
+      <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div>
+    ${canWrite?`<div class="modal" id="bundleFormModalV613" role="dialog" aria-modal="true" aria-labelledby="bundleFormTitleV285" tabindex="-1" style="display:none">
+      <section class="modal-card" style="max-width:620px" id="bundleFormCard">
+        <div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>
+        <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
+        <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+        <label>Included services</label><div id="bsv" class="small"></div>
+        <div style="margin-top:12px" class="row"><button class="btn ghost sm" id="cancelBundleForm">Cancel</button><span class="spacer"></span><button class="btn sm" id="badd3">Save bundle</button></div>
+      </section></div>`:''}</div>`);
+  /* One door in, one door out, so Esc, the backdrop and Cancel cannot leave the overlay up with
+     a hidden form inside it. The activation is torn down on close because the node is reused —
+     unlike the service editor, which is rebuilt on every render. */
+  let closeBundleDialogV613=null;
+  function showBundleFormV613(){
+    const modal=$('bundleFormModalV613');
+    if(!modal)return;
+    modal.style.display='flex';
+    if(closeBundleDialogV613)closeBundleDialogV613=null;
+    closeBundleDialogV613=CUI.activateDialog(modal,{onClose:()=>closeBundleFormV285(),initialFocus:'#bnm'});
+  }
   let bundleCacheV285=[],editingBundleIdV285=null;
   async function loadBR(){
     const [servicesResult,bundlesResult,productsResultV488]=await Promise.all([
@@ -11657,7 +11808,10 @@ async function servicesPage(){
      A second form would be a second place for the two to drift apart. */
   function closeBundleFormV285(){
     editingBundleIdV285=null;
-    if($('bundleFormCard'))$('bundleFormCard').style.display='none';
+    /* nestly_v613: the deactivator is dropped BEFORE it is called, so the CUI.activateDialog
+       onClose path (Esc, backdrop) re-entering here cannot recurse. */
+    if(closeBundleDialogV613){const done=closeBundleDialogV613;closeBundleDialogV613=null;done()}
+    if($('bundleFormModalV613'))$('bundleFormModalV613').style.display='none';
     if($('bundleFormTitleV285'))$('bundleFormTitleV285').textContent='Add bundle';
     if($('badd3'))$('badd3').textContent='Save bundle';
     if($('bnm'))$('bnm').value='';
@@ -11668,7 +11822,7 @@ async function servicesPage(){
     const bundle=bundleCacheV285.find(item=>item.id===bundleId);
     if(!bundle||!$('bundleFormCard'))return;
     editingBundleIdV285=bundleId;
-    $('bundleFormCard').style.display='block';
+    showBundleFormV613();
     $('bundleFormTitleV285').textContent='Edit bundle';
     $('badd3').textContent='Save changes';
     $('bnm').value=bundle.name||'';
@@ -11743,7 +11897,7 @@ async function servicesPage(){
      open Bundles in the same visit and it still said "add services first" — with no way to pick
      anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
      every time the Bundles view is opened. */
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();showBundleFormV613();loadBR();$('bnm')?.focus()};
   if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>closeBundleFormV285();
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
@@ -18252,7 +18406,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
       ${/* nestly_v606: the two WhatsApp cards moved to Operations setup -> Reminder & Notification.
            They govern every message Peekaa sends, not this one campaign. */''}
-      <div id="growBbAttentionV571"></div>
+      ${/* nestly_v613 (owner photo: the whole "Customers to bring back" card struck through —
+           "delete this"). The campaigns below already say who gets a voucher and when; the card
+           was a second, differently-reasoned audience sitting above them. The loader itself
+           (loadAttentionListV571) is left intact and still covered by v548-attention-list —
+           removing the mount is the reversible half, and get_attention_list_v548 is untouched. */''}
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
            to give programmes to customer inactive for > 30 days / > 60 days / > 90 days"). The old
@@ -20020,9 +20178,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
   loadGrowWaAutomationCardV583(outerMain).catch(()=>{});
   loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
-  /* nestly_v571: business-wide on purpose — a bring-back campaign is configured for the whole
-     firm, so the audience it is aimed at must not be narrowed by the header's branch picker. */
-  loadAttentionListV571(outerMain,null).catch(()=>{});
+  /* nestly_v613: the attention card no longer mounts here — see the note at its old slot. */
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
     growBbDraftV361={name:'',reward:'',away:'',expiry:''};
@@ -26883,7 +27039,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${/* nestly_v613 (owner photo: "Scan customer QR" struck out in the page head, and a two-button
+         row drawn at the foot of the keypad — "Walk-in Sale" beside "Scan"). The scan is a way to
+         START a sale, like the keypad and like a walk-in; it belongs with them, not in the row of
+         page-level actions beside sales history. The button keeps its id, so the same handler and
+         the same v-earlier auto-open (#tScanRedemption.click()) still find it. */''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
@@ -26893,9 +27053,12 @@ async function svRunTopupFlow({branches,state,testOnly}){
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
-        ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>
-        <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
+        ${(canOfferWalkin()||canScanRedemption())?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        <div class="till-entry-starts-v613">
+          ${canOfferWalkin()?`<button class="btn ghost sm" id="tWalkin" style="padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>`:''}
+          ${canScanRedemption()?`<button class="btn ghost sm" id="tScanRedemption" style="padding:12px">${CUI.icon('scan',{size:16})} Scan</button>`:''}
+        </div>
+        ${canOfferWalkin()?'<p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>':''}`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
     const inp=$('tPhone');
@@ -27098,7 +27261,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
       sb.rpc('business_get_checkout_catalogue_v94',{
         p_business:S.biz.id,p_branch:tillBranchId,p_include_inactive:false
       }),
-      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
+      /* nestly_v613: the same exclusion the Packages page applies — a package built for one
+         customer must never be offered to the next person at the counter. */
+      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).is('bespoke_for_client',null).order('name')
         :Promise.resolve({data:null,error:null}),
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
@@ -29446,6 +29611,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'19b83f17ec60b19aa214ccd2587f090c21b0e1bdedeafbd6e046f587d382c489',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'d87ab81143042b2b80b7242b891a0030329dfabe837321faab063b04dbf56d86',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -163,7 +163,10 @@ test('v417 the Messages settings are still reachable, now behind the v549 dialog
   assert.doesNotMatch(appJs, /customerInboxSettingsToggleV386/, 'the v386 gear is not resurrected');
   assert.match(appJs, /id="customerInboxSettingsV386" class="customer-inbox-settings-v386"/,
     'still rendered unconditionally, so the dialog has a live node to borrow');
-  assert.match(appJs, /data-inbox-settings-v549/, 'and it has a door');
+  /* nestly_v613 (owner: "move here", with a gear drawn beside the page title). The door left the
+     filter row for the page head. v417's point is untouched — the settings are still REACHABLE,
+     which is the whole reason v417 refused to delete the control along with the panel. */
+  assert.match(appJs, /id="customerInboxSettingsHeadV613"/, 'and it has a door');
   assert.match(appJs, /customerInAppInboxPreferences/, 'the reminder preferences survive');
   assert.match(appJs, /id="customerMessagesNotifications"/, 'and so does the device switch');
   assert.doesNotMatch(appJs, /settingsOpenV395/, 'the v395 open state stays dead');

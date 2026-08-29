@@ -3843,81 +3843,6 @@ async function loadDashboardBottlesV278(root,branchId=null){
   </section>`;
 }
 
-/* V548 — "Customers to bring back", the dashboard's attention list.
-   The strategy ruling (2026-08-26) is that Peekaa's first screen must answer the question no
-   competitor can: WHO is overdue against their own visit rhythm, and how much monthly revenue is
-   fading with them. The server (get_attention_list_v548) owns every judgement — median inter-visit
-   cadence, due/overdue/slipping bucketing, monthly value — this card only prints it. Rows carry
-   client names and phones, so the RPC is gated on the clients module scope and the card simply
-   stays absent for staff who cannot open Customers (same predicate, one server authority).
-   The per-row action is the staff-tap wa.me draft (the V330 pattern): outbound sending does not
-   exist yet platform-wide, and a button that opens the owner's own WhatsApp with a ready message
-   works today. When the WhatsApp engine lands, this button is what it replaces. */
-function attentionWhatsAppUrlV548(phone,name,businessName){
-  const digits=String(phone||'').replace(/\D/g,'');
-  const mobile=/^[89]\d{7}$/.test(digits)?`65${digits}`:/^65[89]\d{7}$/.test(digits)?digits:null;
-  if(!mobile)return null;
-  const first=String(name||'').trim().split(/\s+/)[0]||'';
-  const text=`Hi${first?` ${first}`:''}! It's ${String(businessName||'us').trim()} here — we haven't seen you in a while and we'd love to have you back. Come by this week!`;
-  return `https://wa.me/${mobile}?text=${encodeURIComponent(text)}`;
-}
-const ATTENTION_STATUS_V548={
-  due:{label:'Due back',tone:'#F0A35B'},
-  overdue:{label:'Overdue',tone:'#C24135'},
-  slipping:{label:'Slipping away',tone:'#8E2F26'}
-};
-/* nestly_v571 (owner ruling): this list left the Dashboard and now lives inside the Bring-back
-   module in Rewards Programme, where the vouchers it is arguing for are configured. The renderer
-   is unchanged — only the mount point and the staleness guard, which can no longer assume the
-   dashboard root. `host.isConnected` is the honest test: any re-render of the host page replaces
-   the node, so a late RPC cannot paint into a screen the owner has already left. */
-async function loadAttentionListV571(root,branchId=null,hostId='growBbAttentionV571'){
-  const host=root?.querySelector(`#${hostId}`);
-  if(!host)return;
-  host.innerHTML='';
-  if(S.myRole!=='owner'&&!canReadModule('clients'))return;
-  const {data,error}=await sb.rpc('get_attention_list_v548',{p_business:S.biz.id,p_branch:branchId,p_limit:8});
-  if(!host.isConnected)return;
-  if(error||!data)return;
-  const sum=data.summary||{};
-  const rows=Array.isArray(data.rows)?data.rows:[];
-  const fadingCount=(Number(sum.overdue)||0)+(Number(sum.slipping)||0);
-  const atRisk=Number(sum.monthly_at_risk_cents)||0;
-  const oneTime=Number(sum.one_time_count)||0;
-  /* A business with nothing to act on gets no card at all — an empty "attention" panel on the
-     first screen of the day would be noise, and a brand-new business would see it forever. */
-  if(!rows.length&&!oneTime)return;
-  const dayWord=n=>`${Number(n)||0}d`;
-  const attentionRowV548=r=>{
-    const st=ATTENTION_STATUS_V548[r.status]||ATTENTION_STATUS_V548.due;
-    const wa=attentionWhatsAppUrlV548(r.phone,r.full_name,S.biz?.name);
-    return `<li class="attention-row-v548" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line,#eee)">
-      <div style="flex:1;min-width:0">
-        <b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.full_name||'Customer')}</b>
-        <span class="muted small">Last visit ${dayWord(r.last_visit_days)} ago · usually every ~${esc(String(Math.round(Number(r.cadence_days)||0)))}d · ${esc(money(r.monthly_value_cents))}/mo</span>
-      </div>
-      <span class="pill" style="background:${st.tone}1A;color:${st.tone};font-weight:700;white-space:nowrap">${st.label}</span>
-      ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content data-attention-outreach="${esc(r.client_id)}" aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}
-    </li>`;
-  };
-  host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-top:12px">
-    <div class="cui-card-head">${CUI.icon('customers',{size:24})}<div><h2 id="dashboardAttentionTitleV548">Customers to bring back</h2><p>Each customer judged by their own visit rhythm, not a fixed rule.</p></div></div>
-    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${fadingCount} customer${fadingCount===1?'':'s'} overdue</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
-    <ul style="list-style:none;margin:8px 0 0;padding:0">${rows.map(attentionRowV548).join('')}</ul>
-    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${oneTime} customer${oneTime===1?'':'s'} visited once in the last year and never came back.</p>`:''}
-    <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/customers">Open Customers</a></div>
-  </section>`;
-  /* V550: a Message tap becomes evidence. The wa.me draft opens regardless; the record is
-     fire-and-forget (a failed write must never block the outreach itself), deduped server-side
-     to one row per customer per SG day, and it is what get_recovery_report_v550 attributes
-     "came back after being contacted" against. */
-  host.querySelectorAll('a[data-attention-outreach]').forEach(link=>{
-    link.addEventListener('click',()=>{
-      sb.rpc('record_attention_outreach_v550',{p_business:S.biz.id,p_client:link.dataset.attentionOutreach}).then(()=>{},()=>{});
-    });
-  });
-}
-
 /* V180 (owner instruction: "I want have simple glance of calendar").
    The Today-schedule strip announced today's bookings but showed none of them — an owner had
    to leave the Dashboard to learn whether anyone was coming in. It now renders today's actual
@@ -4649,7 +4574,10 @@ async function clientsPage(){
          only the first was ever read by getElementById, so the second was dead UI. One bar now
          renders, carrying the union of both bars' inactivity buckets (incl. all_inactive, which
          the dashboard drill targets). -->
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity" aria-describedby="clientFilterHelp"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div><p class="muted small" id="clientFilterHelp" style="margin-top:8px">The dated groups are mutually exclusive; Inactive 60+ days is the combined 60–89 and 90+ audience Merchant insights reports. Branch-scoped inactivity means no valid visit inside the selected reporting scope; never-visited remains separate.</p></div>
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div>${/* nestly_v613 (owner photo: the paragraph struck through — "delete this"). The three
+         option labels already say what each bucket is, and the sentence explaining that they do
+         not overlap was longer than the filter it described. The select therefore no longer
+         describes itself through a removed node — aria-describedby went with the paragraph. */''}</div>
     <div class="client-audience-actions" id="clientAudienceActions" hidden aria-live="polite"></div>
     <div class="card" id="form" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="list">${CUI.tableSkeleton({rows:5,columns:7})}</div>
@@ -7224,7 +7152,11 @@ async function tillPage(){
   }
 
   function drawStep1(){
-    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${canScanRedemption()?CUI.action({id:'tScanRedemption',label:'Scan customer QR',iconName:'scan',variant:'secondary'}):''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
+    M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:canScanRedemption()?"Type the customer's phone number, or scan a redemption QR.":"Type the customer's phone number to record a purchase.",iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale',actions:`${/* nestly_v613 (owner photo: "Scan customer QR" struck out in the page head, and a two-button
+         row drawn at the foot of the keypad — "Walk-in Sale" beside "Scan"). The scan is a way to
+         START a sale, like the keypad and like a walk-in; it belongs with them, not in the row of
+         page-level actions beside sales history. The button keeps its id, so the same handler and
+         the same v-earlier auto-open (#tScanRedemption.click()) still find it. */''}${canReadModule('sales')?CUI.action({id:'tViewSalesHistoryV253',label:'View sales history',iconName:'sales',variant:'secondary'}):''}`})}
       <div class="card frontline-card" style="text-align:center">
         <label class="sr-only" for="tPhone">Customer phone number</label>
         <input id="tPhone" class="frontline-phone" inputmode="numeric" autocomplete="tel-national" maxlength="8" placeholder="···· ····" value="${esc(phone)}">
@@ -7234,9 +7166,12 @@ async function tillPage(){
           ${['1','2','3','4','5','6','7','8','9','⌫','0','✕'].map(k=>`<button class="btn ghost" data-k="${k}" ${workspaceTemplateAttributeV97('aria-label',k==='⌫'?'phoneKeyDelete':k==='✕'?'phoneKeyClear':'phoneKeyDigit',k==='⌫'||k==='✕'?{}:{digit:k})}>${k}</button>`).join('')}
         </div>
         <p class="muted small" style="margin-top:14px">⌫ deletes one digit · ✕ clears</p>
-        ${canOfferWalkin()?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-        <button class="btn ghost sm" id="tWalkin" style="width:100%;padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>
-        <p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>`:''}
+        ${(canOfferWalkin()||canScanRedemption())?`<hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        <div class="till-entry-starts-v613">
+          ${canOfferWalkin()?`<button class="btn ghost sm" id="tWalkin" style="padding:12px">${CUI.icon('till',{size:16})} Walk-in sale</button>`:''}
+          ${canScanRedemption()?`<button class="btn ghost sm" id="tScanRedemption" style="padding:12px">${CUI.icon('scan',{size:16})} Scan</button>`:''}
+        </div>
+        ${canOfferWalkin()?'<p class="muted small" style="margin:6px 0 0">No points, rewards, packages or stored value.</p>':''}`:''}
         ${canScanRedemption()?'':'<p class="muted small">Redemption scanning requires Loyalty write access at this branch.</p>'}
       </div>`;
     const inp=$('tPhone');
@@ -7439,7 +7374,9 @@ async function tillPage(){
       sb.rpc('business_get_checkout_catalogue_v94',{
         p_business:S.biz.id,p_branch:tillBranchId,p_include_inactive:false
       }),
-      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).order('name')
+      /* nestly_v613: the same exclusion the Packages page applies — a package built for one
+         customer must never be offered to the next person at the counter. */
+      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).is('bespoke_for_client',null).order('name')
         :Promise.resolve({data:null,error:null}),
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
@@ -9831,6 +9768,16 @@ async function servicesPage(){
   /* Keep the list in memory so an add reflects INSTANTLY (one insert round-trip that
      returns the row, then local splice + re-render) instead of a second full re-fetch. */
   let svCache=[];
+  /* nestly_v613 (owner, on the Edit service dialog: "can add which branch have only"). The
+     restriction itself is not new — public.service_branches has existed since v11a, and it is
+     already ENFORCED in all three places a service can be chosen: the till reads
+     business_get_checkout_catalogue_v94 (which takes p_branch), the appointments picker filters on
+     it client-side, the customer-facing readers apply the same rule, and sell_package_v102 refuses
+     a branch that does not offer the package's service. What was missing was any way for an owner
+     to SET it. The convention those readers share is the one this editor writes: no rows at all
+     means "offered everywhere", and any rows mean "only these". */
+  let branchListV613=[],serviceBranchMapV613=new Map(),branchLoadFailedV613=false;
+  const serviceBranchIdsV613=serviceId=>serviceBranchMapV613.get(serviceId)||new Set();
   function renderSvc(){
     const sv=svCache;
     /* nestly_v584 (owner photo 17). Three marks on one screen, all pulling the same way:
@@ -9869,6 +9816,19 @@ async function servicesPage(){
             <div><label for="svcEditCommissionV584">Commission override %</label><input id="svcEditCommissionV584" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(commissionPctV584(s.commission_bps))}"></div>
           </div>
           <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission.</p>
+          ${/* nestly_v613: only drawn for a firm that HAS more than one branch — a single-branch
+               shop has no choice to make and the control would only be a question with one answer. */''}
+          ${branchListV613.length>1?`<div class="svc-branch-picker-v613">
+            <label id="svcEditBranchesLabelV613">Offered at</label>
+            ${branchLoadFailedV613
+              ?'<p class="err small">The branch list could not be loaded, so this cannot be changed right now. Reload the page and try again.</p>'
+              :`<div role="group" aria-labelledby="svcEditBranchesLabelV613">${branchListV613.map(branch=>{
+                  const assigned=serviceBranchIdsV613(s.id);
+                  const on=assigned.size===0||assigned.has(branch.id);
+                  return `<label class="svc-branch-choice-v613"><input type="checkbox" data-svc-branch-v613="${esc(branch.id)}" ${on?'checked':''}><span data-merchant-content>${esc(branch.name)}</span></label>`;
+                }).join('')}</div>
+              <p class="muted small help">Untick a branch and this service stops being offered there — it disappears from that branch's Record sale, its appointment picker and its customer booking page. Every branch ticked means it is offered everywhere.</p>`}
+          </div>`:''}
           <div class="row" style="margin-top:14px"><button class="btn ghost sm" data-svc-cancel="1">Cancel</button><span class="muted small" id="svcEditStatus" role="status" aria-live="polite"></span><span class="spacer"></span><button class="btn sm" data-svc-save="${s.id}">Save changes</button></div>
         </section></div>`);
     }
@@ -9945,10 +9905,51 @@ async function servicesPage(){
       if(error){if(status)status.textContent=ownerErrorText(error);return}
       const row=svCache.find(x=>x.id===id);
       if(row&&data&&data[0])Object.assign(row,data[0]);
+      /* nestly_v613: branch availability is written after the service row, as a diff against what
+         was loaded, so a dialog opened on an unchanged service issues no writes at all. Failing
+         here is reported and does NOT roll back the fields above — those are already saved, and
+         claiming otherwise would be the worse lie. */
+      const branchError=await saveServiceBranchesV613(id,status);
+      if(branchError)return;
       editingServiceId=null;
       if(closeServiceDialogV584){const close=closeServiceDialogV584;closeServiceDialogV584=null;close()}
       renderSvc();toast('Service updated');
     });
+  }
+  /* nestly_v613. "All branches ticked" is stored as NO ROWS, not as one row per branch: that is
+     the state every reader already treats as "offered everywhere", and it is also the state a
+     newly added branch inherits — writing an explicit row per branch today would silently exclude
+     tomorrow's branch from a service the owner believes is universal. Zero ticked is refused,
+     because the schema has no way to say "nowhere" and would read it back as "everywhere". */
+  async function saveServiceBranchesV613(serviceId,status){
+    if(branchListV613.length<2)return null;
+    const boxes=[...document.querySelectorAll('[data-svc-branch-v613]')];
+    if(!boxes.length)return null;
+    if(branchLoadFailedV613){
+      if(status)status.textContent='The branch list could not be loaded, so branch availability was not changed.';
+      return true;
+    }
+    const picked=new Set(boxes.filter(box=>box.checked).map(box=>box.dataset.svcBranchV613));
+    if(!picked.size){
+      if(status)status.textContent='Choose at least one branch. A service has to be offered somewhere.';
+      return true;
+    }
+    const before=serviceBranchIdsV613(serviceId);
+    const wantRows=picked.size===branchListV613.length?new Set():picked;
+    const add=[...wantRows].filter(branchId=>!before.has(branchId));
+    const remove=[...before].filter(branchId=>!wantRows.has(branchId));
+    if(!add.length&&!remove.length)return null;
+    const [insertResult,deleteResult]=await Promise.all([
+      add.length?sb.from('service_branches').insert(add.map(branchId=>({business_id:S.biz.id,service_id:serviceId,branch_id:branchId}))):Promise.resolve({error:null}),
+      remove.length?sb.from('service_branches').delete().eq('business_id',S.biz.id).eq('service_id',serviceId).in('branch_id',remove):Promise.resolve({error:null})
+    ]);
+    const branchWriteError=insertResult.error||deleteResult.error;
+    if(branchWriteError){
+      if(status)status.textContent=workspaceTemplateTextV97('serviceBranchesFailed',{error:ownerErrorText(branchWriteError)});
+      return true;
+    }
+    serviceBranchMapV613.set(serviceId,wantRows);
+    return null;
   }
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
@@ -9957,10 +9958,22 @@ async function servicesPage(){
     const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
   };
   async function load(){
-    const [servicesResult,mediaMap]=await Promise.all([
+    const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613]=await Promise.all([
       sb.from('services').select('*').eq('business_id',S.biz.id).order('name'),
-      canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map())
+      canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map()),
+      sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+      sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
     ]);
+    /* nestly_v613: a failed branch read must not be drawn as "this service is offered everywhere"
+       — that is a real setting, and inventing it would be the same class of lie v584 removed from
+       the staff roster. The picker says it could not be loaded instead, and refuses to save. */
+    branchLoadFailedV613=!!(branchesResultV613.error||serviceBranchesResultV613.error);
+    branchListV613=branchesResultV613.data||[];
+    serviceBranchMapV613=new Map();
+    (serviceBranchesResultV613.data||[]).forEach(row=>{
+      if(!serviceBranchMapV613.has(row.service_id))serviceBranchMapV613.set(row.service_id,new Set());
+      serviceBranchMapV613.get(row.service_id).add(row.branch_id);
+    });
     const {data:sv,error}=servicesResult;
     if(!isCurrent())return;
     if(error){
@@ -9979,15 +9992,37 @@ async function servicesPage(){
      inside the service's own editor now, so a service is edited in one place. loadCommissionConfig
      and its separate card are deleted rather than left mounted on a node that no longer exists. */
   /* bundles */
+  /* nestly_v613 (owner photo: an arrow from the Bundles row's Edit button — "when click is
+     pop-up"). The bundle form used to open in place, at the TOP of the card, above the catalogue
+     — so on a list of any length the row you pressed Edit on scrolled out of sight and the form
+     you were typing into was somewhere else. It is a dialog now, the same one v584 gave the
+     service editor, and for the same reason. This is a MOVE, not a rewrite: the form keeps every
+     id (#bnm, #bpr, #bsv, #badd3, #cancelBundleForm, #bundleFormTitleV285), so openBundleEditV285,
+     closeBundleFormV285 and the save handler are untouched — only where the node sits, and the
+     activate/deactivate around it, are new. */
   M().insertAdjacentHTML('beforeend',`<div class="services-segment-body" id="bundleSegmentBody" style="display:none">
-    <div class="card">${canWrite?'<div id="bundleFormCard" style="display:none"><div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>':''}
-      ${canWrite?`
-      <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
-      <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
-      <label>Included services</label><div id="bsv" class="small"></div>
-      <div style="margin-top:12px" class="row"><button class="btn sm" id="badd3">Save bundle</button><button class="btn ghost sm" id="cancelBundleForm">Cancel</button></div></div>`:''}
+    <div class="card">
       <div class="v150-soft-head"><b>Bundles catalogue</b><p>Several services at one price. Packages remain in the Packages module.</p></div>
-      <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div></div>`);
+      <div id="blist3" style="margin-top:12px">${CUI.tableSkeleton({rows:3,columns:5})}</div></div>
+    ${canWrite?`<div class="modal" id="bundleFormModalV613" role="dialog" aria-modal="true" aria-labelledby="bundleFormTitleV285" tabindex="-1" style="display:none">
+      <section class="modal-card" style="max-width:620px" id="bundleFormCard">
+        <div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>
+        <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
+        <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+        <label>Included services</label><div id="bsv" class="small"></div>
+        <div style="margin-top:12px" class="row"><button class="btn ghost sm" id="cancelBundleForm">Cancel</button><span class="spacer"></span><button class="btn sm" id="badd3">Save bundle</button></div>
+      </section></div>`:''}</div>`);
+  /* One door in, one door out, so Esc, the backdrop and Cancel cannot leave the overlay up with
+     a hidden form inside it. The activation is torn down on close because the node is reused —
+     unlike the service editor, which is rebuilt on every render. */
+  let closeBundleDialogV613=null;
+  function showBundleFormV613(){
+    const modal=$('bundleFormModalV613');
+    if(!modal)return;
+    modal.style.display='flex';
+    if(closeBundleDialogV613)closeBundleDialogV613=null;
+    closeBundleDialogV613=CUI.activateDialog(modal,{onClose:()=>closeBundleFormV285(),initialFocus:'#bnm'});
+  }
   let bundleCacheV285=[],editingBundleIdV285=null;
   async function loadBR(){
     const [servicesResult,bundlesResult,productsResultV488]=await Promise.all([
@@ -10051,7 +10086,10 @@ async function servicesPage(){
      A second form would be a second place for the two to drift apart. */
   function closeBundleFormV285(){
     editingBundleIdV285=null;
-    if($('bundleFormCard'))$('bundleFormCard').style.display='none';
+    /* nestly_v613: the deactivator is dropped BEFORE it is called, so the CUI.activateDialog
+       onClose path (Esc, backdrop) re-entering here cannot recurse. */
+    if(closeBundleDialogV613){const done=closeBundleDialogV613;closeBundleDialogV613=null;done()}
+    if($('bundleFormModalV613'))$('bundleFormModalV613').style.display='none';
     if($('bundleFormTitleV285'))$('bundleFormTitleV285').textContent='Add bundle';
     if($('badd3'))$('badd3').textContent='Save bundle';
     if($('bnm'))$('bnm').value='';
@@ -10062,7 +10100,7 @@ async function servicesPage(){
     const bundle=bundleCacheV285.find(item=>item.id===bundleId);
     if(!bundle||!$('bundleFormCard'))return;
     editingBundleIdV285=bundleId;
-    $('bundleFormCard').style.display='block';
+    showBundleFormV613();
     $('bundleFormTitleV285').textContent='Edit bundle';
     $('badd3').textContent='Save changes';
     $('bnm').value=bundle.name||'';
@@ -10137,7 +10175,7 @@ async function servicesPage(){
      open Bundles in the same visit and it still said "add services first" — with no way to pick
      anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
      every time the Bundles view is opened. */
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();$('bundleFormCard').style.display='block';loadBR();$('bnm')?.focus()};
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();showBundleFormV613();loadBR();$('bnm')?.focus()};
   if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>closeBundleFormV285();
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
@@ -16613,7 +16651,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <p class="muted small">A customer who has not visited for the number of days you set is sent the voucher automatically, once per absence. Staff hand it over from Record sale — nothing is charged, and the visit is recorded at zero.</p></span></div>
       ${/* nestly_v606: the two WhatsApp cards moved to Operations setup -> Reminder & Notification.
            They govern every message Peekaa sends, not this one campaign. */''}
-      <div id="growBbAttentionV571"></div>
+      ${/* nestly_v613 (owner photo: the whole "Customers to bring back" card struck through —
+           "delete this"). The campaigns below already say who gets a voucher and when; the card
+           was a second, differently-reasoned audience sitting above them. The loader itself
+           (loadAttentionListV571) is left intact and still covered by v548-attention-list —
+           removing the mount is the reversible half, and get_attention_list_v548 is untouched. */''}
       ${growBbErrorV361&&!growBbAddOpenV361?`<p class="notice warn small" style="margin-top:8px">${esc(growBbErrorV361)}</p>`:''}
       ${/* V364 (owner markup, photo 2, written beside the old Retention page: "This programme is
            to give programmes to customer inactive for > 30 days / > 60 days / > 90 days"). The old
@@ -18381,9 +18423,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* ---- V361: Bring-back module wiring. Immediate-write throughout, same as points/tiers. ---- */
   loadGrowWaAutomationCardV583(outerMain).catch(()=>{});
   loadGrowBbWhatsappStripV551(outerMain).catch(()=>{});
-  /* nestly_v571: business-wide on purpose — a bring-back campaign is configured for the whole
-     firm, so the audience it is aimed at must not be narrowed by the header's branch picker. */
-  loadAttentionListV571(outerMain,null).catch(()=>{});
+  /* nestly_v613: the attention card no longer mounts here — see the note at its old slot. */
   outerMain.querySelectorAll('[data-grow-bb-add-v361]').forEach(el=>el.onclick=()=>{
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
     growBbDraftV361={name:'',reward:'',away:'',expiry:''};
@@ -29014,12 +29054,20 @@ async function inventoryPage(){
      column is left untouched, so no figure already entered is destroyed, and cost is still
      collected in Programmes -> More reward settings, where it has an actual purpose: deciding
      what a reward can safely cost. It is never asked for twice. */
-  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('inventory',{size:24})}<div><h1>Products</h1><p class="muted small">What you sell and what you charge for it.</p></div></div>
-    <div class="row">${canWrite?importBtn('inventory'):''}</div></div>
+  /* nestly_v613 (owner photo: Products and Packages ringed in the rail with an arrow to the
+     Services page — "Products & Packages please follow Services format"). Services is the shape
+     the owner approved: a title bar that carries Import and Add, an add form that stays folded
+     until you ask for it, and ONE catalogue card whose table shows a photo, the figures, an
+     On/Off pill and a row that edits in a dialog. Products was a two-column split with a
+     permanently open add form on the left, no photo, no status column, and an editor that
+     expanded a second table row underneath the one being edited. Same data, same writers, same
+     ids — only the arrangement follows Services now. */
+  const canUploadCatalogueMedia=S.myRole==='owner';
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('inventory',{size:24})}<div><h1>Products</h1><p>What you sell and what you charge for it.</p></div></div>
+    <div class="v150-title-actions">${canWrite?importBtn('inventory')+CUI.action({id:'openProductForm',label:'Add product',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
-    <div class="split">
-    ${canWrite?`<div class="card"><b>Add product</b>
-      <label for="pn2">Name</label><input id="pn2"><label for="ps2">SKU (optional)</label><input id="ps2">
+    ${canWrite?`<div class="card" id="productFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add product</b><p>Save one thing you sell, then return to the catalogue.</p></div>
+      <label for="pn2">Name</label><input id="pn2" placeholder="e.g. Chicken rice"><label for="ps2">SKU (optional)</label><input id="ps2">
       <label for="pp2">Sell for (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00">
       ${/* nestly_v584 (owner photo 9: the whole stock-counting disclosure struck out corner to
            corner and the STOCK column scribbled through — "Remove stock taking feature", confirmed
@@ -29029,8 +29077,8 @@ async function inventoryPage(){
            no stock row sells exactly as it did. Every stock table, view and RPC is left in the
            database untouched, so nothing a firm already counted is destroyed and re-listing this
            is a UI change if the owner wants it back. */''}
-      <div style="margin-top:14px"><button class="btn" id="padd2">Add product</button></div></div>`:''}
-    <div class="card"><b>Your products</b><div id="ilist" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:5})}</div></div></div>`;
+      <div style="margin-top:16px" class="row"><button class="btn" id="padd2">Save product</button><button class="btn ghost sm" id="cancelProductForm">Cancel</button></div></div>`:''}
+    <div class="card"><div class="v150-soft-head"><b>Products catalogue</b><p>Active products can be selected during checkout.</p></div><div id="ilist" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:5})}</div></div>`;
   /* V191 (owner: "how to edit and delete pricing or edit information etc"). Products could only
      be created — a mistyped price or name was permanent, which matters more now that a whole
      café menu lives here. Editing never rewrites history: every sale carries its own snapshot.
@@ -29038,11 +29086,21 @@ async function inventoryPage(){
      reference the row; disabling removes it from Record sale and the catalogue while leaving
      every reference and every past receipt intact. */
   let editingProductId=null;
+  /* nestly_v613: the dialog is rebuilt on every render, so the previous activation is retired and
+     a fresh one taken — the same lifecycle servicesPage uses for #svcEditModalV584. */
+  let closeProductDialogV613=null;
   function bindProductEditors(){
+    const dialogV613=$('prodEditModalV613');
+    if(dialogV613){
+      closeProductDialogV613=CUI.activateDialog(dialogV613,{
+        onClose:()=>{if(editingProductId){editingProductId=null;loadInv()}},
+        initialFocus:'#prodEditName'});
+    }else closeProductDialogV613=null;
     document.querySelectorAll('[data-prod-edit]').forEach(b=>b.onclick=()=>{
       editingProductId=b.dataset.prodEdit;loadInv();
     });
     document.querySelectorAll('[data-prod-cancel]').forEach(b=>b.onclick=()=>{
+      if(closeProductDialogV613)return closeProductDialogV613();
       editingProductId=null;loadInv();
     });
     document.querySelectorAll('[data-prod-toggle]').forEach(b=>b.onclick=async()=>{
@@ -29063,37 +29121,69 @@ async function inventoryPage(){
         .update({name,sku,retail_price_cents:price}).eq('id',id);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
       if(error){if(status)status.textContent=ownerErrorText(error);return}
-      editingProductId=null;toast('Product updated');loadInv();
+      editingProductId=null;
+      if(closeProductDialogV613){const close=closeProductDialogV613;closeProductDialogV613=null;close()}
+      toast('Product updated');loadInv();
     });
   }
   async function loadInv(){
-    const [productsResult]=await Promise.all([
-      sb.from('products').select('*').eq('business_id',S.biz.id).order('name')]);
+    /* nestly_v613: the catalogue photo comes from the same v158 asset store the Services page
+       reads, joined on (kind,entity) exactly as servicesPage does. Only an owner may upload, so
+       only an owner pays for the lookup — a failed read drops the pictures, never the list. */
+    const [productsResult,mediaMap]=await Promise.all([
+      sb.from('products').select('*').eq('business_id',S.biz.id).order('name'),
+      canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map())]);
     if(!isCurrent())return;
     if(productsResult.error){
       $('ilist').innerHTML=`<div class="err">Products could not be loaded. <button class="btn ghost sm" id="inventoryRetry">Retry</button></div>`;
       $('inventoryRetry').onclick=loadInv;return;
     }
-    const pr=productsResult.data;
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th></th></tr></thead><tbody>
-      ${pr.map(p=>{return `<tr><td data-label="Product"><b>${esc(p.name)}</b></td><td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
+    const pr=(productsResult.data||[]).map(product=>{
+      const asset=mediaMap.get(catalogueMediaCacheKeyV158('product',product.id));
+      return {...product,image_url:catalogueImageUrlV158(asset)||product.image_url||''};
+    });
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products catalogue"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th>Status</th><th></th></tr></thead><tbody>
+      ${pr.map(p=>{
+        const image=catalogueImageUrlV158(p);
+        const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'product',entityId:p.id,label:image?'Change photo':'Attach photo'}):'';
+        return `<tr><td data-label="Product"><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('inventory',{size:20})}</span>`}<div><b data-merchant-content>${esc(p.name)}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td>
+      <td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
       <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td>
-      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}">${p.active?'Turn off':'Turn on'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>${canWrite&&editingProductId===p.id?`<tr><td colspan="7"><div class="v150-soft-head"><b>Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
-        <div class="field-grid">
-          <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
-          <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>
-          <div><label for="prodEditPrice">Sell for (${S.biz.currency||'SGD'})</label><input id="prodEditPrice" type="number" min="0" step="0.01" value="${((p.retail_price_cents||0)/100).toFixed(2)}"></div>
-        </div>
-        <div class="row" style="margin-top:12px"><button class="btn sm" data-prod-save="${p.id}">Save changes</button><button class="btn ghost sm" data-prod-cancel="1">Cancel</button><span class="muted small" id="prodEditStatus" role="status" aria-live="polite"></span></div></td></tr>`:''}`}).join('')}</tbody></table></div>`
-      :`<div class="empty"><div class="big">📦</div>No products yet. Add what you sell — for example chicken rice at ${money(500)}.</div>`;
+      <td data-label="Status"><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span></td>
+      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="svc-toggle-icon-v584${p.active?'':' is-off'}" data-workspace-i18n data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}" title="${p.active?'Switch this product off':'Switch this product on'}" aria-label="${p.active?'Switch this product off':'Switch this product on'}">${p.active?'✕':'✓'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+      }).join('')}</tbody></table></div>`
+      :CUI.emptyState({iconName:'inventory',title:'No products yet',body:`Add what you sell — for example chicken rice at ${money(500)}.`});
+    /* nestly_v613: the editor is a dialog, exactly as the service editor has been since v584.
+       Rendered after the table rather than inside it, because a <tr> that expands into a form
+       pushed the row you were editing off the top of a long catalogue. Every id and every
+       data-prod-* hook the save/cancel handlers read is unchanged. */
+    const editingProductRowV613=canWrite&&editingProductId?(pr||[]).find(row=>row.id===editingProductId):null;
+    if(editingProductRowV613){
+      const p=editingProductRowV613;
+      $('ilist').insertAdjacentHTML('beforeend',`<div class="modal" id="prodEditModalV613" role="dialog" aria-modal="true" aria-labelledby="prodEditTitleV613" tabindex="-1">
+        <section class="modal-card" style="max-width:620px">
+          <div class="v150-soft-head"><b id="prodEditTitleV613">Edit product</b><p>Correct anything typed wrongly. Past sales keep the price they were sold at.</p></div>
+          <div class="field-grid">
+            <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
+            <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>
+            <div><label for="prodEditPrice">Sell for (${S.biz.currency||'SGD'})</label><input id="prodEditPrice" type="number" min="0" step="0.01" value="${((p.retail_price_cents||0)/100).toFixed(2)}"></div>
+          </div>
+          <div class="row" style="margin-top:14px"><button class="btn ghost sm" data-prod-cancel="1">Cancel</button><span class="muted small" id="prodEditStatus" role="status" aria-live="polite"></span><span class="spacer"></span><button class="btn sm" data-prod-save="${p.id}">Save changes</button></div>
+        </section></div>`);
+    }
+    if(canUploadCatalogueMedia)bindCataloguePhotoUploadsV158({onSaved:()=>loadInv()});
     bindProductEditors();
   }
   if(canWrite)$('padd2').onclick=async()=>{
     if($('pn2').value.trim().length<2) return toast('Name required');
     const {error}=await sb.from('products').insert({business_id:S.biz.id,name:$('pn2').value.trim(),
       sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
-    if(error) return fail(error);toast('Product added');$('pn2').value='';$('pp2').value='';loadInv();
+    if(error) return fail(error);toast('Product added');$('pn2').value='';$('ps2').value='';$('pp2').value='';
+    if($('productFormCard'))$('productFormCard').style.display='none';
+    loadInv();
   };
+  if(canWrite&&$('openProductForm'))$('openProductForm').onclick=()=>{$('productFormCard').style.display='block';$('pn2').focus()};
+  if(canWrite&&$('cancelProductForm'))$('cancelProductForm').onclick=()=>{$('productFormCard').style.display='none'};
   loadInv();
 }
 
@@ -29128,7 +29218,10 @@ async function packagesPage(options){
   const canWrite=canWriteModule('packages');
   routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
   const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult]=await Promise.all([
-    fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).order('created_at',{ascending:false}).order('id')),
+    /* nestly_v613: a one-off belongs to one customer, so it is not part of the catalogue this
+       page manages — editing, renaming, retiring or re-pricing it would be meaningless once the
+       single customer it exists for has bought it. */
+    fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).is('bespoke_for_client',null).order('created_at',{ascending:false}).order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,duration_min,price_cents,active',{count:'exact'}).eq('business_id',S.biz.id).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
@@ -29141,6 +29234,12 @@ async function packagesPage(options){
     $('packagesRetry').onclick=packagesPage;return;
   }
   const plans=plansResult.data,sv=servicesResult.data,packageBranches=branchesResult.data||[];
+  /* nestly_v613: the name of the branch a used session will be recorded against, resolved from
+     the top bar exactly as usePkg resolves the id, so the label and the write can never differ. */
+  const packageBranchNameForUseV613=()=>{
+    const id=reportingOperationalBranchIdV155(packageBranches);
+    return id?(packageBranches.find(branch=>branch.id===id)?.name||''):'';
+  };
   const packagePurchaseCount=(purchasesResult?.data||[]).reduce((tally,row)=>{
     if(row?.plan_id)tally[row.plan_id]=(tally[row.plan_id]||0)+1;
     return tally;
@@ -29159,10 +29258,17 @@ async function packagesPage(options){
       ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
       :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
   };
-  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>${packagesViewV584==='customers'?'Customer packages':'Packages'}</h1><p class="muted small">${packagesViewV584==='customers'?'Find a customer and use one of their prepaid sessions.':'Manage prepaid sessions. Sell packages from Record sale.'}</p></div></div></div>
+  /* nestly_v613 (owner: "Products & Packages please follow Services format"). Services keeps its
+     Add behind a title-bar action and leads with the catalogue; Packages led with a permanently
+     open create form, so the list of what you already sell was below the fold on a page whose job
+     is to show it. Same form, same ids, same writers — it is folded now, and the list below it is
+     the same table shape Services uses. Editing was already a dialog (v601), which is the other
+     half of the Services format. */
+  M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>${packagesViewV584==='customers'?'Customer packages':'Packages'}</h1><p>${packagesViewV584==='customers'?'Find a customer and use one of their prepaid sessions.':'Manage prepaid sessions. Sell packages from Record sale.'}</p></div></div>
+    <div class="v150-title-actions">${canWrite&&packagesViewV584==='plans'?CUI.action({id:'openPackageForm',label:'Add package',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only packages access</b><p class="muted small" style="margin-top:5px">You can review package plans and customer balances. Ask for Packages edit access to create or use sessions.</p></div>`}
     ${packagesViewV584==='plans'?`<section class="package-panel-v157" id="pkgPanelPlans" role="tabpanel">
-    <div class="card">${canWrite?`<b id="kFormTitle">Create a package</b>
+    ${canWrite?`<div class="card" id="packageFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b id="kFormTitle">Create a package</b><p>Save one prepaid package, then return to the catalogue.</p></div>
       <input id="kid" type="hidden">
       <label for="kn">Name</label><input id="kn" placeholder="e.g. 5x Facial">
       <div class="split"><div><label for="kp">Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
@@ -29177,30 +29283,49 @@ async function packagesPage(options){
       <div class="row" style="gap:8px;align-items:center"><input id="kx" type="number" min="1" max="3650" step="1" inputmode="numeric" placeholder="e.g. 90" style="max-width:140px"><span class="muted small">days</span></div>
       <p class="muted small" style="margin-top:4px">Days a customer has to use every session after they buy. Leave blank and the package never expires. The deadline is fixed at purchase, so editing this later only changes packages sold from the new version onwards.</p>
       <div class="permission-banner" id="kDiscount" style="margin-top:14px"><b>Choose a service to calculate value</b><p class="muted small" style="margin-top:4px">Peekaa compares the package price with the exact service price × sessions.</p></div>
-      <div class="row" style="margin-top:14px"><button class="btn" id="kadd">Save package</button><button class="btn ghost" id="kcancel" style="display:none">Cancel edit</button></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="kadd">Save package</button><button class="btn ghost sm" id="kcancel">Cancel</button></div>
       ${S.myRole==='owner'&&preferencesAvailable?`<hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
         <label style="display:flex;align-items:flex-start;gap:10px;color:var(--ink);cursor:pointer">
           <input id="kPoints" type="checkbox" style="width:auto;margin-top:3px" ${packageEarnsPoints?'checked':''}>
           <span><b>Make package purchases eligible for loyalty points</b><small class="muted" style="display:block;margin-top:3px">Eligibility is evaluated once on the package price; points are earned only when an active published loyalty programme applies. Using sessions never earns points again.</small></span>
-        </label>`:S.myRole==='owner'?`<div class="permission-banner" style="margin-top:20px"><b>Package points setting unavailable</b><p class="muted small" style="margin-top:4px">Peekaa cannot confirm whether package purchases earn points. The setting control is hidden; completed sale receipts remain authoritative.</p><button class="btn ghost sm" id="packagePreferencesRetry" style="margin-top:8px">Try again</button></div>`:''}`:''}
-      <div id="kplist" style="margin-top:16px">${(plans||[]).filter(p=>!p.retired_at).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
-        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''} · ${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</span>
-          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'}. Editing it changes what you sell from now on; they keep the price and sessions they paid for.`:'Not sold to anyone yet.'}</div></div>
-        <span class="spacer"></span>
+        </label>`:S.myRole==='owner'?`<div class="permission-banner" style="margin-top:20px"><b>Package points setting unavailable</b><p class="muted small" style="margin-top:4px">Peekaa cannot confirm whether package purchases earn points. The setting control is hidden; completed sale receipts remain authoritative.</p><button class="btn ghost sm" id="packagePreferencesRetry" style="margin-top:8px">Try again</button></div>`:''}</div>`:''}
+      <div class="card"><div class="v150-soft-head"><b>Packages catalogue</b><p>Active packages can be sold at Record sale.</p></div>
+      <div id="kplist" style="margin-top:8px">${(plans||[]).filter(p=>!p.retired_at).length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Packages catalogue"><table class="cui-table" data-responsive="true"><thead><tr><th>Package</th><th class="num">Price</th><th class="num">Sessions</th><th>Status</th><th></th></tr></thead><tbody>${(plans||[]).filter(p=>!p.retired_at).map(p=>`<tr>
+        <td data-label="Package"><b data-merchant-content>${esc(p.name)}</b>
+          <div class="muted small">${p.service_id?`${esc(serviceDisplayName(serviceById[p.service_id]||{}))} · `:''}${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</div>
+          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'}. Editing it changes what you sell from now on; they keep the price and sessions they paid for.`:'Not sold to anyone yet.'}</div></td>
+        <td class="num" data-label="Price">${money(p.price_cents)}</td>
+        <td class="num" data-label="Sessions">${p.sessions}</td>
+        <td data-label="Status">
         ${/* nestly_v601 (owner photo 2: "Since there's on/off allow user to on/off as well"). The
              pill was a label pretending to be a control. It is a button now, and it calls a writer
              that flips the flag WITHOUT superseding the plan — routing it through the save would
              mint a version every time somebody paused a package. */''}
         ${canWrite?`<button type="button" class="pill ${p.active?'on':'off'}" data-package-active="${p.id}" data-package-next="${p.active?'off':'on'}" aria-pressed="${p.active?'true':'false'}" data-workspace-i18n title="${p.active?'Switch this package off':'Switch this package on'}">${statusOnOff(p.active)}</button>`
-          :`<span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>`}
-        ${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-edit-package="${p.id}">Edit</button>${packagePurchaseCount[p.id]?'':`<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button>`}<button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}" data-package-sold="${Number(packagePurchaseCount[p.id]||0)}">Delete</button></div>`:''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
+          :`<span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>`}</td>
+        <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-edit-package="${p.id}">Edit</button>${packagePurchaseCount[p.id]?'':`<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button>`}<button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}" data-package-sold="${Number(packagePurchaseCount[p.id]||0)}">Delete</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</tbody></table></div>`:CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
     </section>`:''}
     ${packagesViewV584==='customers'?`<section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel">
       <div class="card"><div class="row"><div><b>Customer packages</b><p class="muted small" style="margin-top:5px">Search by customer name or phone, then use sessions from the matching customer record.</p></div></div>
       <div class="package-customer-tools-v157">
-        ${canWrite?`<div><label for="kUseBranch">Branch recording used session</label><select id="kUseBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select></div>`:''}
+        ${/* nestly_v613 (owner photo: the branch select struck through, an arrow to the VIEWING
+             switcher in the top bar — "here have already, based on this"). Two branch controls on
+             one screen could disagree, and in the owner's own screenshot they did: the header read
+             "Kopitiam 2" while this select still said "Cubbly · Orchard", so a session taken from
+             that list would have been recorded against a branch nobody had chosen. The header is
+             the single control now; reportingOperationalBranchIdV155 is the SAME resolver the rest
+             of the workspace uses to turn it into one operational branch, including the
+             consolidated case. The branch is still shown, because a write needs to say where it
+             lands — it is just no longer a second thing to set. */''}
+        ${canWrite?`<div><span class="muted small">Session recorded at</span><p style="margin:2px 0 0;font-weight:600" data-package-use-branch-v613>${esc(packageBranchNameForUseV613()||'No active branch')}</p></div>`:''}
         <div><label for="kCustomerSearch">Search customer</label><input id="kCustomerSearch" type="search" placeholder="Name or phone"></div>
         <button class="btn ghost sm" id="kCustomerSearchClear" type="button">Clear</button>
+        ${/* nestly_v613 (owner photo, written across the top of this page: "some customer need
+             customise package which is not in package list" -> "+ Customise Package"). It sits
+             with the other actions on the page it belongs to, not in the Packages catalogue,
+             because what it makes is not a catalogue entry — it is one customer's entitlement,
+             sold once and never offered to anyone else. */''}
+        ${canWrite?`<button class="btn sm" id="kBespokeOpenV613" type="button">+ Customise package</button>`:''}
       </div>
       ${/* nestly_v612 (owner: "i need subtab for (all/active/used up) within the module"). Six rows
            in the photo, five of them used up — the one package a member of staff can actually take
@@ -29215,8 +29340,21 @@ async function packagesPage(options){
   if(canWrite&&packagesViewV584==='plans'){
     const resetPackageForm=()=>{
       $('kid').value='';$('kn').value='';$('kp').value='';$('ks').value='5';$('kv').value='';$('kx').value='';
-      $('kFormTitle').textContent='Create a package';$('kadd').textContent='Save package';$('kcancel').style.display='none';renderPackageDiscount();
+      $('kFormTitle').textContent='Create a package';$('kadd').textContent='Save package';renderPackageDiscount();
     };
+    /* nestly_v613: the form is folded, so Cancel closes it rather than only clearing it — and
+       Add always opens it empty. Editing does not come through here at all any more (v601 gave it
+       its own dialog), so there is no half-filled state for Add to inherit. */
+    const showPackageFormV613=()=>{
+      resetPackageForm();
+      if($('packageFormCard'))$('packageFormCard').style.display='block';
+      $('kn').focus();
+    };
+    const hidePackageFormV613=()=>{
+      resetPackageForm();
+      if($('packageFormCard'))$('packageFormCard').style.display='none';
+    };
+    if($('openPackageForm'))$('openPackageForm').onclick=showPackageFormV613;
     /* nestly_v593: one reader for the field, used by both the save call and the pre-save check,
        so "what counts as blank" cannot differ between validating it and sending it. */
     const packageExpiryDaysV593=()=>{
@@ -29240,7 +29378,7 @@ async function packagesPage(options){
         <p class="muted small" style="margin-top:4px">This list value is frozen with the package so future service-price changes do not rewrite what was sold.</p>`;
     };
     $('kv').onchange=renderPackageDiscount;$('ks').oninput=renderPackageDiscount;$('kp').oninput=renderPackageDiscount;
-    $('kcancel').onclick=resetPackageForm;
+    $('kcancel').onclick=hidePackageFormV613;
     /* V193 (owner: "i should be able to edit or delete"). A package version is frozen so that a
        customer who bought it keeps the price, sessions and service they paid for — but that
        protection only means anything once somebody HAS bought it. Both of this firm's versions
@@ -29386,7 +29524,8 @@ async function packagesPage(options){
       if(error)return fail(error);
       toast($('kid').value
         ?workspaceTemplateTextV97('packageVersionCreated',{version:Number(data?.version_no||0)})
-        :'Package created');refreshPackagesV584();
+        :'Package created');
+      hidePackageFormV613();refreshPackagesV584();
     };
     if($('kPoints'))$('kPoints').onchange=async()=>{
       const checkbox=$('kPoints');checkbox.disabled=true;
@@ -29527,11 +29666,101 @@ async function packagesPage(options){
 	  if(packageSearch)packageSearch.oninput=()=>{packagePage=0;renderPackages()};
 	  const packageSearchClear=$('kCustomerSearchClear');
 	  if(packageSearchClear)packageSearchClear.onclick=()=>{if(packageSearch)packageSearch.value='';packagePage=0;renderPackages();packageSearch?.focus()};
+  /* nestly_v613. The one-off. It asks for exactly what a package IS — a name, a price, a number
+     of sessions, optionally the service it is for and optionally how long the customer has to use
+     it — plus the customer it is for, because that is the whole point of it. The branch comes from
+     the top bar, like every other write on this page.
+     The customer is identified by phone through lookup_client_by_phone, the same RPC the till
+     uses, rather than by listing customers into a picker: this page can already only see people
+     who hold packages, and a dropdown of every customer in the firm would be a new disclosure
+     surface for a screen that does not need one. */
+  const openBespokePackageV613=()=>{
+    const branchId=reportingOperationalBranchIdV155(packageBranches);
+    if(!branchId)return toast('No active branch is available. Choose one at the top.');
+    const branchName=packageBranchNameForUseV613();
+    const modal=document.createElement('div');
+    modal.className='modal';modal.tabIndex=-1;
+    modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+    modal.setAttribute('aria-labelledby','kBespokeTitleV613');
+    modal.innerHTML=`<section class="modal-card" style="max-width:620px">
+      <div class="v150-soft-head"><b id="kBespokeTitleV613">Customise a package</b><p>Built for one customer and sold to them now. It is not added to the packages catalogue and nobody else can buy it.</p></div>
+      <label for="kBespokePhoneV613">Customer mobile number</label>
+      <div class="row" style="gap:8px"><input id="kBespokePhoneV613" type="tel" inputmode="numeric" autocomplete="off" placeholder="8123 4567" style="flex:1"><button class="btn ghost sm" type="button" id="kBespokeFindV613">Find</button></div>
+      <p class="muted small" id="kBespokeCustomerV613" role="status" aria-live="polite" style="margin-top:6px">Find the customer this package is for.</p>
+      <div class="field-grid" style="margin-top:12px">
+        <div><label for="kBespokeNameV613">Package name</label><input id="kBespokeNameV613" maxlength="120" placeholder="e.g. 3x facial + 1 spa"></div>
+        <div><label for="kBespokeSessionsV613">Sessions</label><input id="kBespokeSessionsV613" type="number" min="1" max="1000" step="1" inputmode="numeric" value="1"></div>
+        <div><label for="kBespokePriceV613">Price (${esc(S.biz.currency||'SGD')})</label><input id="kBespokePriceV613" type="number" min="0" step="0.01" inputmode="decimal"></div>
+        <div><label for="kBespokeExpiryV613">Expires after purchase <span class="muted">(optional)</span></label><input id="kBespokeExpiryV613" type="number" min="1" max="3650" step="1" inputmode="numeric" placeholder="days"></div>
+      </div>
+      <label for="kBespokeServiceV613">Exact service <span class="muted">(optional)</span></label>
+      <select id="kBespokeServiceV613"><option value="">— no single service, this is a mix —</option>${(sv||[]).filter(service=>service.active).map(service=>`<option value="${esc(service.id)}">${esc(serviceDisplayName(service))} · ${money(service.price_cents)}</option>`).join('')}</select>
+      <p class="muted small" style="margin-top:6px">Recorded at ${esc(branchName||'this branch')}. The customer pays now, exactly as they would for a catalogue package — points, revenue and the receipt all behave the same way.</p>
+      <div id="kBespokeErrorV613" role="alert"></div>
+      <div class="row" style="margin-top:14px"><button class="btn ghost sm" type="button" id="kBespokeCancelV613">Cancel</button><span class="spacer"></span><button class="btn" type="button" id="kBespokeSellV613" disabled>Sell package</button></div>
+    </section>`;
+    document.body.appendChild(modal);
+    let deactivate=null,client=null;
+    const close=()=>{if(deactivate){const done=deactivate;deactivate=null;done({restoreFocus:true})}else modal.remove()};
+    deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#kBespokePhoneV613'});
+    const errorHost=()=>document.getElementById('kBespokeErrorV613');
+    const showError=message=>{const host=errorHost();if(host)host.innerHTML=message?`<div class="err">${esc(message)}</div>`:''};
+    document.getElementById('kBespokeCancelV613').onclick=close;
+    document.getElementById('kBespokeFindV613').onclick=async()=>{
+      const phone=String(document.getElementById('kBespokePhoneV613').value||'').trim();
+      client=null;document.getElementById('kBespokeSellV613').disabled=true;showError('');
+      if(!phone)return showError('Enter the customer mobile number.');
+      const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:phone});
+      if(!modal.isConnected)return;
+      if(error)return showError(ownerErrorText(error));
+      if(data?.status!=='found'){
+        document.getElementById('kBespokeCustomerV613').textContent='Find the customer this package is for.';
+        /* A one-off is sold to somebody who is already a customer. Creating one here would be a
+           second, quieter way into the customer list with none of that screen's consent copy. */
+        return showError(data?.status==='not_found'
+          ?'No customer with that number. Add them from Customers or Record sale first.'
+          :(data?.message||'Enter a valid Singapore number.'));
+      }
+      client={id:data.client_id,name:data.full_name||'This customer'};
+      document.getElementById('kBespokeCustomerV613').textContent=workspaceTemplateTextV97('bespokePackageFor',{name:client.name});
+      document.getElementById('kBespokeSellV613').disabled=false;
+      document.getElementById('kBespokeNameV613').focus();
+    };
+    document.getElementById('kBespokeSellV613').onclick=async()=>{
+      if(!client)return showError('Find the customer first.');
+      const name=String(document.getElementById('kBespokeNameV613').value||'').trim();
+      const sessions=parseInt(document.getElementById('kBespokeSessionsV613').value||'0',10);
+      const priceRaw=String(document.getElementById('kBespokePriceV613').value||'').trim();
+      const price=Math.round(parseFloat(priceRaw||'0')*100);
+      const expiryRaw=String(document.getElementById('kBespokeExpiryV613').value||'').trim();
+      const expiry=expiryRaw===''?null:Number(expiryRaw);
+      if(name.length<2)return showError('Give the package a name the customer will recognise.');
+      if(!(sessions>=1&&sessions<=1000))return showError('Enter between 1 and 1000 sessions.');
+      if(!priceRaw||!(price>=0))return showError('Enter the price the customer is paying.');
+      if(expiry!==null&&!(expiry>=1&&expiry<=3650))
+        return showError('Expiry must be between 1 and 3650 days, or left blank for no expiry.');
+      const button=document.getElementById('kBespokeSellV613');
+      CUI.setButtonBusy(button,{busy:true,label:'Selling…'});
+      /* A fresh key per attempt, so a genuine retry after a failure is a new sale and a
+         double-tap on the SAME attempt is not — the server dedupes on this key. */
+      const {error}=await sb.rpc('sell_bespoke_package_v613',{
+        p_business:S.biz.id,p_client:client.id,p_name:name,
+        p_price_cents:price,p_sessions:sessions,
+        p_service:document.getElementById('kBespokeServiceV613').value||null,
+        p_expiry_days:expiry,p_branch:branchId,p_idempotency_key:crypto.randomUUID()});
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      if(error)return showError(humanErrorV295(error,'That package could not be sold.'));
+      close();toast('Package sold');refreshPackagesV584();
+    };
+  };
+  if(canWrite&&$('kBespokeOpenV613'))$('kBespokeOpenV613').onclick=openBespokePackageV613;
   const packageSessionIdem=new Map();
   window.usePkg=async(id)=>{
     if(!canWrite)return;
-    const branchId=$('kUseBranch')?.value;
-    if(!branchId)return toast('Choose the branch using this session');
+    /* nestly_v613: resolved at click time, not at render, so a branch switched in the top bar
+       while this list is open is honoured by the very next session taken. */
+    const branchId=reportingOperationalBranchIdV155(packageBranches);
+    if(!branchId)return toast('No active branch is available. Choose one at the top.');
     const attempt=packageUseAttemptKeyV102(packageSessionIdem,id,branchId);
     const {data,error}=await sb.rpc('use_package_session_v102',{
       p_business:S.biz.id,p_client_package:id,p_branch:branchId,
@@ -33044,6 +33273,25 @@ async function settingsPage(){
        sub:'On the rota and creditable for sales, with no login. No seat is billed.',
        match:row=>!['owner','manager'].includes(row.role)&&!row.user_id}
     ];
+    /* nestly_v613 (owner photo: Kelvin and Devi ringed, an arrow to the VIEWING switcher reading
+       "Kopitiam 2" — "this two is not under this branch, why show?"). The roster ignored the top
+       bar entirely, so every teammate in the firm appeared under every branch. It follows the same
+       control every other page does now.
+       Two rows are deliberately NOT filtered out:
+       • owners and managers, because they are all-branches by definition — the Branch cell has
+         said exactly that since v584, and hiding them would empty the first group on every
+         branch;
+       • a teammate assigned to NO branch, because an unassigned row belongs to no branch and
+         filtering on membership would make it unreachable from every branch view — the one state
+         where the owner most needs to see it. Their cell already reads "Unassigned".
+       "All branches" (selectedBranchId === null) shows the whole team, as it always has. */
+    const staffVisibleAtBranchV613=row=>{
+      if(!selectedBranchId)return true;
+      if(['owner','manager'].includes(row.role))return true;
+      const assigned=staffBranchAssignedV577.get(row.id);
+      if(!assigned||!assigned.size)return true;
+      return assigned.has(selectedBranchId);
+    };
     const staffRowV209=s=>{
       /* nestly_v584: the "Inherits enabled modules" / "N explicit modules" pill is struck out on
          the owner's photo 15 along with the access one. What a teammate can reach is now read (and
@@ -33093,14 +33341,22 @@ async function settingsPage(){
          asked ("where do I activate it and select the modules?"). The words differ by state
          because the action does: a teammate with no login needs access GRANTED, one who already
          signs in needs their modules changed. */
-      const appAccessDoorV595=(mark,label,cta)=>`<span class="staff-access-door-v595" data-workspace-i18n data-staff-access-open-v595 title="${esc(label)} — open app access &amp; modules">${mark}<span class="staff-access-cta-v595">${esc(cta)}</span></span>`;
+      /* nestly_v613 (owner photo 14: "Modules" and both "Give access" links struck out, marked
+         "delete", with arrows from them back to the tick and the cross above). v595 added those
+         words because a bare badge had no affordance; the owner's ruling is that the badge itself
+         IS the door — "clicking on the X or the app access icon opens up the give access or edit
+         modules function" — which is exactly what this handler already does. So the words go and
+         the door does not: same span, same data-staff-access-open-v595 contract, same destination.
+         The affordance moves into CSS (a pointer and a hover ring on the badge) and into the
+         title/aria-label, which still say in words what the badge opens. */
+      const appAccessDoorV595=(mark,label)=>`<span class="staff-access-door-v595" data-workspace-i18n data-staff-access-open-v595 title="${esc(label)} — open app access &amp; modules" aria-label="${esc(label)} — open app access and modules for ${esc(s.full_name||'this teammate')}">${mark}</span>`;
       const appAccessCellV584=accessStateV569==='rejected'
-        ?appAccessDoorV595('<span class="staff-access-mark-v584 is-no" aria-label="App access declined">\u2715</span>','App access declined','Give access')
+        ?appAccessDoorV595('<span class="staff-access-mark-v584 is-no" aria-label="App access declined">\u2715</span>','App access declined')
         /* A pending row is left exactly as it was: it already carries Approve/Decline on the row
            itself (v569), and a third call to action beside them would compete with the decision. */
         :accessPendingV569?'<span class="pill warn">Waiting</span>'
-        :s.user_id?appAccessDoorV595('<span class="staff-access-mark-v584 is-yes" aria-label="Can sign in">\u2713</span>','Can sign in','Modules')
-        :appAccessDoorV595('<span class="staff-access-mark-v584 is-no" aria-label="No app access">\u2715</span>','No app access','Give access');
+        :s.user_id?appAccessDoorV595('<span class="staff-access-mark-v584 is-yes" aria-label="Can sign in">\u2713</span>','Can sign in')
+        :appAccessDoorV595('<span class="staff-access-mark-v584 is-no" aria-label="No app access">\u2715</span>','No app access');
       const pct=bps=>bps===null||bps===undefined?'—':`${(Number(bps)/100).toFixed(Number(bps)%100?2:0)}%`;
       const commissionSummary=s.commission_service_bps==null&&s.commission_product_bps==null
         ?'<span class="muted small">Commission not set</span>'
@@ -33164,9 +33420,11 @@ async function settingsPage(){
       </div>`;
     };
     const rows=st||[];
-    $('team').innerHTML=rows.length
+    const visibleRowsV613=rows.filter(staffVisibleAtBranchV613);
+    const hiddenByBranchV613=rows.length-visibleRowsV613.length;
+    $('team').innerHTML=visibleRowsV613.length
       ?staffGroupsV209.map(group=>{
-          const members=rows.filter(group.match);
+          const members=visibleRowsV613.filter(group.match);
           if(!members.length)return '';
           return `<section class="staff-group-v209">
             <div class="staff-group-head-v209">
@@ -33176,8 +33434,10 @@ async function settingsPage(){
             <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>Position</span><span>Commission</span><span>App access</span><span></span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
-        }).join('')
-      :'<p class="muted small">No teammates yet — add one above, or invite one below.</p>';
+        }).join('')+(hiddenByBranchV613?`<p class="muted small" style="margin-top:12px">${hiddenByBranchV613} teammate${hiddenByBranchV613===1?'':'s'} not assigned to this branch ${hiddenByBranchV613===1?'is':'are'} hidden. Choose All branches at the top to see everyone.</p>`:'')
+      :rows.length
+        ? `<p class="muted small">No teammates are assigned to this branch. Choose All branches at the top to see the rest of the team.</p>`
+        :'<p class="muted small">No teammates yet — add one above, or invite one below.</p>';
     /* nestly_v584: activate the editor dialog and its two tabs. Closing takes the same path the
        row's Edit toggle takes, so there is one place that decides which profile is open. */
     const staffDialogV584=$('staffEditModalV584');

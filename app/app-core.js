@@ -7031,6 +7031,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   tierBenefitBirthdayOnly:Object.freeze({en:'{item} can only be given in the customer\'s birthday month.','zh-CN':'{item} 只能在顾客生日当月提供。',ms:'{item} hanya boleh diberi dalam bulan hari jadi pelanggan.'}),
   tierBenefitBirthdayUnknown:Object.freeze({en:'Add this customer\'s date of birth before giving {item}.','zh-CN':'请先填写该顾客的出生日期，才能提供 {item}。',ms:'Tambah tarikh lahir pelanggan ini sebelum memberi {item}.'}),
   sessionUsed:Object.freeze({en:'Session used — {remaining} left. Visit counted for retention ✓','zh-CN':'已使用一次——剩余 {remaining} 次。此次到访已计入回流统计 ✓',ms:'Sesi digunakan — baki {remaining}. Lawatan dikira untuk pengekalan ✓'}),
+  /* nestly_v613: both of these print a runtime value into a sentence, so they are templates
+     rather than interpolation — the v97 rule the workspace has followed since it shipped. */
+  bespokePackageFor:Object.freeze({en:'For {name}','zh-CN':'为 {name}',ms:'Untuk {name}'}),
+  serviceBranchesFailed:Object.freeze({en:'The service was saved, but its branches were not: {error}','zh-CN':'服务已保存，但其分店未保存：{error}',ms:'Perkhidmatan disimpan, tetapi cawangannya tidak: {error}'}),
   catalogueEnabled:Object.freeze({en:'Catalogue-first checkout enabled','zh-CN':'已启用目录优先结账',ms:'Pembayaran katalog dahulu diaktifkan'}),
   catalogueDisabled:Object.freeze({en:'Catalogue-first checkout disabled','zh-CN':'已停用目录优先结账',ms:'Pembayaran katalog dahulu dinyahaktifkan'}),
   inviteCreated:Object.freeze({en:'Invite created: {code} — copied','zh-CN':'邀请已创建：{code}——已复制',ms:'Jemputan dicipta: {code} — disalin'}),
@@ -7150,6 +7154,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'giftCardLoaded','sessionUsed','welcomeOfferGiven','bringbackVoucherGiven',
   'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned',
   'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
+  'bespokePackageFor','serviceBranchesFailed',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
   'customersImported','customersImportPreview',
   /* nestly_v603: packageHistory and packageHistoryWithOlder retired with the shared "Recent
@@ -7221,6 +7226,81 @@ const workspaceTemplateInnerHtmlV97=(key,values={},locale=workspaceLocale)=>{
   return html+esc(template.slice(cursor));
 };
 const workspaceTemplateHtmlV97=(key,values={})=>`<span data-workspace-template="${esc(key)}">${workspaceTemplateInnerHtmlV97(key,values)}</span>`;
+/* V548 — "Customers to bring back", the dashboard's attention list.
+   The strategy ruling (2026-08-26) is that Peekaa's first screen must answer the question no
+   competitor can: WHO is overdue against their own visit rhythm, and how much monthly revenue is
+   fading with them. The server (get_attention_list_v548) owns every judgement — median inter-visit
+   cadence, due/overdue/slipping bucketing, monthly value — this card only prints it. Rows carry
+   client names and phones, so the RPC is gated on the clients module scope and the card simply
+   stays absent for staff who cannot open Customers (same predicate, one server authority).
+   The per-row action is the staff-tap wa.me draft (the V330 pattern): outbound sending does not
+   exist yet platform-wide, and a button that opens the owner's own WhatsApp with a ready message
+   works today. When the WhatsApp engine lands, this button is what it replaces. */
+function attentionWhatsAppUrlV548(phone,name,businessName){
+  const digits=String(phone||'').replace(/\D/g,'');
+  const mobile=/^[89]\d{7}$/.test(digits)?`65${digits}`:/^65[89]\d{7}$/.test(digits)?digits:null;
+  if(!mobile)return null;
+  const first=String(name||'').trim().split(/\s+/)[0]||'';
+  const text=`Hi${first?` ${first}`:''}! It's ${String(businessName||'us').trim()} here — we haven't seen you in a while and we'd love to have you back. Come by this week!`;
+  return `https://wa.me/${mobile}?text=${encodeURIComponent(text)}`;
+}
+const ATTENTION_STATUS_V548={
+  due:{label:'Due back',tone:'#F0A35B'},
+  overdue:{label:'Overdue',tone:'#C24135'},
+  slipping:{label:'Slipping away',tone:'#8E2F26'}
+};
+/* nestly_v571 (owner ruling): this list left the Dashboard and now lives inside the Bring-back
+   module in Rewards Programme, where the vouchers it is arguing for are configured. The renderer
+   is unchanged — only the mount point and the staleness guard, which can no longer assume the
+   dashboard root. `host.isConnected` is the honest test: any re-render of the host page replaces
+   the node, so a late RPC cannot paint into a screen the owner has already left. */
+async function loadAttentionListV571(root,branchId=null,hostId='growBbAttentionV571'){
+  const host=root?.querySelector(`#${hostId}`);
+  if(!host)return;
+  host.innerHTML='';
+  if(S.myRole!=='owner'&&!canReadModule('clients'))return;
+  const {data,error}=await sb.rpc('get_attention_list_v548',{p_business:S.biz.id,p_branch:branchId,p_limit:8});
+  if(!host.isConnected)return;
+  if(error||!data)return;
+  const sum=data.summary||{};
+  const rows=Array.isArray(data.rows)?data.rows:[];
+  const fadingCount=(Number(sum.overdue)||0)+(Number(sum.slipping)||0);
+  const atRisk=Number(sum.monthly_at_risk_cents)||0;
+  const oneTime=Number(sum.one_time_count)||0;
+  /* A business with nothing to act on gets no card at all — an empty "attention" panel on the
+     first screen of the day would be noise, and a brand-new business would see it forever. */
+  if(!rows.length&&!oneTime)return;
+  const dayWord=n=>`${Number(n)||0}d`;
+  const attentionRowV548=r=>{
+    const st=ATTENTION_STATUS_V548[r.status]||ATTENTION_STATUS_V548.due;
+    const wa=attentionWhatsAppUrlV548(r.phone,r.full_name,S.biz?.name);
+    return `<li class="attention-row-v548" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line,#eee)">
+      <div style="flex:1;min-width:0">
+        <b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.full_name||'Customer')}</b>
+        <span class="muted small">Last visit ${dayWord(r.last_visit_days)} ago · usually every ~${esc(String(Math.round(Number(r.cadence_days)||0)))}d · ${esc(money(r.monthly_value_cents))}/mo</span>
+      </div>
+      <span class="pill" style="background:${st.tone}1A;color:${st.tone};font-weight:700;white-space:nowrap">${st.label}</span>
+      ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content data-attention-outreach="${esc(r.client_id)}" aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}
+    </li>`;
+  };
+  host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-top:12px">
+    <div class="cui-card-head">${CUI.icon('customers',{size:24})}<div><h2 id="dashboardAttentionTitleV548">Customers to bring back</h2><p>Each customer judged by their own visit rhythm, not a fixed rule.</p></div></div>
+    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${fadingCount} customer${fadingCount===1?'':'s'} overdue</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
+    <ul style="list-style:none;margin:8px 0 0;padding:0">${rows.map(attentionRowV548).join('')}</ul>
+    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${oneTime} customer${oneTime===1?'':'s'} visited once in the last year and never came back.</p>`:''}
+    <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/customers">Open Customers</a></div>
+  </section>`;
+  /* V550: a Message tap becomes evidence. The wa.me draft opens regardless; the record is
+     fire-and-forget (a failed write must never block the outreach itself), deduped server-side
+     to one row per customer per SG day, and it is what get_recovery_report_v550 attributes
+     "came back after being contacted" against. */
+  host.querySelectorAll('a[data-attention-outreach]').forEach(link=>{
+    link.addEventListener('click',()=>{
+      sb.rpc('record_attention_outreach_v550',{p_business:S.biz.id,p_client:link.dataset.attentionOutreach}).then(()=>{},()=>{});
+    });
+  });
+}
+
 /* ---------- customers ---------- */
 function normalizeSingaporeCustomerSearch(value){
   let digits=String(value||'').replace(/\D/g,'');

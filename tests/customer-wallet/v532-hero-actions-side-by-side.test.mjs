@@ -34,19 +34,17 @@ test('V532 a lone button still spans the row', () => {
     'a reward with no booking link must not leave half the row empty');
 });
 
-test('V532 genuinely narrow phones still stack', () => {
-  /* Walk back from the rule to the at-rule that encloses it, rather than trying to match a media
-     block with a regex — several 380px blocks exist and `[^}]*` cannot span the rules between. */
-  const needle = '.customer-business-summary-actions-v349{grid-template-columns:1fr!important}';
-  const at = css.indexOf(needle);
-  assert.notEqual(at, -1, 'the narrow-screen stack must still exist');
-  const before = css.slice(0, at);
-  let depth = 0, i = before.length - 1;
-  for (; i >= 0; i -= 1) {
-    if (before[i] === '}') depth += 1;
-    else if (before[i] === '{') { if (depth === 0) break; depth -= 1; }
-  }
-  const opener = before.slice(before.lastIndexOf('@', i), i);
-  assert.equal(opener, '@media(max-width:380px)',
-    `below 380px two columns really are too tight — that stack is deliberate and stays. Found it inside: ${opener}`);
+/* nestly_v613 (owner photo 3, Claim reward and Book now ringed together as one row — "i want this
+   format" — with the full-width Book now bar beneath them struck out). The phone the owner
+   photographed is narrower than 380px, and this media query was the only thing still stacking the
+   pair there, so the one screen the ruling was about was the one screen it did not reach. The rule
+   is gone. The width it was protecting is fine without it: at 375px the card's 335px of inner
+   width less the 10px gap gives each button 162px — wider than the 158px v532 itself measured and
+   accepted at 390px, and above the 150px v491 was guarding. */
+test('V613 the pair stays side by side at every width', () => {
+  assert.ok(!css.includes('.customer-business-summary-actions-v349{grid-template-columns:1fr!important}'),
+    'no media query may stack the hero actions any more');
+  assert.match(css, /\.customer-business-summary-actions-v349\{[^}]*grid-template-columns:1fr 1fr!important/,
+    'the two-column rule is what governs the row at every width');
 });
+

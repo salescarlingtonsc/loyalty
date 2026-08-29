@@ -64,11 +64,18 @@ test('nestly_v584 stock keeping is gone from the workspace, not merely folded aw
   assert.doesNotMatch(page, /pill no">low/);
   // What the page IS, is unchanged: add a product, see the list.
   assert.match(page, /id="padd2"/);
-  assert.match(page, /<b>Your products<\/b>/);
+  /* nestly_v613 (owner: "Products & Packages please follow Services format"). The list card wears
+     the Services heading grammar now — a v150-soft-head reading "Products catalogue" — instead of
+     a bare "Your products". The assertion follows the heading; what it is guarding (that the page
+     shows a product LIST, and shows it as a catalogue rather than a stock room) is unchanged. */
+  assert.match(page, /<b>Products catalogue<\/b>/);
 });
 
 test('V221 empty and error states speak about products', () => {
-  assert.match(page, /No products yet\. Add what you sell — for example chicken rice at/);
+  /* nestly_v613: the empty state moved to CUI.emptyState, the component Services uses, so the
+     sentence is split across a title and a body. Both halves are still asserted. */
+  assert.match(page, /title:'No products yet'/);
+  assert.match(page, /Add what you sell — for example chicken rice at/);
   assert.doesNotMatch(page, /that costs you/);
   assert.match(page, /Products could not be loaded/);
   assert.doesNotMatch(page, /Inventory could not be loaded/);

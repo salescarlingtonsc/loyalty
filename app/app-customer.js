@@ -1905,6 +1905,39 @@ function walletClockV580(value){
   if(Number.isNaN(at.getTime()))return '';
   return at.toLocaleString('en-SG',{timeZone:'Asia/Singapore',timeStyle:'short'});
 }
+/* nestly_v613. The booking detail sheet. Read-only: it opens no RPC and offers no action the row
+   did not already offer, so a mis-tap costs a Close. Same modal grammar as the reschedule sheet
+   below it (CUI.activateDialog, close on overlay, walletDate for the Asia/Singapore instant). */
+function openCustomerBookingDetailV613(payload){
+  let record=null;
+  try{record=JSON.parse(payload||'null')}catch{record=null}
+  if(!record)return;
+  const when=walletDate(record.starts_at,true)||walletDate(record.starts_at)||'';
+  const rows=[
+    ['Service',record.service],
+    ['When',when],
+    ['Branch',record.branch],
+    ['Address',record.address],
+    ['With',record.staff],
+    /* The raw status is a machine word ('no_show'); it is printed as words, never re-judged —
+       which tab the row sits on is decided upstream and this sheet does not second-guess it. */
+    ['Status',record.status?String(record.status).replaceAll('_',' '):''],
+    ['Note',record.note]
+  ].filter(([,value])=>String(value||'').trim());
+  const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','customerBookingDetailTitleV613');
+  modal.innerHTML=`<div class="modal-card"><div class="row"><h2 id="customerBookingDetailTitleV613" data-merchant-content>${esc(record.business||'Booking')}</h2><span class="spacer"></span><button class="btn ghost sm" id="customerBookingDetailCloseV613" aria-label="Close booking details">Close</button></div>
+    ${rows.length
+      ?`<dl class="customer-booking-detail-list-v613">${rows.map(([label,value])=>`<div><dt class="muted small">${esc(label)}</dt><dd data-merchant-content>${esc(value)}</dd></div>`).join('')}</dl>`
+      :'<p class="muted small" style="margin-top:8px">This booking has no further details recorded.</p>'}
+  </div>`;
+  document.body.appendChild(modal);
+  let deactivateDialog;
+  const close=()=>deactivateDialog?deactivateDialog():modal.remove();
+  deactivateDialog=CUI.activateDialog(modal,{onClose:close,initialFocus:'#customerBookingDetailCloseV613'});
+  document.getElementById('customerBookingDetailCloseV613').onclick=close;
+}
 function customerBookingRowV580(group,item,tab){
   const logo=customerBookingBusinessLogoV195(group);
   const name=String(group.business_name||'').trim()||'Business';
@@ -1923,7 +1956,20 @@ function customerBookingRowV580(group,item,tab){
     :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
       ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
       :`<span class="pill ${tab==='cancelled'?'no':'ok'} customer-booking-act-v580">${esc(ct('Appointment'))}</span>`;
-  return `<article class="card customer-booking-row-v580" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+  /* nestly_v613 (owner photo: an arrow into a History row — "can click to see details"). The row
+     prints a business, a service and a time; everything else the feed already carries — the full
+     date, the branch, the staff member, the status, the customer's own note — had nowhere to be
+     read. The sheet is built ONLY from fields present on this record: anything the business did
+     not send is omitted rather than shown empty, so the sheet never invents a detail the row
+     could not have had. It travels as JSON on the row because the list repaints on every tab tap
+     and a click-time index into a rebuilt array would go stale. */
+  const detailPayloadV613=esc(JSON.stringify({
+    business:name,service,starts_at:item.starts_at||'',branch,address,
+    staff:String(item.staff_name||'').trim(),
+    status:String(item.status||'').trim(),
+    note:String(item.note||item.customer_note||'').trim()
+  }));
+  return `<article class="card customer-booking-row-v580 customer-booking-row-detailed-v613" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}" data-booking-detail-v613="${detailPayloadV613}" role="button" tabindex="0" aria-label="Booking details for ${esc(name)}">
     <div class="customer-booking-row-logo-v580">${logo}</div>
     <div class="customer-booking-row-copy-v580">
       <b data-merchant-content>${esc(name)}</b>
@@ -1969,7 +2015,7 @@ function customerBookingRequestRowV605(group,item,tab){
     <div class="customer-booking-row-end-v580">
       <time class="customer-booking-row-date-v580" datetime="${esc(when)}">${esc(walletDate(when)||'Time pending')}</time>
       <span class="pill ${statusTone} customer-booking-act-v580">${esc(statusLabel)}</span>
-      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-withdraw-request="${esc(item.request_id)}">${esc(ct('Withdraw'))}</button>`:''}
+      ${/* nestly_v613 (owner photo: the Pending pill and the Withdraw button ringed together — "change to X button"). The word became an icon so the status and its one action sit on a single line instead of stacking two full-width controls under the date. It is the SAME control — same data-withdraw-request contract, same confirm, same RPC — so nothing about withdrawing changed except how much room it asks for. The label survives as aria-label/title, because an X alone says nothing to a screen reader. */''}${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request="${esc(item.request_id)}" aria-label="${esc(ct('Withdraw'))}" title="${esc(ct('Withdraw'))}">${CUI.icon('close',{size:16})}</button>`:''}
     </div>
   </article>`;
 }
@@ -2318,6 +2364,22 @@ async function renderCustomerBookings(){
     });
     wireCustomerRepeatBookingV167($('walletBody'));
     wireCustomerBookingSearchV326($('walletBody'));
+    /* nestly_v613: the row opens its own details. The guard is what keeps the existing controls
+       working — Reschedule, Book and Withdraw all live INSIDE this article, and without it every
+       one of them would also open the sheet behind its own dialog. */
+    $('walletBody').querySelectorAll('[data-booking-detail-v613]').forEach(row=>{
+      const open=event=>{
+        if(event.target.closest('button,a'))return;
+        openCustomerBookingDetailV613(row.dataset.bookingDetailV613);
+      };
+      row.onclick=open;
+      row.onkeydown=event=>{
+        if(event.key!=='Enter'&&event.key!==' ')return;
+        if(event.target!==row)return;
+        event.preventDefault();
+        openCustomerBookingDetailV613(row.dataset.bookingDetailV613);
+      };
+    });
     /* v290 (the road from 8 to 9): a request still sitting in the business's inbox finally has a
        customer-side exit. The RPC re-resolves ownership exactly as the reader does, so this
        button can only ever withdraw a row this page was allowed to show. */
@@ -2383,7 +2445,7 @@ async function renderCustomerMessages(){
   }
   /* V289: the inbox has no tab of its own — it is opened from the header bell — so it must offer
      a way back to Home. Without backTo the shell drew no back button at all. */
-  renderCustomerShell({active:'messages',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1></div></header>
+  renderCustomerShell({active:'messages',backTo:'#/wallet',staffWorkspaces:context.staffWorkspaces,messagesAvailable:true,body:`<header class="customer-page-head"><div><h1>Messages</h1></div>${/* nestly_v613 (owner photo 1: the round settings control ringed in the filter row, an arrow to a gear drawn beside the page title — "move here"). The door to Inbox settings now sits in the page head, where every other customer surface puts its gear (customer-profile-gear-v583), and wears that gear rather than the "!" glyph the owner was reading as an alert. It renders hidden and is revealed by the inbox renderer when it binds the dialog, so it can never be a button that opens nothing. */''}<button type="button" class="customer-profile-gear-v583" id="customerInboxSettingsHeadV613" aria-haspopup="dialog" aria-label="Inbox reminder and notification settings" title="Inbox reminder and notification settings" hidden>${CUI.icon('settings',{size:20})}</button></header>
     <section class="card wallet-section" id="customerInAppInbox" aria-busy="true" tabindex="-1"><div class="wallet-skeleton"></div></section>
     ${/* v386 (owner photo 8): the page subtitle, the "<brand> inbox" heading and its second copy
          of the same sentence were three explanations stacked over one list. The list says what it
@@ -8166,7 +8228,9 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     returnInboxSettingsNodesV549();
     if(deactivate)deactivate();
     document.getElementById('customerInboxSettingsModalV549')?.remove();
-    document.querySelector('[data-inbox-settings-v549]')?.focus?.();
+    /* nestly_v613: focus returns to the gear in the page head, which is where the dialog was
+       opened from now that the filter-row toggle is gone. */
+    document.getElementById('customerInboxSettingsHeadV613')?.focus?.();
   };
   const openInboxSettingsModalV549=()=>{
     if(inboxSettingsDeactivateV549)return;
@@ -8292,21 +8356,16 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
         <div id="customerInAppInboxPreferences" style="margin-top:18px"></div>
         <div id="customerInboxDeviceSlotV386"></div>
       </div></div>`;
-    /* nestly_v549: the door. Sits in the section head opposite the filter, labelled for a screen
-       reader because the glyph alone says nothing, and declaring aria-haspopup="dialog" because
-       that is now what it opens. */
-    const settingsHeadV549=host.querySelector('.customer-inbox-head-v386');
-    if(settingsHeadV549&&!settingsHeadV549.querySelector('[data-inbox-settings-v549]')){
-      const toggleV549=document.createElement('button');
-      toggleV549.type='button';
-      toggleV549.className='customer-inbox-settings-toggle-v549';
-      toggleV549.dataset.inboxSettingsV549='1';
-      toggleV549.setAttribute('aria-haspopup','dialog');
-      toggleV549.setAttribute('aria-label','Inbox reminder and notification settings');
-      toggleV549.title='Inbox reminder and notification settings';
-      toggleV549.textContent='!';
-      settingsHeadV549.appendChild(toggleV549);
-      toggleV549.onclick=openInboxSettingsModalV549;
+    /* nestly_v549 kept the door in the section head; nestly_v613 moved it to the page head, which
+       renderCustomerMessages owns. That head is NOT rebuilt by this renderer's host.innerHTML, so
+       the button survives every filter tap and is bound once per render rather than recreated —
+       and it stays hidden until this line runs, so it is never a control that opens nothing.
+       A wallet-embedded inbox has no such head; there the door simply is not drawn, exactly as
+       before v549 for that surface. */
+    const settingsDoorV613=document.getElementById('customerInboxSettingsHeadV613');
+    if(settingsDoorV613){
+      settingsDoorV613.hidden=false;
+      settingsDoorV613.onclick=openInboxSettingsModalV549;
     }
     /* Moved, not duplicated: the section keeps its id and its already-bound control, so the v296
        push wiring that ran once at page render still owns the button it bound. */
