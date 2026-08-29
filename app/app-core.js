@@ -86,6 +86,24 @@ function clientErrorSurface(){
   try{if(typeof S!=='undefined'&&S?.user)return 'customer'}catch{}
   return 'public';
 }
+/* SEC-04: report only origin+pathname, plus the SPA hash ROUTE (never the raw href/search/hash) —
+   a full href can carry invite/join/recovery/OAuth tokens in the query string or fragment (e.g. a
+   Supabase auth callback puts #access_token=... in the hash). location.search is never included,
+   and a hash that isn't a '#/...' route (like '#access_token=...') is dropped entirely rather than
+   risking a token leaking into telemetry. */
+function clientErrorUrl(){
+  try{
+    const loc=globalThis.location;
+    if(!loc)return '';
+    let url=String(loc.origin||'')+String(loc.pathname||'');
+    const hash=String(loc.hash||'');
+    if(hash.startsWith('#/')){
+      const cut=Math.min(...[hash.indexOf('?'),hash.indexOf('&')].filter(i=>i>=0).concat([hash.length]));
+      url+=hash.slice(0,cut);
+    }
+    return url.slice(0,300);
+  }catch{return ''}
+}
 function reportClientError(event){
   try{
     if(clientErrorReportCount>=CLIENT_ERROR_REPORT_LIMIT)return;
@@ -98,7 +116,7 @@ function reportClientError(event){
     let build='';try{build=String(buildIdentity?.shortSha||'')}catch{build=''}
     Promise.resolve(sb.rpc('report_client_error_v177',{
       p_surface:clientErrorSurface(),p_message:message,p_stack:stack,
-      p_url:String(globalThis.location?.href||'').slice(0,300),p_build:build
+      p_url:clientErrorUrl(),p_build:build
     })).catch(()=>{});
   }catch{}
 }

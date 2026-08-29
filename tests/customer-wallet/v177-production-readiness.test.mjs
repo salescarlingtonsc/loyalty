@@ -28,7 +28,16 @@ test('uncaught browser errors reach the v177 intake instead of dying silently',(
   assert.match(reporter,/p_surface:clientErrorSurface\(\)/);
   assert.match(reporter,/\.slice\(0,500\)/,'message must respect the 500-char server cap');
   assert.match(reporter,/\.slice\(0,2000\)/,'stack must respect the 2000-char server cap');
-  assert.match(reporter,/\.slice\(0,300\)/,'url must respect the 300-char server cap');
+  assert.match(reporter,/p_url:clientErrorUrl\(\)/,'the url must go through the SEC-04 sanitizer, never the raw href');
+
+  /* SEC-04: a raw location.href can carry invite/join/recovery/OAuth tokens in the query string
+     or fragment (a Supabase auth callback puts #access_token=... in the hash). clientErrorUrl()
+     must report only origin+pathname plus a genuine '#/...' SPA route, truncated before any '?'
+     or '&' inside the hash, and must never touch location.search or emit a non-route hash. */
+  const urlHelper=section(app,'function clientErrorUrl(','function reportClientError(');
+  assert.match(urlHelper,/\.slice\(0,300\)/,'url must respect the 300-char server cap');
+  assert.doesNotMatch(urlHelper,/location\.search|loc\.search/,'query string must never be reported');
+  assert.match(urlHelper,/hash\.startsWith\('#\/'\)/,'only a genuine SPA route hash may be included');
 });
 
 test('the browser caps and dedupes its own reports so one loop cannot flood the table',()=>{
