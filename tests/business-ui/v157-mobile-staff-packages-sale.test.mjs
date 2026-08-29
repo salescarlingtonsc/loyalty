@@ -68,7 +68,14 @@ test('V157 reorganises Packages into My packages and Customer packages without a
   assert.doesNotMatch(packages, /data-package-tab=/);
   assert.match(app, /custpackages:\(\)=>packagesPage\(\{view:'customers'\}\)/);
   assert.match(packages, /id="kCustomerSearch" type="search" placeholder="Name or phone"/);
-  assert.match(packages, /filter\(k=>!query\|\|\[k\.client_name,k\.client_phone,k\.plan_name\]\.some/);
+  /* nestly_v612 (owner: "i need subtab for (all/active/used up) within the module"). The search
+     predicate is named now, because the status tabs count against it too — the counts on the tabs
+     must describe the rows the SEARCH already narrowed, not the whole table, or "Active (1)" would
+     contradict an empty list. */
+  assert.match(packages, /const matchesQueryV612=k=>!query\|\|\[k\.client_name,k\.client_phone,k\.plan_name\]\.some/);
+  assert.match(packages, /const searched=packageRows\.filter\(matchesQueryV612\)/);
+  assert.match(packages, /packageStatusV612==='active'\?Number\(k\.remaining\)>0&&k\.status!=='expired':Number\(k\.remaining\)===0/,
+    'used up is no sessions left; active is sessions left AND a window still open');
   assert.doesNotMatch(packages, /id="ksell"/);
   assert.doesNotMatch(packages, /fetchAllRowsResult\(\(\)=>sb\.from\('clients'\)/);
 });

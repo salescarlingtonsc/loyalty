@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="40aa096ad06e561d979f17155740c9a64a0c4e3b48d6d3d0eee196e3ff27d242"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="5c4273d3bf5b31f452b3dc2c6b834355ff7ec25e1fb149fe8d290fc2580aaa11"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -906,6 +906,13 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .profile .who:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+/* nestly_v612 (owner, photo 3: the avatar and its +/− ringed together — "clicking anywhere on the
+   icon should open the drop down"). Measured before changing anything: every point INSIDE the
+   button already opened the menu, and the button stops six pixels past the +. It sits in the top
+   right corner, where a thumb naturally lands on the corner itself rather than on a 66x44 pill, so
+   the taps that missed were the ones just outside it. This grows the target by 10px on each side
+   and 8px above and below WITHOUT moving anything: the pill is drawn by the button, the hit area
+   by this overlay, so nothing on the header shifts. */
 .profile .who:active{transform:scale(.975)}
 .profile .who .chev{font-size:9px;color:var(--muted);margin-left:2px}
 .profile .avatar{width:30px;height:30px;border-radius:999px;background:var(--grad);color:#fff;
@@ -2638,7 +2645,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    so once the bar ran out of width the four pills folded into a column and read as an open
    dropdown. They now stay on one line and the strip scrolls if the bar is narrow, which is the
    treatment .v150-segment already gives itself on small screens. */
-.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388{max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .grow-usage-quick-v388::-webkit-scrollbar{display:none}
 .grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
@@ -5326,6 +5333,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .v150-filterbar>div.v150-segment{margin-top:calc(13px * 1.35 + 6px);flex:0 0 auto}
 .appointment-list-filters>div.row,.v150-filterbar>div.row{
   display:flex;align-items:center;overflow:visible;grid-template-rows:none}
+/* nestly_v612 (owner, photo 4, twice: the four period options ringed as a stacked list — "make
+   into sub tab so cleaner"). THE REAL CAUSE, measured rather than guessed. The rule above turns
+   every direct child of a filter bar into a two-ROW grid, which is right for a label-over-input
+   cell and wrong for a segmented control: the segment became a one-column grid and stacked its
+   four buttons vertically, which is the "dropdown" in the photo. v603 set flex-wrap:nowrap on it,
+   which did nothing at all — the element was not flex. `div.row` already gets carved back out on
+   the line above; the segment needs the same, and its own display restored. */
+.v150-filterbar>div.v150-segment,.appointment-list-filters>div.v150-segment{
+  display:inline-flex;align-items:center;grid-template-rows:none;overflow-x:auto;flex-wrap:nowrap}
 /* The helper sentence and the preset strip take a line of their own. */
 .appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584,
 .v150-filterbar>p{flex:1 0 100%;margin:2px 0 0}
@@ -5480,7 +5496,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 40aa096ad06e561d979f17155740c9a64a0c4e3b48d6d3d0eee196e3ff27d242</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5c4273d3bf5b31f452b3dc2c6b834355ff7ec25e1fb149fe8d290fc2580aaa11</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -9565,7 +9581,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'40aa096ad06e561d979f17155740c9a64a0c4e3b48d6d3d0eee196e3ff27d242',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'5c4273d3bf5b31f452b3dc2c6b834355ff7ec25e1fb149fe8d290fc2580aaa11',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
