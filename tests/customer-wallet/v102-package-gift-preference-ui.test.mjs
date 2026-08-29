@@ -186,19 +186,26 @@ test('Quick Earn receipt sums operation receipts and never attributes concurrent
   assert.doesNotMatch(till,/Math\.max\(0,refreshedPoints/);
 });
 
-test('package authoring is clone/version based and sold history uses frozen snapshots',()=>{
+test('package authoring still versions underneath, but never says so',()=>{
   const packages=section('async function packagesPage','async function branchesPage');
-  assert.match(packages,/Create new version/);
-  assert.match(packages,/Save new version/);
-  assert.match(packages,/workspaceTemplateTextV97\('packageVersionCreated'/);
-  assert.match(app,/packageVersionCreated:Object\.freeze\(\{en:'New package version v\{version\} created; prior version archived'/);
-  // V193: the freeze copy is now conditional and honest. It only claims a version is frozen once
-  // somebody has actually bought it — an unsold version protects nobody, so it stays renameable
-  // and deletable. The snapshot promise is unchanged for versions that HAVE been sold.
-  assert.match(packages,/frozen\. They keep their original price, sessions and service snapshot/);
-  assert.match(packages,/Not sold to anyone yet, so it can still be renamed or deleted/);
+  /* nestly_v601 (owner photo 2: "instead of create new version - it should be edit. dont label it
+     as V1 / V2 etc. that is incorrect ... once save will be true moving forward").
+     "True moving forward" IS the versioning: a customer who bought keeps the price, sessions and
+     service they paid for, and the edit applies to sales made after it. So the mechanic is
+     untouched — the save still goes through save_package_plan_v102 with the plan id, which
+     supersedes — and only the words change. The version number is Peekaa's bookkeeping. */
+  assert.match(packages,/openPackageEditDialogV601\(plan\)/);
+  assert.match(packages,/p_business:S\.biz\.id,p_plan:plan\.id,p_name:name/,
+    'the dialog still saves through the versioning writer');
+  assert.doesNotMatch(packages,/Create new version/);
+  assert.doesNotMatch(packages,/Save new version/);
+  assert.doesNotMatch(packages,/v\$\{Number\(p\.version_no/,'no version number on the row');
+  assert.match(packages,/Sold to \$\{packagePurchaseCount\[p\.id\]\} customer/);
+  assert.match(packages,/Not sold to anyone yet\./);
   assert.match(packages,/staff_list_package_entitlements_v102/);
-  assert.match(packages,/plan_version/);
+  /* nestly_v601: the row no longer PRINTS the version, but the frozen snapshot it stands for is
+     still what the customer holds — it is read for the record, not for the label. */
+  assert.match(packages,/staff_list_package_entitlements_v102/);
   assert.match(packages,/price_cents/);
   assert.doesNotMatch(packages,/client_packages'\)\.select\('\*, clients/);
 });

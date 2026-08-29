@@ -6668,7 +6668,10 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
   ].filter(Boolean);
   return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
     <div class="c360-summary-row-v294">
-      <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)} · v${entry.planVersion}</span>
+      ${/* nestly_v601 (owner photo 2: "dont label it as V1 / V2 etc. that is incorrect"). The
+           version is Peekaa's bookkeeping — it is what keeps this customer's price and sessions
+           frozen at what they paid — and never something a person reading the row needs. */''}
+      <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)}</span>
       <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
     </div>
     <p class="small" style="margin-top:8px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
@@ -29142,12 +29145,17 @@ async function packagesPage(options){
           <input id="kPoints" type="checkbox" style="width:auto;margin-top:3px" ${packageEarnsPoints?'checked':''}>
           <span><b>Make package purchases eligible for loyalty points</b><small class="muted" style="display:block;margin-top:3px">Eligibility is evaluated once on the package price; points are earned only when an active published loyalty programme applies. Using sessions never earns points again.</small></span>
         </label>`:S.myRole==='owner'?`<div class="permission-banner" style="margin-top:20px"><b>Package points setting unavailable</b><p class="muted small" style="margin-top:4px">Peekaa cannot confirm whether package purchases earn points. The setting control is hidden; completed sale receipts remain authoritative.</p><button class="btn ghost sm" id="packagePreferencesRetry" style="margin-top:8px">Try again</button></div>`:''}`:''}
-      <div id="kplist" style="margin-top:16px">${(plans||[]).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
-        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">v${Number(p.version_no||1)} · ${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''} · ${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</span>
-          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'} — frozen. They keep their original price, sessions and service snapshot, so create a new version to change anything.`:'Not sold to anyone yet, so it can still be renamed or deleted.'}</div></div>
-        <span class="spacer"></span><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>
-        ${canWrite?(packagePurchaseCount[p.id]?`${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}`
-          :`<div class="row" style="gap:6px;flex-wrap:wrap">${p.active?`<button class="btn ghost sm" data-edit-package="${p.id}">Create new version</button>`:''}<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button><button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}">Delete</button></div>`):''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
+      <div id="kplist" style="margin-top:16px">${(plans||[]).filter(p=>!p.retired_at).map(p=>`<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
+        <div><b data-merchant-content>${esc(p.name)}</b> <span class="muted small">${money(p.price_cents)} · ${p.sessions} sessions${p.service_id?` · ${esc(serviceDisplayName(serviceById[p.service_id]||{}))}`:''} · ${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</span>
+          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'}. Editing it changes what you sell from now on; they keep the price and sessions they paid for.`:'Not sold to anyone yet.'}</div></div>
+        <span class="spacer"></span>
+        ${/* nestly_v601 (owner photo 2: "Since there's on/off allow user to on/off as well"). The
+             pill was a label pretending to be a control. It is a button now, and it calls a writer
+             that flips the flag WITHOUT superseding the plan — routing it through the save would
+             mint a version every time somebody paused a package. */''}
+        ${canWrite?`<button type="button" class="pill ${p.active?'on':'off'}" data-package-active="${p.id}" data-package-next="${p.active?'off':'on'}" aria-pressed="${p.active?'true':'false'}" data-workspace-i18n title="${p.active?'Switch this package off':'Switch this package on'}">${statusOnOff(p.active)}</button>`
+          :`<span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>`}
+        ${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-edit-package="${p.id}">Edit</button>${packagePurchaseCount[p.id]?'':`<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button>`}<button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}" data-package-sold="${Number(packagePurchaseCount[p.id]||0)}">Delete</button></div>`:''}</div>`).join('')||CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
     </section>`:''}
     ${packagesViewV584==='customers'?`<section class="package-panel-v157" id="pkgPanelCustomers" role="tabpanel">
       <div class="card"><div class="row"><div><b>Customer packages</b><p class="muted small" style="margin-top:5px">Search by customer name or phone, then use sessions from the matching customer record.</p></div></div>
@@ -29209,26 +29217,109 @@ async function packagesPage(options){
       if(error)return toast(ownerErrorText(error));
       toast('Package renamed');refreshPackagesV584();
     });
+    /* nestly_v601 (owner ruling, asked and answered): Delete on a package somebody has bought
+       means "stop selling it, honour what's sold" — it leaves Record sale and this list, and every
+       customer holding it keeps the sessions they paid for. On a package nobody bought it is still
+       a real delete, because there is nothing to honour. The two are different promises, so they
+       are different sentences. */
     document.querySelectorAll('[data-package-delete]').forEach(button=>button.onclick=async()=>{
       const id=button.dataset.packageDelete,name=button.dataset.packageName||'this package';
-      if(!await confirmActionV386(`Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
+      const sold=Number(button.dataset.packageSold||0);
+      if(!await confirmActionV386(sold
+        ? `Stop selling "${name}"? It leaves Record sale and this list, so nobody can buy it again. The ${sold} customer${sold===1?'':'s'} who already bought it keep${sold===1?'s':''} the sessions they paid for and can still use them. This cannot be undone.`
+        : `Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('business_manage_package_plan_v193',
         {p_business:S.biz.id,p_plan:id,p_action:'delete',p_name:null});
       if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
       if(error)return toast(ownerErrorText(error));
-      toast('Package deleted');refreshPackagesV584();
+      toast(sold?`"${name}" is no longer for sale`:'Package deleted');refreshPackagesV584();
     });
+    /* nestly_v601: the same option list the create form draws, so the dialog cannot offer a
+       different set of services from the form beside it. The current service stays selected even
+       if it has since been deactivated — otherwise opening Edit on an old package silently
+       rewrites it to "flexible" the moment the owner presses Save. */
+    const packageServiceOptionsV601=selectedId=>{
+      const chosen=String(selectedId||'');
+      const live=(sv||[]).filter(service=>service.active||service.id===chosen);
+      return `<option value="">— flexible package, no list-price comparison —</option>`
+        +live.map(service=>`<option value="${service.id}" ${service.id===chosen?'selected':''}>${esc(serviceDisplayName(service))} · ${money(service.price_cents)}${service.active?'':' · inactive'}</option>`).join('');
+    };
+    /* nestly_v601: the edit dialog. It writes through save_package_plan_v102, the same call the
+       create form uses, so a sold package still supersedes rather than mutating in place — the
+       owner's "true moving forward", and the reason four customers' receipts do not change under
+       them. The only new thing here is the shape of the screen. */
+    const openPackageEditDialogV601=plan=>{
+      const dialog=document.createElement('div');
+      dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+      dialog.setAttribute('aria-labelledby','packageEditTitleV601');
+      const sold=Number(packagePurchaseCount[plan.id]||0);
+      dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
+        <div class="row"><div><p class="eyebrow">Package</p><h2 id="packageEditTitleV601" style="margin-top:4px" data-merchant-content>${esc(plan.name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="packageEditCloseV601">Close</button></div>
+        <form id="packageEditFormV601" style="margin-top:14px">
+          <label for="packageEditNameV601">Name</label><input id="packageEditNameV601" maxlength="120" required value="${esc(plan.name)}">
+          <div class="split"><div><label for="packageEditPriceV601">Price (${esc(BRAND.currency||'SGD')})</label><input id="packageEditPriceV601" type="number" min="0" step="0.01" inputmode="decimal" required value="${esc((plan.price_cents/100).toFixed(2))}"></div>
+            <div><label for="packageEditSessionsV601">Sessions</label><input id="packageEditSessionsV601" type="number" min="1" max="1000" step="1" inputmode="numeric" required value="${esc(String(plan.sessions))}"></div></div>
+          <label for="packageEditServiceV601">Exact service / variation</label>
+          <select id="packageEditServiceV601">${packageServiceOptionsV601(plan.service_id)}</select>
+          <label for="packageEditExpiryV601">Expires after purchase <span class="muted">(optional)</span></label>
+          <div class="row" style="gap:8px;align-items:center"><input id="packageEditExpiryV601" type="number" min="1" max="3650" step="1" inputmode="numeric" placeholder="e.g. 90" style="max-width:140px" value="${esc(plan.expiry_days??'')}"><span class="muted small">days</span></div>
+          <p class="muted small" style="margin-top:6px">${sold
+            ? `Sold to ${sold} customer${sold===1?'':'s'}. Saving applies to packages sold from now on — the ${sold===1?'customer':'customers'} who already bought keep${sold===1?'s':''} the price, sessions and service they paid for.`
+            : 'Nobody has bought this yet, so saving simply changes it.'}</p>
+          <div id="packageEditErrorV601" role="alert"></div>
+          <div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="packageEditCancelV601">Cancel</button><button type="submit" class="btn" id="packageEditSaveV601">Save</button></div>
+        </form></div>`;
+      document.body.append(dialog);
+      let deactivate=null;
+      const close=()=>{if(deactivate){const d=deactivate;deactivate=null;d({restoreFocus:true})}else dialog.remove()};
+      deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#packageEditNameV601'});
+      $('packageEditCloseV601').onclick=close;$('packageEditCancelV601').onclick=close;
+      $('packageEditFormV601').onsubmit=async event=>{
+        event.preventDefault();
+        const name=$('packageEditNameV601').value.trim();
+        const errorHost=$('packageEditErrorV601');
+        const expiryRaw=$('packageEditExpiryV601').value.trim();
+        const expiry=expiryRaw===''?null:Number(expiryRaw);
+        if(name.length<2){errorHost.innerHTML='<div class="err">Give the package a name.</div>';return}
+        if(expiry!==null&&!(expiry>=1&&expiry<=3650)){
+          errorHost.innerHTML='<div class="err">Expiry must be between 1 and 3650 days, or left blank for no expiry.</div>';return;
+        }
+        const save=$('packageEditSaveV601');CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
+        const {error}=await sb.rpc('save_package_plan_v102',{
+          p_business:S.biz.id,p_plan:plan.id,p_name:name,
+          p_price_cents:Math.round(parseFloat($('packageEditPriceV601').value||'0')*100),
+          p_sessions:parseInt($('packageEditSessionsV601').value||'1'),
+          p_service:$('packageEditServiceV601').value||null,
+          p_active:plan.active,p_expiry_days:expiry
+        });
+        if(save.isConnected)CUI.setButtonBusy(save,{busy:false});
+        if(error){errorHost.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That package could not be saved.'))}</div>`;return}
+        close();toast('Package saved');refreshPackagesV584();
+      };
+    };
+    /* nestly_v601: the On/Off pill, now a control. */
+    document.querySelectorAll('[data-package-active]').forEach(button=>button.onclick=async()=>{
+      const id=button.dataset.packageActive,turningOn=button.dataset.packageNext==='on';
+      CUI.setButtonBusy(button,{busy:true,label:'…'});
+      const {error}=await sb.rpc('business_set_package_active_v601',
+        {p_business:S.biz.id,p_plan:id,p_active:turningOn});
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      if(error)return toast(ownerErrorText(error));
+      toast(turningOn?'Package switched on':'Package switched off — it stays here, and can be switched back on');
+      refreshPackagesV584();
+    });
+    /* nestly_v601 (owner photo 2: "when press edit should pop up for user to easily edit and save").
+       Edit used to fill the create form at the top of the page and scroll there, which on a long
+       packages list reads as the page jumping for no reason and leaves the owner unsure which
+       package they are editing. It is a dialog now, titled with the package's own name.
+       The version number is gone from every label. "Once save will be true moving forward" is
+       exactly what the versioning underneath already does — a customer who bought keeps the price
+       and sessions they paid for — so the mechanic is untouched and only Peekaa's bookkeeping
+       number stops being shown. */
     document.querySelectorAll('[data-edit-package]').forEach(button=>button.onclick=()=>{
       const plan=(plans||[]).find(item=>item.id===button.dataset.editPackage);if(!plan)return;
-      $('kid').value=plan.id;$('kn').value=plan.name;$('kp').value=(plan.price_cents/100).toFixed(2);
-      $('ks').value=plan.sessions;$('kv').value=plan.service_id||'';
-      /* nestly_v593: a new version starts from what the live one says, expiry included — an owner
-         creating v2 to change the price must not silently drop v1's deadline by leaving the box
-         empty. `?? ''` and not `||''` so a value is carried and only a real NULL clears it. */
-      $('kx').value=plan.expiry_days??'';
-      $('kFormTitle').textContent='Create a new package version';$('kadd').textContent='Save new version';$('kcancel').style.display='inline-flex';
-      renderPackageDiscount();$('kn').focus();window.scrollTo({top:0,behavior:'smooth'});
+      openPackageEditDialogV601(plan);
     });
     $('kadd').onclick=async()=>{
       if($('kn').value.trim().length<2) return toast('Name it');
@@ -29292,7 +29383,7 @@ async function packagesPage(options){
          a button the till is about to refuse with package_expired, so the row states the deadline
          and drops the action instead. */
       const expiredV593=k.status==='expired';
-      return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">v${Number(k.plan_version||1)} · ${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${k.expires_at?`<div class="muted small">${expiredV593?'Expired':'Use by'} ${esc(sgt(k.expires_at))}</div>`:''}</td>
+      return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${k.expires_at?`<div class="muted small">${expiredV593?'Expired':'Use by'} ${esc(sgt(k.expires_at))}</div>`:''}</td>
       <td>${k.remaining}/${k.sessions||'?'}</td>
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
       <td>${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}</td></tr>`;

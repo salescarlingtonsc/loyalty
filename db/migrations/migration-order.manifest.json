@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 490,
-  "executableCount": 476,
+  "itemCount": 491,
+  "executableCount": 477,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -708,7 +708,7 @@
     },
     {
       "sourceDeployVersion": "20260829",
-      "count": 10,
+      "count": 11,
       "paths": [
         "db/migrations/20260829_nestly_v586_tier_basis_reaches_the_draft.sql",
         "db/migrations/20260829_nestly_v587_join_qr_names_its_business.sql",
@@ -718,6 +718,7 @@
         "db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql",
         "db/migrations/20260829_nestly_v599_browser_write_boundaries.sql",
         "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
+        "db/migrations/20260829_nestly_v601_package_edit_retire_and_switch.sql",
         "db/migrations/20260829_nestly_v601_pause_featureless_cron.sql",
         "db/migrations/20260829_nestly_v602_same_business_references.sql"
       ]
@@ -4578,7 +4579,7 @@
       "path": "db/migrations/20260829_nestly_v600_register_v361_bringback_cron.sql",
       "semanticVersion": "v600",
       "proposedDeployVersion": "20260829095932",
-      "sha256": "0d1bed87f662bfdde06595ddece83a84c2fe820dfbd5f8f2ee4105bf5a0dc0a9"
+      "sha256": "9dbe617e0d52e88ef92bcf703a778dc012945604370f069759c82370deb3bb1c"
     },
     {
       "order": 483,
@@ -4602,7 +4603,7 @@
       "path": "db/migrations/20260829_nestly_v602_same_business_references.sql",
       "semanticVersion": "v602",
       "proposedDeployVersion": "20260829105315",
-      "sha256": "45301b41b6aac9988acd23329546981532ffa348e29d485097680b50ccca691b"
+      "sha256": "5da5ccc6112304c0a345041c6a8e9c08a9fd9b49c06a75ce11fe9071fad0c9ab"
     },
     {
       "order": 486,
@@ -4643,6 +4644,14 @@
       "semanticVersion": "v598",
       "proposedDeployVersion": "20260829180000",
       "sha256": "98f0ebb7ba93f78ac58d87944bdc6dfdeb451af08662966c5b27f6c1fc9989d4"
+    },
+    {
+      "order": 491,
+      "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v601_package_edit_retire_and_switch.sql",
+      "semanticVersion": "v601",
+      "proposedDeployVersion": "20260829190000",
+      "sha256": "46264012942eb1e4027c5e3fc36e240bbf54e1b3e29e8f86d1ba1db5eaa8436f"
     }
   ]
 }

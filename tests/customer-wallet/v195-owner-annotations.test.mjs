@@ -559,7 +559,10 @@ test('the My Rewards search can actually hide things — [hidden] beats the disp
 });
 
 test('reaching #/join from #/join re-routes — same-hash nav() fires no hashchange', () => {
-  /* Two real dead-ends: registration success (already at #/join) and rescanning from the
-     expired-QR screen (also at #/join). Both must explicitly route(). */
-  assert.equal((appJs.match(/if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/g) || []).length, 2);
+  /* Three real dead-ends now: registration success (already at #/join), rescanning from the
+     expired-QR screen (also at #/join), and nestly_v602's hand-off — a business account signing
+     out to join as a customer, which lands back on #/join with the scan preserved. All three must
+     explicitly route(), because nav() to the hash you are already on fires no hashchange and so
+     does nothing at all. */
+  assert.equal((appJs.match(/if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/g) || []).length, 3);
 });

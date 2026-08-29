@@ -135,7 +135,11 @@ test('A2 the card prints the numbers, the purchase date, the price and every use
   const html = render(V.packageDetailModelV442({ packages: [ACTIVE_PACKAGE], sales: salesWithThreeUses() }),
     { canUse: true, branches: [{ id: 'br-1', name: 'Bugis' }] });
   const text = visibleText(html);
-  assert.match(text, /10x Facial · v2/);
+  /* nestly_v601 (owner photo 2: "dont label it as V1 / V2 etc. that is incorrect"). The version
+     is what keeps this customer's price and sessions frozen at what they paid; it is bookkeeping,
+     not something a person reading the card needs to see. The name still names the package. */
+  assert.match(text, /10x Facial/);
+  assert.doesNotMatch(text, /· v\d/);
   assert.match(text, /3 of 10 used · 7 left/, 'the owner\'s own phrasing, from the chip\'s columns');
   assert.match(text, /7 left/);
   assert.match(text, /Bought 1 Jul 2026 · SGD 450\.00/);
