@@ -252,7 +252,9 @@ test('V269 accept reuses the existing conversion RPC and decline is a recorded d
   assert.match(bookings, /onclick="decideBookingRequestV73\('\$\{b\.id\}','confirm'\)"/);
   assert.match(bookings, /onclick="decideBookingRequestV73\('\$\{b\.id\}','decline'\)"/);
   // a declined request stays in the list with its status, so "did anyone answer me" is answerable
-  assert.match(bookings, /sb\.from\('booking_requests'\)\.select\('\*, services\(name\)'\)/);
+  // pinned to the composite FK (nestly wave: SEC-02/v603 PGRST201 hotfix) so a future FK change
+  // can never make this embed ambiguous again.
+  assert.match(bookings, /sb\.from\('booking_requests'\)\.select\('\*, services!booking_requests_service_business_fkey\(name\)'\)/);
   assert.doesNotMatch(bookings, /from\('booking_requests'\)[^\n]*\.delete\(\)/,
     'a declined request must stay on the record, never be deleted');
 });

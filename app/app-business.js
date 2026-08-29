@@ -2563,14 +2563,18 @@ async function decideBookingRequestGlobalV329(id,decision,contactDetails){
   if(!authorized){toast('Booking write access is required');return}
   const {data,error}=await sb.rpc('staff_decide_booking_request_v73',{p_business:S.biz.id,p_request:id,p_decision:decision,p_branch:null});
   if(error){const failText=`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Try again.'}`;toast(failText);return}
-  toast(bookingDecisionNotice(data,decision).text);
+  const notice=bookingDecisionNotice(data,decision);
+  toast(notice.text);
   autoRefreshIfRelevant();
   refreshPendingBookingRequestCountV329();
-  if(decision==='confirm'&&contactDetails)offerBookingConfirmationContactV330(contactDetails);
+  /* Only offer the WhatsApp confirmation hand-off when the confirm actually applied (or replayed
+     a prior apply) — a scheduling_conflict/etc. never became an appointment, so sending "your
+     appointment is confirmed" would be false. */
+  if(decision==='confirm'&&contactDetails&&notice.ok)offerBookingConfirmationContactV330(contactDetails);
 }
 async function openBookingRequestPopupV329ById(id){
   if($('bookingRequestPopupV329'))return; // one at a time — a second INSERT while one is open just refreshes the badge
-  const {data,error}=await sb.from('booking_requests').select('*, services(name), staff(full_name), branches(name,address)')
+  const {data,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name), staff(full_name), branches(name,address)')
     .eq('id',id).eq('business_id',S.biz.id).maybeSingle();
   if(error||!data||!STAFF_BOOKING_DECISION_STATUSES.has(data.status))return;
   openBookingRequestPopupV329(data);
@@ -10220,6 +10224,12 @@ function bookingDecisionNotice(result,decision){
   const verb=decision==='confirm'?'Confirm':'Decline';
   if(outcome==='applied')return {ok:true,text:`${verb} applied. Current status: ${actual}.`};
   if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:`${verb} was already applied. Current status: ${actual}.`};
+  /* Owner report: "pressing confirm does no changes". scheduling_conflict is by far the most
+     common non-applied outcome on Confirm — it means the chosen team member isn't available at
+     that exact time per their own schedule (the write-time guard refused it), not a generic
+     failure. Name the real cause and the fix (Change time / staff) instead of a bare snake_case
+     outcome string. */
+  if(outcome==='scheduling_conflict')return {ok:false,text:`${verb} could not be applied — the team member isn't available at that time, per their schedule. Try "Change time / staff" for a different slot.`};
   return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
 }
 function sectionTabsV200(root,{key='',label='Sections'}={}){
@@ -10406,7 +10416,7 @@ async function bookingsPage(){
     <p class="muted small">Booking rules, opening hours and who customers may choose now live in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>`;
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   async function load(){
-    const {data:br,error}=await sb.from('booking_requests').select('*, services(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
+    const {data:br,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
     if(!isCurrent())return;
     const list=$('blist');if(!list?.isConnected)return;
     /* V288 (audit A2, MEDIUM 19): a failed read used to raise a toast and leave the card on
@@ -10473,7 +10483,7 @@ async function bookingsPage(){
     });
   }
   async function loadCr(){
-    const {data:cr,error}=await sb.from('change_requests').select('*, appointments(starts_at, clients(full_name))')
+    const {data:cr,error}=await sb.from('change_requests').select('*, appointments!change_requests_appointment_business_fkey(starts_at, clients(full_name))')
       .eq('business_id',S.biz.id).eq('status','pending').order('created_at');
     if(!isCurrent())return;
     const list=$('crlist');if(!list?.isConnected)return;
@@ -26528,7 +26538,9 @@ async function appointmentsPage(){
       });
       if(!isCurrent())return;
       if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
-      toast(bookingDecisionNotice(data,'confirm').text);
+      const notice=bookingDecisionNotice(data,'confirm');
+      toast(notice.text);
+      if(!notice.ok){button.disabled=false;return}
       reschedulingRequestIdV329='';
       refreshPendingBookingRequestCountV329();
       loadAppointmentsGuardedV288();
@@ -26597,8 +26609,10 @@ async function appointmentsPage(){
       });
       if(!isCurrent())return;
       if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
+      const notice=bookingDecisionNotice(data,'confirm');
+      toast(notice.text);
+      if(!notice.ok){button.disabled=false;return}
       close();
-      toast(bookingDecisionNotice(data,'confirm').text);
       refreshPendingBookingRequestCountV329();
       loadAppointmentsGuardedV288();
       offerBookingConfirmationContactV330({...contact,staffName:staffSelect?.value?(staffName[staffSelect.value]||contact.staffName):contact.staffName,startsAt:preferred});
@@ -28933,7 +28947,7 @@ async function waitlistPage(){
     const dayEndMs=new Date(sgIso(`${shiftSgDateInput(periodTo,1)}T00:00`)).getTime();
     const dayStartIso=new Date(dayStartMs).toISOString();
     const dayEndIso=new Date(dayEndMs).toISOString();
-    const {data:rows,error}=await fetchAllRowsResult(()=>sb.from('waitlist').select('*, services(name)',{count:'exact'})
+    const {data:rows,error}=await fetchAllRowsResult(()=>sb.from('waitlist').select('*, services!waitlist_service_business_fkey(name)',{count:'exact'})
       .eq('business_id',S.biz.id)
       /* Active rows are fetched WHATEVER the period: a walk-in waiting right now is not a
          historical record and must not vanish because staff opened yesterday. */

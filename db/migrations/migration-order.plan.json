@@ -2952,6 +2952,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260829_nestly_v611_guard_honours_shop_hours_default.sql",
+      "semanticVersion": "v611",
+      "proposedDeployVersion": "20260829164723"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260829_nestly_v593_package_expiry.sql",
       "semanticVersion": "v593",
       "proposedDeployVersion": "20260829170000"

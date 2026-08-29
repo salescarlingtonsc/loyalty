@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 450,
-  "itemCount": 495,
+  "pendingCount": 451,
+  "itemCount": 496,
   "items": [
     {
       "order": 1,
@@ -4912,6 +4912,16 @@
     {
       "order": 491,
       "kind": "pending",
+      "version": "20260829164723",
+      "name": "nestly_v611_guard_honours_shop_hours_default",
+      "path": "supabase/migrations/20260829164723_nestly_v611_guard_honours_shop_hours_default.sql",
+      "octetLength": 6697,
+      "sha256": "57e11dd7feb73517892eec9064d687d50d66c5bc27cafb1e6604e0203ee4e307",
+      "provenance": "local-source"
+    },
+    {
+      "order": 492,
+      "kind": "pending",
       "version": "20260829170000",
       "name": "nestly_v593_package_expiry",
       "path": "supabase/migrations/20260829170000_nestly_v593_package_expiry.sql",
@@ -4920,7 +4930,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 492,
+      "order": 493,
       "kind": "pending",
       "version": "20260829180000",
       "name": "nestly_v598_shop_hours_are_the_default",
@@ -4930,7 +4940,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 493,
+      "order": 494,
       "kind": "pending",
       "version": "20260829190000",
       "name": "nestly_v601_package_edit_retire_and_switch",
@@ -4940,7 +4950,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 494,
+      "order": 495,
       "kind": "pending",
       "version": "20260829200000",
       "name": "nestly_v603_package_history_and_dates",
@@ -4950,7 +4960,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 495,
+      "order": 496,
       "kind": "pending",
       "version": "20260830010000",
       "name": "nestly_v612_referral_immediate_when_no_floor",
