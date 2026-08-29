@@ -128,6 +128,28 @@ function reportClientError(event){
 }
 window.addEventListener('error',reportClientError);
 window.addEventListener('unhandledrejection',reportClientError);
+/* nestly_v610 — scan-journey funnel (diagnosis instrumentation, owner-directed). The /join page
+   starts a journey and writes its correlation id to sessionStorage; the app continues the SAME
+   journey here so one real-device scan can be read back stage by stage from function_edge_logs.
+   Emits ONLY while a journey id exists — zero traffic for every ordinary visit. Never the raw
+   token, never PII. The single-shot stages dedupe per page load so re-renders do not spam. */
+const JOIN_FUNNEL_ONCE_V610=new Set();
+const JOIN_FUNNEL_SINGLE_SHOT_V610=new Set(['join_app_loaded','join_pending_scan_found','join_auth_screen_shown','join_auth_completed','join_business_visible']);
+function joinFunnelEmitV610(event,detail){
+  try{
+    const cid=sessionStorage.getItem('nestly.join.funnelCid')||'';
+    if(!cid)return;
+    if(JOIN_FUNNEL_SINGLE_SHOT_V610.has(event)){
+      if(JOIN_FUNNEL_ONCE_V610.has(event))return;
+      JOIN_FUNNEL_ONCE_V610.add(event);
+    }
+    const payload=JSON.stringify({cid,event,at:Date.now(),detail:detail?JSON.stringify(detail).slice(0,1400):''});
+    const url=`${SB_URL}/functions/v1/join-funnel`;
+    if(navigator.sendBeacon&&navigator.sendBeacon(url,new Blob([payload],{type:'text/plain'})))return;
+    fetch(url,{method:'POST',body:payload,headers:{'content-type':'text/plain'},keepalive:true,credentials:'omit'}).catch(()=>{});
+  }catch{}
+}
+function joinFunnelEndV610(){try{sessionStorage.removeItem('nestly.join.funnelCid')}catch{}}
 /* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
    gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
    customer read below goes through this helper, which aborts at `ms` and normalises the outcome
@@ -3667,6 +3689,8 @@ async function route(){
          and by then the person is signed in and this branch is not the one that runs. So it is not
          consulted here at all. The in-memory flag below is only so a re-render of the same visit
          does not stack a second sheet on the first; it resets on every scan and every page load. */
+      joinFunnelEmitV610('join_app_loaded',{signedIn:false});
+      if(pendingCustomerJoinToken)joinFunnelEmitV610('join_pending_scan_found',{signedIn:false});
       if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599
         &&!consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)){
         customerJoinAskedThisVisitV599=true;
@@ -4308,6 +4332,7 @@ function customerRegistrationShell(body){
      recorded and resumes after sign-in. Every screen this shell hosts (sign-in, OTP, profile) now
      says what the scan is about to join. Copy only: the join still fires exactly once, after
      sign-in, through the recorded confirmation. */
+  if(pendingCustomerJoinToken)joinFunnelEmitV610('join_auth_screen_shown');
   const joinContextV609=pendingCustomerJoinToken
     ?`<section class="card" style="margin-bottom:14px;padding:12px 16px"><div class="row" style="gap:10px">${CUI.icon('scan',{size:18})}<p class="small" style="margin:0">Scan received — you will join <b>${esc(pendingCustomerJoinBusinessNameV609||'this business')}</b> as soon as you sign in or create your account.</p></div></section>`
     :'';
@@ -8033,6 +8058,8 @@ let pendingCustomerJoinSlugV587='';
 async function renderCustomerQrJoin(){
   const joinRenderEpoch=++customerWalletRenderEpoch,isCurrent=()=>customerWalletRenderEpoch===joinRenderEpoch;
   const token=pendingCustomerJoinToken;
+  joinFunnelEmitV610('join_app_loaded',{signedIn:true});
+  if(token){joinFunnelEmitV610('join_pending_scan_found',{signedIn:true});joinFunnelEmitV610('join_auth_completed');}
   if(!token){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
@@ -8067,6 +8094,7 @@ async function renderCustomerQrJoin(){
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();
   const attemptKey=writeAttemptKey('nestly.customer.joinQr',token);
+  joinFunnelEmitV610('join_rpc_started');
   const {data,error}=await customerRpc('customer_join_business_from_qr_v89',{
     p_join_token:token,p_idempotency_key:attemptKey
   });
@@ -8083,6 +8111,7 @@ async function renderCustomerQrJoin(){
        Peekaa QR." The owner then went looking for a broken QR, replaced it (killing their real
        printed one), and scanned again — and was told the same thing. The message has to name the
        real reason, and offer the way through it. */
+    joinFunnelEmitV610('join_rpc_failed',{code:String(error.code||''),msg:String(error.message||'').slice(0,160)});
     const noCustomerAccountV602=String(error.code||'')==='42501'
       ||/customer identity is required|customer session required/i.test(String(error.message||''));
     if(!noCustomerAccountV602&&error.code!=='PGRST202'&&error.code!=='42883')rememberPendingCustomerJoinToken('');
@@ -8112,6 +8141,7 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   if(!['joined','already_joined','completed','linked'].includes(String(data?.outcome||data?.status||''))){
+    joinFunnelEmitV610('join_rpc_failed',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
     /* v286 (audit): this branch left the customer on a card still headed 'Joining this programme'
        with no action, and kept the dead token + write-attempt key so a later retry replayed the
        same failing join. It now matches the error branch: a way out, and a clean rescan. */
@@ -8120,6 +8150,7 @@ async function renderCustomerQrJoin(){
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
   clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
+  joinFunnelEmitV610('join_rpc_succeeded',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
   /* nestly_v587 (owner: "once pressing yes will land inside the exact same business"). This read
      was always empty: customer_join_business_from_qr_v89 returned outcome + business_id and no
      slug at all, so every successful join fell back to the programmes list. v587 adds
@@ -8148,6 +8179,11 @@ async function renderCustomerQrJoin(){
   await maybeOfferCustomerPasskeySetup({isCurrent});
   if(!isCurrent())return;
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
+  /* The journey's last stage: the wallet route is live and has had two frames to paint. */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    joinFunnelEmitV610('join_business_visible',{hash:String(location.hash||'').split('?')[0].slice(0,80)});
+    joinFunnelEndV610();
+  }));
 }
 
 async function renderCustomerClaim(){

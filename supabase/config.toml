@@ -101,3 +101,6 @@ rp_origins = [
   "https://peekaa.asia",
   "https://www.peekaa.asia"
 ]
+
+[functions.join-funnel]
+verify_jwt = false

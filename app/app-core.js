@@ -122,6 +122,27 @@ function reportClientError(event){
 }
 window.addEventListener('error',reportClientError);
 window.addEventListener('unhandledrejection',reportClientError);
+/* nestly_v610 — scan-journey funnel (diagnosis instrumentation, owner-directed). The /join page
+   starts a journey and writes its correlation id to sessionStorage; the app continues the SAME
+   journey here so one real-device scan can be read back stage by stage from function_edge_logs.
+   Emits ONLY while a journey id exists — zero traffic for every ordinary visit. Never the raw
+   token, never PII. The single-shot stages dedupe per page load so re-renders do not spam. */
+const JOIN_FUNNEL_ONCE_V610=new Set();
+const JOIN_FUNNEL_SINGLE_SHOT_V610=new Set(['join_app_loaded','join_pending_scan_found','join_auth_screen_shown','join_auth_completed','join_business_visible']);
+function joinFunnelEmitV610(event,detail){
+  try{
+    const cid=sessionStorage.getItem('nestly.join.funnelCid')||'';
+    if(!cid)return;
+    if(JOIN_FUNNEL_SINGLE_SHOT_V610.has(event)){
+      if(JOIN_FUNNEL_ONCE_V610.has(event))return;
+      JOIN_FUNNEL_ONCE_V610.add(event);
+    }
+    const payload=JSON.stringify({cid,event,at:Date.now(),detail:detail?JSON.stringify(detail).slice(0,1400):''});
+    const url=`${SB_URL}/functions/v1/join-funnel`;
+    if(navigator.sendBeacon&&navigator.sendBeacon(url,new Blob([payload],{type:'text/plain'})))return;
+    fetch(url,{method:'POST',body:payload,headers:{'content-type':'text/plain'},keepalive:true,credentials:'omit'}).catch(()=>{});
+  }catch{}
+}
 /* v177 customer RPC timeout. A PostgREST call with no client deadline can hang until the browser
    gives up, leaving a customer-facing skeleton spinning forever with no retry affordance. Every
    customer read below goes through this helper, which aborts at `ms` and normalises the outcome
@@ -1570,6 +1591,8 @@ async function route(){
          and by then the person is signed in and this branch is not the one that runs. So it is not
          consulted here at all. The in-memory flag below is only so a re-render of the same visit
          does not stack a second sheet on the first; it resets on every scan and every page load. */
+      joinFunnelEmitV610('join_app_loaded',{signedIn:false});
+      if(pendingCustomerJoinToken)joinFunnelEmitV610('join_pending_scan_found',{signedIn:false});
       if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599
         &&!consumeCustomerJoinHandoffV606(pendingCustomerJoinToken)){
         customerJoinAskedThisVisitV599=true;
