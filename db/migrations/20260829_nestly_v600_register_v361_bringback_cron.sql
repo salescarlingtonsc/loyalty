@@ -12,7 +12,7 @@ begin;
 -- written idempotently precisely because production already has the job: applying it there is
 -- a verified no-op, while applying it to a fresh database creates the job for the first time.
 -- Note for whoever applies this: the deploy tooling assigns the actual ledger version at apply
--- time (see nestly_v599, whose proposed 20260829190000 stamp was superseded by the ledger's
+-- time (see nestly_v599, whose proposed 20260829105315 stamp was superseded by the ledger's
 -- real 20260829094129 -- this file's own supabase/migrations timestamp may likewise be
 -- re-stamped on apply and should not be assumed authoritative until confirmed against
 -- supabase_migrations.schema_migrations).

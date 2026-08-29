@@ -80,7 +80,7 @@
 -- No RLS policy, no grant, no function used by the product and no ON DELETE action is changed by
 -- this migration. Acceptance suite: db/tests/v602_same_business_references.sql.
 --
--- Deploy stamp: the twin at supabase/migrations/20260829190000_nestly_v602_same_business_references.sql
+-- Deploy stamp: the twin at supabase/migrations/20260829105315_nestly_v602_same_business_references.sql
 -- carries an AUTHORED stamp (later than v601's real ledger stamp 20260829102308, so it sorts last).
 -- Applying through MCP re-stamps the ledger row with the actual UTC apply time; when that happens
 -- the plans and manifests are corrected to the real stamp, exactly as v599/v600/v601 were.

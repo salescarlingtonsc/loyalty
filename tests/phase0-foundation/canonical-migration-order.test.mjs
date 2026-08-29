@@ -116,7 +116,7 @@ test('materializer creates one byte-preserving 448451 and deterministic manifest
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v602_same_business_references' // tail — v602 takes the tail: its AUTHORED stamp (20260829190000) is the latest in the plan
+    'nestly_v598_shop_hours_are_the_default' // tail — v602 takes the tail: its AUTHORED stamp (20260829190000) is the latest in the plan
     // v599 (real ledger 20260829094129) and v600 (real ledger 20260829095932) were applied via MCP,
     // which stamps with actual UTC apply time; both therefore sort BEFORE the afternoon-authored
     // v586-v598 stamps and sit at their real chronological slots earlier in this list.
