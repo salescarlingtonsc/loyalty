@@ -56,7 +56,9 @@ test('customer can scan a business-issued QR from first use and from persistent 
   assert.match(scanner,/id="customerJoinScannerImage" type="file" accept="image\/\*"/);
   /* v610 widened the gap: the funnel's join_pending_scan_saved emit sits between remember and
      close. The contract is unchanged — remember, close, then an explicit re-route. */
-  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);[\s\S]{0,200}?close\(\{restoreFocus:false\}\);[\s\S]{0,300}?if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/); /* v281: same-hash nav() fires nothing; a rescan from #\/join must re-route */
+  /* v611: an accepted scan hands the dialog's history entry over (handOffHistory:true) so the
+     asynchronous history.back() cannot pop '#/join' back out — see v611-inapp-scan-history-race. */
+  assert.match(scanner,/rememberPendingCustomerJoinToken\(token\);[\s\S]{0,2200}?close\(\{restoreFocus:false,handOffHistory:true\}\);[\s\S]{0,300}?if\(location\.hash==='#\/join'\)route\(\);else nav\('#\/join'\);/); /* v281: same-hash nav() fires nothing; a rescan from #\/join must re-route */
   assert.match(app,/function renderCustomerFirstProgrammeQuest/);
   assert.match(app,/firstQuest:'Your first rewards'/);
   assert.match(app,/id="customerFirstScan"/);

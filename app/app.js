@@ -6233,7 +6233,9 @@ function openCustomerJoinScanner(){
   /* nestly_v472: the till watch dies with the sheet, on EVERY dismissal path — the ✕, the
      backdrop, Esc, and a successful business-QR scan all funnel through close(). */
   let stopTillWatchV472=()=>{};
-  const close=({restoreFocus=true}={})=>{if(closed)return;closed=true;stop();stopTillWatchV472();dialogCleanup({restoreFocus});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
+  /* nestly_v611: close() forwards handOffHistory (the V468 lesson — a close() that swallows its
+     options silently reverts every hand-off behind it). */
+  const close=({restoreFocus=true,handOffHistory=false}={})=>{if(closed)return;closed=true;stop();stopTillWatchV472();dialogCleanup({restoreFocus,handOffHistory});if(activeCustomerJoinScannerCleanup===close)activeCustomerJoinScannerCleanup=()=>{}};
   activeCustomerJoinScannerCleanup=close;
   /* nestly_v472 (owner photo 7). Armed only for the customer's OWN QR — the join-a-business
      camera is a different errand and nothing is being served at a counter. It closes the sheet
@@ -6259,7 +6261,18 @@ function openCustomerJoinScanner(){
     joinFunnelEmitV610('join_inapp_scan_result',{accepted:true});
     rememberPendingCustomerJoinToken(token);
     joinFunnelEmitV610('join_pending_scan_saved');
-    close({restoreFocus:false});
+    /* nestly_v611 — THE IN-APP SCAN FAILURE, named by the owner's own funnel trace
+       (cid 903edba1…, build 8dd9585159af, 2026-08-30 00:00 SGT): scan accepted, token saved,
+       '#/join' entered, business preview fetched 200 — then "confirm sheet refused: pending
+       token or hash moved during preview", and the customer was left on My Rewards.
+       activateDialog pushes a history entry so Android Back can dismiss the sheet, and the
+       plain close() unwinds that entry with history.back(), which is ASYNCHRONOUS. The nav to
+       '#/join' below landed first, and the queued pop then removed it — the navigation happened
+       and was immediately undone, exactly the v363 stamps-exclusivity race. Same cure: a scan
+       that proceeds hands the dialog's history entry over instead of popping it, so nothing
+       yanks '#/join' back out from under the confirm sheet. Every other dismissal (✕, backdrop,
+       Esc, till-watch) keeps the default and still unwinds its own entry. */
+    close({restoreFocus:false,handOffHistory:true});
     /* v281 audit: a rescan from the expired-QR screen is ALREADY at #/join — same-hash nav()
        fires nothing, so the new token was remembered and never submitted. */
     if(location.hash==='#/join')route();else nav('#/join');
