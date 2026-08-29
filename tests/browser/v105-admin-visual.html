@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="40db623f45ee8dbb451ce4dc162fa7e83e418aa3c241d3374e32bc1861286613">
+<meta name="v105-production-component-sha256" content="9b20971039d34767625ca621066905d11164036514625d543c854676b9fec956">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -912,6 +912,13 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .profile .who:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+/* nestly_v612 (owner, photo 3: the avatar and its +/− ringed together — "clicking anywhere on the
+   icon should open the drop down"). Measured before changing anything: every point INSIDE the
+   button already opened the menu, and the button stops six pixels past the +. It sits in the top
+   right corner, where a thumb naturally lands on the corner itself rather than on a 66x44 pill, so
+   the taps that missed were the ones just outside it. This grows the target by 10px on each side
+   and 8px above and below WITHOUT moving anything: the pill is drawn by the button, the hit area
+   by this overlay, so nothing on the header shifts. */
 .profile .who:active{transform:scale(.975)}
 .profile .who .chev{font-size:9px;color:var(--muted);margin-left:2px}
 .profile .avatar{width:30px;height:30px;border-radius:999px;background:var(--grad);color:#fff;
@@ -2644,7 +2651,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    so once the bar ran out of width the four pills folded into a column and read as an open
    dropdown. They now stay on one line and the strip scrolls if the bar is narrow, which is the
    treatment .v150-segment already gives itself on small screens. */
-.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388{max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .grow-usage-quick-v388::-webkit-scrollbar{display:none}
 .grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
@@ -5332,6 +5339,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .v150-filterbar>div.v150-segment{margin-top:calc(13px * 1.35 + 6px);flex:0 0 auto}
 .appointment-list-filters>div.row,.v150-filterbar>div.row{
   display:flex;align-items:center;overflow:visible;grid-template-rows:none}
+/* nestly_v612 (owner, photo 4, twice: the four period options ringed as a stacked list — "make
+   into sub tab so cleaner"). THE REAL CAUSE, measured rather than guessed. The rule above turns
+   every direct child of a filter bar into a two-ROW grid, which is right for a label-over-input
+   cell and wrong for a segmented control: the segment became a one-column grid and stacked its
+   four buttons vertically, which is the "dropdown" in the photo. v603 set flex-wrap:nowrap on it,
+   which did nothing at all — the element was not flex. `div.row` already gets carved back out on
+   the line above; the segment needs the same, and its own display restored. */
+.v150-filterbar>div.v150-segment,.appointment-list-filters>div.v150-segment{
+  display:inline-flex;align-items:center;grid-template-rows:none;overflow-x:auto;flex-wrap:nowrap}
 /* The helper sentence and the preset strip take a line of their own. */
 .appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584,
 .v150-filterbar>p{flex:1 0 100%;margin:2px 0 0}
@@ -6294,7 +6310,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 40db623f45ee</span>
+<span class="v105-provenance">v105 production-component harness · 9b20971039d3</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6419,7 +6435,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'40db623f45ee8dbb451ce4dc162fa7e83e418aa3c241d3374e32bc1861286613',
+  sourceHash:'9b20971039d34767625ca621066905d11164036514625d543c854676b9fec956',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

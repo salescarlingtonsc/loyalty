@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="83ff88a2a0f184bdf54b964998ffac82a156a7e23c3d3e7f49993240a29be9be"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="01aa97122f971916f79391ecdcd45225285a25a0916cac9eeb2f3950a7af6020"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -907,6 +907,13 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   cursor:pointer;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
   transition:transform .2s var(--spring),box-shadow .2s var(--ease)}
 .profile .who:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+/* nestly_v612 (owner, photo 3: the avatar and its +/− ringed together — "clicking anywhere on the
+   icon should open the drop down"). Measured before changing anything: every point INSIDE the
+   button already opened the menu, and the button stops six pixels past the +. It sits in the top
+   right corner, where a thumb naturally lands on the corner itself rather than on a 66x44 pill, so
+   the taps that missed were the ones just outside it. This grows the target by 10px on each side
+   and 8px above and below WITHOUT moving anything: the pill is drawn by the button, the hit area
+   by this overlay, so nothing on the header shifts. */
 .profile .who:active{transform:scale(.975)}
 .profile .who .chev{font-size:9px;color:var(--muted);margin-left:2px}
 .profile .avatar{width:30px;height:30px;border-radius:999px;background:var(--grad);color:#fff;
@@ -2639,7 +2646,7 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
    so once the bar ran out of width the four pills folded into a column and read as an open
    dropdown. They now stay on one line and the strip scrolls if the bar is narrow, which is the
    treatment .v150-segment already gives itself on small screens. */
-.grow-usage-quick-v388{flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.grow-usage-quick-v388{max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .grow-usage-quick-v388::-webkit-scrollbar{display:none}
 .grow-usage-quick-v388 button{flex:0 0 auto;white-space:nowrap}
 @media(max-width:960px){.c360-summary-card-v294{order:-1;width:100%}}
@@ -5327,6 +5334,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .v150-filterbar>div.v150-segment{margin-top:calc(13px * 1.35 + 6px);flex:0 0 auto}
 .appointment-list-filters>div.row,.v150-filterbar>div.row{
   display:flex;align-items:center;overflow:visible;grid-template-rows:none}
+/* nestly_v612 (owner, photo 4, twice: the four period options ringed as a stacked list — "make
+   into sub tab so cleaner"). THE REAL CAUSE, measured rather than guessed. The rule above turns
+   every direct child of a filter bar into a two-ROW grid, which is right for a label-over-input
+   cell and wrong for a segmented control: the segment became a one-column grid and stacked its
+   four buttons vertically, which is the "dropdown" in the photo. v603 set flex-wrap:nowrap on it,
+   which did nothing at all — the element was not flex. `div.row` already gets carved back out on
+   the line above; the segment needs the same, and its own display restored. */
+.v150-filterbar>div.v150-segment,.appointment-list-filters>div.v150-segment{
+  display:inline-flex;align-items:center;grid-template-rows:none;overflow-x:auto;flex-wrap:nowrap}
 /* The helper sentence and the preset strip take a line of their own. */
 .appointment-list-filters>.filter-fullrow-v584,.v150-filterbar>.filter-fullrow-v584,
 .v150-filterbar>p{flex:1 0 100%;margin:2px 0 0}
@@ -6647,6 +6663,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'83ff88a2a0f184bdf54b964998ffac82a156a7e23c3d3e7f49993240a29be9be',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'01aa97122f971916f79391ecdcd45225285a25a0916cac9eeb2f3950a7af6020',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

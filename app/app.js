@@ -712,7 +712,12 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
 const CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334=CUSTOMER_INTERFACE_VIEWS_V296
   .filter(([key])=>!['preview','done','programme','interface','appointment'].includes(key));
 /* The two tabs the Customer Action page itself shows. */
-const CUSTOMER_INTERFACE_TABS_V368=['appointment','actions'];
+/* nestly_v612 (owner, photo 5: an arrow drawn between the two tabs — "swap place", clarified as
+   "basically just swap the position, everything within it stays the same"). Customer Action leads
+   now and Appointment Setting follows. Order only: each tab still renders its own contents, every
+   hash resolves exactly as before, and CUSTOMER_INTERFACE_TABS_V368 is read elsewhere with
+   .includes(), which does not care about order. */
+const CUSTOMER_INTERFACE_TABS_V368=['actions','appointment'];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
@@ -46079,6 +46084,8 @@ async function inventoryPage(){
    prints a full date AND time, which is right for an audit row and far too wide for a table
    column. A function declaration, not a const inside the page: the row renderer runs before the
    page's own body finishes, and a const there sits in the temporal dead zone when it does. */
+/* nestly_v612 (owner: "i need subtab for (all/active/used up) within the module"). */
+const PACKAGE_STATUS_TABS_V612=Object.freeze([['all','All'],['active','Active'],['used','Used up']]);
 function packageDayV603(value){
   /* nestly_v608: sgt() prints a date AND a time ("2026-07-01 10:00"), and splitting on a comma it
      does not contain left the time on both new columns — the owner asked for dd/mm/yy. Reuses the
@@ -46089,6 +46096,9 @@ function packageDayV603(value){
 }
 async function packagesPage(options){
   const packagesViewV584=options&&options.view==='customers'?'customers':'plans';
+  /* nestly_v612: which status tab is showing. Page state, so it survives a re-render of the
+     list but resets when the page is opened afresh. */
+  let packageStatusV612='all';
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const refreshPackagesV584=()=>packagesPage({view:packagesViewV584});
   const canWrite=canWriteModule('packages');
@@ -46167,6 +46177,13 @@ async function packagesPage(options){
         ${canWrite?`<div><label for="kUseBranch">Branch recording used session</label><select id="kUseBranch">${packageBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')||'<option value="">No active branch</option>'}</select></div>`:''}
         <div><label for="kCustomerSearch">Search customer</label><input id="kCustomerSearch" type="search" placeholder="Name or phone"></div>
         <button class="btn ghost sm" id="kCustomerSearchClear" type="button">Clear</button>
+      </div>
+      ${/* nestly_v612 (owner: "i need subtab for (all/active/used up) within the module"). Six rows
+           in the photo, five of them used up — the one package a member of staff can actually take
+           a session from was outnumbered five to one, and on a busy counter that list only grows.
+           Counts are on the tabs so the split is readable before anything is clicked. */''}
+      <div class="v150-segment package-status-tabs-v612" role="tablist" aria-label="Package status" style="margin-top:12px">
+        ${PACKAGE_STATUS_TABS_V612.map(([key,label])=>`<button type="button" role="tab" data-package-status-v612="${key}" aria-selected="${packageStatusV612===key?'true':'false'}" aria-pressed="${packageStatusV612===key?'true':'false'}">${esc(label)} <span class="muted" data-package-status-count-v612="${key}"></span></button>`).join('')}
       </div>
       <div id="klist" style="margin-top:8px">${CUI.tableSkeleton({rows:4,columns:5})}</div></div>
     </section>`:''}`;
@@ -46376,7 +46393,19 @@ async function packagesPage(options){
 	  const renderPackages=()=>{
 	    if(!isCurrent()||!$('klist'))return;
 	    const query=($('kCustomerSearch')?.value||'').trim().toLowerCase();
-	    const filtered=packageRows.filter(k=>!query||[k.client_name,k.client_phone,k.plan_name].some(value=>String(value||'').toLowerCase().includes(query)));
+	    const matchesQueryV612=k=>!query||[k.client_name,k.client_phone,k.plan_name].some(value=>String(value||'').toLowerCase().includes(query));
+	    /* nestly_v612: the status split. "Used up" is remaining===0 whatever the stored status says;
+	       "Active" is a package with sessions left AND a window still open, which is what a member of
+	       staff can actually take a session from. An expired package with sessions left is in neither,
+	       and is exactly why "All" exists. */
+	    const searched=packageRows.filter(matchesQueryV612);
+	    const packageStatusCountsV612={
+	      all:searched.length,
+	      active:searched.filter(k=>Number(k.remaining)>0&&k.status!=='expired').length,
+	      used:searched.filter(k=>Number(k.remaining)===0).length
+	    };
+	    const filtered=searched.filter(k=>packageStatusV612==='all'
+	      ||(packageStatusV612==='active'?Number(k.remaining)>0&&k.status!=='expired':Number(k.remaining)===0));
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
 	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
     $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th>Left</th><th>Status</th><th></th></tr>
@@ -46447,6 +46476,22 @@ async function packagesPage(options){
       deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#packageHistoryCloseV603'});
       $('packageHistoryCloseV603').onclick=close;
       if(canWrite)bindReversalButtons(refreshPackagesV584);
+    });
+    document.querySelectorAll('[data-package-status-count-v612]').forEach(node=>{
+      /* Concatenated rather than a template literal: v97 refuses interpolated textContent because
+         that is how untranslatable interface prose gets written. This is a count in brackets, not
+         a sentence, and it has no words to translate. */
+      node.textContent='('+(packageStatusCountsV612[node.dataset.packageStatusCountV612]??0)+')';
+    });
+    document.querySelectorAll('[data-package-status-v612]').forEach(button=>{
+      button.setAttribute('aria-selected',String(button.dataset.packageStatusV612===packageStatusV612));
+      button.setAttribute('aria-pressed',String(button.dataset.packageStatusV612===packageStatusV612));
+      button.onclick=()=>{
+        if(packageStatusV612===button.dataset.packageStatusV612)return;
+        packageStatusV612=button.dataset.packageStatusV612;
+        /* Page 1 of the new tab, not page 3 of the old one. */
+        packagePage=0;renderPackages();
+      };
     });
     const prev=$('packagesPrev'),next=$('packagesNext');
     if(prev)prev.onclick=()=>{packagePage=Math.max(0,packagePage-1);renderPackages()};
@@ -50648,11 +50693,59 @@ async function loadMerchantPaymentsV142(){
     location.assign(executed.data.redirect_url);
   };
 }
+/* nestly_v612 (owner, photo 1: a table drawn across the Subscription page — Business Name, a row
+   per branch, the plan, "Expires on XXX", Ongoing/Expired, and a payment method column; confirmed
+   as "those six, one row per branch").
+   IT IS A VIEW, NOT A BILLING CHANGE. The owner was asked directly and chose one company plan with
+   a per-branch breakdown, so every row carries the SAME plan, renewal date, status and payment
+   method — because there is one subscription. Showing a different status per branch would be a
+   drawing of a product Peekaa does not sell, and the first person to read it would believe one
+   branch could lapse while the others ran on. What differs down the table is the branch, which is
+   the thing the owner wanted to see their money against. */
+function subscriptionBranchTableV612(billing){
+  const branches=Array.isArray(billing?.__branchesV612)?billing.__branchesV612:[];
+  if(!branches.length)return '';
+  const cadence=billing?.terms?.cadence==='annual'?'Annual'
+    :billing?.terms?.cadence==='monthly'?'Monthly':'—';
+  const amount=Number(billing?.terms?.amount_cents||billing?.amount_due_cents||0);
+  const plan=cadence==='—'?'—':`${cadence}${amount?` · ${money(amount)}${cadence==='Annual'?'/year':'/month'}`:''}`;
+  const expires=billing?.next_payment_at?sgt(billing.next_payment_at)
+    :billing?.provider?.current_period_end?sgt(billing.provider.current_period_end):'—';
+  /* "Ongoing" is the owner's own word for a subscription that has not lapsed. Anything the provider
+     does not call active or trialing is reported as it is rather than dressed up. */
+  const status=billing?.status==='active'||billing?.status==='trialing'
+    ?'<span class="pill ok">Ongoing</span>'
+    :`<span class="pill off">${esc(String(billing?.status||'unknown').replaceAll('_',' '))}</span>`;
+  const method=billing?.payment_method?.brand
+    ?`${esc(String(billing.payment_method.brand))}${billing.payment_method.last4?` ····${esc(String(billing.payment_method.last4))}`:''}`
+    :billing?.provider?.subscription_id?'On file':'Not set';
+  return `<div class="cui-table-wrap" style="margin-bottom:16px"><table data-responsive="true" class="cui-table">
+    <tr><th>Business name</th><th>Branch</th><th>Plan</th><th>Expires on</th><th>Status</th><th>Payment method</th></tr>
+    ${branches.map(branch=>`<tr>
+      <td data-merchant-content>${esc(S.biz?.name||'—')}</td>
+      <td data-merchant-content>${esc(branch.name||'—')}</td>
+      <td>${esc(plan)}</td>
+      <td>${esc(expires)}</td>
+      <td>${status}</td>
+      <td>${method}</td>
+    </tr>`).join('')}
+  </table></div>
+  <p class="muted small" style="margin:-6px 0 16px">One subscription covers the company, so every branch shares its plan, renewal date and payment method. Extra branches are charged as units of it.</p>`;
+}
 /* ---------- provider-backed subscription billing ---------- */
 async function loadBillingConfig(){
   const wrap=$('billingWrap');if(!wrap||!S.biz?.id)return;
   wrap.setAttribute('aria-busy','true');
-  const {data:b,error}=await sb.rpc('get_business_billing_v125',{p_business:S.biz.id});
+  /* nestly_v612: the branch rows the owner's table asks for. Read here rather than added to the
+     billing RPC — this is a view of branches the workspace already reads everywhere else, and the
+     billing contract has no business growing a column for a layout. A failure is not fatal: the
+     plan card is what this page is for, so the table simply does not draw. */
+  const [{data:b,error},branchResultV612]=await Promise.all([
+    sb.rpc('get_business_billing_v125',{p_business:S.biz.id}),
+    sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id)
+      .eq('active',true).order('is_default',{ascending:false}).order('name')
+  ]);
+  if(b&&!error)b.__branchesV612=Array.isArray(branchResultV612?.data)?branchResultV612.data:[];
   if(!wrap.isConnected)return;
   wrap.setAttribute('aria-busy','false');
   if(error||!b||b.business_id!==S.biz.id){
@@ -50712,7 +50805,7 @@ async function loadBillingConfig(){
       :!sameCadence?'Change billing cycle'
       :!sameCapacity?'Increase capacity'
       :'Manage billing';
-    wrap.innerHTML=`<div class="row"><div><b>Peekaa subscription</b><p class="muted small" style="margin-top:3px">One plan. Annual saves SGD 600 against monthly billing.</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
+    wrap.innerHTML=`${subscriptionBranchTableV612(b)}<div class="row"><div><b>Peekaa subscription</b><p class="muted small" style="margin-top:3px">One plan. Annual saves SGD 600 against monthly billing.</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
       <fieldset style="border:0;padding:0;margin:16px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">Billing cycle</legend>
         <div class="row" style="align-items:stretch;flex-wrap:wrap">
           <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" checked> <strong>Annual · SGD 1,188/year</strong><br><span class="muted small">SGD 99/month equivalent · selected by default</span></label>
@@ -51547,10 +51640,17 @@ function bookingRulesCardHtmlV325(){
   const seatingSectorV235=['fnb','bar','other'].includes(String(S.biz.industry||'').toLowerCase());
   const seatsGuestsV235=seatingSectorV235&&S.biz.takes_table_reservations===true;
   const isOwner=S.myRole==='owner';
-  return `<div class="card" style="margin-top:16px"><b>Change requests</b>
+  return `<div class="card" style="margin-top:16px">${/* nestly_v612 (owner, photo 5: "Change
+      requests" struck through, "Customer Appointment Request" written in). The old name described
+      the row in a queue; the owner's names the thing a customer sent. */''}<b>Customer Appointment Request</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline each one in Bookings.</p>
       ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-        <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>`
+        <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>
+      <label style="display:flex;align-items:center;gap:8px;margin:12px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
+      <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
+      <div id="setAvailabilityErr" role="status"></div>`
         :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
     <div class="card" style="margin-top:16px">
       <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
@@ -51570,11 +51670,11 @@ function bookingRulesCardHtmlV325(){
         <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
       <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
       <div id="setErr"></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
-      <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Customer booking availability</b>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-        <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
-      <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
+      ${/* nestly_v612 (owner, photo 5: "Let customers choose a team member" ringed with an arrow up
+           to the Customer Appointment Request card — "put here"). It moved there. What it decides —
+           whether a customer may pick their person when they ask for an appointment — belongs with
+           the rest of what a customer may do when they ask, not under a heading about opening
+           hours that no longer has any hours under it (v606 moved those to each branch). */''}
       ${/* nestly_v606 (owner mark, photo: the whole opening-hours grid ringed with an arrow to
            Branches — "branch opening hour should put here"). Hours belong to a BRANCH: this page
            is one screen for the whole business, and it was asking the owner to set one branch's
@@ -51582,8 +51682,6 @@ function bookingRulesCardHtmlV325(){
            this switch did not, because who a customer may pick is a business decision and the
            owner's own mark on the next photo put it here. */''}
       <p class="muted small" style="margin-top:14px">Opening hours are set on each branch — <a href="#/branches">open Branches</a>.</p>
-      <div style="margin-top:14px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
-      <div id="setAvailabilityErr" role="status"></div>
     </div>
     ${bookingConfirmationTemplateCardHtmlV330()}`;
 }

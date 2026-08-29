@@ -90,7 +90,10 @@ const stub=`(()=>{
     purchased_at:'2026-07-01T02:00:00Z',last_used_at:'2026-08-20T02:00:00Z',service_name:'Facial'}],
   staff_package_session_history_v603:{client_package_id:'cp1',plan_name:'5x Facial',sessions:5,remaining:3,
     purchased_at:'2026-07-01T02:00:00Z',sessions_used:[{consumption_id:'k1',sale_id:'s1',used_at:'2026-08-20T02:00:00Z',remaining_after:3,reversed:false}]},
-  get_business_billing_v125:{business_id:BIZ,status:'active',plan:'annual'},
+  get_business_billing_v125:{business_id:BIZ,status:'active',
+    terms:{cadence:'annual',customer_capacity:1000,amount_cents:118800},
+    next_payment_at:'2027-08-25T00:00:00Z',plans:[{cadence:'annual',amount_cents:118800},{cadence:'monthly',amount_cents:16800}],
+    provider:{subscription_id:'sub_1'},current_customer_count:8},
   business_get_customer_join_qr_status_v91:{join_token:null,active_count:0},
   get_grow_usage_v386:{rows:[]},
   business_get_programmes_v314:{programmes:[],programmes_contract:'v391'}
@@ -192,6 +195,53 @@ console.log('\n### v600 Block time — recurring off days');
     ok(await page.evaluate(()=>document.querySelector('[data-weekly-off-v600="3"]').checked),'Wednesday is pre-ticked from the stub');
     ok(/Currently off every Wednesday/.test(await text(page)),'and it says so in words');
   }
+  ok(errs.length===0,'no page errors ('+errs.slice(0,1)+')');
+  await ctx.close(); }
+
+console.log('\n### item 1 — the Subscription branch table');
+{ const {ctx,page,errs}=await open('/settings');
+  await page.waitForTimeout(2000);
+  const heads=await page.evaluate(()=>[...document.querySelectorAll('#billingWrap th')].map(h=>h.textContent.trim()));
+  ok(JSON.stringify(heads)===JSON.stringify(['Business name','Branch','Plan','Expires on','Status','Payment method']),'six columns: '+heads.join(' | '));
+  const rows=await page.evaluate(()=>[...document.querySelectorAll('#billingWrap tr')].slice(1).map(r=>[...r.children].map(c=>c.textContent.trim())));
+  console.log('     rows:',JSON.stringify(rows));
+  ok(rows.length===2,'one row per active branch');
+  ok(rows.every(r=>r[4]==='Ongoing'),'both say Ongoing — it is one company subscription');
+  ok(rows[0][1]!==rows[1][1],'and the branch is what differs down the table');
+  ok(errs.length===0,'no page errors ('+errs.slice(0,1)+')');
+  await ctx.close(); }
+
+console.log('\n### photo 5 — Customer Action');
+{ const {ctx,page,errs}=await open('/customer-interface/appointment');
+  await page.waitForTimeout(1500);
+  const tabs=await page.evaluate(()=>[...document.querySelectorAll('.settings-tabs button, [role=tablist] a, [role=tablist] button')].map(b=>b.textContent.trim()).filter(Boolean));
+  console.log('     tabs:',tabs.slice(0,4).join(' | '));
+  /* The swap means Customer Action opens first, so the appointment card is present but hidden —
+     innerText would not see it. Read the DOM. */
+  const card=await page.evaluate(()=>{const c=document.querySelector('#aac')?.closest('.card');return c?c.innerHTML:''});
+  ok(/Customer Appointment Request/.test(card),'the card is renamed');
+  ok(!/Change requests/.test(card),'the old name is gone');
+  ok(await page.evaluate(()=>{
+       const panes=[...document.querySelectorAll('[data-ci-section],[data-settings-panel],section')];
+       return document.querySelector('#aac')!==null;}),'the appointment card still exists on the page');
+  ok(await page.evaluate(()=>{const c=document.querySelector('#aac')?.closest('.card');return !!c&&!!c.querySelector('#setStaffChoice')}),'the team-member switch sits in that same card');
+  ok(await page.evaluate(()=>{const c=document.querySelector('#aac')?.closest('.card');return !!c&&!!c.querySelector('#setStaffChoiceSaveV606')}),'and its Save came with it');
+  ok(errs.length===0,'no page errors ('+errs.slice(0,1)+')');
+  await ctx.close(); }
+
+console.log('\n### item 2 — package status sub-tabs');
+{ const {ctx,page,errs}=await open('/custpackages');
+  const tabs=await page.evaluate(()=>[...document.querySelectorAll('[data-package-status-v612]')].map(b=>b.textContent.trim()));
+  ok(tabs.length===3,'three tabs: '+tabs.join(' | '));
+  const rows=()=>page.evaluate(()=>document.querySelectorAll('#klist tbody tr, #klist table tr').length-1);
+  console.log('     All rows:',await rows());
+  await page.click('[data-package-status-v612="used"]'); await page.waitForTimeout(700);
+  console.log('     Used up :',await rows(),'| tab labels:',(await page.evaluate(()=>[...document.querySelectorAll('[data-package-status-v612]')].map(b=>b.textContent.trim()))).join(' | '));
+  ok(await page.evaluate(()=>document.querySelector('[data-package-status-v612=\"used\"]').getAttribute('aria-selected')==='true'),'Used up becomes the selected tab');
+  await page.click('[data-package-status-v612="active"]'); await page.waitForTimeout(700);
+  const activeRows=await rows();
+  console.log('     Active  :',activeRows);
+  ok(activeRows===1,'Active shows the one package with sessions left');
   ok(errs.length===0,'no page errors ('+errs.slice(0,1)+')');
   await ctx.close(); }
 
