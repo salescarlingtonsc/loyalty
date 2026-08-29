@@ -29090,8 +29090,12 @@ async function inventoryPage(){
    column. A function declaration, not a const inside the page: the row renderer runs before the
    page's own body finishes, and a const there sits in the temporal dead zone when it does. */
 function packageDayV603(value){
-  const text=value?sgt(value):'';
-  return text?String(text).split(',')[0].trim()||text:'—';
+  /* nestly_v608: sgt() prints a date AND a time ("2026-07-01 10:00"), and splitting on a comma it
+     does not contain left the time on both new columns — the owner asked for dd/mm/yy. Reuses the
+     app's existing short-date formatter, which is already Asia/Singapore and already the shape
+     every other short date on this workspace prints. Caught by LOOKING at the rendered row; the
+     source-level test could not have seen it. */
+  return value?promotionDateShortV324(value)||'—':'—';
 }
 async function packagesPage(options){
   const packagesViewV584=options&&options.view==='customers'?'customers':'plans';
