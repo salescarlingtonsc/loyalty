@@ -2754,8 +2754,16 @@ async function renderCustomerQrJoin(){
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(customerJoinConfirmedV596.slug)||pendingCustomerJoinSlugV587;
   }else{
     if(!(await confirmCustomerJoinV571(token,isCurrent)))return;
-    if(!isCurrent())return;
+    /* nestly_v604: record the Yes before the staleness bail (see the v604 note in
+       confirmCustomerJoinV571). If a wallet watcher repainted while the sheet was open, this
+       invocation is stale — but the person still pressed Yes on this token. Re-entering the
+       route lets a FRESH invocation find the recorded answer and carry straight into the join,
+       instead of the Yes dying with the stale epoch and the screen staying wherever it was. */
     rememberCustomerJoinConfirmedV596(token,pendingCustomerJoinSlugV587);
+    if(!isCurrent()){
+      if(location.hash==='#/join')route();
+      return;
+    }
   }
   renderCustomerShell({active:'programmes',body:`<section class="card" aria-busy="true"><div class="row">${CUI.icon('scan',{size:24})}<div><h1>Joining this programme</h1><p class="muted small" style="margin-top:5px">Peekaa is validating the business QR. No customer can search for or self-link a business here.</p></div></div><p id="customerQrJoinStatus" class="muted small" role="status" aria-live="polite" style="margin-top:14px">Checking QR…</p></section>`});
   focusCustomerRoute();

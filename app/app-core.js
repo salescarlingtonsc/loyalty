@@ -1545,8 +1545,13 @@ async function route(){
       if(pendingCustomerJoinToken&&!customerJoinAskedThisVisitV599){
         customerJoinAskedThisVisitV599=true;
         if(!(await confirmCustomerJoinV571(pendingCustomerJoinToken,isRouteCurrent)))return;
-        if(!isRouteCurrent())return;
+        /* nestly_v604: the answer is recorded BEFORE the staleness bail. The sheet survives
+           competing repaints now, so by the time Yes lands this route invocation is often no
+           longer the current one — a later invocation has already painted sign-in underneath,
+           which is exactly the screen the person needs next. Losing the recorded Yes to that
+           ordering forced a second ask after sign-up; recording it first costs nothing. */
         rememberCustomerJoinConfirmedV596(pendingCustomerJoinToken,pendingCustomerJoinSlugV587);
+        if(!isRouteCurrent())return;
       }
       return renderCustomerRegistration(isRouteCurrent);
     }
@@ -3643,7 +3648,17 @@ async function loadMemberQrIntoV327({card,slot,status},isCurrent){
 async function confirmCustomerJoinV571(token,isCurrent){
   let preview=null;
   try{preview=await publicGateway('public-join',{method:'GET',query:`?token=${encodeURIComponent(token)}`})}catch(error){}
-  if(!isCurrent())return false;
+  /* nestly_v604 — THE SILENT SCAN. The owner's phone logged this preview returning 200 with the
+     business, and then NOTHING appeared. The old guard here was `if(!isCurrent())return false` —
+     the render epoch. On a real phone another render routinely starts during this fetch (session
+     restore re-route, a wallet watcher repaint), so the epoch was already stale, the sheet was
+     thrown away unshown, and the caller's ask-once flag then suppressed every retry on the same
+     visit: gateway 200, blank screen, "nothing pops up". This sheet is a body-level modal that
+     outlives page repaints by construction — the only states that genuinely invalidate it are
+     the scan being abandoned (token cleared or replaced) or the person having navigated off the
+     join route. Those are what is tested now; a competing repaint underneath is not a reason to
+     not ask. */
+  if(pendingCustomerJoinToken!==token||location.hash!=='#/join')return false;
   /* `name` is the key the server sends. business_name / business.name are kept as fallbacks so a
      future payload that nests the business still names it. */
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
