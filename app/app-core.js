@@ -275,7 +275,7 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   retention:['retention','Retention'],referrals:['referrals','Referrals'],memberships:['memberships','Memberships'],
   giftcards:['giftcard','Gift cards'],reports:['reports','Business Insights'],customerintel:['customers','Customer intelligence'],support:['customers','WhatsApp Inbox'],staffperf:['staff','Staff performance'],
   dailyreport:['daily','Daily report'],pnl:['pnl','P&L'],expenses:['expenses','Expenses'],
-  staffmembers:['staff','Staff Members'],settings:['settings','Settings'],setup:['setup','Get started'],
+  staffmembers:['staff','Staff Members'],settings:['settings','Subscription'],setup:['setup','Get started'],
   /* nestly_v606 (owner mark on the Bring-back page: the WhatsApp automation and delivery blocks
      ringed together, with "Reminder & Notification move under operations setup"). A SURFACE key,
      not an entitlement — what it shows is owner-level workspace configuration, so it is gated on

@@ -62,18 +62,16 @@ test('the rewards draft retry cannot deadlock on a stale idempotency key', () =>
     'other failures must show the real reason, not a generic message');
 });
 
-test('an owner can say whether the business sells services, products or both', () => {
-  // Owner: "some business is products only no services ... some have mix like salon
-  // (so we can have default for the sectors but able to off or on if needed to)"
-  assert.match(app, /id="sellsServices"/);
-  assert.match(app, /id="sellsProducts"/);
-  assert.match(app, /business_set_sales_mix_v184/);
-  const i = app.indexOf("salesMixSave')");
-  const src = app.slice(i, i + 1600);
-  assert.ok(src.includes('Pick at least one'),
-    'a business that sells neither has nothing to record a sale against');
-  assert.ok(src.includes('also_disabled'),
-    'the owner must be told what else was switched off, not discover it later');
-  // The rest of the entitlement stays with the sector.
-  assert.match(app, /Everything else is set by Peekaa for your sector/);
+test('the sell-mix control is gone, and the RPC behind it is not called from anywhere', () => {
+  /* nestly_v607 (owner markup on the Settings page: "What do you sell?" inside the block struck
+     out with the modules list, and "Settings" renamed Subscription). The mix decided which of two
+     entitlements were on — services, products, or both — and every other module on that page was
+     already Peekaa's to grant, which the page said out loud. Leaving one editable entitlement on a
+     page about billing, beside a read-only list of the rest, was the inconsistency the owner
+     struck through. The server RPC is untouched and still reachable to Peekaa; nothing in the app
+     calls it. */
+  assert.doesNotMatch(app, /id="sellsServices"/);
+  assert.doesNotMatch(app, /id="sellsProducts"/);
+  assert.doesNotMatch(app, /business_set_sales_mix_v184/);
+  assert.doesNotMatch(app, /Everything else is set by Peekaa for your sector/);
 });

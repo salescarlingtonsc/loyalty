@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b1d9315283548b888076e434220e4afc8426d9813e1ff3daf1abd5ce7241a906"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d98e48b670222b525d311184059ba88f07dd10919b7087213d564fcbd2887f24"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2785,13 +2785,8 @@ details.report-decision-card[open]>summary .report-card-visual{margin-top:14px}
 .c360-rewards-under-v392>:first-child{margin-top:6px!important}
 .till-item-search-v392{margin:8px 0 10px}
 .till-item-search-v392 input{min-height:44px}
-.settings-module-grid-v389{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:7px;margin-top:10px}
-.settings-module-v389{display:flex;flex-direction:column;gap:1px;min-width:0;padding:7px 9px;
-  border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--bg)}
-.settings-module-name-v389{display:flex;align-items:center;gap:6px;min-width:0;font-size:12px;color:var(--ink)}
-.settings-module-name-v389 b{font-weight:650;overflow-wrap:anywhere}
-.settings-module-name-v389 svg{flex:0 0 auto;color:var(--muted)}
-.settings-module-uses-v389{font-size:10.5px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
+/* nestly_v607: the module grid these rules painted was removed with the Settings page's
+   read-only entitlement list (owner: "dont need to show them the modules, just remove it"). */
 .grow-overview-open-v388{padding:0;border:0;background:none;font:inherit;font-weight:750;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .grow-overview-open-v388:hover{color:var(--coral);text-decoration:underline}
 .grow-overview-open-v388:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:4px}
@@ -5485,7 +5480,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b1d9315283548b888076e434220e4afc8426d9813e1ff3daf1abd5ce7241a906</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d98e48b670222b525d311184059ba88f07dd10919b7087213d564fcbd2887f24</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -29429,6 +29424,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'b1d9315283548b888076e434220e4afc8426d9813e1ff3daf1abd5ce7241a906',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'d98e48b670222b525d311184059ba88f07dd10919b7087213d564fcbd2887f24',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

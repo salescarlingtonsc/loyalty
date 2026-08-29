@@ -2120,7 +2120,9 @@ function profileHtml(){
              same card in a dialog, because printing, replacing and revoking a QR needs more room
              than a dropdown row. */''}
         ${S.myRole==='owner'?`<a href="#" id="pmBusinessQrV368">${CUI.icon('scan',{size:20})}My Business QR</a>`:''}
-        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:20})}Settings</a>`:''}
+        ${/* nestly_v607: the owner struck "Settings" out in the menu too and wrote Subscription.
+             The route is unchanged — the page it opens is the plan now, and nothing else. */''}
+        ${S.myRole==='owner'?`<a href="#/settings" id="pmSettings">${CUI.icon('settings',{size:20})}Subscription</a>`:''}
         <!-- V209 (owner annotations): "remove this" on Team & staff — Staff Members is already in
              the sidebar, and two doors to one page is the duplicated navigation flagged at V180.
              "move here" on Branches — it belongs in Operations setup beside Staff and Services,
@@ -32457,7 +32459,7 @@ async function settingsPage(){
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
-  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Settings</h1><p class="muted small">Workspace, team & modules</p></div></div></div>
+  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Subscription</h1><p class="muted small">Your Peekaa plan and what it covers.</p></div></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
@@ -32472,26 +32474,15 @@ async function settingsPage(){
       <button type="button" class="settings-tab" role="tab" id="settab-catalogue" aria-controls="setpanel-catalogue" aria-selected="false" tabindex="-1" data-settab="catalogue" hidden>Checkout catalogue</button>
       <button type="button" class="settings-tab" role="tab" id="settab-team" aria-controls="setpanel-team" aria-selected="false" tabindex="-1" data-settab="team" hidden>Team &amp; permissions</button>
     </div>
-    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1"><div class="split"><div class="card">${S.myRole==='owner'?`<b>What do you sell?</b>
-      <p class="muted small" style="margin:6px 0 10px">Your sector sets a sensible default — a cafe starts with products only, a massage shop with services only, a salon with both. Change it here if your shop is different.</p>
-      <label class="row sales-mix-row"><input type="checkbox" id="sellsServices" ${(S.biz.enabled_modules||[]).includes('services')?'checked':''}> <span><b>Services</b><br><span class="muted small">Bookable treatments, classes or appointments.</span></span></label>
-      <label class="row sales-mix-row"><input type="checkbox" id="sellsProducts" ${(S.biz.enabled_modules||[]).includes('inventory')?'checked':''}> <span><b>Products</b><br><span class="muted small">Physical items you stock and sell.</span></span></label>
-      <div class="row" style="margin-top:12px"><button class="btn sm" id="salesMixSave">Save</button><span class="muted small" id="salesMixStatus" role="status" aria-live="polite"></span></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">`:''}<b>Modules</b><p class="muted small" style="margin:6px 0 10px">Everything else is set by Peekaa for your sector. Contact Peekaa if your business needs a different module entitlement.</p>
-      ${/* V389 (owner, photo 1: "the modules are lump together, very messy ... i need you to have a
-            structure and frame it easier to read").
-            The mess had a cause, not just a look. `.chip` is styled in this app's stylesheet, but
-            it sets a background, a radius and padding and NO display — it is a <span>, so it is
-            inline. What made that work elsewhere is its container `.platform-module-list`, whose
-            `display:flex` blockified it; and that rule lives only in platform-console.css, which
-            app.js fetches on demand for #/platform routes (loadPlatformConsoleAssetsV184) and
-            which this page never loads. So each chip stayed inline, and a padded background on a
-            wrapping inline element paints exactly the overlap in the owner's photo.
-            So this list gets its OWN class and its own rules in this app's stylesheet, rather than
-            borrowing a console's. The console keeps .platform-module-list for its own lists.
-            One module per framed cell, name first and its dependencies on a quieter second line —
-            "uses Customers, Sales & refunds" is a footnote, not half the title. */''}
-      <div class="settings-module-grid-v389" aria-label="Enabled modules">${mods.filter(m=>(S.biz.enabled_modules||[]).includes(m)).map(m=>`<div class="settings-module-v389"><span class="settings-module-name-v389">${CUI.icon(MODULES[m][0],{size:16})}<b>${esc(MODULES[m][1])}</b></span>${dependencyText(m)?`<span class="settings-module-uses-v389">uses ${esc(dependencyText(m))}</span>`:''}</div>`).join('')||'<p class="muted small">No optional modules are assigned.</p>'}</div></div>
+    <section class="settings-panel" id="setpanel-modules" role="tabpanel" aria-labelledby="settab-modules" tabindex="-1">
+      ${/* nestly_v607 (owner markup: "Settings" struck through and "Subscription" written in, on
+           the page and in the profile menu; "click to edit modules" answered with "dont need to
+           show them the modules, just remove it. since only admin can edit").
+           "What do you sell?" and the Modules list are gone. Both described ENTITLEMENT, which
+           Peekaa grants and an owner cannot change — the page said so itself ("Contact Peekaa if
+           your business needs a different module entitlement"), so it was a read-only list of
+           things that look like settings. What remains is the one thing on this page the owner
+           actually owns: the plan they pay for. */''}
       <div class="card" id="billingWrap">${CUI.skeletonGrid({cards:2,lines:3})}</div></div></section>
     <section class="settings-panel" id="setpanel-catalogue" role="tabpanel" aria-labelledby="settab-catalogue" tabindex="-1" hidden>
       <div class="card" id="checkoutCatalogueWrap">${CUI.loadingState({title:'Loading checkout catalogue',iconName:'till'})}</div>
@@ -33568,25 +33559,8 @@ async function settingsPage(){
      dependency resolver rewrites enabled_modules on every write and would otherwise put
      services straight back, making the toggle look broken. The server reports what else it
      switched off and we say so plainly rather than letting the owner discover it later. */
-  const salesMixSave=$('salesMixSave');
-  if(salesMixSave)salesMixSave.onclick=async()=>{
-    const status=$('salesMixStatus');
-    const sellsServices=$('sellsServices').checked,sellsProducts=$('sellsProducts').checked;
-    if(!sellsServices&&!sellsProducts){
-      if(status)status.textContent='Pick at least one — a business has to sell something.';return;
-    }
-    CUI.setButtonBusy(salesMixSave,{busy:true,label:'Saving…'});
-    const {data,error}=await sb.rpc('business_set_sales_mix_v184',{
-      p_business:S.biz.id,p_sells_services:sellsServices,p_sells_products:sellsProducts});
-    if(salesMixSave.isConnected)CUI.setButtonBusy(salesMixSave,{busy:false});
-    if(error){if(status)status.textContent=ownerErrorText(error);return}
-    const alsoOff=Array.isArray(data?.also_disabled)?data.also_disabled:[];
-    S.biz.enabled_modules=[...(S.biz.enabled_modules||[])];
-    if(status)status.textContent=alsoOff.length
-      ?`Saved. ${alsoOff.map(m=>MODULES[m]?MODULES[m][1]:m).join(' and ')} turned off too — it needs what you just removed.`
-      :'Saved. Reloading the menu…';
-    setTimeout(()=>location.reload(),alsoOff.length?2200:600);
-  };
+  /* nestly_v607: the sell-mix control was struck out with the modules list beside it. Its
+     server RPC is untouched and still Peekaa's to call; nothing in the app calls it. */
   loadBillingConfig();
 }
 /* ---------- provider-backed subscription billing ---------- */
