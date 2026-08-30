@@ -3136,6 +3136,48 @@
       "version": "20260830233000",
       "name": "nestly_v641_inbox_mark_all_read_through_the_guard",
       "sourcePath": "db/migrations/20260830_nestly_v641_inbox_mark_all_read_through_the_guard.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831000000",
+      "name": "nestly_v644_can_contact_authority",
+      "sourcePath": "db/migrations/20260831_nestly_v644_can_contact_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831010000",
+      "name": "nestly_v645_messaging_retention",
+      "sourcePath": "db/migrations/20260831_nestly_v645_messaging_retention.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831020000",
+      "name": "nestly_v646_engagement_rollups",
+      "sourcePath": "db/migrations/20260831_nestly_v646_engagement_rollups.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831030000",
+      "name": "nestly_v647_canonical_taxonomy",
+      "sourcePath": "db/migrations/20260831_nestly_v647_canonical_taxonomy.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831040000",
+      "name": "nestly_v648_service_canonical_map",
+      "sourcePath": "db/migrations/20260831_nestly_v648_service_canonical_map.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831050000",
+      "name": "nestly_v649_category_snapshot_at_sale",
+      "sourcePath": "db/migrations/20260831_nestly_v649_category_snapshot_at_sale.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831060000",
+      "name": "nestly_v650_ci_read_layer",
+      "sourcePath": "db/migrations/20260831_nestly_v650_ci_read_layer.sql"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="99f722713ae98b39ce23c7394761916e637e327894d558c69fd62693f25147a4"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="4da8bc62c6f7ed8c14a7d384c51dbcfe5694ec3d81bffac38db204fe14aaa6cd"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5553,7 +5553,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 99f722713ae98b39ce23c7394761916e637e327894d558c69fd62693f25147a4</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 4da8bc62c6f7ed8c14a7d384c51dbcfe5694ec3d81bffac38db204fe14aaa6cd</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -11488,7 +11488,7 @@ async function servicesPage(){
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
   M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
-    <div class="v150-title-actions">${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
+    <div class="v150-title-actions">${canWrite?`<a class="btn ghost sm" href="#/servicemapping">Map categories</a>`:''}${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
     <div class="services-segment-body" id="serviceSegmentBody">${canWrite?`<div class="card" id="serviceFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add service</b><p>Save one bookable service, then return to the catalogue.</p></div>
@@ -29658,6 +29658,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'99f722713ae98b39ce23c7394761916e637e327894d558c69fd62693f25147a4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'4da8bc62c6f7ed8c14a7d384c51dbcfe5694ec3d81bffac38db204fe14aaa6cd',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

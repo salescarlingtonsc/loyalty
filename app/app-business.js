@@ -3001,7 +3001,7 @@ function renderShell(page){
       EDITOR surface is untouched; only this top-level page redirects. */
       nav('#/grow/bringback');return Promise.resolve();},promotions:promotionsPage,studio:hashParam=>growPage('studio',hashParam,null,{fromRouteV288:true}),storedvalue:hashParam=>growPage('storedvalue',hashParam,null,{fromRouteV288:true}),referrals:referralsPage,
     memberships:membershipsPage,giftcards:giftcardsPage,appointments:appointmentsPage,
-    waitlist:waitlistPage,inventory:inventoryPage,packages:()=>packagesPage({view:'plans'}),custpackages:()=>packagesPage({view:'customers'}),reports:reportsPage,customerintel:customerIntelligencePage,support:supportInboxPageV531,
+    waitlist:waitlistPage,inventory:inventoryPage,packages:()=>packagesPage({view:'plans'}),custpackages:()=>packagesPage({view:'customers'}),reports:reportsPage,customerintel:customerIntelligencePage,servicemapping:serviceMappingBoardPage,support:supportInboxPageV531,
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,remindernotify:reminderNotificationPageV606,
@@ -9761,7 +9761,7 @@ async function servicesPage(){
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
   M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
-    <div class="v150-title-actions">${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
+    <div class="v150-title-actions">${canWrite?`<a class="btn ghost sm" href="#/servicemapping">Map categories</a>`:''}${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
     <div class="v150-segment" role="tablist" aria-label="Services catalogue"><button type="button" id="servicesSeg" aria-pressed="true">Services</button><button type="button" id="bundlesSeg" aria-pressed="false">Bundles</button></div>
     <div class="services-segment-body" id="serviceSegmentBody">${canWrite?`<div class="card" id="serviceFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add service</b><p>Save one bookable service, then return to the catalogue.</p></div>
@@ -30262,6 +30262,17 @@ async function customerIntelligencePage(){
   };
   const today=singaporeIsoDate(),from=shiftSingaporeDate(today,-364);
   let lastPayload=null,lastRequest=null,lastTruthBundle=null,lastEconomicsBundle=null,lastCustomerError='';
+  /* nestly_v650 (owner batch: acquisition mix, join/booking funnel, contactability and category
+     mix land on this same page, fed by their own business-scope-only RPCs — see
+     get_ci_acquisition_v1/get_ci_funnel_v1/get_ci_contactability_v1/get_ci_category_mix_v1).
+     Each bundle is captured independently so a failure in one never blanks the others, matching
+     the existing lastTruthBundle/lastEconomicsBundle pattern on this page. Engagement
+     (get_ci_engagement_v1) is deliberately NOT wired here — it lands with a later polish pass. */
+  let lastAcquisitionBundle=null,lastAcquisitionError='',lastFunnelBundle=null,lastFunnelError='',
+    lastContactabilityBundle=null,lastContactabilityError='',lastCategoryMixBundle=null,
+    lastCategoryMixError='',lastCategoryMixPeriod=null;
+  const categoryCustomersCacheV650=new Map();// node_key -> {loading,error,data}
+  const expandedCategoryNodesV650=new Set();
   const CUSTOMER_INTELLIGENCE_PAGE_SIZE=100;
   /* V285: the heading now says what the rail says. Every other route in the workspace answers to
      the name it was opened by; this one was reached under "Customer intelligence" and then titled
@@ -30278,6 +30289,155 @@ async function customerIntelligencePage(){
   const scopeMoney=(cents,currency=S.biz.currency||'SGD')=>`${currency} ${(Number(cents||0)/100).toFixed(2)}`;
   const percent=value=>Number.isFinite(Number(value))?`${Number(value).toFixed(1)}%`:'—';
   const frequency=value=>Number(value)>0?`Every ${Number(value).toFixed(1)} days`:'Building history';
+  /* nestly_v650: plain-English labels for get_ci_acquisition_v1's `via` values. Unknown is kept
+     in this map deliberately — see acquisitionMarkupV650 below, which never filters it out. */
+  const CI_ACQUISITION_VIA_LABELS_V650={
+    qr_join:'Joined by QR',referral:'Referred',portal_booking:'Booked online',
+    walk_in_till:'Added at the till',staff_created:'Added by staff',
+    qr_scan_provisioned:'Scanned member QR',csv_import:'Imported',
+    campaign:'Campaign',unknown:'Unknown'
+  };
+  const ciViaLabelV650=via=>CI_ACQUISITION_VIA_LABELS_V650[String(via||'unknown')]||esc(String(via||'Unknown'));
+  const ciQuietErrorV650=(title,message)=>`<section class="card"><div class="err" role="status"><b>${esc(title)}</b> ${esc(message||'Try running the report again.')}</div></section>`;
+  const ciMeasuredSinceV650=observedSince=>observedSince
+    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    :'';
+  function acquisitionMarkupV650(){
+    if(lastAcquisitionError)return ciQuietErrorV650('Where customers come from could not load.',lastAcquisitionError);
+    const bundle=lastAcquisitionBundle;
+    const sources=Array.isArray(bundle?.sources)?bundle.sources:[];
+    return `<section class="revenue-truth-section" aria-labelledby="ciAcquisitionHeadingV650">
+      <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Where customers come from</span>
+      <h2 id="ciAcquisitionHeadingV650">Acquisition mix</h2></div></div>
+      <p class="muted small">All branches</p>
+      ${sources.length?`<div class="cui-table-wrap" role="region" aria-label="Acquisition mix"><table class="cui-table"><thead><tr><th>Source</th><th>Evidence</th><th>Customers</th><th>New this period</th><th>Repeat</th></tr></thead><tbody>${sources.map(source=>`<tr><td data-label="Source"><b>${ciViaLabelV650(source.via)}</b></td><td data-label="Evidence" class="muted small">${esc(source.evidence||'')}</td><td data-label="Customers">${Number(source.customers||0)}</td><td data-label="New this period">${Number(source.new_in_period||0)}</td><td data-label="Repeat">${Number(source.repeat_customers||0)}</td></tr>`).join('')}</tbody></table></div>`
+        :'<div class="empty">No acquisition activity recorded in this scope yet.</div>'}
+      ${ciMeasuredSinceV650(bundle?.observed_since)}
+    </section>`;
+  }
+  function ciFunnelStepsMarkupV650(steps){
+    return `<div class="revenue-truth-metrics">${steps.map(([label,value])=>
+      `<article class="revenue-truth-metric"><span>${esc(label)}</span><strong>${value===null||value===undefined?'—':Number(value)}</strong></article>`
+    ).join('')}</div>`;
+  }
+  function funnelMarkupV650(){
+    if(lastFunnelError)return ciQuietErrorV650('Join & booking funnel could not load.',lastFunnelError);
+    const bundle=lastFunnelBundle,funnel=bundle?.funnel||{};
+    const join=funnel.join||null,booking=funnel.booking||null;
+    return `<section class="revenue-truth-section" aria-labelledby="ciFunnelHeadingV650">
+      <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Join &amp; booking funnel</span>
+      <h2 id="ciFunnelHeadingV650">How customers move through sign-up and booking</h2></div></div>
+      <p class="muted small">All branches</p>
+      <h3 class="small" style="margin-top:12px;font-weight:700">Join</h3>
+      ${join?ciFunnelStepsMarkupV650([['Page views',join.page_view],['Started',join.started],['Completed',join.completed]]):'<div class="empty">No join funnel data in this scope yet.</div>'}
+      <h3 class="small" style="margin-top:16px;font-weight:700">Booking</h3>
+      ${booking?ciFunnelStepsMarkupV650([['Page views',booking.page_view],['Availability checks',booking.started],['Completed',booking.completed]]):'<div class="empty">No booking funnel data in this scope yet.</div>'}
+      ${ciMeasuredSinceV650(bundle?.observed_since)}
+    </section>`;
+  }
+  function ciContactabilityGroupMarkupV650(label,group){
+    if(!group)return '';
+    const channels=group.allowed_by_channel||{};
+    const prominent=['whatsapp','sms','email'],rest=['push','in_app','call'];
+    const channelCard=(key,label2)=>`<article class="revenue-truth-metric"><span>${esc(label2)}</span><strong>${Number(channels[key]||0)} / ${Number(group.customers||0)}</strong></article>`;
+    return `<div style="margin-top:12px"><h3 class="small" style="font-weight:700">${esc(label)}${group.category?` · ${esc(group.category)}`:''}</h3>
+      <div class="revenue-truth-metrics" style="margin-top:8px">
+        ${channelCard('whatsapp','WhatsApp')}${channelCard('sms','SMS')}${channelCard('email','Email')}
+      </div>
+      <p class="muted small" style="margin-top:8px">Also allowed: push ${Number(channels.push||0)}, in-app ${Number(channels.in_app||0)}, call ${Number(channels.call||0)} (out of ${Number(group.customers||0)} customers)</p>
+    </div>`;
+  }
+  function contactabilityMarkupV650(){
+    if(lastContactabilityError)return ciQuietErrorV650('Who you may contact could not load.',lastContactabilityError);
+    const bundle=lastContactabilityBundle;
+    if(!bundle)return '<section class="revenue-truth-section"><div class="empty">Run this report to load contactability.</div></section>';
+    return `<section class="revenue-truth-section" aria-labelledby="ciContactabilityHeadingV650">
+      <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Who you may contact</span>
+      <h2 id="ciContactabilityHeadingV650">Contactable customers, by channel</h2></div></div>
+      ${ciContactabilityGroupMarkupV650('Business offers',bundle.business_offers)}
+      ${ciContactabilityGroupMarkupV650('Rewards &amp; points',bundle.rewards_and_points)}
+      ${bundle.note?`<p class="muted small" style="margin-top:12px">${esc(bundle.note)}</p>`:''}
+    </section>`;
+  }
+  const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;
+  function ciCategoryCustomersRowsMarkupV650(nodeKey){
+    const cached=categoryCustomersCacheV650.get(nodeKey);
+    if(!cached)return '';
+    if(cached.loading)return `<tr><td colspan="4"><div class="empty">Loading customers…</div></td></tr>`;
+    if(cached.error)return `<tr><td colspan="4"><div class="err" role="status">${esc(cached.error)}</div></td></tr>`;
+    const customers=Array.isArray(cached.data?.customers)?cached.data.customers:[];
+    if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div></td></tr>`;
+    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div></td></tr>`;
+  }
+  function categoryMixMarkupV650(){
+    if(lastCategoryMixError)return ciQuietErrorV650('What they buy could not load.',lastCategoryMixError);
+    const bundle=lastCategoryMixBundle;
+    if(!bundle)return '<section class="revenue-truth-section"><div class="empty">Run this report to load category mix.</div></section>';
+    const coverage=bundle.coverage||{};
+    const classifiedPct=Number(coverage.classified_pct_bps||0)/100;
+    const projectedPct=Number(coverage.projected_share_bps||0)/100;
+    const withhold=bundle.status==='empty'||Number(coverage.classified_pct_bps||0)<CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650;
+    if(withhold){
+      return `<section class="revenue-opportunity--withheld" aria-labelledby="ciCategoryMixHeadingV650">
+        <div><span class="revenue-truth-eyebrow">What they buy</span>
+        <h2 id="ciCategoryMixHeadingV650">Category mix is not reliable yet</h2>
+        <p>${bundle.status==='empty'?'No service or retail lines have been mapped to a category yet.':`Only ${classifiedPct.toFixed(1)}% of service &amp; retail revenue is classified — Peekaa withholds this view below ${(CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650/100).toFixed(0)}%.`}</p></div>
+        <a class="btn ghost sm" href="#/servicemapping">Map services</a>
+      </section>`;
+    }
+    const categories=Array.isArray(bundle.categories)?bundle.categories:[];
+    return `<section class="revenue-truth-section" aria-labelledby="ciCategoryMixHeadingV650">
+      <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">What they buy</span>
+      <h2 id="ciCategoryMixHeadingV650">Category mix</h2></div></div>
+      <p class="muted small">All branches</p>
+      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key):''}`).join('')}</tbody></table></div>`
+        :'<div class="empty">No categorised revenue in this scope yet.</div>'}
+      <p class="muted small" style="margin-top:10px">Category view covers ${classifiedPct.toFixed(1)}% of service &amp; retail revenue.${projectedPct>0?` ${projectedPct.toFixed(1)}% projected through current mappings, not snapshots.`:''}</p>
+      ${ciMeasuredSinceV650(bundle.observed_since)}
+    </section>`;
+  }
+  function ciCategoryMixWrapV650(){return `<div id="ciCategoryMixWrapV650">${categoryMixMarkupV650()}</div>`}
+  function refreshCategoryMixSectionV650(){
+    const wrap=$('ciCategoryMixWrapV650');
+    if(!wrap)return;
+    wrap.innerHTML=categoryMixMarkupV650();
+    bindCategoryMixSectionV650();
+  }
+  async function loadCategoryCustomersV650(nodeKey){
+    if(!lastCategoryMixPeriod)return;
+    categoryCustomersCacheV650.set(nodeKey,{loading:true});
+    refreshCategoryMixSectionV650();
+    const {data,error}=await sb.rpc('get_ci_category_customers_v1',{
+      p_business:S.biz.id,p_node_key:nodeKey,
+      p_from:lastCategoryMixPeriod.from,p_to:lastCategoryMixPeriod.to,p_limit:50
+    });
+    if(!isCurrent())return;
+    categoryCustomersCacheV650.set(nodeKey,error
+      ?{error:error.message||'Customers could not be loaded.'}
+      :{data});
+    refreshCategoryMixSectionV650();
+  }
+  function bindCategoryMixSectionV650(){
+    const wrap=$('ciCategoryMixWrapV650');
+    if(!wrap)return;
+    wrap.querySelectorAll('.ci-category-row-v650').forEach(row=>{
+      const toggle=()=>{
+        const nodeKey=row.getAttribute('data-node-key');
+        if(!nodeKey)return;
+        if(expandedCategoryNodesV650.has(nodeKey)){
+          expandedCategoryNodesV650.delete(nodeKey);
+          refreshCategoryMixSectionV650();
+        }else{
+          expandedCategoryNodesV650.add(nodeKey);
+          if(!categoryCustomersCacheV650.has(nodeKey))loadCategoryCustomersV650(nodeKey);
+          else refreshCategoryMixSectionV650();
+        }
+      };
+      row.onclick=toggle;
+      row.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle()}};
+    });
+    CUI.enhance(wrap);
+  }
   const forecastMarkup=(forecast,currency)=>{
     if(forecast?.status!=='available'){
       const unmet=Array.isArray(forecast?.unmet_thresholds)?forecast.unmet_thresholds:[];
@@ -30345,7 +30505,7 @@ async function customerIntelligencePage(){
     const economicsMarkupV522=economicsGatedOffV522
       ?''
       :window.NestlySectorEconomics.render(economicsView);
-    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}`;
+    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -30373,6 +30533,7 @@ async function customerIntelligencePage(){
       });
     }else recommendationRefreshMount?.remove();
     CUI.enhance(body);
+    bindCategoryMixSectionV650();
     $('ciCsv').disabled=!!lastCustomerError||!customers.length;
     const more=$('ciMore');if(more)more.onclick=loadMore;
   };
@@ -30424,9 +30585,12 @@ async function customerIntelligencePage(){
        bar's own label helper is the single place that knows which branch is in force, and it
        already answers "All branches" when none is. */
     const branchName=profileBranchScopeLabelV158();
+    lastCategoryMixPeriod={from:fromDate,to:toDate};
+    categoryCustomersCacheV650.clear();expandedCategoryNodesV650.clear();
     const [
       truthResponse,lifecycleResponse,briefingResponse,customerResponse,
-      economicsResponse,driversResponse,policyResponse
+      economicsResponse,driversResponse,policyResponse,
+      acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -30459,7 +30623,14 @@ async function customerIntelligencePage(){
         p_business:S.biz.id,
         p_policy_key:'lapse_detection',
         p_as_of:reportAsOf
-      })
+      }),
+      /* nestly_v650: business-scope-only RPCs (no p_branch) — "All branches" behaviour is
+         implied, not selectable, since these read across the whole business regardless of the
+         top bar's branch filter. */
+      sb.rpc('get_ci_acquisition_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
+      sb.rpc('get_ci_funnel_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
+      sb.rpc('get_ci_contactability_v1',{p_business:S.biz.id}),
+      sb.rpc('get_ci_category_mix_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate})
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -30501,6 +30672,14 @@ async function customerIntelligencePage(){
     };
     lastCustomerError=customerResponse.error?.message||'';
     lastPayload=customerResponse.data||{};
+    lastAcquisitionError=acquisitionResponse.error?.message||'';
+    lastAcquisitionBundle=acquisitionResponse.data||null;
+    lastFunnelError=funnelResponse.error?.message||'';
+    lastFunnelBundle=funnelResponse.data||null;
+    lastContactabilityError=contactabilityResponse.error?.message||'';
+    lastContactabilityBundle=contactabilityResponse.data||null;
+    lastCategoryMixError=categoryMixResponse.error?.message||'';
+    lastCategoryMixBundle=categoryMixResponse.data||null;
     paint(lastPayload);
   };
   $('ciRun').onclick=run;
@@ -30566,6 +30745,99 @@ async function customerIntelligencePage(){
   };
   renderReportScopeNoteV272(isCurrent);
   await run();
+}
+
+/* nestly_v650: Service mapping board. Reached from Customer Intelligence's "What they buy"
+   withhold state (#/servicemapping) and, when writable, a small link from Services. There is no
+   MODULES entry and no route guard for this token — the same shape as #/studio's owner-only
+   pattern except the gate here is services-module access, enforced entirely server-side by
+   get_service_mapping_board_v1 / set_service_canonical_node_v1 (SECURITY DEFINER, services-gated).
+   A denial from the RPC renders the ordinary error card; nothing here re-implements that check. */
+async function serviceMappingBoardPage(){
+  disposeCurrentRoute();
+  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
+  routeMain.innerHTML=CUI.loadingState({title:'Map services',iconName:'services',body:'Loading your services…'});
+  const canWrite=canWriteModule('services');
+  let board=null,loadError='';
+  const nodeLabelV650=nodeKey=>{
+    if(!nodeKey)return '';
+    const node=(board?.nodes||[]).find(n=>n.node_key===nodeKey);
+    return node?(node.label||node.node_key):nodeKey;
+  };
+  const nodeOptionsHtmlV650=selected=>{
+    const nodes=Array.isArray(board?.nodes)?board.nodes:[];
+    const byPack=new Map();
+    nodes.forEach(node=>{
+      const pack=node.pack||'Other';
+      if(!byPack.has(pack))byPack.set(pack,[]);
+      byPack.get(pack).push(node);
+    });
+    return `<option value="">— Choose —</option>${[...byPack.entries()].map(([pack,packNodes])=>
+      `<optgroup label="${esc(pack)}">${packNodes.map(node=>
+        `<option value="${esc(node.node_key)}" ${node.node_key===selected?'selected':''}>${'  '.repeat(Math.max(0,Number(node.level||0)))}${esc(node.label||node.node_key)}</option>`
+      ).join('')}</optgroup>`
+    ).join('')}`;
+  };
+  function paint(){
+    if(!isCurrent())return;
+    if(loadError){
+      routeMain.innerHTML=CUI.errorState({title:'Map services unavailable',message:ownerErrorText({message:loadError})||loadError});
+      const retry=$('routeRetry');
+      if(retry)retry.onclick=()=>{
+        routeMain.innerHTML=CUI.loadingState({title:'Map services',iconName:'services',body:'Loading your services…'});
+        loadBoard();
+      };
+      return;
+    }
+    const services=Array.isArray(board?.services)?board.services:[];
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Map services',subtitle:'Match each service to a category so What they buy can report on it.',iconName:'services',canWrite,moduleLabel:'Map services'})}
+      <div class="card">${services.length?`<div class="cui-table-wrap" role="region" aria-label="Service category map"><table class="cui-table" data-responsive="true"><thead><tr><th>Service</th><th>Old category</th><th>Mapped to</th><th>Suggested</th><th>Choose</th></tr></thead><tbody>${services.map(service=>{
+        const current=nodeLabelV650(service.node_key);
+        const suggestedLabel=service.suggested_node_key&&!service.node_key?nodeLabelV650(service.suggested_node_key):'';
+        return `<tr>
+          <td data-label="Service"><b>${esc(service.name||'Service')}</b></td>
+          <td data-label="Old category" class="muted small">${esc(service.legacy_category||'—')}</td>
+          <td data-label="Mapped to">${current?esc(current):'<span class="muted">—</span>'}</td>
+          <td data-label="Suggested">${suggestedLabel?`${esc(suggestedLabel)}${canWrite?` <button class="btn ghost sm" type="button" data-accept-suggestion="${esc(service.service_id)}" data-suggested-node="${esc(service.suggested_node_key)}">Accept</button>`:''}`:'<span class="muted">—</span>'}</td>
+          <td data-label="Choose">${canWrite?`<select data-service-select="${esc(service.service_id)}" style="min-height:44px">${nodeOptionsHtmlV650(service.node_key)}</select>`:'<span class="muted small">View only</span>'}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`
+        :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add services first, then map them to categories here.'})}
+      </div>`;
+    CUI.enhance(routeMain);
+    if(!canWrite)return;
+    routeMain.querySelectorAll('[data-accept-suggestion]').forEach(button=>{
+      button.onclick=async()=>{
+        const serviceId=button.getAttribute('data-accept-suggestion'),nodeKey=button.getAttribute('data-suggested-node');
+        button.disabled=true;
+        const {error}=await sb.rpc('set_service_canonical_node_v1',{p_business:S.biz.id,p_service:serviceId,p_node_key:nodeKey});
+        if(!isCurrent())return;
+        if(error){button.disabled=false;return toast('That mapping could not be saved.')}
+        toast('Mapping saved');
+        await loadBoard();
+      };
+    });
+    routeMain.querySelectorAll('[data-service-select]').forEach(select=>{
+      select.onchange=async()=>{
+        const serviceId=select.getAttribute('data-service-select'),nodeKey=select.value;
+        if(!nodeKey)return;
+        select.disabled=true;
+        const {error}=await sb.rpc('set_service_canonical_node_v1',{p_business:S.biz.id,p_service:serviceId,p_node_key:nodeKey});
+        if(!isCurrent())return;
+        if(error){select.disabled=false;return toast('That mapping could not be saved.')}
+        toast('Mapping saved');
+        await loadBoard();
+      };
+    });
+  }
+  async function loadBoard(){
+    const {data,error}=await sb.rpc('get_service_mapping_board_v1',{p_business:S.biz.id});
+    if(!isCurrent())return;
+    if(error){loadError=error.message||'Map services could not be loaded.';board=null}
+    else{loadError='';board=data||{services:[],nodes:[]}}
+    paint();
+  }
+  await loadBoard();
 }
 
 /* ---------- reports ---------- */

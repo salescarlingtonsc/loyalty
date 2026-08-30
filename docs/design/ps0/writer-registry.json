@@ -3813,6 +3813,34 @@
     {
       "id": "db.backfill:20260830160000_nestly_v634_sale_items_all_paths.sql:sale_items",
       "reason": "one-time migration backfill (sale_items:INSERT) in 20260830160000_nestly_v634_sale_items_all_paths.sql; projects one honest line per pre-v634 itemless sale from the sale row's own facts (description suffixed ·backfill); reversal rows skipped; product_id deliberately rides ref_id only so trg_sale_item_stock_deduct cannot double-deduct; NOT a runtime writer"
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_acquisition_v1",
+      "reason": "Phase A/B Customer Intelligence 'Where customers come from' card (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns an acquisition-mix summary (via/evidence/customers/new_in_period/repeat_customers) from get_ci_read_layer. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_funnel_v1",
+      "reason": "Phase A/B Customer Intelligence 'Join & booking funnel' card (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns join/booking funnel step counts from get_ci_read_layer. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_contactability_v1",
+      "reason": "Phase A/B Customer Intelligence 'Who you may contact' card (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns per-channel contactable-customer counts (can_contact_authority) for business offers and rewards/points. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_category_mix_v1",
+      "reason": "Phase A/B Customer Intelligence 'What they buy' card (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns the category revenue mix and its classified/projected coverage from the v649 category-snapshot-at-sale + v647 canonical taxonomy. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_category_customers_v1",
+      "reason": "Phase A/B Customer Intelligence category drill-in, fired on demand when an owner/manager expands a category row in 'What they buy' (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns the customer list for one node_key. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",
+      "reason": "Service mapping board (#/servicemapping, nestly_v650), reached from Customer Intelligence's category-mix withhold state and from Services. SECURITY DEFINER, business-membership + services-module-READ gated, read-only — returns the service list joined to v647/v648 canonical nodes plus each service's suggested_node_key. Writes nothing; the page renders only when this call succeeds, which is the whole client-side gate."
+    },
+    {
+      "id": "browser.rpc:app/app.js:set_service_canonical_node_v1",
+      "reason": "Service mapping board Accept/select action (nestly_v650). SECURITY DEFINER, business-membership + services-module-WRITE gated. Writer-adjacent, allowlisted rather than curated into \"writers\": it writes only public.service_canonical_map / services.node_key (nestly_v648), a mapping REFERENCE column used to classify revenue for reporting — it moves no ledger/credit/points value, mints nothing, and cannot change what a sale charges or what an appointment does."
     }
   ]
 }
