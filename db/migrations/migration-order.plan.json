@@ -3183,6 +3183,18 @@
       "path": "db/migrations/20260831_nestly_v650_ci_read_layer.sql",
       "semanticVersion": "v650",
       "proposedDeployVersion": "20260831060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v651_canonical_cadence.sql",
+      "semanticVersion": "v651",
+      "proposedDeployVersion": "20260831070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v652_evidence_contract.sql",
+      "semanticVersion": "v652",
+      "proposedDeployVersion": "20260831080000"
     }
   ]
 }

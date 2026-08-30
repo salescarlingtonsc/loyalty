@@ -114,3 +114,97 @@ test('V550 outreach evidence is immutable and deduped in the migration, not poli
   assert.ok(migration.includes('before update or delete on public.attention_outreach_v550'));
   assert.ok(migration.includes('on conflict (business_id, client_id, occurred_on) do nothing'));
 });
+
+/* ---- v652: the report leads with its evidence, not with a dollar figure ------------------
+   The comparison group in this report is NOT a randomised holdout — it is whoever was not
+   contacted — so nestly_v652 attaches an evidence block whose verdict is structurally capped
+   at 'early_signal'. These cases EXECUTE the renderer against the three states the RPC can
+   actually produce; the legacy case (no evidence key) must keep rendering exactly as before. */
+
+const V652_LIMITATIONS = [
+  'The comparison group was not randomly assigned — it is whoever was not contacted, so the two groups may differ in ways this report cannot see.',
+  'Revenue is credited to any paying visit within 30 days of contact, whether or not the offer was redeemed.',
+  'Net revenue is floored at zero, so this figure can never show a campaign performing worse than the comparison group.'
+];
+
+function withEvidence(overrides) {
+  return { ...FIXTURE, evidence: {
+    population: 'Customers contacted after at least 14 days away',
+    denominator: 'Contacted customers who were lapsed at the time of contact',
+    window: { from: '2026-07-12', to: '2026-08-27' },
+    sample: { treated: 4, treated_events: 3, comparison: 2, comparison_events: 1 },
+    comparison: 'Similarly lapsed customers who happened to receive no contact in this window',
+    rates: { treated_pct: 75.0, comparison_pct: 50.0 },
+    difference: null,
+    verdict: 'insufficient',
+    verdict_ceiling: 'early_signal',
+    limitations: V652_LIMITATIONS,
+    observed_since: null,
+    ...overrides } };
+}
+
+const EARLY_SIGNAL = withEvidence({
+  sample: { treated: 100, treated_events: 34, comparison: 100, comparison_events: 21 },
+  rates: { treated_pct: 34.0, comparison_pct: 21.0 },
+  difference: { absolute_pp: 13.0, relative: 1.62, confidence_95_pp: [2.1, 23.9],
+    method: 'normal approximation, 95% interval on the difference in rates' },
+  verdict: 'early_signal'
+});
+
+test('V652 an insufficient verdict withholds the dollar headline instead of leading with it', () => {
+  const html = render(withEvidence({}));
+  assert.ok(html.includes('revenue-opportunity--withheld'),
+    'the withheld state reuses the same idiom Customer Intelligence uses to withhold a suggestion');
+  assert.ok(!html.includes('<b>Recovered revenue (estimated)</b>'),
+    'the confident headline must not appear while the groups cannot be told apart');
+  assert.ok(!/class="metric"[^>]*>SGD 33\.33/.test(html),
+    'the net figure must not be presented as the headline metric in this state');
+  assert.ok(html.includes('SGD 33.33'),
+    'the figure is still reachable for reference — demoted, not deleted');
+  assert.ok(html.includes('<b>4</b>') && html.includes('<b>2</b>'),
+    'both arm sizes are stated so the reader can see why it is withheld');
+});
+
+test('V652 an early signal shows the figure but subordinates it to the rate difference', () => {
+  const html = render(EARLY_SIGNAL);
+  assert.ok(html.includes('Early signal'), 'the verdict labels the card');
+  assert.ok(html.includes('class="metric"') && html.includes('SGD 33.33'),
+    'the dollar figure is shown in this state');
+  assert.ok(html.includes('34.0%') && html.includes('21.0%'),
+    'both return rates are shown, never the treated rate alone');
+  assert.ok(html.includes('+13.0pp'), 'the absolute difference is stated in percentage points');
+  assert.ok(html.includes('+2.1pp') && html.includes('+23.9pp'),
+    'the 95% range travels with the difference — a point estimate alone would overstate it');
+  assert.ok(!html.includes('Strong pattern'),
+    'a non-randomised comparison may never be presented as a strong pattern');
+});
+
+test('V652 a strong_pattern verdict is rendered defensively as an early signal', () => {
+  /* The server caps this at early_signal, so it cannot occur; if it ever did, the renderer
+     must not upgrade the claim on the strength of a value it should never have received. */
+  const html = render(withEvidence({
+    sample: { treated: 100, treated_events: 34, comparison: 100, comparison_events: 21 },
+    rates: { treated_pct: 34.0, comparison_pct: 21.0 },
+    difference: { absolute_pp: 13.0, relative: 1.62, confidence_95_pp: [2.1, 23.9],
+      method: 'normal approximation, 95% interval on the difference in rates' },
+    verdict: 'strong_pattern' }));
+  assert.ok(html.includes('Early signal'), 'the ceiling is honoured by the renderer too');
+  assert.ok(!html.includes('Strong pattern'));
+});
+
+test('V652 every limitation is rendered verbatim, never paraphrased or truncated', () => {
+  for (const html of [render(withEvidence({})), render(EARLY_SIGNAL)]) {
+    for (const limitation of V652_LIMITATIONS) {
+      assert.ok(html.includes(limitation),
+        `a reader cannot quote the number honestly without this caveat: ${limitation.slice(0, 48)}…`);
+    }
+  }
+});
+
+test('V652 a response without an evidence block still renders the original report', () => {
+  const html = render(FIXTURE);
+  assert.ok(html.includes('Recovered revenue (estimated)'),
+    'older cached payloads keep working unchanged');
+  assert.ok(!html.includes('revenue-opportunity--withheld'));
+  assert.ok(!html.includes('Early signal'));
+});

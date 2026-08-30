@@ -48695,10 +48695,13 @@ function recoveryReportHtmlV550(data){
   const confidenceNote=d.low_confidence
     ?`<div class="card" style="border-left:3px solid #F0A35B"><b>Small numbers, read with care.</b><p class="muted small" style="margin:6px 0 0">Fewer than 10 contacted customers or fewer than 10 comparison customers in this period — one person changes these percentages a lot.</p></div>`
     :'';
-  return `<div class="card"><b>Recovered revenue (estimated)</b>
-      <div class="metric" style="margin-top:8px">${esc(money(net.cents))}</div>
-      <p class="muted small">Net of what would likely have happened anyway. Gross spend by customers who returned within ${attrDays} days of being contacted: <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
-      <p class="muted small">Method: ${esc(net.method||'')}</p></div>
+  /* nestly_v652 — the RPC now ships an `evidence` block naming its own comparison group as
+     "whoever was not contacted", never a randomised holdout. The headline leads with that
+     verdict instead of the dollar figure, so a reader cannot mistake correlation dressed as
+     causation for the moat metric it resembles. A response with no `evidence` key (an older
+     cached read from before the migration) falls back to the pre-v652 dollar-first card. */
+  const headlineHtml=recoveryHeadlineHtmlV652(d.evidence,net,rec,attrDays);
+  return `${headlineHtml}
     ${confidenceNote}
     <div class="card"><b>The funnel</b><table style="margin-top:8px">
       <tr><td data-workspace-i18n>Customers contacted while lapsed</td><td class="num"><b>${treated}</b></td></tr>
@@ -48712,6 +48715,53 @@ function recoveryReportHtmlV550(data){
     ${monthly.length?`<div class="card"><b>By month</b><table style="margin-top:8px">
       <tr><th style="text-align:left">Month</th><th class="num">Contacted</th><th class="num">Returned</th><th class="num">Gross</th></tr>
       ${monthly.map(m=>`<tr><td>${esc(m.month||'')}</td><td class="num">${Number(m.interventions)||0}</td><td class="num">${Number(m.returned)||0}</td><td class="num">${esc(money(m.gross_cents))}</td></tr>`).join('')}</table></div>`:''}`;
+}
+/* V652 helper — pure, same posture as recoveryReportHtmlV550, kept between it and reportsPage
+   so the v550 test harness (which slices the file from recoveryReportHtmlV550's declaration to
+   reportsPage's) can execute this too without a separate extraction. */
+function recoveryPctFmtV652(v){return v===null||v===undefined?'—':`${Number(v).toFixed(1)}%`}
+function recoveryHeadlineHtmlV652(evidenceRaw,net,rec,attrDays){
+  const evidence=evidenceRaw&&typeof evidenceRaw==='object'?evidenceRaw:null;
+  if(!evidence){
+    return `<div class="card"><b>Recovered revenue (estimated)</b>
+      <div class="metric" style="margin-top:8px">${esc(money(net.cents))}</div>
+      <p class="muted small">Net of what would likely have happened anyway. Gross spend by customers who returned within ${attrDays} days of being contacted: <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
+      <p class="muted small">Method: ${esc(net.method||'')}</p></div>`;
+  }
+  /* verdict_ceiling is 'early_signal' — 'strong_pattern' cannot be issued by this RPC. A stray
+     value from a future migration is rendered as 'early_signal' defensively rather than trusted
+     at face value; anything that isn't literally 'insufficient' takes the early_signal branch. */
+  const verdict=evidence.verdict==='insufficient'?'insufficient':'early_signal';
+  const sample=evidence.sample&&typeof evidence.sample==='object'?evidence.sample:{};
+  const limitations=Array.isArray(evidence.limitations)?evidence.limitations:[];
+  const limitationsHtml=limitations.length
+    ?`<details class="revenue-truth-limitations"><summary>Limitations</summary><ul>${limitations.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>`
+    :'';
+  if(verdict==='insufficient'){
+    return `<section class="revenue-opportunity--withheld" aria-labelledby="recoveryHeadlineHeadingV652">
+      <div><span class="revenue-truth-eyebrow">Recovered revenue</span>
+      <h2 id="recoveryHeadlineHeadingV652">Not enough signal yet</h2>
+      <p>The customers Peekaa contacted cannot yet be told apart from customers who were never contacted — the comparison group here is simply whoever was not reached, not a random holdout. Peekaa is withholding a dollar figure until the two groups can be told apart with confidence.</p>
+      <p class="muted small" style="margin-top:8px">Contacted: <b>${Number(sample.treated)||0}</b> (${Number(sample.treated_events)||0} returned) &middot; Comparison: <b>${Number(sample.comparison)||0}</b> (${Number(sample.comparison_events)||0} returned)</p>
+      <details style="margin-top:8px"><summary class="muted small" style="cursor:pointer">Estimated figure (not yet reliable)</summary><p class="muted small" style="margin-top:4px">${esc(money(net.cents))} — for reference only; do not quote this while the verdict is "not enough signal".</p></details>
+      ${limitationsHtml}
+      </div>
+    </section>`;
+  }
+  const rates=evidence.rates&&typeof evidence.rates==='object'?evidence.rates:{};
+  const diff=evidence.difference&&typeof evidence.difference==='object'?evidence.difference:null;
+  const ppFmt=v=>v===null||v===undefined?'—':`${Number(v)>=0?'+':''}${Number(v).toFixed(1)}pp`;
+  const ci=Array.isArray(diff?.confidence_95_pp)?diff.confidence_95_pp:[null,null];
+  const diffLine=diff
+    ?`Contacted ${recoveryPctFmtV652(rates.treated_pct)} vs ${recoveryPctFmtV652(rates.comparison_pct)} &mdash; difference ${ppFmt(diff.absolute_pp)}, 95% range ${ppFmt(ci[0])} to ${ppFmt(ci[1])}`
+    :`Contacted ${recoveryPctFmtV652(rates.treated_pct)} vs ${recoveryPctFmtV652(rates.comparison_pct)}`;
+  return `<div class="card"><span class="revenue-truth-eyebrow">Early signal</span>
+    <div class="metric" style="margin-top:8px">${esc(money(net.cents))}</div>
+    <p class="muted small" style="margin-top:6px">${diffLine}</p>
+    <p class="muted small">Net of what would likely have happened anyway. Gross spend by customers who returned within ${attrDays} days of being contacted: <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
+    <p class="muted small">Method: ${esc(net.method||'')}</p>
+    ${limitationsHtml}
+    </div>`;
 }
 async function reportsPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;

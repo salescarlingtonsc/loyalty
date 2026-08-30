@@ -3178,6 +3178,18 @@
       "version": "20260831060000",
       "name": "nestly_v650_ci_read_layer",
       "sourcePath": "db/migrations/20260831_nestly_v650_ci_read_layer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831070000",
+      "name": "nestly_v651_canonical_cadence",
+      "sourcePath": "db/migrations/20260831_nestly_v651_canonical_cadence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831080000",
+      "name": "nestly_v652_evidence_contract",
+      "sourcePath": "db/migrations/20260831_nestly_v652_evidence_contract.sql"
     }
   ]
 }
