@@ -142,8 +142,12 @@ test('v501/UI the tier editor stacks instead of being laid out as a row', () => 
     'no note/confirm/form block in this list is a row item');
   assert.match(indexHtml, /\.grow-setup-rewardlist-v301>li\.grow-tier-form-v501\{font-size:inherit;color:inherit;/,
     'and the tier FORM leaves the 12px brown note styling behind');
-  assert.match(app, /<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>/,
-    'the form carries the class the rule targets');
+  /* nestly_v658 (owner photos 1 and 2: "add tier ... must be a pop up" / "edit button should pop
+     up"). The form now also wears grow-inline-modal-v658, which lifts it over a backdrop the way
+     nestly_v410 does for the gift form. It keeps grow-tier-form-v501, so the stacking rule this
+     test protects still applies — and matters more inside a narrow dialog than it did in the list. */
+  assert.match(app, /<li class="imp-note grow-tier-form-v501 grow-inline-modal-v658" data-grow-tiers-addform-v331 role="dialog" aria-modal="true"/,
+    'the form carries the class the rule targets, and is presented as a dialog');
   assert.match(indexHtml, /#growTiersBenefitTemplateV363\{flex:0 1 260px;min-width:190px\}/,
     'the benefit-template picker had shrunk to 98px and truncated its label mid-word ("Discou")');
 });

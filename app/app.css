@@ -1478,6 +1478,16 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-points-form-card-v343.grow-points-form-modal-v410 .service-photo-uploader-v158{vertical-align:top}
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-points-form-actions-v584{margin-top:0!important;align-items:center}
 @media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
+.grow-inline-modal-v658{position:fixed;z-index:71;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(calc(100vw - 32px),var(--dialog-w-md));max-height:min(86vh,760px);overflow:auto;
+  list-style:none;margin:0;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-lg);
+  padding:20px;display:block}
+.grow-inline-modal-v658>p,.grow-inline-modal-v658>div:not(.grow-points-form-head-v485){max-width:none}
+.grow-inline-modal-v658 .grow-setup-input-v301{max-width:none!important;width:100%}
+.grow-inline-modal-v658 .grow-points-form-head-v485{margin-bottom:4px}
+@media(max-width:520px){.grow-inline-modal-v658{padding:16px;max-height:90vh}}
+@media(prefers-reduced-motion:no-preference){
+  .grow-inline-modal-v658{animation:growPointsModalInV410 .16s var(--ease)}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
 @keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
 .grow-stamps-summary-v356{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px;padding:16px 18px;
@@ -3239,23 +3249,20 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .range>label>input,.range>label>select{min-width:0;max-width:100%}
 .range>label{min-width:0;flex:0 1 auto}
 .range>label>input[type=date]{width:150px}
-.sales-filter-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,max-content));
-  grid-template-rows:auto auto;align-items:start;justify-content:start;gap:10px 12px}
+.sales-filter-panel{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-start;
+  gap:10px 12px}
 .sales-filter-row,.sales-filter-row.secondary{display:contents}
-.sales-filter-panel>.sales-filter-row>div{display:grid;grid-row:span 2;row-gap:6px;min-width:0}
-.sales-filter-panel>.sales-filter-row>div>label{margin:0;align-self:end;white-space:nowrap}
-.sales-filter-panel>.sales-filter-row>.btn{grid-row:span 2;align-self:end;white-space:nowrap}
-.sales-filter-panel>.row{grid-column:1/-1;grid-row:auto;align-self:start}
+.sales-filter-panel>.sales-filter-row>div{display:flex;flex-direction:column;justify-content:flex-end;
+  row-gap:6px;min-width:0;flex:0 0 auto}
+.sales-filter-panel>.sales-filter-row>div>label{margin:0;white-space:nowrap}
+.sales-filter-panel>.sales-filter-row>.btn{align-self:flex-end;white-space:nowrap;flex:0 0 auto}
+.sales-filter-panel>.row{flex:1 0 100%;align-self:flex-start}
 .sales-filter-panel input[type=date]{width:150px}
 .sales-filter-panel input[type=search]{width:170px}
 .sales-filter-panel select{width:auto;min-width:130px}
-@supports (grid-template-rows: subgrid){
-  .sales-filter-panel>.sales-filter-row>div{grid-template-rows:subgrid}
-}
 @media(max-width:720px){
-  .sales-filter-panel{grid-template-columns:1fr;grid-template-rows:none}
-  .sales-filter-panel>.sales-filter-row>div{grid-row:auto}
-  .sales-filter-panel>.sales-filter-row>.btn{grid-row:auto}
+  .sales-filter-panel>.sales-filter-row>div{flex:1 0 100%}
+  .sales-filter-panel>.sales-filter-row>.btn{flex:1 0 100%}
   .sales-filter-panel input[type=date],.sales-filter-panel input[type=search],
   .sales-filter-panel select{width:100%}
 }

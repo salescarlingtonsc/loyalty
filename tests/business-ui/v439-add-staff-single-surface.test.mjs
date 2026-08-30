@@ -76,6 +76,13 @@ function extractConst(src, name) {
 
 const importBtnSrc = extractFunction(app, 'importBtn');
 const enhanceSrc = extractFunction(app, 'enhanceStaffMembersTabsV164');
+/* nestly_v658 (owner photo 8: "+add staff ... will also pop up to edit / create"). Add staff now
+   lifts the existing manual-add card into a dialog through the shared presentFormModalV658 /
+   dismissFormModalV658 pair, so the extracted function has two new dependencies. They are handed
+   in as REAL source rather than stubbed: the whole point of this test is that pressing Add staff
+   opens the manual card and nothing else, and a stub could not tell us whether it still does. */
+const presentFormModalSrc = extractFunction(app, 'presentFormModalV658');
+const dismissFormModalSrc = extractFunction(app, 'dismissFormModalV658');
 const escSrc = extractConst(app, 'esc');
 const roleLabelsSrc = extractConst(app, 'ROLE_LABELS');
 const staffRoleOptionsSrc = extractConst(app, 'STAFF_ROLE_OPTIONS_V207');
@@ -207,6 +214,15 @@ class Element {
     return node;
   }
   remove() { if (this.parentNode) this.parentNode.removeChild(this); }
+  /* nestly_v658: presentFormModalV658 inserts the modal backdrop as the card's previous sibling,
+     so the shim needs the one DOM call that does it. Modelled on before() below. */
+  insertBefore(node, ref) {
+    if (node.parentNode) node.parentNode.removeChild(node);
+    const idx = ref ? this.childNodes.indexOf(ref) : -1;
+    node.parentNode = this;
+    if (idx >= 0) this.childNodes.splice(idx, 0, node); else this.childNodes.push(node);
+    return node;
+  }
   prepend(node) {
     if (node.parentNode) node.parentNode.removeChild(node);
     node.parentNode = this; this.childNodes.unshift(node);
@@ -362,7 +378,7 @@ const { esc, STAFF_ROLE_OPTIONS_V207 } = new Function(
   `${escSrc}\n${roleLabelsSrc}\n${staffRoleOptionsSrc}\nreturn {esc, ROLE_LABELS, STAFF_ROLE_OPTIONS_V207};`
 )();
 const enhanceStaffMembersTabsV164 = new Function('document', 'esc', 'STAFF_ROLE_OPTIONS_V207',
-  `${enhanceSrc}\nreturn enhanceStaffMembersTabsV164;`
+  `${presentFormModalSrc}\n${dismissFormModalSrc}\n${enhanceSrc}\nreturn enhanceStaffMembersTabsV164;`
 )(documentShim, esc, STAFF_ROLE_OPTIONS_V207);
 
 /* ---------- fixture: the real settings-team-card markup (app.js line ~42546), with the real

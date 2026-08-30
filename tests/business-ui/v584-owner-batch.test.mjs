@@ -47,8 +47,20 @@ test('photos 3, 4, 11 and 14 — every filter bar puts labels and controls on th
 test('photo 10 — the sales filters pack left and Clear sits with Apply', () => {
   const sales = section('const salesDefaultToV266=', 'const salesFilterNoteV266=');
   assert.match(sales, /<button class="btn sm" id="salesApply">Apply filters<\/button>\s*\n\s*<button class="btn ghost sm" id="salesClear">Clear filters<\/button>/);
-  // The 150px track floor was wider than a select's own content, which is what spread them apart.
-  assert.match(shell, /\.sales-filter-panel\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(120px,max-content\)\)/);
+  /* nestly_v658 (owner photo 6: "fix alignment, boxes are overlapping"). v584's compact bar was a
+     grid whose column COUNT came from the 120px minimum, so at 1440px it laid out more tracks than
+     the content needed and squeezed each toward that floor — while the controls inside keep fixed
+     widths (a date box is 150px). Measured in Chrome: From/To overlapped by 6px and To/Customer
+     search by 25px. A wrapping flex row sizes each cell by its own content, so a control can never
+     be wider than the box it sits in and overlap is not expressible. What v584 was protecting —
+     the bar packing LEFT rather than spreading — is what justify-content:flex-start keeps, and the
+     assertion below still pins it. */
+  assert.match(shell, /\.sales-filter-panel\{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-start/);
+  /* Narrowly the v584 rule, not any display:grid — the base rule at the top of the stylesheet
+     still declares one and is overridden by the flex rule above, which is fine and is why the
+     panel keeps its margin-bottom. */
+  assert.doesNotMatch(shell, /\.sales-filter-panel\{display:grid;grid-template-columns:repeat\(auto-fit/,
+    'the auto-fit track grid that caused the overlap is gone');
 });
 
 test('photos 2 and 8 — one pager, 20 rows a page, on both lists the owner drew it on', () => {
@@ -166,8 +178,13 @@ test('photo 17 — a service is edited in one dialog, including its commission o
   assert.match(services, /<th class="num">Commission%/);
   // The "?" states what an override means, where the column is.
   assert.match(services, /helpDotMarkupV385\('the commission override'/);
-  // Turn off became a cross; turn on, a tick.
-  assert.match(services, /class="svc-toggle-icon-v584[^"]*"[^>]*onclick="toggleSvc\('\$\{s\.id\}',\$\{!s\.active\}\)"/);
+  /* nestly_v658 (owner photo 7: the Packages row "will be the model that other modules follow
+     (status / edit / delete) ... for products & services"). v584's separate ✓/✗ icon is gone: the
+     STATUS PILL is the switch, as it already is on Packages, and switching OFF asks first. What
+     v584 fixed — that the control is an icon/state rather than the words "Turn off" — still holds,
+     and the doesNotMatch below still pins it. */
+  assert.match(services, /<button type="button" class="pill \$\{s\.active\?'on':'off'\}" data-svc-active="\$\{s\.id\}"/);
+  assert.doesNotMatch(services, /svc-toggle-icon-v584[^"]*"[^>]*onclick="toggleSvc/, 'the separate toggle icon is gone');
   assert.doesNotMatch(services, />\$\{s\.active\?'Turn off':'Turn on'\}</);
   // Blank still means "not decided", which is a different setting from 0%.
   assert.match(services, /commissionRawV584===''\?null:Math\.round\(parseFloat\(commissionRawV584\)\*100\)/);

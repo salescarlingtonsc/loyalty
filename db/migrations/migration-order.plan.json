@@ -3219,6 +3219,12 @@
       "path": "db/migrations/20260831_nestly_v657_discount_two_shapes.sql",
       "semanticVersion": "v657",
       "proposedDeployVersion": "20260831120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v659_edit_means_edit.sql",
+      "semanticVersion": "v659",
+      "proposedDeployVersion": "20260831130000"
     }
   ]
 }

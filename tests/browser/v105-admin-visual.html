@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="46079e0c0d6b5c214d6db8ced46dcebc249d8459d39e4057097fea2d01da300b">
+<meta name="v105-production-component-sha256" content="63c5eeb3e4f96023513c92a5768f08179d5a8ba8ed0f26dfe5995ecb4d864c0b">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -2273,6 +2273,23 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-points-form-card-v343.grow-points-form-modal-v410 .service-photo-uploader-v158{vertical-align:top}
 .grow-points-form-card-v343.grow-points-form-modal-v410 .grow-points-form-actions-v584{margin-top:0!important;align-items:center}
 @media(max-width:520px){.grow-points-form-card-v343.grow-points-form-modal-v410{padding:16px;max-height:90vh}}
+/* nestly_v658 (owner: "same as point system pop up", for the tier form and the bring-back campaign
+   form). The v410 rule above is welded to .grow-points-form-card-v343, so a second form could not
+   wear it. This is the same presentation as a class any inline form can take: it keeps its element
+   and its place in the DOM — which is what lets it survive the full-page re-render every handler
+   on these surfaces ends in — and is lifted over the backdrop purely in CSS.
+   The children are forced to a column because these forms are laid out as wide rows in a list, and
+   a five-across row inside a centred dialog is unreadable. */
+.grow-inline-modal-v658{position:fixed;z-index:71;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(calc(100vw - 32px),var(--dialog-w-md));max-height:min(86vh,760px);overflow:auto;
+  list-style:none;margin:0;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-lg);
+  padding:20px;display:block}
+.grow-inline-modal-v658>p,.grow-inline-modal-v658>div:not(.grow-points-form-head-v485){max-width:none}
+.grow-inline-modal-v658 .grow-setup-input-v301{max-width:none!important;width:100%}
+.grow-inline-modal-v658 .grow-points-form-head-v485{margin-bottom:4px}
+@media(max-width:520px){.grow-inline-modal-v658{padding:16px;max-height:90vh}}
+@media(prefers-reduced-motion:no-preference){
+  .grow-inline-modal-v658{animation:growPointsModalInV410 .16s var(--ease)}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
 @keyframes growPointsModalInV410{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
 .grow-stamps-summary-v356{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px;padding:16px 18px;
@@ -5159,33 +5176,38 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
    was wider than a select's own content, so every dropdown carried up to 46px of empty track to
    its right and the six fields were spread across the card. The floor now only has to clear a
    date box's own width; each track is its content, and the row packs left. */
-.sales-filter-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,max-content));
-  grid-template-rows:auto auto;align-items:start;justify-content:start;gap:10px 12px}
+/* nestly_v658 (owner photo 6: "fix alignment, boxes are overlapping"). MEASURED, not guessed:
+   a Chrome harness at 1440px put From/To 6px into each other and To/Customer search 25px.
+   THE CAUSE. This was `repeat(auto-fit, minmax(120px, max-content))` — a grid whose column count
+   is worked out from the 120px MINIMUM. At this width it laid out more tracks than the content
+   needs, each squeezed toward that 120px floor, while the controls inside them keep fixed widths
+   (a date box is 150px, the search 170px). A 150px control in a 120px track does not shrink; it
+   spills over the next track, which is precisely the overlap the owner has now reported twice
+   (v593 fixed the result SENTENCE riding up into the fields; this is the fields themselves).
+   THE FIX. The bar is a wrapping flex row. Each cell is sized by its own content instead of by a
+   shared track, so a control can never be wider than the box it sits in and overlap is not
+   expressible; when the window is too narrow the cells wrap to the next line rather than
+   colliding. `align-items:flex-end` bottom-aligns every cell, so the controls sit on one line and
+   each label sits directly above its own control — which is what the v581 subgrid was protecting
+   and what a plain flex row was previously rejected for losing.
+   The per-control widths below are kept: they are what makes the bar compact (v584), and they are
+   now a cell's width rather than something fighting a track for room. */
+.sales-filter-panel{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-start;
+  gap:10px 12px}
 .sales-filter-row,.sales-filter-row.secondary{display:contents}
-.sales-filter-panel>.sales-filter-row>div{display:grid;grid-row:span 2;row-gap:6px;min-width:0}
-.sales-filter-panel>.sales-filter-row>div>label{margin:0;align-self:end;white-space:nowrap}
-/* The button spans BOTH tracks like every field cell. With grid-row:2 it occupied only the lower
-   track, so auto-placement dropped it into the first free row-2 slot — column one, ahead of the
-   fields it applies. Spanning two keeps it in document order, sitting on the controls' line. */
-.sales-filter-panel>.sales-filter-row>.btn{grid-row:span 2;align-self:end;white-space:nowrap}
-/* nestly_v593 (owner photo 4: a red box drawn round the whole filter bar, "do not allow
-   overlapping of boxes"). Every OTHER child of this grid carries a placement rule — field cells
-   and both buttons span the two explicit rows — but the result sentence ("Showing 55 sales · 31
-   Jul 2026 to 29 Aug 2026") had none. Auto-placement therefore dropped it into the first free
-   single-row slot, which is the first column: a 150px track, so the sentence wrapped to three
-   lines and rode up alongside the fields instead of sitting under them. It is a statement about
-   every filter above it, so it takes the full width on a row of its own, below the controls. */
-.sales-filter-panel>.row{grid-column:1/-1;grid-row:auto;align-self:start}
+.sales-filter-panel>.sales-filter-row>div{display:flex;flex-direction:column;justify-content:flex-end;
+  row-gap:6px;min-width:0;flex:0 0 auto}
+.sales-filter-panel>.sales-filter-row>div>label{margin:0;white-space:nowrap}
+.sales-filter-panel>.sales-filter-row>.btn{align-self:flex-end;white-space:nowrap;flex:0 0 auto}
+/* The result sentence is a statement about every filter above it, so it takes a line of its own
+   below the controls (nestly_v593's ruling, expressed in flex). */
+.sales-filter-panel>.row{flex:1 0 100%;align-self:flex-start}
 .sales-filter-panel input[type=date]{width:150px}
 .sales-filter-panel input[type=search]{width:170px}
 .sales-filter-panel select{width:auto;min-width:130px}
-@supports (grid-template-rows: subgrid){
-  .sales-filter-panel>.sales-filter-row>div{grid-template-rows:subgrid}
-}
 @media(max-width:720px){
-  .sales-filter-panel{grid-template-columns:1fr;grid-template-rows:none}
-  .sales-filter-panel>.sales-filter-row>div{grid-row:auto}
-  .sales-filter-panel>.sales-filter-row>.btn{grid-row:auto}
+  .sales-filter-panel>.sales-filter-row>div{flex:1 0 100%}
+  .sales-filter-panel>.sales-filter-row>.btn{flex:1 0 100%}
   .sales-filter-panel input[type=date],.sales-filter-panel input[type=search],
   .sales-filter-panel select{width:100%}
 }
@@ -6391,7 +6413,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 46079e0c0d6b</span>
+<span class="v105-provenance">v105 production-component harness · 63c5eeb3e4f9</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6516,7 +6538,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'46079e0c0d6b5c214d6db8ced46dcebc249d8459d39e4057097fea2d01da300b',
+  sourceHash:'63c5eeb3e4f96023513c92a5768f08179d5a8ba8ed0f26dfe5995ecb4d864c0b',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

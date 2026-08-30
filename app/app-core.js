@@ -1207,22 +1207,6 @@ function killCharts(){S.charts.forEach(c=>c.destroy());S.charts=[]}
    no future caller has to remember it. route() is safe to re-enter: it takes a fresh
    beginRouteInvocation() epoch on entry, which invalidates every in-flight older render. */
 function nav(h){if(location.hash===h)route();else location.hash=h}
-/* ===== THE ONE DESTRUCTIVE CONFIRM (owner ruling 2026-08-18) ================================
-   Deleting something used to behave three different ways: 28 sites called the browser's native
-   window.confirm(), five modules expanded an inline .imp-note under the row, and nine used
-   confirmDeliberateV288's typed acknowledgement. The native dialog was the problem — it cannot
-   carry Peekaa's brand, it renders as "peekaa.asia says..." in Chrome, it reads as a browser
-   error inside the installed PWA, and (V291 already said this about four money dialogs) it
-   CANNOT BE TRANSLATED, so it spoke English to a workforce CLAUDE.md says may not read it.
-
-   This is its replacement and the default for every ordinary destructive action.
-   confirmDeliberateV288 stays for the irreversible money and tenant-data actions that deserve a
-   typed acknowledgement; the inline .imp-note expand stays as the pattern for list rows.
-
-   The message keeps the SAME single string the native call passed — the leading question becomes
-   the dialog title and the remainder becomes the explanation, so no copy had to be rewritten and
-   every sentence the owner wrote survives verbatim.
-   TO CHANGE THE CONFIRM PATTERN: change this one function. */
 function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',danger=true}={}){
   const text=String(message||'').trim();
   const cut=(()=>{

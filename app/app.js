@@ -3441,6 +3441,48 @@ function confirmDeliberateV288({title,summaryHtml='',body='',acknowledgement='I 
    the dialog title and the remainder becomes the explanation, so no copy had to be rewritten and
    every sentence the owner wrote survives verbatim.
    TO CHANGE THE CONFIRM PATTERN: change this one function. */
+/* nestly_v658 (owner photo 8: "staff member (add staff) / Branches (+add branch) / service
+   (+add services) / product (+add product) / packages (+add package) - all these will also pop up
+   to edit / create"). Five pages each open a create form as a card folded into the page; three of
+   them ALREADY edit in a dialog, so the same act had two shapes on one screen.
+   This lifts an existing card into a dialog without moving it: same element, same id, same place
+   in the DOM, so every handler that binds by id inside it keeps working — the presentation-only
+   pattern nestly_v410 established for the gift form and v658 generalised for tiers and bring-back.
+   Building a real detached dialog for each would mean re-pointing dozens of `$('...')` lookups,
+   which is a far larger change for the same result.
+   The backdrop is inserted as the card's PREVIOUS SIBLING rather than appended to document.body,
+   so a route change that replaces the page takes the backdrop with it — a body-level node would
+   outlive its form and leave the screen dimmed with nothing to close. */
+function presentFormModalV658(card,{onCancel,initialFocus}={}){
+  if(!card)return;
+  card.classList.add('grow-inline-modal-v658');
+  card.setAttribute('role','dialog');
+  card.setAttribute('aria-modal','true');
+  card.style.display='block';
+  let back=card.previousElementSibling;
+  if(!back||!back.hasAttribute||!back.hasAttribute('data-form-modal-back-v658')){
+    back=document.createElement('div');
+    back.className='grow-points-modal-back-v410';
+    back.setAttribute('data-form-modal-back-v658','');
+    back.setAttribute('aria-hidden','true');
+    if(card.parentNode)card.parentNode.insertBefore(back,card);
+  }
+  const cancel=()=>{if(typeof onCancel==='function')onCancel();else dismissFormModalV658(card)};
+  back.onclick=cancel;
+  card.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();cancel()}};
+  const first=initialFocus?card.querySelector(initialFocus):null;
+  if(first)first.focus({preventScroll:true});
+}
+function dismissFormModalV658(card){
+  if(!card)return;
+  const back=card.previousElementSibling;
+  if(back&&back.hasAttribute&&back.hasAttribute('data-form-modal-back-v658'))back.remove();
+  card.classList.remove('grow-inline-modal-v658');
+  card.removeAttribute('role');
+  card.removeAttribute('aria-modal');
+  card.onkeydown=null;
+  card.style.display='none';
+}
 function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',danger=true}={}){
   const text=String(message||'').trim();
   const cut=(()=>{
@@ -27375,8 +27417,17 @@ async function servicesPage(){
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
       <td class="num">${s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
-      <td><span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span></td>
-      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button><button type="button" class="svc-toggle-icon-v584${s.active?'':' is-off'}" data-workspace-i18n onclick="toggleSvc('${s.id}',${!s.active})" title="${s.active?'Turn this service off':'Turn this service back on'}" aria-label="${s.active?'Turn this service off':'Turn this service back on'}">${CUI.icon(s.active?'close':'check',{size:18})}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+      ${/* nestly_v658 (owner photo 7: "once fixed will be the model that other modules follow
+           (status / edit / delete) will be the same for products & services"). The Packages row
+           makes the STATUS PILL itself the switch; here the pill was inert and the real control
+           was a separate ✓/✗ icon two cells away, so the same act had two different shapes on two
+           catalogue pages. One shape now, and the same confirmation: switching OFF is asked about
+           because it stops the item being sellable, switching back on is not because it takes
+           nothing away. */''}
+      <td>${canWrite
+        ?`<button type="button" class="pill ${s.active?'on':'off'}" data-svc-active="${s.id}" data-svc-name="${esc(serviceDisplayName(s))}" data-svc-next="${s.active?'off':'on'}" aria-pressed="${s.active?'true':'false'}" data-workspace-i18n title="${s.active?'Switch this service off':'Switch this service on'}">${statusOnOff(s.active)}</button>`
+        :`<span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span>`}</td>
+      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add your first service so customers can book and staff can select it during checkout.'});
     const editingRowV584=canWrite&&editingServiceId?(sv||[]).find(row=>row.id===editingServiceId):null;
@@ -27413,6 +27464,7 @@ async function servicesPage(){
     }
     if(canUploadCatalogueMedia)bindCataloguePhotoUploadsV158({onSaved:()=>load()});
     bindServiceEditors();
+    bindServiceStatusV658(); // nestly_v658: the status pill is a switch now
   }
   if(canWrite)$('sadd').onclick=async()=>{
     const name=$('sn').value.trim(),variant=$('sv').value.trim()||null,
@@ -27430,10 +27482,15 @@ async function servicesPage(){
     renderSvc();
     toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';
     if($('sbb'))$('sbb').value='0';if($('sba'))$('sba').value='0';$('sn').focus();
-    if($('serviceFormCard'))$('serviceFormCard').style.display='none';
+    dismissFormModalV658($('serviceFormCard')); // nestly_v658
   };
-  if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{$('serviceFormCard').style.display='block';$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false');$('sn')?.focus()};
-  if(canWrite&&$('cancelServiceForm'))$('cancelServiceForm').onclick=()=>{$('serviceFormCard').style.display='none'};
+  if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{
+    $('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';
+    $('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false');
+    presentFormModalV658($('serviceFormCard'),{initialFocus:'#sn', // nestly_v658
+      onCancel:()=>dismissFormModalV658($('serviceFormCard'))});
+  };
+  if(canWrite&&$('cancelServiceForm'))$('cancelServiceForm').onclick=()=>dismissFormModalV658($('serviceFormCard'));
   /* V183 (owner: "no edit function ... what if i key wrongly, then the service how can i remove
      the time?"). The catalogue could only be Disabled, so a typo in a price or duration was
      permanent — the only workaround was to disable the row and re-add it, which orphans its
@@ -27530,6 +27587,17 @@ async function servicesPage(){
     serviceBranchMapV613.set(serviceId,wantRows);
     return null;
   }
+  /* nestly_v658: the Services pill is the switch now (owner photo 7's model). window.toggleSvc
+     stays as the one writer — the pill delegates to it — so nothing else that calls it changes. */
+  const bindServiceStatusV658=()=>{
+    document.querySelectorAll('[data-svc-active]').forEach(button=>button.onclick=async()=>{
+      const turningOn=button.dataset.svcNext==='on';
+      if(!turningOn&&!await confirmActionV386(
+        `Switch "${button.dataset.svcName||'this service'}" off? Customers can no longer book it and staff can no longer sell it. Past bookings and sales keep it, and you can switch it back on at any time.`,
+        {confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
+      window.toggleSvc(button.dataset.svcActive,turningOn);
+    });
+  };
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
     const {error}=await sb.from('services').update({active:to}).eq('id',id);
@@ -34179,8 +34247,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-bb-delete-yes-v361="${esc(campaign.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-bb-delete-no-v361="1">Cancel</button></div>
       </li>`;
   };
-  const growBbFormV361=growBbAddOpenV361?`<li class="grow-points-form-card-v343" data-grow-bb-form-v361>
-    <b>${growBbEditingV361?'Edit campaign':'New bring-back campaign'}</b>
+  /* nestly_v658 (owner photo 3: "the buttons should pop up as well (same as point system pop
+     up)"). Same treatment as the tier form above and for the same reason — presentation only, so
+     the three entry points into this one form (+ Add campaign, a row's Edit, and the 30/60/90
+     quick-start chips) all keep working untouched. */
+  const growBbFormV361=growBbAddOpenV361?`<div class="grow-points-modal-back-v410" data-grow-bb-modal-back-v658 aria-hidden="true"></div><li class="grow-points-form-card-v343 grow-inline-modal-v658" data-grow-bb-form-v361 role="dialog" aria-modal="true" aria-labelledby="growBbFormTitleV658">
+    <div class="grow-points-form-head-v485"><b id="growBbFormTitleV658">${growBbEditingV361?'Edit campaign':'New bring-back campaign'}</b>
+      <button type="button" class="grow-points-form-close-v485" data-grow-bb-cancel-v361="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button></div>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growBbNameV361">Campaign name</label><br><input id="growBbNameV361" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growBbDraftV361.name)}" placeholder="e.g. We miss you"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growBbAwayV361">Send when away for (days)</label><br><input id="growBbAwayV361" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(growBbDraftV361.away)}" placeholder="e.g. 60"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growBbRewardV361">Voucher or gift</label><br><input id="growBbRewardV361" class="grow-setup-input-v301" style="width:100%;max-width:320px" value="${esc(growBbDraftV361.reward)}" placeholder="e.g. Free coffee on your next visit"></p>
@@ -34827,8 +34900,20 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      permanently expanded."): the old 'prompt' state ("Tier saved... Add another tier / Done") is
      gone — growTiersAddSave now closes straight back to '' on success (see its handler below), so
      this is a plain open/closed ternary, one management surface, no second confirmation screen. */
-  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<li class="imp-note grow-tier-form-v501" data-grow-tiers-addform-v331>
-    <b>${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
+  /* nestly_v658 (owner photos 1 and 2: "add tier ... must be a pop up - not current way of
+     editing (same as point system pop up)" / "edit button should pop up"). Both buttons already
+     open THIS one form — Add with a blank draft, Edit with the tier's own — so nothing about the
+     state, the fields, the validation or the two RPCs moves. What changes is presentation, in
+     exactly the way nestly_v410 did it for the gift form the owner is pointing at: the <li> keeps
+     its element, its hook and its place in the DOM, and CSS lifts it over a backdrop.
+     That is deliberately NOT a detached document.body dialog: every handler on this surface ends
+     in growRerenderV322, which replaces outerMain wholesale, and a form rendered BY the page
+     template survives that because it is re-created on the next pass. A detached node would be
+     orphaned behind a repainted page — the trap openTierBenefitDialogV657 avoids by living
+     outside outerMain, which this form cannot do without moving every one of its handlers. */
+  const growTiersAddFormV331=growTiersAddOpenV331==='form'?`<div class="grow-points-modal-back-v410" data-grow-tiers-modal-back-v658 aria-hidden="true"></div><li class="imp-note grow-tier-form-v501 grow-inline-modal-v658" data-grow-tiers-addform-v331 role="dialog" aria-modal="true" aria-labelledby="growTiersFormTitleV658">
+    <div class="grow-points-form-head-v485"><b id="growTiersFormTitleV658">${growTiersEditingV331?'Edit tier':'Add a tier'}</b>
+      <button type="button" class="grow-points-form-close-v485" data-grow-tiers-add-cancel-v331="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button></div>
     <p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growTiersAddNameV331">Tier name</label><br><input id="growTiersAddNameV331" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growTiersAddDraftV331.name)}" placeholder="e.g. Gold"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growTiersAddThresholdV331">${esc(growTiersThresholdLabelV585)}</label><br><input id="growTiersAddThresholdV331" class="grow-setup-input-v301" data-workspace-i18n inputmode="numeric" style="width:100%;max-width:160px" value="${esc(growTiersAddDraftV331.threshold)}" placeholder="${esc(growTiersThresholdPlaceholderV585)}"></p>
     <p class="muted small" style="margin:-2px 0 0">${growTiersBasisIsSpendV585
@@ -36296,6 +36381,28 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(first&&document.activeElement!==first)first.focus({preventScroll:true});
     }
   }
+  /* nestly_v658: the same dismissal grammar the v410 gift pop-up uses, for the two forms the
+     owner asked to become pop-ups. One helper, because three copies of "click the backdrop, press
+     Escape, focus the first field" is how they drift apart. */
+  const growInlineModalDismissV658=(formSelector,backdropSelector,cancelSelector,firstFieldId)=>{
+    const form=outerMain.querySelector(formSelector);
+    if(!form)return;
+    const cancel=()=>outerMain.querySelector(cancelSelector)?.click();
+    const backdrop=outerMain.querySelector(backdropSelector);
+    if(backdrop)backdrop.onclick=cancel;
+    form.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();cancel()}};
+    /* Focus once per opening, not on every re-render: these surfaces repaint on each keystroke
+       that touches the draft, and re-focusing would fight the cursor. */
+    if(!form.dataset.focusedV658){
+      form.dataset.focusedV658='1';
+      const first=firstFieldId?form.querySelector(firstFieldId):null;
+      if(first&&document.activeElement!==first)first.focus({preventScroll:true});
+    }
+  };
+  growInlineModalDismissV658('[data-grow-tiers-addform-v331]','[data-grow-tiers-modal-back-v658]',
+    '[data-grow-tiers-add-cancel-v331]','#growTiersAddNameV331');
+  growInlineModalDismissV658('[data-grow-bb-form-v361]','[data-grow-bb-modal-back-v658]',
+    '[data-grow-bb-cancel-v361]','#growBbNameV361');
   /* nestly_v422: the preview grid's gift-detail popup went with the preview (owner photo 2,
      "no need this preview"). Nothing else ever carried data-grow-stamp-gift-v410, and the editor
      grid one card up opens the real gift form on the same tap. */
@@ -47142,6 +47249,10 @@ async function inventoryPage(){
       editingProductId=null;loadInv();
     });
     document.querySelectorAll('[data-prod-toggle]').forEach(b=>b.onclick=async()=>{
+      /* nestly_v658: ask before it stops being sellable; switching back on takes nothing away. */
+      if(b.dataset.prodActive&&!await confirmActionV386(
+        `Switch "${b.dataset.prodName||'this product'}" off? Staff can no longer sell it at Record sale. Past sales keep it, and you can switch it back on at any time.`,
+        {confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
       const to=!b.dataset.prodActive;
       const {error}=await sb.from('products').update({active:to}).eq('id',b.dataset.prodToggle);
       if(error)return toast(ownerErrorText(error));
@@ -47207,8 +47318,14 @@ async function inventoryPage(){
         return `<tr><td data-label="Product"><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('inventory',{size:20})}</span>`}<div><b data-merchant-content>${esc(p.name)}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td>
       <td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
       <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td>
-      <td data-label="Status"><span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span></td>
-      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="svc-toggle-icon-v584${p.active?'':' is-off'}" data-workspace-i18n data-prod-toggle="${p.id}" data-prod-active="${p.active?'1':''}" title="${p.active?'Switch this product off':'Switch this product on'}" aria-label="${p.active?'Switch this product off':'Switch this product on'}">${p.active?'✕':'✓'}</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+      ${/* nestly_v658 (owner photo 7: the Packages row "will be the model that other modules
+           follow (status / edit / delete) ... for products & services"). Same change as Services:
+           the STATUS PILL is the switch, the separate ✓/✗ icon is gone, and switching off asks
+           first because it stops the product being sellable. */''}
+      <td data-label="Status">${canWrite
+        ?`<button type="button" class="pill ${p.active?'on':'off'}" data-prod-toggle="${p.id}" data-prod-name="${esc(p.name||'')}" data-prod-active="${p.active?'1':''}" aria-pressed="${p.active?'true':'false'}" data-workspace-i18n title="${p.active?'Switch this product off':'Switch this product on'}">${statusOnOff(p.active)}</button>`
+        :`<span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>`}</td>
+      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</tbody></table></div>`
       :CUI.emptyState({iconName:'inventory',title:'No products yet',body:`Add what you sell — for example chicken rice at ${money(500)}.`});
     /* nestly_v613: the editor is a dialog, exactly as the service editor has been since v584.
@@ -47241,11 +47358,12 @@ async function inventoryPage(){
     const {error}=await sb.from('products').insert({business_id:S.biz.id,name:$('pn2').value.trim(),
       sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
     if(error) return fail(error);toast('Product added');$('pn2').value='';$('ps2').value='';$('pp2').value='';
-    if($('productFormCard'))$('productFormCard').style.display='none';
+    dismissFormModalV658($('productFormCard')); // nestly_v658
     loadInv();
   };
-  if(canWrite&&$('openProductForm'))$('openProductForm').onclick=()=>{$('productFormCard').style.display='block';$('pn2').focus()};
-  if(canWrite&&$('cancelProductForm'))$('cancelProductForm').onclick=()=>{$('productFormCard').style.display='none'};
+  if(canWrite&&$('openProductForm'))$('openProductForm').onclick=()=>presentFormModalV658($('productFormCard'),
+    {initialFocus:'#pn2',onCancel:()=>dismissFormModalV658($('productFormCard'))}); // nestly_v658
+  if(canWrite&&$('cancelProductForm'))$('cancelProductForm').onclick=()=>dismissFormModalV658($('productFormCard'));
   loadInv();
 }
 
@@ -47419,7 +47537,7 @@ async function packagesPage(options){
              pill was a label pretending to be a control. It is a button now, and it calls a writer
              that flips the flag WITHOUT superseding the plan — routing it through the save would
              mint a version every time somebody paused a package. */''}
-        ${canWrite?`<button type="button" class="pill ${p.active?'on':'off'}" data-package-active="${p.id}" data-package-next="${p.active?'off':'on'}" aria-pressed="${p.active?'true':'false'}" data-workspace-i18n title="${p.active?'Switch this package off':'Switch this package on'}">${statusOnOff(p.active)}</button>`
+        ${canWrite?`<button type="button" class="pill ${p.active?'on':'off'}" data-package-active="${p.id}" data-package-name="${esc(p.name||'')}" data-package-next="${p.active?'off':'on'}" aria-pressed="${p.active?'true':'false'}" data-workspace-i18n title="${p.active?'Switch this package off':'Switch this package on'}">${statusOnOff(p.active)}</button>`
           :`<span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>`}</td>
         <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-edit-package="${p.id}">Edit</button>${packagePurchaseCount[p.id]?'':`<button type="button" class="btn ghost sm" data-package-rename="${p.id}" data-package-name="${esc(p.name)}">Rename</button>`}<button type="button" class="btn ghost sm" data-package-delete="${p.id}" data-package-name="${esc(p.name)}" data-package-sold="${Number(packagePurchaseCount[p.id]||0)}">Delete</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`).join('')}</tbody></table></div>`:CUI.emptyState({iconName:'packages',title:'No packages yet',body:'Create your first prepaid package here. Staff can sell it from Record sale.'})}</div></div></section>
     </section>`:''}
@@ -47465,12 +47583,11 @@ async function packagesPage(options){
        its own dialog), so there is no half-filled state for Add to inherit. */
     const showPackageFormV613=()=>{
       resetPackageForm();
-      if($('packageFormCard'))$('packageFormCard').style.display='block';
-      $('kn').focus();
+      presentFormModalV658($('packageFormCard'),{initialFocus:'#kn',onCancel:hidePackageFormV613}); // nestly_v658
     };
     const hidePackageFormV613=()=>{
       resetPackageForm();
-      if($('packageFormCard'))$('packageFormCard').style.display='none';
+      dismissFormModalV658($('packageFormCard'));
     };
     if($('openPackageForm'))$('openPackageForm').onclick=showPackageFormV613;
     /* nestly_v593: one reader for the field, used by both the save call and the pre-save check,
@@ -47617,6 +47734,18 @@ async function packagesPage(options){
     /* nestly_v601: the On/Off pill, now a control. */
     document.querySelectorAll('[data-package-active]').forEach(button=>button.onclick=async()=>{
       const id=button.dataset.packageActive,turningOn=button.dataset.packageNext==='on';
+      /* nestly_v658 (owner photo 7: "clicking on status > will change from on to off > i need a
+         confirmation pop up to let user agree with that action"). The pill IS the button here, so
+         it sits directly under a thumb aimed at the row's Edit — one stray tap and the package
+         silently left Record sale. Switching OFF is the direction worth asking about: it stops
+         staff being able to sell the package at all. Switching back ON restores it and takes
+         nothing away, so that direction is not gated — a confirm on every tap teaches people to
+         dismiss confirms. The sentence says what survives, because "off" reads as "deleted" to an
+         owner who has already sold some. */
+      const nameV658=button.dataset.packageName||'this package';
+      if(!turningOn&&!await confirmActionV386(
+        `Switch "${nameV658}" off? Staff can no longer sell it at Record sale. Customers who already bought it keep every session they paid for, and you can switch it back on at any time.`,
+        {confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
       CUI.setButtonBusy(button,{busy:true,label:'…'});
       const {error}=await sb.rpc('business_set_package_active_v601',
         {p_business:S.biz.id,p_plan:id,p_active:turningOn});
@@ -48123,7 +48252,6 @@ async function branchesPage(){
   if(branchesAutoOpenAddV628){branchesAutoOpenAddV628=false;openForm(null)}
   function openForm(b){
     editId=b?b.id:null;
-    $('brForm').style.display='block';
     $('brForm').innerHTML=`<b>${b?'Edit branch':'New branch'}</b>
       <div class="split"><div><label for="brName">Name *</label><input id="brName" value="${b?esc(b.name):''}"></div>
       <div><label for="brPhone">Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
@@ -48142,7 +48270,11 @@ async function branchesPage(){
            <p class="small" style="margin-top:6px">The exact amount and billing date are shown on the secure payment page before anything is charged. The branch stays switched off until that payment confirms.</p></div>`}
       <div class="row" style="margin-top:16px"><button class="btn" id="brSave">${b?'Save changes':'Create branch'}</button>
       <button class="btn ghost sm" id="brCancel">Cancel</button></div>`;
-    $('brCancel').onclick=()=>{$('brForm').style.display='none';};
+    /* nestly_v658: the branch form is the only one of the five that serves BOTH create and edit,
+       so both become the dialog at once. innerHTML is filled first and the card is presented
+       after, so the focus target below exists when it is asked for. */
+    presentFormModalV658($('brForm'),{initialFocus:'#brName',onCancel:()=>dismissFormModalV658($('brForm'))});
+    $('brCancel').onclick=()=>dismissFormModalV658($('brForm'));
     $('brSave').onclick=async()=>{
       const name=$('brName').value.trim();
       if(name.length<2) return toast('Branch name required');
@@ -48159,7 +48291,7 @@ async function branchesPage(){
         const {error}=await saveBranchFieldsV325(editId,payload);
         if(error){fail(error);CUI.setButtonBusy($('brSave'),{busy:false});return}
         toast('Branch updated');
-        $('brForm').style.display='none';
+        dismissFormModalV658($('brForm')); // nestly_v658
         load();
         return;
       }
@@ -50363,13 +50495,11 @@ function enhanceStaffMembersTabsV164(teamPanel){
   const openManualAdd=()=>{
     setTab('list');
     if(!manualCard)return;
-    manualCard.style.display='block';
-    listPanel.querySelector('#staffAddName')?.focus();
+    presentFormModalV658(manualCard,{initialFocus:'#staffAddName', // nestly_v658
+      onCancel:()=>dismissFormModalV658(manualCard)});
   };
   if(addTop)addTop.addEventListener('click',openManualAdd);
-  listPanel.querySelector('#staffAddCancel')?.addEventListener('click',()=>{
-    if(manualCard)manualCard.style.display='none';
-  });
+  listPanel.querySelector('#staffAddCancel')?.addEventListener('click',()=>dismissFormModalV658(manualCard));
   listPanel.querySelector('#staffAddSave')?.addEventListener('click',async()=>{
     const status=listPanel.querySelector('#staffAddStatus');
     const nameInput=listPanel.querySelector('#staffAddName');
