@@ -3201,6 +3201,18 @@
       "path": "db/migrations/20260831_nestly_v654_receipt_identity_and_perk_date.sql",
       "semanticVersion": "v654",
       "proposedDeployVersion": "20260831090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v655_cancel_and_package_edit.sql",
+      "semanticVersion": "v655",
+      "proposedDeployVersion": "20260831100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v656_tier_discount_scope.sql",
+      "semanticVersion": "v656",
+      "proposedDeployVersion": "20260831110000"
     }
   ]
 }

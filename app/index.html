@@ -464,6 +464,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .grow-tier-benefit-value-v369 input,.grow-tier-benefit-value-v369 select{flex:1;min-width:0}
 .grow-tier-benefit-value-v369 b{flex:none;font-size:13px}
 .grow-tier-benefit-preview-v369{grid-column:1/-1;margin-top:-2px}
+/* nestly_v656 (owner photo 3): the "which items does this discount cover" picker. It spans the
+   whole benefit row rather than squeezing into the value column, because it is a list and the
+   row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
+   forty items cannot push the Save button off the screen. */
+.grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+.grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
+.grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
+  padding:8px;border:1px solid var(--line);border-radius:12px}
+.grow-tier-benefit-scope-list-v656 .checkrow{margin:0;padding:6px 8px}
 @media(max-width:900px){
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
@@ -5727,7 +5736,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=cddf67b676d8","customer":"/app-customer.js?b=48d54be16059","business":"/app-business.js?b=3c12be137fe0","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=cddf67b676d8","customer":"/app-customer.js?b=cd749cc878ea","business":"/app-business.js?b=5506b4ed90dc","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

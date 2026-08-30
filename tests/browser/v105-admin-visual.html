@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="0b982d0801dd3fe2f84f403f40a15e0b2a5b6e368920291f3708e7e64c173df7">
+<meta name="v105-production-component-sha256" content="93795a92351cf111add740b41c0063fbbe67caee934344e1e30b61145711b57d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -357,6 +357,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .grow-tier-benefit-value-v369 input,.grow-tier-benefit-value-v369 select{flex:1;min-width:0}
 .grow-tier-benefit-value-v369 b{flex:none;font-size:13px}
 .grow-tier-benefit-preview-v369{grid-column:1/-1;margin-top:-2px}
+/* nestly_v656 (owner photo 3): the "which items does this discount cover" picker. It spans the
+   whole benefit row rather than squeezing into the value column, because it is a list and the
+   row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
+   forty items cannot push the Save button off the screen. */
+.grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+.grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
+.grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
+  padding:8px;border:1px solid var(--line);border-radius:12px}
+.grow-tier-benefit-scope-list-v656 .checkrow{margin:0;padding:6px 8px}
 @media(max-width:900px){
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
@@ -6374,7 +6383,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 0b982d0801dd</span>
+<span class="v105-provenance">v105 production-component harness · 93795a92351c</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6499,7 +6508,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'0b982d0801dd3fe2f84f403f40a15e0b2a5b6e368920291f3708e7e64c173df7',
+  sourceHash:'93795a92351cf111add740b41c0063fbbe67caee934344e1e30b61145711b57d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

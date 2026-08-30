@@ -1529,18 +1529,33 @@
       "kernel": "N/A"
     },
     {
-      "id": "db.fn:public.evaluate_checkout/5",
+      "id": "db.fn:public.evaluate_checkout/6",
       "surface": "db_function",
-      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
+      "latest_file": "20260831110000_nestly_v656_tier_discount_scope.sql",
       "rows_written": "checkout_evaluations:INSERT, checkout_evaluation_operations:INSERT",
       "detected_signals": "idem-signal, advisory-lock",
-      "entry_point": "evaluate_checkout(p_business,p_branch,p_client,p_lines,p_idempotency_key)",
+      "entry_point": "evaluate_checkout(p_business,p_branch,p_client,p_lines,p_idempotency_key,p_tier_benefit)",
       "callers": "browser till checkout (server-priced quote; the client holds only the opaque token id)",
       "reads": "services/products (server prices via app.ps1b_catalog_price), program_rules_compiled (sale.completed discount rules), budget_periods (PROJECTED cap), businesses (active_config_version_id + GST)",
       "idempotency": "checkout_evaluation_operations UNIQUE(business_id, idempotency_key) + request_hash; advisory xact lock; replay returns the same token while unexpired+unconsumed, else 22023 stale",
-      "value": "NON-VALUE — mints a priced quote only; no money, ledger, tender or discount is applied here",
+      "value": "NON-VALUE — mints a priced quote only; no money, ledger, tender or discount is applied here. nestly_v656 added p_tier_benefit (defaulted, so the previous 5-argument call still resolves): the ONE limited tier discount the counter chose for this sale. It is a REQUEST, not an answer — the pricing authority decides what, if anything, comes off, and refuses the perk outright when the customer's allowance for the period is already spent. The chosen perk is part of the request hash, so a cart priced with the perk and the same cart priced without it are different requests and cannot replay each other's token.",
       "kernel_migratability": "KERNEL — the server-owned evaluation-token authority; nothing is client-priceable (a price/amount key on any line is a hard error)",
       "kernel": "KERNEL — PS-1C evaluation half of the unified checkout kernel."
+    },
+    {
+      "id": "db.fn:public.record_cart_sale/11",
+      "surface": "db_function",
+      "latest_file": "20260831110000_nestly_v656_tier_discount_scope.sql",
+      "rows_written": "benefit_fulfilments:INSERT, budget_periods:INSERT/UPDATE, budget_reservations:INSERT, checkout_discount_lines:INSERT, checkout_evaluations:UPDATE, checkout_sv_tenders:UPDATE, sale_items:INSERT",
+      "detected_signals": "idem-signal, advisory-lock, token-consume",
+      "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid,p_occurred_at,p_redemptions)",
+      "callers": "browser till checkout — the PS-1C finaliser, called with the evaluation token minted by evaluate_checkout",
+      "reads": "checkout_evaluations (the token, and the ONLY source of prices, effects and totals — the cart is re-hashed against it), program_rules, budget_periods, businesses",
+      "idempotency": "the evaluation token is consumed exactly once (consumed_at/consumed_sale_id); a replay returns duplicate_ignored with the original sale. nestly_v656's tier-benefit issue uses the SALE ID as its idempotency key, so a replayed finalise re-uses the same issue row rather than spending a second allowance.",
+      "value": "VALUE-IMPACTING — this is where the cart becomes money. nestly_v656: when the consumed evaluation carries a tier-discount effect flagged tier_benefit_limited, the customer's allowance is spent HERE, in the same transaction that creates the sale, via staff_issue_tier_benefit_v365. Before v656 a limited tier discount could not reach a bill at all (v370 excluded it because using one must be counted, and the staff Give button counts without charging), so a '20% off, 1 per month' perk was recorded as handed over while the customer paid in full. If the allowance has gone since the price was quoted, staff_issue_tier_benefit_v365 raises and the whole sale aborts — deliberate, because the alternative is charging a discounted total for a perk nothing records as spent.",
+      "kernel_migratability": "KERNEL — the PS-1C finalisation half of the unified checkout kernel; the sole writer of checkout_discount_lines, and the only place a checkout evaluation token is consumed.",
+      "kernel": "KERNEL — PS-1C finaliser. Sanctioned redefinition points for this function are v51/v58/v59/v60/v67/v370/v394/v573/v656, enforced by tests/program-studio/ps0-no-executor.test.mjs.",
+      "indirect_writes": "public.sales via record_quick_sale (the parent money row), and public.tier_benefit_issues_v365 via staff_issue_tier_benefit_v365 (nestly_v656 — the customer's tier allowance is spent in this same transaction)."
     },
     {
       "id": "db.fn:public.reverse_sale_v40_base/6",
@@ -2091,6 +2106,13 @@
       "rpc": "customer_reschedule_appointment_v508",
       "resolves_to": "customer_reschedule_appointment_v508/4 (authenticated customer, verified link derived from auth.uid(); nestly_v509 UI). ONE transaction: cancels the caller's own booked future appointment and inserts a fresh 'pending' booking_requests row plus the app.booking_management_tokens row that makes it visible/withdrawable — the owner's 2026-08-25 ruling that reschedule is a fresh request the business approves, never an amendment the old appointment waits on. Writes appointments.status, booking_requests, app.booking_management_tokens and audit_log; none is a VALUE_TABLE, so no value impact. Rides app.v89_customer_booking_gate (business booking switch + open workspace) on the request insert.",
       "call_site_finding": "none — new time validated future server-side; atomicity is the idempotency (a replay finds the appointment no longer 'booked' and is refused already_actioned); 5-per-15-min throttle per client; audit_log'd"
+    },
+    {
+      "id": "browser.rpc:app/app.js:customer_cancel_appointment_v655",
+      "surface": "browser_rpc_binding",
+      "rpc": "customer_cancel_appointment_v655",
+      "resolves_to": "customer_cancel_appointment_v655/2 (authenticated customer; business, client and identity all derived from auth.uid() via customer_identities + a 'verified' customer_links row, with the slug only narrowing that relationship — the same resolution customer_reschedule_appointment_v508 uses). Sets public.appointments.status to 'cancelled' on the caller's OWN booked appointment and writes one audit_log row. Neither is a VALUE_TABLE, so no value impact. Owner ruling 2026-08-31 (photo 1, \"where's the cancel appointment button. i need it there. X\"): the customer cancels outright rather than filing a request — the v33 customer_request_appointment_action path, which asks the business to approve, is deliberately NOT what this button uses.",
+      "call_site_finding": "none — advisory-locked per (actor, appointment); a replay of a successful cancel returns ok/replayed rather than erroring, and any other non-'booked' status is refused already_actioned; anon has no EXECUTE; audit_log'd"
     },
     {
       "id": "browser.rpc:app/app.js:customer_create_gift_intent_v515",

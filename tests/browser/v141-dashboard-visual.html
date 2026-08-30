@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2fd8fcb136b7fbe84c6db45c4c476a1d2be7e4fa790b389ee8ad47f5b463b0e4"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="a3fbe37cd10983ca1ebff0280fccafd3f5dab8bf399c29d0aa24c3bb14107ac1"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -352,6 +352,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .grow-tier-benefit-value-v369 input,.grow-tier-benefit-value-v369 select{flex:1;min-width:0}
 .grow-tier-benefit-value-v369 b{flex:none;font-size:13px}
 .grow-tier-benefit-preview-v369{grid-column:1/-1;margin-top:-2px}
+/* nestly_v656 (owner photo 3): the "which items does this discount cover" picker. It spans the
+   whole benefit row rather than squeezing into the value column, because it is a list and the
+   row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
+   forty items cannot push the Save button off the screen. */
+.grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+.grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
+.grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
+  padding:8px;border:1px solid var(--line);border-radius:12px}
+.grow-tier-benefit-scope-list-v656 .checkrow{margin:0;padding:6px 8px}
 @media(max-width:900px){
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}
@@ -6727,6 +6736,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'2fd8fcb136b7fbe84c6db45c4c476a1d2be7e4fa790b389ee8ad47f5b463b0e4',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'a3fbe37cd10983ca1ebff0280fccafd3f5dab8bf399c29d0aa24c3bb14107ac1',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="d481294204822cb18de7717f979175cfefcf2e433955c283c3f7b78d41b00ff4"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="993fd2622808b3839401cfef8ad5161697360941abfafc64b5cb934ebdb0bffa"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -350,6 +350,15 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .grow-tier-benefit-value-v369 input,.grow-tier-benefit-value-v369 select{flex:1;min-width:0}
 .grow-tier-benefit-value-v369 b{flex:none;font-size:13px}
 .grow-tier-benefit-preview-v369{grid-column:1/-1;margin-top:-2px}
+/* nestly_v656 (owner photo 3): the "which items does this discount cover" picker. It spans the
+   whole benefit row rather than squeezing into the value column, because it is a list and the
+   row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
+   forty items cannot push the Save button off the screen. */
+.grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+.grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
+.grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
+  padding:8px;border:1px solid var(--line);border-radius:12px}
+.grow-tier-benefit-scope-list-v656 .checkrow{margin:0;padding:6px 8px}
 @media(max-width:900px){
   .grow-tier-benefit-row-v365{grid-template-columns:1fr 1fr;}
   .grow-tier-benefit-row-v365>button{grid-column:2;justify-self:end}

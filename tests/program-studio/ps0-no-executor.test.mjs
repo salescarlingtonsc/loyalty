@@ -334,8 +334,24 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      line's kind/id come from ps1c_bundle_lines_v204 instead of being hardcoded 'service' — and
      its acceptance suite is db/tests/v488_product_bundles_and_bottle_checkpoints.sql. The PS-2A
      shadow increments (v61-v64) remain barred. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs)/;
-  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs)/;
+  /* nestly_v656 (owner mark 2026-08-31, photo 3: "10% off selected products able to select the
+     product/services ... also when i 'use' the voucher > it must deduct the overall amount by
+     10%"). Same reasoning as v370/v394/v488, and the same shape of exception. Two things had to
+     move inside the pricing authority and could not live anywhere else:
+       * WHAT a tier discount comes off. Scoping it to chosen products/services is a change to how
+         the base is computed from the priced lines, which only this function holds.
+       * WHETHER a LIMITED discount can come off at all. v370 excluded limited perks because using
+         one must be COUNTED and the automatic path counts nothing; the gap it left is that the
+         staff Give button counts and charges nothing, so a "20% off, 1 per month" perk was
+         recorded as handed over while the customer paid in full. The perk is now nameable for one
+         sale, and record_cart_sale spends the allowance in the same transaction that takes the
+         money — which is why the FINALISER is on the tender list too.
+     Acceptance suite: db/tests/v656_tier_discount_scope.sql — 7 assertions, run rolled-back
+     against production before apply, including the regression that an unscoped discount still
+     takes its percentage off the whole bill. The PS-2A shadow increments (v61-v64) remain barred
+     from all three functions. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/;
+  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
     const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
@@ -484,8 +500,17 @@ test('checkout_discount_lines is written ONLY by the kernel finaliser (record_ca
      test protects is untouched -- the ONLY writer of this table is still record_cart_sale, every
      insert still sits inside it, and every row still traces to a consumed evaluation token. The
      assertions below re-prove all of that against the v572 body rather than taking it on trust. */
-    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v573_module_off_reaches_the_rpcs)/,
-      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67/v370/v573 kernel migrations`);
+  /* nestly_v656 joins on exactly the same footing as v59, v67, v370 and v573: it
+     CREATE-OR-REPLACEs the same finaliser and carries the same single insert, unchanged, still
+     behind v370's `if v_rule is not null` guard. What it adds sits AFTER that insert and writes a
+     different thing entirely — a tier_benefit_issues_v365 row, spending the customer's allowance
+     in the same transaction that takes the money for the discount it bought. The invariant this
+     test protects is untouched: the ONLY writer of checkout_discount_lines is record_cart_sale,
+     every insert still sits inside it, and every row still traces to a consumed evaluation token.
+     The assertions below re-prove all of that against the v656 body rather than taking it on
+     trust. */
+    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/,
+      `${file} must not insert into checkout_discount_lines outside the v58/v59/v67/v370/v573/v656 kernel migrations`);
     const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
     const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
     assert.notEqual(finaliserAt, -1, `${file} must define the record_cart_sale finaliser`);

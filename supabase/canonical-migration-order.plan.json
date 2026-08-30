@@ -3196,6 +3196,18 @@
       "version": "20260831090000",
       "name": "nestly_v654_receipt_identity_and_perk_date",
       "sourcePath": "db/migrations/20260831_nestly_v654_receipt_identity_and_perk_date.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831100000",
+      "name": "nestly_v655_cancel_and_package_edit",
+      "sourcePath": "db/migrations/20260831_nestly_v655_cancel_and_package_edit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831110000",
+      "name": "nestly_v656_tier_discount_scope",
+      "sourcePath": "db/migrations/20260831_nestly_v656_tier_discount_scope.sql"
     }
   ]
 }

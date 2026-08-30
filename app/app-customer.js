@@ -1995,8 +1995,17 @@ function customerBookingRowV580(group,item,tab){
   const branch=String(item.branch_name||'').trim();
   const rescheduleV508=group.bookingEnabled===true&&!!group.business_slug&&!!item.appointment_id
     &&String(item.status||'')==='booked'&&tab==='bookings';
+  /* nestly_v655 (owner photo 1: "where's the cancel appointment button. i need it there. X").
+     A confirmed booking offered Reschedule and no way out. The X is the same control the Pending
+     row has carried since v613 — icon-only, same class, label on aria-label/title — so the two
+     rows read as one grammar. Owner ruling when asked what it should do: "cancel it outright".
+     It appears under exactly the condition Reschedule does, because both are "change a booking
+     the business has committed to" and neither should be offered without the other. */
+  const cancelV655=rescheduleV508
+    ?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-cancel-appointment-v655="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" aria-label="${esc(ct('Cancel booking'))}" title="${esc(ct('Cancel booking'))}">${CUI.icon('close',{size:16})}</button>`
+    :'';
   const action=rescheduleV508
-    ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>`
+    ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>${cancelV655}`
     :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
       ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
       :`<span class="pill ${customerBookingCancelledV654(item)?'no':'ok'} customer-booking-act-v580">${esc(ct('Appointment'))}</span>`;
@@ -2504,6 +2513,25 @@ async function renderCustomerBookings(){
     /* nestly_v613: the row opens its own details. The guard is what keeps the existing controls
        working — Reschedule, Book and Withdraw all live INSIDE this article, and without it every
        one of them would also open the sheet behind its own dialog. */
+    /* nestly_v655: cancel a confirmed booking. Same shape as the v290 withdraw beside it — a
+       confirm the customer must answer, a busy button, one RPC, and a repaint. The sentence says
+       what cancelling costs, because this releases a slot the business has already held. */
+    $('walletBody').querySelectorAll('[data-cancel-appointment-v655]').forEach(button=>button.onclick=async()=>{
+      if(button.disabled)return;
+      if(!await confirmActionV386('Cancel this booking? The business gives your slot to someone else, and you would have to book again.',
+        {confirmLabel:'Cancel booking',cancelLabel:'Keep it'}))return;
+      button.disabled=true;button.setAttribute('aria-busy','true');
+      const result=await customerRpc('customer_cancel_appointment_v655',{
+        p_business_slug:button.dataset.businessSlug||'',
+        p_appointment:button.dataset.cancelAppointmentV655});
+      if(result.error){
+        button.disabled=false;button.removeAttribute('aria-busy');
+        return toast(String(result.error.message||'')==='already_actioned'
+          ?'This booking has already been changed — open it again to see where it stands.'
+          :'The booking could not be cancelled. Try again.');
+      }
+      toast('Booking cancelled');renderCustomerBookings();
+    });
     $('walletBody').querySelectorAll('[data-booking-detail-v613]').forEach(row=>{
       const open=event=>{
         if(event.target.closest('button,a'))return;
@@ -7669,6 +7697,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       <div class="customer-reward-copy-v492">
       <div class="customer-reward-card-head-v339"><span class="pill ${claimableV502?'ok':'off'}">${esc(tierLabel?`${tierLabel} perk`:'Tier perk')}</span></div>
       <b class="wallet-reward-trade customer-reward-name-v339" data-merchant-content>${esc(sentence)}</b>
+      ${/* nestly_v656 (owner photo 3: "put all products under description"). A discount that names
+           items says which, on its own line under the headline, so a customer can tell at a glance
+           whether the thing they are about to buy is covered. A benefit that names none says
+           nothing here — silence means the whole bill, and inventing a line to say so would be
+           noise on every other perk. */''}
+      ${(Array.isArray(perk?.scope_items)?perk.scope_items.filter(Boolean):[]).length
+        ?`<p class="muted small" data-tier-perk-scope-v656 style="margin-top:4px" data-merchant-content>On ${esc(perk.scope_items.filter(Boolean).join(', '))}</p>`:''}
       ${statusV502}
       ${dateLineV502}
       ${/* nestly_v515: a METERED perk gets its own QR. An unlimited one deliberately does not —

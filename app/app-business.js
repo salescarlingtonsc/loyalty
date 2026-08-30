@@ -430,8 +430,12 @@ function growTierBenefitSentenceV365(benefit){
      typing is the text the server will store. 'custom' is the only kind whose words are typed. */
   const kind=String(benefit?.kind||'custom');
   const discount=Number(benefit?.discount);
+  /* nestly_v656: a scoped discount names its items, mirroring app.v656_discount_label, so the
+     preview an owner reads while ticking boxes is the wording the server will store. */
+  const scopeNamesV656=Array.isArray(benefit?.scopeNames)?benefit.scopeNames.filter(Boolean):[];
   const label=kind==='discount_pct'
-    ?(Number.isFinite(discount)&&discount>0?`${String(discount).replace(/\.0+$/,'')}% off`:'')
+    ?(Number.isFinite(discount)&&discount>0
+      ?`${String(discount).replace(/\.0+$/,'')}% off${scopeNamesV656.length?` ${scopeNamesV656.join(', ')}`:''}`:'')
     :kind==='free_item'
     ?((String(benefit?.itemLabel||'').trim()||String(benefit?.productName||'').trim())
         ?`Free ${String(benefit?.productName||benefit?.itemLabel).trim()}`:'')
@@ -453,8 +457,56 @@ function growTiersBenefitLinesV363(value){
    stored shape into that draft and back. A tier whose benefits exist only as v363 perk_note text
    (no v365 rows yet, or the migration not applied on this database) still opens correctly — the
    line becomes an unlimited benefit, which is exactly what it meant when it was written. */
-function growTiersBenefitDraftFromV365(rows,perkNote){
+/* nestly_v656 (owner photo 3: "10% off selected products able to select the product/services
+   ... if blanket 10% also allow that selection"). A discount used to mean the whole bill and
+   nothing else, because tier_benefits_v365's own shape CHECK forbids a product on a discount row.
+   The choice lives in its own table now, over both catalogues.
+   NOTHING TICKED IS A REAL ANSWER and it is the default: it means the whole bill, which is what
+   every discount configured before v656 already does. That is the same convention the branch and
+   reward pickers use, and it is stated on the control rather than left to be discovered. */
+/* The chosen items by NAME, sorted the way app.v656_scope_names sorts them, so the preview and
+   the stored wording agree character for character. */
+function growTierScopeNamesV656(benefit,products,services){
+  const wanted=new Set([...(benefit?.scopeProductIds||[]),...(benefit?.scopeServiceIds||[])].map(String));
+  if(!wanted.size)return [];
+  return [...(products||[]),...(services||[])]
+    .filter(row=>row&&wanted.has(String(row.id)))
+    .map(row=>String(row.name||''))
+    .filter(Boolean)
+    .sort((a,b)=>a.localeCompare(b));
+}
+function growTierScopePickerV656(benefit,index,products,services){
+  const chosenProducts=new Set((benefit?.scopeProductIds||[]).map(String));
+  const chosenServices=new Set((benefit?.scopeServiceIds||[]).map(String));
+  const items=[
+    ...(services||[]).map(row=>({...row,kind:'service'})),
+    ...(products||[]).map(row=>({...row,kind:'product'}))];
+  if(!items.length){
+    return `<p class="muted small grow-tier-benefit-scope-v656">This discount comes off the whole bill. Add a service or a product to your catalogue to narrow it.</p>`;
+  }
+  const count=chosenProducts.size+chosenServices.size;
+  return `<details class="grow-tier-benefit-scope-v656"${count?' open':''}>
+    <summary>${count?`Off ${count} chosen item${count===1?'':'s'}`:'Off the whole bill'} — choose items</summary>
+    <p class="muted small" style="margin:6px 0">Tick nothing and the discount comes off the whole bill. Tick items and it comes off those only.</p>
+    <div class="grow-tier-benefit-scope-list-v656">
+      ${items.map(row=>{
+        const on=row.kind==='service'?chosenServices.has(String(row.id)):chosenProducts.has(String(row.id));
+        return `<label class="checkrow"><input type="checkbox" value="${esc(row.id)}" ${on?'checked':''} data-grow-tiers-scope-${row.kind}-v656="${index}"><span>${esc(row.name)} <span class="muted small">${row.kind==='service'?'service':'product'}</span></span></label>`;
+      }).join('')}
+    </div>
+  </details>`;
+}
+function growTiersBenefitDraftFromV365(rows,perkNote,scopeRows){
+  /* nestly_v656: which products and services each discount names. Kept as two id arrays because
+     that is the shape the form reads and the RPC writes; an empty pair means the whole bill. */
+  const scopeForV656=id=>{
+    const mine=(Array.isArray(scopeRows)?scopeRows:[]).filter(row=>row&&String(row.benefit_id)===String(id));
+    return {
+      scopeProductIds:mine.filter(row=>row.product_id).map(row=>String(row.product_id)),
+      scopeServiceIds:mine.filter(row=>row.service_id).map(row=>String(row.service_id))};
+  };
   if(Array.isArray(rows)&&rows.length)return rows.map(row=>({id:row.id||null,
+    ...scopeForV656(row.id),
     kind:row.benefit_kind||'custom',
     label:String(row.label||''),
     /* V369: the two structured kinds carry a number or an item; 'custom' carries only words. */
@@ -463,7 +515,8 @@ function growTiersBenefitDraftFromV365(rows,perkNote){
     itemLabel:row.item_label||'',
     limit_count:row.limit_count==null?'':String(row.limit_count),limit_period:row.limit_period||'month'}));
   return growTiersBenefitLinesV363(perkNote).map(line=>({id:null,kind:'custom',label:line,
-    discount:'',productId:'',itemLabel:'',limit_count:'',limit_period:'month'}));
+    discount:'',productId:'',itemLabel:'',limit_count:'',limit_period:'month',
+    scopeProductIds:[],scopeServiceIds:[]}));
 }
 /* Reads the live form rows. Blanks are KEPT here on purpose: the remove buttons address rows by
    their rendered index, so silently dropping an empty row mid-capture would shift every index
@@ -479,7 +532,11 @@ function growTiersReadBenefitFieldsV363(){
     productId:String(node.querySelector('[data-grow-tiers-benefit-product-v369]')?.value||''),
     itemLabel:String(node.querySelector('[data-grow-tiers-benefit-item-v369]')?.value||'').trim(),
     limit_count:String(node.querySelector('[data-grow-tiers-benefit-limit-v365]')?.value||'').trim(),
-    limit_period:String(node.querySelector('[data-grow-tiers-benefit-period-v365]')?.value||'month')
+    limit_period:String(node.querySelector('[data-grow-tiers-benefit-period-v365]')?.value||'month'),
+    /* nestly_v656: nothing ticked is a real answer — "the whole bill" — so these are always read
+       and always sent, rather than being omitted when empty. */
+    scopeProductIds:[...node.querySelectorAll('[data-grow-tiers-scope-product-v656]:checked')].map(box=>box.value),
+    scopeServiceIds:[...node.querySelectorAll('[data-grow-tiers-scope-service-v656]:checked')].map(box=>box.value)
   }));
 }
 let shellRenderEpoch=0;
@@ -7064,6 +7121,10 @@ async function tillPage(){
   let evalResult=null;     // authoritative response {evaluation_id,expires_at,server_lines,applied_effects,subtotal_cents,discount_total_cents,total_cents,gst_cents}
   let evalError=null;      // {kind:'zero'|'perm'|'custom'|'generic', message} — evaluate/typed errors; cart stays EDITABLE (fix by changing the cart)
   let evalSeq=0;           // monotonic guard: only the newest evaluate response is applied
+  /* nestly_v656: the ONE limited tier discount the counter chose for this sale, or null. It is a
+     request, never an answer — the browser sends the benefit id and evaluate_checkout decides
+     what, if anything, comes off. Cleared with the customer, because a perk belongs to a person. */
+  let appliedTierBenefitV656=null;
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
@@ -7119,7 +7180,7 @@ async function tillPage(){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;tillItemSearchV392='';
+    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null; // v656
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
@@ -7135,6 +7196,7 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
+    appliedTierBenefitV656=null; // v656: a perk belongs to a person, not to the screen
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   function draw(){
@@ -7750,7 +7812,8 @@ async function tillPage(){
     evalState='evaluating';evalError=null;
     const evalKey=crypto.randomUUID(); // a fresh evaluate key per call is fine — independent of the finalise key
     const {data,error}=await sb.rpc('evaluate_checkout',{p_business:S.biz.id,p_branch:tillBranchId||null,
-      p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey});
+      p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey,
+      p_tier_benefit:cust?appliedTierBenefitV656:null});
     if(!isTillCurrent())return;
     if(seq!==evalSeq)return; // a newer evaluate superseded this one
     if(error){applyEvalError(error);draw();return false;}
@@ -8165,17 +8228,39 @@ async function tillPage(){
     const autoRow=autoBenefit
       ?`<div class="till-tier-benefit-row-v369 till-benefit-auto-v373">
           <span><b class="small">${esc(autoBenefit.sentence||autoBenefit.label||'Discount')}</b>
+          ${(Array.isArray(autoBenefit.scope_items)?autoBenefit.scope_items.filter(Boolean):[]).length
+            ?`<span class="muted small">On ${esc(autoBenefit.scope_items.filter(Boolean).join(', '))}</span>`:''}
           <span class="muted small">Applied automatically at payment — no action needed</span></span>
           <span class="pill ok">${appliedTierEffect
             ?`Applied · −${money(appliedTierEffect.amount_cents!=null?appliedTierEffect.amount_cents:0)}`
             :'Automatic'}</span>
         </div>`
       :'';
-    const giveRows=giveNow.map(benefit=>`<div class="till-tier-benefit-row-v369">
+    /* nestly_v656 (owner photo 3: "when i 'use' the voucher > it must deduct the overall amount
+       by 10%"). A LIMITED discount used to be a Give — staff recorded that a 20%-off perk had been
+       handed over, and the customer was then charged full price, because v370 deliberately keeps
+       limited perks out of the automatic discount and nothing else moved money. It is applied to
+       THIS bill now: Apply re-prices the cart through evaluate_checkout with the perk named, and
+       finalising the sale spends the allowance in the same transaction that takes the money.
+       Everything that is not a discount keeps its Give — those really are hand-overs. */
+    const isDiscountBenefitV656=benefit=>String(benefit?.benefit_kind||'')==='discount_pct'
+      &&Number(benefit?.discount_percent)>0;
+    const benefitScopeLineV656=benefit=>{
+      const items=Array.isArray(benefit?.scope_items)?benefit.scope_items.filter(Boolean):[];
+      return items.length?`<span class="muted small">On ${esc(items.join(', '))}</span>`:'';
+    };
+    const giveRows=giveNow.map(benefit=>{
+      const applyV656=isDiscountBenefitV656(benefit);
+      const isAppliedV656=applyV656&&appliedTierBenefitV656===benefit.benefit_id;
+      return `<div class="till-tier-benefit-row-v369">
         <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
+        ${benefitScopeLineV656(benefit)}
         <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>
-        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}" data-limit-v654="${esc(String(tillBenefitLimitTextV373(benefit)||''))}">Give</button>
-      </div>`).join('');
+        ${applyV656
+          ?`<button type="button" class="btn ${isAppliedV656?'ghost':'primary'} sm" data-tier-benefit-apply-v656="${esc(benefit.benefit_id)}" data-applied-v656="${isAppliedV656?'1':''}">${isAppliedV656?'Remove':'Apply'}</button>`
+          :`<button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}" data-limit-v654="${esc(String(tillBenefitLimitTextV373(benefit)||''))}">Give</button>`}
+      </div>`;
+    }).join('');
     const tierBanner=(autoRow||giveRows)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
         <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
@@ -8933,6 +9018,29 @@ async function tillPage(){
     /* V365: give one tier benefit. The idempotency key is per press, so a double-tap on a slow
        connection replays into the SAME issue rather than burning two of the customer's monthly
        allowance; the server answers duplicate_ignored and the count does not move. */
+    /* nestly_v656: Apply / Remove for a tier DISCOUNT. This button moves no money by itself — it
+       records which perk the counter chose and re-prices through evaluate_checkout, which is the
+       only thing allowed to decide what comes off. A refusal (the allowance went, the customer
+       dropped below the tier) surfaces as the evaluation's own error and the choice is dropped,
+       so the till can never show a discount the server did not grant. */
+    document.querySelectorAll('[data-tier-benefit-apply-v656]').forEach(button=>button.onclick=async()=>{
+      if(busy)return;
+      const benefitId=button.dataset.tierBenefitApplyV656;
+      const wasApplied=button.dataset.appliedV656==='1';
+      const previous=appliedTierBenefitV656;
+      appliedTierBenefitV656=wasApplied?null:benefitId;
+      const ok=await runEvaluate();
+      if(!isTillCurrent())return;
+      if(ok===false){
+        /* Put it back exactly as it was and re-price, so the panel and the chosen perk agree. */
+        appliedTierBenefitV656=previous;
+        await runEvaluate();
+        if(!isTillCurrent())return;
+        return toast(wasApplied?'That could not be removed. Try again.':'That perk could not be applied to this sale.');
+      }
+      draw();
+      toast(wasApplied?'Discount removed':'Discount applied to this sale');
+    });
     document.querySelectorAll('[data-tier-benefit-give-v365]').forEach(button=>button.onclick=async()=>{
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
@@ -14676,6 +14784,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ?sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
       .then(r=>r.error?[]:(r.data||[])).catch(()=>[])
     :Promise.resolve([]);
+  /* nestly_v656 (owner photo 3: "able to select the product/services"). A discount is scoped over
+     BOTH catalogues, so the services list is read the same way the products list already is —
+     fail-soft, because an unreadable catalogue must leave the owner able to save a blanket
+     discount rather than blocking the page. */
+  const growBenefitServicesRequestV656=canRewards
+    ?sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+      .then(r=>r.error?[]:(r.data||[])).catch(()=>[])
+    :Promise.resolve([]);
+  const growBenefitScopeRequestV656=canRewards
+    ?sb.from('tier_benefit_scope_v656').select('benefit_id,product_id,service_id')
+      .eq('business_id',S.biz.id)
+      .then(r=>r.error?[]:(r.data||[])).catch(()=>[])
+    :Promise.resolve([]);
   /* Already a Promise.all, but it was CREATED after the five awaits above had each finished, so
      it could never overlap them. Creating it here is the whole of its change. */
   /* V386: the windowed reads for the analytics card, and ONLY that card. (V468 removed the
@@ -14747,6 +14868,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   /* V369 (owner: "pull from existing products (drop down selection)"). The catalogue the free-item
      benefit picks from. Fail-soft: no products simply means the owner types the item instead. */
   const growBenefitProductsV369=await growBenefitProductsRequestV369;
+  if(!isGrowCurrent())return;
+  const growBenefitServicesV656=await growBenefitServicesRequestV656;
+  if(!isGrowCurrent())return;
+  const growBenefitScopeV656=await growBenefitScopeRequestV656;
   if(!isGrowCurrent())return;
   /* V331: Published/History split for the new #/grow/tiers page and every existing tile/summary
      reader that used to (wrongly) rely on a nonexistent `active` column. Sorted by threshold —
@@ -17264,7 +17389,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
               <option value="free_item"${kind==='free_item'?' selected':''}>Free item</option>
               <option value="custom"${kind==='custom'?' selected':''}>My own wording</option>
             </select>
-            ${kind==='discount_pct'?`<span class="grow-tier-benefit-value-v369"><input class="grow-setup-input-v301" data-grow-tiers-benefit-discount-v369="${index}" inputmode="decimal" value="${esc(String(benefit.discount??''))}" placeholder="10" data-workspace-i18n aria-label="Discount percent for benefit ${index+1}"><b class="muted">% off</b></span>`
+            ${kind==='discount_pct'?`<span class="grow-tier-benefit-value-v369"><input class="grow-setup-input-v301" data-grow-tiers-benefit-discount-v369="${index}" inputmode="decimal" value="${esc(String(benefit.discount??''))}" placeholder="10" data-workspace-i18n aria-label="Discount percent for benefit ${index+1}"><b class="muted">% off</b></span>${growTierScopePickerV656(benefit,index,growBenefitProductsV369,growBenefitServicesV656)}`
               :kind==='free_item'?`<span class="grow-tier-benefit-value-v369">
                   ${growBenefitProductsV369.length?`<select class="grow-setup-input-v301" data-grow-tiers-benefit-product-v369="${index}" data-workspace-i18n aria-label="Free product for benefit ${index+1}">
                     <option value="">Type it instead…</option>
@@ -17278,7 +17403,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
               ${GROW_TIER_BENEFIT_PERIODS_V365.map(([value,label])=>`<option value="${esc(value)}"${(benefit.limit_period||'month')===value?' selected':''}>${esc(label)}</option>`).join('')}
             </select>
             <button type="button" class="btn ghost sm" data-grow-tiers-benefit-remove-v363="${index}" data-workspace-i18n aria-label="Remove benefit ${index+1}">Remove</button>
-            <span class="muted small grow-tier-benefit-preview-v369">${esc(growTierBenefitSentenceV365({...benefit,kind,productName})||'Customers see this line on their tier card.')}</span>
+            <span class="muted small grow-tier-benefit-preview-v369">${esc(growTierBenefitSentenceV365({...benefit,kind,productName,scopeNames:growTierScopeNamesV656(benefit,growBenefitProductsV369,growBenefitServicesV656)})||'Customers see this line on their tier card.')}</span>
           </div>`}).join('')
         :'<p class="muted small" style="margin:6px 0 0">No benefit yet — this tier is recognition only. Add one below if you want to give something.</p>'}
       <p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
@@ -19410,7 +19535,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersAddOpenV331='form';
     growTiersAddDraftV331={name:tier.name||'',threshold:String(tier.threshold||''),perkNote:tier.perk_note||'',
       benefits:growTiersBenefitDraftFromV365(
-        (growTierBenefitsV365||[]).filter(row=>String(row.tier_id)===String(tier.id)),tier.perk_note)};
+        (growTierBenefitsV365||[]).filter(row=>String(row.tier_id)===String(tier.id)),tier.perk_note,
+        growBenefitScopeV656)};
     growTiersErrorV331='';
     growRerenderV322();
   });
@@ -19482,7 +19608,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the same numbers (app.v365_apply_perk_note), and this local build only keeps the tier RPC's
        own perk_note argument honest in the moment between the two writes. */
     const perkNote=benefits.map(row=>growTierBenefitSentenceV365({...row,
-      productName:(growBenefitProductsV369.find(p=>String(p.id)===String(row.productId))||{}).name||''}))
+      productName:(growBenefitProductsV369.find(p=>String(p.id)===String(row.productId))||{}).name||'',
+      scopeNames:growTierScopeNamesV656(row,growBenefitProductsV369,growBenefitServicesV656)}))
       .filter(Boolean).join('\n');
     growTiersAddDraftV331={name,threshold:thresholdField?.value||'',perkNote,benefits};
     const badLimit=benefits.find(row=>String(row.limit_count||'').trim()!==''
@@ -19523,6 +19650,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           product_id:String(row.kind)==='free_item'&&row.productId?row.productId:null,
           item_label:String(row.kind)==='free_item'&&!row.productId?String(row.itemLabel||'').trim():null,
           limit_count:String(row.limit_count||'').trim()===''?null:Math.round(Number(row.limit_count)),
+          /* nestly_v656: always sent for a discount, empty array included — an empty array is the
+             owner saying "the whole bill", which is different from not mentioning scope at all
+             (the server leaves the stored scope alone when neither key is present, so an older
+             cached bundle cannot silently widen a discount somebody narrowed). */
+          scope_product_ids:String(row.kind)==='discount_pct'?(row.scopeProductIds||[]):[],
+          scope_service_ids:String(row.kind)==='discount_pct'?(row.scopeServiceIds||[]):[],
           limit_period:row.limit_period||'month',
           ...(row.id&&wasEditing?{id:row.id}:{})}))});
       if(!isGrowCurrent())return;
