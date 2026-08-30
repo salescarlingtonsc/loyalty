@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d87ab81143042b2b80b7242b891a0030329dfabe837321faab063b04dbf56d86"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="6082f275d5e6d483846a70872beb5bef84a3025879f6e635b594bceda1775543"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2326,7 +2326,15 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 /* The trail above a drilled-in category: where you are, and one tap back to the level above. */
 .grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
 .grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
-.grow-breadcrumb-back-v346{padding:0;width:32px;height:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
+/* nestly_v627 (owner photo 7, the back control ringed: "make it longer (similar to the edit
+   button size) — currently is too awkwardly tall", and the same for every Rewards Programme
+   back). It was NOT a 32px circle on screen: this rule asks for 32x32, but `.btn.sm` is two
+   classes and this is one, so its min-height:44px won and the control rendered 32 wide by 44
+   tall — a vertical oval, which is exactly what the owner was looking at. Sized as a pill
+   instead: the same 44px height every other small button has, and wide enough to read as one
+   beside them. Every Rewards Programme back button carries this class (Overview, Limited Offer,
+   Bring-back, the topic pages), so they all move together. */
+.grow-breadcrumb-back-v346{padding:8px 16px;width:auto;min-width:60px;height:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
 /* V362 (owner, photos 1+2): the back arrow sits inline to the LEFT of the page title rather than
    on its own line under it. */
 .grow-title-row-v362{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
@@ -3043,11 +3051,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:999px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
-/* nestly_v613 (owner photo: "why got overlapping word here" beside the Success sounds switch).
-   The state word sat in a shrinkable flex item next to a fixed-width switch, so on a narrow
-   phone it wrapped to its min-content width and the second line ran under the switch. It no
-   longer shrinks and no longer wraps; the head wraps instead, which moves the whole toggle onto
-   its own line rather than letting two things share one. */
+/* nestly_v613 read the overlap as a wrapping problem; nestly_v627 found the real cause — the
+   toggle handler was writing the state word into the <i> that draws the switch, so the word was
+   painted inside the pill (fixed in app.js). These rules are kept because they are still correct
+   on their own terms: the word must not shrink below its content or wrap beside a fixed-width
+   control, and the head wrapping is what keeps the pair on one line at any width. */
 .customer-sound-toggle{flex:0 0 auto;flex-wrap:nowrap}
 .customer-sound-toggle>span:not(.cui-switch){white-space:nowrap;flex:0 0 auto}
 #customerExperiencePreferences .wallet-section-head{flex-wrap:wrap;row-gap:8px}
@@ -5251,11 +5259,18 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
-/* nestly_v613. The withdraw control is an X now (owner: "change to X button"), so it is sized as
-   an icon target rather than a text button. The end column keeps its stack — date, status, action —
-   which is the order the owner photographed; only the action stopped being a full-width word. */
-.customer-booking-withdraw-v613{width:32px;min-width:32px;height:32px;padding:0;display:inline-flex;
-  align-items:center;justify-content:center;border-radius:50%;line-height:0}
+/* nestly_v613 made the withdraw control an X. nestly_v627 (owner photo 4: "for the X please make
+   it a perfect circle") makes it actually round: `width` alone was not enough, because `.btn.sm`
+   is two classes to this rule's one and its min-height:44px won — the control was 32 wide and 44
+   tall, an oval, the same defect the Rewards Programme back button had. Both dimensions are
+   pinned now, min-height included, so the circle cannot be stretched by a more specific rule. */
+.customer-booking-withdraw-v613{width:36px;min-width:36px;max-width:36px;height:36px;min-height:36px;
+  max-height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:50%;line-height:0;flex:0 0 auto}
+/* nestly_v627 (owner photo 4: an arrow moving the Pending pill down under the service line). It
+   sits in the copy column now, so it aligns with the business name and the service above it
+   instead of with the date and the actions on the right. */
+.customer-booking-row-status-v627{margin:8px 0 0;display:flex}
 /* nestly_v613. The row opens its own details ("can click to see details"), so it must look and
    behave like a control. The buttons inside it keep their own cursor and their own click. */
 .customer-booking-row-detailed-v613{cursor:pointer}
@@ -5277,6 +5292,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-detail-list-v613{display:grid;gap:10px;margin:12px 0 0}
 .customer-booking-detail-list-v613 dt{margin:0}
 .customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
+.customer-booking-detail-book-v627{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
@@ -5537,7 +5553,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d87ab81143042b2b80b7242b891a0030329dfabe837321faab063b04dbf56d86</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 6082f275d5e6d483846a70872beb5bef84a3025879f6e635b594bceda1775543</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9096,9 +9112,12 @@ async function tillPage(){
       sb.rpc('business_get_checkout_catalogue_v94',{
         p_business:S.biz.id,p_branch:tillBranchId,p_include_inactive:false
       }),
-      /* nestly_v613: the same exclusion the Packages page applies — a package built for one
-         customer must never be offered to the next person at the counter. */
-      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).is('bespoke_for_client',null).order('name')
+      /* nestly_v627 (owner photo 3: a package must be offerable at chosen branches only, "same as
+         services"). "No package_branches rows at all, OR a row for THIS branch" cannot be written
+         as one PostgREST filter, and approximating it in the browser would be the client
+         re-deriving a server rule. The RPC answers it where the rule lives, and carries forward
+         both filters this read already had — active only, and never a v613 bespoke plan. */
+      wantPackages?sb.rpc('business_list_branch_packages_v627',{p_business:S.biz.id,p_branch:tillBranchId})
         :Promise.resolve({data:null,error:null}),
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
@@ -9193,7 +9212,7 @@ async function tillPage(){
 	          image_url:item.image_url||''})),
 	      products:activeItems.filter(item=>item.item_type==='product')
 	        .map(item=>({id:item.item_id,name:item.name,unit_cents:item.unit_cents||0,image_url:item.image_url||''})),
-      packages:(pkg.error||!pkg.data)?null:pkg.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0})),
+      packages:(pkg.error||!pkg.data)?null:(Array.isArray(pkg.data?.items)?pkg.data.items:[]).map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0})),
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
@@ -27261,9 +27280,12 @@ async function svRunTopupFlow({branches,state,testOnly}){
       sb.rpc('business_get_checkout_catalogue_v94',{
         p_business:S.biz.id,p_branch:tillBranchId,p_include_inactive:false
       }),
-      /* nestly_v613: the same exclusion the Packages page applies — a package built for one
-         customer must never be offered to the next person at the counter. */
-      wantPackages?sb.from('package_plans').select('id,name,price_cents,active').eq('business_id',S.biz.id).eq('active',true).is('bespoke_for_client',null).order('name')
+      /* nestly_v627 (owner photo 3: a package must be offerable at chosen branches only, "same as
+         services"). "No package_branches rows at all, OR a row for THIS branch" cannot be written
+         as one PostgREST filter, and approximating it in the browser would be the client
+         re-deriving a server rule. The RPC answers it where the rule lives, and carries forward
+         both filters this read already had — active only, and never a v613 bespoke plan. */
+      wantPackages?sb.rpc('business_list_branch_packages_v627',{p_business:S.biz.id,p_branch:tillBranchId})
         :Promise.resolve({data:null,error:null}),
       wantMemberships?sb.from('membership_plans').select('id,name,price_cents,cadence,active').eq('business_id',S.biz.id).eq('active',true).order('name')
         :Promise.resolve({data:null,error:null}),
@@ -27358,7 +27380,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
 	          image_url:item.image_url||''})),
 	      products:activeItems.filter(item=>item.item_type==='product')
 	        .map(item=>({id:item.item_id,name:item.name,unit_cents:item.unit_cents||0,image_url:item.image_url||''})),
-      packages:(pkg.error||!pkg.data)?null:pkg.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0})),
+      packages:(pkg.error||!pkg.data)?null:(Array.isArray(pkg.data?.items)?pkg.data.items:[]).map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0})),
       memberships:(mem.error||!mem.data)?null:mem.data.map(p=>({id:p.id,name:p.name,unit_cents:p.price_cents||0,cadence:p.cadence})),
       customerPackages:entitlements.error?[]:(entitlements.data?.packages||[]),
       customerVouchers:entitlements.error?[]:(entitlements.data?.vouchers||[]),
@@ -29611,6 +29633,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'d87ab81143042b2b80b7242b891a0030329dfabe837321faab063b04dbf56d86',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'6082f275d5e6d483846a70872beb5bef84a3025879f6e635b594bceda1775543',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

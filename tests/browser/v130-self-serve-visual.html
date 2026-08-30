@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="80ee56cf97c6e9b6a231d204ee7c94faf70ef23d3cd64815ad5e4b819912cd4e"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="82204506be110158774a5b83a67693e86fee4baa4cb75e11cb9caa1e1b6e6208"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2325,7 +2325,15 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 /* The trail above a drilled-in category: where you are, and one tap back to the level above. */
 .grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
 .grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
-.grow-breadcrumb-back-v346{padding:0;width:32px;height:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
+/* nestly_v627 (owner photo 7, the back control ringed: "make it longer (similar to the edit
+   button size) — currently is too awkwardly tall", and the same for every Rewards Programme
+   back). It was NOT a 32px circle on screen: this rule asks for 32x32, but `.btn.sm` is two
+   classes and this is one, so its min-height:44px won and the control rendered 32 wide by 44
+   tall — a vertical oval, which is exactly what the owner was looking at. Sized as a pill
+   instead: the same 44px height every other small button has, and wide enough to read as one
+   beside them. Every Rewards Programme back button carries this class (Overview, Limited Offer,
+   Bring-back, the topic pages), so they all move together. */
+.grow-breadcrumb-back-v346{padding:8px 16px;width:auto;min-width:60px;height:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
 /* V362 (owner, photos 1+2): the back arrow sits inline to the LEFT of the page title rather than
    on its own line under it. */
 .grow-title-row-v362{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
@@ -3042,11 +3050,11 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-surface summary.small,.customer-surface summary.muted{min-height:44px;display:flex;align-items:center}
 .workspace-language-picker{width:auto;min-width:132px;min-height:44px;padding:8px 34px 8px 11px;border-radius:999px;background:#fff;font-size:13px;font-weight:650}
 .customer-sound-toggle{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;color:var(--ink);cursor:pointer}
-/* nestly_v613 (owner photo: "why got overlapping word here" beside the Success sounds switch).
-   The state word sat in a shrinkable flex item next to a fixed-width switch, so on a narrow
-   phone it wrapped to its min-content width and the second line ran under the switch. It no
-   longer shrinks and no longer wraps; the head wraps instead, which moves the whole toggle onto
-   its own line rather than letting two things share one. */
+/* nestly_v613 read the overlap as a wrapping problem; nestly_v627 found the real cause — the
+   toggle handler was writing the state word into the <i> that draws the switch, so the word was
+   painted inside the pill (fixed in app.js). These rules are kept because they are still correct
+   on their own terms: the word must not shrink below its content or wrap beside a fixed-width
+   control, and the head wrapping is what keeps the pair on one line at any width. */
 .customer-sound-toggle{flex:0 0 auto;flex-wrap:nowrap}
 .customer-sound-toggle>span:not(.cui-switch){white-space:nowrap;flex:0 0 auto}
 #customerExperiencePreferences .wallet-section-head{flex-wrap:wrap;row-gap:8px}
@@ -5250,11 +5258,18 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
-/* nestly_v613. The withdraw control is an X now (owner: "change to X button"), so it is sized as
-   an icon target rather than a text button. The end column keeps its stack — date, status, action —
-   which is the order the owner photographed; only the action stopped being a full-width word. */
-.customer-booking-withdraw-v613{width:32px;min-width:32px;height:32px;padding:0;display:inline-flex;
-  align-items:center;justify-content:center;border-radius:50%;line-height:0}
+/* nestly_v613 made the withdraw control an X. nestly_v627 (owner photo 4: "for the X please make
+   it a perfect circle") makes it actually round: `width` alone was not enough, because `.btn.sm`
+   is two classes to this rule's one and its min-height:44px won — the control was 32 wide and 44
+   tall, an oval, the same defect the Rewards Programme back button had. Both dimensions are
+   pinned now, min-height included, so the circle cannot be stretched by a more specific rule. */
+.customer-booking-withdraw-v613{width:36px;min-width:36px;max-width:36px;height:36px;min-height:36px;
+  max-height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:50%;line-height:0;flex:0 0 auto}
+/* nestly_v627 (owner photo 4: an arrow moving the Pending pill down under the service line). It
+   sits in the copy column now, so it aligns with the business name and the service above it
+   instead of with the date and the actions on the right. */
+.customer-booking-row-status-v627{margin:8px 0 0;display:flex}
 /* nestly_v613. The row opens its own details ("can click to see details"), so it must look and
    behave like a control. The buttons inside it keep their own cursor and their own click. */
 .customer-booking-row-detailed-v613{cursor:pointer}
@@ -5276,6 +5291,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-detail-list-v613{display:grid;gap:10px;margin:12px 0 0}
 .customer-booking-detail-list-v613 dt{margin:0}
 .customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
+.customer-booking-detail-book-v627{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
@@ -5640,6 +5656,57 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
   if(button)button.disabled=false;
   if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again or use email and password.</div>';
 }
+/* nestly_v625 (owner: admin sign-in becomes Google-only). No password path, no signup intent —
+   the super admin console has one door in. Mirrors the business Google flow's shape (own
+   sessionStorage attempt slot, own canonical-origin guard, own redirect target) but is
+   deliberately simpler: there is no server-side admission RPC to call before persisting the
+   session, because platform authority is decided by DB predicates on every read, not by a
+   gate at sign-in time. An unauthorized Google identity still signs in — it just sees a
+   console with nothing in it. */
+function platformOAuthRedirectUrl(){
+  const redirect=new URL(NestlyNativeBridge.publicUrl('/admin'));
+  redirect.searchParams.set('oauth','platform');
+  return redirect.toString();
+}
+function ensureCanonicalPlatformOAuthOrigin(){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/admin'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(canonical.toString());
+  return false;
+}
+function beginPlatformGoogleOAuthAttempt(){
+  try{
+    sessionStorage.setItem('nestly:platform-oauth-attempt',JSON.stringify({startedAt:Date.now()}));
+    return true;
+  }catch{return false}
+}
+function takePlatformGoogleOAuthAttempt(){
+  const key='nestly:platform-oauth-attempt',raw=sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if(!raw)return false;
+  try{
+    const attempt=JSON.parse(raw),age=Date.now()-Number(attempt?.startedAt);
+    return Number.isFinite(age)&&age>=0&&age<=30*60*1000;
+  }catch{return false}
+}
+async function startPlatformGoogleAuth({button,errorHostId}){
+  if(!ensureCanonicalPlatformOAuthOrigin())return;
+  const errorHost=$(errorHostId);
+  if(button)button.disabled=true;
+  if(errorHost)errorHost.innerHTML='';
+  if(beginPlatformGoogleOAuthAttempt()){
+    try{
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:platformOAuthRedirectUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
+      });
+      if(!error)return;
+    }catch{}
+  }
+  sessionStorage.removeItem('nestly:platform-oauth-attempt');
+  if(button)button.disabled=false;
+  if(errorHost)errorHost.innerHTML='<div class="err">Google sign-in could not be started. Try again.</div>';
+}
   function renderBusinessApplication(){
   destroyMountedTurnstiles();
   let locale=businessApplicationLanguage();
@@ -5741,25 +5808,34 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
     ${admin?'':`<nav class="entry-path-switch" aria-label="Account type"><a href="/business" aria-current="page">${CUI.icon('branch',{size:16})}<span>I’m a business</span></a><a href="/app">${CUI.icon('customers',{size:16})}<span>I’m a customer</span></a></nav>`}
     <p class="muted" style="margin-bottom:8px">${admin?'Platform operations for authorized Peekaa administrators.':'Loyalty & retention for every business — real rewards, not vanity points.'}</p>
     <h1 id="businessAuthTitle" style="margin:14px 0 2px">${admin?'Super admin sign in':mode==='in'?'Sign in':'Create your account'}</h1>
-    ${!admin&&!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
+    ${admin?`${businessGoogleButtonHtml('platformGoogleSignIn')}<p class="muted small" style="margin-top:10px">Google sign-in only.</p><div id="autherr">${sessionStorage.getItem('nestly-platform-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-platform-oauth-notice'))}</div>`:''}</div>`:`
+    ${!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')}<div class="row" aria-hidden="true" style="gap:10px;margin:16px 0 4px"><hr style="flex:1;border:0;border-top:1px solid var(--line)"><span class="muted small">or use email</span><hr style="flex:1;border:0;border-top:1px solid var(--line)"></div>`:''}
     <label for="em">Email</label><input id="em" type="email" placeholder="you@business.com">
     <label for="pw">Password</label>${passwordControlHtml('pw',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
-    <div id="autherr">${!admin&&sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
+    <div id="autherr">${sessionStorage.getItem('nestly-business-oauth-notice')?`<div class="err">${esc(sessionStorage.getItem('nestly-business-oauth-notice'))}</div>`:''}</div>
     ${mode==='in'?'<div style="margin-top:9px;text-align:right"><button class="btn ghost sm" id="forgot" style="border:0;box-shadow:none;padding:4px">Forgot password?</button></div>':''}
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="go">${admin?'Sign in':mode==='in'?'Sign in':'Sign up'}</button>
-      ${admin?'':`<span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>`}
+      <button class="btn" id="go">${mode==='in'?'Sign in':'Sign up'}</button>
+      <span class="spacer"></span><button class="btn ghost sm" id="sw">${mode==='in'?'New here? Sign up':'Have an account? Sign in'}</button>
     </div>
-    ${admin?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>'}
+    <button type="button" class="btn ghost sm" id="authStaffInviteDoorV588" style="width:100%;margin-top:10px">Joining a team? Enter your staff invite code</button>`}
     ${legalLinks()}</section></main>`;
   bindPasswordVisibility(root);
-  if(!admin&&sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
-  if(!admin&&NestlyNativeBridge.isNative&&$('sw')){
+  /* nestly_v625: admin sign-in has no password form or mode switcher left to wire — one button,
+     one handler, then stop. Everything below this belongs to the business side of renderAuth. */
+  if(admin){
+    if(sessionStorage.getItem('nestly-platform-oauth-notice'))sessionStorage.removeItem('nestly-platform-oauth-notice');
+    if($('platformGoogleSignIn'))$('platformGoogleSignIn').onclick=event=>
+      startPlatformGoogleAuth({button:event.currentTarget,errorHostId:'autherr'});
+    return;
+  }
+  if(sessionStorage.getItem('nestly-business-oauth-notice'))sessionStorage.removeItem('nestly-business-oauth-notice');
+  if(NestlyNativeBridge.isNative&&$('sw')){
     $('sw').outerHTML='<span class="muted small" style="max-width:210px;text-align:right">New business accounts cannot be created in this app.</span>';
   }
   /* nestly_v588 (owner: staff signup was "in a mess" — a code holder had no visible door in from
-     the ordinary sign-in screen). Gated on the same !admin condition as #sw: this is the business
-     side of renderAuth only. */
+     the ordinary sign-in screen). This is the business side of renderAuth only — admin already
+     returned above. */
   if($('authStaffInviteDoorV588'))$('authStaffInviteDoorV588').onclick=()=>renderStaffInviteAuthV151('up',businessStaffInviteCodeV151());
   if($('sw'))$('sw').onclick=()=>renderAuth(mode==='in'?'up':'in');
   if($('forgot')) $('forgot').onclick=()=>renderAuth('forgot',{admin});
@@ -5822,6 +5898,38 @@ async function startBusinessGoogleAuth({button,errorHostId,intent='signin',legal
     sessionStorage.setItem('nestly-business-oauth-notice',pendingAttempt.intent==='signin'
       ?'No business account was found for that Google login. Choose New here? Sign up and accept the Terms and Privacy Policy first.'
       :'Could not verify the consented Google signup. Return to signup and try again.');
+  }
+}
+
+/* nestly_v625: platform's mirror of consumeBusinessOAuthRedirect, deliberately thinner. There is
+   no separate admission RPC to call before persisting the session — platform authority is a
+   server-side DB predicate checked on every read, not a gate this function has to clear first.
+   So the only job here is: was this fragment expected (a pending attempt this tab started,
+   within the same window), and if so, hand the tokens to the real client. */
+async function consumePlatformOAuthRedirect(){
+  const search=new URLSearchParams(location.search);
+  if(search.get('oauth')!=='platform')return;
+  const hash=new URLSearchParams((location.hash||'').replace(/^#/,'').replace(/^\?/,'') );
+  const providerError=search.get('error_description')||search.get('error')||hash.get('error_description')||hash.get('error');
+  const oauthAccessToken=hash.get('access_token'),oauthRefreshToken=hash.get('refresh_token');
+  /* OAuth fragments contain credentials. Remove them from browser history before any network or
+     rendering work, exactly as the business flow does. */
+  history.replaceState(null,'','/admin');
+  const pendingAttempt=takePlatformGoogleOAuthAttempt();
+  if(!pendingAttempt||providerError){
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  if(!oauthAccessToken||!oauthRefreshToken){
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
+    return;
+  }
+  try{
+    const {error}=await sb.auth.setSession({access_token:oauthAccessToken,refresh_token:oauthRefreshToken});
+    if(error)throw error;
+  }catch{
+    await sb.auth.signOut({scope:'local'}).catch(()=>{});
+    sessionStorage.setItem('nestly-platform-oauth-notice','Could not complete Google sign-in');
   }
 }
   function accountDeletionCardHtml(){
@@ -6077,6 +6185,91 @@ function renderSelfServePaymentPendingV286(onboarding){
   };
   setTimeout(poll,1200);
 }
+/* nestly_v620: a locked workspace whose lock is really "pay us" — the trial ran out, or a
+   previously-paid subscription lapsed — gets a screen with a direct one-click path back to
+   Stripe Checkout, instead of the generic "contact your representative" copy below. That copy
+   is right for a still-pending approval or a paused-for-some-other-reason subscription; it is
+   wrong for a lock the owner can clear themselves right now. get_business_entitlement_v620 is
+   callable by any staff of the business even while locked, so any teammate opening a locked
+   workspace resolves the same authoritative operational_state — this never guesses from the
+   control payload's own paused/rejected flags, which predate v620 and do not distinguish
+   trial_expired or payment_lapsed from the other lock reasons. */
+function renderLockedWorkspacePaymentV620(control,entitlement){
+  const trialExpired=entitlement.operational_state==='trial_expired';
+  const headline=trialExpired?'Your trial has ended':'Your subscription payment has lapsed';
+  const reason=String(entitlement.restriction_reason||'').trim();
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="workspaceLockedPaymentTitle">
+    <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
+    <div class="entry-choice-icon" style="margin-top:18px">${CUI.icon('info',{size:24})}</div>
+    <h1 id="workspaceLockedPaymentTitle" style="font-size:1.65rem;margin:14px 0 6px">${esc(headline)}</h1>
+    ${reason?`<p class="muted" style="line-height:1.6">${esc(reason)}</p>`:''}
+    <div id="workspaceLockedPaymentError"></div>
+    <button class="btn" id="workspaceLockedPaymentGo" style="width:100%;margin-top:16px">Continue to secure payment</button>
+    <button class="btn ghost" id="workspaceLockedPaymentSignOut" style="width:100%;margin-top:10px">Sign out</button>
+    ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  $('main').focus();
+  CUI.announce(headline+'.',{assertive:true});
+  wireAccountDeletionButton();
+  $('workspaceLockedPaymentSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  $('workspaceLockedPaymentGo').onclick=async()=>{
+    const button=$('workspaceLockedPaymentGo'),errorHost=$('workspaceLockedPaymentError');
+    button.disabled=true;errorHost.innerHTML='';
+    const businessId=String(control.business_id||'');
+    /* Mirrors the Settings billing card's execute path (loadBillingConfig) — same idempotency
+       attempt shape and the same sessionStorage slot key, so a retry here and a retry from
+       Settings for the same business would recover the same in-flight command rather than
+       racing two different ones. */
+    const {data:billing,error:billingError}=await sb.rpc('get_business_billing_v125',{p_business:businessId});
+    if(billingError||!billing){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
+      return;
+    }
+    const cadence='annual';
+    const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
+    const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
+    const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
+    const writeBillingAttempt=attempt=>{try{sessionStorage.setItem(billingAttemptSlot,JSON.stringify(attempt))}catch{}};
+    const clearBillingAttempt=key=>{try{const current=readBillingAttempt();if(!current||current.key===key)sessionStorage.removeItem(billingAttemptSlot)}catch{}};
+    const fingerprint=JSON.stringify({type:'create_checkout',cadence,capacity});
+    let attempt=readBillingAttempt();
+    if(!attempt||attempt.fingerprint!==fingerprint){attempt={fingerprint,key:crypto.randomUUID(),command_id:null};writeBillingAttempt(attempt)}
+    let requested=attempt.command_id?{command_id:attempt.command_id}:null,requestError=null;
+    if(!requested){
+      const response=await sb.rpc('request_billing_command_v124',{
+        p_business:businessId,p_command_type:'create_checkout',p_cadence:cadence,
+        p_customer_capacity:capacity,p_idempotency_key:attempt.key
+      });
+      requested=response.data;requestError=response.error;
+    }
+    if(requestError||!requested?.command_id){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm whether the billing request was saved. Try again; the exact request will be reused.</div>';
+      return;
+    }
+    attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}});
+    if(executed.error){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm Stripe’s result. Try again to recover the exact provider request.</div>';
+      return;
+    }
+    const result=executed.data||requested;
+    if(result.redirect_url){clearBillingAttempt(attempt.key);location.assign(result.redirect_url);return}
+    if(['failed','canceled'].includes(result.status)){
+      clearBillingAttempt(attempt.key);
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe did not complete this request. Try again.</div>';
+    }else if(result.status==='uncertain'){
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
+    }else{
+      clearBillingAttempt(attempt.key);
+      button.disabled=false;
+      errorHost.innerHTML='<div class="err">Stripe did not return a checkout link. Try again.</div>';
+    }
+  };
+}
   function renderBusinessWorkspaceControl(control={}){
   const approval=control.approval||{},subscription=control.subscription||{},representative=control.representative||{};
   const approvalStatus=approval.status||'pending';
@@ -6092,6 +6285,17 @@ function renderSelfServePaymentPendingV286(onboarding){
       renderSelfServePaymentPendingV286(onboarding);
     });
     return;
+  }
+  if(control._entitlementCheckedV620!==true){
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" style="text-align:center"><div class="logo">${brandWordmark()}</div><h1 style="font-size:24px;margin-top:18px">Checking account status…</h1></section></main>`;
+    sb.rpc('get_business_entitlement_v620',{p_business:control.business_id}).then(({data,error})=>{
+      renderBusinessWorkspaceControl({...control,_entitlementCheckedV620:true,_entitlementV620:(!error&&data)?data:null});
+    });
+    return;
+  }
+  const entitlementStateV620=String(control._entitlementV620?.operational_state||'');
+  if(entitlementStateV620==='trial_expired'||entitlementStateV620==='payment_lapsed'){
+    return renderLockedWorkspacePaymentV620(control,control._entitlementV620);
   }
   const paused=subscription.workspace_paused===true;
   const rejected=approvalStatus==='rejected';

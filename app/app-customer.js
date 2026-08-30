@@ -1931,12 +1931,26 @@ function openCustomerBookingDetailV613(payload){
     ${rows.length
       ?`<dl class="customer-booking-detail-list-v613">${rows.map(([label,value])=>`<div><dt class="muted small">${esc(label)}</dt><dd data-merchant-content>${esc(value)}</dd></div>`).join('')}</dl>`
       :'<p class="muted small" style="margin-top:8px">This booking has no further details recorded.</p>'}
+    ${/* nestly_v627 (owner photo 5, the booking-details sheet: "should also have the book again
+         button below - align it properly"). Full width under the details, which is where the
+         sheet's own reading order ends — not squeezed beside Close in the head, where it would
+         compete with the way out. It reuses openCustomerRepeatBookingV167, the same function the
+         row's own Book button calls, so this is a second door to one flow and not a second
+         booking path. */''}
+    ${record.slug?`<button type="button" class="btn customer-booking-detail-book-v627" id="customerBookingDetailBookV627">${CUI.icon('bookings',{size:18})}<span>${esc(ct('Book again'))}</span></button>`:''}
   </div>`;
   document.body.appendChild(modal);
   let deactivateDialog;
   const close=()=>deactivateDialog?deactivateDialog():modal.remove();
   deactivateDialog=CUI.activateDialog(modal,{onClose:close,initialFocus:'#customerBookingDetailCloseV613'});
   document.getElementById('customerBookingDetailCloseV613').onclick=close;
+  const bookAgainV627=document.getElementById('customerBookingDetailBookV627');
+  /* Closed FIRST: openCustomerRepeatBookingV167 navigates, and a dialog left mounted over a route
+     change is the shape that has stranded this surface before. */
+  if(bookAgainV627)bookAgainV627.onclick=()=>{
+    close();
+    openCustomerRepeatBookingV167(record.slug,record.appointment_id||null,bookAgainV627);
+  };
 }
 function customerBookingRowV580(group,item,tab){
   const logo=customerBookingBusinessLogoV195(group);
@@ -1965,6 +1979,12 @@ function customerBookingRowV580(group,item,tab){
      and a click-time index into a rebuilt array would go stale. */
   const detailPayloadV613=esc(JSON.stringify({
     business:name,service,starts_at:item.starts_at||'',branch,address,
+    /* nestly_v627 (owner photo 5): the sheet offers Book again, so it has to carry the two things
+       a re-book needs — which business, and which appointment to copy the service and staff
+       preference from. Only when this business actually takes bookings; the sheet must never
+       show an action that leads nowhere. */
+    slug:group.bookingEnabled&&group.business_slug?String(group.business_slug):'',
+    appointment_id:item.appointment_id?String(item.appointment_id):'',
     staff:String(item.staff_name||'').trim(),
     status:String(item.status||'').trim(),
     note:String(item.note||item.customer_note||'').trim()
@@ -1993,6 +2013,63 @@ function customerBookingRowV580(group,item,tab){
    time the customer asked for, and it is the only time on the card. So a request is a row like any
    other, sorted by that, and the tabs stop looking like three different screens. The one thing a
    request carries that an appointment does not — its status and Withdraw — travels with it. */
+/* nestly_v627 (owner photo 4). Amending a request the business has not yet acted on. Deliberately
+   NOT the v508 reschedule sheet: that one replaces an approved appointment, releasing a slot the
+   business already committed to, and says so. This one changes a request nobody has answered, so
+   there is nothing to warn about and nothing to release — the same row, a different time.
+   The service, the party size and the branch are not editable here: those are what the business
+   is being asked to approve, and changing them is asking a different question. */
+function openCustomerAmendRequestSheetV627({requestId,preferredAt,note,onDone}={}){
+  const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','customerAmendRequestTitleV627');
+  /* The picker wants a local `YYYY-MM-DDTHH:mm`. sgt() is the one Asia/Singapore formatter on this
+     surface, and sgIso() its inverse, so the value written back is the same instant the row read. */
+  const localValue=(()=>{
+    const at=preferredAt?new Date(preferredAt):null;
+    if(!at||Number.isNaN(at.getTime()))return '';
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',
+      day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(at)
+      .reduce((all,part)=>{all[part.type]=part.value;return all},{});
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  })();
+  modal.innerHTML=`<div class="modal-card"><div class="row"><h2 id="customerAmendRequestTitleV627">${esc(ct('Edit booking'))}</h2><span class="spacer"></span><button class="btn ghost sm" id="customerAmendRequestCloseV627" aria-label="Close">Close</button></div>
+    <label for="customerAmendRequestAtV627">Date &amp; time</label><input id="customerAmendRequestAtV627" type="datetime-local" value="${esc(localValue)}">
+    <label for="customerAmendRequestNoteV627">Note (optional)</label><textarea id="customerAmendRequestNoteV627" rows="3" maxlength="750">${esc(note||'')}</textarea>
+    <p class="muted small" style="margin-top:8px">This request has not been answered yet, so changing it simply updates what you asked for.</p>
+    <div id="customerAmendRequestErrorV627" role="alert"></div>
+    <button class="btn" id="customerAmendRequestSaveV627" style="width:100%;margin-top:12px">Save changes</button></div>`;
+  document.body.appendChild(modal);
+  let deactivate=null;
+  const close=()=>{if(deactivate){const done=deactivate;deactivate=null;done({restoreFocus:true})}else modal.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#customerAmendRequestAtV627'});
+  const errorHost=()=>document.getElementById('customerAmendRequestErrorV627');
+  const showError=message=>{const host=errorHost();if(host)host.innerHTML=message?`<div class="err">${esc(message)}</div>`:''};
+  document.getElementById('customerAmendRequestCloseV627').onclick=close;
+  document.getElementById('customerAmendRequestSaveV627').onclick=async()=>{
+    const local=document.getElementById('customerAmendRequestAtV627').value;
+    if(!local)return showError('Choose a date and time.');
+    if(Date.parse(sgIso(local))<=Date.now())return showError('Choose a time in the future.');
+    const button=document.getElementById('customerAmendRequestSaveV627');
+    CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
+    const result=await customerRpc('customer_amend_booking_request_v627',{
+      p_request:requestId,p_preferred_at:sgIso(local),
+      p_notes:document.getElementById('customerAmendRequestNoteV627').value.trim()||null});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+    if(result.error){
+      /* already_actioned means the business answered while this sheet was open. Repainting is the
+         honest response — the row the customer was editing no longer exists in that state. */
+      if(String(result.error.message||'')==='already_actioned'){
+        close();toast('The business has already handled this request — the list has been refreshed.');
+        if(typeof onDone==='function')onDone();
+        return;
+      }
+      return showError('The change could not be saved. Try again.');
+    }
+    close();toast('Booking updated');
+    if(typeof onDone==='function')onDone();
+  };
+}
 function customerBookingRequestRowV605(group,item,tab){
   const logo=customerBookingBusinessLogoV195(group);
   const name=String(group.business_name||'').trim()||'Business';
@@ -2011,10 +2088,21 @@ function customerBookingRequestRowV605(group,item,tab){
     <div class="customer-booking-row-copy-v580">
       <b data-merchant-content>${esc(name)}</b>
       ${detail?`<p class="customer-booking-row-detail-v580" data-merchant-content>${esc(detail)}</p>`:''}
+      ${/* nestly_v627 (owner photo 4: an arrow from the Pending pill down to a box drawn under the
+           service line — "shift the pending below to the area i drew - make it align"). The status
+           belongs with what it describes, on the left with the business and the service, not
+           stacked in the right-hand column with the date and the row's actions. That column is now
+           only actions, which is what makes it line up. */''}
+      <p class="customer-booking-row-status-v627"><span class="pill ${statusTone}">${esc(statusLabel)}</span></p>
     </div>
     <div class="customer-booking-row-end-v580">
       <time class="customer-booking-row-date-v580" datetime="${esc(when)}">${esc(walletDate(when)||'Time pending')}</time>
-      <span class="pill ${statusTone} customer-booking-act-v580">${esc(statusLabel)}</span>
+      ${/* nestly_v627 (owner photo 4: "where the Pending is right now - i need you to place an
+           edit button to amend the booking"). PENDING REQUESTS ONLY, which is the owner's own
+           ruling when asked: once the business has approved it there is an appointment, and moving
+           that releases a slot they have committed to — a different act, which keeps the v508
+           reschedule flow. So this button appears under exactly the condition Withdraw does. */''}
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Edit booking'))}</button>`:''}
       ${/* nestly_v613 (owner photo: the Pending pill and the Withdraw button ringed together — "change to X button"). The word became an icon so the status and its one action sit on a single line instead of stacking two full-width controls under the date. It is the SAME control — same data-withdraw-request contract, same confirm, same RPC — so nothing about withdrawing changed except how much room it asks for. The label survives as aria-label/title, because an X alone says nothing to a screen reader. */''}${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request="${esc(item.request_id)}" aria-label="${esc(ct('Withdraw'))}" title="${esc(ct('Withdraw'))}">${CUI.icon('close',{size:16})}</button>`:''}
     </div>
   </article>`;
@@ -2383,6 +2471,15 @@ async function renderCustomerBookings(){
     /* v290 (the road from 8 to 9): a request still sitting in the business's inbox finally has a
        customer-side exit. The RPC re-resolves ownership exactly as the reader does, so this
        button can only ever withdraw a row this page was allowed to show. */
+    /* nestly_v627: only rendered on a request that is still unanswered, so this wiring inherits
+       that gate rather than repeating it. */
+    $('walletBody').querySelectorAll('[data-amend-request-v627]').forEach(button=>{
+      button.onclick=()=>openCustomerAmendRequestSheetV627({
+        requestId:button.dataset.amendRequestV627,
+        preferredAt:button.dataset.amendAtV627||'',
+        note:button.dataset.amendNoteV627||'',
+        onDone:()=>renderCustomerBookings()});
+    });
     $('walletBody').querySelectorAll('[data-withdraw-request]').forEach(button=>{
       button.onclick=async()=>{
         if(button.disabled)return;
@@ -2608,7 +2705,11 @@ async function renderCustomerProfile(requestedView){
     <section class="card" id="customerAppearance" style="margin-top:14px"><div class="wallet-section-head"><div><h2>Appearance</h2><p class="muted small">Peekaa looks the same as your businesses do by default. Switch to dark if you prefer it.</p></div></div>
       <div class="customer-theme-choice" role="radiogroup" aria-label="Appearance">${[['light','Light','Beige, like the business app'],['dark','Dark','Easier at night'],['device','Match my device','Follows your phone setting']].map(([value,label,hint])=>`<label class="customer-theme-option" for="customerTheme-${value}"><input type="radio" id="customerTheme-${value}" name="customerTheme" value="${value}" ${customerThemePreferenceV190()===value?'checked':''}><span><b>${esc(label)}</b><span class="muted small" style="display:block">${esc(hint)}</span></span></label>`).join('')}</div>
     </section>
-    <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound" style="display:inline-flex;gap:10px;align-items:center;cursor:pointer"><span class="muted small">${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span><span class="cui-switch"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><i></i></span></label></div></section>
+    <section class="card" id="customerExperiencePreferences" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('successSounds'))}</h2><p class="muted small">${esc(ct('soundHelp'))}</p></div><span class="spacer"></span><label class="customer-sound-toggle" for="customerSuccessSound" style="display:inline-flex;gap:10px;align-items:center;cursor:pointer">${/* nestly_v627 (owner photos 1+2: "when i click on or off - the overlapping issue will surface"). The
+             state word is addressed by id now. It used to be reached as the input's
+             nextElementSibling, which is NOT this span — it is the <i> that DRAWS the switch, so
+             every click painted the word inside the pill and left it lying over the knob. The
+             v613 wrapping fix could not have helped: nothing was wrapping. */''}<span class="muted small" id="customerSuccessSoundLabelV627">${esc(customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff'))}</span><span class="cui-switch"><input id="customerSuccessSound" type="checkbox" ${customerCelebrationSoundEnabled?'checked':''}><i></i></span></label></div></section>
     ${NestlyNativeBridge.isNative?`<section class="card" id="customerDeviceNotificationsNative" style="margin-top:14px"><h2>Notifications</h2><p class="muted small" style="margin-top:6px">Reward, offer and booking updates arrive in your Peekaa inbox — tap the bell at the top of any screen. Alerts on your lock screen are not switched on for this app yet.</p><a class="btn ghost sm" href="#/customer/messages" style="margin-top:12px">Open inbox</a></section>`:`<section class="card customer-push-setting" id="customerDeviceNotifications" style="margin-top:14px"><div><h2>Device notifications</h2><p class="muted small" data-push-status role="status" aria-live="polite">Checking this device…</p><p class="muted small" style="margin-top:7px">This switch controls whether this device can show notifications at all. Which ones you actually receive is set in <a href="#/customer/communications">Communications</a> — offers, rewards and points, and Peekaa updates each have their own channels there.</p></div><button class="btn ghost" id="customerPushProfileControl" type="button" aria-pressed="false">${CUI.icon('bell',{size:16})}<span data-push-label>Turn on device notifications</span></button></section>`}
     <h2 class="customer-profile-group-v3">Privacy &amp; consent</h2>
     <section class="card" id="customerMarketingPreference" style="margin-top:14px"><h2>${esc(ct('Marketing choices'))}</h2><details class="customer-profile-consent-v3" style="margin-top:8px"><summary class="small">What you’re agreeing to</summary><p class="muted small" style="margin-top:5px">${esc(ct('Offers and updates from Nestly Technologies Pte. Ltd., the company behind {product}, and its partners, by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. Your name and contact details may be shared with {product}’s partners for marketing purposes only. This is separate from messages sent by individual businesses.',{product:BRAND.productName}))}</p></details>
@@ -2650,18 +2751,24 @@ async function renderCustomerProfile(requestedView){
     CUI.announce(option.value==='dark'?'Dark appearance on':option.value==='device'?'Appearance follows your device':'Light appearance on');
   });
   const successSound=$('customerSuccessSound');
+  /* nestly_v627: one writer for the word, reading the one flag that decides it, so the two places
+     that set it cannot disagree and neither can address the wrong node again. */
+  const setSuccessSoundLabelV627=()=>{
+    const label=$('customerSuccessSoundLabelV627');
+    if(label)label.textContent=customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff');
+  };
   if(successSound){
     const reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
     /* v286: the label is painted from the stored preference, so a customer who had turned sounds on
        and then switched Reduce Motion on saw a greyed-out, unchecked box captioned "On". */
     if(reducedMotion){
       successSound.checked=false;successSound.disabled=true;customerCelebrationSoundEnabled=false;
-      const label=successSound.nextElementSibling;if(label)label.textContent=ct('soundOff');
+      setSuccessSoundLabelV627();
     }
     successSound.onchange=()=>{
       customerCelebrationSoundEnabled=successSound.checked&&!reducedMotion;
       try{sessionStorage.setItem('nestly.customer.successSound',customerCelebrationSoundEnabled?'1':'0')}catch{}
-      const label=successSound.nextElementSibling;if(label)label.textContent=customerCelebrationSoundEnabled?ct('soundOn'):ct('soundOff');
+      setSuccessSoundLabelV627();
     };
   }
   const profilePush=window.NestlyCustomerPush?.configure({rpc:(name,args)=>sb.rpc(name,args),userId:S.user?.id});

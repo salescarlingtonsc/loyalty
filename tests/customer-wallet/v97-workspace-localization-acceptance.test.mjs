@@ -384,8 +384,10 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      inside one package's own history there is nothing to disambiguate. usedSessionReversedBy is
      KEPT and rendered in that dialog. 142 - 3 = 139. */
   /* nestly_v613 adds two: bespokePackageFor (the customer a one-off package is being built for)
-     and serviceBranchesFailed (the branch write that failed after the service itself saved). */
-  assert.equal(keys.length,141,'mixed-interface interpolation inventory changed without review');
+     and serviceBranchesFailed (the branch write that failed after the service itself saved).
+     nestly_v627 adds catalogueBranchesFailed, the same sentence for a package or a product whose
+     branch write failed after the row itself saved. */
+  assert.equal(keys.length,142,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

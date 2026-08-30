@@ -1522,7 +1522,7 @@ button.reward-card-v250:focus-visible{outline:3px solid rgba(201,67,51,.25);outl
 .reward-card-pending-new-v268{border-style:dashed}
 .grow-breadcrumb-v268{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.82rem;color:var(--muted)}
 .grow-breadcrumb-current-v268{font-weight:800;color:var(--ink);letter-spacing:.02em}
-.grow-breadcrumb-back-v346{padding:0;width:32px;height:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
+.grow-breadcrumb-back-v346{padding:8px 16px;width:auto;min-width:60px;height:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;flex-shrink:0}
 .grow-title-row-v362{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
 .grow-title-text-v362{min-width:0}
 .grow-setup-v301{padding:4px 14px 16px}
@@ -3282,8 +3282,10 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-address-v580{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .customer-booking-row-end-v580{display:grid;justify-items:end;gap:7px;flex:0 0 auto}
-.customer-booking-withdraw-v613{width:32px;min-width:32px;height:32px;padding:0;display:inline-flex;
-  align-items:center;justify-content:center;border-radius:50%;line-height:0}
+.customer-booking-withdraw-v613{width:36px;min-width:36px;max-width:36px;height:36px;min-height:36px;
+  max-height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:50%;line-height:0;flex:0 0 auto}
+.customer-booking-row-status-v627{margin:8px 0 0;display:flex}
 .customer-booking-row-detailed-v613{cursor:pointer}
 .customer-booking-row-detailed-v613:focus-visible{outline:2px solid var(--peekaa-red,var(--coral));outline-offset:2px}
 .customer-booking-row-detailed-v613 button,.customer-booking-row-detailed-v613 a{cursor:pointer}
@@ -3297,6 +3299,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-detail-list-v613{display:grid;gap:10px;margin:12px 0 0}
 .customer-booking-detail-list-v613 dt{margin:0}
 .customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
+.customer-booking-detail-book-v627{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}

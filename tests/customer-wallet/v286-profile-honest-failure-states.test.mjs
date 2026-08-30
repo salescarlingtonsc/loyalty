@@ -66,5 +66,15 @@ test('v293: the preferred-language control changes the app and says exactly what
 });
 
 test('v286: the sound label follows the reduced-motion override', () => {
-  assert.match(profile, /if\(reducedMotion\)\{[\s\S]*?successSound\.disabled=true[\s\S]*?label\.textContent=ct\('soundOff'\)/);
+  /* nestly_v627 (owner photos 1+2: "when i click on or off - the overlapping issue will surface").
+     v286's point is unchanged and is what these lines still pin — the label must state the state
+     the override actually forces, not the stored preference. What changed is WHERE the label is:
+     it used to be reached as the input's nextElementSibling, which is not the label at all — it
+     is the <i> that draws the switch, so the word was being painted inside the pill. Both writers
+     now go through one function that addresses the span by id. */
+  assert.match(profile, /if\(reducedMotion\)\{[\s\S]*?successSound\.disabled=true[\s\S]*?setSuccessSoundLabelV627\(\)/);
+  assert.match(profile, /const setSuccessSoundLabelV627=\(\)=>\{[\s\S]*?\$\('customerSuccessSoundLabelV627'\)[\s\S]*?ct\('soundOn'\):ct\('soundOff'\)/,
+    'one writer, addressing the label by id');
+  assert.doesNotMatch(profile, /successSound\.nextElementSibling/,
+    'the switch that DRAWS the control must never be written to as if it were the label');
 });

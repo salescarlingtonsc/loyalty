@@ -3028,6 +3028,12 @@
       "version": "20260830080000",
       "name": "nestly_v626_automation_writers_sa_only",
       "sourcePath": "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830090000",
+      "name": "nestly_v627_package_product_branches_and_request_amend",
+      "sourcePath": "db/migrations/20260830_nestly_v627_package_product_branches_and_request_amend.sql"
     }
   ]
 }

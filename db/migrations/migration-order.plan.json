@@ -3033,6 +3033,12 @@
       "path": "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql",
       "semanticVersion": "v626",
       "proposedDeployVersion": "20260830080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v627_package_product_branches_and_request_amend.sql",
+      "semanticVersion": "v627",
+      "proposedDeployVersion": "20260830090000"
     }
   ]
 }
