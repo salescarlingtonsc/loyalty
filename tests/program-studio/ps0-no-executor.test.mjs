@@ -350,7 +350,17 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      against production before apply, including the regression that an unscoped discount still
      takes its percentage off the whole bill. The PS-2A shadow increments (v61-v64) remain barred
      from all three functions. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/;
+  /* nestly_v657 (owner ruling 2026-08-31, after seeing v656 in production). A tier discount is
+     one of exactly two shapes — off the whole bill, optionally capped in money, or off ONE item
+     chosen from a list of eligible ones. Both halves are decisions about WHAT BASE a percentage
+     is taken from and what ceiling applies to it, which only the pricing authority can make:
+     v656's tick-list discounted every ticked item at once, and the owner's ruling is that exactly
+     one is discounted — the highest-priced eligible line on that bill. It is added to allowedPlan
+     ONLY: record_cart_sale and evaluate_checkout are untouched by v657, so the tender list is
+     deliberately not widened. Acceptance suite: db/tests/v657_discount_two_shapes.sql — 6
+     assertions run rolled-back against production before apply, including the regression that an
+     uncapped whole-bill discount still takes its percentage off the whole bill. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes)/;
   const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;

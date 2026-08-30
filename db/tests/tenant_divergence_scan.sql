@@ -268,7 +268,14 @@ begin
       ('public.set_expense_void(uuid,uuid,boolean)','expenses'),
       ('public.update_expense_v285(uuid,uuid,integer,text,text)','expenses'),
       ('public.correct_quick_sale_amount_v84(uuid,uuid,integer,text,text)','sales'),
-      ('public.evaluate_checkout(uuid,uuid,uuid,jsonb,uuid)','till'),
+      /* nestly_v657: the arity moved. nestly_v656 gave evaluate_checkout a sixth, defaulted
+         parameter (the tier discount the counter chose for this sale) and DROPPED the 5-argument
+         overload in the same transaction, because two overloads a 5-argument call could both
+         satisfy is the PGRST203 ambiguity that took every promotion save down in v410. The check
+         itself is unchanged and still the point: this function must consult the till module
+         authority, not a role permission alone — and it still does. Only the signature this row
+         looks the function up by has been corrected, so D20 can find it again. */
+      ('public.evaluate_checkout(uuid,uuid,uuid,jsonb,uuid,uuid)','till'),
       ('public.reserve_checkout_sv_tender(uuid,uuid,integer,uuid)','till')
     ) as t(sig, module)
   loop

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="065095cb3e0d2e2c648e8151b289b88121d8a63a4eaf6f7ebecb9739400a744a"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="633003fbab7895522ec002dac68ad8877219a6d1ef2e10e96049b208d46171b5"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -356,6 +356,14 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
    forty items cannot push the Save button off the screen. */
 .grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+/* nestly_v657 (owner photo 2: "the saved benefits and editing benefits is seated at the same area
+   - making it very confusing"). Benefits are a LIST now, one line each, and every edit happens in
+   a dialog — so this styles a read-only row, not a form. */
+.grow-tier-benefit-list-v657{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.grow-tier-benefit-item-v657{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.grow-tier-benefit-item-copy-v657{display:grid;gap:2px;flex:1;min-width:0}
+.grow-tier-benefit-item-copy-v657 b{overflow-wrap:anywhere}
 .grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
 .grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
   padding:8px;border:1px solid var(--line);border-radius:12px}
@@ -5569,7 +5577,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 065095cb3e0d2e2c648e8151b289b88121d8a63a4eaf6f7ebecb9739400a744a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 633003fbab7895522ec002dac68ad8877219a6d1ef2e10e96049b208d46171b5</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7432,8 +7440,19 @@ async function tillPage(){
        effect, carrying no rule and its own label. It is named on the receipt line, because
        "Discount (whole bill)" tells the counter nothing about why the price dropped — and the
        customer will ask. Every figure is still the server's; only the words differ. */
+    /* nestly_v657 (owner photo 1: "(whole bill) is wrong — just remove that wording if there are
+       selected items"). The effect's LEVEL is 'bill' for a tier discount either way — one figure
+       taken off the bill total, never a per-line one — so the level alone cannot tell these apart,
+       and reading it as "whole bill" said the opposite of the truth about a single-item discount.
+       The server states the shape (tier_benefit_mode) and, for an item discount, which line it
+       landed on, so the counter reads "10% off · facial" rather than a contradiction. */
+    const tierModeV657=String(e.tier_benefit_mode||'');
+    const tierItemV657=String(e.tier_benefit_item||'').trim();
+    const tierScopeTxtV657=tierModeV657==='item'
+      ?(tierItemV657?` · ${tierItemV657}`:'')
+      :scopeTxt;
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${scopeTxt}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -7838,9 +7857,15 @@ async function tillPage(){
        Everything that is not a discount keeps its Give — those really are hand-overs. */
     const isDiscountBenefitV656=benefit=>String(benefit?.benefit_kind||'')==='discount_pct'
       &&Number(benefit?.discount_percent)>0;
+    /* nestly_v657: the list means ELIGIBLE now — one of them is discounted, the dearest on the
+       bill — so the line says "any one of", not "on". Saying "on" about five items when only one
+       is discounted is the misreading the owner caught in the editor. */
     const benefitScopeLineV656=benefit=>{
       const items=Array.isArray(benefit?.scope_items)?benefit.scope_items.filter(Boolean):[];
-      return items.length?`<span class="muted small">On ${esc(items.join(', '))}</span>`:'';
+      if(!items.length)return '';
+      return String(benefit?.discount_scope||'')==='item'
+        ?`<span class="muted small">Any one of: ${esc(items.join(', '))}</span>`
+        :`<span class="muted small">On ${esc(items.join(', '))}</span>`;
     };
     const giveRows=giveNow.map(benefit=>{
       const applyV656=isDiscountBenefitV656(benefit);
@@ -9246,7 +9271,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'065095cb3e0d2e2c648e8151b289b88121d8a63a4eaf6f7ebecb9739400a744a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'633003fbab7895522ec002dac68ad8877219a6d1ef2e10e96049b208d46171b5',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

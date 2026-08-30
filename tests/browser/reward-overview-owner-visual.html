@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="81350a8e9265c988b9eb6c2b970035cdb971f6ee67b8238469857c093cd0f3d0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="be6f6f30cc0ca369d48b609637abd047c71c863163b19b2f94d2cd685edd6494"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -356,6 +356,14 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
    forty items cannot push the Save button off the screen. */
 .grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+/* nestly_v657 (owner photo 2: "the saved benefits and editing benefits is seated at the same area
+   - making it very confusing"). Benefits are a LIST now, one line each, and every edit happens in
+   a dialog — so this styles a read-only row, not a form. */
+.grow-tier-benefit-list-v657{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.grow-tier-benefit-item-v657{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.grow-tier-benefit-item-copy-v657{display:grid;gap:2px;flex:1;min-width:0}
+.grow-tier-benefit-item-copy-v657 b{overflow-wrap:anywhere}
 .grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
 .grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
   padding:8px;border:1px solid var(--line);border-radius:12px}
@@ -5568,7 +5576,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 81350a8e9265c988b9eb6c2b970035cdb971f6ee67b8238469857c093cd0f3d0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · be6f6f30cc0ca369d48b609637abd047c71c863163b19b2f94d2cd685edd6494</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -7552,10 +7560,14 @@ function growTierBenefitSentenceV365(benefit){
   const discount=Number(benefit?.discount);
   /* nestly_v656: a scoped discount names its items, mirroring app.v656_discount_label, so the
      preview an owner reads while ticking boxes is the wording the server will store. */
-  const scopeNamesV656=Array.isArray(benefit?.scopeNames)?benefit.scopeNames.filter(Boolean):[];
+  /* nestly_v657: mirrors app.v657_discount_label — the shape, then any money ceiling. The list of
+     eligible items is NOT in the wording any more; it is its own line under the benefit, which is
+     where the owner asked for it and what keeps the label inside its 120-character column. */
+  const modeV657=String(benefit?.discountScope||'bill');
+  const maxV657=Number(String(benefit?.maxDiscount||'').replace(/[^0-9.]/g,''));
   const label=kind==='discount_pct'
     ?(Number.isFinite(discount)&&discount>0
-      ?`${String(discount).replace(/\.0+$/,'')}% off${scopeNamesV656.length?` ${scopeNamesV656.join(', ')}`:''}`:'')
+      ?`${String(discount).replace(/\.0+$/,'')}% off${modeV657==='item'?' one item':''}${Number.isFinite(maxV657)&&maxV657>0?`, up to ${maxV657.toFixed(2)}`:''}`:'')
     :kind==='free_item'
     ?((String(benefit?.itemLabel||'').trim()||String(benefit?.productName||'').trim())
         ?`Free ${String(benefit?.productName||benefit?.itemLabel).trim()}`:'')
@@ -7577,13 +7589,6 @@ function growTiersBenefitLinesV363(value){
    stored shape into that draft and back. A tier whose benefits exist only as v363 perk_note text
    (no v365 rows yet, or the migration not applied on this database) still opens correctly — the
    line becomes an unlimited benefit, which is exactly what it meant when it was written. */
-/* nestly_v656 (owner photo 3: "10% off selected products able to select the product/services
-   ... if blanket 10% also allow that selection"). A discount used to mean the whole bill and
-   nothing else, because tier_benefits_v365's own shape CHECK forbids a product on a discount row.
-   The choice lives in its own table now, over both catalogues.
-   NOTHING TICKED IS A REAL ANSWER and it is the default: it means the whole bill, which is what
-   every discount configured before v656 already does. That is the same convention the branch and
-   reward pickers use, and it is stated on the control rather than left to be discovered. */
 /* The chosen items by NAME, sorted the way app.v656_scope_names sorts them, so the preview and
    the stored wording agree character for character. */
 function growTierScopeNamesV656(benefit,products,services){
@@ -7595,27 +7600,142 @@ function growTierScopeNamesV656(benefit,products,services){
     .filter(Boolean)
     .sort((a,b)=>a.localeCompare(b));
 }
-function growTierScopePickerV656(benefit,index,products,services){
-  const chosenProducts=new Set((benefit?.scopeProductIds||[]).map(String));
-  const chosenServices=new Set((benefit?.scopeServiceIds||[]).map(String));
-  const items=[
-    ...(services||[]).map(row=>({...row,kind:'service'})),
-    ...(products||[]).map(row=>({...row,kind:'product'}))];
+
+/* nestly_v657 (owner: "if editing / adding new benefit > pop up to do any form of edits").
+   One benefit, one dialog. It edits a COPY and hands it back on Save, so Cancel genuinely
+   discards — the old inline rows wrote straight into the draft on every keystroke, which is why
+   a half-typed benefit could not be abandoned. */
+function openTierBenefitDialogV657({benefit,products,services,onSave}={}){
+  const draft={id:null,kind:'custom',label:'',discount:'',productId:'',itemLabel:'',
+    limit_count:'',limit_period:'month',discountScope:'bill',maxDiscount:'',
+    scopeProductIds:[],scopeServiceIds:[],...(benefit||{})};
+  const dialog=document.createElement('div');
+  dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  dialog.setAttribute('aria-labelledby','tierBenefitDialogTitleV657');
+  const render=()=>{
+    const kind=String(draft.kind||'custom');
+    const mode=String(draft.discountScope||'bill');
+    dialog.innerHTML=`<div class="modal-card" style="width:min(560px,100%)">
+      <div class="row"><div><p class="eyebrow">Tier benefit</p>
+        <h2 id="tierBenefitDialogTitleV657" style="margin-top:4px">${benefit&&benefit.kind?'Edit benefit':'Add a benefit'}</h2></div>
+        <span class="spacer"></span><button type="button" class="btn ghost sm" data-v657-cancel>Cancel</button></div>
+      <label class="small" style="display:block;margin-top:14px;font-weight:600">What is it?</label>
+      <select class="grow-setup-input-v301" data-v657-kind style="width:100%;margin-top:4px">
+        <option value="discount_pct"${kind==='discount_pct'?' selected':''}>Discount</option>
+        <option value="free_item"${kind==='free_item'?' selected':''}>Free item</option>
+        <option value="custom"${kind==='custom'?' selected':''}>My own wording</option>
+      </select>
+      ${kind==='discount_pct'?`
+        <label class="small" style="display:block;margin-top:12px;font-weight:600">How much off?</label>
+        <div class="row" style="gap:6px;align-items:center;margin-top:4px">
+          <input class="grow-setup-input-v301" data-v657-discount inputmode="decimal" value="${esc(String(draft.discount??''))}" placeholder="10" style="flex:1" aria-label="Discount percent">
+          <b class="muted">% off</b></div>
+        <label class="small" style="display:block;margin-top:12px;font-weight:600">Off what?</label>
+        <label class="checkrow" style="margin-top:4px"><input type="radio" name="v657mode" value="bill" ${mode==='bill'?'checked':''} data-v657-mode><span><b>The whole bill</b><br><span class="muted small">The percentage comes off everything on the bill.</span></span></label>
+        <label class="checkrow"><input type="radio" name="v657mode" value="item" ${mode==='item'?'checked':''} data-v657-mode><span><b>One item</b><br><span class="muted small">The percentage comes off ONE item per visit — the dearest one on the bill that you allow below.</span></span></label>
+        ${mode==='bill'?`
+          <label class="small" for="v657Max" style="display:block;margin-top:12px;font-weight:600">Most it can ever take off (optional)</label>
+          <input id="v657Max" class="grow-setup-input-v301" data-v657-max inputmode="decimal" value="${esc(String(draft.maxDiscount??''))}" placeholder="e.g. 20.00" style="width:100%;margin-top:4px">
+          <p class="muted small" style="margin:4px 0 0">Leave blank for no ceiling. With 10% off and a 20.00 ceiling, a 500.00 bill still only loses 20.00.</p>`
+        :growTierEligiblePickerV657(draft,products,services)}
+      `:kind==='free_item'?`
+        <label class="small" style="display:block;margin-top:12px;font-weight:600">Which item is free?</label>
+        ${products.length?`<select class="grow-setup-input-v301" data-v657-product style="width:100%;margin-top:4px">
+          <option value="">Type it instead…</option>
+          ${products.map(row=>`<option value="${esc(row.id)}"${String(draft.productId)===String(row.id)?' selected':''}>${esc(row.name)}</option>`).join('')}
+        </select>`:''}
+        <input class="grow-setup-input-v301" data-v657-item value="${esc(draft.itemLabel||'')}" placeholder="e.g. lollipop" style="width:100%;margin-top:6px"${draft.productId?' hidden':''}>
+      `:`
+        <label class="small" style="display:block;margin-top:12px;font-weight:600">Your wording</label>
+        <input class="grow-setup-input-v301" data-v657-label value="${esc(draft.label||'')}" placeholder="e.g. 1 for 1 deals" style="width:100%;margin-top:4px">
+      `}
+      <label class="small" style="display:block;margin-top:12px;font-weight:600">How often can they use it?</label>
+      <div class="row" style="gap:8px;margin-top:4px;flex-wrap:wrap">
+        <input class="grow-setup-input-v301" data-v657-limit inputmode="numeric" value="${esc(String(draft.limit_count??''))}" placeholder="No limit" style="flex:1;min-width:110px" aria-label="How many times">
+        <select class="grow-setup-input-v301" data-v657-period style="flex:2;min-width:150px" aria-label="Limit period">
+          ${GROW_TIER_BENEFIT_PERIODS_V365.map(([value,label])=>`<option value="${esc(value)}"${(draft.limit_period||'month')===value?' selected':''}>${esc(label)}</option>`).join('')}
+        </select></div>
+      <p class="muted small" style="margin-top:8px">A <b>discount with no limit</b> comes off the bill automatically at Record sale. Everything else is applied or handed over by staff, and Peekaa counts each one.</p>
+      <p class="muted small" data-v657-preview style="margin-top:10px"></p>
+      <div class="row" style="margin-top:14px;justify-content:flex-end;gap:8px">
+        <button type="button" class="btn ghost sm" data-v657-cancel2>Cancel</button>
+        <button type="button" class="btn sm" data-v657-save>Save benefit</button></div>
+    </div>`;
+    wire();
+  };
+  const capture=()=>{
+    const q=sel=>dialog.querySelector(sel);
+    draft.kind=String(q('[data-v657-kind]')?.value||draft.kind);
+    if(q('[data-v657-discount]'))draft.discount=String(q('[data-v657-discount]').value||'').trim();
+    if(q('[data-v657-max]'))draft.maxDiscount=String(q('[data-v657-max]').value||'').trim();
+    if(q('[data-v657-product]'))draft.productId=String(q('[data-v657-product]').value||'');
+    if(q('[data-v657-item]'))draft.itemLabel=String(q('[data-v657-item]').value||'').trim();
+    if(q('[data-v657-label]'))draft.label=String(q('[data-v657-label]').value||'').trim();
+    if(q('[data-v657-limit]'))draft.limit_count=String(q('[data-v657-limit]').value||'').trim();
+    if(q('[data-v657-period]'))draft.limit_period=String(q('[data-v657-period]').value||'month');
+    const picked=dialog.querySelector('[data-v657-mode]:checked');
+    if(picked)draft.discountScope=String(picked.value||'bill');
+    if(dialog.querySelector('[data-v657-eligible]')){
+      draft.scopeProductIds=[...dialog.querySelectorAll('[data-v657-eligible][data-kind="product"]:checked')].map(b=>b.value);
+      draft.scopeServiceIds=[...dialog.querySelectorAll('[data-v657-eligible][data-kind="service"]:checked')].map(b=>b.value);
+    }
+  };
+  const preview=()=>{
+    const node=dialog.querySelector('[data-v657-preview]');
+    if(!node)return;
+    const productName=(products.find(row=>String(row.id)===String(draft.productId))||{}).name||'';
+    const sentence=growTierBenefitSentenceV365({...draft,productName,
+      scopeNames:growTierScopeNamesV656(draft,products,services)});
+    node.textContent=sentence?`Customers read: ${sentence}`:'Customers see this line on their tier card.';
+  };
+  const wire=()=>{
+    dialog.querySelectorAll('[data-v657-cancel],[data-v657-cancel2]').forEach(b=>b.onclick=close);
+    const rerender=()=>{capture();render();};
+    dialog.querySelector('[data-v657-kind]').onchange=rerender;
+    dialog.querySelectorAll('[data-v657-mode]').forEach(b=>b.onchange=rerender);
+    if(dialog.querySelector('[data-v657-product]'))dialog.querySelector('[data-v657-product]').onchange=rerender;
+    dialog.querySelectorAll('input,select').forEach(el=>{
+      el.addEventListener('input',()=>{capture();preview();});
+    });
+    dialog.querySelector('[data-v657-save]').onclick=()=>{
+      capture();
+      if(typeof onSave==='function')onSave({...draft});
+      close();
+    };
+    preview();
+  };
+  let deactivate=null;
+  const close=()=>{if(deactivate){const d=deactivate;deactivate=null;d({restoreFocus:true})}else dialog.remove()};
+  document.body.append(dialog);
+  render();
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'[data-v657-kind]'});
+}
+/* The eligibility list for a single-item discount. Its meaning changed with v657: these are the
+   items the discount MAY come off, and exactly one of them — the dearest on the bill — actually
+   does. The heading says so, because v656's identical-looking list meant "all of these". */
+function growTierEligiblePickerV657(draft,products,services){
+  const chosenP=new Set((draft.scopeProductIds||[]).map(String));
+  const chosenS=new Set((draft.scopeServiceIds||[]).map(String));
+  const items=[...(services||[]).map(r=>({...r,kind:'service'})),...(products||[]).map(r=>({...r,kind:'product'}))];
   if(!items.length){
-    return `<p class="muted small grow-tier-benefit-scope-v656">This discount comes off the whole bill. Add a service or a product to your catalogue to narrow it.</p>`;
+    return `<p class="notice warn small" style="margin-top:10px">You have no services or products yet, so there is nothing for a single-item discount to come off. Add one, or choose “The whole bill”.</p>`;
   }
-  const count=chosenProducts.size+chosenServices.size;
-  return `<details class="grow-tier-benefit-scope-v656"${count?' open':''}>
-    <summary>${count?`Off ${count} chosen item${count===1?'':'s'}`:'Off the whole bill'} — choose items</summary>
-    <p class="muted small" style="margin:6px 0">Tick nothing and the discount comes off the whole bill. Tick items and it comes off those only.</p>
+  const count=chosenP.size+chosenS.size;
+  return `<label class="small" style="display:block;margin-top:12px;font-weight:600">Which items qualify?</label>
+    <p class="muted small" style="margin:4px 0 6px">Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.${count?` ${count} ticked.`:''}</p>
     <div class="grow-tier-benefit-scope-list-v656">
       ${items.map(row=>{
-        const on=row.kind==='service'?chosenServices.has(String(row.id)):chosenProducts.has(String(row.id));
-        return `<label class="checkrow"><input type="checkbox" value="${esc(row.id)}" ${on?'checked':''} data-grow-tiers-scope-${row.kind}-v656="${index}"><span>${esc(row.name)} <span class="muted small">${row.kind==='service'?'service':'product'}</span></span></label>`;
+        const on=row.kind==='service'?chosenS.has(String(row.id)):chosenP.has(String(row.id));
+        return `<label class="checkrow"><input type="checkbox" data-v657-eligible data-kind="${row.kind}" value="${esc(row.id)}" ${on?'checked':''}><span>${esc(row.name)} <span class="muted small">${row.kind}</span></span></label>`;
       }).join('')}
-    </div>
-  </details>`;
+    </div>`;
 }
+/* nestly_v657: growTierScopePickerV656 is deleted, not merely unmounted. It rendered the item
+   tick-list INSIDE a benefit's form row, and both of the things it existed for are gone — the
+   inline rows (benefits are edited in a dialog now) and its meaning ("discount every ticked
+   item", which the owner rejected). Its replacement is growTierEligiblePickerV657, whose list
+   means "any ONE of these". Leaving a second picker behind is how two lists that look identical
+   come to mean different things. */
 function growTiersBenefitDraftFromV365(rows,perkNote,scopeRows){
   /* nestly_v656: which products and services each discount names. Kept as two id arrays because
      that is the shape the form reads and the RPC writes; an empty pair means the whole bill. */
@@ -7627,6 +7747,9 @@ function growTiersBenefitDraftFromV365(rows,perkNote,scopeRows){
   };
   if(Array.isArray(rows)&&rows.length)return rows.map(row=>({id:row.id||null,
     ...scopeForV656(row.id),
+    /* nestly_v657: which of the two shapes, and the ceiling as the owner typed it (money). */
+    discountScope:row.discount_scope||'bill',
+    maxDiscount:row.max_discount_cents==null?'':(Number(row.max_discount_cents)/100).toFixed(2),
     kind:row.benefit_kind||'custom',
     label:String(row.label||''),
     /* V369: the two structured kinds carry a number or an item; 'custom' carries only words. */
@@ -7636,7 +7759,7 @@ function growTiersBenefitDraftFromV365(rows,perkNote,scopeRows){
     limit_count:row.limit_count==null?'':String(row.limit_count),limit_period:row.limit_period||'month'}));
   return growTiersBenefitLinesV363(perkNote).map(line=>({id:null,kind:'custom',label:line,
     discount:'',productId:'',itemLabel:'',limit_count:'',limit_period:'month',
-    scopeProductIds:[],scopeServiceIds:[]}));
+    scopeProductIds:[],scopeServiceIds:[],discountScope:'bill',maxDiscount:''}));
 }
 /* Reads the live form rows. Blanks are KEPT here on purpose: the remove buttons address rows by
    their rendered index, so silently dropping an empty row mid-capture would shift every index
@@ -13181,41 +13304,36 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          no benefits), so the empty state is a plain note, not a warning. */''}
     <div class="grow-tier-benefits-v363" data-grow-tiers-benefits-v363>
       <label class="muted small">Benefits <span class="muted">(optional — add as many as you like)</span></label>
+      ${/* nestly_v657 (owner photo 2: "the saved benefits and editing benefits is seated at the
+           same area - making it very confusing" -> "if editing / adding new benefit > pop up to do
+           any form of edits"). Every benefit used to be a live form row, and v656's item picker —
+           a list of the whole catalogue — opened INSIDE one of those rows, pushing that row's own
+           count, period and Remove below it. The result read as one long run of controls with no
+           boundary between what was saved and what was being edited.
+           This is a LIST now: one line per benefit, in the words the customer will read, with
+           Edit and Remove. All editing happens in a dialog over the page, where a benefit's
+           fields belong to that benefit and nothing else. The draft
+           (growTiersAddDraftV331.benefits) is unchanged and is still what the save path reads —
+           growTiersReadBenefitFieldsV363 already falls back to it when there are no form rows on
+           the page, which is now always. */''}
       ${(growTiersAddDraftV331.benefits||[]).length
-        ?(growTiersAddDraftV331.benefits||[]).map((benefit,index)=>{
-            /* V369 (owner: "currently is using words - very misleading ... drop down > discount >
-               add % . or drop down > free item > type the item out or pull from existing
-               products"). The row leads with WHAT KIND of benefit it is; the field beside it is
-               whatever that kind actually needs. Only "My own wording" is free text now. */
+        ?`<ul class="grow-tier-benefit-list-v657">${(growTiersAddDraftV331.benefits||[]).map((benefit,index)=>{
             const kind=String(benefit.kind||'custom');
             const productName=(growBenefitProductsV369.find(row=>String(row.id)===String(benefit.productId))||{}).name||'';
-            return `<div class="grow-tier-benefit-row-v365" data-grow-tiers-benefit-row-v365="${index}"${benefit.id?` data-grow-tiers-benefit-id-v365="${esc(benefit.id)}"`:''}>
-            <select class="grow-setup-input-v301" data-grow-tiers-benefit-kind-v369="${index}" data-workspace-i18n aria-label="Benefit type ${index+1}">
-              <option value="discount_pct"${kind==='discount_pct'?' selected':''}>Discount</option>
-              <option value="free_item"${kind==='free_item'?' selected':''}>Free item</option>
-              <option value="custom"${kind==='custom'?' selected':''}>My own wording</option>
-            </select>
-            ${kind==='discount_pct'?`<span class="grow-tier-benefit-value-v369"><input class="grow-setup-input-v301" data-grow-tiers-benefit-discount-v369="${index}" inputmode="decimal" value="${esc(String(benefit.discount??''))}" placeholder="10" data-workspace-i18n aria-label="Discount percent for benefit ${index+1}"><b class="muted">% off</b></span>${growTierScopePickerV656(benefit,index,growBenefitProductsV369,growBenefitServicesV656)}`
-              :kind==='free_item'?`<span class="grow-tier-benefit-value-v369">
-                  ${growBenefitProductsV369.length?`<select class="grow-setup-input-v301" data-grow-tiers-benefit-product-v369="${index}" data-workspace-i18n aria-label="Free product for benefit ${index+1}">
-                    <option value="">Type it instead…</option>
-                    ${growBenefitProductsV369.map(row=>`<option value="${esc(row.id)}"${String(benefit.productId)===String(row.id)?' selected':''}>${esc(row.name)}</option>`).join('')}
-                  </select>`:''}
-                  <input class="grow-setup-input-v301" data-grow-tiers-benefit-item-v369="${index}" value="${esc(benefit.itemLabel||'')}" placeholder="e.g. lollipop" data-workspace-i18n aria-label="Free item for benefit ${index+1}"${benefit.productId?' hidden':''}>
-                </span>`
-              :`<input class="grow-setup-input-v301" data-grow-tiers-benefit-input-v363="${index}" value="${esc(benefit.label||'')}" placeholder="e.g. 1 for 1 deals" data-workspace-i18n aria-label="Benefit ${index+1}">`}
-            <input class="grow-setup-input-v301" data-grow-tiers-benefit-limit-v365="${index}" inputmode="numeric" value="${esc(String(benefit.limit_count??''))}" placeholder="No limit" data-workspace-i18n aria-label="How many times for benefit ${index+1}">
-            <select class="grow-setup-input-v301" data-grow-tiers-benefit-period-v365="${index}" data-workspace-i18n aria-label="Limit period for benefit ${index+1}">
-              ${GROW_TIER_BENEFIT_PERIODS_V365.map(([value,label])=>`<option value="${esc(value)}"${(benefit.limit_period||'month')===value?' selected':''}>${esc(label)}</option>`).join('')}
-            </select>
-            <button type="button" class="btn ghost sm" data-grow-tiers-benefit-remove-v363="${index}" data-workspace-i18n aria-label="Remove benefit ${index+1}">Remove</button>
-            <span class="muted small grow-tier-benefit-preview-v369">${esc(growTierBenefitSentenceV365({...benefit,kind,productName,scopeNames:growTierScopeNamesV656(benefit,growBenefitProductsV369,growBenefitServicesV656)})||'Customers see this line on their tier card.')}</span>
-          </div>`}).join('')
+            const scopeNames=growTierScopeNamesV656(benefit,growBenefitProductsV369,growBenefitServicesV656);
+            const sentence=growTierBenefitSentenceV365({...benefit,kind,productName,scopeNames})
+              ||'This benefit is not finished — open it to say what it gives.';
+            const eligible=kind==='discount_pct'&&String(benefit.discountScope||'bill')==='item'&&scopeNames.length
+              ?`<span class="muted small">On ${esc(scopeNames.join(', '))}</span>`:'';
+            return `<li class="grow-tier-benefit-item-v657">
+              <span class="grow-tier-benefit-item-copy-v657"><b>${esc(sentence)}</b>${eligible}</span>
+              <span class="row" style="gap:6px;flex:none">
+                <button type="button" class="btn ghost sm" data-grow-tiers-benefit-edit-v657="${index}">Edit</button>
+                <button type="button" class="btn ghost sm" data-grow-tiers-benefit-remove-v363="${index}" data-workspace-i18n aria-label="Remove benefit ${index+1}">Remove</button>
+              </span></li>`;
+          }).join('')}</ul>`
         :'<p class="muted small" style="margin:6px 0 0">No benefit yet — this tier is recognition only. Add one below if you want to give something.</p>'}
       <p class="grow-setup-sentence-v301 row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-        <select class="grow-setup-input-v301" id="growTiersBenefitTemplateV363" style="max-width:260px" aria-label="Benefit template">
-          ${GROW_TIER_BENEFIT_TEMPLATES_V363.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}
-        </select>
         <button type="button" class="btn ghost sm" data-grow-tiers-benefit-add-v363="1">+ Add benefit</button>
       </p>
       ${/* V370: the one thing an owner has to know before choosing a limit on a discount. */''}
@@ -15376,16 +15494,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersAddDraftV331={...growTiersAddDraftV331,benefits};
     growRerenderV322({quiet:true});
   });
+  /* nestly_v657: adding and editing both go through the dialog. The draft is written only when
+     the dialog says Save, so an abandoned edit leaves the tier exactly as it was. */
+  const growTiersBenefitWriteV657=(index,value)=>{
+    growTiersCaptureDraftV363();
+    const benefits=[...(growTiersAddDraftV331.benefits||[])];
+    if(index===null||index===undefined||index<0||index>=benefits.length)benefits.push(value);
+    else benefits[index]=value;
+    growTiersAddDraftV331={...growTiersAddDraftV331,benefits};
+    growRerenderV322({quiet:true});
+  };
+  outerMain.querySelectorAll('[data-grow-tiers-benefit-edit-v657]').forEach(button=>button.onclick=()=>{
+    const index=Number(button.dataset.growTiersBenefitEditV657);
+    const benefit=(growTiersAddDraftV331.benefits||[])[index];
+    if(!benefit)return;
+    openTierBenefitDialogV657({benefit,products:growBenefitProductsV369,services:growBenefitServicesV656,
+      onSave:value=>growTiersBenefitWriteV657(index,value)});
+  });
   const growTiersBenefitAdd=outerMain.querySelector('[data-grow-tiers-benefit-add-v363]');
   if(growTiersBenefitAdd)growTiersBenefitAdd.onclick=()=>{
-    const picked=String($('growTiersBenefitTemplateV363')?.value||'custom:');
-    growTiersCaptureDraftV363();
-    const [kind,value]=picked.split(':');
-    growTiersAddDraftV331={...growTiersAddDraftV331,
-      benefits:[...(growTiersAddDraftV331.benefits||[]),
-        {id:null,kind:kind||'custom',label:'',discount:value||'',productId:'',itemLabel:'',
-         limit_count:'',limit_period:'month'}]};
-    growRerenderV322({quiet:true});
+    openTierBenefitDialogV657({benefit:null,products:growBenefitProductsV369,services:growBenefitServicesV656,
+      onSave:value=>growTiersBenefitWriteV657(null,value)});
   };
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
   if(growTiersAddCancel)growTiersAddCancel.onclick=()=>{
@@ -15424,6 +15553,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const badDiscount=benefits.find(row=>String(row.kind||'')==='discount_pct'
       &&!(Number(row.discount)>0&&Number(row.discount)<=100));
     if(badDiscount){growTiersErrorV331='A discount must be between 0.01 and 100 percent.';return growRerenderV322();}
+    /* nestly_v657: a single-item discount with nothing eligible has no item to come off, so the
+       server refuses it. Say so here, where the owner can still see which benefit is unfinished,
+       rather than letting a save round-trip come back as a raw error. */
+    const badScopeV657=benefits.find(row=>String(row.kind||'')==='discount_pct'
+      &&String(row.discountScope||'bill')==='item'
+      &&((row.scopeProductIds||[]).length+(row.scopeServiceIds||[]).length)===0);
+    if(badScopeV657){growTiersErrorV331='A one-item discount needs at least one product or service ticked. Open the benefit and choose which items qualify, or set it to the whole bill.';return growRerenderV322();}
+    const badCapV657=benefits.find(row=>String(row.kind||'')==='discount_pct'
+      &&String(row.maxDiscount||'').trim()!==''
+      &&!(Number(String(row.maxDiscount).replace(/[^0-9.]/g,''))>0));
+    if(badCapV657){growTiersErrorV331='A maximum discount must be an amount of money, or leave it blank for no ceiling.';return growRerenderV322();}
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
     growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
@@ -15462,6 +15602,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
              cached bundle cannot silently widen a discount somebody narrowed). */
           scope_product_ids:String(row.kind)==='discount_pct'?(row.scopeProductIds||[]):[],
           scope_service_ids:String(row.kind)==='discount_pct'?(row.scopeServiceIds||[]):[],
+          /* nestly_v657: the shape, and the ceiling in CENTS — the owner types money and the
+             column stores cents, and the conversion belongs on one side of the wire only. */
+          discount_scope:String(row.kind)==='discount_pct'?(row.discountScope||'bill'):'bill',
+          max_discount_cents:String(row.kind)==='discount_pct'&&String(row.discountScope||'bill')==='bill'
+            &&String(row.maxDiscount||'').trim()!==''
+            ?Math.round(Number(String(row.maxDiscount).replace(/[^0-9.]/g,''))*100):null,
           limit_period:row.limit_period||'month',
           ...(row.id&&wasEditing?{id:row.id}:{})}))});
       if(!isGrowCurrent())return;
@@ -15729,7 +15875,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'81350a8e9265c988b9eb6c2b970035cdb971f6ee67b8238469857c093cd0f3d0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'be6f6f30cc0ca369d48b609637abd047c71c863163b19b2f94d2cd685edd6494',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

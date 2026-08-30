@@ -3208,6 +3208,12 @@
       "version": "20260831110000",
       "name": "nestly_v656_tier_discount_scope",
       "sourcePath": "db/migrations/20260831_nestly_v656_tier_discount_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831120000",
+      "name": "nestly_v657_discount_two_shapes",
+      "sourcePath": "db/migrations/20260831_nestly_v657_discount_two_shapes.sql"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e78ad9e90df7e91f942c9794b2e58b71175330e6a6294bfba69acbdaccea664b"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="8f501ce9294a04a57739ca22179c50a5a689098d4fc118e971aad45dd500e64f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -356,6 +356,14 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
    forty items cannot push the Save button off the screen. */
 .grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+/* nestly_v657 (owner photo 2: "the saved benefits and editing benefits is seated at the same area
+   - making it very confusing"). Benefits are a LIST now, one line each, and every edit happens in
+   a dialog — so this styles a read-only row, not a form. */
+.grow-tier-benefit-list-v657{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.grow-tier-benefit-item-v657{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.grow-tier-benefit-item-copy-v657{display:grid;gap:2px;flex:1;min-width:0}
+.grow-tier-benefit-item-copy-v657 b{overflow-wrap:anywhere}
 .grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
 .grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
   padding:8px;border:1px solid var(--line);border-radius:12px}
@@ -5569,7 +5577,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · e78ad9e90df7e91f942c9794b2e58b71175330e6a6294bfba69acbdaccea664b</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 8f501ce9294a04a57739ca22179c50a5a689098d4fc118e971aad45dd500e64f</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -9682,7 +9690,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'e78ad9e90df7e91f942c9794b2e58b71175330e6a6294bfba69acbdaccea664b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'8f501ce9294a04a57739ca22179c50a5a689098d4fc118e971aad45dd500e64f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

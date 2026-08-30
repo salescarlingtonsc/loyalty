@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="3192b02f6128f8b37d8430565fa242daa0a96898a90384cf7f82cf09fb2a2e56"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="c90af3119cc8cb23f9b8a1137e2d187a2ecadab1554c20f9254a00c0fd28dbc3"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -355,6 +355,14 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    row's other cells are single controls. The list scrolls at a fixed height so a catalogue of
    forty items cannot push the Save button off the screen. */
 .grow-tier-benefit-scope-v656{grid-column:1/-1;margin:2px 0 0}
+/* nestly_v657 (owner photo 2: "the saved benefits and editing benefits is seated at the same area
+   - making it very confusing"). Benefits are a LIST now, one line each, and every edit happens in
+   a dialog — so this styles a read-only row, not a form. */
+.grow-tier-benefit-list-v657{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.grow-tier-benefit-item-v657{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.grow-tier-benefit-item-copy-v657{display:grid;gap:2px;flex:1;min-width:0}
+.grow-tier-benefit-item-copy-v657 b{overflow-wrap:anywhere}
 .grow-tier-benefit-scope-v656>summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
 .grow-tier-benefit-scope-list-v656{display:grid;gap:4px;max-height:190px;overflow-y:auto;
   padding:8px;border:1px solid var(--line);border-radius:12px}

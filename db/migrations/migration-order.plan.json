@@ -3213,6 +3213,12 @@
       "path": "db/migrations/20260831_nestly_v656_tier_discount_scope.sql",
       "semanticVersion": "v656",
       "proposedDeployVersion": "20260831110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v657_discount_two_shapes.sql",
+      "semanticVersion": "v657",
+      "proposedDeployVersion": "20260831120000"
     }
   ]
 }

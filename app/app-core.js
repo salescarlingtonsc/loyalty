@@ -458,6 +458,38 @@ let growTiersManageTabV331='published';
 let growTiersDeletePendingV331='';
 let growTiersAddOpenV331='';
 let growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
+/* ============ V363 — A TIER HAS MANY BENEFITS, NOT ONE SENTENCE ==============================
+   Owner (2026-08-16, photo 2): "allow me to add multiple benefits (like essential = no benefits,
+   gold = 10% discount / free xx every month / birthday rewards) — i need all these templates
+   available for them to edit the values OR they can customise their own."
+   NO SCHEMA CHANGE IS NEEDED and none is made: loyalty_tiers.perk_note has been a NEWLINE-JOINED
+   list of benefit lines since V235, and both customer read paths already split it into one chip
+   per line (nestly_v186_customer_tier_ladder / v310's regexp_split_to_table on E'\\r?\\n', and
+   tierBenefitLines() on the workspace side). The editor was the only part still treating it as a
+   single sentence. So this is a form over the SAME field: rows in, '\n'.join out.
+   The templates are prefilled EDITABLE text, not codes — an owner picks one and changes "10" to
+   "15" or "coffee" to "pastry" right there, and "Write my own" gives them a blank row. Storing
+   the resulting sentence (rather than a structured rule) is deliberate: perk_note is descriptive
+   copy shown to customers, not something the engine computes with — the only benefit the engine
+   actually enforces is points_multiplier, which has its own field and is untouched here. */
+/* V369: the picker seeds a KIND and its value now, not a sentence. "Write my own" is the only
+   entry that produces free text. */
+/* nestly_v493 (owner, photos 2 + 3: the circled "add a benefit" picker struck out and photo 3 —
+   the per-row kind picker — held up beside it, "both needs to sync").
+   Two dropdowns chose the same thing in two vocabularies: this one offered "10% off every visit /
+   20% off every visit / Free item / Write my own", while the row it creates offered "Discount /
+   Free item / My own wording". An owner picked "20% off every visit" and the row it produced said
+   "Discount" — the same benefit named twice, differently, one line apart.
+   One vocabulary now, and it is the ROW's, because the row is the thing that persists and the one
+   the owner edits afterwards. The percentage left the labels with it: it was never a separate
+   choice, only a prefill, and offering 10 and 20 as the two options implied a menu where there is
+   a free number. Picking Discount now opens the row with an empty % for the owner to type, which
+   is the same field they would have corrected anyway. */
+const GROW_TIER_BENEFIT_TEMPLATES_V363=Object.freeze([
+  ['discount_pct:','Discount'],
+  ['free_item:','Free item'],
+  ['custom:','My own wording']
+]);
 let growTiersErrorV331='';
 let growTiersBusyV331=false;
 let growTiersEditingV331=null;
@@ -5311,10 +5343,26 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
       <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
         :`<b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(balance))}<span>stamps</span></b>`}</div>`
     :modeV386==='tiers'&&tierBlockV393
-      ?`<b class="customer-business-balance-v347 customer-business-balance-tier-v386">${esc(tierLabel||heroLabel)}</b>
+      /* nestly_v657 (owner, HENG HENG 888: the list said "2,908 pts" while this card showed the
+         bare word "POINTS" and "995 visits to Silver").
+         Points and the tier ladder measure DIFFERENT things on purpose — points are the spendable
+         currency, while each business separately chooses what its ladder counts (this one counts
+         visits). That is by design and stays. What was wrong is that a customer who has not
+         reached the first rung has no tier name, so this slot fell back to `heroLabel` — which is
+         the literal string 'POINTS' — and printed a unit word where a value belongs, next to a
+         ladder line counting something else entirely. Until they reach a rung they see the number
+         the programme list shows them; once they have a tier, the tier leads, exactly as before. */
+      ?`<b class="customer-business-balance-v347 ${tierLabel?'customer-business-balance-tier-v386':''}">${tierLabel
+          ?esc(tierLabel)
+          :`${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span>`}</b>
         <div class="customer-reward-progress customer-business-tier-meter-v386" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tierProgressV386}" aria-label="${esc(tierLabel?`${tierLabel} progress`:'Tier progress')}" style="--reward-progress:${tierProgressV386}%"><span></span></div>
+        ${/* nestly_v657: the ladder line names BOTH ends of the measure — "5 of 1,000 visits to
+             Silver" rather than "995 visits to Silver" — so the number above it (points) and the
+             number in it (visits) cannot be misread as the same quantity said two ways. */''}
         <p class="customer-business-summary-line-v362">${tierNextV386
-          ?`${esc(customerTierDistanceCountV310(tierRemainingV386,tierBasisV393))} ${esc(customerTierUnitWordV310(tierBasisV393))} to ${esc(tierNextNameV393||'next tier')}`
+          ?(tierNextThresholdV393>0
+            ?`${esc(customerTierDistanceCountV310(tierMetricV393,tierBasisV393))} of ${esc(customerTierDistanceCountV310(tierNextThresholdV393,tierBasisV393))} ${esc(customerTierUnitWordV310(tierBasisV393))} to ${esc(tierNextNameV393||'next tier')}`
+            :`${esc(customerTierDistanceCountV310(tierRemainingV386,tierBasisV393))} ${esc(customerTierUnitWordV310(tierBasisV393))} to ${esc(tierNextNameV393||'next tier')}`)
           :'You are at the top tier'}</p>`
       :`<b class="customer-business-balance-v347">${esc(primary.replace(/\s+(points|pts|stamps|visits|spend)$/i,''))}<span>${esc(unit==='stamps'?'stamps':unitLabel)}</span></b>${heroProgressV3?`<div class="customer-business-hero-progress-v3">${heroProgressV3}</div>`:''}`;
   /* In tiers-only mode the two reward sentences below are about a reward ladder this firm is not
