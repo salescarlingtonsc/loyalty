@@ -579,6 +579,33 @@
   });
   const PLATFORM_COPY_DETAIL=Object.freeze({
     'zh-CN':Object.freeze({
+      /* nestly_v627: v620-v626 shipped these platform strings in English only, which the v97
+         coverage test caught as "zh-CN is missing". The console offers three locales; a
+         string with no entry falls through to English, so an operator who chose 中文 or
+         Bahasa Melayu was reading a half-translated screen. Placeholders are carried
+         through unchanged so the runtime template still substitutes them. */
+      'This export reads customer personal data across businesses. Enter the reason (min 8 chars):':'此导出会读取跨企业的顾客个人资料。请输入理由（至少 8 个字符）：',
+      'Reason required':'需要填写理由',
+      'Enter a reason of at least 8 characters to export customer records across more than one business.':'跨多家企业导出顾客记录前，请输入至少 8 个字符的理由。',
+      'Downloaded {count} customers (stopped at the page limit)':'已下载 {count} 位顾客（已达分页上限而停止）',
+      'Downloaded {count} customer rows (stopped at the page limit)':'已下载 {count} 行顾客记录（已达分页上限而停止）',
+      'Merchant\'s move':'商家的下一步',
+      'Peekaa\'s move':'Peekaa 的下一步',
+      'Copy business ID':'复制企业 ID',
+      'Invoice with Create manual invoice above once you have followed up.':'跟进之后，请使用上方的“创建人工发票”开具发票。',
+      'Business ID copied.':'企业 ID 已复制。',
+      'Copy was unavailable. Copy the business ID manually.':'无法自动复制，请手动复制企业 ID。',
+      'Resolve':'处理',
+      'Resolution note (min 4 characters):':'处理备注（至少 4 个字符）：',
+      'Enter at least 4 characters to resolve this alert.':'请输入至少 4 个字符才能处理此提醒。',
+      'Billing alert resolved.':'账单提醒已处理。',
+      'Enter a reason of at least 8 characters to view customer records across more than one business.':'跨多家企业查看顾客记录前，请输入至少 8 个字符的理由。',
+      'Recorded in the audit log — for example, a PDPA erasure request.':'会记录在审计日志中——例如 PDPA 删除请求。',
+      'Loading archived firm records…':'正在加载已归档的企业记录…',
+      'Manual payment requests':'人工付款请求',
+      'Businesses that asked to pay outside the self-serve checkout.':'要求在自助结账之外付款的企业。',
+      'Billing alerts':'账单提醒',
+      'System-detected billing exceptions across checkout, webhooks, payments, branches and manual requests. Resolving one records a note in the audit trail.':'系统在结账、Webhook、付款、分店与人工请求中侦测到的账单异常。处理时会在审计记录中留下备注。',
       '(one or more)':'（一个或多个）','(select one or more)':'（选择一个或多个）',
       'Account lifecycle is controlled by onboarding evidence.':'账户生命周期由入驻证据控制。',
       'Activate firm':'激活企业','Active access':'有效权限','Active blockers':'当前阻碍','Active:':'已启用：',
@@ -662,6 +689,33 @@
       'When enabled, Quick Earn uses the firm catalogue and platform reports can analyse product and service patterns.':'启用后，“快速积分”会使用企业目录，平台报告可分析产品与服务模式。'
     }),
     ms:Object.freeze({
+      /* nestly_v627: v620-v626 shipped these platform strings in English only, which the v97
+         coverage test caught as "zh-CN is missing". The console offers three locales; a
+         string with no entry falls through to English, so an operator who chose 中文 or
+         Bahasa Melayu was reading a half-translated screen. Placeholders are carried
+         through unchanged so the runtime template still substitutes them. */
+      'This export reads customer personal data across businesses. Enter the reason (min 8 chars):':'Eksport ini membaca data peribadi pelanggan merentas perniagaan. Masukkan sebabnya (minimum 8 aksara):',
+      'Reason required':'Sebab diperlukan',
+      'Enter a reason of at least 8 characters to export customer records across more than one business.':'Masukkan sebab sekurang-kurangnya 8 aksara untuk mengeksport rekod pelanggan merentas lebih daripada satu perniagaan.',
+      'Downloaded {count} customers (stopped at the page limit)':'{count} pelanggan dimuat turun (berhenti pada had halaman)',
+      'Downloaded {count} customer rows (stopped at the page limit)':'{count} baris pelanggan dimuat turun (berhenti pada had halaman)',
+      'Merchant\'s move':'Giliran peniaga',
+      'Peekaa\'s move':'Giliran Peekaa',
+      'Copy business ID':'Salin ID perniagaan',
+      'Invoice with Create manual invoice above once you have followed up.':'Keluarkan invois dengan Cipta invois manual di atas setelah anda membuat susulan.',
+      'Business ID copied.':'ID perniagaan disalin.',
+      'Copy was unavailable. Copy the business ID manually.':'Salinan tidak tersedia. Salin ID perniagaan secara manual.',
+      'Resolve':'Selesaikan',
+      'Resolution note (min 4 characters):':'Nota penyelesaian (minimum 4 aksara):',
+      'Enter at least 4 characters to resolve this alert.':'Masukkan sekurang-kurangnya 4 aksara untuk menyelesaikan amaran ini.',
+      'Billing alert resolved.':'Amaran pengebilan diselesaikan.',
+      'Enter a reason of at least 8 characters to view customer records across more than one business.':'Masukkan sebab sekurang-kurangnya 8 aksara untuk melihat rekod pelanggan merentas lebih daripada satu perniagaan.',
+      'Recorded in the audit log — for example, a PDPA erasure request.':'Direkodkan dalam log audit — contohnya, permintaan pemadaman PDPA.',
+      'Loading archived firm records…':'Memuatkan rekod firma yang diarkibkan…',
+      'Manual payment requests':'Permintaan pembayaran manual',
+      'Businesses that asked to pay outside the self-serve checkout.':'Perniagaan yang meminta untuk membayar di luar pembayaran layan diri.',
+      'Billing alerts':'Amaran pengebilan',
+      'System-detected billing exceptions across checkout, webhooks, payments, branches and manual requests. Resolving one records a note in the audit trail.':'Pengecualian pengebilan yang dikesan sistem merentas pembayaran, webhook, bayaran, cawangan dan permintaan manual. Menyelesaikannya merekodkan nota dalam jejak audit.',
       '(one or more)':'(satu atau lebih)','(select one or more)':'(pilih satu atau lebih)',
       'Account lifecycle is controlled by onboarding evidence.':'Kitaran akaun dikawal oleh bukti penerimaan.',
       'Activate firm':'Aktifkan firma','Active access':'Akses aktif','Active blockers':'Halangan aktif','Active:':'Aktif:',

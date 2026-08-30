@@ -98,7 +98,16 @@ test('hidden admin entry uses normal auth and resolves Platform before tenant di
   const auth=section("function renderAuth(mode='in',{admin=false}={})",'function validNewPassword');
   assert.match(auth,/admin\?'Super admin sign in'/);
   assert.match(auth,/admin\?'':`<nav class="entry-path-switch"/);
-  assert.match(auth,/admin\?'':`<span class="spacer"><\/span><button class="btn ghost sm" id="sw"/);
+  /* nestly_v627: v625 gave renderAuth one admin arm and one business arm, so the mode switcher is
+     no longer guarded by its own `admin?'':` ternary — it lives in the business arm. The property
+     this line has always been protecting is that a super admin gets no sign-up switcher, and that
+     is what it checks now. */
+  const adminArm=auth.slice(
+    auth.indexOf("${admin?`${businessGoogleButtonHtml('platformGoogleSignIn')"),
+    auth.indexOf("${!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')"));
+  assert.ok(adminArm.length>40,'the admin arm of renderAuth must be locatable');
+  assert.doesNotMatch(adminArm,/id="sw"/,'a super admin has no account to sign up for');
+  assert.match(auth,/<span class="spacer"><\/span><button class="btn ghost sm" id="sw"/);
   assert.match(entryRoutingDoc,/uses the normal business email\/password authentication method/);
   assert.match(entryRoutingDoc,/does not create an Auth user/);
 });

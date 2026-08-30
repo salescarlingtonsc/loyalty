@@ -57,7 +57,16 @@ test('report isolates currencies and downloads every customer page',async()=>{
   assert.match(source,/Preparing complete CSV/);
   assert.match(source,/reportCsvRows\(report,customers\)/);
   assert.match(source,/\['net_revenue_cents','completed_transactions','active_customers','returning_customers'\]/);
-  assert.match(source,/while\(cursor\)/);
+  /* nestly_v627: the pager is a do/while now, not `while(cursor)` — it must run once before there
+     is a cursor to test. What this line has always been guarding is that the CSV pages rather than
+     taking the first page and calling it the answer, so that is asserted directly, together with
+     the two things the current loop adds: it refuses a cursor that does not advance, and when it
+     stops at its page cap it SAYS so on the button rather than handing over a short file that
+     looks complete. */
+  assert.match(source,/\}while\(cursor&&pages<maxPages\)/);
+  assert.match(source,/if\(seenCursors\.has\(token\)\)throw new Error\(pt\('Customer paging did not advance\.'\)\)/);
+  assert.match(source,/customers\.truncated=Boolean\(cursor\)&&pages>=maxPages/);
+  assert.match(source,/Downloaded \{count\} customers \(stopped at the page limit\)/);
   assert.doesNotMatch(source,/p_limit:\s*10000|customers\.slice\(0,\s*250\)/);
   assert.match(source,/The returning-rate denominator is active customers/);
   assert.match(styles,/\.platform-report-sheet/);

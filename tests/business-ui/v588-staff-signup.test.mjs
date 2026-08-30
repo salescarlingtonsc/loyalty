@@ -98,8 +98,19 @@ test('the accept screen\'s "different account" path is untouched and still goes 
 test('renderAuth grows a staff-invite door on the business side only, wired to the up-mode invite screen', () => {
   assert.match(renderAuthFn, /id="authStaffInviteDoorV588"/);
   assert.match(renderAuthFn, /Joining a team\? Enter your staff invite code/);
-  // Gated the same way the pre-existing "New here? Sign up" button is: admin?'':...
-  assert.match(renderAuthFn, /\$\{admin\?'':'<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588"/);
+  /* nestly_v627: still gated exactly as the "New here? Sign up" button is, but v625 replaced the
+     per-control `${admin?'':...}` guards with one admin arm and one business arm — so the gate is
+     now membership of that arm rather than its own ternary. Asserted as the property: the door is
+     absent from the admin arm and present in the business one. */
+  const adminArm = renderAuthFn.slice(
+    renderAuthFn.indexOf("${admin?`${businessGoogleButtonHtml('platformGoogleSignIn')"),
+    renderAuthFn.indexOf("${!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')"));
+  assert.ok(adminArm.length > 40, 'the admin arm of renderAuth must be locatable');
+  assert.doesNotMatch(adminArm, /authStaffInviteDoorV588/,
+    'a super admin is not joining a team and must not be offered the invite door');
+  assert.match(renderAuthFn.slice(renderAuthFn.indexOf('<label for="em">Email</label>')),
+    /<button type="button" class="btn ghost sm" id="authStaffInviteDoorV588"/,
+    'and the business side keeps it');
   assert.match(renderAuthFn, /if\(\$\('authStaffInviteDoorV588'\)\)\$\('authStaffInviteDoorV588'\)\.onclick=\(\)=>renderStaffInviteAuthV151\('up',businessStaffInviteCodeV151\(\)\)/);
 });
 

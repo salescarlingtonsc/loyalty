@@ -51,7 +51,19 @@ test('business sign-in and owner signup expose one accessible Google action with
   assert.ok(signup.indexOf('id="applicationConsent"') < signup.indexOf("businessGoogleButtonHtml('businessApplicationGoogle')"));
   assert.match(signup, /startBusinessGoogleAuth\(/);
   assert.match(signIn, /businessGoogleButtonHtml\('businessGoogleSignIn'\)/);
-  assert.match(signIn, /!admin&&!NestlyNativeBridge\.isNative/);
+  /* nestly_v627: v625 split renderAuth into one admin arm and one business arm, so the old single
+     guard `!admin&&!NestlyNativeBridge.isNative` is no longer spelled anywhere — the admin case is
+     handled by the outer ternary and the native case by the inner one. The PROPERTY is unchanged
+     and is what is asserted now: an admin gets the platform button and never the business one, and
+     the business button is drawn only when this is not the native shell. */
+  const adminArm = signIn.slice(
+    signIn.indexOf("${admin?`${businessGoogleButtonHtml('platformGoogleSignIn')"),
+    signIn.indexOf("${!NestlyNativeBridge.isNative?`${businessGoogleButtonHtml('businessGoogleSignIn')"));
+  assert.ok(adminArm.length > 40, 'the admin arm of renderAuth must be locatable');
+  assert.doesNotMatch(adminArm, /businessGoogleSignIn/,
+    'the super-admin screen must never offer the business Google action');
+  assert.match(signIn, /\$\{!NestlyNativeBridge\.isNative\?`\$\{businessGoogleButtonHtml\('businessGoogleSignIn'\)/,
+    'and the business action is drawn only outside the native shell');
   assert.doesNotMatch(signIn, /id="businessGoogleLegal"/);
   assert.doesNotMatch(signIn, /If Google creates a new Peekaa account/);
   assert.doesNotMatch(signIn, /Please accept the Terms and Privacy Policy before continuing with Google/);

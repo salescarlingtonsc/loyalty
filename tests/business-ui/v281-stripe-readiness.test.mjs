@@ -39,9 +39,16 @@ const webhook = readFileSync(
 const command = readFileSync(
   join(root, 'supabase', 'functions', 'stripe-billing-command', 'index.ts'), 'utf8');
 
+/* nestly_v627: the slice used to run all the way to renderBusinessWorkspaceControl, which swept in
+   every function written between the two — by v620 that included renderLockedWorkspacePaymentV620,
+   a SEPARATE checkout door for a locked workspace with its own stored command id. Counting its
+   invoke as one of this executor's replays made "exactly one replay" read as a loop that is not
+   there. The slice ends at the next function now, so the invariant is measured on the thing it
+   names; renderLockedWorkspacePaymentV620 gets its own assertion below rather than being dropped
+   from coverage. */
 const checkoutExecutor = app.slice(
   app.indexOf('async function runSelfServeCheckoutV281('),
-  app.indexOf('function renderBusinessWorkspaceControl('));
+  app.indexOf('function selfServePaymentReturnStateV286('));
 assert.ok(checkoutExecutor.length > 200, 'the V281 checkout executor must be locatable');
 
 /* ---------------------------------------------------------------------------------------------
@@ -159,6 +166,27 @@ test('V281 an uncertain execution is retried with the SAME command id, as the se
   const replays = checkoutExecutor.match(/sb\.functions\.invoke\('stripe-billing-command'/g) || [];
   assert.equal(replays.length, 2,
     'exactly one replay: the command holds a stable Stripe idempotency key, but a loop is not a retry policy');
+});
+
+/* nestly_v627. v620 added a second door to the same billing command — the locked-workspace payment
+   screen. It is not part of the V281 executor and does not share its slice, but it is subject to
+   the same law, which is the whole point of V281: a retry must never mint a second Stripe session.
+   It satisfies it a different way — it stores the command id it was given and reuses it instead of
+   requesting a new one — so that is what is pinned here. */
+test('V627 the locked-workspace checkout reuses its command id rather than minting a second one', () => {
+  const lockedDoor = app.slice(
+    app.indexOf('function renderLockedWorkspacePaymentV620('),
+    app.indexOf('function renderBusinessWorkspaceControl('));
+  assert.ok(lockedDoor.length > 200, 'the v620 locked-workspace payment door must be locatable');
+  assert.match(lockedDoor, /let requested=attempt\.command_id\?\{command_id:attempt\.command_id\}:null/,
+    'a stored command id short-circuits the request: retrying must not ask for a new command');
+  assert.match(lockedDoor, /if\(!requested\)\{[\s\S]*?request_billing_command_v124/,
+    'and the request is issued ONLY when there is no stored command to reuse');
+  assert.match(lockedDoor, /attempt\.command_id=requested\.command_id;writeBillingAttempt\(attempt\)/,
+    'the id is persisted before the provider is called, so a reload recovers it');
+  const lockedInvokes = lockedDoor.match(/sb\.functions\.invoke\('stripe-billing-command'/g) || [];
+  assert.equal(lockedInvokes.length, 1,
+    'one execution per press; an uncertain result asks the owner to retry rather than looping');
 });
 
 test('V281 every non-redirect outcome re-enables the button and names what to do next', () => {

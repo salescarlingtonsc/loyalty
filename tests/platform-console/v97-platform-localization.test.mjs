@@ -345,8 +345,14 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // pair). Announcement inventory is unchanged — both of the panel's CUI.announce()
   // calls pass a ternary expression, the same non-literal-argument shape every other
   // hold/release confirmation already uses, so they were never part of this set.
-  assert.equal(explicit.length,1083,'update the audited explicit-copy inventory when adding runtime UI');
-  assert.equal(metadata.length,836,'update the audited CUI metadata inventory when adding UI metadata'); // v574
+  /* nestly_v627: v620-v626 (the payment-truth wave) added the billing-alerts panel, the manual
+     payment-request panel, the cross-business customer-export reason prompts and the archived-firm
+     loading state — 13 new explicit pt() strings and 6 new metadata strings. All 22 English strings
+     they shipped had no zh-CN or ms entry at all, which is what the coverage test above caught;
+     both dictionaries carry them now, and these counts are re-pinned to what the console actually
+     renders. */
+  assert.equal(explicit.length,1096,'update the audited explicit-copy inventory when adding runtime UI');
+  assert.equal(metadata.length,842,'update the audited CUI metadata inventory when adding UI metadata'); // v627
   assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
@@ -445,7 +451,12 @@ test('every literal accessibility and input attribute is localized or an audited
 test('every plainLabel use is classified behind localization or structured metadata rendering',async()=>{
   const source=await read('app/platform-console.js');
   const uses=[...source.matchAll(/plainLabel\(/g)];
-  assert.equal(uses.length,5,'new plainLabel rendering must be classified as controlled UI, sector data, or structured metadata');
+  /* nestly_v627: v620 added a sixth, billingAlertKindLabel's fallback. It is classified the same
+     way platformStatus is — the derived label is handed to pt() rather than rendered raw — so a
+     billing alert kind the console has no hand-written label for still goes through the
+     dictionary instead of appearing as an English snake_case word on a Chinese screen. */
+  assert.equal(uses.length,6,'new plainLabel rendering must be classified as controlled UI, sector data, or structured metadata');
+  assert.match(source,/return pt\(labels\[kind\]\|\|plainLabel\(kind\)\)/);
   assert.match(source,/const platformStatus=value=>pt\(plainLabel\(value\)\)/);
   assert.match(source,/function plainLabel\(value\)/);
   assert.match(source,/sectorModuleByKey\.get\(key\)\?\.label\|\|plainLabel\(key\)/);
