@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="12b603f36fa72ff1b442904ed975bc35f4c6aaec3906c101125f511102b4e356"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="bf7bb70eb6202cc85aaaae3b64d3667fca8d249423dd3974e3867ed0524e94cd"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3561,8 +3561,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    row). Three fixed columns cannot hold four tabs, and four at the old size would not fit a phone
    at all — the count is read from the list rather than hard-coded, and the row is sized down to
    match what the owner drew. */
-.customer-booking-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;margin:0 0 14px;background:var(--card);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow)}
-.customer-booking-tab{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:38px;padding:6px 6px;border:0;border-radius:10px;background:transparent;color:var(--ink2);font-family:inherit;font-size:12px;font-weight:650;transition:background .14s var(--ease),color .14s var(--ease)}
+/* nestly_v641 (owner photo: the Confirmed label sitting outside its own highlighted pill). Four
+   minmax(0,1fr) columns let a column be narrower than the word in it, so the button box was
+   smaller than its text — the selected background painted the box and the label spilled past it.
+   minmax(max-content,1fr) means a column is never narrower than its content: the four stay equal
+   whenever they fit, and when they cannot the row scrolls sideways instead of clipping a word.
+   That also holds for a locale whose labels are longer than English's. */
+.customer-booking-tabs{display:grid;grid-template-columns:repeat(4,minmax(max-content,1fr));gap:4px;padding:4px;margin:0 0 14px;background:var(--card);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow-x:auto;scrollbar-width:none}
+.customer-booking-tabs::-webkit-scrollbar{display:none}
+.customer-booking-tab{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;white-space:nowrap;min-height:38px;padding:6px 6px;border:0;border-radius:10px;background:transparent;color:var(--ink2);font-family:inherit;font-size:12px;font-weight:650;transition:background .14s var(--ease),color .14s var(--ease)}
 .customer-booking-tab:hover{background:var(--bg);color:var(--ink)}
 .customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--brand-red-on-soft)}
 .customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}
@@ -5571,7 +5578,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 12b603f36fa72ff1b442904ed975bc35f4c6aaec3906c101125f511102b4e356</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · bf7bb70eb6202cc85aaaae3b64d3667fca8d249423dd3974e3867ed0524e94cd</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -9174,7 +9181,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'12b603f36fa72ff1b442904ed975bc35f4c6aaec3906c101125f511102b4e356',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'bf7bb70eb6202cc85aaaae3b64d3667fca8d249423dd3974e3867ed0524e94cd',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="927c9e52b3e407c4719465eb31c5837b93909711ad2395edfc43b8c6156e307d"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="76f853ac62da58216f4617445aa51ee309c9bb04f16ac65e849f94e5ce7b91cd"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -3560,8 +3560,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
    row). Three fixed columns cannot hold four tabs, and four at the old size would not fit a phone
    at all — the count is read from the list rather than hard-coded, and the row is sized down to
    match what the owner drew. */
-.customer-booking-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;margin:0 0 14px;background:var(--card);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow)}
-.customer-booking-tab{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:38px;padding:6px 6px;border:0;border-radius:10px;background:transparent;color:var(--ink2);font-family:inherit;font-size:12px;font-weight:650;transition:background .14s var(--ease),color .14s var(--ease)}
+/* nestly_v641 (owner photo: the Confirmed label sitting outside its own highlighted pill). Four
+   minmax(0,1fr) columns let a column be narrower than the word in it, so the button box was
+   smaller than its text — the selected background painted the box and the label spilled past it.
+   minmax(max-content,1fr) means a column is never narrower than its content: the four stay equal
+   whenever they fit, and when they cannot the row scrolls sideways instead of clipping a word.
+   That also holds for a locale whose labels are longer than English's. */
+.customer-booking-tabs{display:grid;grid-template-columns:repeat(4,minmax(max-content,1fr));gap:4px;padding:4px;margin:0 0 14px;background:var(--card);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);overflow-x:auto;scrollbar-width:none}
+.customer-booking-tabs::-webkit-scrollbar{display:none}
+.customer-booking-tab{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;white-space:nowrap;min-height:38px;padding:6px 6px;border:0;border-radius:10px;background:transparent;color:var(--ink2);font-family:inherit;font-size:12px;font-weight:650;transition:background .14s var(--ease),color .14s var(--ease)}
 .customer-booking-tab:hover{background:var(--bg);color:var(--ink)}
 .customer-booking-tab[aria-selected="true"]{background:var(--tint);color:var(--brand-red-on-soft)}
 .customer-booking-tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--bg);color:inherit;font-size:11px;font-weight:800}

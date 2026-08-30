@@ -136,8 +136,15 @@ test('V259 the Workspace & brand form lives in the Customer Interface module', (
   // around all three, so the panel call itself is no longer individually guarded.
   assert.match(interfacePage, /\$\{workspaceBrandPanelHtmlV259\(\)\}/);
   assert.match(interfacePage, /wireWorkspaceBrandV259\(\);/);
-  // brand/identity first, then the customer programme, then sign-up QR and app actions
-  const order = ['workspaceBrandPanelHtmlV259()', 'customerProgrammeEditorV95', 'customerInterfaceSectionsHtmlV243('];
+  assert.match(interfacePage, /ciSectionV296\('appointment',[\s\S]{0,2000}?customerInterfaceSectionsHtmlV243\(\)/,
+    'the app-actions card renders inside Appointment Setting, the page\'s only view');
+  /* nestly_v634: the app-actions card (customerInterfaceSectionsHtmlV243) moved into the
+     Appointment Setting section when Customer Action lost its own tab, so it now appears BEFORE
+     the customer-programme editor in source. What V259 is protecting is that the brand form leads
+     the module — the sections after it are views, only one of which is on screen at a time, so
+     their source order is not something a reader ever sees. The two markers that still describe a
+     visible order are kept; the third is asserted as present, in the section it moved to. */
+  const order = ['workspaceBrandPanelHtmlV259()', 'customerProgrammeEditorV95'];
   let cursor = -1;
   for (const marker of order) {
     const at = interfacePage.indexOf(marker);

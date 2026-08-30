@@ -149,10 +149,13 @@ test('V269 Customer Interface presents the three sections the owner named, in or
     'workspaceBrandPanelHtmlV259()',
     "customerInterfaceSectionHeadingV269('ciSectionAppointmentV325'",
     'bookingRulesCardHtmlV325()',
+    /* nestly_v634: the app-actions card moved INTO Appointment Setting when Customer Action lost
+       its own tab, so it now sits between the booking rules and the programme heading. Its place
+       in this ordered list moves with it — the list still describes the real composition of the
+       module, which is what V269 exists to pin. */
+    'customerInterfaceSectionsHtmlV243(',
     "customerInterfaceSectionHeadingV269('ciSectionProgrammeV269'",
     'id="customerProgrammeEditorV95"',
-    /* V368: the panel survives, its heading does not (see above). */
-    'customerInterfaceSectionsHtmlV243(',
     /* V303: the V296 Gift cards section and its switch left this page with the rest of the
        gift-card surface (owner: "remove gift cards from the business UI entirely"). */
   ];

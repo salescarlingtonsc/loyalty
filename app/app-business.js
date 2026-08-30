@@ -34376,7 +34376,14 @@ async function loadCustomerCapabilitiesV223(){
       };
       $('customerBookingEnabled').addEventListener('change',refreshBookingInertWarningV294);
       refreshBookingInertWarningV294();
-      save.onclick=async()=>{
+      /* nestly_v641. v375's arrangement was "a Save button in each card, both running this one
+         handler", which is why the two panes could never save contradictory halves. v633 merged
+         the appointment switches into the Customer Appointment Request card and deleted the card
+         that carried the second button — so the switches ended up in a card whose Save writes
+         booking_staff_choice and nothing else, and ticking one there would have been silently
+         lost. The handler is published here instead, and that card's Save awaits it: one save,
+         one RPC, all three values, exactly as v375 intended. */
+      const runCapabilitySaveV634=async()=>{
         save.disabled=true;controls.forEach(id=>$(id).disabled=true);status.textContent='Saving customer actions…';
         const {data,error}=await sb.rpc('business_set_customer_capabilities_v89',{
           p_business:S.biz.id,
@@ -34391,6 +34398,8 @@ async function loadCustomerCapabilitiesV223(){
         refreshBookingInertWarningV294();
         toast(data?.replayed===true?'Customer actions were already saved':'Customer actions saved');
       };
+      save.onclick=runCapabilitySaveV634;
+      customerCapabilitiesSaveV634=runCapabilitySaveV634;
     }
   
 }
@@ -35116,13 +35125,16 @@ function bookingRulesCardHtmlV325(){
            ids, so business_set_customer_capabilities_v89 still reads them exactly as it did —
            this is a move, not a second save path. */''}
       ${isOwner?`<label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-      <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one to show it) and this switch starts working.</p>
+      <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
       <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
-      <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-        <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>
-      <label style="display:flex;align-items:center;gap:8px;margin:12px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
-        <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
-      <p class="muted small" style="margin-top:2px">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</p>
+      ${/* nestly_v641 (owner: "align the boxes after you have compiled them"). Four switches that
+           had arrived from two different cards were still wearing two different shapes — two
+           bordered .checkrow blocks with a bold title and a description, and two bare inline
+           labels whose explanation sat in a loose paragraph below. One card asking one question
+           gets one row shape; the staff-choice explanation moves inside its own row, where it
+           describes the box it belongs to rather than floating under the pair. */''}
+      <label class="checkrow" for="aac"><input type="checkbox" id="aac" ${S.biz.auto_approve_changes?'checked':''}><span><b>Auto-approve reschedule/cancel requests</b><br><span class="muted small">Accept a customer's change without waiting for you to approve it in Bookings.</span></span></label>
+      <label class="checkrow" for="setStaffChoice"><input type="checkbox" id="setStaffChoice" ${S.biz.booking_staff_choice?'checked':''}><span><b>Let customers choose a team member</b><br><span class="muted small">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</span></span></label>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
       <div id="setAvailabilityErr" role="status"></div>`
         :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
@@ -35276,6 +35288,11 @@ function wireBookingRulesV325(isCurrent=()=>true){
     staffChoiceSaveV606.disabled=false;
     if(error){if(err)err.innerHTML=`<div class="err">${esc(humanErrorV295(error,'That could not be saved.'))}</div>`;return}
     S.biz.booking_staff_choice=staffChoice;
+    /* nestly_v641: the two capability switches share this card, so they share its Save. Their own
+       RPC is published by the capability loader — awaited here rather than duplicated, so there is
+       still exactly one writer for all three of them. Ordered after the branch above so a failed
+       booking-rules save reports itself and stops, instead of half-saving in silence. */
+    if(typeof customerCapabilitiesSaveV634==='function')await customerCapabilitiesSaveV634();
     toast(staffChoice?'Customers can choose a team member':'Customers pick a time and you assign the person');
   };
 }
@@ -35596,25 +35613,18 @@ function wireCustomerInterfacePreviewV243(){
 function customerInterfaceSectionHeadingV269(id,label,hint){
   return `<h2 class="customer-interface-section-v269" id="${esc(id)}" style="margin:26px 0 0;font-size:16px">${esc(label)}<span class="muted small" style="display:block;font-weight:400;margin-top:4px">${esc(hint)}</span></h2>`;
 }
-/* V375 (owner, photo 16). Three marks on one screen:
-     - "Customer Action" -> "Customer Permissions" (the tab and the page title above);
-     - "move inside" on Customer booking and Customer appointment changes, with arrows onto the
-       Appointment Setting tab — both are about appointments, so they now live beside the booking
-       rules and only the redemption QR stays here;
-     - the Customer fields and Tenant isolation cards struck through, "delete these wordings".
-   Splitting the switches does NOT split the write: there is still one
-   business_set_customer_capabilities_v89 call reading all three checkboxes by id, and both Save
-   buttons run it, so the two panes can never save contradictory halves. */
-function customerCapabilitiesAppointmentCardHtmlV375(){
-  return `<section class="card" id="businessCustomerCapabilitiesAppointmentV375" style="margin-top:16px"><div class="row"><div><b>What customers may do with appointments</b><p class="muted small" style="margin-top:5px">Turning one off keeps existing bookings and history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilitiesAppointmentV375" type="button" style="display:none" disabled>Save</button></div>
-    <label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
-    <!-- v294 (owner: "Why only one company showed when i already enable qrcode?" — the ticked
-         box was real but INERT: booking is only offered to customers when at least one active
-         service is shown on the booking page, and this screen never said so. The dependency is
-         now stated the moment it bites, with the exact next step.) -->
-    <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
-    <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label></section>`;
-}
+/* nestly_v641: customerCapabilitiesAppointmentCardHtmlV375 is deleted, not merely unmounted.
+   v633 moved its two switches into the Customer Appointment Request card and this card kept
+   rendering below them, so both switches were on the page twice under the SAME ids — the loader
+   bound one copy and the other sat permanently unticked, which is what the owner photographed.
+   A card that can only ever duplicate live ids is not something to leave behind a comment; the
+   ids, the copy and the v294 inert-booking warning all live in the merged card now, and the
+   single business_set_customer_capabilities_v89 save reads them there. */
+/* nestly_v641: set by the capability loader once its controls are live, so the Customer
+   Appointment Request card's Save can write the two switches that now live inside it. Null until
+   then — a Save pressed before the load finishes writes the booking rules and says so, rather
+   than sending three capability values nobody has read yet. */
+let customerCapabilitiesSaveV634=null;
 function customerInterfaceSectionsHtmlV243(){
   return `<div class="customer-interface-sections-v243">
     <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
@@ -35756,7 +35766,10 @@ async function customerInterfacePageV243(hashParam){
      X" statement is struck out, and the Publish button becomes a Save that sits at the FOOT of
      the page (see ciSaveBarV368 below). */
   const ciOnActionPageV368=CUSTOMER_INTERFACE_TABS_V368.includes(customerInterfaceViewV296);
-  const ciPageTitleV368=ciOnActionPageV368?'Customer Action':(ciActiveLabelV296||'Customer Interface');
+  /* nestly_v641 (owner photo 5, "Action" struck through and "Permission" written over it; the rail
+     row was renamed in v633 but this title was not, so the page and the row disagreed). Every
+     switch here answers "what may a customer do", which is a permission. */
+  const ciPageTitleV368=ciOnActionPageV368?'Customer Permission':(ciActiveLabelV296||'Customer Interface');
   M().innerHTML=`<div class="settings-page" data-workspace-i18n><div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>${esc(ciPageTitleV368)}</h1></div></div></div>
     ${customerInterfaceStepperHtmlV325(customerInterfaceViewV296)}
     ${canEditCustomerInterface?`${ciSectionV296('brand',ciWithPreviewV325(`${customerInterfaceSectionHeadingV269('ciSectionBrandV269','Business Profile','Your name, logo, colour, bio, branches and the policy your customers read.')}
@@ -35772,7 +35785,15 @@ async function customerInterfacePageV243(hashParam){
          it does not illustrate. */''}
     ${ciSectionV296('appointment',`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
     ${bookingRulesCardHtmlV325()}
-    ${customerCapabilitiesAppointmentCardHtmlV375()}
+    ${/* nestly_v641 (owner: "shift the boxes to photo 1"). v633 put Customer booking and Customer
+         appointment changes inside Customer Appointment Request but left the card they came from
+         still rendering below it — so both switches existed TWICE on one page, sharing their ids.
+         Whichever copy the loader bound second is the one that worked, and the other sat there
+         permanently unticked, which is exactly what the owner photographed. The card is gone.
+         In its place: the redemption-QR card, which v633 meant to move here and left stranded in
+         the retired 'actions' section — a section the router no longer reaches, so that switch has
+         been unreachable since v633 shipped. */''}
+    ${customerInterfaceSectionsHtmlV243()}
     ${/* nestly_v577 (owner mark, photo 9: the whole "Service buffer times" card struck through,
          "remove this!"). It was a POINTER card only — it set nothing and saved nothing, it just
          told the reader that buffers live on the service. Buffers themselves are untouched: they
@@ -35783,7 +35804,9 @@ async function customerInterfacePageV243(hashParam){
     <div class="card" style="margin-top:16px" id="customerProgrammeEditorV95">${CUI.loadingState({title:'Loading customer programme',iconName:'loyalty'})}</div>`)}
     ${/* V368: the two cards that outlived the retired Customer Sign-up page. Both are about what
          a customer may do and what they are asked for, which is exactly this page's question. */''}
-    ${ciSectionV296('actions',customerInterfaceSectionsHtmlV243())}
+    ${/* nestly_v641: 'actions' has no section of its own — the router sends that hash to
+         'appointment', which renders these cards above. Rendering them here as well would put a
+         second copy of every id on the page, which is the defect this change exists to fix. */''}
     ${/* V368: '#/customer-interface/interface' still resolves — old links and history entries must
          not 404 — but its content now lives on Customer Action, so the hash lands there rather
          than rendering a second copy of the same ids. */''}`
