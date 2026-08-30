@@ -239,7 +239,19 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
     'requests join the same sorted list rather than a block beneath it');
   const requestRow=section(app,'function customerBookingRequestRowV605','function customerBookingRowListV580');
   assert.match(requestRow,/data-withdraw-request=/,'and so is Withdraw on a pending request');
-  assert.match(requestRow,/class="card customer-booking-row-v580"/,'in the same row shape as History');
+  assert.match(requestRow,/class="card customer-booking-row-v580 customer-booking-row-detailed-v613"/,
+    'in the same row shape as History');
+  /* nestly_v654 (owner photo 1, an arrow into the pending card: "can click to see details, for
+     Confirmed also"). v613 gave appointment rows a detail sheet and left request rows without
+     one, so the row a customer most often wants to check — the one nobody has answered yet — was
+     the only one that did not open. Same sheet, same JSON-on-the-row contract. */
+  assert.match(requestRow,/data-booking-detail-v613="\$\{detailPayloadV654\}" role="button" tabindex="0"/);
+  assert.match(requestRow,/slug:'',appointment_id:''/,
+    'a request has no appointment to re-book, so the sheet offers no Rebook');
+  /* And the status pill it duplicates is dropped inside the Pending tab, where the tab says it. */
+  assert.match(requestRow,/const showStatusPillV654=!\(tab==='pending'&&active&&item\.status!=='waitlisted'\)/);
+  assert.match(requestRow,/\$\{esc\(ct\('Reschedule'\)\)\}<\/button>/,
+    'nestly_v654: Edit is called Reschedule, same control');
 });
 
 /* nestly_v548 (owner photo 1, the "Cubbly SPA / Book now" chip struck out: "remove this", then

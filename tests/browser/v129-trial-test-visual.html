@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="4da8bc62c6f7ed8c14a7d384c51dbcfe5694ec3d81bffac38db204fe14aaa6cd"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="6eec29a8197369ff1f9824b4c0b7bbd1960829cc83ed5cdc282dcfa375fd6b78"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -772,6 +772,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-table-wrap:focus-visible{outline-offset:2px}
 .cui-table{background:#fff}
 .cui-table tr.total-row td{border-top:1.5px solid var(--line);font-weight:680}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+/* nestly_v654 (owner photo 11: "i dont want date alignment got cut off", the wrapped dates
+   ringed). v630 tagged the three date cells on Customer packages with this class and never wrote
+   the rule, so .cui-table td's overflow-wrap:anywhere kept breaking 26/08/2026 mid-number into
+   "26/08/202" + "6" — two different-looking dates. A date is one token; the table already
+   scrolls horizontally inside .cui-table-wrap when the columns will not fit. */
+.package-date-cell-v630{white-space:nowrap;overflow-wrap:normal}
+
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
@@ -5553,7 +5560,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 4da8bc62c6f7ed8c14a7d384c51dbcfe5694ec3d81bffac38db204fe14aaa6cd</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 6eec29a8197369ff1f9824b4c0b7bbd1960829cc83ed5cdc282dcfa375fd6b78</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9901,7 +9908,7 @@ async function tillPage(){
     const giveRows=giveNow.map(benefit=>`<div class="till-tier-benefit-row-v369">
         <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
         <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>
-        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
+        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}" data-limit-v654="${esc(String(tillBenefitLimitTextV373(benefit)||''))}">Give</button>
       </div>`).join('');
     const tierBanner=(autoRow||giveRows)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
@@ -10664,6 +10671,20 @@ async function tillPage(){
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
       const label=button.dataset.label||'the benefit';
+      /* nestly_v654 (owner photos 4 and 5: "Tiering Points already reached but no voucher to scan"
+         / "I didnt use any voucher why it says i used this month"). Production showed why: this
+         button was tapped eight times in two minutes on 20 Aug, and each tap spent one of the
+         customer's monthly allowances outright — no question, no undo, and the customer only ever
+         found out by opening their app and reading "already used". A perk given is a thing the
+         business hands over, so it now asks first, and it names the allowance being spent. */
+      /* Carried on the button at render time: the list that built it lives in another closure,
+         and reaching for it here would be a reference that survives node --check and throws at
+         the counter. */
+      const limitTextV654=String(button.dataset.limitV654||'').trim();
+      if(!await confirmActionV386(
+        `Give ${label} to ${cust?.name||'this customer'}?${limitTextV654?` This uses ${limitTextV654.toLowerCase()}.`:' This uses their allowance for this period.'}`,
+        {confirmLabel:'Give it',danger:false}))return;
+      if(!isTillCurrent())return;
       busy=true;button.disabled=true;
       const {data,error}=await sb.rpc('staff_issue_tier_benefit_v365',{
         p_business:S.biz.id,p_client:cust.client_id,p_benefit:benefitId,
@@ -11106,6 +11127,15 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:32})}
+        ${/* nestly_v654 (owner photo 6: "in a standard receipt must indicate pte ltd (company name)
+             and its UEN"). The cart receipt printed the registered name and the UEN; this fallback
+             receipt — the one drawn when a sale finished without a cart payload — printed neither,
+             so the same counter could hand out two receipts and only one of them said who was
+             paid. Same three lines, same fields, same fallbacks. */''}
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
+        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -11152,7 +11182,7 @@ async function tillPage(){
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
         ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
@@ -28069,7 +28099,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const giveRows=giveNow.map(benefit=>`<div class="till-tier-benefit-row-v369">
         <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
         <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>
-        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
+        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}" data-limit-v654="${esc(String(tillBenefitLimitTextV373(benefit)||''))}">Give</button>
       </div>`).join('');
     const tierBanner=(autoRow||giveRows)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
@@ -28832,6 +28862,20 @@ async function svRunTopupFlow({branches,state,testOnly}){
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
       const label=button.dataset.label||'the benefit';
+      /* nestly_v654 (owner photos 4 and 5: "Tiering Points already reached but no voucher to scan"
+         / "I didnt use any voucher why it says i used this month"). Production showed why: this
+         button was tapped eight times in two minutes on 20 Aug, and each tap spent one of the
+         customer's monthly allowances outright — no question, no undo, and the customer only ever
+         found out by opening their app and reading "already used". A perk given is a thing the
+         business hands over, so it now asks first, and it names the allowance being spent. */
+      /* Carried on the button at render time: the list that built it lives in another closure,
+         and reaching for it here would be a reference that survives node --check and throws at
+         the counter. */
+      const limitTextV654=String(button.dataset.limitV654||'').trim();
+      if(!await confirmActionV386(
+        `Give ${label} to ${cust?.name||'this customer'}?${limitTextV654?` This uses ${limitTextV654.toLowerCase()}.`:' This uses their allowance for this period.'}`,
+        {confirmLabel:'Give it',danger:false}))return;
+      if(!isTillCurrent())return;
       busy=true;button.disabled=true;
       const {data,error}=await sb.rpc('staff_issue_tier_benefit_v365',{
         p_business:S.biz.id,p_client:cust.client_id,p_benefit:benefitId,
@@ -29274,6 +29318,15 @@ async function svRunTopupFlow({branches,state,testOnly}){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:32})}
+        ${/* nestly_v654 (owner photo 6: "in a standard receipt must indicate pte ltd (company name)
+             and its UEN"). The cart receipt printed the registered name and the UEN; this fallback
+             receipt — the one drawn when a sale finished without a cart payload — printed neither,
+             so the same counter could hand out two receipts and only one of them said who was
+             paid. Same three lines, same fields, same fallbacks. */''}
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
+        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -29320,7 +29373,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
         ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
@@ -29658,6 +29711,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'4da8bc62c6f7ed8c14a7d384c51dbcfe5694ec3d81bffac38db204fe14aaa6cd',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'6eec29a8197369ff1f9824b4c0b7bbd1960829cc83ed5cdc282dcfa375fd6b78',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

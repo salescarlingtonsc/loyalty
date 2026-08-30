@@ -3195,6 +3195,12 @@
       "path": "db/migrations/20260831_nestly_v652_evidence_contract.sql",
       "semanticVersion": "v652",
       "proposedDeployVersion": "20260831080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v654_receipt_identity_and_perk_date.sql",
+      "semanticVersion": "v654",
+      "proposedDeployVersion": "20260831090000"
     }
   ]
 }

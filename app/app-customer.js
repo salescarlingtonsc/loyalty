@@ -220,14 +220,6 @@ function recordCustomerSessionStartV256(businessId,locale){
 function customerJoinAlreadyConfirmedV596(token){
   return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
 }
-function peekShareReferralV576(slug){
-  try{
-    const stored=JSON.parse(localStorage.getItem(SHARE_REFERRAL_STORE_KEY_V576)||'null');
-    if(!stored||stored.slug!==normalizeCustomerBusinessIntent(slug))return '';
-    if(Date.now()-Number(stored.at||0)>30*24*3600000){localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576);return ''}
-    return String(stored.code||'');
-  }catch{return ''}
-}
 function clearShareReferralV576(){try{localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576)}catch{}}
 /* Fire-and-forget, from the wallet render for the business the code names. The server owns every
    guard; this only decides what to do with its answer. A definitive answer (applied, or a
@@ -1750,10 +1742,38 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
 const CUSTOMER_BOOKING_TABS_V178=[
   ['bookings','Confirmed','No confirmed bookings yet. Approved appointments appear here.'],
   ['pending','Pending','Nothing waiting. Requests you send appear here until the business answers.'],
-  ['cancelled','Cancelled','No cancelled bookings.'],
-  ['history','History','No past bookings yet.']
+  /* nestly_v654 (owner photo 2: the Cancelled tab ringed and struck through, an arrow into
+     History — "remove this, cancelled will go history"). One past-bookings list, no sub-tabs.
+     Nothing about a cancellation is hidden: the row still carries its own status, and the detail
+     sheet still says Cancelled. Only the fourth tab is gone. */
+  ['history','History','No past bookings yet. Completed and cancelled bookings appear here.']
 ];
 const CANCELLED_CUSTOMER_BOOKING_STATUSES_V178=new Set(['cancelled','canceled','declined','rejected','no_show','noshow']);
+/* nestly_v654 (owner photo 3: the detail sheet's Status reading the raw word "booked", ringed,
+   with "status either completed or cancelled" written beside it). 'booked' is a machine word and
+   it is also ambiguous — it is what an appointment says both before and after it happens. The
+   customer reads one of three words, and the clock decides between the first two: a booked slot
+   still to come is Confirmed, the same slot once its time has passed is Completed, and anything
+   the business or the customer called off is Cancelled. This is the ONLY mapper; the tab a row
+   sits on is still decided upstream and is not re-judged here. */
+const RESOLVED_CUSTOMER_BOOKING_STATUS_WORDS_V654=new Set(['completed','done','finished']);
+function customerBookingCancelledV654(item){
+  return CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(item?.status||'').toLowerCase());
+}
+function customerBookingStatusWordV654(status,startsAt){
+  const raw=String(status||'').trim().toLowerCase();
+  if(!raw)return '';
+  if(CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(raw))return ct('Cancelled');
+  if(RESOLVED_CUSTOMER_BOOKING_STATUS_WORDS_V654.has(raw))return ct('Completed');
+  if(ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES.has(raw))return raw==='waitlisted'?ct('Waitlisted'):ct('Pending');
+  if(raw==='booked'||raw==='confirmed'){
+    /* An unparsable or missing time is treated as still to come — the same safe default
+       customerBookingAppointmentTabV178 takes when it cannot read the clock. */
+    const at=Date.parse(startsAt||'');
+    return Number.isFinite(at)&&at<=Date.now()?ct('Completed'):ct('Confirmed');
+  }
+  return raw.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
+}
 const RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178=new Set(['completed','done','finished']);
 function customerBookingRequestTabV178(request){
   /* nestly_v631: an unanswered request now has its own tab. Only this line moved — what counts as
@@ -1761,11 +1781,12 @@ function customerBookingRequestTabV178(request){
      controls are gated on, so a row that offers those actions and the tab it sits under can never
      disagree. */
   if(isActiveCustomerBookingRequest(request))return 'pending';
-  return CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(request?.status||'').toLowerCase())?'cancelled':'history';
+  /* nestly_v654: a request the business declined is a past request, not a fourth category. */
+  return 'history';
 }
 function customerBookingAppointmentTabV178(appointment,now=Date.now()){
   const status=String(appointment?.status||'').toLowerCase();
-  if(CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(status))return 'cancelled';
+  if(CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(status))return 'history'; // nestly_v654
   if(RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178.has(status))return 'history';
   /* v194 (owner: "done should go history"): a business does not always mark an appointment
      completed, so a visit that has already happened kept sitting under Ongoing. Time decides when
@@ -1889,7 +1910,7 @@ function customerBookingAppointmentRowV344(group,item,changesFeatureEnabled=fals
     ?`<button class="btn ghost sm" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>`
     :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
       ?`<button class="btn ghost sm" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book again'))}</button>`
-      :`<span class="pill ${tab==='cancelled'?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
+      :`<span class="pill ${customerBookingCancelledV654(item)?'no':'ok'}">${esc(ct('Appointment'))}</span>`;
   return `<div class="wallet-appt customer-booking-appointment-row-v344">${customerBookingDateTileV344(item.starts_at)}<div><b>${esc(walletDate(item.starts_at,true)||'Time unavailable')}</b><p class="muted small" style="margin-top:3px">${esc(item.service_name||'Appointment')}${item.branch_name?' · '+esc(item.branch_name):''} · ${esc(String(item.status||'confirmed').replaceAll('_',' '))}</p></div><span class="spacer"></span>${action}</div>`;
 }
 /* nestly_v580 (owner mark, photo 6, superseding v577's History-only version). The owner redrew
@@ -1928,9 +1949,9 @@ function openCustomerBookingDetailV613(payload){
     ['Branch',record.branch],
     ['Address',record.address],
     ['With',record.staff],
-    /* The raw status is a machine word ('no_show'); it is printed as words, never re-judged —
-       which tab the row sits on is decided upstream and this sheet does not second-guess it. */
-    ['Status',record.status?String(record.status).replaceAll('_',' '):''],
+    /* nestly_v654: through the one status mapper, so the sheet reads Confirmed / Completed /
+       Cancelled and never the stored word. Which tab the row sits on is still decided upstream. */
+    ['Status',customerBookingStatusWordV654(record.status,record.starts_at)],
     ['Note',record.note]
   ].filter(([,value])=>String(value||'').trim());
   const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
@@ -1978,7 +1999,7 @@ function customerBookingRowV580(group,item,tab){
     ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>`
     :group.bookingEnabled&&group.business_slug&&tab!=='bookings'
       ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}" data-appointment-id="${esc(item.appointment_id)}">${esc(ct('Book'))}</button>`
-      :`<span class="pill ${tab==='cancelled'?'no':'ok'} customer-booking-act-v580">${esc(ct('Appointment'))}</span>`;
+      :`<span class="pill ${customerBookingCancelledV654(item)?'no':'ok'} customer-booking-act-v580">${esc(ct('Appointment'))}</span>`;
   /* nestly_v613 (owner photo: an arrow into a History row — "can click to see details"). The row
      prints a business, a service and a time; everything else the feed already carries — the full
      date, the branch, the staff member, the status, the customer's own note — had nowhere to be
@@ -2092,7 +2113,26 @@ function customerBookingRequestRowV605(group,item,tab){
     ?(item.status==='waitlisted'?ct('Waitlisted'):ct('Pending'))
     :String(item.status||'updated').replaceAll('_',' ');
   const statusTone=active?(item.status==='waitlisted'?'new':'off'):'no';
-  return `<article class="card customer-booking-row-v580" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}">
+  /* nestly_v654 (owner photo 1: the "Pending" pill struck out — "since the bookings are inside
+     Pending tab we dont need to see pending in every bookings"). The tab already says it. The pill
+     survives everywhere else, because on History the status is the only thing that distinguishes a
+     declined request from a fulfilled one. A waitlisted request keeps its pill even here: that is
+     a different answer from "waiting", and the tab does not say it. */
+  const showStatusPillV654=!(tab==='pending'&&active&&item.status!=='waitlisted');
+  /* nestly_v654 (owner photo 1, an arrow into the pending card: "can click to see details, for
+     Confirmed also"). v613 gave appointment rows a detail sheet and left request rows without one,
+     so the one row type the customer most often wants to check — the one nobody has answered yet —
+     was the only one that did not open. Same sheet, same JSON-on-the-row contract; built only from
+     fields this record actually carries. There is no appointment to re-book, so no slug travels
+     and the sheet shows no Rebook button. */
+  const detailPayloadV654=esc(JSON.stringify({
+    business:name,service,starts_at:when,branch:String(item.branch_name||'').trim(),
+    address:String(item.branch_address||'').trim(),staff:String(item.staff_name||'').trim(),
+    slug:'',appointment_id:'',
+    status:String(item.status||'').trim(),
+    note:String(item.notes||item.note||item.customer_note||'').trim()
+  }));
+  return `<article class="card customer-booking-row-v580 customer-booking-row-detailed-v613" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}" data-booking-detail-v613="${detailPayloadV654}" role="button" tabindex="0" aria-label="Booking details for ${esc(name)}">
     <div class="customer-booking-row-logo-v580">${logo}</div>
     <div class="customer-booking-row-copy-v580">
       <b data-merchant-content>${esc(name)}</b>
@@ -2102,7 +2142,7 @@ function customerBookingRequestRowV605(group,item,tab){
            belongs with what it describes, on the left with the business and the service, not
            stacked in the right-hand column with the date and the row's actions. That column is now
            only actions, which is what makes it line up. */''}
-      <p class="customer-booking-row-status-v627"><span class="pill ${statusTone}">${esc(statusLabel)}</span></p>
+      ${showStatusPillV654?`<p class="customer-booking-row-status-v627"><span class="pill ${statusTone}">${esc(statusLabel)}</span></p>`:''}
     </div>
     <div class="customer-booking-row-end-v580">
       <time class="customer-booking-row-date-v580" datetime="${esc(when)}">${esc(walletDate(when)||'Time pending')}</time>
@@ -2111,7 +2151,7 @@ function customerBookingRequestRowV605(group,item,tab){
            ruling when asked: once the business has approved it there is an appointment, and moving
            that releases a slot they have committed to — a different act, which keeps the v508
            reschedule flow. So this button appears under exactly the condition Withdraw does. */''}
-      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Edit'))}</button>`:''}
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Reschedule'))}</button>`:''}
       ${/* nestly_v613 (owner photo: the Pending pill and the Withdraw button ringed together — "change to X button"). The word became an icon so the status and its one action sit on a single line instead of stacking two full-width controls under the date. It is the SAME control — same data-withdraw-request contract, same confirm, same RPC — so nothing about withdrawing changed except how much room it asks for. The label survives as aria-label/title, because an X alone says nothing to a screen reader. */''}${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request="${esc(item.request_id)}" aria-label="${esc(ct('Withdraw'))}" title="${esc(ct('Withdraw'))}">${CUI.icon('close',{size:16})}</button>`:''}
     </div>
   </article>`;
@@ -2299,7 +2339,7 @@ function customerBookingEmptyMarkupV183(tab='bookings',emptyCopy='',groups=[]){
    number"). v196's reasoning applied to Cancelled as well as History and had simply not been
    extended: a count is a prompt to act, and Ongoing is the only one of the three holding anything
    the customer still has to do something about. Cancelled and History are both records. */
-const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set(['history','cancelled']);
+const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set(['history']);
 function customerBookingTablistMarkupV178(currentTab='bookings',counts={}){
   return `<div class="customer-booking-tabs" role="tablist" aria-label="Booking status">${CUSTOMER_BOOKING_TABS_V178.map(([tab,label])=>{
     const selected=tab===currentTab,showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196.has(tab);
@@ -2372,7 +2412,7 @@ async function renderCustomerBookings(){
     /* nestly_v605: requestHeading retired with the per-business request block it titled. Each
        request is now a row that states its own status (Pending / Waitlisted / the outcome), so a
        heading above a group of them said nothing the rows did not. */
-    const appointmentHeading=currentBookingTab==='bookings'?'Appointments':currentBookingTab==='cancelled'?'Cancelled appointments':'Past appointments';
+    const appointmentHeading=currentBookingTab==='bookings'?'Appointments':'Past appointments';
     const partialMessages=[
       walletResult.error?'Confirmed appointments could not be discovered from your programmes.':'',
       programmeResult.error?'Current linked-business booking availability could not be checked. New booking actions are hidden.':'',
@@ -4344,6 +4384,32 @@ function customerReferralCardMarkupV300(card,business){
     ${referred>0?`<p class="muted small customer-referral-count">${esc(ct('referredCount',{count:referred}))}</p>`:''}
   </section>`;
 }
+/* nestly_v654 (owner photo 14: "the link sent should say something like — here's my referral code
+   to join Jess Salon, spend xx and both of us earn xx points! if dont need spend then just say
+   redeem your xx today"). The old sentence named neither the reward nor the floor, so the one
+   message whose whole job is to persuade a stranger said nothing about what was in it for them.
+   Every number here comes off the same server card the on-screen terms are printed from
+   (customer_get_referral_card_v300), so the message cannot promise what the engine will not pay.
+   The FRIEND's reward leads, because the friend is who reads this. When the business pays only the
+   referrer, or the card has not loaded, the v300 sentence is used unchanged. */
+function customerReferralShareTextV654(card,business){
+  const name=business?.name||ct('localBusiness');
+  const code=String(card?.code||'').trim();
+  const plain=()=>ct('referralShareMessage',{business:name,code});
+  if(!card||card.friend_enabled===false)return plain();
+  const isGiftV421=String(card?.reward_kind||'points')==='voucher';
+  const friendReward=isGiftV421
+    ?String(card?.friend_reward_label||card?.reward_label||'').trim()
+    :(Number(card?.friend_reward_points)>0
+      ?customerReferralPointsV322(card.friend_reward_points,card?.reward_kind):'');
+  if(!friendReward)return plain();
+  const currency=String(card?.currency||business?.currency||'SGD');
+  const floor=Number(card?.min_spend_cents||0)>0
+    ?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
+  return floor
+    ?ct('referralShareMessageFloorV654',{business:name,code,floor,reward:friendReward})
+    :ct('referralShareMessageGiftV654',{business:name,code,reward:friendReward});
+}
 async function shareCustomerReferralV300(card,business){
   /* nestly_v571 (owner, Refer a friend photo, arrow from Share: "share this link to friends for
      register for this business"). It shared #/b/<slug>, the booking portal — a friend who opened
@@ -4360,7 +4426,7 @@ async function shareCustomerReferralV300(card,business){
   let url='';
   try{url=slug?NestlyNativeBridge.publicUrl(`/#/wallet/${encodeURIComponent(slug)}${shareCodeV576?`?ref=${encodeURIComponent(shareCodeV576)}`:''}`):''}catch{}
   if(!url)return toast('This business has no public page to share yet.');
-  const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
+  const text=customerReferralShareTextV654(card,business);
   const businessId=String(business?.id||'');
   const record=channel=>typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.referral_shared',businessId,
     {context:{channel,surface_version:'v300'}});
@@ -7562,6 +7628,20 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        A BIRTHDAY perk is greyed for a different reason and must NOT be given a monthly date: it
        returns in the customer's birthday month, not on the 1st of next month, so it says that
        instead of inventing a deadline it cannot know. */
+    /* nestly_v654 (owner photos 4 and 5: "Tiering Points already reached but no voucher to scan"
+       and "I didnt use any voucher why it says i used this month"). The card was right and could
+       not prove it. Production said the three Hougang ABC perks were issued eight times from the
+       till on 20 Aug, each tap spending that month's allowance — but all the customer was told is
+       that it was "already used", with no date to check against and no way to tell a redemption
+       they made from one a counter made for them. So the line now carries the day it went, and
+       the perk becomes a question the customer can actually ask at the counter. The date is the
+       server's (last_used_at, the latest issue inside the CURRENT period only); when an older
+       server does not send one, the wording falls back to exactly what it said before. */
+    const customerTierPerkUsedLineV654=(perk,windowNoun)=>{
+      const usedAt=perk?.last_used_at?walletDate(perk.last_used_at):'';
+      if(usedAt)return `Used on ${usedAt}.`;
+      return `Already used ${windowNoun}.`.replace(' .','.');
+    };
     const tierPerkCardV501=perk=>{
       const sentence=String(perk?.sentence||perk?.label||'').trim()||'Tier perk';
       const tierLabel=String(perk?.tier_label||'').trim();
@@ -7577,7 +7657,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
           :'<p class="muted small" style="margin-top:5px">No limit — use it whenever you visit.</p>')
         :reasonV502==='not_birthday_month'
           ?'<p class="muted small" data-tier-perk-state-v502="birthday" style="margin-top:5px">Yours during your birthday month.</p>'
-          :`<p class="muted small" data-tier-perk-state-v502="used" style="margin-top:5px">Already used ${esc(windowNoun)}.</p>`;
+          :`<p class="muted small" data-tier-perk-state-v502="used" style="margin-top:5px">${esc(customerTierPerkUsedLineV654(perk,windowNoun))}</p>`;
       /* Use by … while it is live; Back on … once it is spent. Never both, never neither. */
       const dateLineV502=!endsAt?''
         :claimableV502

@@ -3190,6 +3190,12 @@
       "version": "20260831080000",
       "name": "nestly_v652_evidence_contract",
       "sourcePath": "db/migrations/20260831_nestly_v652_evidence_contract.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831090000",
+      "name": "nestly_v654_receipt_identity_and_perk_date",
+      "sourcePath": "db/migrations/20260831_nestly_v654_receipt_identity_and_perk_date.sql"
     }
   ]
 }

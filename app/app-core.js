@@ -871,6 +871,14 @@ function rememberShareReferralV576(slug,code){
   if(!cleanSlug||!cleanCode)return;
   try{localStorage.setItem(SHARE_REFERRAL_STORE_KEY_V576,JSON.stringify({slug:cleanSlug,code:cleanCode,at:Date.now()}))}catch{}
 }
+function peekShareReferralV576(slug){
+  try{
+    const stored=JSON.parse(localStorage.getItem(SHARE_REFERRAL_STORE_KEY_V576)||'null');
+    if(!stored||stored.slug!==normalizeCustomerBusinessIntent(slug))return '';
+    if(Date.now()-Number(stored.at||0)>30*24*3600000){localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576);return ''}
+    return String(stored.code||'');
+  }catch{return ''}
+}
 function rememberPendingCustomerDestination(value){
   pendingCustomerDestination=normalizeCustomerDestination(value);
   try{
@@ -2194,6 +2202,10 @@ const CUSTOMER_COPY=Object.freeze({
     referredCount:'Friends who joined and spent through you: {count}',
     shareYourCode:'Share your code',
     referralShareMessage:'Come join me at {business} — quote my code {code} when you sign up at the counter.',
+    referralShareMessageFloorV654:"Here's my referral code {code} to join {business} — spend {floor} and we both earn {reward}!",
+    referralShareMessageGiftV654:"Here's my referral code {code} to join {business} — claim your {reward} today!",
+    joinReferralLinkedLabelV654:'Your friend\u2019s referral code',
+    joinReferralLinkedHintV654:'Came with the link your friend sent \u2014 nothing to type.',
     rewardReady:'Reward ready — open to redeem.',continueProgramme:'Open your rewards home to see what is next.',
     firstQuest:'Your first rewards',scanLoyaltyQr:'Scan a loyalty QR',
     firstQuestBody:'At a participating business, scan the Peekaa QR shown at the counter. That verified business becomes your first reward account.',
@@ -2399,6 +2411,10 @@ const CUSTOMER_COPY=Object.freeze({
     referredCount:'通过您加入并消费的朋友：{count}',
     shareYourCode:'分享您的推荐码',
     referralShareMessage:'来{business}和我一起吧——在柜台注册时报上我的代码{code}。',
+    referralShareMessageFloorV654:'这是我的推荐码 {code}，快加入{business}——消费{floor}，我们各得{reward}！',
+    referralShareMessageGiftV654:'这是我的推荐码 {code}，快加入{business}——今天就领取您的{reward}！',
+    joinReferralLinkedLabelV654:'朋友的推荐码',
+    joinReferralLinkedHintV654:'随朋友发来的链接自动带入，无需输入。',
     rewardReady:'奖励已就绪 — 打开即可兑换。',continueProgramme:'打开奖励主页，看看接下来能做什么。',
     firstQuest:'你的第一份奖励',scanLoyaltyQr:'扫描会员二维码',
     firstQuestBody:'在参与商家出示的 Peekaa 二维码处扫码。该认证商家会成为你的第一个奖励账户。',
@@ -2629,6 +2645,10 @@ const CUSTOMER_COPY=Object.freeze({
     referredCount:'Rakan yang sertai dan berbelanja melalui anda: {count}',
     shareYourCode:'Kongsi kod anda',
     referralShareMessage:'Jom sertai saya di {business} — sebut kod saya {code} semasa mendaftar di kaunter.',
+    referralShareMessageFloorV654:'Ini kod rujukan saya {code} untuk sertai {business} — belanja {floor} dan kita berdua dapat {reward}!',
+    referralShareMessageGiftV654:'Ini kod rujukan saya {code} untuk sertai {business} — tuntut {reward} anda hari ini!',
+    joinReferralLinkedLabelV654:'Kod rujukan rakan anda',
+    joinReferralLinkedHintV654:'Datang bersama pautan rakan anda \u2014 tiada apa untuk ditaip.',
     rewardReady:'Ganjaran sedia — buka untuk menebus.',continueProgramme:'Buka laman ganjaran anda untuk melihat langkah seterusnya.',
     firstQuest:'Ganjaran pertama anda',scanLoyaltyQr:'Imbas QR kesetiaan',
     firstQuestBody:'Di perniagaan yang menyertai, imbas QR Peekaa yang dipaparkan di kaunter. Perniagaan yang disahkan itu menjadi akaun ganjaran pertama anda.',
@@ -2859,6 +2879,10 @@ const CUSTOMER_COPY=Object.freeze({
     referredCount:'உங்கள் மூலம் சேர்ந்து செலவழித்த நண்பர்கள்: {count}',
     shareYourCode:'உங்கள் குறியீட்டைப் பகிருங்கள்',
     referralShareMessage:'{business}-இல் என்னுடன் இணையுங்கள் — கவுண்டரில் பதிவு செய்யும்போது என் குறியீடு {code} சொல்லுங்கள்.',
+    referralShareMessageFloorV654:'{business}-இல் சேர இது என் பரிந்துரை குறியீடு {code} — {floor} செலவிடுங்கள், நாம் இருவரும் {reward} பெறுவோம்!',
+    referralShareMessageGiftV654:'{business}-இல் சேர இது என் பரிந்துரை குறியீடு {code} — இன்றே உங்கள் {reward} பெறுங்கள்!',
+    joinReferralLinkedLabelV654:'உங்கள் நண்பரின் பரிந்துரை குறியீடு',
+    joinReferralLinkedHintV654:'நண்பர் அனுப்பிய இணைப்புடன் வந்தது \u2014 தட்டச்சு செய்ய வேண்டாம்.',
     rewardReady:'வெகுமதி தயார் — மீட்டெடுக்கத் திறக்கவும்.',continueProgramme:'அடுத்து என்ன என்பதைப் பார்க்க உங்கள் வெகுமதி முகப்பைத் திறக்கவும்.',
     firstQuest:'உங்கள் முதல் வெகுமதிகள்',scanLoyaltyQr:'லாயல்டி QR-ஐ ஸ்கேன் செய்யவும்',
     firstQuestBody:'பங்கேற்கும் வணிகத்தில், கவுண்டரில் காட்டப்படும் Peekaa QR-ஐ ஸ்கேன் செய்யவும். அந்தச் சரிபார்க்கப்பட்ட வணிகமே உங்கள் முதல் வெகுமதிக் கணக்காகும்.',
@@ -3792,6 +3816,11 @@ async function confirmCustomerJoinV571(token,isCurrent){
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
   pendingCustomerJoinBusinessNameV609=name.slice(0,120);
   pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
+  /* nestly_v654: the code the friend arrived with — either handed over by the /join page
+     (pendingCustomerJoinReferralV571) or lifted off ?ref= by the router into the v576 store. */
+  const linkedReferralV654=String(pendingCustomerJoinReferralV571
+    ||(pendingCustomerJoinSlugV587?peekShareReferralV576(pendingCustomerJoinSlugV587):'')
+    ||'').trim().toUpperCase().slice(0,32);
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
     overlay.className='modal customer-surface';
@@ -3803,8 +3832,16 @@ async function confirmCustomerJoinV571(token,isCurrent){
       <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
       <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
       <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
-      <label class="small" for="customerJoinReferralV612" style="display:block;text-align:left;margin:2px 2px 6px;font-weight:600">${esc(ct('joinReferralLabelV571'))}</label>
-      <input id="customerJoinReferralV612" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(ct('joinReferralPlaceholderV571'))}" style="margin-bottom:14px">
+      ${/* nestly_v654 (owner photo 13/14: the friend who taps the shared link should land on THIS
+           sheet with the code already in it, uneditable). The code has been travelling with the
+           link since v576 — the router lifts ?ref= off #/wallet/<slug> and remembers it — but this
+           field never read that store, so the friend was shown an empty box and asked to type a
+           code they had already handed over. Read-only rather than disabled: a disabled input is
+           skipped by some assistive tech and, more practically, the Yes handler below reads
+           .value, which a disabled field still has but a customer could no longer verify. */''}
+      <label class="small" for="customerJoinReferralV612" style="display:block;text-align:left;margin:2px 2px 6px;font-weight:600">${esc(ct(linkedReferralV654?'joinReferralLinkedLabelV654':'joinReferralLabelV571'))}</label>
+      <input id="customerJoinReferralV612" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(ct('joinReferralPlaceholderV571'))}"${linkedReferralV654?` value="${esc(linkedReferralV654)}" readonly`:''} style="margin-bottom:${linkedReferralV654?'6':'14'}px">
+      ${linkedReferralV654?`<p class="muted small" style="text-align:left;margin:0 2px 14px">${esc(ct('joinReferralLinkedHintV654'))}</p>`:''}
       <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
     </section>`;
     document.body.appendChild(overlay);

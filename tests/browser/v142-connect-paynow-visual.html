@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="e26b8152591368903429f7e37098a468bd1a464ecb6c6a90a39428059b182ba3"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="f2e27155211ec3b42d7b01f9f5d599616c72b907b9ed160723cf6d1c45b0f0cd"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -772,6 +772,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-table-wrap:focus-visible{outline-offset:2px}
 .cui-table{background:#fff}
 .cui-table tr.total-row td{border-top:1.5px solid var(--line);font-weight:680}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+/* nestly_v654 (owner photo 11: "i dont want date alignment got cut off", the wrapped dates
+   ringed). v630 tagged the three date cells on Customer packages with this class and never wrote
+   the rule, so .cui-table td's overflow-wrap:anywhere kept breaking 26/08/2026 mid-number into
+   "26/08/202" + "6" — two different-looking dates. A date is one token; the table already
+   scrolls horizontally inside .cui-table-wrap when the columns will not fit. */
+.package-date-cell-v630{white-space:nowrap;overflow-wrap:normal}
+
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
@@ -5553,7 +5560,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · e26b8152591368903429f7e37098a468bd1a464ecb6c6a90a39428059b182ba3</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f2e27155211ec3b42d7b01f9f5d599616c72b907b9ed160723cf6d1c45b0f0cd</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7808,7 +7815,7 @@ async function tillPage(){
     const giveRows=giveNow.map(benefit=>`<div class="till-tier-benefit-row-v369">
         <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
         <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>
-        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
+        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}" data-limit-v654="${esc(String(tillBenefitLimitTextV373(benefit)||''))}">Give</button>
       </div>`).join('');
     const tierBanner=(autoRow||giveRows)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
@@ -8571,6 +8578,20 @@ async function tillPage(){
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
       const label=button.dataset.label||'the benefit';
+      /* nestly_v654 (owner photos 4 and 5: "Tiering Points already reached but no voucher to scan"
+         / "I didnt use any voucher why it says i used this month"). Production showed why: this
+         button was tapped eight times in two minutes on 20 Aug, and each tap spent one of the
+         customer's monthly allowances outright — no question, no undo, and the customer only ever
+         found out by opening their app and reading "already used". A perk given is a thing the
+         business hands over, so it now asks first, and it names the allowance being spent. */
+      /* Carried on the button at render time: the list that built it lives in another closure,
+         and reaching for it here would be a reference that survives node --check and throws at
+         the counter. */
+      const limitTextV654=String(button.dataset.limitV654||'').trim();
+      if(!await confirmActionV386(
+        `Give ${label} to ${cust?.name||'this customer'}?${limitTextV654?` This uses ${limitTextV654.toLowerCase()}.`:' This uses their allowance for this period.'}`,
+        {confirmLabel:'Give it',danger:false}))return;
+      if(!isTillCurrent())return;
       busy=true;button.disabled=true;
       const {data,error}=await sb.rpc('staff_issue_tier_benefit_v365',{
         p_business:S.biz.id,p_client:cust.client_id,p_benefit:benefitId,
@@ -9013,6 +9034,15 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:32})}
+        ${/* nestly_v654 (owner photo 6: "in a standard receipt must indicate pte ltd (company name)
+             and its UEN"). The cart receipt printed the registered name and the UEN; this fallback
+             receipt — the one drawn when a sale finished without a cart payload — printed neither,
+             so the same counter could hand out two receipts and only one of them said who was
+             paid. Same three lines, same fields, same fallbacks. */''}
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
+        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -9059,7 +9089,7 @@ async function tillPage(){
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
         ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
@@ -9156,7 +9186,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'e26b8152591368903429f7e37098a468bd1a464ecb6c6a90a39428059b182ba3',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'f2e27155211ec3b42d7b01f9f5d599616c72b907b9ed160723cf6d1c45b0f0cd',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

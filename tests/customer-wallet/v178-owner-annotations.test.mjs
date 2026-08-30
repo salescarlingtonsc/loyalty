@@ -95,8 +95,17 @@ test('Bookings is a client-side filter of already-fetched records',()=>{
      reachable tab. */
   assert.match(app,/const CUSTOMER_BOOKING_TABS_V178=\[[\s\S]{0,400}?\['bookings','Confirmed'/);
   assert.match(app,/\['pending','Pending'/);
-  assert.match(app,/\['cancelled','Cancelled','No cancelled bookings\.'\]/);
-  assert.match(app,/\['history','History'/);
+  /* nestly_v654 (owner photo 2: the Cancelled tab ringed and struck through, an arrow into
+     History — "remove this, cancelled will go history ... dont need to have any sub tabs inside
+     history"). Three tabs now. What this test protects is unchanged: they are still a CLIENT-SIDE
+     filter of records already fetched, and a cancelled booking is still shown — in History, still
+     carrying its own status. */
+  assert.doesNotMatch(app,/\['cancelled','Cancelled'/,'the Cancelled tab is gone');
+  assert.match(app,/\['history','History','No past bookings yet\. Completed and cancelled bookings appear here\.'\]/);
+  assert.match(app,/function customerBookingRequestTabV178\(request\)\{[\s\S]{0,900}?return 'history';/,
+    'a declined request lands in History, not a fourth tab');
+  assert.match(app,/CANCELLED_CUSTOMER_BOOKING_STATUSES_V178\.has\(status\)\)return 'history'/,
+    'a cancelled appointment lands in History');
   assert.match(app,/role="tablist" aria-label="Booking status"/);
   assert.match(app,/role="tab" id="customerBookingTab-\$\{esc\(tab\)\}"/);
   assert.match(app,/aria-selected="\$\{selected\}" aria-controls="customerBookingPanel" tabindex="\$\{selected\?'0':'-1'\}"/);

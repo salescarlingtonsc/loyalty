@@ -34,6 +34,7 @@ const harness = (() => {
     block('const CUSTOMER_TIER_PERK_WINDOW_V501=', '});'),
     block('function customerTierPerkWindowNounV501(', '\n}'),
     block('function tierPerkHeadingV501(', '\n}'),
+    block('    const customerTierPerkUsedLineV654=(perk,windowNoun)=>{', '\n    };'),
     block('    const tierPerkCardV501=perk=>{', '\n    };')
   ].join('\n');
   const scope = {
@@ -181,6 +182,22 @@ test('v502 the spent card prints the RETURN date, and the live card the LAST USA
   assert.match(spent, /Back on 1 Sep/, 'the day the allowance renews');
   assert.doesNotMatch(spent, /Use by/, 'a spent perk must not advertise a deadline to use it');
   assert.match(spent, /data-tier-perk-back-v502="2026-09-01T00:00:00\+08:00"/);
+});
+
+test('v654 a spent perk says the DAY it went, so "I never used it" is checkable', () => {
+  /* Owner photos 4 and 5, 2026-08-30: "Tiering Points already reached but no voucher to scan" /
+     "I didnt use any voucher why it says i used this month". Production held the answer — the
+     perks were issued eight times from the till on 20 Aug — but the card only ever said "already
+     used", with no date to check and no way to tell a redemption the customer made from one a
+     counter made for them. The date is the server's last_used_at, the latest issue inside the
+     SAME period the count is taken over, so it can never point at a previous window. */
+  const dated = harness.card({ ...spentPerk, last_used_at: '2026-08-20T16:40:25+00:00' });
+  assert.match(dated, /Used on 21 Aug 2026\./, 'the day it went, in Singapore time');
+  assert.doesNotMatch(dated, /Already used/, 'the vaguer sentence is replaced, not appended');
+  assert.match(dated, /Back on 1 Sep/, 'and it still says when it returns');
+  /* An older server, or a perk with no use in this window, sends no date and the card says
+     exactly what it said before rather than inventing one. */
+  assert.match(harness.card(spentPerk), /Already used this month\./);
 });
 
 test('v502 a spent perk offers no counter instruction, because there is nothing to hand over', () => {

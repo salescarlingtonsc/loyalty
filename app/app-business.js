@@ -8174,7 +8174,7 @@ async function tillPage(){
     const giveRows=giveNow.map(benefit=>`<div class="till-tier-benefit-row-v369">
         <span><b class="small">${esc(benefit.sentence||benefit.label||'Benefit')}</b>
         <span class="muted small">${tillBenefitLimitTextV373(benefit)}</span></span>
-        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}">Give</button>
+        <button type="button" class="btn primary sm" data-tier-benefit-give-v365="${esc(benefit.benefit_id)}" data-label="${esc(benefit.label||'')}" data-limit-v654="${esc(String(tillBenefitLimitTextV373(benefit)||''))}">Give</button>
       </div>`).join('');
     const tierBanner=(autoRow||giveRows)
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px"><b>${tierName} benefits</b>
@@ -8937,6 +8937,20 @@ async function tillPage(){
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
       const label=button.dataset.label||'the benefit';
+      /* nestly_v654 (owner photos 4 and 5: "Tiering Points already reached but no voucher to scan"
+         / "I didnt use any voucher why it says i used this month"). Production showed why: this
+         button was tapped eight times in two minutes on 20 Aug, and each tap spent one of the
+         customer's monthly allowances outright — no question, no undo, and the customer only ever
+         found out by opening their app and reading "already used". A perk given is a thing the
+         business hands over, so it now asks first, and it names the allowance being spent. */
+      /* Carried on the button at render time: the list that built it lives in another closure,
+         and reaching for it here would be a reference that survives node --check and throws at
+         the counter. */
+      const limitTextV654=String(button.dataset.limitV654||'').trim();
+      if(!await confirmActionV386(
+        `Give ${label} to ${cust?.name||'this customer'}?${limitTextV654?` This uses ${limitTextV654.toLowerCase()}.`:' This uses their allowance for this period.'}`,
+        {confirmLabel:'Give it',danger:false}))return;
+      if(!isTillCurrent())return;
       busy=true;button.disabled=true;
       const {data,error}=await sb.rpc('staff_issue_tier_benefit_v365',{
         p_business:S.biz.id,p_client:cust.client_id,p_benefit:benefitId,
@@ -9379,6 +9393,15 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'Sale recorded. The screen is ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card" style="text-align:center">
         ${CUI.icon('check',{size:32})}
+        ${/* nestly_v654 (owner photo 6: "in a standard receipt must indicate pte ltd (company name)
+             and its UEN"). The cart receipt printed the registered name and the UEN; this fallback
+             receipt — the one drawn when a sale finished without a cart payload — printed neither,
+             so the same counter could hand out two receipts and only one of them said who was
+             paid. Same three lines, same fields, same fallbacks. */''}
+        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
+        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -9425,7 +9448,7 @@ async function tillPage(){
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
         <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
         ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">Reg. no. ${esc(S.biz.registration_number)}</p>`:''}
+        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
         ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
@@ -29301,11 +29324,48 @@ function packageDayV603(value){
      source-level test could not have seen it. */
   return value?promotionDateShortV324(value)||'—':'—';
 }
+/* nestly_v654 (owner photo 11). Read-only: it opens no RPC and offers no action the row did not
+   already offer, so a mis-tap costs a Close. Every line is omitted when the row does not carry it,
+   rather than printed empty — the sheet never invents a detail the row could not have had. */
+function openPackageDetailV654(payload){
+  let record=null;
+  try{record=JSON.parse(payload||'null')}catch{record=null}
+  if(!record)return;
+  const used=Number(record.sessions)>0
+    ?`${Math.max(0,Number(record.sessions)-Number(record.remaining||0))} of ${Number(record.sessions)}`:'';
+  const rows=[
+    ['Customer',record.customer],['Mobile',record.phone],
+    ['Package',record.plan],['Price',record.price],['Service',record.service],
+    ['Sessions used',used],
+    ['Date bought',record.purchased_at?packageDayV603(record.purchased_at):''],
+    ['Last used',record.last_used_at?packageDayV603(record.last_used_at):''],
+    ['Expiry',record.expires_at?packageDayV603(record.expires_at):'No expiry'],
+    ['Status',String(record.status||'').replaceAll('_',' ')]
+  ].filter(([,value])=>String(value||'').trim());
+  const dialog=document.createElement('div');
+  dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  dialog.setAttribute('aria-labelledby','packageDetailTitleV654');
+  dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
+    <div class="row"><div><p class="eyebrow">Customer package</p>
+      <h2 id="packageDetailTitleV654" style="margin-top:4px" data-merchant-content>${esc(record.plan||'Package')}</h2></div>
+      <span class="spacer"></span><button type="button" class="btn ghost sm" id="packageDetailCloseV654">Close</button></div>
+    <dl class="cui-deflist" style="margin-top:14px">${rows.map(([label,value])=>
+      `<div class="row" style="gap:10px;align-items:flex-start;margin-top:8px"><dt class="muted small" style="min-width:120px">${esc(label)}</dt><dd style="margin:0" data-merchant-content>${esc(String(value))}</dd></div>`).join('')}</dl>
+  </div>`;
+  document.body.append(dialog);
+  let deactivate=null;
+  const close=()=>{if(deactivate){const d=deactivate;deactivate=null;d({restoreFocus:true})}else dialog.remove()};
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#packageDetailCloseV654'});
+  $('packageDetailCloseV654').onclick=close;
+}
 async function packagesPage(options){
   const packagesViewV584=options&&options.view==='customers'?'customers':'plans';
   /* nestly_v612: which status tab is showing. Page state, so it survives a re-render of the
      list but resets when the page is opened afresh. */
-  let packageStatusV612='all';
+  /* nestly_v654 (owner photo 11, an arrow from the rail item to the Active pill: "when click
+     this, default page is at this"). Opening on All buried the two packages a counter can
+     actually use under five that are finished. Active is what the page is for. */
+  let packageStatusV612='active';
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const refreshPackagesV584=()=>packagesPage({view:packagesViewV584});
   const canWrite=canWriteModule('packages');
@@ -29713,7 +29773,19 @@ async function packagesPage(options){
          a button the till is about to refuse with package_expired, so the row states the deadline
          and drops the action instead. */
       const expiredV593=k.status==='expired';
-      return `<tr><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${/* nestly_v614 (owner photo 1, a box drawn on the header between Status and the row
+      /* nestly_v654 (owner photo 11, an arrow into the package column: "can click to see
+         details"). The row already carries every field the dialog shows — it opens from the row's
+         own data and asks the server nothing. History stays its own button: that one IS a fetch,
+         and it answers a different question. The payload travels as JSON on the row because the
+         list repaints on every tab tap and a click-time index into a rebuilt array would go
+         stale — the same contract the customer app's booking rows use. */
+      const detailPayloadV654=esc(JSON.stringify({
+        customer:k.client_name||'',phone:k.client_phone||'',plan:k.plan_name||'',
+        price:money(k.price_cents),service:k.service_name?serviceDisplayName(k):'',
+        purchased_at:k.purchased_at||'',last_used_at:k.last_used_at||'',
+        expires_at:k.expires_at||'',status:k.status||'',
+        sessions:Number(k.sessions)||0,remaining:Number(k.remaining)||0}));
+      return `<tr data-package-detail-v654="${detailPayloadV654}" tabindex="0" role="button" aria-label="Package details"><td><b>${esc(k.client_name||'—')}</b><div class="muted small">${esc(k.client_phone||'')}</div></td><td>${esc(k.plan_name||'—')} <span class="muted small">${money(k.price_cents)}</span>${k.service_name?`<div class="muted small">${esc(serviceDisplayName(k))}</div>`:''}${/* nestly_v614 (owner photo 1, a box drawn on the header between Status and the row
              actions: "i need to have a tab on expiry date (if the package has an expiry)"). The
              deadline used to be a third line under the package NAME, where it could not be read
              down the list or compared between rows. It is a column now, so this sub-line goes
@@ -29743,7 +29815,7 @@ async function packagesPage(options){
         ?`<span${expiredV593?' class="err"':''}>${esc(packageDayV603(k.expires_at))}</span>`
         :'<span class="muted small">No expiry</span>'}</td>
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
-      <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
+      <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}',${esc(JSON.stringify(String(k.plan_name||'')))},${esc(JSON.stringify(String(k.client_name||'')))})">Use</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
     }).join('')}</table>
       <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} customer packages · page ${packagePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
       ${/* nestly_v603 (owner: "History" written beside Use session, with a line down to this
@@ -29794,6 +29866,20 @@ async function packagesPage(options){
       deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#packageHistoryCloseV603'});
       $('packageHistoryCloseV603').onclick=close;
       if(canWrite)bindReversalButtons(refreshPackagesV584);
+    });
+    /* nestly_v654: the row opens its own details. The guard is what keeps Use and History
+       working — both live inside this row, and without it either would also open the sheet. */
+    document.querySelectorAll('[data-package-detail-v654]').forEach(row=>{
+      const open=event=>{
+        if(event.target.closest('button,a'))return;
+        openPackageDetailV654(row.dataset.packageDetailV654);
+      };
+      row.onclick=open;
+      row.onkeydown=event=>{
+        if(event.key!=='Enter'&&event.key!==' ')return;
+        if(event.target!==row)return;
+        event.preventDefault();openPackageDetailV654(row.dataset.packageDetailV654);
+      };
     });
     document.querySelectorAll('[data-package-status-count-v612]').forEach(node=>{
       /* Concatenated rather than a template literal: v97 refuses interpolated textContent because
@@ -29927,8 +30013,14 @@ async function packagesPage(options){
   };
   if(canWrite&&$('kBespokeOpenV613'))$('kBespokeOpenV613').onclick=openBespokePackageV613;
   const packageSessionIdem=new Map();
-  window.usePkg=async(id)=>{
+  window.usePkg=async(id,label='',customer='')=>{
     if(!canWrite)return;
+    /* nestly_v654 (owner photo 7: an arrow into both Use buttons — "when click Use, please prompt
+       a pop-up to confirm"). One tap spent a prepaid session outright; the only way back was the
+       row's History → Undo, after the customer had already been told. The question names the
+       package and the customer, because two rows on this page can otherwise look identical. */
+    const askV654=`Use one session${label?` of ${label}`:''}${customer?` for ${customer}`:''}? This is deducted from their prepaid sessions now.`;
+    if(!await confirmActionV386(askV654,{confirmLabel:'Use session',danger:false}))return;
     /* nestly_v613: resolved at click time, not at render, so a branch switched in the top bar
        while this list is open is honoured by the very next session taken. */
     const branchId=reportingOperationalBranchIdV155(packageBranches);
@@ -35516,8 +35608,13 @@ function bookingRulesCardHtmlV325(){
            below the WhatsApp template. The markup is unchanged and still carries
            #businessCustomerCapabilities and #customerCapabilitiesStatus, so the capability loader
            finds and enables it exactly as before; only its home moved. */''}
-      ${customerInterfaceSectionsHtmlV243()}
-      <div class="row" style="margin-top:12px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
+      ${/* nestly_v654 (owner photo 10: the redemption-QR row and its Save ringed together —
+           "move to lowest under its own title Rewards Setting"). v642 had put it here as a fifth
+           box in the card that asks what a customer may do with APPOINTMENTS, which it is not
+           about. It renders at the bottom of this page now, under its own heading. The markup is
+           unchanged and still carries #businessCustomerCapabilities and #customerCapabilitiesStatus,
+           so the capability loader finds and enables it exactly as before; only its home moved. */''}
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="setStaffChoiceSaveV606" style="display:none">Save</button></div>
       <div id="setAvailabilityErr" role="status"></div>`
         :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
     <div class="card" style="margin-top:16px">
@@ -35536,7 +35633,13 @@ function bookingRulesCardHtmlV325(){
         <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
       <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="setAutoConfirm" style="width:auto" ${S.biz.booking_auto_confirm?'checked':''}> Auto-confirm when a table is free</label>`:''}
-      <div style="margin-top:14px"><button class="btn sm" id="setSave">Save booking rules</button></div>
+      ${/* nestly_v654 (owner photo 9: three Saves struck out with "delete cause here have already",
+         an arrow to the one Save in the corner of the page). One page, one Save. Each button keeps
+         its id, its handler and its place in the DOM and is only hidden, because the page Save
+         works by pressing every Save inside the visible section — removing them would remove the
+         very thing that still writes booking rules, the WhatsApp template and the capabilities.
+         The hidden-but-clicked pattern is the one #saveCustomerCapabilities has used since v375. */''}
+    <div style="margin-top:14px"><button class="btn sm" id="setSave" style="display:none">Save booking rules</button></div>
       <div id="setErr"></div>
       ${/* nestly_v612 (owner, photo 5: "Let customers choose a team member" ringed with an arrow up
            to the Customer Appointment Request card — "put here"). It moved there. What it decides —
@@ -35573,9 +35676,11 @@ function bookingConfirmationTemplateCardHtmlV330(){
     <div class="row" style="margin-top:10px;gap:6px;flex-wrap:wrap">${BOOKING_CONFIRMATION_TEMPLATE_TOKENS_V330.map(t=>`<button type="button" class="btn ghost sm" data-insert-template-token="${esc(t.token)}">+ ${esc(t.label)}</button>`).join('')}</div>
     <textarea id="setConfirmationTemplate" rows="4" style="margin-top:10px">${esc(template)}</textarea>
     <p class="muted small" id="setConfirmationTemplatePreview" style="margin-top:8px">${esc(bookingConfirmationMessageV330({template,customerName:'Mei',serviceName:'Facial',staffName:'Devi',startsAt:new Date(Date.now()+86400000).toISOString(),location:'313 Orchard Road, Singapore 238895'}))}</p>
-    <div style="margin-top:10px"><button class="btn sm" id="setConfirmationTemplateSave">Save message</button></div>
+    <div style="margin-top:10px"><button class="btn sm" id="setConfirmationTemplateSave" style="display:none">Save message</button></div>
     <div id="setConfirmationTemplateErr"></div>
-  </div>`;
+  </div>
+  ${customerInterfaceSectionHeadingV269('ciSectionRewardsSettingV654','Rewards Setting','What your customers may do with the rewards they have earned.')}
+  <div class="card" style="margin-top:12px">${customerInterfaceSectionsHtmlV243()}</div>`;
 }
 function wireBookingRulesV325(isCurrent=()=>true){
   const isOwner=S.myRole==='owner';
@@ -35799,6 +35904,63 @@ async function loadBusinessProfilePreviewLiveV486(){
   }
   refreshCustomerInterfaceLivePreviewV326();
 }
+/* nestly_v654 — WHAT THE CUSTOMER'S BOOK NOW BUTTON ACTUALLY DEPENDS ON.
+   The customer app gates the hero's Book now on the conjunction the server computes for it
+   (customer_get_business_actions_v89 / customer_portal_capabilities): the tenant's bookings
+   module, at least one active service, and the Customer Permission booking switch. This is the
+   workspace-side mirror of exactly that conjunction — no more, no less — so the preview and the
+   customer app cannot disagree. Business-scoped and read once per workspace, in the same shape as
+   the programme spine: null means "not read yet", and null renders no button. */
+let bookingPreviewTruthV654=null;
+let bookingPreviewTruthLoadingV654=false;
+async function refreshBookingPreviewTruthV654(){
+  const businessId=S.biz?.id||'';
+  if(!businessId)return null;
+  const [capability,services]=await Promise.all([
+    sb.rpc('business_get_customer_capabilities_v89',{p_business:businessId}),
+    /* `active` is nullable on services and the server treats NULL as active, so this asks the
+       same question the server asks rather than a stricter one. */
+    sb.from('services').select('id').eq('business_id',businessId).or('active.is.null,active.eq.true').limit(1)
+  ]);
+  if(capability?.error||services?.error)return null;
+  const permission=capability?.data?.booking_enabled===true;
+  const moduleOn=Array.isArray(S.biz?.enabled_modules)&&S.biz.enabled_modules.includes('bookings');
+  const hasService=Array.isArray(services?.data)&&services.data.length>0;
+  bookingPreviewTruthV654={businessId,permission,moduleOn,hasService,
+    enabled:permission&&moduleOn&&hasService};
+  return bookingPreviewTruthV654;
+}
+function bookingPreviewTruthCacheV654(){
+  const businessId=S.biz?.id||'';
+  if(!businessId)return null;
+  if(bookingPreviewTruthV654&&bookingPreviewTruthV654.businessId===businessId)return bookingPreviewTruthV654;
+  if(!bookingPreviewTruthLoadingV654){
+    bookingPreviewTruthLoadingV654=true;
+    refreshBookingPreviewTruthV654()
+      .then(truth=>{if(truth)refreshCustomerInterfaceLivePreviewV326()})
+      .catch(()=>{})
+      .finally(()=>{bookingPreviewTruthLoadingV654=false});
+  }
+  return null;
+}
+function bookingPreviewEnabledV654(){
+  const truth=bookingPreviewTruthCacheV654();
+  return truth?truth.enabled:null;
+}
+/* The owner asked why the button was missing. This says so, in their own settings' words, and
+   only once the answer is actually known. */
+function bookingPreviewBlockedNoteV654(){
+  const truth=bookingPreviewTruthCacheV654();
+  if(!truth||truth.enabled)return '';
+  const reason=!truth.moduleOn
+    ?'the Bookings module is switched off for this workspace'
+    :!truth.hasService
+      ?'this workspace has no active service for customers to book'
+      :'“Customers can request appointments” is off under Customer Interface \u2192 Customer Permission';
+  return `<section class="card" aria-label="Why Book now is hidden" data-ci-preview-booking-blocked-v654>
+    <p class="muted small" style="margin:0"><b>No “Book now” for your customers.</b> ${esc(reason)}. Turn it on and this preview — and your customers’ app — will show the button.</p>
+  </section>`;
+}
 function customerInterfaceLivePreviewMarkupV326(){
   /* nestly_v567 — A PREVIEW MAY NOT INVENT THE PROGRAMME STACK IT IS PREVIEWING.
      v417 read the stack off the spine (programmeSpineRowsV314) and kept a hardcoded
@@ -35880,7 +36042,17 @@ function customerInterfaceLivePreviewMarkupV326(){
       industry_label:($('bilabel')?.value||'').trim(),
       industry:INDUSTRIES[$('bi')?.value||S.biz.industry]?.label||S.biz.industry||''},
     actionableCard,programmeCards:[],
-    bookingEnabled:true,offersStatus:'ready',rewardsHost:false,
+    /* nestly_v654 (owner photos 15/16: "why business view have Book now but customer view does
+       not"). Root cause, found in production: the customer app's hero shows Book now only when
+       all three of the tenant's booking conditions hold — the bookings module enabled, at least
+       one active service, and Customer Permission's own booking switch on — and Jess Salon had
+       that switch OFF (business_customer_capabilities_v89.booking_enabled = false, while AhXiang,
+       the salon that does show it, has it true). The customer app was right. THE PREVIEW WAS THE
+       BUG: it passed the literal `true` here, so it drew a button the owner's customers could not
+       have, and the owner could not see which of their own settings was hiding it.
+       Same rule as v567's spine: fail closed. An unread capability shows no button rather than a
+       promised one, and the band below the preview names the setting that is off. */
+    bookingEnabled:bookingPreviewEnabledV654()===true,offersStatus:'ready',rewardsHost:false,
     collapsedHeaderV339:true,
     programmeCapabilities:{
       /* nestly_v417 (owner, photo 11: the whole preview ringed — "sync to live reward
@@ -35897,7 +36069,8 @@ function customerInterfaceLivePreviewMarkupV326(){
          statement about the client's own payload, not a claim about the server's version. */
       programmes:spineRowsV567.filter(row=>row&&row.active===true)
         .map(row=>({kind:row.kind,customer_visible:true,active:true})),
-      programmes_contract:'v310',rewards:true,activity:true,appointments:true,booking_request:true
+      programmes_contract:'v310',rewards:true,activity:true,appointments:true,
+      booking_request:bookingPreviewEnabledV654()===true
     }
   });
   /* V334 (owner markup, photo 10: "why this not reflected?" — the booking policy text typed on
@@ -35927,6 +36100,7 @@ function customerInterfaceLivePreviewMarkupV326(){
          section was removed. */''}
     <p class="muted small ci-live-preview-sample-badge-v326" role="note">Your business profile as customers see it, drawn by the customer app's own renderer.</p>
     <div id="walletBody">${merchantExperience}
+      ${bookingPreviewBlockedNoteV654()}
       ${bookingPolicy?`<section class="card" aria-label="Booking policy" data-ci-live-preview-bookingpolicy-v334><p class="muted small" style="margin:0">${esc(bookingPolicy)}</p></section>`:''}
     </div>
     ${customerPrimaryNavigation('programmes',{})}

@@ -10,7 +10,25 @@ test('a receipt identifies the company that was actually paid', () => {
   assert.match(app, /id="buen"/);
   assert.match(app, /legal_name:legalName,registration_number:registrationNumber/);
   assert.match(app, /S\.biz\.legal_name\|\|d\.businessName\|\|S\.biz\.name/);
-  assert.match(app, /Reg\. no\. \$\{esc\(S\.biz\.registration_number\)\}/);
+  /* nestly_v654 (owner photo 6: "in a standard receipt must indicate pte ltd (company name) and
+     its UEN ... even after i input it"). Two things were wrong and only one of them was here.
+     The wording: the form asks for a "Business registration number / UEN" and the receipt said
+     "Reg. no.", which is not the term a Singapore customer looks for. The real defect was in the
+     database — the partial unique index over registration_number evaluates
+     app.normalized_business_identity_v79, which was granted to postgres alone, so an owner typing
+     a UEN got 42501 and NOTHING in the form saved. Fixed by nestly_v654's grant. */
+  assert.match(app, /UEN \$\{esc\(S\.biz\.registration_number\)\}/);
+  assert.doesNotMatch(app, /Reg\. no\./);
+});
+
+test('v654 the fallback receipt names the company too', () => {
+  /* drawStep3's non-cart receipt — drawn when a sale finishes without a cart payload — carried no
+     company identity at all, so one counter could hand out two receipts and only one of them said
+     who had been paid. */
+  const fallback = app.slice(app.indexOf('function drawStep3()'), app.indexOf('function drawCartReceipt()'));
+  assert.match(fallback, /S\.biz\.legal_name\|\|S\.biz\.name/);
+  assert.match(fallback, /UEN \$\{esc\(S\.biz\.registration_number\)\}/);
+  assert.match(fallback, /Not GST registered/);
 });
 
 test('the trading name is kept when it differs from the registered name', () => {

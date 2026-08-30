@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="5a4b6b72e949f05caa5d73d5bbf849852ffd4dcb74344028635fed4cf8844515">
+<meta name="v104-production-source-sha256" content="d6665b666b65dba432e796e2c0b8d2bbe768915a3b8cc355c3178ca925cb6e81">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -779,6 +779,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-table-wrap:focus-visible{outline-offset:2px}
 .cui-table{background:#fff}
 .cui-table tr.total-row td{border-top:1.5px solid var(--line);font-weight:680}.cui-table th,.cui-table td{white-space:normal}.cui-table td{overflow-wrap:anywhere}.cui-table .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+/* nestly_v654 (owner photo 11: "i dont want date alignment got cut off", the wrapped dates
+   ringed). v630 tagged the three date cells on Customer packages with this class and never wrote
+   the rule, so .cui-table td's overflow-wrap:anywhere kept breaking 26/08/2026 mid-number into
+   "26/08/202" + "6" — two different-looking dates. A date is one token; the table already
+   scrolls horizontally inside .cui-table-wrap when the columns will not fit. */
+.package-date-cell-v630{white-space:nowrap;overflow-wrap:normal}
+
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
@@ -5564,7 +5571,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 5a4b6b72e949f05caa5d73d5bbf849852ffd4dcb74344028635fed4cf8844515</p>
+  <p class="v104-provenance">Local production-render harness · source d6665b666b65dba432e796e2c0b8d2bbe768915a3b8cc355c3178ca925cb6e81</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -5576,7 +5583,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="5a4b6b72e949f05caa5d73d5bbf849852ffd4dcb74344028635fed4cf8844515";
+const PRODUCTION_SOURCE_SHA256="d6665b666b65dba432e796e2c0b8d2bbe768915a3b8cc355c3178ca925cb6e81";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
@@ -5882,6 +5889,32 @@ function customerReferralCardMarkupV300(card,business){
     ${referred>0?`<p class="muted small customer-referral-count">${esc(ct('referredCount',{count:referred}))}</p>`:''}
   </section>`;
 }
+/* nestly_v654 (owner photo 14: "the link sent should say something like — here's my referral code
+   to join Jess Salon, spend xx and both of us earn xx points! if dont need spend then just say
+   redeem your xx today"). The old sentence named neither the reward nor the floor, so the one
+   message whose whole job is to persuade a stranger said nothing about what was in it for them.
+   Every number here comes off the same server card the on-screen terms are printed from
+   (customer_get_referral_card_v300), so the message cannot promise what the engine will not pay.
+   The FRIEND's reward leads, because the friend is who reads this. When the business pays only the
+   referrer, or the card has not loaded, the v300 sentence is used unchanged. */
+function customerReferralShareTextV654(card,business){
+  const name=business?.name||ct('localBusiness');
+  const code=String(card?.code||'').trim();
+  const plain=()=>ct('referralShareMessage',{business:name,code});
+  if(!card||card.friend_enabled===false)return plain();
+  const isGiftV421=String(card?.reward_kind||'points')==='voucher';
+  const friendReward=isGiftV421
+    ?String(card?.friend_reward_label||card?.reward_label||'').trim()
+    :(Number(card?.friend_reward_points)>0
+      ?customerReferralPointsV322(card.friend_reward_points,card?.reward_kind):'');
+  if(!friendReward)return plain();
+  const currency=String(card?.currency||business?.currency||'SGD');
+  const floor=Number(card?.min_spend_cents||0)>0
+    ?customerReferralMoneyV300(card?.min_spend_cents,currency):'';
+  return floor
+    ?ct('referralShareMessageFloorV654',{business:name,code,floor,reward:friendReward})
+    :ct('referralShareMessageGiftV654',{business:name,code,reward:friendReward});
+}
 async function shareCustomerReferralV300(card,business){
   /* nestly_v571 (owner, Refer a friend photo, arrow from Share: "share this link to friends for
      register for this business"). It shared #/b/<slug>, the booking portal — a friend who opened
@@ -5898,7 +5931,7 @@ async function shareCustomerReferralV300(card,business){
   let url='';
   try{url=slug?NestlyNativeBridge.publicUrl(`/#/wallet/${encodeURIComponent(slug)}${shareCodeV576?`?ref=${encodeURIComponent(shareCodeV576)}`:''}`):''}catch{}
   if(!url)return toast('This business has no public page to share yet.');
-  const text=ct('referralShareMessage',{business:business?.name||ct('localBusiness'),code:String(card?.code||'').trim()});
+  const text=customerReferralShareTextV654(card,business);
   const businessId=String(business?.id||'');
   const record=channel=>typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('customer.referral_shared',businessId,
     {context:{channel,surface_version:'v300'}});

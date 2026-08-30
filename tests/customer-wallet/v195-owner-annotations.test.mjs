@@ -443,13 +443,16 @@ test('My Rewards no longer explains how to get what the customer already has', (
 });
 
 test('History is a record, so it carries no count', () => {
-  assert.match(appJs, /const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set\(\['history','cancelled'\]\)/);
+  /* nestly_v654: Cancelled is no longer a tab (it falls into History), so the no-count set is
+     History alone. The rule it encodes is untouched — a count is a prompt to ACT, and a record
+     is not. */
+  assert.match(appJs, /const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196=new Set\(\['history'\]\)/);
   assert.match(appJs, /showCount=!CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196\.has\(tab\)/);
   assert.match(appJs, /\$\{showCount&&Number\(counts\[tab\]\)>0\?/);
   const tablist = new Function('esc', `${section(appJs, 'const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196', '\nasync function renderCustomerBookings')}
     ${section(appJs, 'const CUSTOMER_BOOKING_TABS_V178=[', 'const CANCELLED_CUSTOMER_BOOKING_STATUSES_V178')}
     return customerBookingTablistMarkupV178;`)((value) => String(value ?? ''));
-  const html = tablist('bookings', { bookings: 2, pending: 1, cancelled: 3, history: 9 });
+  const html = tablist('bookings', { bookings: 2, pending: 1, history: 9 });
   /* nestly_v631: "Ongoing" is "Confirmed" now, and Pending is its own tab. v196's rule decides
      which of them carries a number and is untouched — a count is a prompt to ACT, so the two tabs
      holding something to do keep theirs. */
@@ -459,10 +462,9 @@ test('History is a record, so it carries no count', () => {
      number"). v196's own rule was that a count is a prompt to act; Cancelled is a record, like
      History, so it loses its count for the same reason History did. Ongoing keeps its own, because
      that is the tab holding something still to do. */
-  assert.doesNotMatch(html, /Cancelled\s*<span class="customer-booking-tab-count">/);
+  assert.doesNotMatch(html, /Cancelled/, 'nestly_v654: there is no Cancelled tab to count');
   assert.doesNotMatch(html, /History\s*<span class="customer-booking-tab-count">/);
   assert.doesNotMatch(html, />9</);
-  assert.doesNotMatch(html, />3</);
 });
 
 /* ------------------------------------- 9 · v230: the panel is built from the firm's chosen mode */
