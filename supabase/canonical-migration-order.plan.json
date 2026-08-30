@@ -3034,6 +3034,18 @@
       "version": "20260830090000",
       "name": "nestly_v627_package_product_branches_and_request_amend",
       "sourcePath": "db/migrations/20260830_nestly_v627_package_product_branches_and_request_amend.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830100000",
+      "name": "nestly_v629_customer_lifetime_spend",
+      "sourcePath": "db/migrations/20260830_nestly_v629_customer_lifetime_spend.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830110000",
+      "name": "nestly_v632_inbox_mark_all_read",
+      "sourcePath": "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql"
     }
   ]
 }

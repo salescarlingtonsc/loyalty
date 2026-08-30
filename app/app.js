@@ -687,7 +687,11 @@ const CUSTOMER_INTERFACE_VIEWS_V296=[
      the two tabs on this page are Appointment Setting and Customer Permissions, and the booking
      rules are the ones an owner opens it for. Both hashes still resolve exactly as before; only
      which one the rail row carries has changed, so a bookmarked /actions is untouched. */
-  ['actions','Customer Action','#/customer-interface/appointment','customers',2],
+  /* nestly_v633 (owner photo 5: "Action" struck through and "Permission" written beside the rail
+     row as well as the page title). The row already lands on the appointment view (v392, "when
+     click this is the default page"), which is now the ONLY view — so the destination is unchanged
+     and only the word the owner corrected has moved. */
+  ['actions','Customer Permission','#/customer-interface/appointment','customers',2],
   ['preview','Preview','#/customer-interface','customers',3],
   ['done','Done','#/customer-interface/done','check',4],
   ['programme','Customer programme','#/customer-interface/programme','loyalty',5],
@@ -717,7 +721,14 @@ const CUSTOMER_INTERFACE_VIEWS_VISIBLE_V334=CUSTOMER_INTERFACE_VIEWS_V296
    now and Appointment Setting follows. Order only: each tab still renders its own contents, every
    hash resolves exactly as before, and CUSTOMER_INTERFACE_TABS_V368 is read elsewhere with
    .includes(), which does not care about order. */
-const CUSTOMER_INTERFACE_TABS_V368=['actions','appointment'];
+/* nestly_v633 (owner photos 4+5, ruled when asked: "remove customer action, move its contents
+   into appointment setting tab. (only 1 tab now)"). Two tabs over a page whose first tab held a
+   single checkbox was a strip you had to cross to reach one switch. With one view left,
+   customerInterfaceStepperHtmlV325 draws no strip at all — it already refuses to render fewer
+   than two — so the page loses the control without losing anything it led to.
+   'actions' stays a KNOWN view (CUSTOMER_INTERFACE_VIEWS_V296) so an old bookmark still resolves;
+   the router normalises it to 'appointment', which is where its contents now live. */
+const CUSTOMER_INTERFACE_TABS_V368=['appointment'];
 const NAVGROUPS=[
   {key:'home',icon:'home',flat:'Dashboard',items:['dashboard']},
   {key:'customers',icon:'customers',flat:'Customers',items:['clients']},
@@ -5110,6 +5121,8 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'Open programme',
     'Withdraw':'Withdraw',
     'Edit booking':'Edit booking',
+    'Mark all read':'Mark all read',
+    'Edit':'Edit',
     'Waitlisted':'Waitlisted',
     'Pending':'Pending',
     'Appointment':'Appointment',
@@ -5353,6 +5366,8 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'打开方案',
     'Withdraw':'撤回',
     'Edit booking':'修改预约',
+    'Mark all read':'全部标为已读',
+    'Edit':'修改',
     'Waitlisted':'已加入候补',
     'Pending':'待处理',
     'Appointment':'预约',
@@ -5580,6 +5595,8 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'Buka program',
     'Withdraw':'Tarik balik',
     'Edit booking':'Sunting tempahan',
+    'Mark all read':'Tanda semua dibaca',
+    'Edit':'Sunting',
     'Waitlisted':'Dalam senarai menunggu',
     'Pending':'Menunggu',
     'Appointment':'Temu janji',
@@ -5807,6 +5824,8 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'திட்டத்தைத் திற',
     'Withdraw':'திரும்பப் பெறு',
     'Edit booking':'முன்பதிவைத் திருத்து',
+    'Mark all read':'அனைத்தையும் படித்ததாகக் குறி',
+    'Edit':'திருத்து',
     'Waitlisted':'காத்திருப்புப் பட்டியலில்',
     'Pending':'நிலுவையில்',
     'Appointment':'சந்திப்பு',
@@ -6881,17 +6900,26 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
 }
 /* v178 (owner sketch "Bookings | Cancelled | History"): the same already-fetched records are
    split client-side into three tabs. No new RPC, no extra round trip. */
+/* nestly_v631 (owner photo 6: "Ongoing" struck through with "Confirmed" written over it, and a
+   second tab drawn in for "Pending"). v194 named this tab for what it held — requests AND
+   appointments together — and that is exactly what the owner has now split. A request the business
+   has not answered is not a booking yet; mixing it with confirmed appointments meant the count on
+   this tab could not tell a customer whether they had anything to turn up to. Confirmed leads,
+   because it answers that question; Pending follows, because it is the one still waiting. */
 const CUSTOMER_BOOKING_TABS_V178=[
-  /* v194 (owner renamed it on the screenshot): "Bookings" inside a page called Bookings said
-     nothing. "Ongoing" is what the tab actually holds. */
-  ['bookings','Ongoing','No bookings yet. Active requests and upcoming appointments appear here.'],
+  ['bookings','Confirmed','No confirmed bookings yet. Approved appointments appear here.'],
+  ['pending','Pending','Nothing waiting. Requests you send appear here until the business answers.'],
   ['cancelled','Cancelled','No cancelled bookings.'],
   ['history','History','No past bookings yet.']
 ];
 const CANCELLED_CUSTOMER_BOOKING_STATUSES_V178=new Set(['cancelled','canceled','declined','rejected','no_show','noshow']);
 const RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178=new Set(['completed','done','finished']);
 function customerBookingRequestTabV178(request){
-  if(isActiveCustomerBookingRequest(request))return 'bookings';
+  /* nestly_v631: an unanswered request now has its own tab. Only this line moved — what counts as
+     "active" is still isActiveCustomerBookingRequest, the same predicate the Withdraw and Edit
+     controls are gated on, so a row that offers those actions and the tab it sits under can never
+     disagree. */
+  if(isActiveCustomerBookingRequest(request))return 'pending';
   return CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(request?.status||'').toLowerCase())?'cancelled':'history';
 }
 function customerBookingAppointmentTabV178(appointment,now=Date.now()){
@@ -7242,7 +7270,7 @@ function customerBookingRequestRowV605(group,item,tab){
            ruling when asked: once the business has approved it there is an appointment, and moving
            that releases a slot they have committed to — a different act, which keeps the v508
            reschedule flow. So this button appears under exactly the condition Withdraw does. */''}
-      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Edit booking'))}</button>`:''}
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Edit'))}</button>`:''}
       ${/* nestly_v613 (owner photo: the Pending pill and the Withdraw button ringed together — "change to X button"). The word became an icon so the status and its one action sit on a single line instead of stacking two full-width controls under the date. It is the SAME control — same data-withdraw-request contract, same confirm, same RPC — so nothing about withdrawing changed except how much room it asks for. The label survives as aria-label/title, because an X alone says nothing to a screen reader. */''}${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request="${esc(item.request_id)}" aria-label="${esc(ct('Withdraw'))}" title="${esc(ct('Withdraw'))}">${CUI.icon('close',{size:16})}</button>`:''}
     </div>
   </article>`;
@@ -15879,6 +15907,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
         </div>
+        ${/* nestly_v632 (owner photo 7: "Mark Read All" written into the space the v613 gear left).
+             Server-side, not a loop over the rows on screen: this page holds one page of the inbox,
+             so a client loop would clear what had been fetched and leave the badge showing a number
+             the customer could not reach. Drawn only when there IS something unread — a control
+             that would do nothing is not offered. */''}
+        ${items.some(item=>String(item?.state||'')==='unread')?`<button type="button" class="btn ghost sm customer-inbox-readall-v632" id="customerInboxReadAllV632">${esc(ct('Mark all read'))}</button>`:''}
         </div>
       ${/* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). It is gone, and
            what it hid is NOT: the panel it toggled holds this business's inbox-reminder
@@ -15911,6 +15945,22 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        and it stays hidden until this line runs, so it is never a control that opens nothing.
        A wallet-embedded inbox has no such head; there the door simply is not drawn, exactly as
        before v549 for that surface. */
+    const readAllV632=document.getElementById('customerInboxReadAllV632');
+    if(readAllV632)readAllV632.onclick=async()=>{
+      CUI.setButtonBusy(readAllV632,{busy:true,label:'\u2026'});
+      const {error}=await request('customer_mark_in_app_inbox_read_all_v632',{p_idempotency_key:crypto.randomUUID()});
+      if(!walletSectionStillCurrent(host,isCurrent))return;
+      if(error){
+        CUI.setButtonBusy(readAllV632,{busy:false});
+        toast('Those messages could not be marked read. Try again.');
+        return;
+      }
+      /* Repaint from the server rather than editing the rows in place: the RPC decides what was
+         eligible (a dismissed message stays dismissed), and this list must show its answer, not a
+         guess made here. */
+      if(typeof refreshInbox==='function')await refreshInbox();
+      refreshBell().catch(()=>{});
+    };
     const settingsDoorV613=document.getElementById('customerInboxSettingsHeadV613');
     if(settingsDoorV613){
       settingsDoorV613.hidden=false;
@@ -21643,7 +21693,7 @@ async function clientsPage(){
          only the first was ever read by getElementById, so the second was dead UI. One bar now
          renders, carrying the union of both bars' inactivity buckets (incl. all_inactive, which
          the dashboard drill targets). -->
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="consent_desc">Consent first</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div>${/* nestly_v613 (owner photo: the paragraph struck through — "delete this"). The three
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="spend_desc">Lifetime spend high to low</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div>${/* nestly_v613 (owner photo: the paragraph struck through — "delete this"). The three
          option labels already say what each bucket is, and the sentence explaining that they do
          not overlap was longer than the filter it described. The select therefore no longer
          describes itself through a removed node — aria-describedby went with the paragraph. */''}</div>
@@ -21714,7 +21764,7 @@ async function clientsPage(){
     if(sortKey==='last_visit_desc')list.sort((a,b)=>ts(b.last_visit_at)-ts(a.last_visit_at));
     else if(sortKey==='joined_desc')list.sort((a,b)=>ts(b.created_at)-ts(a.created_at));
     else if(sortKey==='points_desc')list.sort((a,b)=>num(b.points)-num(a.points));
-    else if(sortKey==='consent_desc')list.sort((a,b)=>Number(!!b.marketing_consent)-Number(!!a.marketing_consent));
+    else if(sortKey==='spend_desc')list.sort((a,b)=>num(b.lifetime_spend_cents)-num(a.lifetime_spend_cents));
     else list.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||'')));
     return list;
   };
@@ -21882,11 +21932,11 @@ async function clientsPage(){
     const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="consent_desc">Consent ${sortGlyph}</button></th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
         <td>${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
-        <td>${c.marketing_consent?'<span class="pill ok">Yes</span>':'<span class="pill off">No</span>'}</td></tr>`).join('')}</table></div>
+        <td class="num">${esc(money(Number(c.lifetime_spend_cents)||0))}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
         <button class="btn ghost sm" id="clNext" ${clientPage+1>=pages?'disabled':''}>Next</button></div>`;
@@ -46665,7 +46715,11 @@ async function inventoryPage(){
    column. A function declaration, not a const inside the page: the row renderer runs before the
    page's own body finishes, and a const there sits in the temporal dead zone when it does. */
 /* nestly_v612 (owner: "i need subtab for (all/active/used up) within the module"). */
-const PACKAGE_STATUS_TABS_V612=Object.freeze([['all','All'],['active','Active'],['used','Used up']]);
+/* nestly_v630 (owner photo 3: "All" ringed with an arrow reading "'all' put behind"). The two
+   tabs a member of staff acts from lead; All is the fallback when neither answers the question,
+   so it goes last. The DEFAULT is untouched — the page still opens on All, which is what the
+   owner's screenshot shows selected. */
+const PACKAGE_STATUS_TABS_V612=Object.freeze([['active','Active'],['used','Used up'],['all','All']]);
 function packageDayV603(value){
   /* nestly_v608: sgt() prints a date AND a time ("2026-07-01 10:00"), and splitting on a comma it
      does not contain left the time on both new columns — the owner asked for dd/mm/yy. Reuses the
@@ -47078,7 +47132,7 @@ async function packagesPage(options){
 	      ||(packageStatusV612==='active'?Number(k.remaining)>0&&k.status!=='expired':Number(k.remaining)===0));
 	    const total=filtered.length,totalPages=Math.max(1,Math.ceil(total/PACKAGE_PAGE_SIZE));
 	    const visible=filtered.slice(packagePage*PACKAGE_PAGE_SIZE,(packagePage+1)*PACKAGE_PAGE_SIZE);
-    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th>Left</th><th>Expiry</th><th>Status</th><th></th></tr>
+    $('klist').innerHTML=total?`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Customer</th><th>Package</th><th>Date bought</th><th>Last used</th><th class="num">Used</th><th>Expiry</th><th>Status</th><th></th></tr>
       ${visible.map(k=>{
       /* nestly_v593: the server already reports 'expired' as the status of a package whose window
          has closed (staff_list_package_entitlements_v102 derives it, it is not a stored value).
@@ -47095,19 +47149,28 @@ async function packagesPage(options){
            payload already; last used is v603's, and it counts only sessions that were not undone.
            An em dash rather than a blank so an untouched package reads as "never used" instead of
            looking like a column that failed to load. */''}
-      <td>${esc(packageDayV603(k.purchased_at))}</td>
-      <td>${k.last_used_at?esc(packageDayV603(k.last_used_at)):'<span class="muted">—</span>'}</td>
-      <td>${k.remaining}/${k.sessions||'?'}</td>
+      ${/* nestly_v630 (owner photo 3: "I want date alignment one line"). The dates were already
+           dd/mm/yyyy; the column was narrow enough to wrap them mid-string ("26/08/20" then
+           "26"), which reads as two different numbers. They no longer wrap. */''}
+      <td class="package-date-cell-v630">${esc(packageDayV603(k.purchased_at))}</td>
+      <td class="package-date-cell-v630">${k.last_used_at?esc(packageDayV603(k.last_used_at)):'<span class="muted">—</span>'}</td>
+      ${/* nestly_v630 (owner photo 3: "LEFT" struck through, "USED" written above it, with
+           "if only used once, show 1/5"). A member of staff at the counter is told how much of the
+           package has been consumed, not how much is left — the same fraction read the other way
+           round. Derived, never stored: sessions minus remaining, so it cannot drift from the
+           number the till decrements. A package whose session count is unreadable prints an em
+           dash rather than guessing a denominator. */''}
+      <td class="num">${Number(k.sessions)>0?`${Math.max(0,Number(k.sessions)-Number(k.remaining||0))}/${Number(k.sessions)}`:'<span class="muted">—</span>'}</td>
       ${/* nestly_v614: dd/mm/yy, the same short Singapore date the two columns beside it print.
            A package sold without a deadline says so in words — a blank cell here would read as a
            date that failed to load, and "no expiry" is a real term the customer was sold. The
            word "Expired" is not repeated: the Status pill beside it already says that, and the
            date is what this column is for. */''}
-      <td>${k.expires_at
+      <td class="package-date-cell-v630">${k.expires_at
         ?`<span${expiredV593?' class="err"':''}>${esc(packageDayV603(k.expires_at))}</span>`
         :'<span class="muted small">No expiry</span>'}</td>
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
-      <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use session</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
+      <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}')">Use</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
     }).join('')}</table>
       <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} customer packages · page ${packagePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
       ${/* nestly_v603 (owner: "History" written beside Use session, with a line down to this
@@ -47423,6 +47486,8 @@ async function branchHoursEditorV606(host,branch){
     toast('Opening hours saved');
   };
 }
+/* nestly_v628: set by Subscription's "+ Add branch", consumed once by branchesPage below. */
+let branchesAutoOpenAddV628=false;
 async function branchesPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Branches','branches');
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -47432,6 +47497,15 @@ async function branchesPage(){
     <div id="brList">${CUI.skeletonGrid({cards:3,lines:3})}</div>`;
   let branchList=[],staffList=[],openAssignId=null,editId=null,branchAddAttemptKey=null,openHoursIdV606=null;
   $('addBr').onclick=()=>openForm(null);
+  /* nestly_v628 (owner photo 1: "+ Add Branch" on the Subscription page, which the owner described
+     as "setting up of new branch and payment gateway to activate new branch"). That flow is this
+     page's — create the branch unpaid, hand the billing command to Stripe, switch it on when the
+     payment confirms — so Subscription links here and opens this form rather than growing a second
+     one, which would be a second code path that can charge a card.
+     A one-shot flag rather than a query param: this router splits the hash on '/' without
+     stripping a query, so '#/branches?add=1' would not resolve to a page at all. Cleared as it is
+     read, so a later visit to Branches opens the list as it always has. */
+  if(branchesAutoOpenAddV628){branchesAutoOpenAddV628=false;openForm(null)}
   function openForm(b){
     editId=b?b.id:null;
     $('brForm').style.display='block';
@@ -50395,7 +50469,14 @@ async function settingsPage(){
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->
-      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="true" data-settab="modules">Modules &amp; plan</button>
+      ${/* nestly_v628 (owner photo 1: the "Modules & plan" pill struck out and the business name
+           written beside it). One visible tab is not a choice, so it was a label pretending to be
+           a control — and the label named a page that no longer exists. The business name goes
+           above the table instead, where it says whose subscription this is. The BUTTON is hidden
+           rather than deleted, exactly as v385 did for the other two: selectSettingsTab and
+           staffMembersPage both drive this tablist by id, and the panel below is still the one
+           they open. */''}
+      <button type="button" class="settings-tab" role="tab" id="settab-modules" aria-controls="setpanel-modules" aria-selected="true" data-settab="modules" hidden>Modules &amp; plan</button>
       ${/* V385 (owner markup, photo 10: both tabs struck through and the whole Checkout
            catalogue panel crossed out; owner ruling — "remove tabs only, decide homes later").
            The BUTTONS are hidden, not deleted, and both panels stay in the DOM. Staff Members is
@@ -51579,6 +51660,40 @@ async function loadMerchantPaymentsV142(){
    drawing of a product Peekaa does not sell, and the first person to read it would believe one
    branch could lapse while the others ran on. What differs down the table is the branch, which is
    the thing the owner wanted to see their money against. */
+/* nestly_v628. What the row could not hold: the branch's own contact details beside the plan facts
+   every branch shares. Read-only, built from the row already on screen — no second read, and no
+   action, so a mis-tap costs a Close. */
+function openSubscriptionBranchDetailV628(payload){
+  let record=null;
+  try{record=JSON.parse(payload||'null')}catch{record=null}
+  if(!record)return;
+  const rows=[
+    ['Branch',record.branch],
+    ['Address',record.address],
+    ['Phone',record.phone],
+    ['Email',record.email],
+    ['Payment frequency',record.frequency],
+    ['Billed until',record.billed_until],
+    ['Payment method',record.method]
+  ].filter(([,value])=>String(value||'').trim()&&String(value).trim()!=='—');
+  const modal=document.createElement('div');modal.className='modal';modal.tabIndex=-1;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','subscriptionBranchTitleV628');
+  modal.innerHTML=`<section class="modal-card" style="max-width:520px">
+    <div class="row"><div><p class="eyebrow">Branch</p><h2 id="subscriptionBranchTitleV628" style="margin-top:4px" data-merchant-content>${esc(record.branch||'Branch')}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="subscriptionBranchCloseV628" aria-label="Close branch details">Close</button></div>
+    ${record.is_default?'<p class="muted small" style="margin-top:6px">Main branch.</p>':''}
+    <dl class="customer-booking-detail-list-v613">${rows.map(([label,value])=>`<div><dt class="muted small">${esc(label)}</dt><dd data-merchant-content>${esc(value)}</dd></div>`).join('')}</dl>
+    ${/* Stated once, here, rather than as a paragraph under the table the owner struck out: it is
+         the answer to "why does every row look the same", which is a question you only ask while
+         looking at one row. */''}
+    <p class="muted small" style="margin-top:14px">One subscription covers the whole company, so every branch shares this plan, billing date and payment method.</p>
+  </section>`;
+  document.body.appendChild(modal);
+  let deactivate=null;
+  const close=()=>{if(deactivate){const done=deactivate;deactivate=null;done({restoreFocus:true})}else modal.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#subscriptionBranchCloseV628'});
+  document.getElementById('subscriptionBranchCloseV628').onclick=close;
+}
 function subscriptionBranchTableV612(billing){
   const branches=Array.isArray(billing?.__branchesV612)?billing.__branchesV612:[];
   if(!branches.length)return '';
@@ -51593,21 +51708,36 @@ function subscriptionBranchTableV612(billing){
   const status=billing?.status==='active'||billing?.status==='trialing'
     ?'<span class="pill ok">Ongoing</span>'
     :`<span class="pill off">${esc(String(billing?.status||'unknown').replaceAll('_',' '))}</span>`;
-  const method=billing?.payment_method?.brand
-    ?`${esc(String(billing.payment_method.brand))}${billing.payment_method.last4?` ····${esc(String(billing.payment_method.last4))}`:''}`
+  const methodPlain=billing?.payment_method?.brand
+    ?`${String(billing.payment_method.brand)}${billing.payment_method.last4?` ····${String(billing.payment_method.last4)}`:''}`
     :billing?.provider?.subscription_id?'On file':'Not set';
-  return `<div class="cui-table-wrap" style="margin-bottom:16px"><table data-responsive="true" class="cui-table">
-    <tr><th>Business name</th><th>Branch</th><th>Plan</th><th>Expires on</th><th>Status</th><th>Payment method</th></tr>
+  const method=esc(methodPlain);
+  /* nestly_v628 (owner photo 1). Four marks on this table:
+       • the business name column struck out — every row carried the same value, so it was a
+         column that could never distinguish two rows. It is the heading above the table now;
+       • "Plan" renamed Payment Frequency, which is what the cell actually holds (Annual/Monthly);
+       • "Expires on" renamed Billed until — the subscription does not expire on that date, it is
+         paid up to it, and the owner's word is the accurate one;
+       • the branch name underlined, "when clicked, then pop-up to see details";
+       • the paragraph beneath struck out. */
+  const detailPayload=branch=>esc(JSON.stringify({
+    branch:branch.name||'',address:branch.address||'',phone:branch.phone||'',email:branch.email||'',
+    is_default:branch.is_default===true,active:branch.active!==false,
+    frequency:plan,billed_until:expires,method:methodPlain
+  }));
+  return `<div class="subscription-company-head-v628"><h2 class="subscription-company-v628" data-merchant-content>${esc(S.biz?.name||'This business')}</h2>
+    <span class="spacer"></span>
+    <button type="button" class="btn sm" id="subscriptionAddBranchV628">+ Add branch</button></div>
+  <div class="cui-table-wrap" style="margin-bottom:16px"><table data-responsive="true" class="cui-table">
+    <tr><th>Branch</th><th>Payment Frequency</th><th>Billed until</th><th>Status</th><th>Payment method</th></tr>
     ${branches.map(branch=>`<tr>
-      <td data-merchant-content>${esc(S.biz?.name||'—')}</td>
-      <td data-merchant-content>${esc(branch.name||'—')}</td>
+      <td><button type="button" class="subscription-branch-open-v628" data-subscription-branch-v628="${detailPayload(branch)}" data-merchant-content>${esc(branch.name||'—')}</button></td>
       <td>${esc(plan)}</td>
       <td>${esc(expires)}</td>
       <td>${status}</td>
       <td>${method}</td>
     </tr>`).join('')}
-  </table></div>
-  <p class="muted small" style="margin:-6px 0 16px">One subscription covers the company, so every branch shares its plan, renewal date and payment method. Extra branches are charged as units of it.</p>`;
+  </table></div>`;
 }
 /* ---------- provider-backed subscription billing ---------- */
 async function loadBillingConfig(){
@@ -51619,7 +51749,10 @@ async function loadBillingConfig(){
      plan card is what this page is for, so the table simply does not draw. */
   const [{data:b,error},branchResultV612]=await Promise.all([
     sb.rpc('get_business_billing_v125',{p_business:S.biz.id}),
-    sb.from('branches').select('id,name,is_default,active').eq('business_id',S.biz.id)
+    /* nestly_v628: address, phone and email join the read because the branch name is a door to a
+       details popup now (owner photo 1: "when clicked, then pop-up to see details"). Nothing new
+       is fetched per click — the popup is built from the row this table already drew. */
+    sb.from('branches').select('id,name,is_default,active,address,phone,email').eq('business_id',S.biz.id)
       .eq('active',true).order('is_default',{ascending:false}).order('name')
   ]);
   if(b&&!error)b.__branchesV612=Array.isArray(branchResultV612?.data)?branchResultV612.data:[];
@@ -51738,6 +51871,14 @@ async function loadBillingConfig(){
       }
       buttons.forEach(button=>button.disabled=false);
     };
+    /* nestly_v628 (owner photo 1): the branch name opens what this row could not fit, and
+       "+ Add Branch" leads to the ONE flow that can create and charge for a branch. Owner ruling:
+       it opens the Branches add form rather than growing a second Stripe hand-off here — two
+       screens that can both charge a card is exactly the shape v281 exists to prevent. */
+    wrap.querySelectorAll('[data-subscription-branch-v628]').forEach(button=>{
+      button.onclick=()=>openSubscriptionBranchDetailV628(button.dataset.subscriptionBranchV628);
+    });
+    if($('subscriptionAddBranchV628'))$('subscriptionAddBranchV628').onclick=()=>{branchesAutoOpenAddV628=true;nav('#/branches')};
     $('billingPrimary').onclick=()=>{
       if(providerSubscription&&sameCadence&&sameCapacity)return execute('create_portal',null,null);
       const type=!providerSubscription?'create_checkout':!sameCadence?'change_cadence':'change_capacity';
@@ -51773,7 +51914,13 @@ async function loadCustomerCapabilitiesV223(){
       $('customerBookingEnabled').checked=value.booking_enabled===true;
       $('customerRedemptionEnabled').checked=value.redemption_enabled===true;
       $('customerAppointmentChangesEnabled').checked=value.appointment_changes_enabled===true;
-      controls.forEach(id=>$(id).disabled=false);save.disabled=false;status.textContent='All customer actions start off until you enable them.';
+      controls.forEach(id=>$(id).disabled=false);save.disabled=false;
+      /* nestly_v633 (owner photo 5: this sentence struck through). It described how the switches
+         START, which is only true before anyone has touched them — and by the time it renders,
+         the boxes above it are already showing the real state. The line is kept as the STATUS
+         line it is (a save writes its result here), so it is blank until it has something true
+         to say. */
+      status.textContent='';
       /* v294: the booking switch depends on a bookable service existing. Count it once and keep
          the warning in lockstep with the checkbox, so an owner is told at the moment of ticking
          — not weeks later by a customer — why nothing appeared. A failed count stays silent
@@ -52521,7 +52668,16 @@ function bookingRulesCardHtmlV325(){
       requests" struck through, "Customer Appointment Request" written in). The old name described
       the row in a queue; the owner's names the thing a customer sent. */''}<b>Customer Appointment Request</b>
       <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline each one in Bookings.</p>
-      ${isOwner?`<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+      ${/* nestly_v633 (owner photo 4, the "What customers may do with appointments" card circled
+           and marked "move up"; ruled as "push this inside Customer Appointment Request - so it
+           will show 4 boxes to check or uncheck"). What a customer MAY do and what happens when
+           they do it were two cards asking one question. The two capability switches keep their
+           ids, so business_set_customer_capabilities_v89 still reads them exactly as it did —
+           this is a move, not a second save path. */''}
+      ${isOwner?`<label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+      <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one to show it) and this switch starts working.</p>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
+      <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="aac" style="width:auto" ${S.biz.auto_approve_changes?'checked':''}> Auto-approve reschedule/cancel requests</label>
       <label style="display:flex;align-items:center;gap:8px;margin:12px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="setStaffChoice" style="width:auto" ${S.biz.booking_staff_choice?'checked':''}> Let customers choose a team member</label>
@@ -53024,7 +53180,11 @@ function customerInterfaceSectionsHtmlV243(){
          operation set up"). These switches govern what a customer may do in their own app.
          V375 moved the two appointment ones to Appointment Setting; the redemption QR is not
          about appointments, so it stays here with the section's status line. -->
-    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><div><b>Customer app actions</b><p class="muted small" style="margin-top:5px">Availability means Peekaa supports the feature. Enablement controls whether customers can start a new action for this business. Turning one off keeps existing history.</p></div><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" style="display:none" disabled>Save</button></div>
+    ${/* nestly_v633 (owner photo 5: the "Customer app actions" heading and the availability/enablement
+         paragraph struck through). Two sentences of theory over a single labelled checkbox. The
+         checkbox says what it does and the status line below says what state it is in; the Save
+         button keeps its id and its place. */''}
+    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" style="display:none" disabled>Save</button></div>
       <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
     </div>`;
@@ -53102,7 +53262,12 @@ async function customerInterfacePageV243(hashParam){
      lands exactly where it always did. */
   /* V368: the retired 'interface' hash resolves to Customer Action, which is where its content
      went. Nothing 404s and no link has to be rewritten. */
-  const ciRequestedViewV368=String(hashParam||'')==='interface'?'actions':String(hashParam||'');
+  /* nestly_v633: 'actions' joins 'interface' as a hash that resolves to where its content WENT.
+     The redemption-QR card and the two appointment switches all render on the appointment view
+     now, so an old bookmark or a stale link lands on the page holding the thing it was named
+     after rather than on an empty section. */
+  const ciRetiredViewsV633={interface:'appointment',actions:'appointment'};
+  const ciRequestedViewV368=ciRetiredViewsV633[String(hashParam||'')]||String(hashParam||'');
   const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296.some(view=>view[0]===ciRequestedViewV368)
     ?ciRequestedViewV368:'preview';
   /* V288 (audit A2, MEDIUM 18): the field-definition read happens BEFORE anything is painted, so

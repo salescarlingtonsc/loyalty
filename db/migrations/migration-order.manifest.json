@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 504,
-  "executableCount": 490,
+  "itemCount": 506,
+  "executableCount": 492,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -728,7 +728,7 @@
     },
     {
       "sourceDeployVersion": "20260830",
-      "count": 10,
+      "count": 12,
       "paths": [
         "db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql",
         "db/migrations/20260830_nestly_v613_bespoke_customer_package.sql",
@@ -739,7 +739,9 @@
         "db/migrations/20260830_nestly_v624_billing_ops_visibility.sql",
         "db/migrations/20260830_nestly_v625_platform_google_only.sql",
         "db/migrations/20260830_nestly_v626_automation_writers_sa_only.sql",
-        "db/migrations/20260830_nestly_v627_package_product_branches_and_request_amend.sql"
+        "db/migrations/20260830_nestly_v627_package_product_branches_and_request_amend.sql",
+        "db/migrations/20260830_nestly_v629_customer_lifetime_spend.sql",
+        "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql"
       ]
     }
   ],
@@ -4775,6 +4777,22 @@
       "semanticVersion": "v627",
       "proposedDeployVersion": "20260830090000",
       "sha256": "1358159681f3164644d7d447a94bda6928332e266af444205c8bcb4e8bd32e1a"
+    },
+    {
+      "order": 505,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v629_customer_lifetime_spend.sql",
+      "semanticVersion": "v629",
+      "proposedDeployVersion": "20260830100000",
+      "sha256": "47a29add6b81effdbdddf86981d6d5173076288bbb1d43cc7fc58af98daf09e0"
+    },
+    {
+      "order": 506,
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql",
+      "semanticVersion": "v632",
+      "proposedDeployVersion": "20260830110000",
+      "sha256": "594ff7d6d0ca5a3f08a790b4d13eaa6036f7706fad68a0fb5dbf3abf9b3dfe76"
     }
   ]
 }

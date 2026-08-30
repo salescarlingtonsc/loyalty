@@ -198,7 +198,12 @@ test('V243 the rail entry resolves to a routed page function', () => {
   /* V368: the requested view is normalised first (the retired 'interface' hash now resolves to
      Customer Action, where its content moved), then matched against the same list. */
   assert.match(app, /const customerInterfaceViewV296=CUSTOMER_INTERFACE_VIEWS_V296\.some\(view=>view\[0\]===ciRequestedViewV368\)/);
-  assert.match(app, /const ciRequestedViewV368=String\(hashParam\|\|''\)==='interface'\?'actions':String\(hashParam\|\|''\);/);
+  /* nestly_v633: 'actions' is no longer a view of its own — its content moved onto the appointment
+     view when the page lost its second tab — so the one-hash special case became a small map of
+     retired hashes. Both still resolve; what this line guards is that a retired hash lands on the
+     page holding what it was named after, rather than 404ing or rendering an empty section. */
+  assert.match(app, /const ciRetiredViewsV633=\{interface:'appointment',actions:'appointment'\};/);
+  assert.match(app, /const ciRequestedViewV368=ciRetiredViewsV633\[String\(hashParam\|\|''\)\]\|\|String\(hashParam\|\|''\);/);
 });
 
 test('V243 the workspace chunk classifier no longer swallows every "#/customer…" hash', () => {

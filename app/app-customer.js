@@ -1741,17 +1741,26 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
 }
 /* v178 (owner sketch "Bookings | Cancelled | History"): the same already-fetched records are
    split client-side into three tabs. No new RPC, no extra round trip. */
+/* nestly_v631 (owner photo 6: "Ongoing" struck through with "Confirmed" written over it, and a
+   second tab drawn in for "Pending"). v194 named this tab for what it held — requests AND
+   appointments together — and that is exactly what the owner has now split. A request the business
+   has not answered is not a booking yet; mixing it with confirmed appointments meant the count on
+   this tab could not tell a customer whether they had anything to turn up to. Confirmed leads,
+   because it answers that question; Pending follows, because it is the one still waiting. */
 const CUSTOMER_BOOKING_TABS_V178=[
-  /* v194 (owner renamed it on the screenshot): "Bookings" inside a page called Bookings said
-     nothing. "Ongoing" is what the tab actually holds. */
-  ['bookings','Ongoing','No bookings yet. Active requests and upcoming appointments appear here.'],
+  ['bookings','Confirmed','No confirmed bookings yet. Approved appointments appear here.'],
+  ['pending','Pending','Nothing waiting. Requests you send appear here until the business answers.'],
   ['cancelled','Cancelled','No cancelled bookings.'],
   ['history','History','No past bookings yet.']
 ];
 const CANCELLED_CUSTOMER_BOOKING_STATUSES_V178=new Set(['cancelled','canceled','declined','rejected','no_show','noshow']);
 const RESOLVED_CUSTOMER_APPOINTMENT_STATUSES_V178=new Set(['completed','done','finished']);
 function customerBookingRequestTabV178(request){
-  if(isActiveCustomerBookingRequest(request))return 'bookings';
+  /* nestly_v631: an unanswered request now has its own tab. Only this line moved — what counts as
+     "active" is still isActiveCustomerBookingRequest, the same predicate the Withdraw and Edit
+     controls are gated on, so a row that offers those actions and the tab it sits under can never
+     disagree. */
+  if(isActiveCustomerBookingRequest(request))return 'pending';
   return CANCELLED_CUSTOMER_BOOKING_STATUSES_V178.has(String(request?.status||'').toLowerCase())?'cancelled':'history';
 }
 function customerBookingAppointmentTabV178(appointment,now=Date.now()){
@@ -2102,7 +2111,7 @@ function customerBookingRequestRowV605(group,item,tab){
            ruling when asked: once the business has approved it there is an appointment, and moving
            that releases a slot they have committed to — a different act, which keeps the v508
            reschedule flow. So this button appears under exactly the condition Withdraw does. */''}
-      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Edit booking'))}</button>`:''}
+      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Edit'))}</button>`:''}
       ${/* nestly_v613 (owner photo: the Pending pill and the Withdraw button ringed together — "change to X button"). The word became an icon so the status and its one action sit on a single line instead of stacking two full-width controls under the date. It is the SAME control — same data-withdraw-request contract, same confirm, same RPC — so nothing about withdrawing changed except how much room it asks for. The label survives as aria-label/title, because an X alone says nothing to a screen reader. */''}${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request="${esc(item.request_id)}" aria-label="${esc(ct('Withdraw'))}" title="${esc(ct('Withdraw'))}">${CUI.icon('close',{size:16})}</button>`:''}
     </div>
   </article>`;
@@ -8437,6 +8446,12 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="all" aria-pressed="${currentFilter==='all'}">All</button>
           <button type="button" class="btn ghost sm customer-inbox-filter" data-inbox-filter="unread" aria-pressed="${currentFilter==='unread'}">Unread</button>
         </div>
+        ${/* nestly_v632 (owner photo 7: "Mark Read All" written into the space the v613 gear left).
+             Server-side, not a loop over the rows on screen: this page holds one page of the inbox,
+             so a client loop would clear what had been fetched and leave the badge showing a number
+             the customer could not reach. Drawn only when there IS something unread — a control
+             that would do nothing is not offered. */''}
+        ${items.some(item=>String(item?.state||'')==='unread')?`<button type="button" class="btn ghost sm customer-inbox-readall-v632" id="customerInboxReadAllV632">${esc(ct('Mark all read'))}</button>`:''}
         </div>
       ${/* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). It is gone, and
            what it hid is NOT: the panel it toggled holds this business's inbox-reminder
@@ -8469,6 +8484,22 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
        and it stays hidden until this line runs, so it is never a control that opens nothing.
        A wallet-embedded inbox has no such head; there the door simply is not drawn, exactly as
        before v549 for that surface. */
+    const readAllV632=document.getElementById('customerInboxReadAllV632');
+    if(readAllV632)readAllV632.onclick=async()=>{
+      CUI.setButtonBusy(readAllV632,{busy:true,label:'\u2026'});
+      const {error}=await request('customer_mark_in_app_inbox_read_all_v632',{p_idempotency_key:crypto.randomUUID()});
+      if(!walletSectionStillCurrent(host,isCurrent))return;
+      if(error){
+        CUI.setButtonBusy(readAllV632,{busy:false});
+        toast('Those messages could not be marked read. Try again.');
+        return;
+      }
+      /* Repaint from the server rather than editing the rows in place: the RPC decides what was
+         eligible (a dismissed message stays dismissed), and this list must show its answer, not a
+         guess made here. */
+      if(typeof refreshInbox==='function')await refreshInbox();
+      refreshBell().catch(()=>{});
+    };
     const settingsDoorV613=document.getElementById('customerInboxSettingsHeadV613');
     if(settingsDoorV613){
       settingsDoorV613.hidden=false;

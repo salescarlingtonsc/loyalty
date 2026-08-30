@@ -86,10 +86,15 @@ test('My Rewards has a back button and no offers shelf or guidance banner',()=>{
   assert.match(render,/\$\{isHome\?`\$\{customerExpiringRewardsMarkupV195\(cards\)\}\s*\n\s*\$\{customerHomeOffersMarkupV167\(offersState\)\}/);
 });
 
-test('Bookings is a three-tab client-side filter of already-fetched records',()=>{
-  // v194: the owner renamed the first tab on the screenshot — "Bookings" inside a page called
-  // Bookings named nothing. The three-tab shape this test protects is unchanged.
-  assert.match(app,/const CUSTOMER_BOOKING_TABS_V178=\[[\s\S]{0,240}?\['bookings','Ongoing'/);
+test('Bookings is a client-side filter of already-fetched records',()=>{
+  /* v194 renamed the first tab; nestly_v631 renamed it again (Ongoing -> Confirmed) and added a
+     fourth for Pending, because an unanswered request is not a booking yet and mixing the two
+     meant the count could not tell a customer whether they had anything to turn up to. What this
+     test protects is unchanged and is everything below: the tabs are a CLIENT-SIDE filter of
+     records already fetched — no tab issues a read — and every one of them is a real, keyboard
+     reachable tab. */
+  assert.match(app,/const CUSTOMER_BOOKING_TABS_V178=\[[\s\S]{0,400}?\['bookings','Confirmed'/);
+  assert.match(app,/\['pending','Pending'/);
   assert.match(app,/\['cancelled','Cancelled','No cancelled bookings\.'\]/);
   assert.match(app,/\['history','History'/);
   assert.match(app,/role="tablist" aria-label="Booking status"/);

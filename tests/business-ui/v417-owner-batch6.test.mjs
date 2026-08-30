@@ -43,7 +43,10 @@ test('v417 each Customer Action tab has its own destination', () => {
     'a tab goes to its own view, not to wherever the rail row points');
   assert.doesNotMatch(strip, /\[key,label,href\]/, 'the rail landing href is no longer read here');
   /* v392's ruling is untouched: the rail row still lands on Appointment Setting. */
-  assert.match(appJs, /\['actions','Customer Action','#\/customer-interface\/appointment'/);
+  /* nestly_v633 (owner photo 5: "Action" struck through, "Permission" written in). v392's ruling
+     is what this line guards and it is untouched — the rail row still lands on Appointment
+     Setting, which is now the page's only view. Only the word changed. */
+  assert.match(appJs, /\['actions','Customer Permission','#\/customer-interface\/appointment'/);
   /* and #/customer-interface/actions already resolved — any key in the view list is accepted. */
   assert.match(appJs, /CUSTOMER_INTERFACE_VIEWS_V296\.some\(view=>view\[0\]===ciRequestedViewV368\)/);
 });

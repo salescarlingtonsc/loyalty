@@ -449,8 +449,12 @@ test('History is a record, so it carries no count', () => {
   const tablist = new Function('esc', `${section(appJs, 'const CUSTOMER_BOOKING_TABS_WITHOUT_COUNT_V196', '\nasync function renderCustomerBookings')}
     ${section(appJs, 'const CUSTOMER_BOOKING_TABS_V178=[', 'const CANCELLED_CUSTOMER_BOOKING_STATUSES_V178')}
     return customerBookingTablistMarkupV178;`)((value) => String(value ?? ''));
-  const html = tablist('bookings', { bookings: 2, cancelled: 3, history: 9 });
-  assert.match(html, /Ongoing\s*<span class="customer-booking-tab-count">2/);
+  const html = tablist('bookings', { bookings: 2, pending: 1, cancelled: 3, history: 9 });
+  /* nestly_v631: "Ongoing" is "Confirmed" now, and Pending is its own tab. v196's rule decides
+     which of them carries a number and is untouched — a count is a prompt to ACT, so the two tabs
+     holding something to do keep theirs. */
+  assert.match(html, /Confirmed\s*<span class="customer-booking-tab-count">2/);
+  assert.match(html, /Pending\s*<span class="customer-booking-tab-count">1/);
   /* nestly_v583 (owner mark, photo 10: the "1" beside Cancelled ringed — "cancelled don't need put
      number"). v196's own rule was that a count is a prompt to act; Cancelled is a record, like
      History, so it loses its count for the same reason History did. Ongoing keeps its own, because

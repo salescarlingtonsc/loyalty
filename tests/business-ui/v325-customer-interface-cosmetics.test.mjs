@@ -51,7 +51,8 @@ test('V325 the stepper renders all six steps with their hashes, in order', () =>
     /* V392 (owner, photo 3): "Permissions" struck through and "Action" written, and the arrow
        onto the Appointment Setting pill — "when click this is the default page". The row's own
        hash moved to that tab; both hashes still resolve, which is what the loop below checks. */
-    ['actions', 'Customer Action', '#/customer-interface/appointment'],
+    /* nestly_v633: renamed to Customer Permission — the row's destination is unchanged. */
+    ['actions', 'Customer Permission', '#/customer-interface/appointment'],
   ];
   const viewsSource = section(app, 'const CUSTOMER_INTERFACE_VIEWS_V296=[', '];');
   /* V368 no longer asserts ORDER across the whole list — 'actions' is declared beside the
