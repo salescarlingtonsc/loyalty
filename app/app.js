@@ -5134,6 +5134,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'Open programme',
     'Withdraw':'Withdraw',
     'Edit booking':'Edit booking',
+    'Nothing left to mark':'Nothing left to mark',
     'Mark all read':'Mark all read',
     'Edit':'Edit',
     'Waitlisted':'Waitlisted',
@@ -5379,6 +5380,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'打开方案',
     'Withdraw':'撤回',
     'Edit booking':'修改预约',
+    'Nothing left to mark':'没有未读消息',
     'Mark all read':'全部标为已读',
     'Edit':'修改',
     'Waitlisted':'已加入候补',
@@ -5608,6 +5610,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'Buka program',
     'Withdraw':'Tarik balik',
     'Edit booking':'Sunting tempahan',
+    'Nothing left to mark':'Tiada yang belum dibaca',
     'Mark all read':'Tanda semua dibaca',
     'Edit':'Sunting',
     'Waitlisted':'Dalam senarai menunggu',
@@ -5837,6 +5840,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Open programme':'திட்டத்தைத் திற',
     'Withdraw':'திரும்பப் பெறு',
     'Edit booking':'முன்பதிவைத் திருத்து',
+    'Nothing left to mark':'படிக்காதவை எதுவும் இல்லை',
     'Mark all read':'அனைத்தையும் படித்ததாகக் குறி',
     'Edit':'திருத்து',
     'Waitlisted':'காத்திருப்புப் பட்டியலில்',
@@ -15923,9 +15927,14 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
         ${/* nestly_v632 (owner photo 7: "Mark Read All" written into the space the v613 gear left).
              Server-side, not a loop over the rows on screen: this page holds one page of the inbox,
              so a client loop would clear what had been fetched and leave the badge showing a number
-             the customer could not reach. Drawn only when there IS something unread — a control
-             that would do nothing is not offered. */''}
-        ${items.some(item=>String(item?.state||'')==='unread')?`<button type="button" class="btn ghost sm customer-inbox-readall-v632" id="customerInboxReadAllV632">${esc(ct('Mark all read'))}</button>`:''}
+             the customer could not reach.
+             nestly_v651 (owner: "mark all read - disappears (bring it back)"). v632 drew it only
+             when something was unread, reasoning that a control which would do nothing should not
+             be offered. That reasoning was wrong here: the control vanished at the exact moment it
+             had just WORKED, so the customer's own successful press made the button look broken or
+             lost. A filter row whose contents move around is harder to trust than a button that is
+             occasionally a no-op, so it is always drawn now. */''}
+        <button type="button" class="btn ghost sm customer-inbox-readall-v632" id="customerInboxReadAllV632">${esc(ct('Mark all read'))}</button>
         </div>
       ${/* nestly_v417 (owner, photo 9: the gear ringed — "remove this button"). It is gone, and
            what it hid is NOT: the panel it toggled holds this business's inbox-reminder
@@ -15961,13 +15970,17 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
     const readAllV632=document.getElementById('customerInboxReadAllV632');
     if(readAllV632)readAllV632.onclick=async()=>{
       CUI.setButtonBusy(readAllV632,{busy:true,label:'\u2026'});
-      const {error}=await request('customer_mark_in_app_inbox_read_all_v632',{p_idempotency_key:crypto.randomUUID()});
+      const {data,error}=await request('customer_mark_in_app_inbox_read_all_v632',{p_idempotency_key:crypto.randomUUID()});
       if(!walletSectionStillCurrent(host,isCurrent))return;
       if(error){
         CUI.setButtonBusy(readAllV632,{busy:false});
         toast('Those messages could not be marked read. Try again.');
         return;
       }
+      /* nestly_v651: the button is always on screen now, so pressing it with nothing unread is a
+         normal thing to do. It says so rather than repainting in silence, which would be
+         indistinguishable from a press that did not register. */
+      if(Number(data?.marked||0)===0)toast(ct('Nothing left to mark'));
       /* Repaint from the server rather than editing the rows in place: the RPC decides what was
          eligible (a dismissed message stays dismissed), and this list must show its answer, not a
          guess made here. */
