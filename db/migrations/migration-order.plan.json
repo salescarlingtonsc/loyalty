@@ -3225,6 +3225,12 @@
       "path": "db/migrations/20260831_nestly_v659_edit_means_edit.sql",
       "semanticVersion": "v659",
       "proposedDeployVersion": "20260831130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v660_owner_rulings.sql",
+      "semanticVersion": "v660",
+      "proposedDeployVersion": "20260831140000"
     }
   ]
 }

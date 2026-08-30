@@ -1993,7 +1993,15 @@ function customerBookingRowV580(group,item,tab){
   const detail=[service,time?`at ${time}`:''].filter(Boolean).join(' ');
   const address=String(item.branch_address||'').trim();
   const branch=String(item.branch_name||'').trim();
-  const rescheduleV508=group.bookingEnabled===true&&!!group.business_slug&&!!item.appointment_id
+  /* nestly_v660 (owner ruling: the Customer Permission box "is for appointments that are
+     confirmed - the check will determine if business allow for reschedule/cancel after
+     confirmation. because if pending they can edit or cancel freely before approval").
+     appointmentChangesEnabled has ridden on this group since v178 and gated nothing here; both
+     controls below act on an appointment the business has already committed to, which is exactly
+     what the owner says the box governs. A PENDING request keeps its own Reschedule and X — those
+     are the request-row controls (amend/withdraw), which are deliberately not gated. */
+  const changesAllowedV660=group.appointmentChangesEnabled===true;
+  const rescheduleV508=group.bookingEnabled===true&&changesAllowedV660&&!!group.business_slug&&!!item.appointment_id
     &&String(item.status||'')==='booked'&&tab==='bookings';
   /* nestly_v655 (owner photo 1: "where's the cancel appointment button. i need it there. X").
      A confirmed booking offered Reschedule and no way out. The X is the same control the Pending
@@ -2526,8 +2534,11 @@ async function renderCustomerBookings(){
         p_appointment:button.dataset.cancelAppointmentV655});
       if(result.error){
         button.disabled=false;button.removeAttribute('aria-busy');
-        return toast(String(result.error.message||'')==='already_actioned'
+        const messageV660=String(result.error.message||'');
+        return toast(messageV660==='already_actioned'
           ?'This booking has already been changed — open it again to see where it stands.'
+          :messageV660==='appointment_changes_disabled'
+          ?'This business asks you to contact them to change a confirmed booking.'
           :'The booking could not be cancelled. Try again.');
       }
       toast('Booking cancelled');renderCustomerBookings();
@@ -3515,10 +3526,23 @@ function openRescheduleReplaceSheetV508({appointmentId,businessSlug,startsAt,onD
         if(typeof onDone==='function')onDone();
         return;
       }
+      /* nestly_v660: the business does not allow changes to a booking it has already confirmed.
+         The button is hidden in that case, so reaching here means the setting changed while this
+         sheet was open — say which, rather than "try again" for something that will never work. */
+      if(String(error.message||'')==='appointment_changes_disabled'){
+        close();toast('This business asks you to contact them to change a confirmed booking.');
+        if(typeof onDone==='function')onDone();
+        return;
+      }
       return toast('The reschedule could not be sent. Please try again.');
     }
     close();
-    toast('Request sent — the business will confirm your new time.');
+    /* nestly_v660: an auto-approving business confirms a free slot the moment the request lands,
+       so the reply says which happened. Telling a customer to wait for a confirmation that has
+       already arrived is how they end up calling the shop to ask. */
+    toast(data&&data.auto_approved===true
+      ?'Rebooked — your new time is confirmed.'
+      :'Request sent — the business will confirm your new time.');
     if(typeof onDone==='function')onDone();
     return data;
   };

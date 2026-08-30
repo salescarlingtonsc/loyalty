@@ -2713,6 +2713,10 @@
       "reason": "V193 rename/delete of an UNSOLD package version. Refuses the moment a single client_packages row references the plan, checked on plan_id (the real FK), so it can never remove a version a customer has bought. Writes package_plans configuration only; no ledger, no stored value."
     },
     {
+      "id": "browser.rpc:app/app.js:business_manage_catalogue_item_v660",
+      "reason": "V660 delete of a SERVICE or a PRODUCT, the Delete the owner asked the two catalogues to grow so they match the Packages row (status / edit / delete). Module-gated on the item's own module ('services' or 'inventory'). It counts every reference to the row and hard-deletes ONLY when that count is zero; anything referenced is set active=false with retired_at=now() and kept. That count is what keeps it off the RESTRICT foreign keys that would otherwise raise a bare 23503 (appointment_services and loyalty_reward_services for a service; sale_items, bar_bottles and loyalty_reward_products for a product), and it deliberately also counts the CASCADE references whose loss would be silent and would move money — bundle_items, where a bundle losing a member still charges the bundle price, and tier_benefit_scope_v656, a discount's eligibility list. Writes services/products configuration only; no ledger, no stored value, no customer-value writer."
+    },
+    {
       "id": "browser.rpc:app/app.js:business_preview_stamp_conversion_v384",
       "reason": "V384 read-only conversion preview. STABLE SECURITY DEFINER, owner-gated by app.c45_owner_loyalty_write; aggregates the business's own points_ledger/points_batches balances at a candidate rate and returns counts (customers, points convertible, stamps to issue, leftover) plus the already-converted flag. Writes nothing; the dialog renders its answer while the owner picks a rate."
     },

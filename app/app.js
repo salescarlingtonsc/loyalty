@@ -3483,6 +3483,29 @@ function dismissFormModalV658(card){
   card.onkeydown=null;
   card.style.display='none';
 }
+/* nestly_v660: Delete for a Service or a Product. One handler, because the two rows now differ
+   only by the word "service"/"product" — the Packages model the owner asked the others to follow.
+   The SERVER decides between removing and retiring; this only asks, reports which happened, and
+   refreshes. */
+function bindCatalogueDeleteV660(onDone){
+  document.querySelectorAll('[data-catalogue-delete-v660]').forEach(button=>button.onclick=async()=>{
+    const id=button.dataset.catalogueDeleteV660;
+    const kind=button.dataset.catalogueKindV660==='product'?'product':'service';
+    const name=button.dataset.catalogueNameV660||`this ${kind}`;
+    if(!await confirmActionV386(
+      `Delete "${name}"? If nothing uses it, it is removed. If it appears on a past ${kind==='service'?'appointment or sale':'sale'}, or in a package, reward, bundle or tier discount, it is switched off instead and kept — so nothing you have already recorded changes.`,
+      {confirmLabel:'Delete',cancelLabel:'Keep it'}))return;
+    CUI.setButtonBusy(button,{busy:true,label:'…'});
+    const {data,error}=await sb.rpc('business_manage_catalogue_item_v660',
+      {p_business:S.biz.id,p_kind:kind,p_item:id,p_action:'delete'});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+    if(error)return toast(ownerErrorText(error));
+    toast(data&&data.action==='retire'
+      ?`"${name}" is switched off and kept — ${data.used_by} record${Number(data.used_by)===1?'':'s'} still refer to it`
+      :`"${name}" deleted`);
+    if(typeof onDone==='function')onDone();
+  });
+}
 function confirmActionV386(message,{confirmLabel='Confirm',cancelLabel='Cancel',danger=true}={}){
   const text=String(message||'').trim();
   const cut=(()=>{
@@ -7407,7 +7430,15 @@ function customerBookingRowV580(group,item,tab){
   const detail=[service,time?`at ${time}`:''].filter(Boolean).join(' ');
   const address=String(item.branch_address||'').trim();
   const branch=String(item.branch_name||'').trim();
-  const rescheduleV508=group.bookingEnabled===true&&!!group.business_slug&&!!item.appointment_id
+  /* nestly_v660 (owner ruling: the Customer Permission box "is for appointments that are
+     confirmed - the check will determine if business allow for reschedule/cancel after
+     confirmation. because if pending they can edit or cancel freely before approval").
+     appointmentChangesEnabled has ridden on this group since v178 and gated nothing here; both
+     controls below act on an appointment the business has already committed to, which is exactly
+     what the owner says the box governs. A PENDING request keeps its own Reschedule and X — those
+     are the request-row controls (amend/withdraw), which are deliberately not gated. */
+  const changesAllowedV660=group.appointmentChangesEnabled===true;
+  const rescheduleV508=group.bookingEnabled===true&&changesAllowedV660&&!!group.business_slug&&!!item.appointment_id
     &&String(item.status||'')==='booked'&&tab==='bookings';
   /* nestly_v655 (owner photo 1: "where's the cancel appointment button. i need it there. X").
      A confirmed booking offered Reschedule and no way out. The X is the same control the Pending
@@ -7940,8 +7971,11 @@ async function renderCustomerBookings(){
         p_appointment:button.dataset.cancelAppointmentV655});
       if(result.error){
         button.disabled=false;button.removeAttribute('aria-busy');
-        return toast(String(result.error.message||'')==='already_actioned'
+        const messageV660=String(result.error.message||'');
+        return toast(messageV660==='already_actioned'
           ?'This booking has already been changed — open it again to see where it stands.'
+          :messageV660==='appointment_changes_disabled'
+          ?'This business asks you to contact them to change a confirmed booking.'
           :'The booking could not be cancelled. Try again.');
       }
       toast('Booking cancelled');renderCustomerBookings();
@@ -9206,10 +9240,23 @@ function openRescheduleReplaceSheetV508({appointmentId,businessSlug,startsAt,onD
         if(typeof onDone==='function')onDone();
         return;
       }
+      /* nestly_v660: the business does not allow changes to a booking it has already confirmed.
+         The button is hidden in that case, so reaching here means the setting changed while this
+         sheet was open — say which, rather than "try again" for something that will never work. */
+      if(String(error.message||'')==='appointment_changes_disabled'){
+        close();toast('This business asks you to contact them to change a confirmed booking.');
+        if(typeof onDone==='function')onDone();
+        return;
+      }
       return toast('The reschedule could not be sent. Please try again.');
     }
     close();
-    toast('Request sent — the business will confirm your new time.');
+    /* nestly_v660: an auto-approving business confirms a free slot the moment the request lands,
+       so the reply says which happened. Telling a customer to wait for a confirmation that has
+       already arrived is how they end up calling the shop to ask. */
+    toast(data&&data.auto_approved===true
+      ?'Rebooked — your new time is confirmed.'
+      :'Request sent — the business will confirm your new time.');
     if(typeof onDone==='function')onDone();
     return data;
   };
@@ -27427,7 +27474,13 @@ async function servicesPage(){
       <td>${canWrite
         ?`<button type="button" class="pill ${s.active?'on':'off'}" data-svc-active="${s.id}" data-svc-name="${esc(serviceDisplayName(s))}" data-svc-next="${s.active?'off':'on'}" aria-pressed="${s.active?'true':'false'}" data-workspace-i18n title="${s.active?'Switch this service off':'Switch this service on'}">${statusOnOff(s.active)}</button>`
         :`<span class="pill ${s.active?'on':'off'}">${statusOnOff(s.active)}</span>`}</td>
-      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+      <td>${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost sm" data-svc-edit="${s.id}">Edit</button>${/* nestly_v660 (owner photo 7: the Packages row "will be the model that other modules
+             follow (status / edit / delete) ... for products & services"). v658 aligned Status and
+             Edit; this is Delete. The confirmation is written by the SERVER's own answer, not by
+             this row: a service or product that anything refers to — a past appointment or sale, a
+             booking, a package, a reward, a bundle, a tier discount — is switched off and kept,
+             because deleting it would either be refused by the database or silently rewrite a
+             bundle's economics. Only something nothing refers to is actually removed. */''}<button type="button" class="btn ghost sm" data-catalogue-delete-v660="${s.id}" data-catalogue-kind-v660="service" data-catalogue-name-v660="${esc(serviceDisplayName(s))}">Delete</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add your first service so customers can book and staff can select it during checkout.'});
     const editingRowV584=canWrite&&editingServiceId?(sv||[]).find(row=>row.id===editingServiceId):null;
@@ -27465,6 +27518,7 @@ async function servicesPage(){
     if(canUploadCatalogueMedia)bindCataloguePhotoUploadsV158({onSaved:()=>load()});
     bindServiceEditors();
     bindServiceStatusV658(); // nestly_v658: the status pill is a switch now
+    bindCatalogueDeleteV660(load); // nestly_v660
   }
   if(canWrite)$('sadd').onclick=async()=>{
     const name=$('sn').value.trim(),variant=$('sv').value.trim()||null,
@@ -47248,6 +47302,7 @@ async function inventoryPage(){
       if(closeProductDialogV613)return closeProductDialogV613();
       editingProductId=null;loadInv();
     });
+    bindCatalogueDeleteV660(loadInv); // nestly_v660
     document.querySelectorAll('[data-prod-toggle]').forEach(b=>b.onclick=async()=>{
       /* nestly_v658: ask before it stops being sellable; switching back on takes nothing away. */
       if(b.dataset.prodActive&&!await confirmActionV386(
@@ -47325,7 +47380,7 @@ async function inventoryPage(){
       <td data-label="Status">${canWrite
         ?`<button type="button" class="pill ${p.active?'on':'off'}" data-prod-toggle="${p.id}" data-prod-name="${esc(p.name||'')}" data-prod-active="${p.active?'1':''}" aria-pressed="${p.active?'true':'false'}" data-workspace-i18n title="${p.active?'Switch this product off':'Switch this product on'}">${statusOnOff(p.active)}</button>`
         :`<span class="pill ${p.active?'on':'off'}">${statusOnOff(p.active)}</span>`}</td>
-      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+      <td data-label="Actions">${canWrite?`<div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-prod-edit="${p.id}">Edit</button><button type="button" class="btn ghost sm" data-catalogue-delete-v660="${p.id}" data-catalogue-kind-v660="product" data-catalogue-name-v660="${esc(p.name||'')}">Delete</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</tbody></table></div>`
       :CUI.emptyState({iconName:'inventory',title:'No products yet',body:`Add what you sell — for example chicken rice at ${money(500)}.`});
     /* nestly_v613: the editor is a dialog, exactly as the service editor has been since v584.
@@ -53764,7 +53819,7 @@ function bookingRulesCardHtmlV325(){
            this is a move, not a second save path. */''}
       ${isOwner?`<label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
       <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers request cancellation or another time from an existing appointment.</span></span></label>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers cancel or reschedule an appointment <b>after you have confirmed it</b>. A request you have not answered yet can always be changed or withdrawn by the customer — this does not affect that.</span></span></label>
       ${/* nestly_v641 (owner: "align the boxes after you have compiled them"). Four switches that
            had arrived from two different cards were still wearing two different shapes — two
            bordered .checkrow blocks with a bold title and a description, and two bare inline

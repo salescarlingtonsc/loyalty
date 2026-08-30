@@ -3220,6 +3220,12 @@
       "version": "20260831130000",
       "name": "nestly_v659_edit_means_edit",
       "sourcePath": "db/migrations/20260831_nestly_v659_edit_means_edit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831140000",
+      "name": "nestly_v660_owner_rulings",
+      "sourcePath": "db/migrations/20260831_nestly_v660_owner_rulings.sql"
     }
   ]
 }
