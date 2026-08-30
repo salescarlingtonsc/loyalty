@@ -35135,6 +35135,13 @@ function bookingRulesCardHtmlV325(){
            describes the box it belongs to rather than floating under the pair. */''}
       <label class="checkrow" for="aac"><input type="checkbox" id="aac" ${S.biz.auto_approve_changes?'checked':''}><span><b>Auto-approve reschedule/cancel requests</b><br><span class="muted small">Accept a customer's change without waiting for you to approve it in Bookings.</span></span></label>
       <label class="checkrow" for="setStaffChoice"><input type="checkbox" id="setStaffChoice" ${S.biz.booking_staff_choice?'checked':''}><span><b>Let customers choose a team member</b><br><span class="muted small">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</span></span></label>
+      ${/* nestly_v642 (owner: "shift it up to Customer Appointment Request"). The fifth box. It is
+           not about appointments, which is why v375 kept it apart — but it IS the same question
+           this card asks, what a customer may do, and it was the only thing left on the page
+           below the WhatsApp template. The markup is unchanged and still carries
+           #businessCustomerCapabilities and #customerCapabilitiesStatus, so the capability loader
+           finds and enables it exactly as before; only its home moved. */''}
+      ${customerInterfaceSectionsHtmlV243()}
       <div class="row" style="margin-top:12px"><button class="btn sm" id="setStaffChoiceSaveV606">Save</button></div>
       <div id="setAvailabilityErr" role="status"></div>`
         :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
@@ -35629,13 +35636,16 @@ function customerInterfaceSectionsHtmlV243(){
   return `<div class="customer-interface-sections-v243">
     <!-- V223 (owner: "customer app settings should not be in bookings - it should be in
          operation set up"). These switches govern what a customer may do in their own app.
-         V375 moved the two appointment ones to Appointment Setting; the redemption QR is not
-         about appointments, so it stays here with the section's status line. -->
+         nestly_v642 (owner: "shift it up to Customer Appointment Request"): the redemption QR was
+         the last thing on the page in a card of its own, one checkbox under a WhatsApp template
+         it has nothing to do with. It renders INSIDE the Customer Appointment Request card now,
+         as a fifth box beside the four the owner already approved — so this section is no longer
+         a card, only the region the capability loader marks busy and writes its status into. -->
     ${/* nestly_v633 (owner photo 5: the "Customer app actions" heading and the availability/enablement
          paragraph struck through). Two sentences of theory over a single labelled checkbox. The
          checkbox says what it does and the status line below says what state it is in; the Save
          button keeps its id and its place. */''}
-    <section class="card" id="businessCustomerCapabilities" style="margin-bottom:16px" aria-busy="true"><div class="row"><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" style="display:none" disabled>Save</button></div>
+    <section id="businessCustomerCapabilities" aria-busy="true"><div class="row"><span class="spacer"></span><button class="btn sm capabilities-save-v375" id="saveCustomerCapabilities" type="button" style="display:none" disabled>Save</button></div>
       <label class="checkrow" for="customerRedemptionEnabled"><input id="customerRedemptionEnabled" type="checkbox" disabled><span><b>Customer redemption QR</b><br><span class="muted small">Let customers prepare a QR that staff must scan before points are redeemed.</span></span></label>
       <p id="customerCapabilitiesStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px">Loading customer action settings…</p></section>
     </div>`;
@@ -35785,15 +35795,11 @@ async function customerInterfacePageV243(hashParam){
          it does not illustrate. */''}
     ${ciSectionV296('appointment',`${customerInterfaceSectionHeadingV269('ciSectionAppointmentV325','Appointment Setting','Booking rules, auto-approve and opening hours for your customers.')}
     ${bookingRulesCardHtmlV325()}
-    ${/* nestly_v641 (owner: "shift the boxes to photo 1"). v633 put Customer booking and Customer
-         appointment changes inside Customer Appointment Request but left the card they came from
-         still rendering below it — so both switches existed TWICE on one page, sharing their ids.
-         Whichever copy the loader bound second is the one that worked, and the other sat there
-         permanently unticked, which is exactly what the owner photographed. The card is gone.
-         In its place: the redemption-QR card, which v633 meant to move here and left stranded in
-         the retired 'actions' section — a section the router no longer reaches, so that switch has
-         been unreachable since v633 shipped. */''}
-    ${customerInterfaceSectionsHtmlV243()}
+    ${/* nestly_v641: the duplicate "What customers may do with appointments" card is gone — its two
+         switches live inside Customer Appointment Request, which is also where nestly_v642 moved
+         the redemption QR. bookingRulesCardHtmlV325 above renders all five, so nothing is drawn
+         here; a second copy would put every capability id on the page twice, which is the defect
+         v641 exists to fix. */''}
     ${/* nestly_v577 (owner mark, photo 9: the whole "Service buffer times" card struck through,
          "remove this!"). It was a POINTER card only — it set nothing and saved nothing, it just
          told the reader that buffers live on the service. Buffers themselves are untouched: they

@@ -136,8 +136,16 @@ test('V259 the Workspace & brand form lives in the Customer Interface module', (
   // around all three, so the panel call itself is no longer individually guarded.
   assert.match(interfacePage, /\$\{workspaceBrandPanelHtmlV259\(\)\}/);
   assert.match(interfacePage, /wireWorkspaceBrandV259\(\);/);
-  assert.match(interfacePage, /ciSectionV296\('appointment',[\s\S]{0,2000}?customerInterfaceSectionsHtmlV243\(\)/,
-    'the app-actions card renders inside Appointment Setting, the page\'s only view');
+  /* nestly_v642: the app-actions section moved one level deeper — it is rendered by
+     bookingRulesCardHtmlV325, inside the Customer Appointment Request card, so it is no longer a
+     sibling of the booking rules in the page source. It is still reached from the appointment
+     section and nowhere else, which is what this line checks. */
+  assert.match(interfacePage, /ciSectionV296\('appointment',[\s\S]{0,2000}?bookingRulesCardHtmlV325\(\)/,
+    'the appointment view renders the card that holds every customer permission');
+  /* Calls only — the declaration `function customerInterfaceSectionsHtmlV243(){` also contains
+     the empty parens, so it has to be excluded or this counts itself. */
+  assert.equal((app.match(/(?<!function\s)customerInterfaceSectionsHtmlV243\(\)/g) || []).length, 1,
+    'exactly one caller, so no capability id can appear on the page twice');
   /* nestly_v634: the app-actions card (customerInterfaceSectionsHtmlV243) moved into the
      Appointment Setting section when Customer Action lost its own tab, so it now appears BEFORE
      the customer-programme editor in source. What V259 is protecting is that the brand form leads

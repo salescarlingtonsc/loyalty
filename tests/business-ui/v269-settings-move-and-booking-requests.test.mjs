@@ -149,11 +149,11 @@ test('V269 Customer Interface presents the three sections the owner named, in or
     'workspaceBrandPanelHtmlV259()',
     "customerInterfaceSectionHeadingV269('ciSectionAppointmentV325'",
     'bookingRulesCardHtmlV325()',
-    /* nestly_v634: the app-actions card moved INTO Appointment Setting when Customer Action lost
-       its own tab, so it now sits between the booking rules and the programme heading. Its place
-       in this ordered list moves with it — the list still describes the real composition of the
-       module, which is what V269 exists to pin. */
-    'customerInterfaceSectionsHtmlV243(',
+    /* nestly_v641 moved the app-actions section INTO Appointment Setting; nestly_v642 moved it one
+       level deeper still, inside the Customer Appointment Request card that bookingRulesCardHtmlV325
+       builds — so it is no longer a marker in the page's own source. bookingRulesCardHtmlV325()
+       above is the marker that stands for it, and the section's continued existence is pinned by
+       V259 and by the v243 slice tests. */
     "customerInterfaceSectionHeadingV269('ciSectionProgrammeV269'",
     'id="customerProgrammeEditorV95"',
     /* V303: the V296 Gift cards section and its switch left this page with the rest of the
