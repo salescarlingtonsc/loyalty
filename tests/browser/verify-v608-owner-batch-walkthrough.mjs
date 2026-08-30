@@ -202,12 +202,22 @@ console.log('\n### item 1 — the Subscription branch table');
 { const {ctx,page,errs}=await open('/settings');
   await page.waitForTimeout(2000);
   const heads=await page.evaluate(()=>[...document.querySelectorAll('#billingWrap th')].map(h=>h.textContent.trim()));
-  ok(JSON.stringify(heads)===JSON.stringify(['Business name','Branch','Plan','Expires on','Status','Payment method']),'six columns: '+heads.join(' | '));
+  /* nestly_v612 built this with six columns, as the owner confirmed when asked. A later owner
+     photo (v628, another session) refined it: the business name column went because every row
+     carried the same value and the heading already says it, "Plan" became "Payment Frequency"
+     because that is what the cell holds, and "Expires on" became "Billed until" because the
+     subscription is paid up to that date rather than expiring on it. The SHAPE this file guards is
+     unchanged — one row per active branch, one company subscription — so the assertion follows the
+     owner's newer wording rather than pinning wording they have since replaced. */
+  ok(JSON.stringify(heads)===JSON.stringify(['Branch','Payment Frequency','Billed until','Status','Payment method']),'five columns: '+heads.join(' | '));
   const rows=await page.evaluate(()=>[...document.querySelectorAll('#billingWrap tr')].slice(1).map(r=>[...r.children].map(c=>c.textContent.trim())));
   console.log('     rows:',JSON.stringify(rows));
   ok(rows.length===2,'one row per active branch');
-  ok(rows.every(r=>r[4]==='Ongoing'),'both say Ongoing — it is one company subscription');
-  ok(rows[0][1]!==rows[1][1],'and the branch is what differs down the table');
+  const statusCol=heads.indexOf('Status'),branchCol=heads.indexOf('Branch');
+  ok(rows.every(r=>r[statusCol]==='Ongoing'),'every row says Ongoing — it is one company subscription');
+  ok(rows[0][branchCol]!==rows[1][branchCol],'and the branch is what differs down the table');
+  ok(new Set(rows.map(r=>r[heads.indexOf('Billed until')])).size===1,
+     'one renewal date across every branch, because there is one subscription');
   ok(errs.length===0,'no page errors ('+errs.slice(0,1)+')');
   await ctx.close(); }
 
