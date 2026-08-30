@@ -3046,6 +3046,12 @@
       "version": "20260830110000",
       "name": "nestly_v632_inbox_mark_all_read",
       "sourcePath": "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830120000",
+      "name": "nestly_v634_reconcile_failure_visibility",
+      "sourcePath": "db/migrations/20260830_nestly_v634_reconcile_failure_visibility.sql"
     }
   ]
 }

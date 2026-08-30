@@ -12641,7 +12641,8 @@
       payment_failed:'Payment failing',
       branch_awaiting:'Branch awaiting payment',
       manual_request_open:'Manual request waiting',
-      reconcile_unconfigured:'Reconciliation not configured'
+      reconcile_unconfigured:'Reconciliation not configured',
+      reconcile_failed:'Reconciliation run failed'
     };
     return pt(labels[kind]||plainLabel(kind));
   }

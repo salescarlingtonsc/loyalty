@@ -3051,6 +3051,12 @@
       "path": "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql",
       "semanticVersion": "v632",
       "proposedDeployVersion": "20260830110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v634_reconcile_failure_visibility.sql",
+      "semanticVersion": "v634",
+      "proposedDeployVersion": "20260830120000"
     }
   ]
 }
