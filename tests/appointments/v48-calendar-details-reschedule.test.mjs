@@ -113,7 +113,7 @@ test('calendar rows minimize PII and fetch one branch-scoped detail record on de
       'a calendar row must never carry contact PII — that stays in the on-demand detail record');
   }
   assert.match(calendar,/async function openAppointmentDetails\(summary,\{startEditing=false\}=\{\}\)[\s\S]*Loading customer and service information/);
-  assert.match(calendar,/select\('id,branch_id,service_id,starts_at,ends_at,status,staff_id,note,total_cents,clients\(full_name,phone,phone_norm,email,birth_date,notes\),services!appointments_service_id_fkey\(name,duration_min,price_cents\)'\)[\s\S]*eq\('branch_id',summary\.branch_id\)[\s\S]*eq\('id',summary\.id\)\.maybeSingle\(\)/);
+  assert.match(calendar,/select\('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients\(full_name,phone,phone_norm,email,birth_date,notes\),services!appointments_service_id_fkey\(name,duration_min,price_cents\)'\)[\s\S]*eq\('branch_id',summary\.branch_id\)[\s\S]*eq\('id',summary\.id\)\.maybeSingle\(\)/);
   assert.match(calendar,/const stillCurrent=detailGate\.begin\(\)[\s\S]*if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}/);
   assert.match(calendar,/Unable to load details[\s\S]*appointmentDetailRetry/);
   assert.match(calendar,/appointmentDetailRetry'\)\?\.focus\(\)/);

@@ -25934,6 +25934,20 @@ async function appointmentsPage(){
         sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
           .eq('business_id',S.biz.id).then(()=>{},()=>{});
       }
+      /* A4: "Book next visit" set this right after the earlier appointment was completed for the
+         SAME client — this is the one shot at recording the provenance, so it is consumed here
+         whether or not it matches (a booking for someone else spends the offer just the same).
+         Fire-and-forget: the appointment itself is already saved, so a failed link write must
+         never be reported as a failed booking. */
+      if(rebookFromAppointmentV640){
+        const rebookHandoffV640=rebookFromAppointmentV640;rebookFromAppointmentV640=null;
+        if(rebookHandoffV640.businessId===S.biz.id&&rebookHandoffV640.clientId&&
+          rebookHandoffV640.clientId===request.p_client&&data?.appointment_id){
+          sb.rpc('link_rebooked_appointment_v1',{p_business:S.biz.id,
+            p_appointment:data.appointment_id,p_booked_from:rebookHandoffV640.appointmentId})
+            .then(({error:linkError})=>{if(linkError)console.error('link_rebooked_appointment_v1 failed',linkError)});
+        }
+      }
       bookingAttempt=null;$('an').value='';$('scheduleSuggestion').innerHTML='';
       toast(data?.replayed?'Appointment already booked — no duplicate created':workspaceTemplateTextV97('bookedWith',{staff:data?.staff_name||staffName[data?.staff_id]||workspaceTranslationV97('staff')}));
       closeNewAppointmentForm();
@@ -26071,7 +26085,9 @@ async function appointmentsPage(){
     };
     const close=()=>closeAppointmentDetails();closeAppointmentDialog=removeLoading;deactivateLoading=CUI.activateDialog(loading,{onClose:close,initialFocus:'#appointmentLoadingClose'});$('appointmentLoadingClose').onclick=close;
     const stillCurrent=detailGate.begin();
-    const {data,error}=await sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents)')
+    /* A4: client_id is added so a completed appointment can hand its client off to "Book next
+       visit" without a second round trip — everything else on this row was already selected. */
+    const {data,error}=await sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents)')
       .eq('business_id',S.biz.id).eq('branch_id',summary.branch_id).eq('id',summary.id).maybeSingle();
     if(!stillCurrent()||!loading.isConnected){removeLoading({restoreFocus:false});return}
     if(error||!data){
@@ -26135,10 +26151,35 @@ async function appointmentsPage(){
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
       ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
-    const close=()=>closeAppointmentDetails();
+    /* A4: every way this dialog can close (X, Escape, backdrop, Done) spends a pending "Book next
+       visit" handoff unless the owner is that very moment being sent to the booking form for it —
+       route() clears the same field on navigation away from Appointments as a second backstop. */
+    let keepRebookHandoffV640=false;
+    const close=()=>{if(!keepRebookHandoffV640)rebookFromAppointmentV640=null;closeAppointmentDetails()};
     closeAppointmentDialog=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#appointmentDialogClose',inheritHistoryId});
     $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
-    dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{if(await setStatus(item.id,action.dataset.status))close()});
+    dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{
+      const status=action.dataset.status;
+      if(!await setStatus(item.id,status))return;
+      if(status!=='completed'){close();return}
+      /* A4 (owner: rebooking should be one tap after checkout). The completed appointment is
+         remembered so the NEXT appointment booked for this same client can be linked to it via
+         link_rebooked_appointment_v1 — see the #ago handler below in appointmentsPage. */
+      rebookFromAppointmentV640={businessId:S.biz.id,appointmentId:item.id,clientId:item.client_id||null};
+      const card=dialog.querySelector('.modal-card');
+      if(!card){close();return}
+      card.innerHTML=`<div class="row"><div><h2 id="appointmentCompletedTitleV640">Appointment completed</h2><p class="muted small" style="margin-top:4px" data-merchant-content>${esc(client.full_name||'This customer')} is checked out.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentCompletedCloseV640" aria-label="Close">Close</button></div><div class="appointment-detail-actions" style="margin-top:16px"><button type="button" class="btn" id="appointmentBookNextV640">Book next visit</button><button type="button" class="btn ghost" id="appointmentCompletedDoneV640">Done</button></div>`;
+      dialog.setAttribute('aria-labelledby','appointmentCompletedTitleV640');
+      $('appointmentCompletedCloseV640').onclick=close;
+      $('appointmentCompletedDoneV640').onclick=close;
+      $('appointmentBookNextV640').onclick=()=>{
+        pendingApptClientId=item.client_id||'';
+        keepRebookHandoffV640=true;
+        close();
+        nav('#/appointments');
+      };
+      requestAnimationFrame(()=>$('appointmentBookNextV640')?.focus());
+    });
     if(!amendableBooked)return;
     const editForm=$('appointmentRescheduleForm'),toggle=$('appointmentEditToggle'),feedback=$('appointmentRescheduleFeedback');
     const setReschedulePending=pending=>{

@@ -254,9 +254,12 @@ test('the named kernel candidate and the minimum inspection set are present as w
   const ids = new Set(registry.writers.map((w) => w.id));
   // Minimum inspection set from PS-0 §9 + the task brief (each must have been discovered).
   const required = [
-    'db.fn:public.record_quick_sale/9',
+    // v630 widened the kernel candidate with p_occurred_at (arity 9 -> 10) and dropped the
+    // old overload in the same transaction. record_sale_by_phone was widened the same way but
+    // as a runtime DO-block patch, so discovery cannot see its new body — it left the curated
+    // set with v630 and is intentionally absent here.
+    'db.fn:public.record_quick_sale/10',
     'db.fn:public.record_cart_sale/7',
-    'db.fn:public.record_sale_by_phone/9',
     'db.trigger:sales:trg_sale_recorded',
     'db.fn:public.sell_package/3',
     'db.fn:public.sell_package/4',

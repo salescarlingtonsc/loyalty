@@ -17,6 +17,8 @@ Deno.serve(async (req) => {
       if (!JOIN_TOKEN_PATTERN.test(joinToken)) return publicError(req, 404);
       const { data, error } = await adminClient().rpc('internal_public_join_page_v89', { p_join_token: joinToken });
       if (error || !data) return publicError(req, 404);
+      /* v637: identity-free funnel counter — telemetry never blocks the public surface. */
+      try { await adminClient().rpc('internal_public_funnel_hit_by_join_token_v640', { p_join_token: joinToken, p_surface: 'join', p_step: 'page_view' }); } catch { /* ignore */ }
       return json(req, 200, { ...data, turnstile_site_key: turnstileSiteKey() });
     }
 
@@ -48,6 +50,8 @@ Deno.serve(async (req) => {
       p_join_token: body.join_token,
       p_phone: String(body.phone),
     });
+    /* v637: join funnel completed. */
+    try { await adminClient().rpc('internal_public_funnel_hit_by_join_token_v640', { p_join_token: body.join_token, p_surface: 'join', p_step: 'completed' }); } catch { /* ignore */ }
     return json(req, 200, data);
   } catch {
     return publicError(req);

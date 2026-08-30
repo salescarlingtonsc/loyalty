@@ -364,6 +364,13 @@ let pendingWaitlistBookIdV571='';
    walk-in asked for. The appointments page opens its form with these filled, so the only thing
    left is the team member. Consumed once, like every other pending handoff here. */
 let pendingApptPrefillV575=null;
+/* A4: the appointment "Book next visit" just completed, waiting to be linked (via
+   link_rebooked_appointment_v1) to whichever appointment gets booked next for the SAME client.
+   Set only after a successful completion; consumed once the next booking succeeds (match or not,
+   the opportunity is spent) and cleared defensively if the completion dialog closes without
+   booking or the owner navigates away from Appointments first. {businessId,appointmentId,clientId}
+   or null. */
+let rebookFromAppointmentV640=null;
 /* V217. Owner: "new appointment here does not work (in the header - beside record sale)".
    It navigated to #/appointments and stopped there, with the booking form still collapsed
    behind its own button — so a control labelled "New appointment" produced a calendar and no
@@ -546,7 +553,10 @@ const PRODUCT_INTERACTION_EVENTS_V100=new Set([
   'customer.notification_opened','customer.explore_searched',
   /* v265: a customer sharing a promotion. The taxonomy row is in the database (v265 migration);
      both halves must name it or the write is refused with 22023. */
-  'customer.promotion_shared'
+  'customer.promotion_shared',
+  /* A9: a customer sharing a referral. The taxonomy row is in the database; both halves must
+     name it or the write is refused with 22023. */
+  'customer.referral_shared'
 ]);
 /* Business discovery is genuinely tenant-free: the customer is looking for a business they have
    no relationship with, so attaching one would be a fiction. Every OTHER customer event stays
@@ -886,7 +896,7 @@ function resetClientSessionState({preserveInvitation=false}={}){
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
-  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growOffersPageV584=0;growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
+  pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;rebookFromAppointmentV640=null;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growOffersPageV584=0;growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
   customerLocale='en';
   workspaceLocaleLoadedFor='';workspaceLocaleVersion=0;workspaceLocale='en';
@@ -1502,6 +1512,9 @@ async function route(){
     if(h==='#/login')h='#/business';
     if(h.startsWith('#/business?'))h='#/business';
     if(h==='#/programmes'||h.startsWith('#/programmes/'))h=h.replace('#/programmes','#/grow');
+    /* A4: a pending "Book next visit" handoff only makes sense while the owner stays on
+       Appointments to complete it. Leaving for any other route without booking spends it. */
+    if(!h.startsWith('#/appointments'))rebookFromAppointmentV640=null;
     const staffInviteCodeV151=businessStaffInviteCodeV151();
     const platformRoutePath=String(h).split('?')[0].replace(/\/+$/,'');
     const requestedPlatformRoute=platformRoutePath==='#/platform'||platformRoutePath.startsWith('#/platform/');

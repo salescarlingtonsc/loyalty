@@ -3042,27 +3042,105 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v628_analytics_exclusions_watermarks.sql",
+      "semanticVersion": "v628",
+      "proposedDeployVersion": "20260830100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v629_first_acquisition.sql",
+      "semanticVersion": "v629",
+      "proposedDeployVersion": "20260830110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v630_behaviour_time_and_direct_links.sql",
+      "semanticVersion": "v630",
+      "proposedDeployVersion": "20260830120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v631_appointment_lifecycle_events.sql",
+      "semanticVersion": "v631",
+      "proposedDeployVersion": "20260830130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v632_rebooking_link.sql",
+      "semanticVersion": "v632",
+      "proposedDeployVersion": "20260830140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v633_tier_transition_history.sql",
+      "semanticVersion": "v633",
+      "proposedDeployVersion": "20260830150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v634_sale_items_all_paths.sql",
+      "semanticVersion": "v634",
+      "proposedDeployVersion": "20260830160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v635_attribution_associations.sql",
+      "semanticVersion": "v635",
+      "proposedDeployVersion": "20260830170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v636_services_delete_owner_only.sql",
+      "semanticVersion": "v636",
+      "proposedDeployVersion": "20260830180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v637_public_funnel_counters.sql",
+      "semanticVersion": "v637",
+      "proposedDeployVersion": "20260830190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v638_demographics_authority.sql",
+      "semanticVersion": "v638",
+      "proposedDeployVersion": "20260830200000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v639_appointment_status_backfill_keys.sql",
+      "semanticVersion": "v639",
+      "proposedDeployVersion": "20260830210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260830_nestly_v640_funnel_hit_resolvers.sql",
+      "semanticVersion": "v640",
+      "proposedDeployVersion": "20260830220000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260830_nestly_v629_customer_lifetime_spend.sql",
       "semanticVersion": "v629",
-      "proposedDeployVersion": "20260830100000"
+      "proposedDeployVersion": "20260830230000"
     },
     {
       "kind": "executable",
       "path": "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql",
       "semanticVersion": "v632",
-      "proposedDeployVersion": "20260830110000"
+      "proposedDeployVersion": "20260830231000"
     },
     {
       "kind": "executable",
       "path": "db/migrations/20260830_nestly_v634_reconcile_failure_visibility.sql",
       "semanticVersion": "v634",
-      "proposedDeployVersion": "20260830120000"
+      "proposedDeployVersion": "20260830232000"
     },
     {
       "kind": "executable",
       "path": "db/migrations/20260830_nestly_v641_inbox_mark_all_read_through_the_guard.sql",
       "semanticVersion": "v641",
-      "proposedDeployVersion": "20260830130000"
+      "proposedDeployVersion": "20260830233000"
     }
   ]
 }

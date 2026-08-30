@@ -3038,24 +3038,102 @@
     {
       "kind": "pending",
       "version": "20260830100000",
+      "name": "nestly_v628_analytics_exclusions_watermarks",
+      "sourcePath": "db/migrations/20260830_nestly_v628_analytics_exclusions_watermarks.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830110000",
+      "name": "nestly_v629_first_acquisition",
+      "sourcePath": "db/migrations/20260830_nestly_v629_first_acquisition.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830120000",
+      "name": "nestly_v630_behaviour_time_and_direct_links",
+      "sourcePath": "db/migrations/20260830_nestly_v630_behaviour_time_and_direct_links.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830130000",
+      "name": "nestly_v631_appointment_lifecycle_events",
+      "sourcePath": "db/migrations/20260830_nestly_v631_appointment_lifecycle_events.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830140000",
+      "name": "nestly_v632_rebooking_link",
+      "sourcePath": "db/migrations/20260830_nestly_v632_rebooking_link.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830150000",
+      "name": "nestly_v633_tier_transition_history",
+      "sourcePath": "db/migrations/20260830_nestly_v633_tier_transition_history.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830160000",
+      "name": "nestly_v634_sale_items_all_paths",
+      "sourcePath": "db/migrations/20260830_nestly_v634_sale_items_all_paths.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830170000",
+      "name": "nestly_v635_attribution_associations",
+      "sourcePath": "db/migrations/20260830_nestly_v635_attribution_associations.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830180000",
+      "name": "nestly_v636_services_delete_owner_only",
+      "sourcePath": "db/migrations/20260830_nestly_v636_services_delete_owner_only.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830190000",
+      "name": "nestly_v637_public_funnel_counters",
+      "sourcePath": "db/migrations/20260830_nestly_v637_public_funnel_counters.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830200000",
+      "name": "nestly_v638_demographics_authority",
+      "sourcePath": "db/migrations/20260830_nestly_v638_demographics_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830210000",
+      "name": "nestly_v639_appointment_status_backfill_keys",
+      "sourcePath": "db/migrations/20260830_nestly_v639_appointment_status_backfill_keys.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830220000",
+      "name": "nestly_v640_funnel_hit_resolvers",
+      "sourcePath": "db/migrations/20260830_nestly_v640_funnel_hit_resolvers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260830230000",
       "name": "nestly_v629_customer_lifetime_spend",
       "sourcePath": "db/migrations/20260830_nestly_v629_customer_lifetime_spend.sql"
     },
     {
       "kind": "pending",
-      "version": "20260830110000",
+      "version": "20260830231000",
       "name": "nestly_v632_inbox_mark_all_read",
       "sourcePath": "db/migrations/20260830_nestly_v632_inbox_mark_all_read.sql"
     },
     {
       "kind": "pending",
-      "version": "20260830120000",
+      "version": "20260830232000",
       "name": "nestly_v634_reconcile_failure_visibility",
       "sourcePath": "db/migrations/20260830_nestly_v634_reconcile_failure_visibility.sql"
     },
     {
       "kind": "pending",
-      "version": "20260830130000",
+      "version": "20260830233000",
       "name": "nestly_v641_inbox_mark_all_read_through_the_guard",
       "sourcePath": "db/migrations/20260830_nestly_v641_inbox_mark_all_read_through_the_guard.sql"
     }

@@ -39,6 +39,8 @@ Deno.serve(async (req) => {
           p_branch: branch || null,
         });
         if (error || !data) return publicError(req);
+        /* v637: an availability read means the customer is picking a slot — funnel 'started'. */
+        try { await adminClient().rpc('internal_public_funnel_hit_by_slug_v640', { p_slug: slug, p_surface: 'booking', p_step: 'started' }); } catch { /* ignore */ }
         return json(req, 200, data);
       }
 
@@ -48,6 +50,8 @@ Deno.serve(async (req) => {
       if (!limit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: limit.retry_after });
       const { data, error } = await adminClient().rpc('internal_public_booking_page', { p_slug: slug });
       if (error || !data) return publicError(req, 404);
+      /* v637: identity-free funnel counter — telemetry never blocks the public surface. */
+      try { await adminClient().rpc('internal_public_funnel_hit_by_slug_v640', { p_slug: slug, p_surface: 'booking', p_step: 'page_view' }); } catch { /* ignore */ }
       return json(req, 200, { ...data, turnstile_site_key: turnstileSiteKey() });
     }
 
@@ -98,6 +102,8 @@ Deno.serve(async (req) => {
     if (error || !data) return publicError(req);
     if (data.conflict) return conflictError(req);
     await recordAccountOpen('internal_record_account_open_booking_token_v175', { p_token_hash: tokenHash });
+    /* v637: booking funnel completed. */
+    try { await adminClient().rpc('internal_public_funnel_hit_by_slug_v640', { p_slug: body.slug, p_surface: 'booking', p_step: 'completed' }); } catch { /* ignore */ }
     return json(req, 200, { ...data, manage_token: manageToken });
   } catch {
     return publicError(req);

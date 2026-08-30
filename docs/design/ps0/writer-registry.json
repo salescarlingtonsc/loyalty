@@ -982,12 +982,12 @@
       "kernel": "SAFE (contract-ready) — deposits & no-show fees flow here; kernel tender/deposit steps call record_payment. No UI means no live risk yet."
     },
     {
-      "id": "db.fn:public.record_quick_sale/9",
+      "id": "db.fn:public.record_quick_sale/10",
       "surface": "db_function",
-      "latest_file": "20260719034201_frenly_v20_financial_engine.sql",
+      "latest_file": "20260830120000_nestly_v630_behaviour_time_and_direct_links.sql",
       "rows_written": "financial_operations:INSERT/UPDATE, sales:INSERT",
       "detected_signals": "idem-signal, for-update",
-      "entry_point": "record_quick_sale(p_business,p_amount_cents,p_method,p_client,p_staff,p_branch,p_note,p_idempotency_key,p_paid)",
+      "entry_point": "record_quick_sale(p_business,p_amount_cents,p_method,p_client,p_staff,p_branch,p_note,p_idempotency_key,p_paid,p_occurred_at)",
       "callers": "browser till (app/index.html:4209 Quick Sale); record_cart_sale/7; record_sale_by_phone/9",
       "reads": "sales (idem replay), financial_operations",
       "sale_policy": "INDIRECT — inserts sales; BEFORE-INSERT trg_sale_policy_snapshot stamps the v10 policy snapshot on the row; the function itself does not resolve policy",
@@ -1002,21 +1002,8 @@
       "reporting": "revenue/visit per resolved policy snapshot; the canonical revenue event",
       "reversal": "reversible via reverse_sale (append-only reversing row)",
       "ui": "Till → Quick Sale",
-      "kernel": "SAFE — this is the named Unified Checkout Kernel candidate; all sale-spine invariants already live on the sales-table trigger chain here"
-    },
-    {
-      "id": "db.fn:public.record_sale_by_phone/9",
-      "surface": "db_delegating_entrypoint",
-      "latest_file": "20260821000003_nestly_v409_canonical_points_balance.sql",
-      "rows_written": "(delegates to public.record_quick_sale)",
-      "detected_signals": "idem-signal",
-      "delegates_to": [
-        "public.record_quick_sale"
-      ],
-      "entry_point": "record_sale_by_phone(p_business,p_phone,p_amount_cents,p_kind,p_note,p_staff,p_idem,p_branch,p_method)",
-      "callers": "browser phone till (app/index.html:3827)",
-      "idempotency": "delegates to record_quick_sale (financial_operations); phone→client resolved via norm_phone",
-      "kernel": "SAFE — already a thin dispatcher onto the kernel candidate (v47b consolidation). Keep as an adapter."
+      "kernel": "SAFE — this is the named Unified Checkout Kernel candidate; all sale-spine invariants already live on the sales-table trigger chain here",
+      "call_site_finding": "v630 widened the signature with p_occurred_at (48h-clamped event time; joins the idempotency payload only when explicitly supplied so pre-v630 replays hash unchanged) and dropped the /9 overload in the same transaction. v634 runtime-patches this body to synthesize one custom sale_items line per non-kernel quick sale (suppressed under the cart kernel via the app.cart_kernel_context GUC). record_cart_sale (/11) and record_sale_by_phone (/10) were widened by v630 as runtime DO-block patches of their live bodies — discovery cannot see runtime-created definitions, so their /9 curation was retired with this change; their full write-surface documentation is preserved in git history and their delegation target remains this kernel candidate."
     },
     {
       "id": "db.fn:public.redeem_customer_birthday_benefit/4",
@@ -1554,28 +1541,6 @@
       "value": "NON-VALUE — mints a priced quote only; no money, ledger, tender or discount is applied here",
       "kernel_migratability": "KERNEL — the server-owned evaluation-token authority; nothing is client-priceable (a price/amount key on any line is a hard error)",
       "kernel": "KERNEL — PS-1C evaluation half of the unified checkout kernel."
-    },
-    {
-      "id": "db.fn:public.record_cart_sale/9",
-      "surface": "db_function",
-      "latest_file": "20260828010858_nestly_v573_module_off_reaches_the_rpcs.sql",
-      "rows_written": "sale_items:INSERT (server lines + signed studio_discount lines), checkout_discount_lines:INSERT, benefit_fulfilments:INSERT, budget_reservations:INSERT, budget_periods:INSERT/UPDATE, checkout_evaluations:UPDATE (consume), checkout_sv_tenders:UPDATE (reserved -> consumed, binding sale_id + spend_operation_id)",
-      "detected_signals": "idem-signal, for-update",
-      "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid)  [the arity-9 TOKEN finaliser]",
-      "callers": "browser till checkout, after evaluate_checkout",
-      "reads": "checkout_evaluations (FOR UPDATE), services/products (price re-resolution → cart_hash), budget_periods (FOR UPDATE re-check), financial_operations (replay proof), program_rules (discount label)",
-      "sale_policy": "INDIRECT — delegates the money write to record_quick_sale; the parent sale carries the discounted total so points/retention/referral earn on it",
-      "config_version": "atomic revalidation asserts businesses.active_config_version_id is UNCHANGED since evaluation",
-      "idempotency": "reuses record_quick_sale's financial_operations op-ledger for the parent sale; the token's single-use (consumed_at write-once) governs the discount/provenance/budget writes; a same-token replay returns duplicate_ignored",
-      "locking": "checkout_evaluations FOR UPDATE (single-use) + budget_periods FOR UPDATE in (rule_id, period_start) order (deadlock-free); any drift → stale_evaluation (P0001)",
-      "payment": "delegates to record_quick_sale (accrual, p_paid); tender is a separate later surface",
-      "loyalty": "INDIRECT via the parent sale trigger on the DISCOUNTED amount_cents (correct)",
-      "reporting": "sales.amount_cents = subtotal − Σ discounts; sale_items reconcile byte-for-byte; get_checkout_discount_report + benefit_fulfilments reconcile",
-      "reversal": "reverse_sale releases the budget commitment and writes a compensating (negative) fulfilment per discount",
-      "value": "VALUE — the ONLY path that applies a Studio discount to money; writes the signed discount line + provenance",
-      "kernel_migratability": "KERNEL — the finalisation half of the unified checkout kernel (v51 record_cart_sale extended with the signed discount line + evaluation token, per architecture §9)",
-      "kernel": "KERNEL — PS-1C finalisation; the single authoritative discount-applying write path. v67 EXTENDS this finaliser (byte-preserving) to consume a stored-value TENDER: when a checkout_sv_tenders hold is bound to the token it releases the hold and spends via app.sv_spend_core (PS-0 paid/bonus split) in the SAME atomic transaction as the sale, records the non-sv remainder as the only public.payments row (p_paid=false; no cash double-count), and writes the tender evidence. No tender -> byte-unchanged.",
-      "call_site_finding": " V370 re-creates it to guard the checkout_discount_lines insert: an applied effect with no rule_id is the automatic tier discount, which gets a fulfilment row and a signed sale_items line but no Studio provenance row (that table's rule_id is NOT NULL and its key is (sale_id, rule_id, effect_index)). No change to what it writes for rule-backed effects."
     },
     {
       "id": "db.fn:public.reverse_sale_v40_base/6",
@@ -3840,6 +3805,14 @@
     {
       "id": "browser.write:app/app.js:product_branches:DELETE",
       "reason": "browser direct write to non-value catalog/config table product_branches (DELETE); nestly_v627 catalogue editors, owner-only RLS, sets which branches sell a product; setup data, not customer value"
+    },
+    {
+      "id": "browser.rpc:app/app.js:link_rebooked_appointment_v1",
+      "reason": "Phase A M5 (A4) 'Book next visit': after completing an appointment, the completion dialog remembers it and, if the very next appointment booked matches the same client, fire-and-forget links the two via public.link_rebooked_appointment_v1 (nestly_v632). Non-value write — it sets ONLY appointments.booked_from_appointment_id, a write-once provenance column guarded by app.appointments_rebook_guard_v632 (NULL->value exactly once, never overwritten), moves no ledger/credit/points value and mints nothing. A failed link is logged to the console and never blocks or retries the booking, which is already saved."
+    },
+    {
+      "id": "db.backfill:20260830160000_nestly_v634_sale_items_all_paths.sql:sale_items",
+      "reason": "one-time migration backfill (sale_items:INSERT) in 20260830160000_nestly_v634_sale_items_all_paths.sql; projects one honest line per pre-v634 itemless sale from the sale row's own facts (description suffixed ·backfill); reversal rows skipped; product_id deliberately rides ref_id only so trg_sale_item_stock_deduct cannot double-deduct; NOT a runtime writer"
     }
   ]
 }
