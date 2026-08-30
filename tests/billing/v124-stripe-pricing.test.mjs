@@ -113,9 +113,15 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   const app = ((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app, /get_business_billing_v125/);
   assert.match(app, /value="annual"[^>]+checked/);
-  assert.match(app, /SGD 1,188/);
-  assert.match(app, /SGD 148/);
-  assert.match(app, /1,000 customer profiles/);
+  /* nestly_v653: the card no longer restates prices — it renders them from
+     billing_plan_catalog_v124, which is the same row the checkout charges from. Grepping for
+     "SGD 1,188" here only ever proved the literal had been typed, and it sat happily beside a
+     hardcoded "Annual saves SGD 600" that the catalogue says is 588. Assert the wiring instead;
+     tests/marketing/v274-landing-page.test.mjs pins the catalogue amounts themselves. */
+  assert.match(app, /annualPlan\?esc\(money\(annualPlan\.base_amount_cents\)\)/);
+  assert.match(app, /monthlyPlan\?esc\(money\(monthlyPlan\.base_amount_cents\)\)/);
+  assert.match(app, /\$\{includedCapacity\.toLocaleString\('en-SG'\)\} customer profiles included/);
+  assert.match(app, /money\(plan\.capacity_block_amount_cents\)/);
   assert.match(app, /Staff access included/);
   assert.match(app, /Template-assisted promotion wording/);
   assert.match(app, /does not use generative AI/);

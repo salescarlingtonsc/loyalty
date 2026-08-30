@@ -251,15 +251,46 @@ test('every security header block survives the rewrite change untouched', () => 
 
 /* ── honesty ──────────────────────────────────────────────────────────────── */
 
+/* nestly_v653: this used to pin THREE price literals in app/app.js, which only proved the app
+   and the landing page had been typed the same way — and it did not stop the app disagreeing
+   with the catalogue Stripe actually charges from. It did not: "Annual saves SGD 600" sat next
+   to a 148/monthly, 1,188/annual catalogue whose real saving is 588. The subscription card now
+   DERIVES every figure from billing_plan_catalog_v124, so the app cannot drift by construction
+   and there is no literal left to grep. The guard therefore moves to where drift is still
+   possible — the hand-typed landing page — and is anchored to the catalogue amounts declared in
+   the v162 migration rather than to another copy of the same typing. */
 test('the advertised prices are the ones the product actually charges', async () => {
   const app = await read('app/app.js');
-  assert.match(app, /SGD 148\/month/, 'monthly price drifted in the app');
-  assert.match(app, /SGD 1,188\/year/, 'annual price drifted in the app');
-  assert.match(app, /SGD 99\/month equivalent/, 'annual equivalent drifted in the app');
+  const catalogue = await read('db/migrations/20260804_nestly_v162_stripe_launch_price_148.sql');
 
-  assert.match(landing, /SGD 1,188/, 'the landing page must quote the real annual price');
-  assert.match(landing, /SGD 148/, 'the landing page must quote the real monthly price');
-  assert.match(landing, /SGD 99\/month equivalent/, 'the landing page must quote the real annual equivalent');
+  const monthlyCents = 14800, annualCents = 118800;
+  assert.match(catalogue, new RegExp(`base_amount_cents = ${monthlyCents}\\b`),
+    'the monthly catalogue amount moved; every advertised price below must move with it');
+  assert.match(catalogue, new RegExp(`base_amount_cents = ${annualCents}\\b`),
+    'the annual catalogue amount moved; every advertised price below must move with it');
+
+  const sgd = cents => (cents / 100).toLocaleString('en-SG',
+    { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  assert.match(landing, new RegExp(`SGD ${sgd(annualCents).replace(',', ',')}\\b`),
+    'the landing page must quote the real annual price');
+  assert.match(landing, new RegExp(`SGD ${sgd(monthlyCents)}\\b`),
+    'the landing page must quote the real monthly price');
+  assert.match(landing, new RegExp(`SGD ${sgd(annualCents / 12)}/month equivalent`),
+    'the landing page must quote the real annual equivalent');
+
+  // The app must read those amounts, never restate them.
+  assert.match(app, /annualPlan\?esc\(money\(annualPlan\.base_amount_cents\)\)/,
+    'the annual label must render from the catalogue');
+  assert.match(app, /monthlyPlan\?esc\(money\(monthlyPlan\.base_amount_cents\)\)/,
+    'the monthly label must render from the catalogue');
+  assert.match(app, /Number\(monthlyPlan\.base_amount_cents\)\*12-Number\(annualPlan\.base_amount_cents\)/,
+    'the annual saving must be computed, not asserted');
+  assert.doesNotMatch(app, /Annual saves SGD \d/,
+    'the saving must never be re-hardcoded');
+  assert.doesNotMatch(app, /<strong>Annual · SGD [\d,]+\/year<\/strong>/,
+    'the annual label must never be re-hardcoded');
+  assert.doesNotMatch(app, /<strong>Monthly · SGD [\d,]+\/month<\/strong>/,
+    'the monthly label must never be re-hardcoded');
 });
 
 test('the landing page does not contradict the in-app per-branch pricing caveat', async () => {

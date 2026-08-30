@@ -8450,7 +8450,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
              Server-side, not a loop over the rows on screen: this page holds one page of the inbox,
              so a client loop would clear what had been fetched and leave the badge showing a number
              the customer could not reach.
-             nestly_v651 (owner: "mark all read - disappears (bring it back)"). v632 drew it only
+             nestly_v653 (owner: "mark all read - disappears (bring it back)"). v632 drew it only
              when something was unread, reasoning that a control which would do nothing should not
              be offered. That reasoning was wrong here: the control vanished at the exact moment it
              had just WORKED, so the customer's own successful press made the button look broken or
@@ -8499,7 +8499,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
         toast('Those messages could not be marked read. Try again.');
         return;
       }
-      /* nestly_v651: the button is always on screen now, so pressing it with nothing unread is a
+      /* nestly_v653: the button is always on screen now, so pressing it with nothing unread is a
          normal thing to do. It says so rather than repainting in silence, which would be
          indistinguishable from a press that did not register. */
       if(Number(data?.marked||0)===0)toast(ct('Nothing left to mark'));

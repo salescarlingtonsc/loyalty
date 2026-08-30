@@ -15928,7 +15928,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
              Server-side, not a loop over the rows on screen: this page holds one page of the inbox,
              so a client loop would clear what had been fetched and leave the badge showing a number
              the customer could not reach.
-             nestly_v651 (owner: "mark all read - disappears (bring it back)"). v632 drew it only
+             nestly_v653 (owner: "mark all read - disappears (bring it back)"). v632 drew it only
              when something was unread, reasoning that a control which would do nothing should not
              be offered. That reasoning was wrong here: the control vanished at the exact moment it
              had just WORKED, so the customer's own successful press made the button look broken or
@@ -15977,7 +15977,7 @@ async function renderCustomerInAppInbox(businessSlug,isCurrent=()=>true,actionab
         toast('Those messages could not be marked read. Try again.');
         return;
       }
-      /* nestly_v651: the button is always on screen now, so pressing it with nothing unread is a
+      /* nestly_v653: the button is always on screen now, so pressing it with nothing unread is a
          normal thing to do. It says so rather than repainting in silence, which would be
          indistinguishable from a press that did not register. */
       if(Number(data?.marked||0)===0)toast(ct('Nothing left to mark'));
@@ -48695,7 +48695,7 @@ function recoveryReportHtmlV550(data){
   const confidenceNote=d.low_confidence
     ?`<div class="card" style="border-left:3px solid #F0A35B"><b>Small numbers, read with care.</b><p class="muted small" style="margin:6px 0 0">Fewer than 10 contacted customers or fewer than 10 comparison customers in this period — one person changes these percentages a lot.</p></div>`
     :'';
-  /* nestly_v652 — the RPC now ships an `evidence` block naming its own comparison group as
+  /* nestly_v653 — the RPC now ships an `evidence` block naming its own comparison group as
      "whoever was not contacted", never a randomised holdout. The headline leads with that
      verdict instead of the dollar figure, so a reader cannot mistake correlation dressed as
      causation for the moat metric it resembles. A response with no `evidence` key (an older
@@ -52191,7 +52191,19 @@ async function loadBillingConfig(){
       wrap.innerHTML=`<b>Billing</b><div class="empty small" role="alert">Subscription checkout is not configured yet. Contact <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a>.</div>`;
       return;
     }
-    const blocks=selectedCapacity/1000,extraBlocks=Math.max(blocks-1,0);
+    /* nestly_v653: every figure on this card now comes from the SAME catalogue the checkout
+       charges from. They were hardcoded strings, and one of them was simply wrong: "Annual
+       saves SGD 600" against a 148/month and 1,188/year catalogue is 588, not 600. A price the
+       page states and a price Stripe charges cannot have two sources. Block size and the
+       included allowance stop assuming 1,000 for the same reason. */
+    const annualPlan=byCadence.annual,monthlyPlan=byCadence.monthly;
+    const annualSavingCents=annualPlan&&monthlyPlan
+      ?Number(monthlyPlan.base_amount_cents)*12-Number(annualPlan.base_amount_cents)
+      :null;
+    const referenceCents=Number(plan.compare_at_monthly_cents||0);
+    const blockSize=Math.max(1,Number(plan.capacity_block_size)||1000);
+    const includedCapacity=Math.max(blockSize,Number(plan.included_customer_capacity)||blockSize);
+    const blocks=selectedCapacity/blockSize,extraBlocks=Math.max(blocks-(includedCapacity/blockSize),0);
     const total=Number(plan.base_amount_cents)+extraBlocks*Number(plan.capacity_block_amount_cents);
     const cadenceLabel=selectedCadence==='annual'?'year':'month';
     const equivalent=selectedCadence==='annual'?money(total/12)+' / month equivalent':money(total)+' / month';
@@ -52204,17 +52216,17 @@ async function loadBillingConfig(){
       :!sameCadence?'Change billing cycle'
       :!sameCapacity?'Increase capacity'
       :'Manage billing';
-    wrap.innerHTML=`${subscriptionBranchTableV612(b)}<div class="row"><div><b>Peekaa subscription</b><p class="muted small" style="margin-top:3px">One plan. Annual saves SGD 600 against monthly billing.</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
+    wrap.innerHTML=`${subscriptionBranchTableV612(b)}<div class="row"><div><b>Peekaa subscription</b><p class="muted small" style="margin-top:3px">One plan.${annualSavingCents&&annualSavingCents>0?` Annual saves ${esc(money(annualSavingCents))} against monthly billing.`:''}</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
       <fieldset style="border:0;padding:0;margin:16px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">Billing cycle</legend>
         <div class="row" style="align-items:stretch;flex-wrap:wrap">
-          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" checked> <strong>Annual · SGD 1,188/year</strong><br><span class="muted small">SGD 99/month equivalent · selected by default</span></label>
-          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · SGD 148/month</strong><br><span class="muted small">Cancel renewal before the next billing date</span></label>
+          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" ${selectedCadence==='annual'?'checked':''}> <strong>Annual · ${annualPlan?esc(money(annualPlan.base_amount_cents)):'—'}/year</strong><br><span class="muted small">${annualPlan?esc(money(Number(annualPlan.base_amount_cents)/12))+' / month equivalent':'Annual pricing is not configured'}</span></label>
+          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · ${monthlyPlan?esc(money(monthlyPlan.base_amount_cents)):'—'}/month</strong><br><span class="muted small">Cancel renewal before the next billing date</span></label>
         </div>
       </fieldset>
-      <p class="muted small" style="margin-top:10px">Reference price: SGD 168/month. This is comparison information only; it is not a checkout charge.</p>
+      ${referenceCents>0?`<p class="muted small" style="margin-top:10px">Reference price: ${esc(money(referenceCents))}/month. This is comparison information only; it is not a checkout charge.</p>`:''}
       <label for="billingCapacity" style="display:block;margin-top:16px;font-weight:700">Customer capacity</label>
       <select id="billingCapacity" style="margin-top:6px;max-width:340px">${capacityOptions.map(value=>`<option value="${value}" ${value===selectedCapacity?'selected':''}>Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select>
-      <p class="muted small" style="margin-top:7px">1,000 customer profiles included. Each additional 1,000 is ${money(plan.capacity_block_amount_cents)} per ${cadenceLabel}. ${currentCustomers.toLocaleString('en-SG')} profiles currently stored. Capacity can be increased later.</p>
+      <p class="muted small" style="margin-top:7px">${includedCapacity.toLocaleString('en-SG')} customer profiles included. Each additional ${blockSize.toLocaleString('en-SG')} is ${money(plan.capacity_block_amount_cents)} per ${cadenceLabel}. ${currentCustomers.toLocaleString('en-SG')} profiles currently stored. Capacity can be increased later.</p>
       <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Amount due</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div><div class="muted small" style="margin-top:6px">GST not charged · SGD 0.00</div></div></div></div>
       <div class="row" style="margin-top:14px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
       <p class="muted small" style="margin-top:10px">This price covers your company including its main branch. ${branchCountsV280?`You have ${esc(branchBillingSentenceV280(branchCountsV280))}. `:''}Each extra branch is charged as another unit of this plan, on top of the amount above.</p>
