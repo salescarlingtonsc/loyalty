@@ -7218,6 +7218,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v665: the perk a scanned QR just put on this bill. Interpolated copy in a toast is
      forbidden in the workspace (v97), and rightly — a cashier reading Malay must not be handed
      half a sentence in English. */
+  /* nestly_v666: a reward that cannot go on the bill — a free item, or a discount whose
+     allowance has gone — after its QR has put the customer on screen. The counter is told where
+     the thing they just scanned actually is, instead of being left to wonder. */
+  giftOnRewardsTab:Object.freeze({en:'{item} is ready on the Rewards tab','zh-CN':'{item} 已在“奖励”页签中备妥',ms:'{item} sedia di tab Ganjaran'}),
   tierPerkStaged:Object.freeze({en:'{item} applied to this sale','zh-CN':'已将 {item} 应用于此销售',ms:'{item} digunakan untuk jualan ini'}),
   tierBenefitAlreadyGiven:Object.freeze({en:'{item} was already given.','zh-CN':'{item} 已经提供过了。',ms:'{item} telah pun diberi.'}),
   tierBenefitUsedUp:Object.freeze({en:'{item} is already used up for this period.','zh-CN':'{item} 在本期内已用完。',ms:'{item} telah habis digunakan untuk tempoh ini.'}),
@@ -7347,7 +7351,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven','bringbackVoucherGiven',
-  'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned','tierPerkStaged',
+  'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned','tierPerkStaged','giftOnRewardsTab',
   'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
   'bespokePackageFor','serviceBranchesFailed','catalogueBranchesFailed',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',

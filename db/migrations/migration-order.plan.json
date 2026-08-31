@@ -3267,6 +3267,12 @@
       "path": "db/migrations/20260901_nestly_v666_add_branch_tier_capacity.sql",
       "semanticVersion": "v666",
       "proposedDeployVersion": "20260901010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v666_gift_scan_opens_the_sale.sql",
+      "semanticVersion": "v666",
+      "proposedDeployVersion": "20260901090000"
     }
   ]
 }

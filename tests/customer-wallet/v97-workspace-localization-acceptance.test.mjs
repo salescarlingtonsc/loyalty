@@ -390,8 +390,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nestly_v665 adds one: tierPerkStaged, the sentence the till speaks when a scanned tier-perk
      QR puts that perk on the open bill. It carries the perk's own name, which is merchant copy,
      so it is a template rather than an interpolated toast — the same reason tierBenefitGiven is
-     one. 142 + 1 = 143. */
-  assert.equal(keys.length,143,'mixed-interface interpolation inventory changed without review');
+     one. 142 + 1 = 143.
+     nestly_v666 adds one more: giftOnRewardsTab, which names the reward a scanned QR just put on
+     screen when it cannot go on the bill (a free item, or a discount whose allowance has gone).
+     It carries the reward's own merchant-written name, so it is a template for the same reason
+     tierPerkStaged is. 143 + 1 = 144. */
+  assert.equal(keys.length,144,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

@@ -3897,6 +3897,14 @@
       "resolves_to": "public.staff_gift_reversal_workflows_v665(business, client, limit) — STABLE SECURITY DEFINER, authenticated, till/loyalty/sales READ access. Performs no DML. Lists what a customer has already been given across the four gift families and states, per row, whether THIS actor may hand it back (app.has_perm 'refund_sales'), so a cashier is told why rather than shown a button that would fail.",
       "call_site_finding": "nestly_v665 — two call sites: the till catalogue load (Record sale → Rewards) and clientDetail (Customer 360). Branch scope on the perk rows is app.can_see_branch, the same predicate the issue path uses.",
       "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_scan_gift_qr_to_till_v666",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_scan_gift_qr_to_till_v666",
+      "resolves_to": "public.staff_scan_gift_qr_to_till_v666(business, qr_token) — STABLE SECURITY DEFINER, authenticated, till-or-loyalty write. Performs no DML at all. Answers whose pending gift QR this is (returning the one till customer card, app.v666_till_customer_card) and whether the perk behind it can be priced onto a bill. Settling stays with staff_scan_gift_qr_v515 and staging with staff_stage_gift_qr_v665, so this adds no second writer and no second answer to \"was this QR used\".",
+      "call_site_finding": "nestly_v666 — one call site, the Record sale keypad's Scan button. Before it, that scanner settled a gift QR on sight and then reset to an empty keypad, which spent the customer's voucher and identified nobody (owner report 2026-09-01). Every refusal is soft so the caller falls through to v515 for the wording.",
+      "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
     }
   ]
 }

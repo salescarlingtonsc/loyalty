@@ -37,7 +37,15 @@ test('the page stays small enough to paint fast on a cold mobile network', () =>
 
 /* ── self-containment ─────────────────────────────────────────────────────── */
 
-const BRAND_IMAGES = new Set(['/brand/peekaa-logo.png', '/brand/peekaa-mark.png']);
+/* nestly_v666 adds the loading poster. This rule exists to keep STOCK PHOTOGRAPHY and REMOTE
+   assets off the landing page, and the poster is neither: it is the first frame of Peekaa's own
+   logo animation, served from this repo, and the page already referenced this exact file as the
+   video's `poster` attribute. It became an <img> when the loader stopped being a <video> — iOS
+   refuses autoplay in Low Power Mode and draws a tap-to-play button over it, which is a control
+   the visitor must press before the site appears. Same bytes, same origin, one fewer way to fail. */
+const BRAND_IMAGES = new Set([
+  '/brand/peekaa-logo.png', '/brand/peekaa-mark.png', '/media/peekaa-loading-poster.png',
+]);
 
 test('no external script is loaded: the page carries its own behaviour', () => {
   const external = [...landing.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map((m) => m[1]);

@@ -2477,7 +2477,7 @@ function customerRedemptionIntentArgsV89({businessId,reward,idempotencyKey}){
    caller of this scanner keeps the v515 settle-on-scan behaviour untouched. */
 function openMerchantRedemptionScanner({
   businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{},onMemberResolved=null,
-  stageClientId=null,onGiftStaged=null
+  stageClientId=null,onGiftStaged=null,onGiftIdentified=null
 }={}){
   activeMerchantScannerCleanup();
   const overlay=document.createElement('div');
@@ -2565,6 +2565,27 @@ function openMerchantRedemptionScanner({
        not_stageable rather than raising, and the scan falls straight through to
        staff_scan_gift_qr_v515 below, which keeps sole ownership of the wording for an unknown,
        expired or already-used QR. A network failure falls through the same way. */
+    /* nestly_v666 (owner report 2026-09-01, photo 2: "when i press scan on vouchers - it does
+       nothing but used up the customer's voucher ... it did not auto enter customer number").
+       This is the KEYPAD's arm. There is no customer and no cart yet, so there is nothing to
+       stage a perk onto — what the counter needs is the customer. staff_scan_gift_qr_to_till_v666
+       only reads: it answers whose QR this is and whether the perk can go on a bill, and spends
+       nothing by being asked. The till then opens the sale on that customer and either stages the
+       perk or points staff at the Give buttons already on the Rewards tab.
+       Any soft refusal falls through to staff_scan_gift_qr_v515 below, which keeps sole ownership
+       of the wording for an unknown, expired or already-used QR. */
+    if(payload.kind==='gift'&&onGiftIdentified){
+      submitting=true;status.textContent='Looking up this reward…';
+      const {data:identified,error:identifyError}=await sb.rpc('staff_scan_gift_qr_to_till_v666',{
+        p_business:businessId,p_qr_token:token});
+      if(closed||!isCurrent())return;
+      submitting=false;
+      if(!identifyError&&identified?.status==='found'){
+        stopCamera();close();
+        onGiftIdentified(identified,token);
+        return;
+      }
+    }
     if(payload.kind==='gift'&&onGiftStaged){
       submitting=true;status.textContent='Checking this reward…';
       const {data:staged,error:stageError}=await sb.rpc('staff_stage_gift_qr_v665',{
@@ -20345,6 +20366,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v665: the perk a scanned QR just put on this bill. Interpolated copy in a toast is
      forbidden in the workspace (v97), and rightly — a cashier reading Malay must not be handed
      half a sentence in English. */
+  /* nestly_v666: a reward that cannot go on the bill — a free item, or a discount whose
+     allowance has gone — after its QR has put the customer on screen. The counter is told where
+     the thing they just scanned actually is, instead of being left to wonder. */
+  giftOnRewardsTab:Object.freeze({en:'{item} is ready on the Rewards tab','zh-CN':'{item} 已在“奖励”页签中备妥',ms:'{item} sedia di tab Ganjaran'}),
   tierPerkStaged:Object.freeze({en:'{item} applied to this sale','zh-CN':'已将 {item} 应用于此销售',ms:'{item} digunakan untuk jualan ini'}),
   tierBenefitAlreadyGiven:Object.freeze({en:'{item} was already given.','zh-CN':'{item} 已经提供过了。',ms:'{item} telah pun diberi.'}),
   tierBenefitUsedUp:Object.freeze({en:'{item} is already used up for this period.','zh-CN':'{item} 在本期内已用完。',ms:'{item} telah habis digunakan untuk tempoh ini.'}),
@@ -20474,7 +20499,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'exposureRetryChannelLocked','exposureRetryMixedChannels',
   'packageVersionCreated',
   'giftCardLoaded','sessionUsed','welcomeOfferGiven','bringbackVoucherGiven',
-  'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned','tierPerkStaged',
+  'tierBenefitGiven','tierBenefitAlreadyGiven','tierBenefitUsedUp','tierBenefitNotEarned','tierPerkStaged','giftOnRewardsTab',
   'tierBenefitBirthdayOnly','tierBenefitBirthdayUnknown',
   'bespokePackageFor','serviceBranchesFailed','catalogueBranchesFailed',
   'catalogueEnabled','catalogueDisabled','inviteCreated','importPartial',
@@ -25194,7 +25219,39 @@ async function tillPage(){
       /* v327: a scanned Peekaa member QR resolves straight into the same customer-card step a
          phone lookup would (cust=the RPC's response — same shape as lookup_client_by_phone),
          skipping the phone keypad entirely. */
-      onMemberResolved:data=>{cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();}
+      onMemberResolved:data=>{cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();},
+      /* nestly_v666: a REWARD QR scanned here lands the counter in exactly the same place a
+         phone lookup does — the customer's card — because the payload the server returns is that
+         same card. The reward itself is untouched by the scan: a discount perk is staged onto
+         the sale a moment later (below), and everything else is already sitting on the Rewards
+         tab with a Give button. Before this, the same scan settled the gift outright and then
+         called resetToStart(), so the voucher was spent and the counter was back at an empty
+         keypad with nothing to show for it. */
+      onGiftIdentified:async(data,token)=>{
+        cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();
+        const labelV666=data?.gift_label||'';
+        /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
+           not the allowance, and appliedTierBenefitV656 is only ever sent to evaluate_checkout,
+           so nothing is priced until the counter adds the first item — at which point the
+           discount is already on the bill without anyone pressing Apply. Neither reset that
+           clears this choice runs on the way IN to a customer; both run on the way back out to
+           the keypad, which is exactly the right lifetime for it. */
+        if(data?.stageable===true&&data?.benefit_id){
+          const {data:staged,error:stageError}=await sb.rpc('staff_stage_gift_qr_v665',{
+            p_business:S.biz.id,p_client:data.client_id||null,p_qr_token:token});
+          if(!isTillCurrent())return;
+          if(!stageError&&staged?.status==='staged'){
+            appliedTierBenefitV656=staged.benefit_id;
+            draw();
+            return toast(workspaceTemplateTextV97('tierPerkStaged',{item:staged.reward_label||labelV666||'Discount'}));
+          }
+          /* Staging refused (the allowance went, the period rolled over, the QR was already
+             used). The customer is still correctly on screen — say so plainly and let the
+             Rewards tab be the fallback rather than pretending a discount is on the bill. */
+          return toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
+        }
+        toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
+      }
     });
     if(canReadModule('sales')&&$('tViewSalesHistoryV253'))$('tViewSalesHistoryV253').onclick=()=>nav('#/sales');
     if($('tWalkin'))$('tWalkin').onclick=startWalkinSale;

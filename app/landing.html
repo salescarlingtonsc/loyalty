@@ -645,7 +645,7 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 #pageLoader{position:fixed;inset:0;z-index:400;background:var(--bg);display:grid;place-items:center;
   transition:opacity .45s var(--ease);pointer-events:none}
 #pageLoader.gone{opacity:0}
-#pageLoader video{width:min(200px,52vw);height:auto;border-radius:20px}
+#pageLoader img{width:min(200px,52vw);height:auto;border-radius:20px}
 @media(prefers-reduced-motion:reduce){#pageLoader{display:none}}
 .tilt3d{transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.2,1);will-change:transform}
 .tilt-dash{transform:rotateY(-6deg) rotateX(2deg)}
@@ -703,7 +703,11 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 
 <!-- V462 · first-visit loader: the living logo, once per session, gone in ≤1.4s. -->
 <div id="pageLoader" aria-hidden="true">
-  <video autoplay muted playsinline poster="/media/peekaa-loading-poster.png"><source src="/media/peekaa-loading.mp4" type="video/mp4"></video>
+  <!-- nestly_v666: the same Low Power Mode defect the app's boot mark had — iOS refuses the
+       autoplay and paints its tap-to-play overlay over the poster. This loader is
+       pointer-events:none and removes itself in under 1.4s, so the button was unpressable as
+       well as wrong. The still logo is the loader now. -->
+  <img src="/media/peekaa-loading-poster.png" alt="" aria-hidden="true" decoding="async">
 </div>
 <script>
 (function pageLoaderV462(){
