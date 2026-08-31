@@ -34295,11 +34295,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </div></details>`:''}
       </span>
       </li>
-      <li class="imp-note" data-grow-bb-deleteconfirm-v361="${esc(campaign.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+      ${/* nestly_v662: the same pop-up treatment as the tier confirmation above, for the same
+           reason — these two lists are the one surface the owner is reviewing, and a confirmation
+           that is a band here and a dialog there is a difference with no meaning behind it. */''}
+      ${confirmOpen?`<div class="grow-points-modal-back-v410" data-grow-bb-deleteback-v662 aria-hidden="true"></div>
+      <li class="imp-note grow-inline-modal-v662 grow-inline-modal-v658" data-grow-bb-deleteconfirm-v361="${esc(campaign.id)}" role="dialog" aria-modal="true">
         <b>Delete ${esc(campaign.name)}?</b>
-        <p class="muted small" style="margin-top:6px">It stops sending. Vouchers already sent stay valid — a gift a customer has been promised is not withdrawn.</p>
-        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-bb-delete-yes-v361="${esc(campaign.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-bb-delete-no-v361="1">Cancel</button></div>
-      </li>`;
+        <p class="muted small">It stops sending. Vouchers already sent stay valid — a gift a customer has been promised is not withdrawn.</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-bb-delete-yes-v361="${esc(campaign.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-bb-delete-no-v361="1">Cancel</button></div>
+      </li>`:''}`;
   };
   /* nestly_v658 (owner photo 3: "the buttons should pop up as well (same as point system pop
      up)"). Same treatment as the tier form above and for the same reason — presentation only, so
@@ -34944,11 +34948,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </div></details>`:''}
       </span>
       </li>
-      <li class="imp-note" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+      ${/* nestly_v662 (owner photo 2: "when press delete - should pop up (not like that)"). The
+           confirmation used to open as a red band THREADED INTO the list, between the tier it is
+           about and the next one — so the question and the rows it pushed down read as one
+           surface. It is the same <li>, in the same place in the DOM, wearing the v658 pop-up
+           class: nothing about the pending-id state or the two delete handlers moves. Only the
+           pending row renders one now — the old always-rendered-but-`hidden` copy would have
+           become a visible fixed dialog per tier the moment the pop-up class was added. */''}
+      ${confirmOpen?`<div class="grow-points-modal-back-v410" data-grow-tiers-deleteback-v662 aria-hidden="true"></div>
+      <li class="imp-note grow-inline-modal-v662 grow-inline-modal-v658" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" role="dialog" aria-modal="true">
         <b>Delete ${esc(tier.name)}?</b>
-        <p class="muted small" style="margin-top:6px">It moves to History. Customers currently between this rung and the next will register at whichever tier is left — nothing about their points or history changes, only which rung they show as.</p>
-        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-delete-yes-v331="${esc(tier.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-tiers-delete-no-v331="1">Cancel</button></div>
-      </li>`;
+        <p class="muted small">It moves to History. Customers currently between this rung and the next will register at whichever tier is left — nothing about their points or history changes, only which rung they show as.</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-delete-yes-v331="${esc(tier.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-tiers-delete-no-v331="1">Cancel</button></div>
+      </li>`:''}`;
   };
   /* V351 (owner: "After successful creation, close the form again. Do not keep the form
      permanently expanded."): the old 'prompt' state ("Tier saved... Add another tier / Done") is
@@ -36457,6 +36469,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     '[data-grow-tiers-add-cancel-v331]','#growTiersAddNameV331');
   growInlineModalDismissV658('[data-grow-bb-form-v361]','[data-grow-bb-modal-back-v658]',
     '[data-grow-bb-cancel-v361]','#growBbNameV361');
+  /* nestly_v662: the two delete confirmations became pop-ups too, so they get the same way out.
+     Only the pending row renders one at all, so these selectors can only ever find the
+     confirmation actually being asked. */
+  growInlineModalDismissV658('[data-grow-tiers-deleteconfirm-v331]',
+    '[data-grow-tiers-deleteback-v662]','[data-grow-tiers-delete-no-v331]','');
+  growInlineModalDismissV658('[data-grow-bb-deleteconfirm-v361]',
+    '[data-grow-bb-deleteback-v662]','[data-grow-bb-delete-no-v361]','');
   /* nestly_v422: the preview grid's gift-detail popup went with the preview (owner photo 2,
      "no need this preview"). Nothing else ever carried data-grow-stamp-gift-v410, and the editor
      grid one card up opens the real gift form on the same tap. */
@@ -37145,7 +37164,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
     growTiersEditingV331=null;
     growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';
-    growRerenderV322();
+    /* nestly_v662 (owner photo 1: "when click add tier or edit - must not refresh entire page").
+       Opening the form changes nothing the server knows, but a loud growRerenderV322 wipes
+       outerMain to CUI.loadingState first and rebuilds the page around the dialog — the whole
+       screen visibly blanks and comes back. `quiet:true` skips only that opening flash; the same
+       reads still run and the same markup is swapped in. Exactly what V335 did for the Points
+       System rows, and what the bring-back form beside this one has always done. */
+    growRerenderV322({quiet:true});
   };
   /* V345: each tier row's own Edit button opens the same form, pre-filled, targeting
      business_update_tier_v331 instead of the create RPC on Save — same pattern V343 already
@@ -37161,7 +37186,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         (growTierBenefitsV365||[]).filter(row=>String(row.tier_id)===String(tier.id)),tier.perk_note,
         growBenefitScopeV656)};
     growTiersErrorV331='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});   /* nestly_v662: see the Add handler above. */
   });
   /* ---- V363: benefit rows. Every one of these buttons re-renders the whole page, which throws
      away the form's DOM, so the typed values are captured back into the draft FIRST — the same
@@ -37218,7 +37243,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
   if(growTiersAddCancel)growTiersAddCancel.onclick=()=>{
     growTiersAddOpenV331='';growTiersErrorV331='';growTiersEditingV331=null;
-    growRerenderV322();
+    growRerenderV322({quiet:true});   /* nestly_v662: closing the form changes nothing either. */
   };
   const growTiersAddSave=outerMain.querySelector('[data-grow-tiers-add-save-v331]');
   if(growTiersAddSave)growTiersAddSave.onclick=async()=>{
@@ -37333,11 +37358,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   };
   outerMain.querySelectorAll('[data-grow-tiers-delete-v331]').forEach(button=>button.onclick=()=>{
     growTiersDeletePendingV331=button.dataset.growTiersDeleteV331;
-    growRerenderV322();
+    growRerenderV322({quiet:true});   /* nestly_v662: asking the question deletes nothing. */
   });
   outerMain.querySelectorAll('[data-grow-tiers-delete-no-v331]').forEach(button=>button.onclick=()=>{
     growTiersDeletePendingV331='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-tiers-delete-yes-v331]').forEach(button=>button.onclick=async()=>{
     if(growTiersBusyV331)return;
@@ -52842,6 +52867,16 @@ function subscriptionBranchTableV612(billing){
          paid up to it, and the owner's word is the accurate one;
        • the branch name underlined, "when clicked, then pop-up to see details";
        • the paragraph beneath struck out. */
+  /* nestly_v662: a branch's own state, in the words the Branches page already uses, so the same
+     branch does not read as "Payment lapsed" there and "Ongoing" here. Only a branch that is
+     genuinely running falls through to the subscription-level pill above. */
+  const branchStatusV662=branch=>branch.billing_state==='suspended'
+    ?'<span class="pill no">Payment lapsed</span>'
+    :branch.billing_state==='pending_payment'
+    ?'<span class="pill new">Awaiting payment</span>'
+    :branch.active===false
+    ?'<span class="pill no">Deactivated</span>'
+    :status;
   const detailPayload=branch=>esc(JSON.stringify({
     branch:branch.name||'',address:branch.address||'',phone:branch.phone||'',email:branch.email||'',
     is_default:branch.is_default===true,active:branch.active!==false,
@@ -52856,7 +52891,7 @@ function subscriptionBranchTableV612(billing){
       <td><button type="button" class="subscription-branch-open-v628" data-subscription-branch-v628="${detailPayload(branch)}" data-merchant-content>${esc(branch.name||'—')}</button></td>
       <td>${esc(plan)}</td>
       <td>${esc(expires)}</td>
-      <td>${status}</td>
+      <td>${branchStatusV662(branch)}</td>
       <td>${method}</td>
     </tr>`).join('')}
   </table></div>`;
@@ -52874,8 +52909,16 @@ async function loadBillingConfig(){
     /* nestly_v628: address, phone and email join the read because the branch name is a door to a
        details popup now (owner photo 1: "when clicked, then pop-up to see details"). Nothing new
        is fetched per click — the popup is built from the row this table already drew. */
-    sb.from('branches').select('id,name,is_default,active,address,phone,email').eq('business_id',S.biz.id)
-      .eq('active',true).order('is_default',{ascending:false}).order('name')
+    /* nestly_v662 (owner photo 6: "ABC" written in the gap under the last row, "why did not show
+       other branch where payment lapsed"). This read filtered on active=true, but a branch whose
+       payment lapses is deactivated (active=false, billing_state='suspended') — precisely the
+       branch the owner was looking for. The sentence below the table counts every branch, so the
+       table said 2 while the sentence said 3 with 1 payment lapsed, and the missing one was the
+       only row that needed an owner's attention. Every branch is listed now; billing_state and
+       active come back with it so each row can say which it is. */
+    sb.from('branches').select('id,name,is_default,active,billing_state,address,phone,email')
+      .eq('business_id',S.biz.id)
+      .order('is_default',{ascending:false}).order('active',{ascending:false}).order('name')
   ]);
   if(b&&!error)b.__branchesV612=Array.isArray(branchResultV612?.data)?branchResultV612.data:[];
   if(!wrap.isConnected)return;

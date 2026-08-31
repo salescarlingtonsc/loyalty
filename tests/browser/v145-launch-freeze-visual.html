@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="11109335757831a5dbbc729b61a2e162ff44d3fdc852f79aed0515a862fb935d"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="2a6a4b80a871a2407a7dcf90f9ea88e8965f35c11d8539de60524b5e93f0e34a"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -795,6 +795,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    "26/08/202" + "6" — two different-looking dates. A date is one token; the table already
    scrolls horizontally inside .cui-table-wrap when the columns will not fit. */
 .package-date-cell-v630{white-space:nowrap;overflow-wrap:normal}
+/* nestly_v662 (owner photo 5, both date columns ringed: "i want format stay in one line
+   dd/mm/yyyy"). v654's rule above is (0,1,0) and the two rules it was written to beat —
+   `.cui-table th,.cui-table td{white-space:normal}` and `.cui-table td{overflow-wrap:anywhere}` —
+   are (0,1,1), so it lost on specificity and never took effect: the dates were still breaking
+   into "30/08/202" + "6". Same declarations, stated at a weight that wins. */
+.cui-table td.package-date-cell-v630,.cui-table th.package-date-cell-v630{
+  white-space:nowrap;overflow-wrap:normal;word-break:normal}
 
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
@@ -2282,6 +2289,47 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-inline-modal-v658 .grow-setup-input-v301{max-width:none!important;width:100%}
 .grow-inline-modal-v658 .grow-points-form-head-v485{margin-bottom:4px}
 @media(max-width:520px){.grow-inline-modal-v658{padding:16px;max-height:90vh}}
+/* nestly_v662 (owner photos 1, 3 and 4: "alignment fix (add tier & edit both have this issue)" /
+   "fix alignment"). Three separate rules were still reaching these two dialogs from the LIST they
+   are rendered inside, and each is the same mistake v422/v449 already fixed for the v410 gift
+   pop-up — it just could not be inherited, because that fix is welded to
+   .grow-points-form-card-v343.
+   (1) `.grow-setup-rewardlist-v301>li` is (0,1,1) and sets display:flex + flex-wrap:wrap; the
+       v658 dialog rule above is (0,1,0), so it LOST and the bring-back form stayed a wrapping
+       flex ROW — measured as the two-column layout in the owner's photos 3 and 4, with the title
+       beside "Campaign name" and Save/Cancel beside the expiry field. The tier form escaped only
+       because `.imp-note` happens to carry display:block. Both are declared here at
+       (0,2,1) as an explicit single column, so neither depends on that accident.
+   (2) .grow-setup-input-v301 is centred and carries margin:0 4px, because it was built as a
+       fill-in-the-blank box inside a sentence. Under a left-aligned label it reads as the
+       misalignment ringed in photo 1, and with width:100% + border-box the side margins push the
+       field 8px past the dialog's right edge.
+   (3) .grow-setup-sentence-v301 has line-height:2 — a ~19px band between a label and the field it
+       names, so the label floats between two fields instead of sitting on one. */
+/* The selector carries every class the two forms already wear inside this list
+   (.imp-note / .grow-tier-form-v501), because those rules are declared LATER in this sheet at the
+   same (0,2,1) — matching them here is what makes this win by specificity rather than by order. */
+li.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.grow-tier-form-v501.grow-inline-modal-v658{
+  display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;
+  border:0;padding:20px;text-align:left;background:var(--card);border-radius:var(--r)}
+li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
+.grow-inline-modal-v658 .grow-setup-input-v301{box-sizing:border-box;text-align:left;margin-inline:0}
+.grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+.grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
+/* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
+   question and two buttons, not a form, so they take the small dialog width and keep the warning
+   colouring that told the owner this one is destructive. */
+li.grow-inline-modal-v662,.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v662{
+  width:min(calc(100vw - 32px),var(--dialog-w-sm,420px));
+  background:var(--tint);color:#8a4a2e;font-size:14px;border:1px solid #F2D5D1}
+li.grow-inline-modal-v662>p{margin-top:0!important}
+@media(max-width:520px){li.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.grow-tier-form-v501.grow-inline-modal-v658{padding:16px}}
 @media(prefers-reduced-motion:no-preference){
   .grow-inline-modal-v658{animation:growPointsModalInV410 .16s var(--ease)}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
@@ -5596,10 +5644,19 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-join-title-v587{margin:0;font-size:clamp(21px,5.4vw,26px);line-height:1.2}
 .customer-join-body-v587{margin:10px 0 0}
 .customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
+/* nestly_v662 (owner photo 6: "+ Add branch" ringed, a line drawn across the page to "+ Branch"
+   written above the table's right edge). v628 built this head as a heading, a `.spacer` and the
+   button — the layout it wanted — but never wrote a rule for the class, so the div stayed a plain
+   block: the spacer collapsed and the button dropped under the company name on the left. This is
+   the row that markup was written for, so the button lands on the same right edge as the table
+   below it. It wraps rather than shrinking the heading on a narrow screen. */
+.subscription-company-head-v628{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.subscription-company-head-v628>.spacer{flex:1 1 auto}
+.subscription-company-v628{margin:0;min-width:0}
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 11109335757831a5dbbc729b61a2e162ff44d3fdc852f79aed0515a862fb935d</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2a6a4b80a871a2407a7dcf90f9ea88e8965f35c11d8539de60524b5e93f0e34a</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -9712,7 +9769,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'11109335757831a5dbbc729b61a2e162ff44d3fdc852f79aed0515a862fb935d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'2a6a4b80a871a2407a7dcf90f9ea88e8965f35c11d8539de60524b5e93f0e34a',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="e5adf93274674cedb7ee49dd60721745c46656d3cb80a4232a52c649026788e4">
+<meta name="v104-production-source-sha256" content="a281a1281cfe3b0970e1524f1af1621029b1995ce1c3f4e4fdb7dac70e72d894">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -802,6 +802,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    "26/08/202" + "6" — two different-looking dates. A date is one token; the table already
    scrolls horizontally inside .cui-table-wrap when the columns will not fit. */
 .package-date-cell-v630{white-space:nowrap;overflow-wrap:normal}
+/* nestly_v662 (owner photo 5, both date columns ringed: "i want format stay in one line
+   dd/mm/yyyy"). v654's rule above is (0,1,0) and the two rules it was written to beat —
+   `.cui-table th,.cui-table td{white-space:normal}` and `.cui-table td{overflow-wrap:anywhere}` —
+   are (0,1,1), so it lost on specificity and never took effect: the dates were still breaking
+   into "30/08/202" + "6". Same declarations, stated at a weight that wins. */
+.cui-table td.package-date-cell-v630,.cui-table th.package-date-cell-v630{
+  white-space:nowrap;overflow-wrap:normal;word-break:normal}
 
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
@@ -2289,6 +2296,47 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-inline-modal-v658 .grow-setup-input-v301{max-width:none!important;width:100%}
 .grow-inline-modal-v658 .grow-points-form-head-v485{margin-bottom:4px}
 @media(max-width:520px){.grow-inline-modal-v658{padding:16px;max-height:90vh}}
+/* nestly_v662 (owner photos 1, 3 and 4: "alignment fix (add tier & edit both have this issue)" /
+   "fix alignment"). Three separate rules were still reaching these two dialogs from the LIST they
+   are rendered inside, and each is the same mistake v422/v449 already fixed for the v410 gift
+   pop-up — it just could not be inherited, because that fix is welded to
+   .grow-points-form-card-v343.
+   (1) `.grow-setup-rewardlist-v301>li` is (0,1,1) and sets display:flex + flex-wrap:wrap; the
+       v658 dialog rule above is (0,1,0), so it LOST and the bring-back form stayed a wrapping
+       flex ROW — measured as the two-column layout in the owner's photos 3 and 4, with the title
+       beside "Campaign name" and Save/Cancel beside the expiry field. The tier form escaped only
+       because `.imp-note` happens to carry display:block. Both are declared here at
+       (0,2,1) as an explicit single column, so neither depends on that accident.
+   (2) .grow-setup-input-v301 is centred and carries margin:0 4px, because it was built as a
+       fill-in-the-blank box inside a sentence. Under a left-aligned label it reads as the
+       misalignment ringed in photo 1, and with width:100% + border-box the side margins push the
+       field 8px past the dialog's right edge.
+   (3) .grow-setup-sentence-v301 has line-height:2 — a ~19px band between a label and the field it
+       names, so the label floats between two fields instead of sitting on one. */
+/* The selector carries every class the two forms already wear inside this list
+   (.imp-note / .grow-tier-form-v501), because those rules are declared LATER in this sheet at the
+   same (0,2,1) — matching them here is what makes this win by specificity rather than by order. */
+li.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.grow-tier-form-v501.grow-inline-modal-v658{
+  display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;
+  border:0;padding:20px;text-align:left;background:var(--card);border-radius:var(--r)}
+li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
+.grow-inline-modal-v658 .grow-setup-input-v301{box-sizing:border-box;text-align:left;margin-inline:0}
+.grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+.grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
+/* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
+   question and two buttons, not a form, so they take the small dialog width and keep the warning
+   colouring that told the owner this one is destructive. */
+li.grow-inline-modal-v662,.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v662{
+  width:min(calc(100vw - 32px),var(--dialog-w-sm,420px));
+  background:var(--tint);color:#8a4a2e;font-size:14px;border:1px solid #F2D5D1}
+li.grow-inline-modal-v662>p{margin-top:0!important}
+@media(max-width:520px){li.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.grow-tier-form-v501.grow-inline-modal-v658{padding:16px}}
 @media(prefers-reduced-motion:no-preference){
   .grow-inline-modal-v658{animation:growPointsModalInV410 .16s var(--ease)}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
@@ -5603,6 +5651,15 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-join-title-v587{margin:0;font-size:clamp(21px,5.4vw,26px);line-height:1.2}
 .customer-join-body-v587{margin:10px 0 0}
 .customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
+/* nestly_v662 (owner photo 6: "+ Add branch" ringed, a line drawn across the page to "+ Branch"
+   written above the table's right edge). v628 built this head as a heading, a `.spacer` and the
+   button — the layout it wanted — but never wrote a rule for the class, so the div stayed a plain
+   block: the spacer collapsed and the button dropped under the company name on the left. This is
+   the row that markup was written for, so the button lands on the same right edge as the table
+   below it. It wraps rather than shrinking the heading on a narrow screen. */
+.subscription-company-head-v628{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.subscription-company-head-v628>.spacer{flex:1 1 auto}
+.subscription-company-v628{margin:0;min-width:0}
 
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -5610,7 +5667,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source e5adf93274674cedb7ee49dd60721745c46656d3cb80a4232a52c649026788e4</p>
+  <p class="v104-provenance">Local production-render harness · source a281a1281cfe3b0970e1524f1af1621029b1995ce1c3f4e4fdb7dac70e72d894</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -5622,7 +5679,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="e5adf93274674cedb7ee49dd60721745c46656d3cb80a4232a52c649026788e4";
+const PRODUCTION_SOURCE_SHA256="a281a1281cfe3b0970e1524f1af1621029b1995ce1c3f4e4fdb7dac70e72d894";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);

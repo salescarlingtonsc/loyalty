@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b007a3204d5a9e63b547eeb942143558ca4c920a47c6f8f52086be7736873d83"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d139327343baab445ba6b163f65bcf513002a8130137d7d32bf87011622b5441"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -795,6 +795,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    "26/08/202" + "6" — two different-looking dates. A date is one token; the table already
    scrolls horizontally inside .cui-table-wrap when the columns will not fit. */
 .package-date-cell-v630{white-space:nowrap;overflow-wrap:normal}
+/* nestly_v662 (owner photo 5, both date columns ringed: "i want format stay in one line
+   dd/mm/yyyy"). v654's rule above is (0,1,0) and the two rules it was written to beat —
+   `.cui-table th,.cui-table td{white-space:normal}` and `.cui-table td{overflow-wrap:anywhere}` —
+   are (0,1,1), so it lost on specificity and never took effect: the dates were still breaking
+   into "30/08/202" + "6". Same declarations, stated at a weight that wins. */
+.cui-table td.package-date-cell-v630,.cui-table th.package-date-cell-v630{
+  white-space:nowrap;overflow-wrap:normal;word-break:normal}
 
 .cui-readonly-list{display:grid;gap:12px;margin-top:14px}.cui-readonly-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--hair)}
 .cui-readonly-row:last-child{border-bottom:0}.cui-readonly-row dt{color:var(--muted);font-size:12.5px}.cui-readonly-row dd{text-align:right;font-weight:600;overflow-wrap:anywhere}
@@ -2282,6 +2289,47 @@ textarea.grow-stamps-input-v356{text-align:left;resize:vertical}
 .grow-inline-modal-v658 .grow-setup-input-v301{max-width:none!important;width:100%}
 .grow-inline-modal-v658 .grow-points-form-head-v485{margin-bottom:4px}
 @media(max-width:520px){.grow-inline-modal-v658{padding:16px;max-height:90vh}}
+/* nestly_v662 (owner photos 1, 3 and 4: "alignment fix (add tier & edit both have this issue)" /
+   "fix alignment"). Three separate rules were still reaching these two dialogs from the LIST they
+   are rendered inside, and each is the same mistake v422/v449 already fixed for the v410 gift
+   pop-up — it just could not be inherited, because that fix is welded to
+   .grow-points-form-card-v343.
+   (1) `.grow-setup-rewardlist-v301>li` is (0,1,1) and sets display:flex + flex-wrap:wrap; the
+       v658 dialog rule above is (0,1,0), so it LOST and the bring-back form stayed a wrapping
+       flex ROW — measured as the two-column layout in the owner's photos 3 and 4, with the title
+       beside "Campaign name" and Save/Cancel beside the expiry field. The tier form escaped only
+       because `.imp-note` happens to carry display:block. Both are declared here at
+       (0,2,1) as an explicit single column, so neither depends on that accident.
+   (2) .grow-setup-input-v301 is centred and carries margin:0 4px, because it was built as a
+       fill-in-the-blank box inside a sentence. Under a left-aligned label it reads as the
+       misalignment ringed in photo 1, and with width:100% + border-box the side margins push the
+       field 8px past the dialog's right edge.
+   (3) .grow-setup-sentence-v301 has line-height:2 — a ~19px band between a label and the field it
+       names, so the label floats between two fields instead of sitting on one. */
+/* The selector carries every class the two forms already wear inside this list
+   (.imp-note / .grow-tier-form-v501), because those rules are declared LATER in this sheet at the
+   same (0,2,1) — matching them here is what makes this win by specificity rather than by order. */
+li.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v658,
+.grow-setup-rewardlist-v301>li.grow-tier-form-v501.grow-inline-modal-v658{
+  display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;
+  border:0;padding:20px;text-align:left;background:var(--card);border-radius:var(--r)}
+li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
+.grow-inline-modal-v658 .grow-setup-input-v301{box-sizing:border-box;text-align:left;margin-inline:0}
+.grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+.grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
+/* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
+   question and two buttons, not a form, so they take the small dialog width and keep the warning
+   colouring that told the owner this one is destructive. */
+li.grow-inline-modal-v662,.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v662{
+  width:min(calc(100vw - 32px),var(--dialog-w-sm,420px));
+  background:var(--tint);color:#8a4a2e;font-size:14px;border:1px solid #F2D5D1}
+li.grow-inline-modal-v662>p{margin-top:0!important}
+@media(max-width:520px){li.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v658,
+  .grow-setup-rewardlist-v301>li.grow-tier-form-v501.grow-inline-modal-v658{padding:16px}}
 @media(prefers-reduced-motion:no-preference){
   .grow-inline-modal-v658{animation:growPointsModalInV410 .16s var(--ease)}}
 @media(prefers-reduced-motion:no-preference){.grow-points-form-card-v343.grow-points-form-modal-v410{animation:growPointsModalInV410 .16s var(--ease)}}
@@ -5596,10 +5644,19 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-join-title-v587{margin:0;font-size:clamp(21px,5.4vw,26px);line-height:1.2}
 .customer-join-body-v587{margin:10px 0 0}
 .customer-join-yes-v587{width:100%;margin-top:20px;min-height:52px;font-size:16px;font-weight:800}
+/* nestly_v662 (owner photo 6: "+ Add branch" ringed, a line drawn across the page to "+ Branch"
+   written above the table's right edge). v628 built this head as a heading, a `.spacer` and the
+   button — the layout it wanted — but never wrote a rule for the class, so the div stayed a plain
+   block: the spacer collapsed and the button dropped under the company name on the left. This is
+   the row that markup was written for, so the button lands on the same right edge as the table
+   below it. It wraps rather than shrinking the heading on a narrow screen. */
+.subscription-company-head-v628{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.subscription-company-head-v628>.spacer{flex:1 1 auto}
+.subscription-company-v628{margin:0;min-width:0}
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · b007a3204d5a9e63b547eeb942143558ca4c920a47c6f8f52086be7736873d83</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d139327343baab445ba6b163f65bcf513002a8130137d7d32bf87011622b5441</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -18505,11 +18562,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </div></details>`:''}
       </span>
       </li>
-      <li class="imp-note" data-grow-bb-deleteconfirm-v361="${esc(campaign.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+      ${/* nestly_v662: the same pop-up treatment as the tier confirmation above, for the same
+           reason — these two lists are the one surface the owner is reviewing, and a confirmation
+           that is a band here and a dialog there is a difference with no meaning behind it. */''}
+      ${confirmOpen?`<div class="grow-points-modal-back-v410" data-grow-bb-deleteback-v662 aria-hidden="true"></div>
+      <li class="imp-note grow-inline-modal-v662 grow-inline-modal-v658" data-grow-bb-deleteconfirm-v361="${esc(campaign.id)}" role="dialog" aria-modal="true">
         <b>Delete ${esc(campaign.name)}?</b>
-        <p class="muted small" style="margin-top:6px">It stops sending. Vouchers already sent stay valid — a gift a customer has been promised is not withdrawn.</p>
-        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-bb-delete-yes-v361="${esc(campaign.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-bb-delete-no-v361="1">Cancel</button></div>
-      </li>`;
+        <p class="muted small">It stops sending. Vouchers already sent stay valid — a gift a customer has been promised is not withdrawn.</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-bb-delete-yes-v361="${esc(campaign.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-bb-delete-no-v361="1">Cancel</button></div>
+      </li>`:''}`;
   };
   /* nestly_v658 (owner photo 3: "the buttons should pop up as well (same as point system pop
      up)"). Same treatment as the tier form above and for the same reason — presentation only, so
@@ -19154,11 +19215,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         </div></details>`:''}
       </span>
       </li>
-      <li class="imp-note" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" style="margin-top:4px"${confirmOpen?'':' hidden'}>
+      ${/* nestly_v662 (owner photo 2: "when press delete - should pop up (not like that)"). The
+           confirmation used to open as a red band THREADED INTO the list, between the tier it is
+           about and the next one — so the question and the rows it pushed down read as one
+           surface. It is the same <li>, in the same place in the DOM, wearing the v658 pop-up
+           class: nothing about the pending-id state or the two delete handlers moves. Only the
+           pending row renders one now — the old always-rendered-but-`hidden` copy would have
+           become a visible fixed dialog per tier the moment the pop-up class was added. */''}
+      ${confirmOpen?`<div class="grow-points-modal-back-v410" data-grow-tiers-deleteback-v662 aria-hidden="true"></div>
+      <li class="imp-note grow-inline-modal-v662 grow-inline-modal-v658" data-grow-tiers-deleteconfirm-v331="${esc(tier.id)}" role="dialog" aria-modal="true">
         <b>Delete ${esc(tier.name)}?</b>
-        <p class="muted small" style="margin-top:6px">It moves to History. Customers currently between this rung and the next will register at whichever tier is left — nothing about their points or history changes, only which rung they show as.</p>
-        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-delete-yes-v331="${esc(tier.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-tiers-delete-no-v331="1">Cancel</button></div>
-      </li>`;
+        <p class="muted small">It moves to History. Customers currently between this rung and the next will register at whichever tier is left — nothing about their points or history changes, only which rung they show as.</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-tiers-delete-yes-v331="${esc(tier.id)}">Delete</button><button type="button" class="btn ghost sm" data-grow-tiers-delete-no-v331="1">Cancel</button></div>
+      </li>`:''}`;
   };
   /* V351 (owner: "After successful creation, close the form again. Do not keep the form
      permanently expanded."): the old 'prompt' state ("Tier saved... Add another tier / Done") is
@@ -20667,6 +20736,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     '[data-grow-tiers-add-cancel-v331]','#growTiersAddNameV331');
   growInlineModalDismissV658('[data-grow-bb-form-v361]','[data-grow-bb-modal-back-v658]',
     '[data-grow-bb-cancel-v361]','#growBbNameV361');
+  /* nestly_v662: the two delete confirmations became pop-ups too, so they get the same way out.
+     Only the pending row renders one at all, so these selectors can only ever find the
+     confirmation actually being asked. */
+  growInlineModalDismissV658('[data-grow-tiers-deleteconfirm-v331]',
+    '[data-grow-tiers-deleteback-v662]','[data-grow-tiers-delete-no-v331]','');
+  growInlineModalDismissV658('[data-grow-bb-deleteconfirm-v361]',
+    '[data-grow-bb-deleteback-v662]','[data-grow-bb-delete-no-v361]','');
   /* nestly_v422: the preview grid's gift-detail popup went with the preview (owner photo 2,
      "no need this preview"). Nothing else ever carried data-grow-stamp-gift-v410, and the editor
      grid one card up opens the real gift form on the same tap. */
@@ -21355,7 +21431,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   if(growTiersAddOpen)growTiersAddOpen.onclick=()=>{
     growTiersEditingV331=null;
     growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';
-    growRerenderV322();
+    /* nestly_v662 (owner photo 1: "when click add tier or edit - must not refresh entire page").
+       Opening the form changes nothing the server knows, but a loud growRerenderV322 wipes
+       outerMain to CUI.loadingState first and rebuilds the page around the dialog — the whole
+       screen visibly blanks and comes back. `quiet:true` skips only that opening flash; the same
+       reads still run and the same markup is swapped in. Exactly what V335 did for the Points
+       System rows, and what the bring-back form beside this one has always done. */
+    growRerenderV322({quiet:true});
   };
   /* V345: each tier row's own Edit button opens the same form, pre-filled, targeting
      business_update_tier_v331 instead of the create RPC on Save — same pattern V343 already
@@ -21371,7 +21453,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         (growTierBenefitsV365||[]).filter(row=>String(row.tier_id)===String(tier.id)),tier.perk_note,
         growBenefitScopeV656)};
     growTiersErrorV331='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});   /* nestly_v662: see the Add handler above. */
   });
   /* ---- V363: benefit rows. Every one of these buttons re-renders the whole page, which throws
      away the form's DOM, so the typed values are captured back into the draft FIRST — the same
@@ -21428,7 +21510,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersAddCancel=outerMain.querySelector('[data-grow-tiers-add-cancel-v331]');
   if(growTiersAddCancel)growTiersAddCancel.onclick=()=>{
     growTiersAddOpenV331='';growTiersErrorV331='';growTiersEditingV331=null;
-    growRerenderV322();
+    growRerenderV322({quiet:true});   /* nestly_v662: closing the form changes nothing either. */
   };
   const growTiersAddSave=outerMain.querySelector('[data-grow-tiers-add-save-v331]');
   if(growTiersAddSave)growTiersAddSave.onclick=async()=>{
@@ -21543,11 +21625,11 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   };
   outerMain.querySelectorAll('[data-grow-tiers-delete-v331]').forEach(button=>button.onclick=()=>{
     growTiersDeletePendingV331=button.dataset.growTiersDeleteV331;
-    growRerenderV322();
+    growRerenderV322({quiet:true});   /* nestly_v662: asking the question deletes nothing. */
   });
   outerMain.querySelectorAll('[data-grow-tiers-delete-no-v331]').forEach(button=>button.onclick=()=>{
     growTiersDeletePendingV331='';
-    growRerenderV322();
+    growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-tiers-delete-yes-v331]').forEach(button=>button.onclick=async()=>{
     if(growTiersBusyV331)return;
@@ -30006,6 +30088,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'b007a3204d5a9e63b547eeb942143558ca4c920a47c6f8f52086be7736873d83',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'d139327343baab445ba6b163f65bcf513002a8130137d7d32bf87011622b5441',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
