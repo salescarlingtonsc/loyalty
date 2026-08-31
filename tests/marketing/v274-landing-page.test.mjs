@@ -279,11 +279,11 @@ test('the advertised prices are the ones the product actually charges', async ()
     'the landing page must quote the real annual equivalent');
 
   // The app must read those amounts, never restate them.
-  assert.match(app, /annualPlan\?esc\(money\(annualPlan\.base_amount_cents\)\)/,
-    'the annual label must render from the catalogue');
-  assert.match(app, /monthlyPlan\?esc\(money\(monthlyPlan\.base_amount_cents\)\)/,
-    'the monthly label must render from the catalogue');
-  assert.match(app, /Number\(monthlyPlan\.base_amount_cents\)\*12-Number\(annualPlan\.base_amount_cents\)/,
+  assert.match(app, /annualTierV664\?esc\(money\(annualTierV664\.amount_cents\)\)/,
+    'the annual label must render from the capacity tier the server priced');
+  assert.match(app, /monthlyTierV664\?esc\(money\(monthlyTierV664\.amount_cents\)\)/,
+    'the monthly label must render from the capacity tier the server priced');
+  assert.match(app, /Number\(monthlyTierV664\.amount_cents\)\*12-Number\(annualTierV664\.amount_cents\)/,
     'the annual saving must be computed, not asserted');
   assert.doesNotMatch(app, /Annual saves SGD \d/,
     'the saving must never be re-hardcoded');

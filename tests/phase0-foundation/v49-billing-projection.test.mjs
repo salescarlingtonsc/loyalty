@@ -72,7 +72,11 @@ test('owner-only Settings uses the V124 projection and generic retryable errors 
   assert.match(app,/if\(pageKey==='settings'&&S\.myRole!=='owner'\)[\s\S]*Only the owner can open Settings\./);
   assert.match(billing,/sb\.rpc\('get_business_billing_v125',\{p_business:S\.biz\.id\}\)/);
   assert.match(billing,/const money=c=>'SGD '/);
-  assert.match(billing,/capacity_block_amount_cents/);
+  /* nestly_v664: the card prices from the server's capacity tiers, so the per-1,000 block amount
+     is no longer part of what it renders. What must stay pinned is that the amount comes from the
+     projection and is multiplied by the branch units Stripe is asked for. */
+  assert.match(billing,/tierForCapacityV664\('annual',selectedCapacity\)/);
+  assert.match(billing,/const total=unitAmountV664\*branchUnitsV664/);
   assert.doesNotMatch(billing,/S\.biz\?\.currency|S\.biz\.currency/);
   assert.doesNotMatch(billing,/v_business_billing|error\.message|requestError\?\.message|console\.(?:error|warn)/);
   assert.match(billing,/Billing details could not load\. Check your connection and try again\./);

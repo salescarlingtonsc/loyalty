@@ -3243,6 +3243,12 @@
       "path": "db/migrations/20260831_nestly_v663_customer_appointment_changes.sql",
       "semanticVersion": "v663",
       "proposedDeployVersion": "20260831150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v664_capacity_tiers_and_manual_payment.sql",
+      "semanticVersion": "v664",
+      "proposedDeployVersion": "20260831160000"
     }
   ]
 }

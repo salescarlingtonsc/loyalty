@@ -3238,6 +3238,12 @@
       "version": "20260831150000",
       "name": "nestly_v663_customer_appointment_changes",
       "sourcePath": "db/migrations/20260831_nestly_v663_customer_appointment_changes.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831160000",
+      "name": "nestly_v664_capacity_tiers_and_manual_payment",
+      "sourcePath": "db/migrations/20260831_nestly_v664_capacity_tiers_and_manual_payment.sql"
     }
   ]
 }

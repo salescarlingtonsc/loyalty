@@ -45,9 +45,17 @@ async function validateV124Prices(
   const expectedInterval = cadence === 'annual' ? 'year' : 'month';
   const expectedBase = Number(data.base_amount_cents);
   const expectedCapacity = Number(data.capacity_block_amount_cents);
+  /* nestly_v664: under tiered capacity the whole price is the base price and there is no capacity
+     line item at all, so the claim sends provider_capacity_price_id = null. Retrieving "null" from
+     Stripe would fail the checkout with an unrelated error; a catalogue that names no capacity
+     price simply has no second price to validate. The BASE price is still validated against the
+     tier amount the owner was shown, which is the check that matters. */
+  const capacityPriceId = data.provider_capacity_price_id
+    ? String(data.provider_capacity_price_id)
+    : '';
   const [basePrice, capacityPrice] = await Promise.all([
     stripe.prices.retrieve(String(data.provider_base_price_id)),
-    stripe.prices.retrieve(String(data.provider_capacity_price_id)),
+    capacityPriceId ? stripe.prices.retrieve(capacityPriceId) : Promise.resolve(null),
   ]);
   const valid = (
     price: Stripe.Price,
@@ -61,7 +69,10 @@ async function validateV124Prices(
     price.recurring?.interval_count === 1 &&
     price.recurring?.usage_type === 'licensed' &&
     price.tax_behavior === 'exclusive';
-  if (!valid(basePrice, expectedBase) || !valid(capacityPrice, expectedCapacity)) {
+  if (
+    !valid(basePrice, expectedBase) ||
+    (capacityPrice !== null && !valid(capacityPrice, expectedCapacity))
+  ) {
     throw new Error('Stripe prices do not match the reviewed V124 catalogue');
   }
 }

@@ -68,9 +68,12 @@ test('the numbers are stated where branches are listed, bought, and paid for', (
   assert.match(app, /\$\('brList'\)\.innerHTML=`<p class="muted small"[^`]*branchBillingSentenceV280\(branchCountsV280\)/);
   // the create form, before the owner is sent to Stripe
   assert.match(app, /Your plan already covers your main branch, so adding this one takes you to/);
-  // the subscription card, which quotes ONE unit of the plan and never said so
-  assert.match(app, /This price covers your company including its main branch\./);
-  assert.match(app, /Each extra branch is charged as another unit of this plan, on top of the amount above\./);
+  /* nestly_v664: the subscription card no longer quotes one unit and explains the rest in prose —
+     the Amount due IS the tier amount times the billable branch count, and the sentence beside it
+     states the rule and the proration the owner asked for. */
+  assert.match(app, /Every branch is charged this tier once\./);
+  assert.match(app, /A branch added part-way through a paid period is charged only for the time left in it\./);
+  assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
   // V202's promises are still made
   assert.match(app, /An extra branch is charged like another shop\./);
   assert.match(app, /shown on the secure payment page before anything is charged/);

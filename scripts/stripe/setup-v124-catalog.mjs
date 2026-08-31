@@ -54,6 +54,22 @@ const definitions = [
     role: 'capacity', cadence: 'annual', lookupKey: 'nestly_v124_annual_capacity_1000_sgd',
     unitAmount: 12000, interval: 'year', tax_behavior: 'exclusive', nickname: 'Peekaa annual — additional 1,000 customers',
   },
+  /* nestly_v664: the capacity tiers the owner ruled on 2026-08-31. Tier 1 (10,000 profiles) is the
+     annual/monthly base price above — the amount did not change, what it buys did. These are the
+     two tiers that need a Stripe price before Peekaa can charge for them; until they exist,
+     billing_capacity_tier_catalog_v664 carries a NULL price id and every path refuses the tier
+     rather than charging tier 1's amount for tier 2's capacity. After running this, seed the ids:
+       update public.billing_capacity_tier_catalog_v664
+          set provider_base_price_id = '<price id>'
+        where cadence='annual' and capacity_ceiling=40000;  -- and 100000 */
+  {
+    role: 'base', cadence: 'annual', lookupKey: 'nestly_v664_annual_tier_40000_sgd',
+    resultKey: 'annual_tier_40000', unitAmount: 168800, interval: 'year', tax_behavior: 'exclusive', nickname: 'Peekaa annual — up to 40,000 customer profiles (per branch)',
+  },
+  {
+    role: 'base', cadence: 'annual', lookupKey: 'nestly_v664_annual_tier_100000_sgd',
+    resultKey: 'annual_tier_100000', unitAmount: 249900, interval: 'year', tax_behavior: 'exclusive', nickname: 'Peekaa annual — up to 100,000 customer profiles (per branch)',
+  },
 ];
 
 // Read and validate the complete economic catalogue before the first write.
@@ -152,7 +168,7 @@ for (const staged of stagedPrices) {
       'metadata[capacity_block_size]': '1000',
     });
   }
-  result.prices[`${definition.cadence}_${definition.role}`] = price.id;
+  result.prices[definition.resultKey || `${definition.cadence}_${definition.role}`] = price.id;
 }
 
 return result;

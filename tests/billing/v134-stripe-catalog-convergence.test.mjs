@@ -8,6 +8,9 @@ const definitions=[
   ['nestly_v124_monthly_capacity_1000_sgd','price_monthly_capacity',1000,'month','Peekaa monthly — additional 1,000 customers','capacity','monthly'],
   ['nestly_v124_annual_base_sgd','price_annual_base',118800,'year','Peekaa annual base — 1,000 customers','base','annual'],
   ['nestly_v124_annual_capacity_1000_sgd','price_annual_capacity',12000,'year','Peekaa annual — additional 1,000 customers','capacity','annual'],
+  // nestly_v664: the two capacity tiers above 10,000 profiles, each charged once per branch.
+  ['nestly_v664_annual_tier_40000_sgd','price_annual_tier_40000',168800,'year','Peekaa annual — up to 40,000 customer profiles (per branch)','base','annual'],
+  ['nestly_v664_annual_tier_100000_sgd','price_annual_tier_100000',249900,'year','Peekaa annual — up to 100,000 customer profiles (per branch)','base','annual'],
 ];
 
 function stripeResponse(body,status=200){
@@ -62,7 +65,7 @@ test('existing reviewed Stripe objects converge to Peekaa presentation and rerun
   assert.equal(mock.getProduct().name,'Peekaa Business Subscription');
   assert.equal(mock.getProduct().description,'Peekaa business workspace with customer-capacity billing; staff access included.');
   assert.equal(mock.calls.filter(call=>call.method==='POST'&&call.path.startsWith('/v1/products/')).length,1);
-  assert.equal(mock.calls.filter(call=>call.method==='POST'&&call.path.startsWith('/v1/prices/')).length,4);
+  assert.equal(mock.calls.filter(call=>call.method==='POST'&&call.path.startsWith('/v1/prices/')).length,6);
   for(const [lookup,,amount,interval,nickname,role,cadence] of definitions){
     const price=mock.prices.get(lookup);
     assert.equal(price.unit_amount,amount);
@@ -76,6 +79,7 @@ test('existing reviewed Stripe objects converge to Peekaa presentation and rerun
   assert.deepEqual(first.prices,{
     monthly_base:'price_monthly_base',monthly_capacity:'price_monthly_capacity',
     annual_base:'price_annual_base',annual_capacity:'price_annual_capacity',
+    annual_tier_40000:'price_annual_tier_40000',annual_tier_100000:'price_annual_tier_100000',
   });
   const postsAfterFirst=mock.calls.filter(call=>call.method==='POST').length;
   await setupStripeCatalog({secret:'sk_test_v134catalog',apply:true,fetchImpl:mock.fetchImpl});

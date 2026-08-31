@@ -1891,8 +1891,23 @@ function renderOnboard(){
       const sectorGap=sectors.length?'Eligible business sectors are published.':'No eligible business sector is published.';
       root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:left"><div class="logo" style="text-align:center">${brandWordmark()}</div><h1 style="font-size:1.6rem;margin-top:18px;text-align:center">Payment setup needs help</h1><p class="muted small" style="margin-top:8px;text-align:center">A Stripe checkout window cannot open until Peekaa has active monthly and annual Stripe plans plus at least one eligible business sector. No workspace, invoice, receipt, or charge was created.</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:16px;background:var(--sand)"><b>Why Stripe did not open</b><ul class="small" style="margin:8px 0 0;padding-left:18px"><li>${esc(planGap)}</li><li>${esc(sectorGap)}</li></ul></div>${sectors.length?manualBusinessApplicationFallbackHtml(sectors):`<div class="err" style="margin-top:16px">Business sectors are not ready, so manual application capture is temporarily unavailable. Contact Peekaa support.</div>`}<div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost" id="onboardRetry">Check Stripe setup again</button><a class="btn ghost" href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20subscription%20setup">Email Peekaa support</a></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireBusinessSetupAccount();wireAccountDeletionButton();wireManualBusinessApplicationFallback();$('onboardRetry').onclick=renderOnboard;return;
     }
-    const capacityOptions=Array.from({length:10},(_,index)=>(index+1)*1000);
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details, then choose how you want to pay. Paying by card opens your workspace automatically once Stripe confirms payment; paying manually sends the details to Peekaa admin, who opens your workspace after checking payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset id="payMethodChoice" style="border:0;padding:0;margin:22px 0 0"><legend style="font-weight:700">How would you like to pay?</legend><p class="muted small" style="margin-top:4px">Choose one. Nothing is charged until you confirm.</p><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:10px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="stripe"> <strong>Pay by card now</strong><p class="muted small" style="margin-top:5px">Secure Stripe Checkout. Your workspace opens automatically once payment is confirmed.</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="manual"> <strong>Pay manually</strong><p class="muted small" style="margin-top:5px">Bank transfer, cash or another arrangement. Peekaa admin opens your workspace after checking payment.</p></label></div></fieldset><div id="payStripeBlock" hidden><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · ${money(annual.base_amount_cents)}/year</strong><p class="muted small" style="margin-top:5px">${money(Math.round(annual.base_amount_cents/12))}/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · ${money(monthly.base_amount_cents)}/month</strong><p class="muted small" style="margin-top:5px">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customers</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p></div><div id="payManualBlock" hidden>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}</div><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    /* nestly_v664: signup prices from the same tier ladder the workspace and the server use, and
+       offers only tiers Peekaa can actually charge for — an owner cannot pick a capacity that the
+       Stripe hand-off would refuse after their workspace row already exists. */
+    const signupTiersV664=(Array.isArray(state.data.capacity_tiers)?state.data.capacity_tiers:[])
+      .filter(tier=>tier&&Number(tier.capacity_ceiling)>0);
+    const signupTiersForV664=cadence=>signupTiersV664
+      .filter(tier=>tier.cadence===cadence&&tier.checkout_available!==false)
+      .sort((left,right)=>Number(left.capacity_ceiling)-Number(right.capacity_ceiling));
+    const signupTierV664=(cadence,capacity)=>signupTiersForV664(cadence)
+      .find(tier=>Number(tier.capacity_ceiling)>=Number(capacity))||null;
+    const signupTopTierV664=(()=>{
+      const ladder=signupTiersForV664('annual');
+      return ladder.length?Number(ladder[ladder.length-1].capacity_ceiling):0;
+    })();
+    const capacityOptions=signupTiersForV664('annual').map(tier=>Number(tier.capacity_ceiling));
+    if(!capacityOptions.length)capacityOptions.push(10000);
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details, then choose how you want to pay. Paying by card opens your workspace automatically once Stripe confirms payment; paying manually sends the details to Peekaa admin, who opens your workspace after checking payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset id="payMethodChoice" style="border:0;padding:0;margin:22px 0 0"><legend style="font-weight:700">How would you like to pay?</legend><p class="muted small" style="margin-top:4px">Choose one. Nothing is charged until you confirm.</p><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:10px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="stripe"> <strong>Pay by card now</strong><p class="muted small" style="margin-top:5px">Secure Stripe Checkout. Your workspace opens automatically once payment is confirmed.</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="manual"> <strong>Pay manually</strong><p class="muted small" style="margin-top:5px">Bank transfer, cash or another arrangement. Peekaa admin opens your workspace after checking payment.</p></label></div></fieldset><div id="payStripeBlock" hidden><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · <span id="selfServeAnnualPrice">${money(annual.base_amount_cents)}</span>/year</strong><p class="muted small" style="margin-top:5px"><span id="selfServeAnnualEquivalent">${money(Math.round(annual.base_amount_cents/12))}</span>/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · <span id="selfServeMonthlyPrice">${money(monthly.base_amount_cents)}</span>/month</strong><p class="muted small" style="margin-top:5px" id="selfServeMonthlyNote">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity">Customer capacity</label><select id="customerCapacity">${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p></div><div id="payManualBlock" hidden>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}</div><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
     const setupIntroduction=root.querySelector('main section.card>p');
     if(setupIntroduction)setupIntroduction.insertAdjacentHTML('afterend',businessSetupAccountHtml('businessSetupSignOut'));
     wireBusinessSetupAccount('businessSetupSignOut');wireAccountDeletionButton();
@@ -1902,11 +1917,23 @@ function renderOnboard(){
     $('businessSlug').oninput=()=>{slugEdited=true;$('businessSlug').value=slugify($('businessSlug').value)};
     const updateTotal=()=>{
       const cadence=root.querySelector('[name="selfServeCadence"]:checked')?.value||'annual';
-      const plan=plans.find(item=>item.cadence===cadence),capacity=Number($('customerCapacity').value||1000);
-      const extra=Math.max(capacity/Number(plan.capacity_block_size)-1,0);
-      const total=Number(plan.base_amount_cents)+extra*Number(plan.capacity_block_amount_cents);
-      $('selfServeTotal').textContent=`${money(total)} / ${cadence==='annual'?'year':'month'}`;
-      $('selfServeCapacityNote').textContent=`1,000 customers included. Each additional 1,000 is ${money(plan.capacity_block_amount_cents)} per ${cadence==='annual'?'year':'month'}. Capacity can be increased later.`;
+      const capacity=Number($('customerCapacity').value||10000);
+      const tier=signupTierV664(cadence,capacity);
+      const startButton=$('startSelfServe');
+      if(startButton)startButton.disabled=!tier;
+      $('selfServeTotal').textContent=tier
+        ?`${money(tier.amount_cents)} / ${cadence==='annual'?'year':'month'}`
+        :'Arranged with Peekaa support';
+      $('selfServeCapacityNote').textContent=tier
+        ?`Up to ${capacity.toLocaleString('en-SG')} customer profiles across every branch. Each branch you add later is charged this amount again, for the time left in the period. More than ${signupTopTierV664.toLocaleString('en-SG')} profiles is arranged with Peekaa support.`
+        :`${cadence==='annual'?'Annual':'Monthly'} billing is not offered at this capacity — contact admin.peekaa@gmail.com.`;
+      /* Both cadence cards price the capacity actually chosen, so the headline and the amount due
+         can never disagree. A cadence with no tier at this capacity says so on its own card. */
+      const annualTier=signupTierV664('annual',capacity),monthlyTier=signupTierV664('monthly',capacity);
+      $('selfServeAnnualPrice').textContent=annualTier?money(annualTier.amount_cents):'—';
+      $('selfServeAnnualEquivalent').textContent=annualTier?money(Math.round(annualTier.amount_cents/12)):'—';
+      $('selfServeMonthlyPrice').textContent=monthlyTier?money(monthlyTier.amount_cents):'—';
+      $('selfServeMonthlyNote').textContent=monthlyTier?'Flexible monthly billing':'Not offered at this capacity';
     };
     root.querySelectorAll('[name="selfServeCadence"]').forEach(input=>input.onchange=updateTotal);$('customerCapacity').onchange=updateTotal;updateTotal();wireManualBusinessApplicationFallback();
     /* V169: neither payment path renders until the owner picks one. Previously the Stripe form
@@ -35100,7 +35127,6 @@ function subscriptionBranchTableV612(billing){
   const methodPlain=billing?.payment_method?.brand
     ?`${String(billing.payment_method.brand)}${billing.payment_method.last4?` ····${String(billing.payment_method.last4)}`:''}`
     :billing?.provider?.subscription_id?'On file':'Not set';
-  const method=esc(methodPlain);
   /* nestly_v628 (owner photo 1). Four marks on this table:
        • the business name column struck out — every row carried the same value, so it was a
          column that could never distinguish two rows. It is the heading above the table now;
@@ -35124,19 +35150,24 @@ function subscriptionBranchTableV612(billing){
     is_default:branch.is_default===true,active:branch.active!==false,
     frequency:plan,billed_until:expires,method:methodPlain
   }));
+  /* nestly_v664 (owner: "hide all the information about the subscription per branch inside the
+     individual branches > only click into the branches then will pop up the info"). Payment
+     frequency, Billed until and Payment method leave the table — every row carried the same three
+     values, which is what made one company subscription read as one subscription per branch. They
+     are already in the popup openSubscriptionBranchDetailV628 draws, which is where the owner
+     asked for them. Status stays on the row by ruling: a branch whose payment lapsed is the one
+     row that needs attention, and needing a click to find it is how it gets missed. */
   return `<div class="subscription-company-head-v628"><h2 class="subscription-company-v628" data-merchant-content>${esc(S.biz?.name||'This business')}</h2>
     <span class="spacer"></span>
     <button type="button" class="btn sm" id="subscriptionAddBranchV628">+ Add branch</button></div>
-  <div class="cui-table-wrap" style="margin-bottom:16px"><table data-responsive="true" class="cui-table">
-    <tr><th>Branch</th><th>Payment Frequency</th><th>Billed until</th><th>Status</th><th>Payment method</th></tr>
+  <div class="cui-table-wrap" style="margin-bottom:6px"><table data-responsive="true" class="cui-table">
+    <tr><th>Branch</th><th>Status</th></tr>
     ${branches.map(branch=>`<tr>
       <td><button type="button" class="subscription-branch-open-v628" data-subscription-branch-v628="${detailPayload(branch)}" data-merchant-content>${esc(branch.name||'—')}</button></td>
-      <td>${esc(plan)}</td>
-      <td>${esc(expires)}</td>
       <td>${branchStatusV662(branch)}</td>
-      <td>${method}</td>
     </tr>`).join('')}
-  </table></div>`;
+  </table></div>
+  <p class="muted small" style="margin:0 0 16px">Tap a branch to see its plan, billing date and payment method.</p>`;
 }
 /* ---------- provider-backed subscription billing ---------- */
 async function loadBillingConfig(){
@@ -35185,10 +35216,24 @@ async function loadBillingConfig(){
   const currentCapacity=Math.max(minimumCapacity,Number(b.terms?.customer_capacity||0));
   const initialCadence=byCadence[b.terms?.cadence]?b.terms.cadence:'annual';
   let selectedCadence=byCadence[initialCadence]?initialCadence:(byCadence.annual?'annual':'monthly');
-  let selectedCapacity=currentCapacity;
   const money=c=>'SGD '+((Number.isFinite(Number(c))?Number(c):0)/100).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const capacityOptions=Array.from({length:20},(_,index)=>(index+1)*1000).filter(value=>value>=currentCapacity);
-  if(!capacityOptions.includes(selectedCapacity))capacityOptions.unshift(selectedCapacity);
+  /* nestly_v664 (owner ruling 2026-08-31): capacity is a ladder of fixed tiers priced by the
+     server, not a per-1,000 slider priced here. The tiers arrive with the billing payload — each
+     one saying whether Peekaa can actually charge for it — so this page can never offer an amount
+     Stripe would not be asked for. A tenant already sitting above every tier keeps its own
+     capacity as a read-only entry rather than being silently moved down a ladder. */
+  const capacityTiersV664=(Array.isArray(b.capacity_tiers)?b.capacity_tiers:[])
+    .filter(tier=>tier&&Number(tier.capacity_ceiling)>0);
+  const tiersForCadenceV664=cadence=>capacityTiersV664
+    .filter(tier=>tier.cadence===cadence)
+    .sort((left,right)=>Number(left.capacity_ceiling)-Number(right.capacity_ceiling));
+  const tierForCapacityV664=(cadence,capacity)=>tiersForCadenceV664(cadence)
+    .find(tier=>Number(tier.capacity_ceiling)>=Number(capacity))||null;
+  const salesAssistedAboveV664=(()=>{
+    const ladder=tiersForCadenceV664('annual');
+    return ladder.length?Number(ladder[ladder.length-1].capacity_ceiling):0;
+  })();
+  let selectedCapacity=Number(tierForCapacityV664(selectedCadence,currentCapacity)?.capacity_ceiling||currentCapacity);
   const includedModules=Array.isArray(b.included_modules)?b.included_modules:[];
   const exclusions=Array.isArray(b.exclusions)?b.exclusions:[];
   const providerSubscription=!!b.provider?.subscription_id;
@@ -35214,15 +35259,33 @@ async function loadBillingConfig(){
        saves SGD 600" against a 148/month and 1,188/year catalogue is 588, not 600. A price the
        page states and a price Stripe charges cannot have two sources. Block size and the
        included allowance stop assuming 1,000 for the same reason. */
-    const annualPlan=byCadence.annual,monthlyPlan=byCadence.monthly;
-    const annualSavingCents=annualPlan&&monthlyPlan
-      ?Number(monthlyPlan.base_amount_cents)*12-Number(annualPlan.base_amount_cents)
+    /* nestly_v664: the amounts on this card are the TIER amounts for the capacity chosen, and the
+       total is that amount once per billable branch — the same quantity stripe-billing-command
+       puts on the Stripe line item. Before this the card always drew ONE unit, so a company
+       paying for three branches read "SGD 1,188.00 / year" while Stripe was asked for three times
+       that. Billable = the branches in pending_payment or active; the branch a plan includes and
+       a grandfathered branch are never charged, which is why the count is read rather than the
+       number of rows in the table. */
+    const annualTierV664=tierForCapacityV664('annual',selectedCapacity);
+    const monthlyTierV664=tierForCapacityV664('monthly',selectedCapacity);
+    const selectedTierV664=selectedCadence==='annual'?annualTierV664:monthlyTierV664;
+    const branchUnitsV664=1+Math.max(0,Number(
+      branchCountsV280?branchCountsV280.billable:(b.billable_branch_count||0)));
+    /* Capacity never goes down: the ladder starts at the tier that covers what the tenant already
+       stores, and a tenant sitting above every tier keeps its own figure as the only entry. */
+    const capacityLadderV664=(()=>{
+      const ladder=tiersForCadenceV664(selectedCadence)
+        .map(tier=>Number(tier.capacity_ceiling))
+        .filter(value=>value>=currentCapacity);
+      if(!ladder.includes(selectedCapacity))ladder.unshift(selectedCapacity);
+      return ladder;
+    })();
+    const annualSavingCents=annualTierV664&&monthlyTierV664
+      ?Number(monthlyTierV664.amount_cents)*12-Number(annualTierV664.amount_cents)
       :null;
     const referenceCents=Number(plan.compare_at_monthly_cents||0);
-    const blockSize=Math.max(1,Number(plan.capacity_block_size)||1000);
-    const includedCapacity=Math.max(blockSize,Number(plan.included_customer_capacity)||blockSize);
-    const blocks=selectedCapacity/blockSize,extraBlocks=Math.max(blocks-(includedCapacity/blockSize),0);
-    const total=Number(plan.base_amount_cents)+extraBlocks*Number(plan.capacity_block_amount_cents);
+    const unitAmountV664=selectedTierV664?Number(selectedTierV664.amount_cents):0;
+    const total=unitAmountV664*branchUnitsV664;
     const cadenceLabel=selectedCadence==='annual'?'year':'month';
     const equivalent=selectedCadence==='annual'?money(total/12)+' / month equivalent':money(total)+' / month';
     const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
@@ -35234,24 +35297,34 @@ async function loadBillingConfig(){
       :!sameCadence?'Change billing cycle'
       :!sameCapacity?'Increase capacity'
       :'Manage billing';
+    /* A tier Peekaa has no Stripe price for is shown with its real price and a closed door, never
+       hidden and never quietly charged at another tier's amount — the server refuses the same
+       request for the same reason (request_billing_command_v124). */
+    const tierBlockedReasonV664=!selectedTierV664
+      ?`More than ${salesAssistedAboveV664.toLocaleString('en-SG')} customer profiles is arranged with Peekaa support.`
+      :selectedTierV664.checkout_available===false
+      ?'This capacity is not available for card checkout yet — contact Peekaa support to start it.'
+      :'';
+    const checkoutBlockedV664=Boolean(tierBlockedReasonV664)&&action!=='Manage billing';
     wrap.innerHTML=`${subscriptionBranchTableV612(b)}<div class="row"><div><b>Peekaa subscription</b><p class="muted small" style="margin-top:3px">One plan.${annualSavingCents&&annualSavingCents>0?` Annual saves ${esc(money(annualSavingCents))} against monthly billing.`:''}</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
       <fieldset style="border:0;padding:0;margin:16px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">Billing cycle</legend>
         <div class="row" style="align-items:stretch;flex-wrap:wrap">
-          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" ${selectedCadence==='annual'?'checked':''}> <strong>Annual · ${annualPlan?esc(money(annualPlan.base_amount_cents)):'—'}/year</strong><br><span class="muted small">${annualPlan?esc(money(Number(annualPlan.base_amount_cents)/12))+' / month equivalent':'Annual pricing is not configured'}</span></label>
-          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · ${monthlyPlan?esc(money(monthlyPlan.base_amount_cents)):'—'}/month</strong><br><span class="muted small">Cancel renewal before the next billing date</span></label>
+          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" ${selectedCadence==='annual'?'checked':''}> <strong>Annual · ${annualTierV664?esc(money(annualTierV664.amount_cents)):'—'}/year</strong><br><span class="muted small">${annualTierV664?esc(money(Number(annualTierV664.amount_cents)/12))+' / month equivalent per branch':'Annual pricing is arranged with Peekaa support at this capacity'}</span></label>
+          <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · ${monthlyTierV664?esc(money(monthlyTierV664.amount_cents)):'—'}/month</strong><br><span class="muted small">${monthlyTierV664?'Cancel renewal before the next billing date':'Monthly billing is not offered at this capacity'}</span></label>
         </div>
       </fieldset>
       ${referenceCents>0?`<p class="muted small" style="margin-top:10px">Reference price: ${esc(money(referenceCents))}/month. This is comparison information only; it is not a checkout charge.</p>`:''}
       <label for="billingCapacity" style="display:block;margin-top:16px;font-weight:700">Customer capacity</label>
-      <select id="billingCapacity" style="margin-top:6px;max-width:340px">${capacityOptions.map(value=>`<option value="${value}" ${value===selectedCapacity?'selected':''}>Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select>
-      <p class="muted small" style="margin-top:7px">${includedCapacity.toLocaleString('en-SG')} customer profiles included. Each additional ${blockSize.toLocaleString('en-SG')} is ${money(plan.capacity_block_amount_cents)} per ${cadenceLabel}. ${currentCustomers.toLocaleString('en-SG')} profiles currently stored. Capacity can be increased later.</p>
-      <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Amount due</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div><div class="muted small" style="margin-top:6px">GST not charged · SGD 0.00</div></div></div></div>
+      <select id="billingCapacity" style="margin-top:6px;max-width:340px">${capacityLadderV664.map(value=>`<option value="${value}" ${value===selectedCapacity?'selected':''}>Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select>
+      <p class="muted small" style="margin-top:7px">Your customers are counted across every branch together — ${currentCustomers.toLocaleString('en-SG')} profiles stored now. Capacity can be increased later; it is never reduced below what you already store. More than ${salesAssistedAboveV664.toLocaleString('en-SG')} profiles is arranged with Peekaa support.</p>
+      ${tierBlockedReasonV664?`<div class="imp-note" style="margin-top:10px" role="status">${esc(tierBlockedReasonV664)} <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></div>`:''}
+      <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Amount due</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div><div class="muted small" style="margin-top:4px">${esc(money(unitAmountV664))} per branch / ${cadenceLabel} × ${branchUnitsV664} ${branchUnitsV664===1?'branch':'branches'}</div><div class="muted small" style="margin-top:6px">GST not charged · SGD 0.00</div></div></div></div>
       <div class="row" style="margin-top:14px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
-      <p class="muted small" style="margin-top:10px">This price covers your company including its main branch. ${branchCountsV280?`You have ${esc(branchBillingSentenceV280(branchCountsV280))}. `:''}Each extra branch is charged as another unit of this plan, on top of the amount above.</p>
+      <p class="muted small" style="margin-top:10px">Every branch is charged this tier once. ${branchCountsV280?`You have ${esc(branchBillingSentenceV280(branchCountsV280))}. `:''}A branch added part-way through a paid period is charged only for the time left in it.</p>
       <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">What is included</summary><ul class="small" style="columns:2;column-width:240px">${includedModules.map(module=>`<li>${esc(module)}</li>`).join('')}</ul><p class="muted small"><strong>Template-assisted promotion wording</strong> helps reword factual offer content; the owner reviews and publishes it. It does not use generative AI or invent prices, dates or claims.</p></details>
       <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Not included in this price</summary><ul class="small">${exclusions.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>
       <p class="muted small" style="margin-top:14px">${guarantee}</p>
-      <div class="row" style="margin-top:14px"><button type="button" class="btn" id="billingPrimary">${esc(action)}</button>${providerSubscription?'<button type="button" class="btn ghost" id="billingPortal">Open Stripe billing portal</button>':''}</div>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn" id="billingPrimary"${checkoutBlockedV664?' disabled':''}>${esc(action)}</button>${providerSubscription?'<button type="button" class="btn ghost" id="billingPortal">Open Stripe billing portal</button>':''}</div>
       <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:8px">Stripe Checkout securely collects payment details. Peekaa changes access only after provider confirmation.</p>
       <p class="muted small" style="margin-top:14px">Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p>`;
     wrap.querySelectorAll('[name="billingCadence"]').forEach(input=>{

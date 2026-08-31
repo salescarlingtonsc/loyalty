@@ -118,10 +118,14 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
      "SGD 1,188" here only ever proved the literal had been typed, and it sat happily beside a
      hardcoded "Annual saves SGD 600" that the catalogue says is 588. Assert the wiring instead;
      tests/marketing/v274-landing-page.test.mjs pins the catalogue amounts themselves. */
-  assert.match(app, /annualPlan\?esc\(money\(annualPlan\.base_amount_cents\)\)/);
-  assert.match(app, /monthlyPlan\?esc\(money\(monthlyPlan\.base_amount_cents\)\)/);
-  assert.match(app, /\$\{includedCapacity\.toLocaleString\('en-SG'\)\} customer profiles included/);
-  assert.match(app, /money\(plan\.capacity_block_amount_cents\)/);
+  /* nestly_v664: capacity is a tier ladder priced by the server, so the card renders the TIER
+     amount for the capacity chosen and multiplies it by the billable branch count — the same
+     quantity the Stripe line item carries. The per-1,000 block wording it replaced is gone. */
+  assert.match(app, /annualTierV664\?esc\(money\(annualTierV664\.amount_cents\)\)/);
+  assert.match(app, /monthlyTierV664\?esc\(money\(monthlyTierV664\.amount_cents\)\)/);
+  assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
+  assert.match(app, /per branch \/ \$\{cadenceLabel\} × \$\{branchUnitsV664\}/);
+  assert.doesNotMatch(app, /customer profiles included\. Each additional/);
   assert.match(app, /Staff access included/);
   assert.match(app, /Template-assisted promotion wording/);
   assert.match(app, /does not use generative AI/);
