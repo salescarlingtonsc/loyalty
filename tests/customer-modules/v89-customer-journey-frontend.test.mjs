@@ -246,12 +246,25 @@ test('Bookings shows enabled zero-history firms and hides only disabled firms wi
      one, so the row a customer most often wants to check — the one nobody has answered yet — was
      the only one that did not open. Same sheet, same JSON-on-the-row contract. */
   assert.match(requestRow,/data-booking-detail-v613="\$\{detailPayloadV654\}" role="button" tabindex="0"/);
-  assert.match(requestRow,/slug:'',appointment_id:''/,
-    'a request has no appointment to re-book, so the sheet offers no Rebook');
+  assert.match(requestRow,/appointment_id:''/,
+    'a request has no appointment, so nothing is carried for a repeat of one');
+  /* nestly_v663 (owner photo 6, "Book" written beside a declined request): an ANSWERED request
+     carries the business slug so it can be tried again; an unanswered one still carries none,
+     because the thing to do with it is amend or withdraw, not book a second time. */
+  assert.match(requestRow,/slug:!active&&group\.bookingEnabled&&group\.business_slug\?String\(group\.business_slug\):''/);
+  assert.match(requestRow,/can_amend:!!\(active&&item\.request_id\)/,
+    'nestly_v663: the pending sheet gets Modify, and the row loses its own Reschedule');
   /* And the status pill it duplicates is dropped inside the Pending tab, where the tab says it. */
   assert.match(requestRow,/const showStatusPillV654=!\(tab==='pending'&&active&&item\.status!=='waitlisted'\)/);
-  assert.match(requestRow,/\$\{esc\(ct\('Reschedule'\)\)\}<\/button>/,
-    'nestly_v654: Edit is called Reschedule, same control');
+  /* nestly_v663 (owner photo 5, the Reschedule button crossed out: "delete this button"). The
+     amend control moved into the detail sheet the same row opens (photo 4), so the ROW must not
+     carry it any more — and the sheet must. */
+  assert.doesNotMatch(requestRow,/data-amend-request-v627=/,
+    'nestly_v663: the pending row no longer carries its own Reschedule button');
+  const detailSheet=section(app,'function openCustomerBookingDetailV613','function customerBookingRowListV580')
+    ||section(app,'function openCustomerBookingDetailV613','\nfunction ');
+  assert.match(detailSheet,/customerBookingDetailModifyV663/,
+    'nestly_v663: the sheet carries Modify instead');
 });
 
 /* nestly_v548 (owner photo 1, the "Cubbly SPA / Book now" chip struck out: "remove this", then

@@ -143,13 +143,15 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.doesNotMatch(customerRoute, /id="customerOtpSend" type="button" disabled/);
   assert.doesNotMatch(customerRoute, /id="customerOtpSend"[^>]*\$\{smsAvailable\?'disabled':''\}/,
     'an unavailable SMS provider must not render an enabled button without a handler');
-  assert.match(customerRoute, /id="customerDob" type="date"/);
+  /* nestly_v663: the date of birth is a day/month/year picker writing the same hidden id. */
+  assert.match(customerRoute, /\$\{birthDatePickerHtmlV663\('customerDob',''\)\}/);
   assert.match(customerRoute, /id="customerSignupConsent" type="checkbox"/);
   assert.match(customerRoute, /id="customerSignupMarketing" type="checkbox"/);
   assert.doesNotMatch(customerRoute, /id="customerProfileConsent" type="checkbox"/);
   assert.doesNotMatch(customerRoute, /id="customerMarketing" type="checkbox"/);
   assert.doesNotMatch(customerRoute, /id="customerSignupConsent"[^>]*checked=["']checked["']/i);
-  assert.match(customerRoute, /Yes — send me offers and updates/i);
+  /* nestly_v663 (owner photo A): the phrase is now the control that opens the consent wording. */
+  assert.match(customerRoute, /Yes — send me <button type="button" id="customerSignupMarketingWhat"[^>]*>offers and updates<\/button>/i);
   // V265 (owner ruling C, 2026-08-09): the withdrawal route moved from "Profile → Marketing
   // choices" to the Communications screen, and the tick now also fires the v263 master grant.
   assert.match(customerRoute, /turn this off any time in Profile → Communications/i);

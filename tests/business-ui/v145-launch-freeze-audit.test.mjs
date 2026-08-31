@@ -204,7 +204,9 @@ test('daily report reuses the canonical dashboard visit projection instead of co
   assert.match(daily, /sb\.rpc\('get_dashboard_summary'/);
   assert.match(daily, /require_module_scope_v145[\s\S]*p_module:'dailyreport'/);
   assert.match(daily, /require_module_scope_v145[\s\S]*p_module:'clients'/);
-  assert.match(daily, /const columns=clientsAvailable[\s\S]*'\*, clients\(full_name,phone\)/);
+  assert.match(daily, /const columns=clientsAvailable[\s\S]*\*, clients\(full_name,phone\)/);
+  /* nestly_v663 (owner photo 7): the report prints what was SOLD, so it has to read the lines. */
+  assert.match(daily, /sale_items\(description,qty,unit_cents,line_cents,created_at\)/);
   assert.match(daily, /Customer details unavailable/);
   assert.match(daily, /const visits=Number\(summary\.visits\|\|0\)/);
   assert.match(daily, /const uniqueCustomerRecords=Number\(summary\.unique_customers\|\|0\)/);

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d1e0cce1733e32b4390518b01fd4f4f01c1d1ef895f2f681a47d233a21b6d79f"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="b51878974bea1bcdbe0f065c31dff3e565b189bb3b25013d7346917d86852bbd"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -4842,6 +4842,18 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
    detail is a real <details>, not display:none — the customer must still be able to read what
    they are agreeing to, so the text stays in the accessibility tree and one tap away. Only the
    nine-line paragraph stops being the tallest thing on the sign-up form. */
+/* nestly_v663 (owner photo A). The date of birth is three controls that must read as one field:
+   the surface's own input metrics, real ink rather than the browser's grey dd/mm/yyyy, and a
+   year that is one tap away. Day and month take the space they need; the year takes the rest,
+   because that is the value people hunt for. */
+.cui-label-v663{display:block;margin-top:14px;font-weight:600;color:var(--ink)}
+.dob-picker-v663{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr);gap:8px;margin-top:6px}
+.dob-picker-v663>select{margin:0;color:var(--ink);font-weight:600}
+.dob-picker-v663>select:invalid,.dob-picker-v663>select option[value=""]{color:var(--ink2)}
+/* The consent explainer is the phrase itself, so it must look like a link and sit on the same
+   line as the words around it — not like a button dropped into a sentence. */
+.signup-consent-link-v663{display:inline;padding:0;margin:0;border:0;background:none;font:inherit;
+  color:var(--coral);text-decoration:underline;cursor:pointer}
 .signup-consent-detail-v468{margin:6px 0 0 30px}
 .signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
   list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
@@ -5388,6 +5400,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-detail-list-v613 dt{margin:0}
 .customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
 .customer-booking-detail-book-v627{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+/* nestly_v663: the confirmed-booking sheet carries two actions and the sentence that explains
+   them. Stacked, full width, in the reading order the sheet already ends in — Modify above
+   Cancel, because the destructive one should never be the first thing a thumb lands on. */
+.customer-booking-detail-approval-v663{margin-top:16px;line-height:1.5}
+.customer-booking-detail-approval-v663 a{color:inherit;font-weight:600}
+.customer-booking-detail-actions-v663{display:flex;flex-direction:column;gap:10px}
+.customer-booking-detail-actions-v663 .customer-booking-detail-book-v627{margin-top:10px}
+.customer-booking-detail-actions-v663 .customer-booking-detail-book-v627+.customer-booking-detail-book-v627{margin-top:0}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
@@ -6823,6 +6843,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'d1e0cce1733e32b4390518b01fd4f4f01c1d1ef895f2f681a47d233a21b6d79f',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'b51878974bea1bcdbe0f065c31dff3e565b189bb3b25013d7346917d86852bbd',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

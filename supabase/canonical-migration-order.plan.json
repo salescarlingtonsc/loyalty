@@ -3232,6 +3232,12 @@
       "version": "20260831140000",
       "name": "nestly_v660_owner_rulings",
       "sourcePath": "db/migrations/20260831_nestly_v660_owner_rulings.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831150000",
+      "name": "nestly_v663_customer_appointment_changes",
+      "sourcePath": "db/migrations/20260831_nestly_v663_customer_appointment_changes.sql"
     }
   ]
 }

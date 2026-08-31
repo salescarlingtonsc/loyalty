@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="e2028c518ea6722c72ef41148d62ec94bc6aeb5ce44829a20c958c8761cb6667">
+<meta name="v105-production-component-sha256" content="348f27481cc61f1fcd6d3a3bbb1642c63de6af06627950aa656a748419f10e64">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -4847,6 +4847,18 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
    detail is a real <details>, not display:none — the customer must still be able to read what
    they are agreeing to, so the text stays in the accessibility tree and one tap away. Only the
    nine-line paragraph stops being the tallest thing on the sign-up form. */
+/* nestly_v663 (owner photo A). The date of birth is three controls that must read as one field:
+   the surface's own input metrics, real ink rather than the browser's grey dd/mm/yyyy, and a
+   year that is one tap away. Day and month take the space they need; the year takes the rest,
+   because that is the value people hunt for. */
+.cui-label-v663{display:block;margin-top:14px;font-weight:600;color:var(--ink)}
+.dob-picker-v663{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr);gap:8px;margin-top:6px}
+.dob-picker-v663>select{margin:0;color:var(--ink);font-weight:600}
+.dob-picker-v663>select:invalid,.dob-picker-v663>select option[value=""]{color:var(--ink2)}
+/* The consent explainer is the phrase itself, so it must look like a link and sit on the same
+   line as the words around it — not like a button dropped into a sentence. */
+.signup-consent-link-v663{display:inline;padding:0;margin:0;border:0;background:none;font:inherit;
+  color:var(--coral);text-decoration:underline;cursor:pointer}
 .signup-consent-detail-v468{margin:6px 0 0 30px}
 .signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
   list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
@@ -5393,6 +5405,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-detail-list-v613 dt{margin:0}
 .customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
 .customer-booking-detail-book-v627{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+/* nestly_v663: the confirmed-booking sheet carries two actions and the sentence that explains
+   them. Stacked, full width, in the reading order the sheet already ends in — Modify above
+   Cancel, because the destructive one should never be the first thing a thumb lands on. */
+.customer-booking-detail-approval-v663{margin-top:16px;line-height:1.5}
+.customer-booking-detail-approval-v663 a{color:inherit;font-weight:600}
+.customer-booking-detail-actions-v663{display:flex;flex-direction:column;gap:10px}
+.customer-booking-detail-actions-v663 .customer-booking-detail-book-v627{margin-top:10px}
+.customer-booking-detail-actions-v663 .customer-booking-detail-book-v627+.customer-booking-detail-book-v627{margin-top:0}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
@@ -6470,7 +6490,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · e2028c518ea6</span>
+<span class="v105-provenance">v105 production-component harness · 348f27481cc6</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6595,7 +6615,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'e2028c518ea6722c72ef41148d62ec94bc6aeb5ce44829a20c958c8761cb6667',
+  sourceHash:'348f27481cc61f1fcd6d3a3bbb1642c63de6af06627950aa656a748419f10e64',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

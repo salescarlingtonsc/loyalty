@@ -76,7 +76,13 @@ test('Luna C42: future DOB is rejected at both request and persistence boundarie
   assert.match(registration, /p_birth_date > current_date/i);
   assert.match(canonical, /if new\.birth_date > current_date/i);
   assert.match(canonical, /raise exception 'birth date cannot be in the future' using errcode = '22023'/i);
-  assert.match(app, /id="customerDob" type="date"[\s\S]{0,300}max="\$\{sgDateInputValue\(\)\}"/i);
+  /* nestly_v663 (owner photo A): the native date input became a day/month/year picker, so the
+     browser's own max= attribute is gone. The future-date refusal it stood for is not: both
+     customer forms still check it before they submit, which is where the message the customer
+     reads comes from. The two server boundaries above remain the authority. */
+  assert.match(app, /\$\{birthDatePickerHtmlV663\('customerDob',''\)\}/);
+  assert.match(app, /new Date\(`\$\{birthDate\}T00:00:00`\)>new Date\(\)/);
+  assert.match(app, /new Date\(`\$\{signupBirthDate\}T00:00:00`\)>new Date\(\)/);
 });
 
 test('Luna C42: registration replay is exact, changed payload conflicts, and every dependent write is after the idempotency reservation', () => {

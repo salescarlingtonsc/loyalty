@@ -1019,16 +1019,23 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     ${recovering?'':`<label for="customerSignupPassword">Password</label>${passwordControlHtml('customerSignupPassword',{autocomplete:'new-password',minlength:'12',describedBy:'customerSignupPasswordHelp'})}<p class="muted small" id="customerSignupPasswordHelp" style="margin-top:6px">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><label for="customerSignupPasswordConfirm">Confirm password</label>${passwordControlHtml('customerSignupPasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
     <label for="customerSignupFullName">Full name</label>
     <input id="customerSignupFullName" autocomplete="name" maxlength="200" value="${esc(customerSignupProfileStash()?.fullName||'')}">
-    <label for="customerSignupDob">Date of birth</label>
-    <input id="customerSignupDob" type="date" autocomplete="bday" max="${sgDateInputValue()}" value="${esc(customerSignupProfileStash()?.birthDate||'')}">
+    <span class="cui-label-v663" id="customerSignupDobLabel">Date of birth</span>
+    ${birthDatePickerHtmlV663('customerSignupDob',customerSignupProfileStash()?.birthDate||'')}
     <label for="customerSignupGender">Gender</label>
-    <select id="customerSignupGender" autocomplete="sex"><option value="">Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
+    ${/* nestly_v663 (owner photo A: "make sure male or female must be selected, no other
+         option"). The two options were already the only two, and the send handler already
+         refused anything else; what the control did not do was SAY so before the customer
+         pressed. Required, and the placeholder cannot be chosen again once it is left. */''}
+    <select id="customerSignupGender" autocomplete="sex" required aria-required="true"><option value="" disabled ${['female','male'].includes(String(customerSignupProfileStash()?.gender||''))?'':'selected'}>Select gender</option><option value="female" ${customerSignupProfileStash()?.gender==='female'?'selected':''}>Female</option><option value="male" ${customerSignupProfileStash()?.gender==='male'?'selected':''}>Male</option></select>
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Agreements</legend>
       <label class="row" for="customerSignupConsent" style="align-items:flex-start;margin-top:10px;color:var(--ink);font-weight:500"><input id="customerSignupConsent" type="checkbox" ${customerRegistrationState.legalAccepted?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--coral);text-decoration:underline">Privacy Notice</a>.</span></label>
-      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me offers and updates.</b> <span class="muted">(Optional)</span></span></label>
-      <details class="signup-consent-detail-v468"><summary>Click to read what “offers and updates” means</summary>
-        <p class="muted small">Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners may send me marketing by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. My name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. I can turn this off any time in Profile → Communications. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days.</p>
-      </details>
+      <label class="row" for="customerSignupMarketing" style="align-items:flex-start;margin-top:12px;color:var(--ink);font-weight:500"><input id="customerSignupMarketing" type="checkbox" ${customerRegistrationState.marketingOptedIn?'checked':''} style="width:20px;min-width:20px;min-height:20px;margin-top:1px"> <span><b>Yes — send me <button type="button" id="customerSignupMarketingWhat" class="signup-consent-link-v663">offers and updates</button>.</b> <span class="muted">(Optional)</span></span></label>
+      ${/* nestly_v663 (owner photo A: "offers and updates" boxed, the line beneath struck out —
+           "hyperlink the offers & updates and remove the words below"). The consent wording is
+           what the customer is agreeing TO, so it cannot be deleted; it moves behind the phrase
+           it defines. A button, not an <a>: it opens a dialog rather than navigating, and a link
+           that goes nowhere is the thing this replaces. */''}
+      <div id="customerSignupMarketingCopy" hidden>Nestly Technologies Pte. Ltd., the company behind ${esc(BRAND.productName)}, and its partners may send me marketing by push notification, in-app message, email, SMS, WhatsApp, phone call and other marketing channels. My name and contact details may be shared with ${esc(BRAND.productName)}’s partners for marketing purposes only. I can turn this off any time in Profile → Communications. ${esc(BRAND.productName)} stops sending straight away. Partners are told to stop within 10 business days.</div>
     </fieldset>`}
     <fieldset style="border:0;margin-top:18px;padding:0"><legend class="small" style="font-weight:700">Send the verification code by</legend>
       <label class="row" for="customerOtpSms" style="color:var(--ink);font-weight:500"><input id="customerOtpSms" name="customerOtpChannel" type="radio" value="sms" checked style="width:20px;min-width:20px;min-height:20px"> <span>SMS</span></label>
@@ -1039,6 +1046,15 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <button class="btn ghost" id="customerOtpBack" type="button" style="width:100%;margin-top:10px">Back to sign in</button>
   </section>`);
   bindPasswordVisibility(root);
+  /* nestly_v663: the picker and the consent explainer exist only on the sign-up form, not on the
+     password-reset variant of this screen, so both are wired defensively. */
+  wireBirthDatePickerV663('customerSignupDob');
+  const marketingWhatV663=$('customerSignupMarketingWhat');
+  if(marketingWhatV663)marketingWhatV663.onclick=event=>{
+    /* Inside a <label> for the checkbox: without this the explainer would also toggle consent. */
+    event.preventDefault();event.stopPropagation();
+    openCustomerMarketingConsentSheetV663($('customerSignupMarketingCopy')?.textContent||'');
+  };
   $('customerOtpBack').onclick=()=>{
     resetCustomerRegistrationState();
     renderCustomerPasswordSignIn(isRouteCurrent);
@@ -1174,6 +1190,81 @@ async function resolveCustomerRegistrationDestination(isRouteCurrent=()=>true,or
   }
   return 'navigated';
 }
+/* nestly_v663 (owner photo A, the Date of birth field ringed: "make the data darker and the
+   selection must be easy to select, because now not able to change year. need to scroll month by
+   month. make it the latest iphone way. (which is 25 Aug 1997)").
+
+   The field was <input type="date">. On iOS Safari that is a calendar the customer has to page
+   through ONE MONTH AT A TIME — a 29-year-old is 348 taps from their own birthday — and until it
+   holds a value it prints a grey dd/mm/yyyy that reads as filled-in when it is empty. Neither is
+   fixable with CSS: the control is the browser's.
+
+   Three selects instead, in the order the owner wrote it — day, month, year. iOS renders a select
+   as the spinning wheel he is asking for; every other browser gives an ordinary dropdown, and in
+   both a year is ONE choice rather than a journey. The value still lands in a hidden input under
+   the SAME id the form already reads and validates, so nothing downstream of this control changed.
+
+   Day count follows the chosen month and year, so 31 February cannot be assembled, and a day
+   already chosen that the new month does not have is cleared rather than silently rounded. */
+/* nestly_v663: the same consent wording the struck-out paragraph carried, now reached from the
+   phrase it defines. One sheet, the surface's own dialog grammar (CUI.activateDialog: Escape,
+   backdrop and Android Back all close it), and nothing in it can change the checkbox. */
+function openCustomerMarketingConsentSheetV663(copy=''){
+  const text=String(copy||'').trim();
+  if(!text)return;
+  const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','customerMarketingConsentTitleV663');
+  modal.innerHTML=`<div class="modal-card"><div class="row"><h2 id="customerMarketingConsentTitleV663">Offers and updates</h2><span class="spacer"></span><button class="btn ghost sm" id="customerMarketingConsentCloseV663" aria-label="Close">Close</button></div>
+    <p class="muted small" style="margin-top:10px;line-height:1.6">${esc(text)}</p></div>`;
+  document.body.appendChild(modal);
+  let deactivate;
+  const close=()=>deactivate?deactivate():modal.remove();
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#customerMarketingConsentCloseV663'});
+  document.getElementById('customerMarketingConsentCloseV663').onclick=close;
+}
+const BIRTH_MONTHS_V663=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function birthDatePickerHtmlV663(id,value=''){
+  const parts=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value||''))||[];
+  const year=parts[1]||'',month=parts[2]||'',day=parts[3]||'';
+  /* "Today" in Singapore, the zone every other date on this surface is read in. */
+  const thisYear=Number(sgDateInputValue().slice(0,4))||new Date().getFullYear();
+  const years=[];for(let y=thisYear;y>=thisYear-120;y--)years.push(y);
+  const days=[];for(let d=1;d<=31;d++)days.push(String(d).padStart(2,'0'));
+  return `<div class="dob-picker-v663" role="group" aria-labelledby="${esc(id)}Label">
+    <select id="${esc(id)}Day" aria-label="Day of birth"><option value="">Day</option>${days.map(d=>`<option value="${d}" ${d===day?'selected':''}>${Number(d)}</option>`).join('')}</select>
+    <select id="${esc(id)}Month" aria-label="Month of birth"><option value="">Month</option>${BIRTH_MONTHS_V663.map((label,index)=>{const v=String(index+1).padStart(2,'0');return `<option value="${v}" ${v===month?'selected':''}>${label}</option>`}).join('')}</select>
+    <select id="${esc(id)}Year" aria-label="Year of birth"><option value="">Year</option>${years.map(y=>`<option value="${y}" ${String(y)===year?'selected':''}>${y}</option>`).join('')}</select>
+    <input type="hidden" id="${esc(id)}" autocomplete="bday" value="${esc(value||'')}">
+  </div>`;
+}
+function wireBirthDatePickerV663(id){
+  const day=$(`${id}Day`),month=$(`${id}Month`),year=$(`${id}Year`),hidden=$(id);
+  if(!day||!month||!year||!hidden)return;
+  const daysIn=(y,m)=>(!y||!m)?31:new Date(Number(y),Number(m),0).getDate();
+  const sync=()=>{
+    const limit=daysIn(year.value,month.value);
+    [...day.options].forEach(option=>{
+      if(!option.value)return;
+      const tooLate=Number(option.value)>limit;
+      option.hidden=tooLate;option.disabled=tooLate;
+    });
+    /* A day the new month does not have is cleared, never quietly moved to the 28th. */
+    if(day.value&&Number(day.value)>limit)day.value='';
+    hidden.value=(day.value&&month.value&&year.value)?`${year.value}-${month.value}-${day.value}`:'';
+  };
+  [day,month,year].forEach(control=>control.addEventListener('change',sync));
+  sync();
+}
+/* Prefilling has to reach the three visible controls, not just the hidden value they write —
+   otherwise the form would submit a date the customer cannot see and cannot correct. */
+function setBirthDatePickerValueV663(id,value=''){
+  const parts=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value||''));
+  const day=$(`${id}Day`),month=$(`${id}Month`),year=$(`${id}Year`);
+  if(!day||!month||!year)return;
+  year.value=parts?parts[1]:'';month.value=parts?parts[2]:'';day.value=parts?parts[3]:'';
+  month.dispatchEvent(new Event('change'));
+}
 function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   if(!isRouteCurrent())return;
   const signupConsentRecorded=customerSignupConsentRecorded();
@@ -1181,10 +1272,10 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     <div class="row"><span aria-hidden="true">${CUI.icon('wallet',{size:24})}</span><div><h1 id="customerProfileTitle">Set up ${esc(BRAND.customerLabel)}</h1><p class="muted small" style="margin-top:5px">Your rewards stay separate for each business you choose to join.</p></div></div>
     <label for="customerFullName">Full name <span aria-hidden="true">*</span></label>
     <input id="customerFullName" autocomplete="name" maxlength="200" required>
-    <label for="customerDob">Date of birth <span aria-hidden="true">*</span></label>
-    <input id="customerDob" type="date" autocomplete="bday" max="${sgDateInputValue()}" required>
+    <span class="cui-label-v663" id="customerDobLabel">Date of birth <span aria-hidden="true">*</span></span>
+    ${birthDatePickerHtmlV663('customerDob','')}
     <label for="customerGender">Gender <span aria-hidden="true">*</span></label>
-    <select id="customerGender" autocomplete="sex" required><option value="">Select gender</option><option value="female">Female</option><option value="male">Male</option></select>
+    <select id="customerGender" autocomplete="sex" required aria-required="true"><option value="" disabled selected>Select gender</option><option value="female">Female</option><option value="male">Male</option></select>
     <label for="customerLanguage">Preferred language</label>
     <select id="customerLanguage" autocomplete="language"><option value="en">English</option><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="ta">தமிழ்</option></select>
     <p class="muted small" style="margin-top:14px">${signupConsentRecorded?`Your Terms and Privacy Notice acceptance was captured before phone verification.${customerSignupMarketingOptedIn()?' You also opted in to offers and updates — you can change this anytime in Profile.':''}`:'Consent was not recorded for this browser session. Return to Create account and tick the Terms agreement box before verifying your phone.'}</p>
@@ -1207,10 +1298,11 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   /* v174: the Create-account form already asked for these. Prefill from the
      stash and finish silently; this screen only stays visible when the stash is
      missing (e.g. OTP finished in another tab) or the submission fails. */
+  wireBirthDatePickerV663('customerDob');
   const signupStash=customerSignupProfileStash();
   if(signupStash){
     fullNameInput.value=signupStash.fullName;
-    birthDateInput.value=signupStash.birthDate;
+    setBirthDatePickerValueV663('customerDob',signupStash.birthDate);
     genderInput.value=signupStash.gender;
   }
   register.onclick=async()=>{
@@ -1685,7 +1777,7 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
   const groups=new Map();
   const ensure=(slug,name='Business')=>{
     const key=String(slug||'');
-    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',business_logo:'',bookingEnabled:false,appointmentChangesEnabled:false,requests:[],activeRequests:[],recentRequests:[],appointments:[]});
+    if(!groups.has(key))groups.set(key,{business_slug:key,business_name:name||'Business',business_logo:'',bookingEnabled:false,appointmentChangesEnabled:false,appointmentChangesAutoApprove:false,appointmentPhone:'',requests:[],activeRequests:[],recentRequests:[],appointments:[]});
     else if(name&&groups.get(key).business_name==='Business')groups.get(key).business_name=name;
     return groups.get(key);
   };
@@ -1699,6 +1791,11 @@ function composeCustomerBookingGroups(programmes=[],requestPayload=null,appointm
     /* v286: carried through so the Bookings page can offer the same Change control the wallet
        offers, under the same per-business permission. Absent or unreadable stays false. */
     group.appointmentChangesEnabled=card?.appointment_changes_enabled===true;
+    /* nestly_v663 (owner: "if there's a tick on photo 2 it should auto amend without business
+       approval ... but if requires approval - please let customer know"). Two different facts:
+       whether a confirmed booking MAY be changed, and whether that change still needs an answer.
+       The sheet cannot write an honest sentence without both, so both travel with the group. */
+    group.appointmentChangesAutoApprove=card?.appointment_changes_auto_approve===true;
     /* v195 (owner circled the bare name: "company photo"): a booking is easier to recognise by
        the shop's own mark than by reading a name. Falls back to the initial when a business has
        not uploaded a logo — never a placeholder image pretending to be theirs. */
@@ -1935,6 +2032,46 @@ function walletClockV580(value){
   if(Number.isNaN(at.getTime()))return '';
   return at.toLocaleString('en-SG',{timeZone:'Asia/Singapore',timeStyle:'short'});
 }
+/* nestly_v663. ONE cancel behaviour, reached from the row's X and from the detail sheet's
+   Cancel, so the two cannot drift. What pressing it costs depends on the business's own
+   auto-approve setting, and the sentence says which before anything is sent: with auto-approve the
+   slot is released immediately, without it the business still has to answer and the appointment
+   stays as it is meanwhile. customer_cancel_appointment_v655 (nestly_v663) decides this on the
+   server and reports back which happened, so the toast quotes the outcome rather than predicting
+   it — a customer told "cancelled" for something still booked would turn up on the day. */
+function customerBookingCallLineV663(phone,businessName=''){
+  const number=String(phone||'').trim();
+  if(!number)return `${esc(businessName||'The business')} has not published a phone number in ${esc(BRAND.productName)}.`;
+  return `Or call ${esc(businessName||'them')} on <a href="tel:${esc(number.replace(/[^0-9+]/g,''))}">${esc(number)}</a>.`;
+}
+async function customerCancelBookingV663({appointmentId,businessSlug,autoApprove=false,phone='',businessName='',button=null,onDone=null}={}){
+  if(!appointmentId||!businessSlug)return false;
+  if(button&&button.disabled)return false;
+  const confirmed=await confirmActionV386(autoApprove
+    ?'Cancel this booking? The business gives your slot to someone else, and you would have to book again.'
+    :'Ask to cancel this booking? It stays as it is until the business answers.',
+    {confirmLabel:autoApprove?'Cancel booking':'Send the request',cancelLabel:'Keep it'});
+  if(!confirmed)return false;
+  if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
+  const result=await customerRpc('customer_cancel_appointment_v655',
+    {p_business_slug:businessSlug,p_appointment:appointmentId});
+  if(result.error){
+    if(button){button.disabled=false;button.removeAttribute('aria-busy')}
+    const message=String(result.error.message||'');
+    toast(message==='already_actioned'
+      ?'This booking has already been changed — open it again to see where it stands.'
+      :message==='appointment_changes_disabled'
+      ?`This business asks you to contact them to change a confirmed booking.${phone?` Call ${String(phone).trim()}.`:''}`
+      :'The booking could not be cancelled. Try again.');
+    return false;
+  }
+  /* The server's own answer, not the setting this browser read a moment ago. */
+  toast(result.data?.status==='pending'
+    ?'Cancellation requested — the business will confirm it.'
+    :'Booking cancelled');
+  if(typeof onDone==='function')onDone();
+  return true;
+}
 /* nestly_v613. The booking detail sheet. Read-only: it opens no RPC and offers no action the row
    did not already offer, so a mis-tap costs a Close. Same modal grammar as the reschedule sheet
    below it (CUI.activateDialog, close on overlay, walletDate for the Asia/Singapore instant). */
@@ -1954,6 +2091,18 @@ function openCustomerBookingDetailV613(payload){
     ['Status',customerBookingStatusWordV654(record.status,record.starts_at)],
     ['Note',record.note]
   ].filter(([,value])=>String(value||'').trim());
+  /* nestly_v663: three mutually exclusive shapes, decided here rather than inside the template
+     so the sheet can never offer two contradictory doors at once. */
+  const canChangeV663=record.can_change===true&&!!record.change_slug&&!!record.appointment_id;
+  const canAmendV663=!canChangeV663&&record.can_amend===true&&!!record.request_id;
+  /* An appointment still to come that the business does NOT let customers change. Book again is
+     wrong here for the reason the owner gave, so the sheet says who to ring instead. */
+  const upcomingWithoutChangeV663=!canChangeV663&&!canAmendV663&&!record.request_id
+    &&String(record.status||'')==='booked'
+    &&Number.isFinite(Date.parse(record.starts_at||''))&&Date.parse(record.starts_at)>Date.now();
+  const approvalLineV663=record.auto_approve===true
+    ? `Your change is applied straight away — you do not need to wait for ${esc(record.business||'the business')}.`
+    : `${esc(record.business||'The business')} has to approve a change, and the times you can choose depend on who is free. You will see the answer here. ${customerBookingCallLineV663(record.phone,record.business)}`;
   const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
   modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
   modal.setAttribute('aria-labelledby','customerBookingDetailTitleV613');
@@ -1967,7 +2116,25 @@ function openCustomerBookingDetailV613(payload){
          compete with the way out. It reuses openCustomerRepeatBookingV167, the same function the
          row's own Book button calls, so this is a second door to one flow and not a second
          booking path. */''}
-    ${record.slug?`<button type="button" class="btn customer-booking-detail-book-v627" id="customerBookingDetailBookV627">${CUI.icon('bookings',{size:18})}<span>${esc(ct('Book again'))}</span></button>`:''}
+    ${/* nestly_v663 (owner photo 1: Rebook struck out, "should be Modify & Cancel ... this has
+         no purpose as there's already an upcoming appointment"). A booking still to come, at a
+         business that allows changes to a confirmed one, gets the two actions that apply to it.
+         Both are the SAME controls the row carries — openRescheduleReplaceSheetV508 and
+         customerCancelBookingV663 — so this is a second door, not a second path. Book again
+         survives for everything else: a past visit, a cancelled one, a declined request. */''}
+    ${canChangeV663
+      ?`<p class="muted small customer-booking-detail-approval-v663">${approvalLineV663}</p>
+        <div class="customer-booking-detail-actions-v663">
+          <button type="button" class="btn customer-booking-detail-book-v627" id="customerBookingDetailModifyV663">${CUI.icon('appointments',{size:18})}<span>${esc(ct('Modify'))}</span></button>
+          <button type="button" class="btn ghost customer-booking-detail-book-v627" id="customerBookingDetailCancelV663">${CUI.icon('close',{size:18})}<span>${esc(ct('Cancel booking'))}</span></button>
+        </div>`
+      :canAmendV663
+      ?`<p class="muted small customer-booking-detail-approval-v663">Nobody has answered this request yet, so you can change it freely.</p>
+        <button type="button" class="btn customer-booking-detail-book-v627" id="customerBookingDetailModifyV663">${CUI.icon('appointments',{size:18})}<span>${esc(ct('Modify'))}</span></button>`
+      :record.slug?`<button type="button" class="btn customer-booking-detail-book-v627" id="customerBookingDetailBookV627">${CUI.icon('bookings',{size:18})}<span>${esc(ct('Book again'))}</span></button>`
+      :upcomingWithoutChangeV663
+      ?`<p class="muted small customer-booking-detail-approval-v663">${esc(record.business||'This business')} asks you to contact them to change a confirmed booking. ${customerBookingCallLineV663(record.phone,record.business)}</p>`
+      :''}
   </div>`;
   document.body.appendChild(modal);
   let deactivateDialog;
@@ -1980,6 +2147,26 @@ function openCustomerBookingDetailV613(payload){
   if(bookAgainV627)bookAgainV627.onclick=()=>{
     close();
     openCustomerRepeatBookingV167(record.slug,record.appointment_id||null,bookAgainV627);
+  };
+  /* nestly_v663: each action closes this sheet before opening its own, for the same reason —
+     two stacked dialogs share one focus trap and one history entry. */
+  const modifyV663=document.getElementById('customerBookingDetailModifyV663');
+  if(modifyV663)modifyV663.onclick=()=>{
+    close();
+    if(canChangeV663)openRescheduleReplaceSheetV508({
+      appointmentId:record.appointment_id,businessSlug:record.change_slug,
+      startsAt:record.starts_at||'',onDone:()=>renderCustomerBookings()});
+    else openCustomerAmendRequestSheetV627({
+      requestId:record.request_id,preferredAt:record.preferred_at||'',
+      note:record.request_note||'',onDone:()=>renderCustomerBookings()});
+  };
+  const cancelV663=document.getElementById('customerBookingDetailCancelV663');
+  if(cancelV663)cancelV663.onclick=async()=>{
+    const done=await customerCancelBookingV663({
+      appointmentId:record.appointment_id,businessSlug:record.change_slug,
+      autoApprove:record.auto_approve===true,phone:record.phone,businessName:record.business,
+      button:cancelV663,onDone:()=>renderCustomerBookings()});
+    if(done)close();
   };
 }
 function customerBookingRowV580(group,item,tab){
@@ -2010,7 +2197,7 @@ function customerBookingRowV580(group,item,tab){
      It appears under exactly the condition Reschedule does, because both are "change a booking
      the business has committed to" and neither should be offered without the other. */
   const cancelV655=rescheduleV508
-    ?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-cancel-appointment-v655="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" aria-label="${esc(ct('Cancel booking'))}" title="${esc(ct('Cancel booking'))}">${CUI.icon('close',{size:16})}</button>`
+    ?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-cancel-appointment-v655="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-auto-approve-v663="${group.appointmentChangesAutoApprove===true?'true':'false'}" data-phone-v663="${esc(String(item.branch_phone||'').trim())}" data-business-name-v663="${esc(name)}" aria-label="${esc(ct('Cancel booking'))}" title="${esc(ct('Cancel booking'))}">${CUI.icon('close',{size:16})}</button>`
     :'';
   const action=rescheduleV508
     ?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-reschedule-v508="${esc(item.appointment_id)}" data-business-slug="${esc(group.business_slug)}" data-starts-at="${esc(item.starts_at||'')}">Reschedule</button>${cancelV655}`
@@ -2034,7 +2221,18 @@ function customerBookingRowV580(group,item,tab){
     appointment_id:item.appointment_id?String(item.appointment_id):'',
     staff:String(item.staff_name||'').trim(),
     status:String(item.status||'').trim(),
-    note:String(item.note||item.customer_note||'').trim()
+    note:String(item.note||item.customer_note||'').trim(),
+    /* nestly_v663 (owner photo 1: "Rebook" struck out of the sheet — "confirmed appointment should
+       be Modify & Cancel ... this has no purpose as there's already an upcoming appointment").
+       The sheet offered the one action that made no sense on a booking still to come, and hid the
+       two that did. These four fields are what turn it into the same two controls the row already
+       carries, under the same gate, plus the sentence the owner asked for when a change has to be
+       approved and the number to ring instead. change_slug is separate from slug on purpose: a
+       business can take bookings without allowing changes, and the reverse. */
+    can_change:rescheduleV508,
+    change_slug:rescheduleV508?String(group.business_slug):'',
+    auto_approve:group.appointmentChangesAutoApprove===true,
+    phone:String(item.branch_phone||'').trim()
   }));
   return `<article class="card customer-booking-row-v580 customer-booking-row-detailed-v613" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}" data-booking-detail-v613="${detailPayloadV613}" role="button" tabindex="0" aria-label="Booking details for ${esc(name)}">
     <div class="customer-booking-row-logo-v580">${logo}</div>
@@ -2123,7 +2321,10 @@ function customerBookingRequestRowV605(group,item,tab){
   const when=item.preferred_at||item.created_at||'';
   const time=walletClockV580(when);
   const service=String(item.service_name||'').trim()||'Booking request';
-  const detail=[service,time?`at ${time}`:'',item.party_size?`party of ${Number(item.party_size)}`:'']
+  /* nestly_v663 (owner photo 6, "party of 1" ringed: "don't need show party of 1"). A party of
+     one is what every booking is unless the customer said otherwise, so printing it says nothing.
+     A real party — two or more — is still worth the words and keeps them. */
+  const detail=[service,time?`at ${time}`:'',Number(item.party_size)>1?`party of ${Number(item.party_size)}`:'']
     .filter(Boolean).join(' · ');
   const active=isActiveCustomerBookingRequest(item);
   const statusLabel=active
@@ -2145,9 +2346,19 @@ function customerBookingRequestRowV605(group,item,tab){
   const detailPayloadV654=esc(JSON.stringify({
     business:name,service,starts_at:when,branch:String(item.branch_name||'').trim(),
     address:String(item.branch_address||'').trim(),staff:String(item.staff_name||'').trim(),
-    slug:'',appointment_id:'',
+    /* nestly_v663 (owner photo 6, "Book" written beside a declined request): a request the
+       business turned down is exactly the row a customer wants to try again from, and it was the
+       only past row with no way to. Same data-repeat-booking door as a past appointment. */
+    slug:!active&&group.bookingEnabled&&group.business_slug?String(group.business_slug):'',
+    appointment_id:'',
     status:String(item.status||'').trim(),
-    note:String(item.notes||item.note||item.customer_note||'').trim()
+    note:String(item.notes||item.note||item.customer_note||'').trim(),
+    /* nestly_v663 (owner photo 4, "Modify" written on the pending sheet): the amend control moves
+       off the row and into the sheet — see the row's own note below. */
+    can_amend:!!(active&&item.request_id),
+    request_id:active&&item.request_id?String(item.request_id):'',
+    preferred_at:String(item.preferred_at||''),
+    request_note:String(item.notes||'')
   }));
   return `<article class="card customer-booking-row-v580 customer-booking-row-detailed-v613" data-booking-search-item data-booking-search-name="${esc(name.toLowerCase())}" data-booking-detail-v613="${detailPayloadV654}" role="button" tabindex="0" aria-label="Booking details for ${esc(name)}">
     <div class="customer-booking-row-logo-v580">${logo}</div>
@@ -2168,7 +2379,12 @@ function customerBookingRequestRowV605(group,item,tab){
            ruling when asked: once the business has approved it there is an appointment, and moving
            that releases a slot they have committed to — a different act, which keeps the v508
            reschedule flow. So this button appears under exactly the condition Withdraw does. */''}
-      ${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-amend-request-v627="${esc(item.request_id)}" data-amend-at-v627="${esc(item.preferred_at||'')}" data-amend-note-v627="${esc(item.notes||'')}">${esc(ct('Reschedule'))}</button>`:''}
+      ${/* nestly_v663 (owner photo 5, the Reschedule button crossed out: "delete this button").
+           The row keeps ONE action — the X that withdraws — and amending moves into the detail
+           sheet the same row already opens, where the owner asked for it (photo 4). Nothing was
+           removed from the product: it is the same openCustomerAmendRequestSheetV627, one tap
+           further in, on a row that was carrying two full-width controls under its date. */''}
+      ${!active&&group.bookingEnabled&&group.business_slug?`<button class="btn ghost sm customer-booking-act-v580" type="button" data-repeat-booking data-business-slug="${esc(group.business_slug)}">${esc(ct('Book'))}</button>`:''}
       ${/* nestly_v613 (owner photo: the Pending pill and the Withdraw button ringed together — "change to X button"). The word became an icon so the status and its one action sit on a single line instead of stacking two full-width controls under the date. It is the SAME control — same data-withdraw-request contract, same confirm, same RPC — so nothing about withdrawing changed except how much room it asks for. The label survives as aria-label/title, because an X alone says nothing to a screen reader. */''}${active&&item.request_id?`<button class="btn ghost sm customer-booking-act-v580 customer-booking-withdraw-v613" type="button" data-withdraw-request="${esc(item.request_id)}" aria-label="${esc(ct('Withdraw'))}" title="${esc(ct('Withdraw'))}">${CUI.icon('close',{size:16})}</button>`:''}
     </div>
   </article>`;
@@ -2401,7 +2617,9 @@ async function renderCustomerBookings(){
     ...card,booking_enabled:!response.error&&response.data?.booking?.enabled===true,
     booking:response.error?{enabled:false}:response.data?.booking,
     /* v286: the same per-business permission the wallet reads, carried to the Bookings page. */
-    appointment_changes_enabled:!response.error&&response.data?.appointment_changes?.enabled===true
+    appointment_changes_enabled:!response.error&&response.data?.appointment_changes?.enabled===true,
+    /* nestly_v663: the server decides this — it is false whenever changes are disabled. */
+    appointment_changes_auto_approve:!response.error&&response.data?.appointment_changes?.auto_approve===true
   }));
   const results=await Promise.all(programmes.map(async card=>{
     const slug=card?.business?.slug||'';
@@ -2524,25 +2742,17 @@ async function renderCustomerBookings(){
     /* nestly_v655: cancel a confirmed booking. Same shape as the v290 withdraw beside it — a
        confirm the customer must answer, a busy button, one RPC, and a repaint. The sentence says
        what cancelling costs, because this releases a slot the business has already held. */
-    $('walletBody').querySelectorAll('[data-cancel-appointment-v655]').forEach(button=>button.onclick=async()=>{
-      if(button.disabled)return;
-      if(!await confirmActionV386('Cancel this booking? The business gives your slot to someone else, and you would have to book again.',
-        {confirmLabel:'Cancel booking',cancelLabel:'Keep it'}))return;
-      button.disabled=true;button.setAttribute('aria-busy','true');
-      const result=await customerRpc('customer_cancel_appointment_v655',{
-        p_business_slug:button.dataset.businessSlug||'',
-        p_appointment:button.dataset.cancelAppointmentV655});
-      if(result.error){
-        button.disabled=false;button.removeAttribute('aria-busy');
-        const messageV660=String(result.error.message||'');
-        return toast(messageV660==='already_actioned'
-          ?'This booking has already been changed — open it again to see where it stands.'
-          :messageV660==='appointment_changes_disabled'
-          ?'This business asks you to contact them to change a confirmed booking.'
-          :'The booking could not be cancelled. Try again.');
-      }
-      toast('Booking cancelled');renderCustomerBookings();
-    });
+    /* nestly_v663: the row's X and the detail sheet's Cancel are now literally the same call,
+       so what the customer is warned about and what they are told afterwards cannot differ
+       between two doors onto one act. */
+    $('walletBody').querySelectorAll('[data-cancel-appointment-v655]').forEach(button=>button.onclick=()=>
+      customerCancelBookingV663({
+        appointmentId:button.dataset.cancelAppointmentV655,
+        businessSlug:button.dataset.businessSlug||'',
+        autoApprove:button.dataset.autoApproveV663==='true',
+        phone:button.dataset.phoneV663||'',
+        businessName:button.dataset.businessNameV663||'',
+        button,onDone:()=>renderCustomerBookings()}));
     $('walletBody').querySelectorAll('[data-booking-detail-v613]').forEach(row=>{
       const open=event=>{
         if(event.target.closest('button,a'))return;

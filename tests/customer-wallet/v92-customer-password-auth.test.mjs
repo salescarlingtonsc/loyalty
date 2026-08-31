@@ -33,7 +33,8 @@ test('account creation uses phone and password, then one verification OTP',()=>{
   assert.match(start,/id="customerSignupMarketing" type="checkbox"/);
   assert.match(start,/if\(!\$\('customerSignupConsent'\)\.checked\)/);
   assert.match(start,/marketingOptedIn:recovering\?false:\$\('customerSignupMarketing'\)\.checked/);
-  assert.match(start,/Yes — send me offers and updates/);
+  /* nestly_v663 (owner photo A): the phrase is now the control that opens the consent wording. */
+  assert.match(start,/Yes — send me <button type="button" id="customerSignupMarketingWhat"[^>]*>offers and updates<\/button>/);
   assert.match(start,/\$\('customerOtpBack'\)\.onclick=\(\)=>\{[\s\S]*resetCustomerRegistrationState\(\)/);
   assert.match(verify,/verifyOtp\(\{phone,token,type:'sms'\}\)/);
   assert.match(verify,/sb\.auth\.resend\(\{type:'sms',phone,options\}\)/);

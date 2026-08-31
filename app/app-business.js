@@ -3462,8 +3462,8 @@ function openSaleAmountCorrectionDialog(item,onDone){
     <div class="row" style="margin-top:16px"><button class="btn danger" id="saleCorrectionSubmit" type="button" disabled>Confirm correction</button><button class="btn ghost sm" id="saleCorrectionCancel" type="button">Cancel</button></div>
   </div></div>`);
   const modal=$('saleCorrectionModal'),amount=$('saleCorrectedAmount'),checked=$('saleCorrectionChecked');
-  let deactivateDialog,completed=false;
-  const close=()=>{if(deactivateDialog)deactivateDialog();else modal?.remove();if(completed&&onDone)onDone()};
+  let deactivateDialog,completed=false,refreshed=false;
+  const close=()=>{if(deactivateDialog)deactivateDialog();else modal?.remove();if(completed&&!refreshed&&onDone)onDone()};
   deactivateDialog=CUI.activateDialog(modal,{onClose:close,initialFocus:'#saleCorrectedAmount'});
   $('saleCorrectionClose').onclick=$('saleCorrectionCancel').onclick=close;
   const correctedCents=()=>Math.round(Number(amount.value||0)*100);
@@ -3500,9 +3500,23 @@ function openSaleAmountCorrectionDialog(item,onDone){
       submit.disabled=false;submit.textContent='Retry correction';return;
     }
     completed=true;
-    $('saleCorrectionOutcome').innerHTML=`<div class="imp-note"><b>${data?.replayed?'Correction verified':'Amount corrected'}.</b> Original ${money(Number(data?.original_amount_cents||item.amount_cents))}; replacement ${money(Number(data?.corrected_amount_cents||cents))}${Number(data?.points_earned||0)?` · ${Number(data.points_earned)} points earned on the replacement`:''}.</div>`;
+    /* nestly_v663 (owner: "when replaced to the amended amount - make sure it reflects the
+       corrected amount now in the app, any rewards given must be adjusted ... without user to
+       press refresh"). The ledger behind this dialog only repainted when the dialog was CLOSED,
+       so the row the owner had just corrected still showed the old amount while they were reading
+       the confirmation. It repaints NOW; `refreshed` stops close() doing it a second time.
+       The loyalty half is the server's: correct_quick_sale_amount_v84 removes the original earn
+       per programme, zeroes its batch and lets the replacement sale earn again, in one
+       transaction — and it REFUSES outright if any of that earn was already spent. So the points
+       line below is a report of what the ledger now holds, not a promise about it. */
+    const pointsRemovedV663=Number(data?.points_removed||0),pointsEarnedV663=Number(data?.points_earned||0);
+    const loyaltyLineV663=pointsRemovedV663||pointsEarnedV663
+      ?`<p class="small" style="margin-top:6px">Customer points were adjusted with it: ${pointsRemovedV663} removed from the original, ${pointsEarnedV663} earned on the replacement.</p>`
+      :'';
+    $('saleCorrectionOutcome').innerHTML=`<div class="imp-note"><b>${data?.replayed?'Correction verified':'Amount corrected'}.</b> Original ${money(Number(data?.original_amount_cents||item.amount_cents))}; replacement ${money(Number(data?.corrected_amount_cents||cents))}.${loyaltyLineV663}</div>`;
     submit.disabled=true;submit.textContent='Completed';$('saleCorrectionCancel').textContent='Done';
     saleCorrectionAttempts.delete(item.id);
+    if(typeof onDone==='function'){refreshed=true;onDone()}
     toast(data?.replayed?'Correction retry verified':'Sale corrected and synchronized');
   };
 }
@@ -6313,6 +6327,23 @@ function salesItemLinesPanelV577(lines){
       </li>`;
     }).join('');
   return `<ul class="sales-item-lines-v577">${rows}</ul>`;
+}
+/* nestly_v663 (owner photo 7, the ITEM column of the Revenue drill-down ringed: "what is
+   'quick sale' as the item, you should list down the items like we had in Sales & refunds").
+   'quick sale' is the sale's KIND — the till door it came through — and never what was sold. The
+   same answer the Sales & refunds Item cell gives, as plain text for a table cell that has no
+   room for a disclosure: the sale's own lines first, then its note, and only then the kind.
+
+   sale_items is readable by the OWNER ROLE ONLY (sale_items_owner_read, v51), so a manager or a
+   front-desk reading this report gets no lines back and falls through to exactly the label the
+   report printed before. That is the honest outcome — a blank would read as "nothing was sold" —
+   and it means this change can never show anyone a line their role could not already see. */
+function saleItemSummaryTextV663(sale,fallback=''){
+  const lines=activitySaleItemsTextV518({items:sale&&sale.sale_items});
+  if(lines)return lines;
+  const note=String((sale&&sale.note)||'').trim();
+  if(note&&note!==SALE_KERNEL_NOTE_V518)return note;
+  return String(fallback||'').trim();
 }
 function salesItemCellV571(sale){
   const text=activitySaleItemsTextV518({items:sale&&sale.sale_items});
@@ -33003,9 +33034,12 @@ async function dailyReportPage(){
       if(clientsScopeResult?.error&&clientsScopeResult.error.code!=='42501')throw clientsScopeResult.error;
       clientsAvailable=!clientsScopeResult?.error;
       sl=await fetchAllRows(()=>{
+        /* nestly_v663: the sale's own lines ride along, exactly as the Sales & refunds ledger
+           embeds them — one round trip, and the report already reads a row per sale. */
+        const lineColumnsV663='sale_items(description,qty,unit_cents,line_cents,created_at)';
         const columns=clientsAvailable
-          ?'*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name))'
-          :'*, staff(full_name), appointments(services!appointments_service_id_fkey(name))';
+          ?`*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name)), ${lineColumnsV663}`
+          :`*, staff(full_name), appointments(services!appointments_service_id_fkey(name)), ${lineColumnsV663}`;
         let q=sb.from('sales').select(columns,{count:'exact'})
           .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
         if(scope.branchId)q=q.eq('branch_id',scope.branchId);
@@ -33036,7 +33070,8 @@ async function dailyReportPage(){
         ?(s.clients?.full_name||(s.client_id?'Customer record unavailable':'Walk-in'))
         :(s.client_id?'Customer details unavailable':'Walk-in'),
       custPhone:clientsAvailable?(s.clients?.phone||''):'',
-      label:s.appointments?.services?.name||(s.kind||'').replace('_',' '),
+      /* nestly_v663: what was sold, then the note, then the kind — never the kind first. */
+      label:saleItemSummaryTextV663(s,s.appointments?.services?.name||(s.kind||'').replace('_',' ')),
       amount_cents:s.amount_cents,staffName:s.staff?.full_name||'Unattributed',
       id:s.id,reversal_of:s.reversal_of,reversal_reason:s.reversal_reason,
       kind:s.kind,counts_as_revenue:s.counts_as_revenue,counts_as_visit:s.counts_as_visit,client_id:s.client_id}));
@@ -33061,7 +33096,7 @@ async function dailyReportPage(){
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
       <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
-        ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Service/kind</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
+        ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Item</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total of listed rows (signed)</b></td><td class="num"><b>${money(rows.reduce((a,r)=>a+Number(r.amount_cents||0),0))}</b></td></tr><tr class="total-row"><td colspan="5">Of which revenue (per sale policy)</td><td class="num">${money(revenue)}</td></tr></table></div>`
         /* nestly_v553 (TRUTH-001): this Total printed money(revenue) under a table that lists EVERY

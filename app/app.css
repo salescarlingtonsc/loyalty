@@ -3095,6 +3095,12 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
 .till-choice-qtyctl-v468 button{min-width:40px;min-height:40px;padding:0;font-size:17px;font-weight:750;line-height:1;border-radius:var(--r-sm)}
 .till-choice-qtyctl-v468 output{min-width:22px;text-align:center;font-weight:750;font-size:15px}
 .till-choice-qtyctl-v468 .till-choice-qtyctl-remove-v468{color:var(--brand-red)}
+.cui-label-v663{display:block;margin-top:14px;font-weight:600;color:var(--ink)}
+.dob-picker-v663{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr);gap:8px;margin-top:6px}
+.dob-picker-v663>select{margin:0;color:var(--ink);font-weight:600}
+.dob-picker-v663>select:invalid,.dob-picker-v663>select option[value=""]{color:var(--ink2)}
+.signup-consent-link-v663{display:inline;padding:0;margin:0;border:0;background:none;font:inherit;
+  color:var(--coral);text-decoration:underline;cursor:pointer}
 .signup-consent-detail-v468{margin:6px 0 0 30px}
 .signup-consent-detail-v468>summary{cursor:pointer;color:var(--coral);font-size:13px;font-weight:600;
   list-style:none;padding:4px 0;min-height:32px;display:flex;align-items:center}
@@ -3338,6 +3344,11 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .customer-booking-detail-list-v613 dt{margin:0}
 .customer-booking-detail-list-v613 dd{margin:2px 0 0;font-weight:600;color:var(--ink)}
 .customer-booking-detail-book-v627{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.customer-booking-detail-approval-v663{margin-top:16px;line-height:1.5}
+.customer-booking-detail-approval-v663 a{color:inherit;font-weight:600}
+.customer-booking-detail-actions-v663{display:flex;flex-direction:column;gap:10px}
+.customer-booking-detail-actions-v663 .customer-booking-detail-book-v627{margin-top:10px}
+.customer-booking-detail-actions-v663 .customer-booking-detail-book-v627+.customer-booking-detail-book-v627{margin-top:0}
 .customer-booking-row-date-v580{font-size:12.5px;font-weight:700;color:var(--muted);
   white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
 .customer-booking-act-v580{white-space:nowrap}
