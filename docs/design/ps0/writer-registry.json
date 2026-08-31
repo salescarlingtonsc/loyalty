@@ -2605,6 +2605,28 @@
       "resolves_to": "public.customer_set_whatsapp_marketing_consent_v574(business, opted_in, idempotency_key) — SECURITY DEFINER, authenticated. Appends ONE public.consents row (channel='whatsapp', purpose='marketing', action granted|withdrawn) and, on a grant only, raises public.clients.marketing_consent. Neither table is a VALUE_TABLE. The acting customer is resolved from auth.uid() via customer_identities + a customer_links row in state='verified'; the caller cannot name a client, so staff cannot manufacture consent for someone else.",
       "call_site_finding": "nestly_v574 — one call site, the per-business wallet card wireCustomerWhatsappConsentV574. The notice digest is read server-side from app.customer_legal_documents and pinned, so a published notice change halts capture rather than mislabelling consent. Replay is bounded by consents_v574_idem_uk plus an advisory lock; the same key for the opposite choice raises 23505.",
       "kernel_migratability": "portable — consent evidence is append-only and business-scoped; no stored-value surface is touched."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_stage_gift_qr_v665",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_stage_gift_qr_v665",
+      "resolves_to": "public.staff_stage_gift_qr_v665(business, client, qr_token) — SECURITY DEFINER, authenticated, till-or-loyalty write. Marks ONE public.customer_gift_intents_v515 row completed (the customer's QR is spent) and appends one audit_log row. Neither table is a VALUE_TABLE, and this is the point of the function: it deliberately does NOT write tier_benefit_issues_v365, so the customer's allowance is untouched until record_cart_sale spends it with the money.",
+      "rows_written": "customer_gift_intents_v515:UPDATE (status pending→completed, completion_result), audit_log:INSERT",
+      "entry_point": "browser RPC (authenticated staff) — the till's reward/gift scanners, tried BEFORE staff_scan_gift_qr_v515 and falling through to it on any soft refusal",
+      "idempotency": "the intent row itself: a second scan of the same token finds a non-pending row and answers not_stageable rather than staging twice, under the same v515:scan advisory lock the settle path takes",
+      "value": "NON-VALUE, and that is the change. The pre-v665 path settled a scanned tier perk on sight through staff_issue_tier_benefit_v365, spending the customer's allowance whether or not a sale followed. Staging moves that spend to record_cart_sale, which already issues the perk chosen with the v656 Apply button, so an abandoned sale now costs the customer nothing.",
+      "kernel_migratability": "portable — a redemption intent is evidence, not value; the allowance spend stays in the one authority (staff_issue_tier_benefit_v365, called by record_cart_sale) rather than gaining a second path."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_reverse_gift_redemption_v665",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_reverse_gift_redemption_v665",
+      "resolves_to": "public.staff_reverse_gift_redemption_v665(business, gift_kind, target, reason, idempotency_key) — SECURITY DEFINER, authenticated, gated on app.has_perm(business,'refund_sales') AND app.can_module(business,'sales'), the same authority reverse_sale_fast_v84 and reverse_loyalty_redemption require. Hands a free gift or tier perk back: a tier_benefit_issues_v365 row is stamped reversed_at (every allowance counter ignores it), or a welcome / bring-back / referral grant returns to status 'granted' with its redemption fields cleared.",
+      "rows_written": "tier_benefit_issues_v365:UPDATE (reversed_at), welcome_offer_grants_v215:UPDATE (status, redeemed_*), bringback_grants_v361:UPDATE (status, redeemed_*), referral_grants_v420:UPDATE (status, redeemed_*), gift_redemption_reversals_v665:INSERT, audit_log:INSERT",
+      "entry_point": "browser RPC (authenticated staff with refund permission) — the till's \"Already given\" list and the Customer 360 \"Rewards and perks given\" card",
+      "idempotency": "gift_redemption_reversals_v665_idem_uk on (business_id, idempotency_key) returns the first reversal on replay; gift_redemption_reversals_v665_target_uk allows one reversal per thing reversed, ever; an advisory lock on (business, target) serialises concurrent attempts",
+      "value": "NON-VALUE. Every reachable table is a free-gift entitlement or an allowance counter — none is a VALUE_TABLE, and nothing here touches credit_ledger, points_ledger, sales or stock_batches. The $0 sale written when the gift was handed over is deliberately LEFT STANDING: app.enforce_sale_reversal_bounds refuses a zero-dollar reversal without package-session provenance, and no money is misstated by a zero row. The reversal records that sale's id beside it instead.",
+      "kernel_migratability": "portable — restoring an entitlement is business-scoped and append-only in its evidence; the money path is untouched by design."
     }
   ],
   "allowlist": [
@@ -3867,6 +3889,14 @@
     {
       "id": "browser.rpc:app/app.js:set_service_canonical_node_v1",
       "reason": "Service mapping board Accept/select action (nestly_v650). SECURITY DEFINER, business-membership + services-module-WRITE gated. Writer-adjacent, allowlisted rather than curated into \"writers\": it writes only public.service_canonical_map / services.node_key (nestly_v648), a mapping REFERENCE column used to classify revenue for reporting — it moves no ledger/credit/points value, mints nothing, and cannot change what a sale charges or what an appointment does."
+    },
+    {
+      "id": "browser.rpc:app/app.js:staff_gift_reversal_workflows_v665",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_gift_reversal_workflows_v665",
+      "resolves_to": "public.staff_gift_reversal_workflows_v665(business, client, limit) — STABLE SECURITY DEFINER, authenticated, till/loyalty/sales READ access. Performs no DML. Lists what a customer has already been given across the four gift families and states, per row, whether THIS actor may hand it back (app.has_perm 'refund_sales'), so a cashier is told why rather than shown a button that would fail.",
+      "call_site_finding": "nestly_v665 — two call sites: the till catalogue load (Record sale → Rewards) and clientDetail (Customer 360). Branch scope on the perk rows is app.can_see_branch, the same predicate the issue path uses.",
+      "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
     }
   ]
 }

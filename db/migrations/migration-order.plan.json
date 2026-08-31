@@ -3249,6 +3249,12 @@
       "path": "db/migrations/20260831_nestly_v664_capacity_tiers_and_manual_payment.sql",
       "semanticVersion": "v664",
       "proposedDeployVersion": "20260831160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v665_gift_staging_and_reversal.sql",
+      "semanticVersion": "v665",
+      "proposedDeployVersion": "20260831170000"
     }
   ]
 }

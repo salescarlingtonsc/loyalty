@@ -3244,6 +3244,12 @@
       "version": "20260831160000",
       "name": "nestly_v664_capacity_tiers_and_manual_payment",
       "sourcePath": "db/migrations/20260831_nestly_v664_capacity_tiers_and_manual_payment.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831170000",
+      "name": "nestly_v665_gift_staging_and_reversal",
+      "sourcePath": "db/migrations/20260831_nestly_v665_gift_staging_and_reversal.sql"
     }
   ]
 }

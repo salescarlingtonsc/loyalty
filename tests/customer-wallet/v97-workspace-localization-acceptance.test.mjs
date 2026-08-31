@@ -386,8 +386,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
   /* nestly_v613 adds two: bespokePackageFor (the customer a one-off package is being built for)
      and serviceBranchesFailed (the branch write that failed after the service itself saved).
      nestly_v627 adds catalogueBranchesFailed, the same sentence for a package or a product whose
-     branch write failed after the row itself saved. */
-  assert.equal(keys.length,142,'mixed-interface interpolation inventory changed without review');
+     branch write failed after the row itself saved.
+     nestly_v665 adds one: tierPerkStaged, the sentence the till speaks when a scanned tier-perk
+     QR puts that perk on the open bill. It carries the perk's own name, which is merchant copy,
+     so it is a template rather than an interpolated toast — the same reason tierBenefitGiven is
+     one. 142 + 1 = 143. */
+  assert.equal(keys.length,143,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

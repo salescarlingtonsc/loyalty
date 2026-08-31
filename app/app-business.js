@@ -1054,8 +1054,13 @@ function merchantRedemptionReceiptHtml(data={}){
     <div class="platform-route-note" style="margin-top:14px">${CUI.icon('info',{size:20})}<p class="small">${esc(receipt.fulfilment)}</p></div>
     <button class="btn" id="merchantScannerReceiptClose" type="button" style="width:100%;margin-top:16px">Close receipt</button>`;
 }
+/* nestly_v665 (owner ruling 2026-08-31, photo 1): `stageClientId` + `onGiftStaged` are how the
+   TILL opts into STAGING a scanned tier perk onto the open bill instead of settling it on sight.
+   Only the till passes them, because only the till has a cart to put a perk on; every other
+   caller of this scanner keeps the v515 settle-on-scan behaviour untouched. */
 function openMerchantRedemptionScanner({
-  businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{},onMemberResolved=null
+  businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{},onMemberResolved=null,
+  stageClientId=null,onGiftStaged=null
 }={}){
   activeMerchantScannerCleanup();
   const overlay=document.createElement('div');
@@ -1132,6 +1137,36 @@ function openMerchantRedemptionScanner({
     if(payload.kind==='package'&&!branchId){
       status.textContent='Choose an accessible branch before using this package session.';
       return;
+    }
+    /* nestly_v665 (owner ruling 2026-08-31, photo 1: "when business scan the qrcode - it should
+       auto act as if rewards has been added (photo2) ... in the event the voucher was not used -
+       it should not 'use up' the vouchers").
+       A tier-perk QR scanned WITH A CART OPEN is offered to staff_stage_gift_qr_v665 first. When
+       it stages, the perk goes onto the bill exactly as the till's own Apply button would, and the
+       allowance is spent by record_cart_sale when the money is taken — so an abandoned sale costs
+       the customer nothing. Every other answer is a SOFT one by design: the server returns
+       not_stageable rather than raising, and the scan falls straight through to
+       staff_scan_gift_qr_v515 below, which keeps sole ownership of the wording for an unknown,
+       expired or already-used QR. A network failure falls through the same way. */
+    if(payload.kind==='gift'&&onGiftStaged){
+      submitting=true;status.textContent='Checking this reward…';
+      const {data:staged,error:stageError}=await sb.rpc('staff_stage_gift_qr_v665',{
+        p_business:businessId,p_client:stageClientId||null,p_qr_token:token});
+      if(closed||!isCurrent())return;
+      submitting=false;
+      if(!stageError&&staged?.status==='wrong_customer'){
+        status.textContent='That QR belongs to a different customer. Check whose reward this is.';
+        return;
+      }
+      if(!stageError&&staged?.status==='staged'){
+        stopCamera();close();
+        onGiftStaged(staged);
+        return;
+      }
+      if(stageError&&String(stageError.message||'').includes('period rolled over')){
+        status.textContent='This perk’s period has rolled over. Ask the customer for a fresh QR.';
+        return;
+      }
     }
     const attemptFingerprint=`${payload.kind}:${token}:${saleId||''}`;
     if(!redemptionAttempt||redemptionAttempt.fingerprint!==attemptFingerprint){
@@ -3407,6 +3442,82 @@ function bindReversalButtons(onDone){
     const item=reversalItems.get(reversalItemKey(btn.dataset.reverseKind,btn.dataset.reverseId));
     openReversalDialog(btn.dataset.reverseKind,item,onDone);
   });
+  /* nestly_v665: giving a free gift or a tier perk back rides the same binder as every other
+     reversal control, so any screen that already refreshes itself after a reversal refreshes
+     itself after this one too. The till binds its own, with its own refresh — it is the one
+     screen that must also re-price the cart. */
+  document.querySelectorAll('[data-gift-undo-v665]').forEach(btn=>btn.onclick=()=>{
+    openGiftUndoDialogV665({
+      businessId:S.biz.id,
+      giftKind:btn.dataset.kindV665,
+      targetId:btn.dataset.giftUndoV665,
+      rewardLabel:btn.dataset.labelV665||'',
+      onDone
+    });
+  });
+}
+
+/* nestly_v665 (owner ruling 2026-08-31: "for rewards redeemed > i need to reverse it in the event
+   of wrong redemption"). Handing a gift or a tier perk back to the customer.
+
+   Why its own dialog rather than openReversalDialog: that one reverses MONEY and says so at
+   length — compensating entries, FEFO batch drains, credit that may already be spent. None of
+   that is true here. A gift reversal moves no money at all; it restores a grant to 'granted' or
+   clears a perk's allowance, and the $0 sale that recorded the hand-over is deliberately left
+   standing. Reading a money warning over an act that touches none would teach staff to ignore it.
+
+   The reason is REQUIRED and at least ten characters because the server requires it — this is the
+   record of why a customer's reward came back, and the three presets exist so that a counter
+   under pressure writes a real one instead of "x". Idempotency keys survive a retry, so a dropped
+   connection cannot reverse the same thing twice. */
+const giftUndoKeysV665=new Map();
+const GIFT_UNDO_KIND_LABEL_V665=Object.freeze({tier_perk:'tier perk',welcome:'welcome gift',
+  bringback:'bring-back voucher',referral:'referral gift'});
+function openGiftUndoDialogV665({businessId,giftKind,targetId,rewardLabel,customerName='',onDone}){
+  const keyId=`${giftKind}:${targetId}`;
+  if(!giftUndoKeysV665.has(keyId))giftUndoKeysV665.set(keyId,crypto.randomUUID());
+  const kindWord=GIFT_UNDO_KIND_LABEL_V665[giftKind]||'reward';
+  const presets=['Scanned the wrong customer','Given by mistake','Customer did not take it'];
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="giftUndoModalV665" role="dialog" aria-modal="true" aria-labelledby="giftUndoTitleV665" tabindex="-1"><div class="modal-card" style="max-width:520px">
+    <div class="row"><div><h2 id="giftUndoTitleV665">Give this back?</h2><p class="muted small" style="margin-top:4px" data-merchant-content>${esc(rewardLabel||'Reward')}${customerName?` · ${esc(customerName)}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" id="giftUndoCloseV665" type="button">Close</button></div>
+    <div class="imp-note" style="margin-top:12px"><b>The customer gets it back.</b><p class="small" style="margin-top:5px">This ${esc(kindWord)} becomes available to them again straight away. No money moves, and nothing is deleted — the record that it was given stays, with this reversal recorded beside it.</p></div>
+    <label for="giftUndoReasonV665">Why is this being given back? (required, at least 10 characters)</label>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${presets.map((preset,index)=>`<button type="button" class="btn ghost sm" data-gift-undo-preset-v665="${index}">${esc(preset)}</button>`).join('')}</div>
+    <textarea id="giftUndoReasonV665" rows="2" data-workspace-i18n placeholder="e.g. Scanned the wrong customer"></textarea>
+    <div id="giftUndoOutcomeV665"></div>
+    <div class="row" style="margin-top:16px"><button class="btn danger" id="giftUndoSubmitV665">Give it back</button><button class="btn ghost sm" id="giftUndoCancelV665">Cancel</button></div>
+  </div></div>`);
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else $('giftUndoModalV665')?.remove();};
+  deactivate=CUI.activateDialog($('giftUndoModalV665'),{onClose:close,initialFocus:'#giftUndoReasonV665'});
+  $('giftUndoCloseV665').onclick=$('giftUndoCancelV665').onclick=close;
+  document.querySelectorAll('[data-gift-undo-preset-v665]').forEach(button=>button.onclick=()=>{
+    const field=$('giftUndoReasonV665');
+    field.value=presets[Number(button.dataset.giftUndoPresetV665)]||'';
+    field.focus();
+  });
+  $('giftUndoSubmitV665').onclick=async()=>{
+    const reason=$('giftUndoReasonV665').value.trim();
+    if(reason.length<10)return toast('Write a reason of at least 10 characters');
+    const submit=$('giftUndoSubmitV665');
+    submit.disabled=true;submit.textContent='Giving it back…';
+    const {data,error}=await sb.rpc('staff_reverse_gift_redemption_v665',{
+      p_business:businessId,p_gift_kind:giftKind,p_target:targetId,
+      p_reason:reason,p_idempotency_key:giftUndoKeysV665.get(keyId)});
+    if(error){
+      const missing=error.code==='PGRST202'||error.code==='42883';
+      const gone=String(error.message||'').includes('gift_reversal_target_not_found');
+      $('giftUndoOutcomeV665').innerHTML=`<div class="err"><b>${gone?'Nothing to give back.':'This could not be given back.'}</b> ${esc(missing
+        ?`Giving a reward back needs the latest ${BRAND.productName} service update.`
+        :gone?'It has already been handed back, or it was never redeemed.'
+        :(error.message||'The database refused this reversal.'))}</div>`;
+      submit.disabled=false;submit.textContent='Retry same request';return;
+    }
+    giftUndoKeysV665.delete(keyId);
+    toast(data?.replayed===true?'Already given back':'Given back to the customer');
+    close();
+    if(onDone)onDone(data);
+  };
 }
 
 /* V291 (PDPA erasure, owner-only). A customer may ask for their personal details to be removed.
@@ -5248,7 +5359,22 @@ async function clientDetail(id){
       reversalActionsUnavailable=true;
     }
   }
+  /* nestly_v665 (owner ruling 2026-08-31, photos 3 and 5: the Activity history ringed, with "for
+     rewards redeemed > i need to reverse it"). A welcome, bring-back or referral gift is recorded
+     as a $0 sale, and staff_get_reversal_workflows correctly refuses to reverse one — a
+     zero-dollar sale reversal has no money to compensate and app.enforce_sale_reversal_bounds
+     would refuse it. What CAN be given back is the GRANT behind that row, which is what this
+     second, sibling read answers. Keyed by the sale it wrote, so the row the owner is looking at
+     is the row that grows the control. Fail-soft: no list simply means no Give-back buttons. */
+  let giftWorkflowV665=null;
+  if(canReadSales||canReadLoyalty){
+    const {data:giftsV665,error:giftsErrorV665}=await sb.rpc('staff_gift_reversal_workflows_v665',
+      {p_business:S.biz.id,p_client:id,p_limit:200});
+    if(!isClientDetailCurrent())return;
+    if(!giftsErrorV665)giftWorkflowV665=giftsV665||null;
+  }
   if(!isClientDetailCurrent())return;
+  const giftRowsV665=Array.isArray(giftWorkflowV665?.gifts)?giftWorkflowV665.gifts:[];
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const redemptionWorkflow=Object.fromEntries((reversalData?.redemptions||[]).map(x=>[x.id,x]));
   const saleById=Object.fromEntries((allSl||[]).map(sale=>[sale.id,sale]));
@@ -5844,6 +5970,30 @@ async function clientDetail(id){
         :`<span class="muted small">${esc(g.display_label||'Reward')} · ${g.display_amount_cents!=null?money(g.display_amount_cents):g.display_discount_percent!=null?g.display_discount_percent+'% off':esc(g.display_item||'free item')} · ${g.granted_at.slice(0,10)}</span>`}</div>`}).join('')
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
+  /* nestly_v665 (owner ruling 2026-08-31, photos 3 and 5: the Activity history ringed, with "for
+     rewards redeemed > i need to reverse it in the event of wrong redemption").
+     Its own card, immediately above Activity history, rather than a control grafted onto the
+     activity table. Three reasons. A welcome, bring-back or referral gift shows in that table as
+     a $0 SALE, and a sale is exactly the thing that cannot be reversed here — the reversible
+     object is the grant behind it, so a Reverse button on the sale row would be pointing at the
+     wrong record and would collide with the row's own, correct, "no package-session provenance"
+     refusal. A tier perk has no sale row at all and would otherwise have no path anywhere but the
+     till. And a reversed gift must keep reading as given-then-returned, which a single dated list
+     says far better than a table cell. */
+  const GIFT_KIND_LABEL_V665=Object.freeze({tier_perk:'Tier perk',welcome:'Welcome gift',
+    bringback:'Bring-back voucher',referral:'Referral gift'});
+  const giftsGivenMarkupV665=giftRowsV665.length
+    ?`<div class="card" id="c360GiftsGivenV665"><b>Rewards and perks given</b>
+      <p class="muted small" style="margin-top:5px">Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.</p>
+      ${giftRowsV665.map(gift=>`<div class="row" style="margin-top:10px;align-items:flex-start" data-gift-row-v665="${esc(String(gift.id||''))}">
+        <span class="inline-status">${CUI.icon('giftcard',{size:16})}<span data-merchant-content>${esc(gift.reward_label||GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}</span></span><span class="spacer"></span>
+        <span class="muted small" style="text-align:right">${esc(GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}${gift.reversed_at?`<br><span class="pill off">given back ${esc(activityWhenTextV267(gift.reversed_at))}</span>`:''}</span>
+        ${gift.can_reverse===true
+          ?`<button class="btn danger sm" style="margin-left:10px" data-gift-undo-v665="${esc(String(gift.id||''))}" data-kind-v665="${esc(String(gift.gift_kind||''))}" data-label-v665="${esc(gift.reward_label||'')}">Give back</button>`
+          :(gift.reversed_at?'':`<span class="muted small" style="margin-left:10px">${esc(gift.refusal_reason||'')}</span>`)}
+      </div>`).join('')}
+      </div>`
+    :'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
   /* V267: the Type and Team member menus are built from the rows THIS customer actually has,
      through the same activityTypeOfV267 the cells use, so the menu can never offer a type the
@@ -5935,6 +6085,7 @@ async function clientDetail(id){
            also where it reads. */''}
       ${canReadLoyalty?limitedOfferCardV319:''}
       ${retentionMarkup}
+      ${giftsGivenMarkupV665}
       ${birthdayCardMarkup}${feedbackStripMarkup}
       </div>
       <div class="c360-col-v476">
@@ -7662,7 +7813,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365,giftCatalogueV392,recentItemsV392]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365,giftCatalogueV392,givenGiftsV665,recentItemsV392]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -7718,6 +7869,15 @@ async function tillPage(){
          catalogue and still not claimable. */
       walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_get_customer_actionable_loyalty_v145',{
         p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId
+      }),
+      /* nestly_v665 (owner ruling 2026-08-31: "for rewards redeemed > i need to reverse it in the
+         event of wrong redemption", and "the vouchers is not reflected in record sale"). What this
+         customer has ALREADY been given — tier perks, welcome, bring-back and referral gifts — so
+         the Rewards tab can say so on the screen where the mistake is made, and offer to hand it
+         back. Rides this same load for the same reason every read above does. Fail-soft: a server
+         without v665 simply yields no list. */
+      walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_gift_reversal_workflows_v665',{
+        p_business:S.biz.id,p_client:cust.client_id,p_limit:20
       }),
       walkin?Promise.resolve({data:null,error:null}):sb.from('sale_items')
         .select('item_type,ref_id,created_at,sales!inner(client_id,business_id)')
@@ -7785,6 +7945,10 @@ async function tillPage(){
       customerReferralOffer:entitlements.error?null:(entitlements.data?.referral_offer||null),
       /* V365: the customer's claimable tier benefits, each with what is left this period. */
       customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
+      /* nestly_v665: what has already been given to this customer, and whether this member of
+         staff may hand it back. `may_reverse` is the SERVER's answer about this actor's
+         permission, never a role name this screen decided for itself. */
+      customerGivenGiftsV665:givenGiftsV665?.error?null:(givenGiftsV665?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY member in it is sellable at this branch — a bundle
          missing a member is not the deal the customer was quoted, so it is withheld rather than
@@ -8505,6 +8669,30 @@ async function tillPage(){
         <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
         ${autoRow}${giveRows}</div>`
       :'';
+    /* nestly_v665 (owner ruling 2026-08-31: "for rewards redeemed > i need to reverse it in the
+       event of wrong redemption"). Everything already handed to this customer, on the screen where
+       it was handed over. Two things it fixes at once: a gift or perk settled by a QR scan is now
+       VISIBLE on Record sale instead of silently vanishing from the "ready to give" list, and the
+       counter can put it back the moment they realise they scanned the wrong person.
+       `can_reverse` and `refusal_reason` are the server's, per row — a cashier without refund
+       permission sees the list and is told why they cannot undo, rather than being shown a button
+       that would fail. Reversed rows stay listed, greyed, because "it was given and handed back"
+       is a different fact from "it was never given". */
+    const givenGiftsV665=Array.isArray(catalog.customerGivenGiftsV665?.gifts)
+      ?catalog.customerGivenGiftsV665.gifts:[];
+    const givenKindLabelV665={tier_perk:'Tier perk',welcome:'Welcome gift',
+      bringback:'Bring-back voucher',referral:'Referral gift'};
+    const givenBannerV665=givenGiftsV665.length
+      ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px" data-given-gifts-v665><b>Already given</b>
+        <p class="muted small" style="margin:5px 0">Scanned or handed over for this customer. Undo puts it straight back.</p>
+        ${givenGiftsV665.map(gift=>`<div class="till-tier-benefit-row-v369${gift.reversed_at?' till-benefit-auto-v373':''}">
+          <span><b class="small">${esc(gift.reward_label||givenKindLabelV665[gift.gift_kind]||'Reward')}</b>
+          <span class="muted small">${esc(givenKindLabelV665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}</span></span>
+          ${gift.can_reverse===true
+            ?`<button type="button" class="btn ghost sm" data-gift-undo-v665="${esc(String(gift.id||''))}" data-kind-v665="${esc(String(gift.gift_kind||''))}" data-label-v665="${esc(gift.reward_label||'')}">Undo</button>`
+            :`<span class="muted small">${esc(gift.reversed_at?'Handed back':(gift.refusal_reason||''))}</span>`}
+        </div>`).join('')}</div>`
+      :'';
     /* V392: what this customer's points can actually take home today.
        Affordable gifts lead; the next one up is shown too, with how many points are still needed,
        because "you are 5 away" is the sentence that sells the next visit. Nothing here issues
@@ -8581,7 +8769,7 @@ async function tillPage(){
            control must not shrink what a screen reader is told about it. */''}
         ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm till-gift-scan-v399" id="tGiftScanV392" aria-label="Scan customer QR" title="Scan customer QR">${CUI.icon('scan',{size:18})}</button>`:''}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${redemptionOffHintV435}${giftsBannerV392}${pendingVouchers}`;
+    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${givenBannerV665}${redemptionOffHintV435}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
@@ -9280,6 +9468,26 @@ async function tillPage(){
       draw();
       toast(wasApplied?'Discount removed':'Discount applied to this sale');
     });
+    /* nestly_v665: Undo, on the row of the thing that was given. The catalogue is dropped and the
+       screen redrawn afterwards so the perk reappears in "Ready to give now" — the allowance is
+       genuinely back, and a panel still showing it as spent would be the lie this whole change
+       exists to remove. */
+    document.querySelectorAll('[data-gift-undo-v665]').forEach(button=>button.onclick=()=>{
+      if(busy)return;
+      openGiftUndoDialogV665({
+        businessId:S.biz.id,
+        giftKind:button.dataset.kindV665,
+        targetId:button.dataset.giftUndoV665,
+        rewardLabel:button.dataset.labelV665||'',
+        customerName:cust?.name||'',
+        onDone:async()=>{
+          if(!isTillCurrent())return;
+          catalog=null;await refreshTillCustomerStandingV408();
+          if(!isTillCurrent())return;
+          draw();
+        }
+      });
+    });
     document.querySelectorAll('[data-tier-benefit-give-v365]').forEach(button=>button.onclick=async()=>{
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
@@ -9328,8 +9536,33 @@ async function tillPage(){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
+    /* nestly_v665: what a STAGED tier perk does to this screen. It is deliberately the same three
+       lines the Apply button runs — one perk chosen, one re-price through evaluate_checkout, one
+       redraw — so a perk that arrived by QR and a perk the counter picked by hand are the same
+       state, and the panel shows it with Remove beside it exactly as photo 2 does. Nothing here
+       spends the allowance: record_cart_sale does that when the money is taken. */
+    async function applyStagedTierPerkV665(staged){
+      const benefitId=String(staged?.benefit_id||'');
+      if(!benefitId)return;
+      const previous=appliedTierBenefitV656;
+      appliedTierBenefitV656=benefitId;
+      const ok=await runEvaluate();
+      if(!isTillCurrent())return;
+      if(ok===false){
+        appliedTierBenefitV656=previous;
+        await runEvaluate();
+        if(!isTillCurrent())return;
+        return toast('That perk could not be applied to this sale.');
+      }
+      /* The catalogue is dropped so the benefits panel repaints from the server — the perk must
+         read as applied (Remove beside it), which is the state photo 2 shows. */
+      catalog=null;
+      draw();
+      toast(workspaceTemplateTextV97('tierPerkStaged',{item:staged?.reward_label||'Discount'}));
+    }
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
+      stageClientId:cust?.client_id||null,onGiftStaged:applyStagedTierPerkV665,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
     /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
@@ -9338,6 +9571,7 @@ async function tillPage(){
        one screen, one number, and a cashier cannot be expected to know which door they used. */
     if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
+      stageClientId:cust?.client_id||null,onGiftStaged:applyStagedTierPerkV665,
       isCurrent:isTillCurrent,onComplete:async()=>{catalog=null;await refreshTillCustomerStandingV408();draw()}
     });
     /* V404: the stepper writes the number straight into the <output> rather than re-rendering the

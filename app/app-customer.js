@@ -440,9 +440,16 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{},
       const points=Math.max(0,Number(receipt.points_spent||0));
       qr.innerHTML=CUI.icon('check',{size:32});
       panel.classList.add('customer-redemption-complete');
-      pill.className='pill ok';pill.textContent='Redeemed';
+      /* nestly_v665: a STAGED tier perk is not spent yet — the counter has put it on the bill and
+         it comes off when the sale is paid. Saying "Redeemed" here would be the same overstatement
+         this change exists to remove, and it matters: if the sale is abandoned the customer still
+         has the perk, and their own card will still say so. */
+      const stagedV665=String(receipt.status||'')==='staged';
+      pill.className='pill ok';pill.textContent=stagedV665?'On your bill':'Redeemed';
       status.setAttribute('aria-live','assertive');
-      status.textContent=`Redeemed!${points?` ${points} points were used for`:''} ${rewardName||'your reward'} at ${businessName||'this business'}.`;
+      status.textContent=stagedV665
+        ?`${rewardName||'Your perk'} has been added to your bill at ${businessName||'this business'}.`
+        :`Redeemed!${points?` ${points} points were used for`:''} ${rewardName||'your reward'} at ${businessName||'this business'}.`;
       customerSuccessCue();
       /* V468-E2(a): the server has just told us the intent completed, which is the earliest
          honest moment the balance behind this modal is stale. Start the wallet re-read now — the

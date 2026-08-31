@@ -360,7 +360,18 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      deliberately not widened. Acceptance suite: db/tests/v657_discount_two_shapes.sql — 6
      assertions run rolled-back against production before apply, including the regression that an
      uncapped whole-bill discount still takes its percentage off the whole bill. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes)/;
+  /* nestly_v665 (owner ruling 2026-08-31, photo 1). The kernel is re-created here for a change
+     that decides NOTHING about pricing: the perk-allowance pre-check gains `and i.reversed_at is
+     null`, so a tier perk that was handed back stops reading as spent. What the discount is worth,
+     what base it comes off and what ceiling applies are byte-identical — the replaced definition
+     was pulled from production with pg_get_functiondef and patched by exact anchor, and that one
+     line is the whole diff. It is added to allowedPlan ONLY: record_cart_sale and
+     evaluate_checkout are untouched, so the tender list is deliberately not widened. The same
+     three words are added to the other four allowance readers, because an allowance counted two
+     different ways is how the till and the customer's app come to disagree. Acceptance suite:
+     db/tests/v665_gift_staging_and_reversal.sql — 16 assertions run rolled-back against
+     production, including that the kernel refuses a spent perk and prices a restored one. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes|nestly_v665_gift_staging_and_reversal)/;
   const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
